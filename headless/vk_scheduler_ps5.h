@@ -11,6 +11,7 @@
 #include <functional>
 #include <memory>
 #include <new>
+#include <stdexcept>
 #include <thread>
 #include <utility>
 #include <queue>
@@ -44,6 +45,12 @@ class Scheduler {
 public:
     explicit Scheduler(const Device& device, StateTracker& state_tracker);
     ~Scheduler();
+
+    // Renderer teardown only: stop host submission first, then prove physical
+    // retirement with vkDeviceWaitIdle. Never publish a synthetic guest tick.
+    void StopForShutdown();
+    void ConfirmDeviceRetiredForShutdown(VkResult result);
+    [[nodiscard]] bool IsDeviceRetiredForShutdown() const noexcept { return device_retired; }
 
     /// Sends the current execution context to the GPU.
     u64 Flush(VkSemaphore signal_semaphore = {}, VkSemaphore wait_semaphore = {});
@@ -179,6 +186,7 @@ public:
     template <typename T>
         requires std::is_invocable_v<T, vk::CommandBuffer, vk::CommandBuffer>
     void RecordWithUploadBuffer(T&& command) {
+        if (device_retired) throw std::logic_error("record after device retirement");
 #ifdef PS5_NATIVE
         // ConfigureDraw/Configure can memoize pipeline, rescaling and
         // descriptor bindings before enqueueing. If a chunk record or
@@ -254,6 +262,7 @@ public:
     /// Waits for the given GPU tick, optionally pacing frames.
     /// Generated presents share one game-frame pacing slot.
     void Wait(u64 tick, double target_fps = 0.0, u32 game_frame_presents = 1) {
+        if (device_retired) throw std::logic_error("guest wait after device retirement");
         if (tick > 0) {
             if (tick >= master_semaphore->CurrentTick()) {
                 Flush();
@@ -440,6 +449,9 @@ private:
     DeferredClear deferred_clear;
 
     std::unique_ptr<CommandChunk> chunk;
+    // Retain a throwing or cancelled recording until actual device retirement.
+    std::unique_ptr<CommandChunk> failed_chunk;
+    bool device_retired{};
     std::function<void()> on_submit;
 
     State state;

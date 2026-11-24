@@ -258,27 +258,34 @@ try
 RendererVulkan::~RendererVulkan() {
     try {
         scheduler.RegisterOnSubmit([] {});
-        // Do not submit a new tick on an already failed recording worker.
-        // This extra CPU drain is shutdown-only, never in the frame loop.
+        // Normal path drains real work before stopping host queue producers.
         scheduler.WaitWorker();
         scheduler.Finish();
-        // Finish waits for scheduler submissions, not the independent presenter.
-        try {
-            present_manager.WaitPresent();
-        } catch (...) {
-            // WaitPresent reports failure only after presenter access has ended.
-            ::Eden::RecordGpuFailure(std::current_exception());
-        }
-        // Verify device quiescence before destroying any private image owner.
-        // Their own destructors cannot turn a failed wait into safe retirement.
-        vk::Check(device.GetLogical().WaitIdle());
+        present_manager.WaitPresent();
     } catch (...) {
-        // No safe retirement proof: preserve the cause and fail closed, just
-        // like BufferCache teardown. Do not fake a completed GPU tick or
-        // unwind through members that may still be used by queued commands.
         ::Eden::RecordGpuFailure(std::current_exception());
+    }
+
+    // Guest execution has stopped. Fence callbacks may use the scheduler,
+    // so join that producer first; join the scheduler before the presenter
+    // so no late callback can enqueue another frame.
+    rasterizer.StopFenceWorkerForShutdown();
+    scheduler.StopForShutdown();
+    present_manager.StopForShutdown();
+
+    // Vulkan Lost Device: VK_ERROR_DEVICE_LOST is equivalent to VK_SUCCESS
+    // ONLY for resource-in-use/pending-state determination, never guest
+    // completion. All queue producers are joined before this call.
+    const VkResult retired = device.GetLogical().WaitIdle();
+    if (retired != VK_SUCCESS) {
+        try { vk::Check(retired); }
+        catch (...) { ::Eden::RecordGpuFailure(std::current_exception()); }
+    }
+    if (retired != VK_SUCCESS && retired != VK_ERROR_DEVICE_LOST) {
+        // No retirement proof: releasing potentially live GPU objects is unsafe.
         std::terminate();
     }
+    scheduler.ConfirmDeviceRetiredForShutdown(retired);
     mihawk_native.reset();
     fsr3_optical.reset();
 }

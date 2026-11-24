@@ -2710,19 +2710,21 @@ print("ENCORE_NS2_LOADING_SVC_POST_F07_PASS owners=1 diagnostics_only=1")
 # Selected post-snapshot GPU wait/scheduler/present owners. Do not rewrite
 # the immutable 193-file catalogue or qualify console performance by inventory.
 post_f07_gpu_wait_receipts = {
-    "headless/vulkan_master_semaphore_ps5.cpp": "a8a4a5e66edbdec5c0639d388fc50151764e0f30",
+    "headless/vulkan_master_semaphore_ps5.cpp": "bf6016b68299fb0f494e725aacca2deae5c6a309",
     "headless/fence_manager_ps5.h": "e41f90553fd934629b608ab524c0188270ac3e5a",
-    "headless/vk_fence_manager_ps5.h": "5cdc1ddd0562f6fe1781327a51a2ea9c409d38f8",
-    "headless/vulkan_scheduler_ps5.cpp": "24a749310f746148e585609c29b335180cd53cb3",
-    "headless/vk_scheduler_ps5.h": "9b5b29187be576f652a63ff8e0ad0c6a0755e508",
-    "headless/vulkan_present_manager_ps5.cpp": "c47e77ee49f28c849cb335a7b36e4bc0cf636803",
+    "headless/vk_fence_manager_ps5.h": "022cfc99c30a54e95095313289bdb7006ed014df",
+    "headless/vulkan_scheduler_ps5.cpp": "6e94c5af099773a196f36fd91f3907a2e17f1e5b",
+    "headless/vk_scheduler_ps5.h": "e920772e5f4127b14f3a3ffb1c0c2d1880c516b8",
+    "headless/vulkan_present_manager_ps5.cpp": "296c080e9af0973c45c52f1a0ce9dcaa670d93e9",
+    "headless/vk_rasterizer_shutdown_ps5.h": "e0d1657f9051736a5595b97dfae4843cbf886130",
+    "headless/vk_buffer_cache_shutdown_ps5.cpp": "9808e59dc0e71543176d15482d1c36d1d2398a0a",
 }
 post_f07_gpu_wait_owners = set(post_f07_gpu_wait_receipts)
 for path, blob in post_f07_gpu_wait_receipts.items():
     assert subprocess.check_output(["git", "hash-object", path], cwd=root,
                                    text=True).strip() == blob, path
     assert Path(path).name in (root/"headless/vulkan.cmake").read_text(), path
-print("ENCORE_NATIVE_GPU_WAIT_RECEIPT_PASS", "owners=6 historical_headless_catalog_preserved=193")
+print("ENCORE_NATIVE_GPU_WAIT_RECEIPT_PASS", "owners=8 historical_headless_catalog_preserved=193")
 
 headless_actual = sorted(
     p.relative_to(root).as_posix()

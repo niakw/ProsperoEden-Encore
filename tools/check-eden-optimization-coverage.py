@@ -2211,12 +2211,14 @@ print("FC27_FRAME_PACING_F07_ISOLATION_PASS",
 
 # Explicit native failure-aware synchronization owners, not a rewrite of the historical F07 receipt.
 post_f07_gpu_wait_owners = {
-    "headless/vulkan_master_semaphore_ps5.cpp": "a8a4a5e66edbdec5c0639d388fc50151764e0f30",
+    "headless/vulkan_master_semaphore_ps5.cpp": "bf6016b68299fb0f494e725aacca2deae5c6a309",
     "headless/fence_manager_ps5.h": "e41f90553fd934629b608ab524c0188270ac3e5a",
-    "headless/vk_fence_manager_ps5.h": "5cdc1ddd0562f6fe1781327a51a2ea9c409d38f8",
-    "headless/vulkan_scheduler_ps5.cpp": "24a749310f746148e585609c29b335180cd53cb3",
-    "headless/vk_scheduler_ps5.h": "9b5b29187be576f652a63ff8e0ad0c6a0755e508",
-    "headless/vulkan_present_manager_ps5.cpp": "c47e77ee49f28c849cb335a7b36e4bc0cf636803",
+    "headless/vk_fence_manager_ps5.h": "022cfc99c30a54e95095313289bdb7006ed014df",
+    "headless/vulkan_scheduler_ps5.cpp": "6e94c5af099773a196f36fd91f3907a2e17f1e5b",
+    "headless/vk_scheduler_ps5.h": "e920772e5f4127b14f3a3ffb1c0c2d1880c516b8",
+    "headless/vulkan_present_manager_ps5.cpp": "296c080e9af0973c45c52f1a0ce9dcaa670d93e9",
+    "headless/vk_rasterizer_shutdown_ps5.h": "e0d1657f9051736a5595b97dfae4843cbf886130",
+    "headless/vk_buffer_cache_shutdown_ps5.cpp": "9808e59dc0e71543176d15482d1c36d1d2398a0a",
 }
 for path, blob in post_f07_gpu_wait_owners.items():
     assert path in all_owners and subprocess.check_output(
@@ -2224,7 +2226,7 @@ for path, blob in post_f07_gpu_wait_owners.items():
     assert Path(path).name in (ROOT/"headless/vulkan.cmake").read_text()
 assert 'list(REMOVE_ITEM video_sources renderer_vulkan/vk_master_semaphore.cpp)' in (
     ROOT/"headless/vulkan.cmake").read_text()
-print("ENCORE_NATIVE_GPU_WAIT_OWNER_PASS", "owners=6 historical_F07_unchanged=1")
+print("ENCORE_NATIVE_GPU_WAIT_OWNER_PASS", "owners=8 historical_F07_unchanged=1")
 
 owners=all_owners-set(post_f07_gpu_wait_owners)-post_f07_frame_pacing_owners-post_f07_integrated_source_owners-post_f07_legacy_net_header_owners-ps5_ns2_ipc_present-ps5_vfs128_present-post_f07_ns2_loading_svc_owners-fc27_deferred_owners-post_f07_ns2_fault_owner-pair_present-drawtexture_present-ns2_early_hle_present-ns2_font_service_present-post_f07_loading_artwork_owners-post_f07_typography_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-post_f07_thread_worker_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners-post_f07_plaintext_nca_owners-current_vendor_post_f07_owners-post_f07_ns2_late_hle_headers
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")

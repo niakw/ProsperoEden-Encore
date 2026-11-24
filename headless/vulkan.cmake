@@ -48,6 +48,10 @@ configure_file("${EDEN_PORT_DIR}/vk_scheduler_ps5.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_scheduler.h" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/vulkan_present_manager_ps5.cpp"
     "${PORT_BUILD_DIR}/vulkan_present_manager.cpp" COPYONLY)
+configure_file("${EDEN_PORT_DIR}/vk_rasterizer_shutdown_ps5.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_rasterizer.h" COPYONLY)
+configure_file("${EDEN_PORT_DIR}/vk_buffer_cache_shutdown_ps5.cpp"
+    "${PORT_BUILD_DIR}/vk_buffer_cache_cost.cpp" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/window_adapt_pass_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/present/window_adapt_pass.h" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/vulkan_present_layer_r24.h"

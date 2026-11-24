@@ -25,6 +25,7 @@ def extract(begin, end):
     return SRC[a:SRC.index(end,a)].rstrip()
 CTOR=extract("    worker_thread = std::jthread([this](std::stop_token token) {", "\n}\n\nScheduler::~Scheduler")
 WAIT=extract("void Scheduler::WaitWorker() {", "\nvoid Scheduler::DispatchWork()")
+RETIRE=extract("void Scheduler::StopForShutdown() {", "\nu64 Scheduler::Flush(")
 WORKER=extract("void Scheduler::WorkerThread(std::stop_token stop_token) {", "\nvoid Scheduler::AllocateWorkerCommandBuffer()")
 assert "RecordGpuFailure(std::current_exception())" in CTOR
 assert "RecordGpuFailure(std::current_exception())" in WORKER
@@ -78,9 +79,14 @@ struct CommandChunk {
         if(completed) completed->fetch_add(1);
     }
 };
+enum VkResult { VK_SUCCESS, VK_ERROR_DEVICE_LOST, VK_ERROR_OUT_OF_HOST_MEMORY };
 class Scheduler {
 public:
     std::queue<std::unique_ptr<CommandChunk>> work_queue;
+    std::unique_ptr<CommandChunk> chunk, failed_chunk;
+    bool device_retired{};
+    void StopForShutdown();
+    void ConfirmDeviceRetiredForShutdown(VkResult result);
     std::vector<std::unique_ptr<CommandChunk>> chunk_reserve;
     std::mutex execution_mutex, reserve_mutex, queue_mutex;
     std::function<void()> on_submit;
@@ -118,6 +124,7 @@ INJECT_CTOR
 };
 INJECT_WAIT
 INJECT_WORKER
+INJECT_RETIRE
 int main() {
     using namespace std::chrono_literals;
 #ifdef PS5_NATIVE
@@ -165,6 +172,19 @@ int main() {
         assert(scheduler.completed.load()==0 && Eden::PeekGpuFailure());
         assert(Eden::TakeGpuFailure());
         assert(Eden::PeekGpuFailure());
+        bool premature=false;
+        try { scheduler.ConfirmDeviceRetiredForShutdown(VK_SUCCESS); }
+        catch(const std::logic_error&) { premature=true; }
+        assert(premature && !scheduler.device_retired);
+        scheduler.StopForShutdown();
+        assert(scheduler.failed_chunk);
+        bool unsafe=false;
+        try { scheduler.ConfirmDeviceRetiredForShutdown(VK_ERROR_OUT_OF_HOST_MEMORY); }
+        catch(const std::logic_error&) { unsafe=true; }
+        assert(unsafe && scheduler.failed_chunk && !scheduler.device_retired);
+        scheduler.ConfirmDeviceRetiredForShutdown(VK_ERROR_DEVICE_LOST);
+        assert(scheduler.device_retired && !scheduler.failed_chunk && scheduler.work_queue.empty());
+        scheduler.WaitWorker();
     }
     Eden::ResetGpuFailureForTitle();
     {
@@ -181,7 +201,7 @@ int main() {
     Eden::ResetGpuFailureForTitle();
 #endif
 }
-""".replace("INJECT_REGISTER",REGISTER).replace("INJECT_CTOR",CTOR).replace("INJECT_WAIT",WAIT).replace("INJECT_WORKER",WORKER)
+""".replace("INJECT_REGISTER",REGISTER).replace("INJECT_CTOR",CTOR).replace("INJECT_WAIT",WAIT).replace("INJECT_WORKER",WORKER).replace("INJECT_RETIRE",RETIRE)
 compiler=os.environ.get("CXX") or shutil.which("clang++") or shutil.which("g++")
 assert compiler, "C++20 compiler required"
 with tempfile.TemporaryDirectory(prefix="encore-vulkan-worker-fatal-") as tmp:
@@ -404,3 +424,8 @@ presentation = (ROOT/"headless/vulkan_present_manager_ps5.cpp").read_text()
 assert "vk::Check(device.GetGraphicsQueue().Submit(submit_info, *frame->present_done));" in presentation
 assert "frame->present_done.Wait(10'000'000)" in presentation
 assert "if (present_thread.joinable()) present_thread.join();" in presentation
+assert "failed_chunk = std::move(work);" in WORKER
+assert "if (device_retired) return;" in WAIT
+assert RETIRE.index("result != VK_SUCCESS && result != VK_ERROR_DEVICE_LOST") < RETIRE.index("failed_chunk.reset();")
+assert "KnownGpuTick" not in RETIRE and "gpu_tick" not in RETIRE
+assert "if (scheduler.IsDeviceRetiredForShutdown()) return;" in (ROOT/"headless/vk_buffer_cache_shutdown_ps5.cpp").read_text()

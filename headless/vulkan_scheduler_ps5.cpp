@@ -209,13 +209,32 @@ Scheduler::~Scheduler() {
     // The worker writes gpu_time.pool. Do not test that field until the
     // worker has stopped: the old conditional check raced with its first
     // CreateQueryPool on a quick title exit, risking use-after-free.
-    worker_thread.request_stop();
-    event_cv.notify_all();
-    if (worker_thread.joinable()) worker_thread.join();
+    StopForShutdown();
     if (gpu_time.pool) GpuTimeDestroy(device);
 }
 
+void Scheduler::StopForShutdown() {
+    worker_thread.request_stop();
+    event_cv.notify_all();
+    if (worker_thread.joinable()) worker_thread.join();
+}
+
+void Scheduler::ConfirmDeviceRetiredForShutdown(VkResult result) {
+    if (worker_thread.joinable() ||
+        (result != VK_SUCCESS && result != VK_ERROR_DEVICE_LOST)) {
+        throw std::logic_error("device retirement without shutdown proof");
+    }
+    // Unsubmitted callbacks are discarded only now. No callback executes,
+    // and the completed timeline is untouched even if the device was lost.
+    device_retired = true;
+    failed_chunk.reset();
+    chunk.reset();
+    while (!work_queue.empty()) work_queue.pop();
+    chunk_reserve.clear();
+}
+
 u64 Scheduler::Flush(VkSemaphore signal_semaphore, VkSemaphore wait_semaphore) {
+    if (device_retired) throw std::logic_error("submit after device retirement");
     // When flushing, we only send data to the worker thread; no waiting is necessary.
     const u64 signal_value = SubmitExecution(signal_semaphore, wait_semaphore);
     if (::Eden::DevVulkan::sync_submissions) {
@@ -226,6 +245,9 @@ u64 Scheduler::Flush(VkSemaphore signal_semaphore, VkSemaphore wait_semaphore) {
 }
 
 void Scheduler::Finish(VkSemaphore signal_semaphore, VkSemaphore wait_semaphore) {
+    // Cache destructors need lifetime retirement, not a new guest submission.
+    // Only the renderer can authorize this after stopping all queue owners.
+    if (device_retired) return;
     // When finishing, we need to wait for the submission to have executed on the device.
     const u64 presubmit_tick = CurrentTick();
     SubmitExecution(signal_semaphore, wait_semaphore);
@@ -252,6 +274,7 @@ VkResult Scheduler::BindSparseImage(
 // NS2 N72 END
 
 void Scheduler::WaitWorker() {
+    if (device_retired) return;
 #ifdef PS5_NATIVE
     if (auto failure = ::Eden::PeekGpuFailure()) std::rethrow_exception(failure);
 #endif
@@ -287,6 +310,7 @@ void Scheduler::WaitWorker() {
 }
 
 void Scheduler::DispatchWork() {
+    if (device_retired) throw std::logic_error("dispatch after device retirement");
 #ifdef PS5_NATIVE
     if (auto failure = ::Eden::PeekGpuFailure()) std::rethrow_exception(failure);
 #endif
@@ -608,6 +632,7 @@ void Scheduler::WorkerThread(std::stop_token stop_token) {
 
             // If we've been asked to stop, we're done.
             if (stop_token.stop_requested()) {
+                failed_chunk = std::move(work);
                 return;
             }
             worker_in_flight = true;
@@ -635,6 +660,7 @@ void Scheduler::WorkerThread(std::stop_token stop_token) {
                 // Publish failure before releasing execution_mutex. A
                 // WaitWorker drain can never mistake this chunk for success.
                 ::Eden::RecordGpuFailure(std::current_exception());
+                failed_chunk = std::move(work);
                 event_cv.notify_all();
                 return;
             }

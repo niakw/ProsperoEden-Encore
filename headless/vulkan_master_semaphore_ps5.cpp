@@ -360,7 +360,10 @@ void MasterSemaphore::WaitThread(std::stop_token token) {
         VkResult result;
         do {
             result = pending->Wait(kFailurePollNs);
-            if (result == VK_TIMEOUT) ThrowPendingGpuFailure();
+            if (result == VK_TIMEOUT) {
+                if (token.stop_requested()) return; // owner retained in wait_queue
+                ThrowPendingGpuFailure();
+            }
         } while (result == VK_TIMEOUT);
         vk::Check(result);
         // Never reset, recycle or publish a tick on a failed fence wait.

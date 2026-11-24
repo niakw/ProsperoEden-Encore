@@ -186,7 +186,9 @@ PresentManager::PresentManager(const vk::Instance& instance_,
     }
 }
 
-PresentManager::~PresentManager() {
+PresentManager::~PresentManager() { StopForShutdown(); }
+
+void PresentManager::StopForShutdown() {
     // Join before any members (including later-declared fields) disappear.
     present_thread.request_stop();
     present_ready_cv.notify_all();
@@ -389,12 +391,14 @@ void PresentManager::WaitPresent() {
         // present worker can skip useless per-frame CV notifications.
         if (!present_failure && (!present_queue.empty() || present_in_flight)) {
             ++present_waiters;
-            frame_cv.wait(queue_lock, [this] {
-                return present_failure || (present_queue.empty() && !present_in_flight);
-            });
+            while (!present_failure && (!present_queue.empty() || present_in_flight) &&
+                   !::Eden::PeekGpuFailure()) {
+                frame_cv.wait_for(queue_lock, std::chrono::milliseconds(10));
+            }
             --present_waiters;
         }
         if (present_failure) std::rethrow_exception(present_failure);
+        if (auto failure = ::Eden::PeekGpuFailure()) std::rethrow_exception(failure);
     }
 
     // The above condition will be satisfied when the last frame is taken from the queue.

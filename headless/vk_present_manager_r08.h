@@ -52,6 +52,8 @@ public:
                    Swapchain& swapchain,
                    vk::SurfaceKHR& surface);
     ~PresentManager();
+    // Renderer calls this after the final scheduler callback has stopped.
+    void StopForShutdown();
 
     /// Returns the last used presentation frame
     Frame* GetRenderFrame();

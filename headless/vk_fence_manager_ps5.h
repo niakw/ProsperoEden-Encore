@@ -57,6 +57,7 @@ public:
                           TextureCache& texture_cache, BufferCache& buffer_cache,
                           QueryCache& query_cache, const Device& device, Scheduler& scheduler);
     ~FenceManager() override { StopFenceThread(); }
+    void StopForShutdown() { StopFenceThread(); }
 
 protected:
     Fence CreateFence(bool is_stubbed) override;

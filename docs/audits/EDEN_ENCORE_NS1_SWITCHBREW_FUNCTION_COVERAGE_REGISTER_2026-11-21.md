@@ -3290,3 +3290,11 @@ Vendor `4915afc7bebe87da64c5eeb64843a24727a887dd` : les quatre owners `system_up
 Les commandes historiques `RequestSendSystemUpdate` / `GetSendSystemUpdateProgress` et les **23 commandes** de `ISystemUpdateControl` sont raccordées à un rejet explicite : Encore ne télécharge, ne prépare, n'applique, ne transmet et ne reçoit aucun firmware/card-update Horizon, et ne touche jamais au firmware PS5. Les quatre slots physiques `Unknown12–15` restent volontairement `nullptr`.
 
 Croisement 4 853 : **25 NULL → D**. **Pool restant = 901 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — PDM query : statistiques Eden shipping, journal brut fail-closed
+
+Vendor `04f219188c2c187e5bda6e462d871e5a9ff0b841` : `query_service.cpp/.h` deviennent des owners `eden-backports` explicites. Les statistiques déjà développées (`PlayTimeManager`, nombre de lancements, dernier timestamp, ABI `PlayStatistics` HOS16+/23 en 0x48) atteignent désormais le runtime natif.
+
+La cmd4 `QueryPlayStatisticsByApplicationId` est **implémentée réellement** à partir des mêmes données persistées que cmd5. Les cmd0 et 8–12 sont raccordées à `RejectUnavailablePlayLogQuery` : elles exigent les événements bruts PDM/account que nous ne persistons pas. Le catalogue HOS23 corrige aussi l'ancien faux ABI-DIFF de cmd0 : le nom moderne est bien `QueryAppletEvent` ; `QueryApplicationEvent` ne concernait que HOS 1.0.0–7.0.1.
+
+Croisement 4 853 : cmd0 **ABI-DIFF → D**, cmd4 **NULL → IMPL-SRC**, cmd8–12 **5 NULL → D**, soit **7 entrées sorties du pool. Pool restant = 894 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

@@ -741,6 +741,44 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'successors=4', 'rejected_historical_slots=25',
               'unqualified_interface_slots=4', 'pinned_sources=immutable')
 
+        # PDM aggregate statistics are backed by Eden play-time and launch metadata.
+        # Raw play/account event queries still require the Horizon PDM log, which Encore
+        # intentionally does not persist.
+        pdm_query_overlays={
+            'src/core/hle/service/ns/query_service.cpp': {
+                'before_sha256':'90b9da8dfff82c9141685249153f373ad4d4a477b8d9dbcd049f0637228c5581',
+                'before_bytes':4583,
+                'after_sha256':'cf5b5014ac388fbcb94f5448f9d14a1b1a16ce89eed4fbf93640cb44b451421f',
+                'after_bytes':6968,
+            },
+            'src/core/hle/service/ns/query_service.h': {
+                'before_sha256':'c892d6cc75b1b7df5d87bb2f39540096765a0569397a31dc07b71cc2947a3dbd',
+                'before_bytes':2326,
+                'after_sha256':'259d4b74611d366535dd44bcc2d35b5481629fdb894b8848bee8114eecef19db',
+                'after_bytes':2762,
+            },
+        }
+        for rel,entry in pdm_query_overlays.items():
+            assert rel not in observed, ('PDM query unexpectedly changed by frozen replay',rel)
+            assert rel in spec['entries'], ('Missing PDM query shipping overlay',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'PDM query pinned source drift',rel)
+            assert spec['entries'][rel]['upstream']==entry['before_sha256'], rel
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed PDM query maintained source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
+            observed[rel]=spec['entries'][rel]
+        pdm_query=(ACTIVE/'src/core/hle/service/ns/query_service.cpp').read_text()
+        assert pdm_query.count('D<&IQueryService::QueryPlayStatisticsByApplicationId>')==1
+        assert pdm_query.count('&IQueryService::RejectUnavailablePlayLogQuery')==6
+        assert pdm_query.count('D<&IQueryService::QueryPlayStatisticsByApplicationIdAndUserAccountId>')==1
+        print('NS1_PDM_QUERY_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'successors=2', 'real_application_stats=1',
+              'raw_playlog_rejections=6', 'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

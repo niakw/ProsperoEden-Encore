@@ -19,7 +19,12 @@ def selected_sha(value):
     import hashlib
     raw = value.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-integrated_dma = selected_sha(native) == "0c186d79194135a5d0b300c3a8a6fb0aa503810b"
+integrated_dma = selected_sha(native) in {"0c186d79194135a5d0b300c3a8a6fb0aa503810b", "df2ced96bc384af23e0529f8ab72eba8000a0995"}
+if selected_sha(native) == "df2ced96bc384af23e0529f8ab72eba8000a0995":
+    assert "const u64 aligned_depth =" in native
+    assert "const u64 source_rows =" in native
+    assert "dst_size != dst_size_wide" in native
+    assert "regs.dst_params.block_size.depth > 5" in native
 if integrated_dma:
     helper_begin = "// Signed 2D pitch geometry and device-address overlap are shared by"
     helper_end = "} // namespace\n\nMaxwellDMA::MaxwellDMA"

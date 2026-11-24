@@ -17,6 +17,7 @@ on:
       - 'tools/check-maintained-maxwell-prmt.py'
       - 'tools/check-fc27-ssbo-engine-selection.py'
       - 'tools/check-active-cmake-source-boundary.py'
+      - 'tools/ns1/active_ipc_source_inventory.py'
       - 'headless/CMakeLists.txt'
       - 'tools/check-ns1-image-atomic-spirv-host.py'
       - 'tools/ns1/test_image_atomic_real_spirv.cpp'
@@ -53,6 +54,7 @@ on:
       - 'tools/check-maintained-maxwell-prmt.py'
       - 'tools/check-fc27-ssbo-engine-selection.py'
       - 'tools/check-active-cmake-source-boundary.py'
+      - 'tools/ns1/active_ipc_source_inventory.py'
       - 'headless/CMakeLists.txt'
       - 'tools/check-ns1-image-atomic-spirv-host.py'
       - 'tools/ns1/test_image_atomic_real_spirv.cpp'
@@ -81,6 +83,10 @@ jobs:
           persist-credentials: false
       - name: Verify exact pinned vendor SHA and original paths
         run: bash tools/check-vendor-submodule.sh
+      # One complete, no-build physical IPC count. The old 4853-line mirror
+      # omits registered NS1 interfaces (for example ndrm:lu and ndrm:la).
+      - name: Count all CMake-selected NS1 IPC declarations and NULL owners
+        run: python3 -B tools/ns1/active_ipc_source_inventory.py
       - name: Qualify maintained native SVC cache source selection
         run: python3 -B tools/check-active-cmake-source-boundary.py
       - name: Check vendored dependency source and archive manifests

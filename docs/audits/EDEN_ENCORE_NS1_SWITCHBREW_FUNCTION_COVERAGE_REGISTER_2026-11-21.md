@@ -3172,3 +3172,11 @@ Les chemins `OpenFileSystem`, `OpenSaveDataFileSystem`, `OpenDataStorage*`, Game
 
 **Pool restant = 1 294 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — HID System Server : résidu système entièrement fermé
+
+Vendor `ef32954266481977a0c9c5eef2ff52f637fa45bb` : les **39 derniers slots `nullptr`** de `hid:sys` sont raccordés au rejet matériel explicite déjà utilisé pour les familles Switch sans backend PS5. Cela couvre les événements Home/Sleep/Capture système, Npad system/UI, unique/abstracted-pad, Joy-Con rail/handheld, play-report, connexion Bluetooth/USB et propriétés système restantes. Le service applicatif `hid`, l'entrée jeu, vibration et Npad runtime restent inchangés.
+
+Croisement catalogue 4 853 : **21 lignes NULL** sortent du pool. `hid:sys` ne contient plus de slot `nullptr` actif dans l'overlay NS1.
+
+**Pool restant = 1 273 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

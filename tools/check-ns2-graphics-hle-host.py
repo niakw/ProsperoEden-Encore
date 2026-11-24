@@ -289,9 +289,9 @@ def main()->int:
         633, 634, 636, 637, 638, 639, 640, 641, 650, 651, 652, 653,
         654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665,
         666, 667, 904, 921, 922, 1003, 1004, 1011, 1012, 1021,
-        1022, 1203, 1301, 1302, 1325, 1326, 1411,
+        1022, 1203, 1301, 1302, 1325, 1326,
     )
-    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 65
+    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 64
     assert '{126, &IGraphicsSupervisor::QuerySessionMode, "GetSessionFlag"}' in text
     assert 'm_bootstrap.QuerySessionMode(packet, mode)' in text
     for command in (1501, 1502):
@@ -300,6 +300,11 @@ def main()->int:
     for command in known_optional_gsv:
         assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') in text, (
             f'optional GSV command {command} missing explicit fail-closed dispatch')
+    assert '{1411, &IGraphicsSupervisor::QueryNvDrvTransferMemoryUsage' in text
+    usage = text.split('void IGraphicsSupervisor::QueryNvDrvTransferMemoryUsage(',1)[1].split('\n}',1)[0]
+    assert 'm_nvsrv_session.lock()' in usage
+    assert 'm_nvsrv_transfer_memory_size >> 32' in usage
+    assert 'm_bootstrap_transfer_memory' not in usage
     explicit_reject = text.split(
         'void IGraphicsSupervisor::UnavailableDocumentedFeature(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
     assert 'IPC::ResponseBuilder rb{ctx, 2};' in explicit_reject

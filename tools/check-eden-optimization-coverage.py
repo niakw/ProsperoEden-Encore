@@ -2725,6 +2725,53 @@ if not launcher_service_successor:
 drift_index[r457_service_path]["actual"] = r457_service_prior_blob
 print("R457_LOG_RETENTION_SOURCE_SUCCESSOR_PASS reviewed=1 prior_reconstructed=1")
 
+# Launcher consolidation is independently qualified as an exact source
+# successor. Advance only its known source owners before replaying the older
+# Nov15/16 history; the working-tree launcher bytes remain untouched.
+launcher_consolidation_predecessors = {
+    "headless/prosperoeden/frontend.cpp": (
+        "5433ebd155a504084d84cc1d74a3cbb0eb11b229",
+        "1de983352dad85e4dd6c1520a0c9e9aec26d052d",
+    ),
+    "headless/prosperoeden/eden_services.h": (
+        "8c6248417cb3ec25b327661e410960a3e2a738de",
+        "7c4133b4e2f0340aa1e0e182ae469619d5a8c687",
+    ),
+    "headless/prosperoeden/pe/ui/launcher.cpp": (
+        "1d7822b025dd5b8927baa7ddb23d6c78e5a22276",
+        "255b110f1e1d021ed92511e64c2f8f67ee62a66d",
+    ),
+    "headless/prosperoeden/pe/ui/launcher.hpp": (
+        "4f82cc58396bb3f45aeadc4fb7638e3565d56d03",
+        "fb3a0037cfb86328f398a3059c5dd95faa9d950b",
+    ),
+    "headless/prosperoeden/pe/ui/services.hpp": (
+        "2509658b7e8fb888c10e6bede6ba9ce12a124a7d",
+        "300fa56ad3d8932e25a898c53ed8052f4d69841f",
+    ),
+    "headless/prosperoeden/pe/ui/home.cpp": (
+        "5fe7795275f7f7561f9a79354ac84197b404f3d3",
+        "c4a835b5cfb3033342e6575ef3ccb2606bab0eae",
+    ),
+    "headless/prosperoeden/pe/platform/display_egl.cpp": (
+        "e9484e8e433b1199d30bd80826a6b0f8864ada51",
+        "190a885cc2e50e440234b79a8b69f10b8aa84d18",
+    ),
+}
+launcher_consolidation_advanced = 0
+for path, (current_blob, predecessor_blob) in launcher_consolidation_predecessors.items():
+    assert path in drift_index, ("Missing launcher consolidation owner", path)
+    actual = drift_index[path]["actual"]
+    if actual == current_blob:
+        drift_index[path]["actual"] = predecessor_blob
+        launcher_consolidation_advanced += 1
+    else:
+        assert actual == predecessor_blob, (
+            "Unexpected launcher consolidation source drift", path, actual)
+print("LAUNCHER_CONSOLIDATION_HISTORY_PASS",
+      f"advanced={launcher_consolidation_advanced}",
+      f"owners={len(launcher_consolidation_predecessors)}")
+
 # P1 typography removes the ASCII-only quick-menu conversion while preserving
 # the legacy compact FPS HUD ABI. Reconstruct the exact pre-typography hud.h
 # blob so the existing post-F07 receipt remains immutable.

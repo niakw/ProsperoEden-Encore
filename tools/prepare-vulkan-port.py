@@ -3037,34 +3037,10 @@ elif not _has_current_snapshot_decl:
     shader_source = (shader_source[:_namespace_pos] + _snapshot_decl +
                      shader_source[_namespace_pos:])
 
-# Native Ampere graphics deliberately disables the NS1 stage-parallel
-# translator. Older generator revisions expressed this call with a different
-# line split, so authenticate the unique span argument and normalize only its
-# trailing boolean.
-_native_span_anchor = (
-    "std::span<Shader::Environment* const>{ptrs.data(), active}"
-)
-if shader_source.count(_native_span_anchor) != 1:
-    raise RuntimeError("FC27 native graphics span anchor drift")
-_native_span_pos = shader_source.index(_native_span_anchor)
-_native_call_end = shader_source.find(");", _native_span_pos)
-if _native_call_end < 0 or _native_call_end - _native_span_pos > 400:
-    raise RuntimeError("FC27 native graphics call boundary drift")
-_native_call = shader_source[_native_span_pos:_native_call_end + 2]
-if "nullptr, true, false)" in _native_call:
-    pass
-elif "nullptr, true)" in _native_call:
-    _native_call_current = _native_call.replace(
-        "nullptr, true)", "nullptr, true, false)", 1)
-    shader_source = (shader_source[:_native_span_pos] + _native_call_current +
-                     shader_source[_native_call_end + 2:])
-else:
-    raise RuntimeError("FC27 native graphics parallel flag drift")
-
 for index, (newer, predecessor) in enumerate(_parallel_translation_reverse):
     if index in (0, 1, 6):
-        # Includes, helper declaration and native Ampere call are normalized
-        # structurally above. All other runtime translation pairs stay exact.
+        # Includes/helper declaration are normalized above. Index 6 belongs
+        # to the U90 NS2 handoff, inserted later by its own reviewed delta.
         continue
     predecessor_count = shader_source.count(predecessor)
     current_count = shader_source.count(newer)
@@ -6327,7 +6303,7 @@ apply_reviewed_delta(
 apply_reviewed_delta(
     "vk_pipeline_cache_cost.cpp",
     "#endif\n    GraphicsEnvironments environments;",
-    "#endif\n#ifdef PS5_NATIVE\n    // Research-only real GPU bridge: feed the maintained Vulkan\n    // CFG -> IR -> SPIR-V -> GraphicsPipeline builder with *translated*\n    // Maxwell-compatible instructions, never raw 128-bit Ampere words.\n    const auto ticket =\n        Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()\n            .CaptureGraphicsTicket(maxwell3d);\n    if (ticket) {\n        auto native_translation_cache =\n            Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()\n                .AcquireGraphicsTranslationCache(maxwell3d, *ticket);\n        if (!native_translation_cache) return nullptr;\n        const auto base = maxwell3d->regs.program_region.Address();\n        std::array<Shader::Environment*, Maxwell::MaxShaderProgram> ptrs{};\n        std::vector<std::unique_ptr<Shader::Environment>> native_envs;\n        native_envs.reserve(Maxwell::MaxShaderProgram);\n        std::size_t active{};\n        for (std::size_t i = 0; i < graphics_key.unique_hashes.size(); ++i) {\n            if (!graphics_key.unique_hashes[i]) continue;\n            if (i != 0 && i != 1 && i != 5) return nullptr;\n            const auto stage = i == 0 ? Shader::Stage::VertexA :\n                Shader::StageFromIndex(i - 1);\n            const auto offset = maxwell3d->regs.pipelines[i].offset;\n            if (base > std::numeric_limits<GPUVAddr>::max() - offset)\n                return nullptr;\n            auto original = std::make_unique<GraphicsEnvironment>(\n                *maxwell3d, *gpu_memory,\n                static_cast<Maxwell::ShaderType>(i), base, offset);\n            auto adapted = VideoCommon::CreateNs2GraphicsShaderEnvironment(\n                *gpu_memory, std::move(original), base + offset,\n                static_cast<u32>(stage), native_translation_cache.get());\n            if (!adapted || !Service::Nvidia::Devices::NativeGpuChannelRegistry::\n                                Instance().IsGraphicsCurrent(maxwell3d, *ticket))\n                return nullptr;\n            // Shader key and translated stream must refer to exactly the\n            // same guest bytes. A GMMU remap between key and build aborts.\n            // The factory above only creates NativeMaxwellEnvironment; avoid\n            // enabling RTTI in the PS5 video_core compilation profile.\n            const auto* native_env =\n                static_cast<const Shader::Ampere::NativeMaxwellEnvironment*>(\n                    adapted.get());\n            if (!native_env ||\n                native_env->Image().diagnostic_cache_key != graphics_key.unique_hashes[i])\n                return nullptr;\n            ptrs[active++] = adapted.get();\n            native_envs.emplace_back(std::move(adapted));\n        }\n        main_pools.ReleaseContents();\n        auto pipeline = CreateGraphicsPipeline(\n            main_pools, graphics_key,\n            std::span<Shader::Environment* const>{ptrs.data(), active}, nullptr, true);\n        if (!Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()\n                 .IsGraphicsCurrent(maxwell3d, *ticket))\n            return nullptr;\n        // NS2 translated shader keys/layouts are deliberately never\n        // serialized into the NS1 disk shader cache.\n        return pipeline;\n    }\n#endif\n    GraphicsEnvironments environments;",
+    "#endif\n#ifdef PS5_NATIVE\n    // Research-only real GPU bridge: feed the maintained Vulkan\n    // CFG -> IR -> SPIR-V -> GraphicsPipeline builder with *translated*\n    // Maxwell-compatible instructions, never raw 128-bit Ampere words.\n    const auto ticket =\n        Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()\n            .CaptureGraphicsTicket(maxwell3d);\n    if (ticket) {\n        auto native_translation_cache =\n            Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()\n                .AcquireGraphicsTranslationCache(maxwell3d, *ticket);\n        if (!native_translation_cache) return nullptr;\n        const auto base = maxwell3d->regs.program_region.Address();\n        std::array<Shader::Environment*, Maxwell::MaxShaderProgram> ptrs{};\n        std::vector<std::unique_ptr<Shader::Environment>> native_envs;\n        native_envs.reserve(Maxwell::MaxShaderProgram);\n        std::size_t active{};\n        for (std::size_t i = 0; i < graphics_key.unique_hashes.size(); ++i) {\n            if (!graphics_key.unique_hashes[i]) continue;\n            if (i != 0 && i != 1 && i != 5) return nullptr;\n            const auto stage = i == 0 ? Shader::Stage::VertexA :\n                Shader::StageFromIndex(i - 1);\n            const auto offset = maxwell3d->regs.pipelines[i].offset;\n            if (base > std::numeric_limits<GPUVAddr>::max() - offset)\n                return nullptr;\n            auto original = std::make_unique<GraphicsEnvironment>(\n                *maxwell3d, *gpu_memory,\n                static_cast<Maxwell::ShaderType>(i), base, offset);\n            auto adapted = VideoCommon::CreateNs2GraphicsShaderEnvironment(\n                *gpu_memory, std::move(original), base + offset,\n                static_cast<u32>(stage), native_translation_cache.get());\n            if (!adapted || !Service::Nvidia::Devices::NativeGpuChannelRegistry::\n                                Instance().IsGraphicsCurrent(maxwell3d, *ticket))\n                return nullptr;\n            // Shader key and translated stream must refer to exactly the\n            // same guest bytes. A GMMU remap between key and build aborts.\n            // The factory above only creates NativeMaxwellEnvironment; avoid\n            // enabling RTTI in the PS5 video_core compilation profile.\n            const auto* native_env =\n                static_cast<const Shader::Ampere::NativeMaxwellEnvironment*>(\n                    adapted.get());\n            if (!native_env ||\n                native_env->Image().diagnostic_cache_key != graphics_key.unique_hashes[i])\n                return nullptr;\n            ptrs[active++] = adapted.get();\n            native_envs.emplace_back(std::move(adapted));\n        }\n        main_pools.ReleaseContents();\n        auto pipeline = CreateGraphicsPipeline(\n            main_pools, graphics_key,\n            std::span<Shader::Environment* const>{ptrs.data(), active}, nullptr, true, false);\n        if (!Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()\n                 .IsGraphicsCurrent(maxwell3d, *ticket))\n            return nullptr;\n        // NS2 translated shader keys/layouts are deliberately never\n        // serialized into the NS1 disk shader cache.\n        return pipeline;\n    }\n#endif\n    GraphicsEnvironments environments;",
     "U90 native shader translation and pipeline construction handoff")
 
 # U91: exact reproduction of the authenticated 0xC7C0 Compute cache

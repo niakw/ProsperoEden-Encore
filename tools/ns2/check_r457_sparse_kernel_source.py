@@ -97,14 +97,14 @@ reviewed_vendors.add("8026fcca228d0feda62ffd9625e16ee0429d621e")
 reviewed_vendors.add("887bf44af34999e8b6c5b63dc7c01c6c13b82c8f")
 reviewed_vendors.add("1a928783cce2c2692d8fe9fd958400a2de060bbf")
 reviewed_vendors.add("9632ac089f8b2d89a6856a42e8fb55206cdba1fa")
-if selected == "b5c6f089a6aecd321d08a40238f3cd502f505b26":
-    # AM lifetime successor changes no shader or sparse kernel owner.
-    assert subprocess.check_output(["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"], text=True).strip() == "668fb8effa6963be062d780e3bd145a5233d6b7e"
-    reviewed_vendors.add(selected)
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 selected=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],
                                  text=True).strip()
+if selected == "b5c6f089a6aecd321d08a40238f3cd502f505b26":
+    # AM lifetime successor changes no shader or sparse kernel owner.
+    assert subprocess.check_output(["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"], text=True).strip() == "668fb8effa6963be062d780e3bd145a5233d6b7e"
+    reviewed_vendors.add(selected)
 if pinned in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd"}:
     if pinned in {"95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd"}:
         tree_sha = subprocess.check_output(

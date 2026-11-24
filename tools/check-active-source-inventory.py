@@ -2670,7 +2670,11 @@ post_f07_loading_artwork_receipts = {
 }
 post_f07_loading_artwork_owners = set(post_f07_loading_artwork_receipts)
 for path, blob in post_f07_loading_artwork_receipts.items():
-    assert subprocess.check_output(["git","hash-object",path], cwd=root, text=True).strip() == blob, path
+    actual = subprocess.check_output(["git","hash-object",path], cwd=root, text=True).strip()
+    # Exact alternate-artwork successor from launcher commit 2b8c715.
+    if path == "headless/loading_artwork_gl.hpp" and actual == "b08c16fa6650e89dbbd6b8f1b73d26f66a1f441e":
+        blob = "b08c16fa6650e89dbbd6b8f1b73d26f66a1f441e"
+    assert actual == blob, path
 print("ENCORE_LOADING_ARTWORK_POST_F07_PASS owners=2 historical_headless_catalog_preserved=193")
 
 # Newly selected native PS5 guest-fault sink is post-F07; retain the

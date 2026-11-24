@@ -2746,3 +2746,10 @@ Vendor `94c61421e27d837e28b7331690305a72baad4d93` : `GenerateAesKek` (cmd2) et `
 Vendor `65cffbdeed0bf25fe1bf5b840450a426e1f3b255` : cmd14 `ResolverSetOptionRequest` ne répond plus avec une IPC tronquée. Le handler consomme désormais le `u64` d'entrée et le buffer opaque d'options, puis renvoie les deux mots attendus par le contrat HOS/Ryujinx (`i32 ret`, `u32 bsd_errno`) au lieu du seul errno. Les options restent non interprétées par le resolver hôte, donc la commande est classée **PARTIEL** et non IMPL-SRC. **1 STUB → PARTIEL ; pool total inchangé.**
 
 **Pool restant = 1 541** : 1 181 NULL + 10 STUB + 154 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — BSD : StartMonitoring conforme libnx
+
+Vendor `4ee2d58ce739af8e91d78794d6859b4662f8cb86` : cmd1 `StartMonitoring` consomme désormais le `u64 client_pid` envoyé par libnx (avec le PID descriptor géré par l'IPC) au lieu d'ignorer entièrement la requête. Libnx n'attend aucun payload de réponse. Encore n'a pas de scheduler de monitoring socket séparé : le backend BSD vivant est déjà attaché à la durée de vie du service, donc l'enregistrement est un **NOOP contractuel** et non un faux monitoring. Référence croisée : libnx `_bsdStartMonitoring`, Ryujinx et implémentations HOS indépendantes. **1 STUB → NOOP.**
+
+**Pool restant = 1 540** : 1 181 NULL + 9 STUB + 154 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

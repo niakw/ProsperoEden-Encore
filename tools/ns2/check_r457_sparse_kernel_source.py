@@ -178,15 +178,15 @@ if selected in {"1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a68
         b"blob "+str(len(successor)).encode()+bytes([0])+successor
     ).hexdigest() == ("9ec2e122bee4c7ef3a0889fbf5e8202ae9516339" if selected in {"d63d82dfb9c2afbacac4c9dc1491f743fb083d52", "d634b381d85dae30492dd6291fc4e6e96143f363", "692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf"} else "005280fde5bbd862d64a4def0d17d90a35bbe5e9"), "Vendor host-only successor drift"
 if selected in {"06705357e48b33d837b1f97dbb1c3979cb3d7c31",
-                 "90dbd6c9b3aba2673aadcdf0b39be4c32107eb02"}:
+                 "a619953b32d01b1974c7b7d8e6fdb1f66c8f35f7"}:
     # These reviewed NS2 GPU lifecycle successors do not touch the sparse
     # PTE/slab owners checked below. Authenticate the complete selected tree
     # before replaying the earlier sparse receipt graph.
     expected_tree = {
         "06705357e48b33d837b1f97dbb1c3979cb3d7c31":
             "8bd2b8d1378cefffaf0f4e397289ba62ef009112",
-        "90dbd6c9b3aba2673aadcdf0b39be4c32107eb02":
-            "2cb8d9316b7172fef943b8b3bc9b9857d5a0bf9b",
+        "a619953b32d01b1974c7b7d8e6fdb1f66c8f35f7":
+            "88ea7fe7a1dd085c1346cf14dd3dc82a088d2664",
     }[selected]
     assert subprocess.check_output(
         ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"], text=True
@@ -199,7 +199,7 @@ assert pinned==selected and pinned in reviewed_vendors,(pinned,selected)
 # full vendor tree above. This avoids duplicating the successor SHA through
 # every historical sparse-era set.
 if selected in {"06705357e48b33d837b1f97dbb1c3979cb3d7c31",
-                 "90dbd6c9b3aba2673aadcdf0b39be4c32107eb02"}:
+                 "a619953b32d01b1974c7b7d8e6fdb1f66c8f35f7"}:
     selected = "3abd88bc1a3c334f53f345998b72e9cf8ae87abf"
 def read(path): return (root/path).read_text()
 def gitblob(path):

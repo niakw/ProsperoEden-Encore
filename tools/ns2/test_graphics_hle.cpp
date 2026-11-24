@@ -669,6 +669,27 @@ int main(){
             "graphics supervisor requires ordered bootstrap phases");
     require(state.Complete(completeBootstrap)==GS::Status::InvalidState,
             "duplicate graphics supervisor completion rejected");
+    // Console 24 Nov: 4 -> 11 -> 101 -> 1501 produced kernel NotImplemented
+    // and aborted MKW/Bananza/Pokopia before the first guest GPU submission.
+    const std::array<GP::U32,2> createInter{16+1501,0};
+    const std::array<GP::U32,2> initInter{16+1502,0};
+    GS::State unbootedInter{0xabc};
+    require(unbootedInter.InitializeInterModuleImageContext(createInter,1501)==GS::Status::InvalidState,
+            "inter-module context cannot bypass authenticated bootstrap");
+    require(state.InitializeInterModuleImageContext(initInter,1502)==GS::Status::InvalidState,
+            "1502 cannot precede 1501");
+    auto malformedInter=createInter;
+    malformedInter[1]=1;
+    require(state.InitializeInterModuleImageContext(malformedInter,1501)==GS::Status::InvalidPacket,
+            "reject unexpected payload without advancing context");
+    require(state.InitializeInterModuleImageContext(createInter,1501)==GS::Status::Success &&
+            !state.InterModuleImageReady() &&
+            state.InitializeInterModuleImageContext(createInter,1501)==GS::Status::InvalidState &&
+            state.InitializeInterModuleImageContext(initInter,1502)==GS::Status::Success &&
+            state.InterModuleImageReady() &&
+            state.InitializeInterModuleImageContext(initInter,1502)==GS::Status::InvalidState,
+            "1501/1502 create and initialize session context before any real GPU object");
+    require(!state.GpuContextReady(), "inter-module context does not create a GPU context");
     require(state.InitializeGpuContext(activateGpu,402)==GS::Status::InvalidState &&
             !state.GpuContextReady(),
             "activate GPU context cannot precede initialization");

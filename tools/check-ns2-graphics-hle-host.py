@@ -270,9 +270,12 @@ def main()->int:
         633, 634, 636, 637, 638, 639, 640, 641, 650, 651, 652, 653,
         654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665,
         666, 667, 903, 904, 921, 922, 1003, 1004, 1011, 1012, 1021,
-        1022, 1203, 1301, 1302, 1325, 1326, 1411, 1501, 1502,
+        1022, 1203, 1301, 1302, 1325, 1326, 1411,
     )
-    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 68
+    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 66
+    for command in (1501, 1502):
+        assert f'{{{command}, &IGraphicsSupervisor::InitializeInterModuleImageContext' in text
+    assert 'm_bootstrap.InitializeInterModuleImageContext(packet, ctx.GetCommand())' in text
     for command in known_optional_gsv:
         assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') in text, (
             f'optional GSV command {command} missing explicit fail-closed dispatch')

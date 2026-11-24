@@ -2655,3 +2655,7 @@ Vendor `a0c5a3beb7ab54a67a6d463002ab94e6d838f435` : les commandes ILibraryApplet
 ### 2026-11-24 — PDM HOS23 + EventFd actif
 
 Vendor `175b4f2d6c9511f01aee10757a6255d84d16aab0` : `PdmPlayStatistics` cmd5 est corrigé du layout V1 0x28 vers le layout HOS16+/HOS23 0x48. La réponse utilise le temps de jeu persistant (ns), le compteur de lancements et le dernier timestamp POSIX réels ; les indices du journal PDM global et le premier timestamp restent indisponibles, donc statut **PARTIEL**. Le cmd31 BSD `EventFd` était encore classé STUB alors que le runtime actif possède `EventFdState`, `EventFdImpl`, flags semaphore/nonblock, read/write et intégration Select/Poll : reclassé **IMPL-SRC** sans changement de comportement. Le catalogue est recalculé depuis ses lignes : **pool 1 565** (1 186 NULL + 29 STUB + 154 PARTIEL + 187 ABI-DIFF + 9 AMBIGU). Console PS5 non validée.
+
+### 2026-11-24 — IAsyncValue ErrorContext
+
+Vendor `05646df19d6ec2db27c54ebff88fa2db9775d409` : cmd3 `GetErrorContext` respecte désormais l'ABI libnx (buffer map-alias de 0x200 octets). L'AsyncValue de ListApplicationTitle est déjà achevé avec succès, donc un `ErrorContext` nul est le contexte déterministe correct ; l'ancien handler renvoyait succès sans initialiser le buffer. **STUB → IMPL-SRC. Pool recalculé : 1 564** (1 186 NULL + 28 STUB + 154 PARTIEL + 187 ABI-DIFF + 9 AMBIGU). Console non validée.

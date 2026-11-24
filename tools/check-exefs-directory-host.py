@@ -116,7 +116,19 @@ assert 'game.size = measured;' in size_merge
 assert 'selected_size_cancel_.store(true' in size_merge
 # Standard Switch Control icons are preferred, localized, and surfaced
 # during the shallow Home scan instead of waiting for focus/network enrichment.
-assert 'for (const char* base : {"control", "base/control"})' in library
+# The canonical localized Control icon has priority for every accepted
+# on-disk casing, including mixed-case extracted Switch directories. Verify
+# that behavior rather than requiring an obsolete two-path literal.
+canonical_control = library.split(
+    "    // Canonical Control icons win", 1
+)[1].split(
+    "    // Legacy loose-ExeFS sidecars remain", 1
+)[0]
+assert 'for (const char* base : {' in canonical_control
+for root_name in ("control", "Control", "base/control", "base/Control",
+                  "Base/control", "Base/Control"):
+    assert f'"{root_name}"' in canonical_control
+assert 'localized_icon(base)' in canonical_control
 assert 'std::string("icon_") + language + ".dat"' in library
 assert 'case 1: preferred = "BritishEnglish"' in library
 assert 'case 2: preferred = "French"' in library

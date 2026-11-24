@@ -2996,3 +2996,9 @@ Vendor `aaf3aaed779d10df89128073a9a3b304a69422a6` : HOS20+ cmd310 est nommé `Re
 
 Le routage du message vers Lhub/qlaunch n'est pas inventé : la forme interne de cette remise n'est pas documentée suffisamment pour sérialiser le storage dans le GeneralChannel sans risque. **NULL → PARTIEL**. Le **pool reste 1 549 / 4 853**, tandis que les quatre owners AM ciblés n'ont plus que **5 slots nullptr physiques**, dont **4 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM LibraryAppletSelfAccessor : événement GPU-error partagé
+
+Vendor `80f4972be4e5bf4a16247a8393ccbf0420bfd96c` : `ILibraryAppletSelfAccessor::GetGpuErrorDetectedSystemEvent` (cmd130) retourne désormais le `KReadableEvent` réel `Applet::gpu_error_detected_event`, déjà utilisé par `IApplicationFunctions::GetGpuErrorDetectedSystemEvent`. Il n'y a ni nouvel événement parallèle ni signal artificiel : les deux interfaces observent la même source d'état GPU de l'applet. **1 NULL → IMPL-SRC.**
+
+**Pool restant = 1 548 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

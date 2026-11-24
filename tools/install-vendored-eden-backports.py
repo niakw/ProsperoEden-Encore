@@ -892,6 +892,52 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'movie_rejections=22', 'remaining_slots=11',
               'pinned_sources=immutable')
 
+        # ACC_SU successor: close only the Nintendo Account/auth network paths.
+        # Prove the new owner reverses exactly to the previously accepted ACC blob.
+        acc_rel='src/core/hle/service/acc/acc.cpp'
+        assert acc_rel in observed and acc_rel in spec['entries'], ('Missing ACC shipping owner',acc_rel)
+        assert observed[acc_rel]['active']=='f4f16cb50903e66cf1c320c8ccefec2c457e32221c38238230c76af92243f5bf'
+        assert observed[acc_rel]['bytes']==90909
+        acc_current=(ACTIVE/acc_rel).read_text()
+        assert len(acc_current.encode())==91522
+        assert sha(acc_current.encode())=='fd20d50067f508f246e7857f9d92cb634a8bc07584ae02a4c191502cf6c181c6'
+        acc_prior=acc_current
+        acc_names=(
+            'CheckNetworkServiceAvailabilityAsync',
+            'AuthenticateApplicationAsync',
+            'EnsureSignedDeviceIdentifierCacheForNintendoAccountAsync',
+            'LoadSignedDeviceIdentifierCacheForNintendoAccount',
+            'CreateFloatingRegistrationRequest',
+            'CreateProcedureToRegisterUserWithNintendoAccount',
+            'ResumeProcedureToRegisterUserWithNintendoAccount',
+            'AuthenticateServiceAsync',
+            'ProxyProcedureForGuestLoginWithNintendoAccount',
+            'ProxyProcedureForFloatingRegistrationWithNintendoAccount',
+            'SuspendBackgroundDaemon',
+        )
+        for name in acc_names:
+            after=f'&ACC_SU::RejectUnavailableNintendoAccount, "{name}"'
+            before=f'nullptr, "{name}"'
+            assert acc_prior.count(after)==1, name
+            acc_prior=acc_prior.replace(after,before,1)
+        acc_handler='''    void RejectUnavailableNintendoAccount(HLERequestContext& ctx) {
+        LOG_DEBUG(Service_ACC, "Rejected acc:su Nintendo Account/auth backend operation");
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(ResultUnknown);
+    }
+
+'''
+        assert acc_prior.count(acc_handler)==1
+        acc_prior=acc_prior.replace(acc_handler,'',1)
+        assert len(acc_prior.encode())==90909
+        assert sha(acc_prior.encode())=='f4f16cb50903e66cf1c320c8ccefec2c457e32221c38238230c76af92243f5bf'
+        assert spec['entries'][acc_rel]['active']=='fd20d50067f508f246e7857f9d92cb634a8bc07584ae02a4c191502cf6c181c6'
+        assert spec['entries'][acc_rel]['bytes']==91522
+        assert spec['entries'][acc_rel]['upstream']=='95857946c85c42721f123d4e591d880a57e2cfd9bc74ec995741e633975af02b'
+        observed[acc_rel]=spec['entries'][acc_rel]
+        print('NS1_ACC_SU_AUTH_SUCCESSOR_REPLAY_PASS',
+              'rejected_slots=11', 'local_nulls_preserved=18')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

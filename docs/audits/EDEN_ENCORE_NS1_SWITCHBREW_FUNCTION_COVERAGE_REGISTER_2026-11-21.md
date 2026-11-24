@@ -3324,3 +3324,11 @@ Vendor `683af96eb36362e89c0e0faecfa49cd9e6ab8059` : `caps_c.cpp/.h` deviennent d
 SwitchBrew HOS moderne expose 2001/2002 comme `NotifyAlbumStorageIsAvailable/Unavailable`, exactement les handlers actifs ; les anciens noms movie-read du miroir sont donc des variantes historiques et non des contrats HOS23 distincts.
 
 Croisement 4 853 : **22 NULL → D + 2 ABI-DIFF → IMPL-SRC**, soit **24 entrées sorties du pool. Pool restant = 767 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — ACC:SU : authentification Nintendo Account fermée sans toucher aux profils locaux
+
+Vendor `8d14c398fd604733cfcc05d4dcd1d612ee53a921` : dans l'owner shipping ACC existant, **11 slots** de `ACC_SU` exclusivement dépendants du backend Nintendo Account/réseau sont raccordés à `RejectUnavailableNintendoAccount` : disponibilité réseau, authentification application/service, cache d'identifiant signé Nintendo, floating registration, procédures register/resume Nintendo Account, guest/floating login et suspension du daemon réseau.
+
+Les profils locaux, `GetUserCount/ListAllUsers/GetProfile`, sélection utilisateur, thumbnails, inscription locale, notifiers, open-context et les commandes PIN restent inchangés. Le replay moteur inverse exactement les 11 raccords et la méthode ajoutée puis exige le predecessor ACC `f4f16cb5…` / 90909 octets.
+
+Croisement 4 853 : **11 NULL → D. Pool restant = 756 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

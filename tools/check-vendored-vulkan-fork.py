@@ -2763,8 +2763,8 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
     ]
     # The snapshot helper removes a contiguous block: prove that block is
     # byte-identical to the already hash-verified native shipping source.
-    block_begin = "    // Worker translation must never traverse the live guest GMMU. Snapshot\\n"
-    block_end = "    if (parallel_translate_stages) {\\n" + "        // QueueWork and pool allocation may throw after earlier tasks borrowed\n        // these locals. Drain before unwinding, without stopping persistent workers.\n        struct TranslationDrain {\n            Common::ThreadWorker& worker;\n            bool joined{};\n            ~TranslationDrain() {\n                if (!joined) worker.WaitForRequests();\n            }\n        } translation_drain{shader_translation_workers};\n        size_t parallel_env_index{};\n"
+    block_begin = "    // Worker translation must never traverse the live guest GMMU. Snapshot\n"
+    block_end = "    if (parallel_translate_stages) {\n" + "        // QueueWork and pool allocation may throw after earlier tasks borrowed\n        // these locals. Drain before unwinding, without stopping persistent workers.\n        struct TranslationDrain {\n            Common::ThreadWorker& worker;\n            bool joined{};\n            ~TranslationDrain() {\n                if (!joined) worker.WaitForRequests();\n            }\n        } translation_drain{shader_translation_workers};\n        size_t parallel_env_index{};\n"
     def snapshot_block(src):
         assert src.count(block_begin) == src.count(block_end) == 1
         start = src.index(block_begin)
@@ -2781,11 +2781,11 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
     # prefix, and its preflush declaration was inserted independently of the
     # Vulkan namespace suffix. Retain the exact hunks for the other six edits.
     generated_n3m = reverse_reviewed_source(generated_n3m, [
-        ("#include <exception>\\n", ""),
-        ("#include <stdexcept>\\n", ""),
-        ("#ifdef PS5_NATIVE\\nnamespace VideoCommon {\\n"
-         "void SetShaderTexturePoolPreflushedForThread(bool preflushed) noexcept;\\n"
-         "}\\n#endif\\n\\n", ""),
+        ("#include <exception>\n", ""),
+        ("#include <stdexcept>\n", ""),
+        ("#ifdef PS5_NATIVE\nnamespace VideoCommon {\n"
+         "void SetShaderTexturePoolPreflushedForThread(bool preflushed) noexcept;\n"
+         "}\n#endif\n\n", ""),
         *PARALLEL_TRANSLATION_REVERSES[2:],
     ], "generated parallel translation")
     actual[n56_name].write_text(generated_n3m)

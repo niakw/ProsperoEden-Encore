@@ -2959,3 +2959,9 @@ Ces ressources sont déjà les sources de vérité utilisées par `AppLoader_NCA
 
 **Pool restant = 1 555 / 4 853.** Dans les quatre owners AM ciblés, il reste **7 slots `nullptr` physiques**, dont **6 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM/NS : LaunchSystemApplet raccordé au backend qlaunch
+
+Vendor `61637939907bcc513b7869936144ad083e712856` : NS `IApplicationManagerInterface::LaunchSystemApplet` (cmd304) et AM `IHomeMenuFunctions::LaunchSystemApplet` (cmd50) ne sont plus des slots NULL. Le backend NS utilise le ProgramId qlaunch standard `0100000000001000`, crée le processus invité via `CreateProcess`, matérialise un `AppletId::QLaunch` de type `SystemApplet`, applique les règles de focus qlaunch déjà utilisées par `AppletManager`, l'enregistre comme HomeMenu puis démarre le processus. Le PID réel est retourné par NS ; le wrapper AM l'ignore conformément au contrat firmware. Avant création, la liste des processus interdit un second qlaunch afin de ne pas déclencher l'assert de `WindowSystem::TrackApplet`.
+
+SwitchBrew documente pour HOS20+ le défaut `ns.applet!system_applet_id_gen2 = 0100000000001000` et précise que HomeMenu cmd50 wrappe NS cmd304. **NULL → PARTIEL** pour les deux contrats : l'état NS qui sélectionne MaintenanceMenu et les overrides non-default de `system_applet_id_gen2` ne sont pas encore modélisés. Le **pool global reste 1 555 / 4 853**. Dans les quatre gros owners AM ciblés, il reste **6 slots `nullptr` physiques**, dont **5 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build natif PS5 ni validation console revendiqués.
+

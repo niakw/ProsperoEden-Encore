@@ -22,6 +22,7 @@ import_vm=function(as_source,"NvResult nvhost_as_gpu::ImportNativeVm(")
 commit_vm=function(as_source,"bool nvhost_as_gpu::CommitNativeVmImport(")
 retire_vm=function(as_source,"void nvhost_as_gpu::RetireNativeVm(")
 epoch_vm=function(as_source,"bool nvhost_as_gpu::NativeEpochCurrent(")
+submit_allowed=function(as_source,"bool nvhost_as_gpu::NativeSubmissionAllowed(")
 assert "AllocateVm(" in owner and "address_spaces.Add(*candidate)" in owner
 assert 'm_module->Open(' not in owner and 'm_module->Ioctl1(' not in owner
 assert "RegisterVm(m_process, id)" in register
@@ -78,6 +79,8 @@ struct nvhost_as_gpu : std::enable_shared_from_this<nvhost_as_gpu> {
     u32 m_native_vm_id{};
     std::optional<u64> m_native_generation{};
     std::atomic_bool m_native_vm_retired{};
+    std::atomic_bool native_sparse_poisoned{};
+    bool NativeSubmissionAllowed() const;
     std::mutex mutex{};
     bool NativeEpochCurrent() const;
     bool CommitNativeVmImport(u32 id);
@@ -129,6 +132,7 @@ __IMPORT__
 __COMMIT__
 __RETIRE__
 __EPOCH__
+__SUBMIT_ALLOWED__
 }
 using Registry=Service::Nvidia::Devices::NativeGpuProcessRegistry;
 using Device=Service::Nvidia::Devices::nvhost_as_gpu;
@@ -179,6 +183,9 @@ int main(){
     f.session.m_shared->fail_bind=false;
     assert(as->ImportNativeVm(p)==NvResult::Success && as->gmmu && as->m_native_vm_id==id);
     assert(as->ImportNativeVm(p)==NvResult::InvalidState);
+    assert(as->NativeSubmissionAllowed());
+    as->native_sparse_poisoned=true;
+    assert(!as->NativeSubmissionAllowed());
     const auto race=f.Create();
     const u32 race_id=static_cast<u32>(race.reply[1]);
     assert(race.reply[0]==0 && f.session.RegisterAddressSpace(race_id).IsSuccess());
@@ -189,6 +196,7 @@ int main(){
     f.session.m_shared->retire_after_bind=true;
     assert(racing_as->ImportNativeVm(race_params)==NvResult::Success);
     assert(racing_as->m_native_vm_retired && !racing_as->m_native_vm_id);
+    assert(!racing_as->NativeSubmissionAllowed());
     assert(racing_as->ImportNativeVm(race_params)==NvResult::BadParameter);
     const auto next=foreign.Create();
     assert(next.reply[0]==0 && next.reply[1]!=id);
@@ -199,7 +207,7 @@ int main(){
     assert(registry.RemoveVm(&f.process,id,f.session.m_shared.get()));
     assert(!registry.FindRegisteredVmOwner(&f.process,id));
 }
-""".replace("__TRANSLATE__",translate).replace("__OWNER__",owner).replace("__REGISTER__",register).replace("__IMPORT__",import_vm).replace("__COMMIT__",commit_vm).replace("__RETIRE__",retire_vm).replace("__EPOCH__",epoch_vm)
+""".replace("__TRANSLATE__",translate).replace("__OWNER__",owner).replace("__REGISTER__",register).replace("__IMPORT__",import_vm).replace("__COMMIT__",commit_vm).replace("__RETIRE__",retire_vm).replace("__EPOCH__",epoch_vm).replace("__SUBMIT_ALLOWED__",submit_allowed)
 compilers=list(dict.fromkeys(x for x in (shutil.which("clang++"),shutil.which("g++")) if x))
 assert compilers,"Host C++20 compiler required"
 with tempfile.TemporaryDirectory(prefix="eden-h06-as-owner-") as tmp:
@@ -216,4 +224,4 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-as-owner-") as tmp:
             done=subprocess.run([str(exe)],capture_output=True,text=True,timeout=25)
             assert done.returncode==0,done.stderr[-6500:]
             print("H06_CREATE_GPU_VA_REAL_OWNER_PASS",Path(cc).name,opt,
-                  "vm_opaque=1 register=1 foreign=refused exhaustion=1 import_oom=1 bind_rollback=1 retirement_during_return=1",flush=True)
+                  "vm_opaque=1 register=1 foreign=refused exhaustion=1 import_oom=1 bind_rollback=1 retirement_during_return=1 poison_admission=1",flush=True)

@@ -426,20 +426,13 @@ assert '"Box - Spine"' in indexer
 assert "unsigned EnsureRetailCase(" in native
 assert "RetailCaseIndex()" in native
 assert 'Eden::AppResourceFile("ui/box-art-index.tsv")' in native
-# The supplemental metadata is a deterministic packaging fallback, not a
-# replacement for the large generated index and never embeds copyrighted art.
-fallback_index = (root / "headless/prosperoeden/ui/box-art-fallback.tsv").read_text()
-assert "ns2:mario kart world\t" in fallback_index
-assert "ns2:donkey kong bananza\t" in fallback_index
-assert "r2_22b0967c-08e4-4988-9eeb-c5d7a1c34408.png" in fallback_index
-assert "991fd827-5f47-47ee-a400-4c6f22266b4f.jpg" in fallback_index
-assert "r2_02551e34-3f1e-4bf6-88d5-d083b700cf9f.jpg" in fallback_index
-assert "r2_eee1b6d5-ca97-4fd1-be20-2eda2fe1b979.jpg" in fallback_index
-assert "r2_e12e1a63-a18e-4857-860d-043fc58f86a7.png" in fallback_index
-assert "r2_856693ee-cdd3-4784-bc66-225936136aec.jpg" in fallback_index
-assert 'Eden::AppResourceFile("ui/box-art-fallback.tsv")' in native
-assert "load_rows(input, false);" in native and "load_rows(fallback, true);" in native
-assert "if (it->second[side].empty())" in native
+# GamesDB is the only catalog. The companion is byte-identical to the
+# generated index, not a manually curated list of titles.
+assert 'Eden::AppResourceFile("ui/box-art-index.txt")' in native
+assert "load_rows(input);" in native
+assert "box-art-fallback.tsv" not in native
+assert 'R"ENCORE_BOX(' not in native
+assert 'cp "$app/ui/box-art-index.tsv" "$app/ui/box-art-index.txt"' in package
 assert 'Eden::AppFile("ui/box-art-index.tsv")' not in native
 assert '"EDEN_CASE_INDEX status=%s entries=%zu path=%s' in native
 assert '"EDEN_CASE_FETCH status=unavailable' in native

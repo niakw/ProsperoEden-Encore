@@ -25,6 +25,12 @@ case_index_staged = app / "ui/box-art-index.tsv"
 assert case_index_staged.is_file(), "retail case index missing from installable application"
 case_index_text = case_index_staged.read_text(encoding="utf-8")
 assert case_index_text.count("\n") > 1000, "retail case index is empty/truncated"
+case_rows = [row.split("\t") for row in case_index_text.splitlines() if row.startswith("ns2:")]
+assert case_rows and all(len(row) == 10 for row in case_rows), "missing or malformed NS2 GamesDB rows"
+for column, role in ((1, "front"), (4, "fanart"), (9, "square")):
+    assert any(row[column] != "-" for row in case_rows), f"NS2 GamesDB missing {role}"
+companion = app / "ui/box-art-index.txt"
+assert companion.is_file() and companion.read_bytes() == case_index_staged.read_bytes(), "missing or stale GamesDB companion"
 assert "eu:9524e5f7-ccc8-4ce6-a581-03f82c51825e.jpg" in case_index_text, (
     "reference physical front missing from installed scan catalog"
 )
@@ -50,6 +56,8 @@ for stem in ("switch-logo", "switch-rear-footer", "ns2-head"):
 # Resumed builds restore the already staged catalog from an earlier Actions
 # run: the source-tree index is not regenerated during a stage resume.
 ui_expected.add("ui/box-art-index.tsv")
+ui_expected.add("ui/box-art-index.txt")
+ui_expected.discard("ui/box-art-fallback.tsv")
 
 for source in (source_ui / "lang").glob("*.po"):
     ui_expected.add("ui/lang/" + source.with_suffix(".txt").name)

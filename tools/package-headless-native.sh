@@ -50,6 +50,12 @@ cp "$root/assets/icon0.png" "$app/sce_sys/icon0.png"
 cp "$root/assets/icon0.dds" "$app/sce_sys/icon0.dds"
 rm -rf "$app/ui"
 cp -a "$root/headless/prosperoeden/ui" "$app/ui"
+# Same dynamically generated GamesDB index under a mount-friendly extension.
+# Do not package the obsolete hand-maintained title-specific fallback.
+if [[ -s "$app/ui/box-art-index.tsv" ]]; then
+    cp "$app/ui/box-art-index.tsv" "$app/ui/box-art-index.txt"
+fi
+rm -f "$app/ui/box-art-fallback.tsv"
 noto_fallback_dir="${EDEN_NOTO_FALLBACK_DIR:-$root/build/generated/noto-fallback}"
 test -f "$noto_fallback_dir/receipt.json"
 mkdir -p "$app/ui/fonts/fallback"

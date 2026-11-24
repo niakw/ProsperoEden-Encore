@@ -294,6 +294,12 @@ def main():
             if row and not row.startswith("#")]
     coverage = tuple(sum(len(row) >= 10 and row[col] != "-"
                          for row in rows) for col in (4, 5, 6))
+    # A successful metadata download containing only NS1 must not silently
+    # become a production catalog for an NS1/NS2 application.
+    ns2_rows = [row for row in rows if row[0].startswith("ns2:")]
+    for column, role in ((1, "front"), (4, "fanart"), (9, "square")):
+        if not any(len(row) == 10 and row[column] != "-" for row in ns2_rows):
+            raise ValueError(f"GamesDB snapshot lacks NS2 {role} media")
     print("EDEN_CASE_INDEX_MEDIA fanart={} game_title={} gameplay={} titles={}".format(
         *coverage, len(rows)), flush=True)
     if result.count("\n") < 20:

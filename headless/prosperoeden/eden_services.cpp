@@ -987,19 +987,37 @@ const BoxIndex& RetailCaseIndex() {
         BoxIndex items;
         // Mounted titles can expose eboot.bin but omit auxiliary ui/ files.
         // Use the same fallback search as fonts, translations and launcher art.
-        const std::string catalog_path = Eden::AppResourceFile("ui/box-art-index.tsv");
+        std::string catalog_path = Eden::AppResourceFile("ui/box-art-index.tsv");
         std::ifstream input(catalog_path);
+        // A projected mount may hide the .tsv extension or report a file
+        // that cannot actually be opened. Try the byte-identical generated
+        // companion, then the backing installation paths by real open.
+        if (!input) {
+            for (const std::string& path : {
+                    Eden::AppResourceFile("ui/box-art-index.txt"),
+                    std::string(Eden::kInstallDir) + "/ui/box-art-index.tsv",
+                    std::string(Eden::kInstallDir) + "/ui/box-art-index.txt",
+                    std::string(Eden::kMountedAppDir) + "/ui/box-art-index.tsv",
+                    std::string(Eden::kMountedAppDir) + "/ui/box-art-index.txt"}) {
+                if (!Eden::FilesystemAccess() &&
+                    path != Eden::AppResourceFile("ui/box-art-index.txt")) continue;
+                input.clear();
+                input.open(path);
+                if (input) {
+                    catalog_path = path;
+                    break;
+                }
+            }
+        }
         const bool opened = static_cast<bool>(input);
         if (!opened) {
             std::fprintf(stderr, "EDEN_CASE_INDEX status=missing path=%s\n",
                          catalog_path.c_str());
         }
-        // A tiny, source-verified fallback index is packaged independently
-        // from the optional multi-thousand-title LaunchBox build snapshot.
-        // The full snapshot always wins; fallback fills missing NS2 faces.
-        const auto load_rows = [&](std::istream& source, bool supplemental) {
+        // Only the complete GamesDB-generated index is authoritative.
+        const auto load_rows = [&](std::istream& source) {
         std::string row;
-        while (std::getline(source, row) && (items.size() < 20000 || supplemental)) {
+        while (std::getline(source, row) && items.size() < 20000) {
             if (row.empty() || row[0] == '#' || row.size() > 5000) continue;
             const auto a = row.find('\t');
             if (a == std::string::npos) continue;
@@ -1058,24 +1076,10 @@ const BoxIndex& RetailCaseIndex() {
                 std::move(fronts), std::move(backs), std::move(spines),
                 std::move(scenes[0]), std::move(scenes[1]), std::move(scenes[2]),
                 std::move(scenes[3]), std::move(scenes[4]), split_candidates(square)};
-            auto [it, inserted] = items.emplace(title, faces);
-            if (supplemental && !inserted) {
-                for (std::size_t side = 0; side < faces.size(); ++side) {
-                    if (it->second[side].empty())
-                        it->second[side] = std::move(faces[side]);
-                }
-            }
+            items.emplace(title, std::move(faces));
         }
         };
-        load_rows(input, false);
-        const auto primary_count = items.size();
-        const std::string fallback_path = Eden::AppResourceFile("ui/box-art-fallback.tsv");
-        std::ifstream fallback(fallback_path);
-        if (fallback) load_rows(fallback, true);
-        std::fprintf(stderr,
-                     "EDEN_CASE_FALLBACK status=%s added=%zu path=%s\n",
-                     fallback ? "loaded" : "missing",
-                     items.size() - primary_count, fallback_path.c_str());
+        load_rows(input);
         std::fprintf(stderr, "EDEN_CASE_INDEX status=%s entries=%zu path=%s\n",
                      opened ? "loaded" : "missing", items.size(), catalog_path.c_str());
         return items;

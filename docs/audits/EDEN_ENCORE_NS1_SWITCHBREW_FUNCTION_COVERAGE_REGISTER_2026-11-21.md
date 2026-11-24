@@ -3140,3 +3140,11 @@ Le handler renvoie une erreur au lieu d'un succès factice ; aucune configuratio
 
 **Pool restant = 1 466 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — NS ApplicationManager : delivery/update Nintendo non disponibles rejetés en lot
+
+Vendor `8f2137659278d52c71825939501b7aad466edc3e` : **57 slots `nullptr` physiques** de `IApplicationManagerInterface` sont dispatchés vers une erreur explicite lorsqu'ils dépendent d'infrastructures absentes d'Encore PS5 : demandes de mise à jour/téléchargement, enregistrement GameCard/gold points, system/application delivery, background-update/download tasks, promotions et eLicense/availability. Aucun téléchargement, droit, livraison ou promotion Nintendo n'est simulé et aucun état local d'installation n'est modifié.
+
+Le chemin de chargement local des contenus, les records d'application, NCA/FSP, GameCard local et les fonctions déjà implémentées ne sont pas redirigés. Croisement avec le catalogue historique : **34 lignes NULL** sont réellement dans le pool ; 10 anciennes lignes directes `ns:am` sont déjà HORS-VERSION pour HOS23 et 13 commandes physiques récentes ne sont pas des lignes distinctes du miroir 4 853.
+
+**Pool restant = 1 432 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

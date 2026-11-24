@@ -3126,3 +3126,9 @@ Le contrat HOS23 de cmd51 reste respecté : bool en entrée + buffer de règle, 
 
 **5 NULL → 2 IMPL-SRC/NOOP + 3 D. Pool restant = 1 524 / 4 853.** `GetNetworkAccessStatus` reste volontairement NULL : le payload 0x100 est connu mais les valeurs sémantiques du champ `status` ne sont pas suffisamment prouvées pour assimiler le zéro SDK à un état connecté. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — NIFM : contrats sans backend rejetés explicitement
+
+Vendor `2493221582e7a41528c53546bed61180035fec4e` : cinq slots NIFM supplémentaires ne tombent plus sur `nullptr`. `IRequest::GetAdditionalInfo` (cmd22) consomme le contrat HOS23 mais rejette l'opaque 0x410 faute de modèle. Côté `IGeneralService`, `GetTelemetorySystemEventReadableHandle` (31), `GetTelemetryInfo` (32) et `GetAllowedChannels` (38) retournent une erreur explicite : Encore n'a ni producteur de télémétrie NIFM ni source réglementaire fiable des canaux Wi-Fi. `NotifyApplicationSuspended` (39) consomme le PID u64 puis rejette l'opération, faute de backend NIFM par application/sleep.
+
+Aucune valeur de télémétrie, aucun canal et aucun signal d'événement ne sont fabriqués. **5 NULL → D. Pool restant = 1 519 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

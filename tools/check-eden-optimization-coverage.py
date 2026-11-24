@@ -1820,7 +1820,7 @@ elif pair_present == pair_new_owners:
                 "eden-core/overrides/core/gpu_dirty_memory_manager.h":
                     "7769e314fbefeb8393e6d11b115c88bc0a8a0e58",
                 "eden-core/src/video_core/buffer_cache/buffer_cache.h":
-                    ("4ce33d21debc33c9625129cbd545bf9b1c084272" if actual_buffer_hotpath_pin else "7f07e392ea0cc828d862da29d32ada1ebc3966aa"),
+                    ("fce19742529b21bca0f92f3f67c4e420dcd493c7" if gpu_table_vendor_pin == "1949a57c930d3ebd32bdd93093763ae22681a4a4" else "4ce33d21debc33c9625129cbd545bf9b1c084272" if actual_buffer_hotpath_pin else "7f07e392ea0cc828d862da29d32ada1ebc3966aa"),
                 "eden-core/src/video_core/gpu_vulkan.cpp":
                     "f083c985451563dcfe387d1bc61f54bd02ed762e",
             }

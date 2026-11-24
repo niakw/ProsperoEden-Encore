@@ -2818,3 +2818,10 @@ Build natif PS5 non déclenché ; aucune validation console revendiquée.
 Les 26 lignes encore marquées STUB dans l'annexe SwitchBrew ont été recroisées avec le runtime actif au vendor `b57ce2770c82aef425bc34e2fed2492f63adfe4d`. 24 étaient des statuts historiques déjà dépassés par les correctifs de la branche : **4 → IMPL-SRC, 7 → PARTIEL, 4 → NOOP, 1 → NULL, 8 → D**. Le résidu STUB réellement prouvé est donc limité à **`CanUseApplicationCore`** et **`GetOperationModeSystemInfo`**. Le premier est bloqué par la règle firmware NPDM→ApplicationCore non documentée ; le second par la sémantique inconnue du `u32` OMM cmd26. Aucun bit/retour supposé n'est introduit. NIM `IShopServiceAsync::Prepare` est reclassé NOOP : les implémentations de compatibilité sans eShop (notamment S2Arm/Ryujinx) acceptent cette préparation sans état distant, tandis que `Request` reste PARTIEL avec son corps JSON de compatibilité.
 
 Cette opération répare le suivi du lot STUB ; elle **ne prétend pas recalculer exhaustivement le pool NULL/PARTIEL/ABI-DIFF**. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — AM HomeMenu : writer lock accessors raccordés
+
+Vendor `95089b809f5eb4d3621eaddec92638e8c82f7fa4` : l'owner réellement compilé `encore-active/eden-backports/.../home_menu_functions.cpp` raccorde désormais IHomeMenuFunctions cmd30 `GetHomeButtonWriterLockAccessor` et cmd31 `GetWriterLockAccessorEx`. Les deux retournent un objet IPC `ILockAccessor` concret, déjà utilisé côté ICommonStateGetter ; cmd31 rejette les types hors plage 0..3 conformément au contrat libnx. Le modèle `ILockAccessor` actuel garde toutefois son état par objet et ne partage pas encore un arbitre reader/writer global entre accessors : **2 NULL → PARTIEL**, pas IMPL-SRC complet. Manifeste overlay recalculé ; copie base non modifiée.
+
+Aucun build natif PS5 déclenché ; validation console non revendiquée.

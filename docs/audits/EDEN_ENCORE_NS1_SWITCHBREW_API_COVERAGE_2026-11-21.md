@@ -31,10 +31,10 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 |---|---:|---:|---:|
 | **IMPL-SRC — Implémentation source retrouvée** | 1 733 | 80 | **1 813** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 161 | 3 | **164** |
+| **PARTIEL — Implémentation partielle** | 163 | 3 | **166** |
 | **STUB — Stub / résultat simulé** | 2 | 0 | **2** |
 | **NOOP — No-op documenté** | 222 | 0 | **222** |
-| **NULL — Handler NULL** | 1 187 | 0 | **1 187** |
+| **NULL — Handler NULL** | 1 185 | 0 | **1 185** |
 | **D — Rejet explicite / historique** | 234 | 33 | **267** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 199 | 0 | **199** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1548,8 +1548,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `12` | `UnlockForeground` | — | **IMPL-SRC** ([source C++][ns1-src-037]) | 2026-11-22 |
 | appletAE | `20` | `PopFromGeneralChannel` | — | **IMPL-SRC** ([source C++][ns1-src-037]) | 2026-11-22 |
 | appletAE | `21` | `GetPopFromGeneralChannelEvent` | — | **IMPL-SRC** ([source C++][ns1-src-037]) | 2026-11-22 |
-| appletAE | `30` | `GetHomeButtonWriterLockAccessor` | — | **NULL** ([source C++][ns1-src-037]) | 2026-11-22 |
-| appletAE | `31` | `GetWriterLockAccessorEx` | 2.0.0+ | **NULL** ([source C++][ns1-src-037]) | 2026-11-22 |
+| appletAE | `30` | `GetHomeButtonWriterLockAccessor` | — | **PARTIEL** (objet `ILockAccessor` réel renvoyé par l'owner HomeMenu actif ; arbitrage reader/writer global non partagé ; vendor `95089b80`) | 2026-11-24 |
+| appletAE | `31` | `GetWriterLockAccessorEx` | 2.0.0+ | **PARTIEL** (type 0..3 validé et objet `ILockAccessor` réel ; arbitrage reader/writer global non partagé ; vendor `95089b80`) | 2026-11-24 |
 | appletAE | `100` | `PopRequestLaunchApplicationForDebug` | 6.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
 | appletAE | `110` | `IsForceTerminateApplicationDisabledForDebug` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-037]) | 2026-11-22 |
 | appletAE | `200` | `LaunchDevMenu` | 8.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |

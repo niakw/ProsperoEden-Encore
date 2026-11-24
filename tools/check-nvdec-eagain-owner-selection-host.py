@@ -694,7 +694,7 @@ print("NS1_HOST1X_DEVICE_FD_HOST_PASS active_source=1 ABI_unchanged=1 concurrent
 # GPU-36: actual native NVDEC submit preflight code, compiled in a focused
 # Clang sanitizer harness to reject untrusted ioctl sizes before allocation.
 NVD_PATH=V/"encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvhost_nvdec_common.cpp"
-assert blob(NVD_PATH)=="3e726b66f49a0ce0b91039ce1f1f73baeb0f573b"
+assert blob(NVD_PATH)=="70c3b2ddb2559ccba27ecba7e49370394a4eafbc"
 NVD=NVD_PATH.read_text()
 assert "core.GetSession(sessions[fd])" not in NVD
 assert "params.syncpoint_count > params.fence_count" in NVD

@@ -2687,3 +2687,9 @@ Vendor `25d561a0fd182584da68d53bca65f5ec6dbee3c8` : `IReadOnlyApplicationRecordI
 Vendor `b882a41e0b35a91051fb362cdf2082175d433748` : le dump NS1 23.0.1 confirme que `npns:s` cmd8 `ListenToByName` consomme un buffer d'entrée type 9 ; le handler système adopte maintenant cette ABI et conserve le comportement offline explicite, au lieu d'un succès sans même lire la requête. Cmd106/107 `Get/SetLastNotifiedTime` exposent désormais un état `s64` local cohérent. Cmd161 `GetRequestChangeStateCancelEvent` retourne le `KEvent` de service déjà vivant et n'est plus présenté comme stub. **3 STUB + 1 NULL → hors pool** (cmd8 NOOP offline ; cmd106/107/cmd161 IMPL-SRC).
 
 **Pool restant = 1 555** : 1 185 NULL + 21 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+### 2026-11-24 — NVDEC : SET_SUBMIT_TIMEOUT
+
+Vendor `a11b70417f1c981580a86bf5391b4a24fe0890e9` : le propriétaire réellement sélectionné par le CMake PS5, `encore-active/eden-core/.../nvhost_nvdec_common.cpp`, ne jette plus la valeur de `NVHOST_IOCTL_CHANNEL_SET_SUBMIT_TIMEOUT`. Le champ `submit_timeout` existait déjà dans la classe ; le setter le renseigne maintenant, conformément au comportement Ryujinx. Aucun timeout scheduler artificiel n'est ajouté : il s'agit de l'état du canal demandé par le guest. **STUB → IMPL-SRC**. Le garde GPU-36 épingle le nouveau blob actif.
+
+**Pool restant = 1 554** : 1 185 NULL + 20 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

@@ -25,17 +25,17 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 809 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 809 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 813 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 809 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 729 | 80 | **1 809** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 733 | 80 | **1 813** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 154 | 3 | **157** |
-| **STUB — Stub / résultat simulé** | 26 | 0 | **26** |
-| **NOOP — No-op documenté** | 218 | 0 | **218** |
-| **NULL — Handler NULL** | 1 186 | 0 | **1 186** |
-| **D — Rejet explicite / historique** | 226 | 33 | **259** |
+| **PARTIEL — Implémentation partielle** | 161 | 3 | **164** |
+| **STUB — Stub / résultat simulé** | 2 | 0 | **2** |
+| **NOOP — No-op documenté** | 222 | 0 | **222** |
+| **NULL — Handler NULL** | 1 187 | 0 | **1 187** |
+| **D — Rejet explicite / historique** | 234 | 33 | **267** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 199 | 0 | **199** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 474 | 1 | **475** |
@@ -45,6 +45,14 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 0 | **0** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
+
+### Réconciliation ciblée des 26 STUB historiques — 24/11/2026
+
+Le lot de 26 lignes encore marquées **STUB** dans cette annexe a été recroisé avec les owners réellement actifs au vendor `b57ce2770c82aef425bc34e2fed2492f63adfe4d` et les correctifs déjà intégrés sur cette branche. **24 lignes étaient devenues obsolètes** : 4 IMPL-SRC, 7 PARTIEL, 4 NOOP, 1 NULL et 8 rejets explicites D. **Deux stubs réels restent ouverts : `CanUseApplicationCore` et `GetOperationModeSystemInfo`.**
+
+Pour `CanUseApplicationCore`, Encore possède bien le `KProcess::GetCoreMask()` dérivé des capacités NPDM, mais la règle firmware transformant ce mask en booléen « ApplicationCore » n'est publiée ni par SwitchBrew/libnx ni par les upstreams examinés ; Yuzu/Lichii/Eglantine et Ryujinx restent eux aussi sur une constante. Pour `GetOperationModeSystemInfo`, SwitchBrew établit qu'AM cmd200 relaie OMM cmd26, mais ne documente pas la signification du `u32` ; OMM cmd26 reste absent dans les upstreams Yuzu-family. Aucun bit ni constante n'est donc inventé.
+
+Cette réconciliation **ne constitue pas un nouvel audit des 4 853 entrées** : l'annexe conserve ses écarts physiques historiques et d'autres lignes NULL/PARTIEL peuvent encore être obsolètes. Le registre fonctionnel reste canonique. Aucun build natif PS5 ni résultat console n'est revendiqué.
 
 ### Lot d'exécution NS1 du 22/11 — GPIO et NCM
 
@@ -1364,7 +1372,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:sys | `549` | `GetConnectableRegisteredDevices` | 6.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `700` | `ActivateUniquePad` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `702` | `AcquireUniquePadConnectionEventHandle` | — | **IMPL-SRC** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) ; retourne le vrai `unique_pad_connection_event` détenu par `IHidSystemServer`) | 2026-11-23 |
-| hid:sys | `703` | `GetUniquePadIds` | — | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
+| hid:sys | `703` | `GetUniquePadIds` | — | **IMPL-SRC** (slots Npad réellement connectés, ABI u64 corrigée ; vendor `aa6c39c1`) | 2026-11-22 |
 | hid:sys | `751` | `AcquireJoyDetachOnBluetoothOffEventHandle` | — | **IMPL-SRC** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `800` | `ListSixAxisSensorHandles` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `801` | `IsSixAxisSensorUserCalibrationSupported` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
@@ -1608,7 +1616,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `10` | `ExitProcessAndReturn` | — | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `11` | `GetLibraryAppletInfo` | — | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `12` | `GetMainAppletIdentityInfo` | — | **IMPL-SRC** (identité dérivée du main applet réel (`applet_id` + `program_id`) via `WindowSystem` ; vendor `1b5b609d`) | 2026-11-22 |
-| appletAE | `13` | `CanUseApplicationCore` | — | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
+| appletAE | `13` | `CanUseApplicationCore` | — | **STUB** (résidu réel : ABI connue mais règle firmware reliant NPDM core-mask à « ApplicationCore » non documentée ; Yuzu/Ryujinx restent constants) | 2026-11-22 |
 | appletAE | `14` | `GetCallerAppletIdentityInfo` | — | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `15` | `GetMainAppletApplicationControlProperty` | 2.0.0+ | **IMPL-SRC** (NACP demandé à l'ARP pour le ProgramId du main applet réel au lieu du caller ; vendor `1b5b609d`) | 2026-11-22 |
 | appletAE | `16` | `GetMainAppletStorageId` | 2.0.0+ | **IMPL-SRC** (StorageId dérivé de la présence réelle du Program NCA dans GameCard/SD/NAND ; vendor `1b5b609d`) | 2026-11-22 |
@@ -1661,7 +1669,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `24` | `GetLaunchStorageInfoForDebug` | 2.0.0+ | **D** (commande debug explicitement rejetée sur runtime release ; vendor `fd389efb`, moteur `efc5f412`) | 2026-11-23 |
 | appletAE | `25` | `ExtendSaveData` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `26` | `GetSaveDataSize` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `27` | `CreateCacheStorage` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `27` | `CreateCacheStorage` | 5.0.0+ | **IMPL-SRC** (cache indexé réellement créé, limites NACP et doublons validés ; vendor `670673af`) | 2026-11-22 |
 | appletAE | `30` | `BeginBlockingHomeButtonShortAndLongPressed` | — | **IMPL-SRC** (active les flags short/long réellement consultés par `WindowSystem` ; vendor `3f8249a2`) | 2026-11-22 |
 | appletAE | `31` | `EndBlockingHomeButtonShortAndLongPressed` | — | **IMPL-SRC** (désactive les flags short/long réellement consultés par `WindowSystem` ; vendor `3f8249a2`) | 2026-11-22 |
 | appletAE | `32` | `BeginBlockingHomeButton` | — | **PARTIEL** (active les flags Home réellement consommés, mais le timeout automatique n'est pas encore modélisé ; vendor `3f8249a2`) | 2026-11-22 |
@@ -1677,9 +1685,9 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `71` | `RequestToReboot` | 3.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `80` | `ExitAndRequestToShowThanksMessage` | 4.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `90` | `EnableApplicationCrashReport` | 4.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; écrit `application_crash_report_enabled` sous verrou) | 2026-11-23 |
-| appletAE | `100` | `InitializeApplicationCopyrightFrameBuffer` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `101` | `SetApplicationCopyrightImage` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `102` | `SetApplicationCopyrightVisibility` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `100` | `InitializeApplicationCopyrightFrameBuffer` | 5.0.0+ | **PARTIEL** (dimensions/taille/alignment validés et état conservé ; compositing capture GPU absent ; vendor `08f3042a`) | 2026-11-22 |
+| appletAE | `101` | `SetApplicationCopyrightImage` | 5.0.0+ | **PARTIEL** (rectangle/image RGBA8 validés et mémorisés ; compositing capture GPU absent ; vendor `08f3042a`) | 2026-11-22 |
+| appletAE | `102` | `SetApplicationCopyrightVisibility` | 5.0.0+ | **PARTIEL** (visibilité réellement conservée ; compositing capture GPU absent ; vendor `08f3042a`) | 2026-11-22 |
 | appletAE | `110` | `QueryApplicationPlayStatistics` | 5.0.0+ | **IMPL-SRC** (temps réel persistant via PlayTimeManager + launch_count via LaunchTimestampCache ; vendor d12a06af ; PS5 non validé) | 2026-11-24 |
 | appletAE | `111` | `QueryApplicationPlayStatisticsByUid` | 6.0.0+ | **IMPL-SRC** (même backend réel pour le profil actif Encore ; aucune statistique utilisateur fictive ; vendor d12a06af ; PS5 non validé) | 2026-11-24 |
 | appletAE | `120` | `ExecuteProgram` | 5.0.0+ | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
@@ -1715,7 +1723,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `110` | `NeedsToExitProcess` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `120` | `GetLibraryAppletInfo` | — | **IMPL-SRC** ([source C++][ns1-src-003]) | 2026-11-22 |
 | appletAE | `150` | `RequestForAppletToGetForeground` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
-| appletAE | `160` | `GetIndirectLayerConsumerHandle` | 2.0.0+ | **STUB** ([source C++][ns1-src-003]) | 2026-11-22 |
+| appletAE | `160` | `GetIndirectLayerConsumerHandle` | 2.0.0+ | **D** (fail-closed tant que le backend VI indirect-layer n'existe pas ; vendor `301c0bda`) | 2026-11-22 |
 | appletAE | `0` | `GetEventHandle` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `1` | `ReceiveMessage` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `2` | `GetThisAppletKind` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
@@ -1751,7 +1759,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `80` | `PerformSystemButtonPressingIfInFocus` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `90` | `SetPerformanceConfigurationChangedNotification` | 7.0.0+ | **IMPL-SRC** (active/désactive la notification via `LifecycleManager::SetPerformanceModeChangedNotificationEnabled` ; vendor `3bd12215`) | 2026-11-22 |
 | appletAE | `91` | `GetCurrentPerformanceConfiguration` | 7.0.0+ | **IMPL-SRC** (lit la configuration APM réelle pour le mode courant via `APM::Controller` ; vendor `3bd12215`) | 2026-11-22 |
-| appletAE | `200` | `GetOperationModeSystemInfo` | 7.0.0+ | **STUB** ([source C++][ns1-src-033]) | 2026-11-22 |
+| appletAE | `200` | `GetOperationModeSystemInfo` | 7.0.0+ | **STUB** (résidu réel : AM relaie OMM cmd26, dont le u32 n'a pas de sémantique publique établie ; OMM cmd26 reste absent) | 2026-11-22 |
 | appletAE | `300` | `GetSettingsPlatformRegion` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `0` | `Exit` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `1` | `LockExit` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
@@ -1775,7 +1783,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `42` | `GetSystemSharedLayerHandle` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `43` | `GetSystemSharedBufferHandle` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `50` | `SetHandlesRequestToDisplay` | — | **PARTIEL** (stocke réellement `handles_request_to_display` sous verrou ; le consommateur request-to-display complet reste à raccorder ; vendor `b3afcf99`) | 2026-11-22 |
-| appletAE | `51` | `ApproveToDisplay` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `51` | `ApproveToDisplay` | — | **IMPL-SRC** (publie la visibilité réelle de l'applet ; vendor `0837393b`) | 2026-11-22 |
 | appletAE | `60` | `OverrideAutoSleepTimeAndDimmingTime` | — | **NOOP** (adaptation PS5 : les délais de veille/atténuation invités ne sont pas transmis au système hôte et aucun `idle:sys` invité ne les consomme ; vendor `55be5734`) | 2026-11-23 |
 | appletAE | `61` | `SetMediaPlaybackState` | — | **PARTIEL** (raccordé au même état `media_playback_state` que la surface application, sans consommateur système ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `62` | `SetIdleTimeDetectionExtension` | — | **PARTIEL** (stocke l'extension dans l'état applet sous verrou ; aucun idle-timer hôte ne la consomme encore ; vendor `6fc24667`) | 2026-11-22 |
@@ -1807,7 +1815,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `11` | `ReleaseForegroundRights` | — | **IMPL-SRC** ([source C++][ns1-src-046]) | 2026-11-22 |
 | appletAE | `12` | `RejectToChangeIntoBackground` | — | **IMPL-SRC** ([source C++][ns1-src-046]) | 2026-11-22 |
 | appletAE | `20` | `SetAppletWindowVisibility` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-046]) | 2026-11-22 |
-| appletAE | `21` | `SetAppletGpuTimeSlice` | 7.0.0+ | **STUB** ([source C++][ns1-src-046]) | 2026-11-22 |
+| appletAE | `21` | `SetAppletGpuTimeSlice` | 7.0.0+ | **PARTIEL** (s64 conservé dans l'état applet ; pas de retune du scheduler GPU PS5 ; vendor `d725a970`) | 2026-11-22 |
 | appletAE | `0` | `SetExpectedMasterVolume` | — | **IMPL-SRC** ([source C++][ns1-src-032]) | 2026-11-22 |
 | appletAE | `1` | `GetMainAppletExpectedMasterVolume` | — | **IMPL-SRC** ([source C++][ns1-src-032]) | 2026-11-22 |
 | appletAE | `2` | `GetLibraryAppletExpectedMasterVolume` | — | **IMPL-SRC** ([source C++][ns1-src-032]) | 2026-11-22 |
@@ -2094,7 +2102,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `19` | `LaunchApplicationOld` | 1.0.0-5.1.0 | **HORS-VERSION** ([source C++][ns1-src-014]) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `21` | `GetApplicationContentPath` | — | **NULL** ([source C++][ns1-src-104]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `22` | `TerminateApplication` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `23` | `ResolveApplicationContentPath` | — | **STUB** ([source C++][ns1-src-104]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `23` | `ResolveApplicationContentPath` | — | **NULL** (owner actif HOS23 : slot explicitement nullptr ; l'ancien classement STUB provenait d'un snapshot obsolète) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `26` | `BeginInstallApplication` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `27` | `DeleteApplicationRecord` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `30` | `RequestApplicationUpdateInfo` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -2329,7 +2337,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `RequestApplicationRightsOnServer` | — | **NULL** ([source C++][ns1-src-106]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `RequestAssignRights` | — | **NULL** ([source C++][ns1-src-106]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `4` | `DeprecatedRequestAssignRightsToResume` | — | **NULL** ([source C++][ns1-src-106]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `5` | `VerifyActivatedRightsOwners` | — | **STUB** ([source C++][ns1-src-106]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `5` | `VerifyActivatedRightsOwners` | — | **D** (fail-closed sans environnement de droits Nintendo ; vendor `d2e93fb0`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `6` | `DeprecatedGetApplicationRightsStatus` | — | **NULL** ([source C++][ns1-src-106]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7` | `RequestPrefetchForDynamicRights` | — | **NULL** ([source C++][ns1-src-106]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `8` | `GetDynamicRightsState` | — | **NULL** ([source C++][ns1-src-106]) | 2026-11-22 |
@@ -2337,7 +2345,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `10` | `RequestAssignRightsToResume` | 7.0.0+ | **NULL** ([source C++][ns1-src-106]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `11` | `GetActivatedRightsUsers` | 7.0.0+ | **NULL** ([source C++][ns1-src-106]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `12` | `GetApplicationRightsStatus` | 8.0.0+ | **NULL** ([source C++][ns1-src-106]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `13` | `GetRunningApplicationStatus` | 8.0.0+ | **STUB** ([source C++][ns1-src-106]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `13` | `GetRunningApplicationStatus` | 8.0.0+ | **D** (sortie initialisée puis fail-closed sans environnement de droits Nintendo ; vendor `d2e93fb0`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `RequestLinkDevice` | — | **NULL** ([source C++][ns1-src-107]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `RequestCleanupAllPreInstalledApplications` | 6.0.0+ | **NULL** ([source C++][ns1-src-107]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2` | `RequestCleanupPreInstalledApplication` | 6.0.0+ | **NULL** ([source C++][ns1-src-107]) | 2026-11-22 |
@@ -2933,7 +2941,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
 | bsd:u, bsd:s | `0` | `RegisterClient (Initialize)` | — | **IMPL-SRC** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; RegisterClient exact, handler BSD_USA::RegisterClient ; statique, PS5 non validé) | 2026-11-22 |
-| bsd:u, bsd:s | `1` | `StartMonitoring` | — | **STUB** ([source C++][ns1-src-026]) | 2026-11-22 |
+| bsd:u, bsd:s | `1` | `StartMonitoring` | — | **NOOP** (PID consommé ; backend BSD déjà lié à la session, aucun scheduler de monitoring séparé ; vendor `4ee2d58c`) | 2026-11-22 |
 | bsd:u, bsd:s | `2` | `Socket` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `3` | `SocketExempt` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `4` | `Open` | — | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
@@ -3003,7 +3011,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | sfdnsres | `11` | `GetHostByAddrRequestWithOptions` | 5.0.0+ | **NULL** ([source C++][ns1-src-027]) | 2026-11-22 |
 | sfdnsres | `12` | `GetAddrInfoRequestWithOptions` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-027]) | 2026-11-22 |
 | sfdnsres | `13` | `GetNameInfoRequestWithOptions` | 5.0.0+ | **NULL** ([source C++][ns1-src-027]) | 2026-11-22 |
-| sfdnsres | `14` | `ResolverSetOptionRequest` | 5.0.0+ | **STUB** ([source C++][ns1-src-027]) | 2026-11-22 |
+| sfdnsres | `14` | `ResolverSetOptionRequest` | 5.0.0+ | **PARTIEL** (ABI entrée/buffer et sorties ret+errno corrigées ; options opaques non interprétées ; vendor `65cffbde`) | 2026-11-22 |
 | sfdnsres | `15` | `ResolverGetOptionRequest` | 5.0.0+ | **NULL** ([source C++][ns1-src-027]) | 2026-11-22 |
 | nsd:u, nsd:a | `10` | `GetSettingName` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
 | nsd:u, nsd:a | `11` | `GetEnvironmentIdentifier` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; écrit l'identifiant local stable `lp1`, changement d'environnement Nintendo désactivé) | 2026-11-23 |
@@ -4915,18 +4923,18 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `1` | `IsProcessing` | — | **IMPL-SRC** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps C++ non trivial retrouvé; non validé PS5) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `2` | `GetResult` | — | **IMPL-SRC** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps C++ non trivial retrouvé; non validé PS5) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `3` | `GetSystemEventReadableHandle` | — | **IMPL-SRC** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps C++ non trivial retrouvé; non validé PS5) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `4` | `SetChannels` | 6.0.0+ | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `4` | `SetChannels` | 6.0.0+ | **PARTIEL** (buffer s16[] conservé ; backend PS5 sans métadonnée canal pour filtrer ; vendor `945a4a0a`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `0` | `GetRequestState` | — | **IMPL-SRC** (machine d'état réelle protégée par mutex ; expose `OnHold` une fois puis résout `Accepted/Invalid` selon le réseau hôte et signale l'événement ; vendor `084983e0`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `1` | `GetResult` | — | **IMPL-SRC** (résultat dérivé de l'état IRequest et de la disponibilité réseau réelle, avec résolution de `OnHold` ; vendor `084983e0`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `2` | `GetSystemEventReadableHandles` | — | **IMPL-SRC** (retourne les deux vrais KEvent de la requête ; les transitions d'état signalent l'événement ; vendor `084983e0`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `3` | `Cancel` | — | **IMPL-SRC** (ramène réellement la requête à `NotSubmitted` et signale le changement d'état ; vendor `084983e0`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `4` | `Submit` | — | **IMPL-SRC** (place réellement IRequest en `OnHold` sous verrou avant résolution observable ; vendor `084983e0`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `5` | `SetRequirement` | — | **IMPL-SRC** ([vendor 62660c05](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/62660c058f2a76353dba6bc208f165857460000e/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; Requirement HOS23 opaque 0x24 conservé byte-exact dans IRequest) | 2026-11-23 |
-| nifm:a, nifm:s, nifm:u | `6` | `SetRequirementPreset` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `6` | `SetRequirementPreset` | — | **NOOP** (preset consommé ; pas de daemon de politique Horizon côté PS5 ; vendor `100be854`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `8` | `SetPriority` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `9` | `SetNetworkProfileId` | — | **PARTIEL** ([active NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d1524eb55acb905c694a46cdb1333e32c0e4bdbf/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI UUID 0x10 corrigée et état mémorisé, sélection/routage par profil encore incomplet) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `10` | `SetRejectable` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
-| nifm:a, nifm:s, nifm:u | `11` | `SetConnectionConfirmationOption` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `11` | `SetConnectionConfirmationOption` | — | **NOOP** (option consommée ; pas d'applet de confirmation Horizon côté PS5 ; vendor `100be854`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `12` | `SetPersistent` | — | **IMPL-SRC** ([vendor 2a7dfec8](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2a7dfec8c6e31b4ba004501a666a4836443d3787/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; bool persistant appliqué aux transitions OnHold/Accepted/Invalid selon la connectivité) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `13` | `SetInstant` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `14` | `SetSustainable` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
@@ -4936,7 +4944,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `18` | `SetRequirementByRevision` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `19` | `GetRequirement` | — | **IMPL-SRC** ([vendor 62660c05](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/62660c058f2a76353dba6bc208f165857460000e/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; Requirement HOS23 opaque 0x24 conservé byte-exact dans IRequest) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `20` | `GetRevision` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
-| nifm:a, nifm:s, nifm:u | `21` | `GetAppletInfo` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `21` | `GetAppletInfo` | — | **D** (retour NIFM AppletLaunchNotRequired au lieu de fabriquer un applet réseau ; vendor `100be854`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `22` | `GetAdditionalInfo` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `23` | `SetKeptInSleep` | 3.0.0+ | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `24` | `RegisterSocketDescriptor` | 3.0.0+ | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
@@ -5030,7 +5038,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nim:eca | `2` | `Read` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | nim:eca | `3` | `GetErrorCode` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | nim:eca | `4` | `Request` | — | **PARTIEL** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
-| nim:eca | `5` | `Prepare` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nim:eca | `5` | `Prepare` | — | **NOOP** (IShopServiceAsync : contrat accepté sans eShop ; S2Arm/Ryujinx confirme que Prepare peut être sans état distant, Request restant PARTIEL) | 2026-11-22 |
 | nim:ecas | `0` | `RegisterSpecialClient` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:ecas | `1` | `UnregisterSpecialClient` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | ntc | `0` | `OpenEnsureNetworkClockAvailabilityService` | — | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; constructeur IPC, événement ou horloge hôte opérationnels dans la source ; non validé PS5) | 2026-11-22 |
@@ -5357,8 +5365,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ovln:rcv | `2` | `GetReceiveEventHandle` | — | **IMPL-SRC** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/ovln/receiver.cpp) ; création d'interface ou gestion effective des sources, notifications, événements et tick ; ABI/PS5 non validés) | 2026-11-22 |
 | ovln:rcv | `3` | `Receive` | — | **IMPL-SRC** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/ovln/receiver.cpp) ; création d'interface ou gestion effective des sources, notifications, événements et tick ; ABI/PS5 non validés) | 2026-11-22 |
 | ovln:rcv | `4` | `ReceiveWithTick` | — | **IMPL-SRC** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/ovln/receiver.cpp) ; création d'interface ou gestion effective des sources, notifications, événements et tick ; ABI/PS5 non validés) | 2026-11-22 |
-| ovln:snd | `0` | `OpenSender` | — | **STUB** (source `sources/eden/src/core/hle/service/psc/ovln/sender_service.cpp` ; ISenderService::OpenSender est STUBBED ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| ovln:snd | `0` | `Send` | — | **STUB** (source `sources/eden/src/core/hle/service/psc/ovln/sender.cpp` ; ISender::Send est STUBBED ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| ovln:snd | `0` | `OpenSender` | — | **IMPL-SRC** (ABI libounce exacte et objet ISender réel avec queue locale ; vendor `69e90bc9`) | 2026-11-22 |
+| ovln:snd | `0` | `Send` | — | **PARTIEL** (queue locale/overflow/compteur réels ; pont vers ovln:rcv non partagé ; vendor `69e90bc9`) | 2026-11-22 |
 | ovln:snd | `1` | `GetUnreceivedMessageCount` | — | **NULL** (source `sources/eden/src/core/hle/service/psc/ovln/sender.cpp` ; ISender::GetUnreceivedMessageCount est nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | time:m | `0` | `GetUserStaticService` | — | **IMPL-SRC** (SwitchBrew cmd0 retourne IStaticService user ; `GetStaticServiceAsUser` renvoie bien le wrapper `time:u`, écart de nom interne seulement ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
 | time:m | `5` | `GetAdminStaticService` | — | **IMPL-SRC** (SwitchBrew cmd5 retourne IStaticService admin ; `GetStaticServiceAsAdmin` renvoie bien `time:a`, écart de nom interne seulement ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
@@ -5804,8 +5812,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ssl | `1` | `GetOption` | — | **IMPL-SRC** ([source SSL PS5](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2f294bbfaa54440eaf9dafe9cabd2c104ba3a439/encore-active/eden-core/src/core/hle/service/ssl/ssl.cpp) ; relit réellement les quatre options du contexte SSL) | 2026-11-23 |
 | ssl | `2` | `CreateConnection` | — | **IMPL-SRC** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslContext`, ID/nom et corps analysés; fonction source présente, non certifiée PS5) | 2026-11-22 |
 | ssl | `3` | `GetConnectionCount` | — | **IMPL-SRC** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslContext`, ID/nom et corps analysés; fonction source présente, non certifiée PS5) | 2026-11-22 |
-| ssl | `4` | `ImportServerPki` | — | **STUB** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslContext`, ID/nom et corps analysés; succès simulé) | 2026-11-22 |
-| ssl | `5` | `ImportClientPki` | — | **STUB** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslContext`, ID/nom et corps analysés; succès simulé) | 2026-11-22 |
+| ssl | `4` | `ImportServerPki` | — | **D** (ResultNotSupported sans trust-store/PKI context-local ; vendor `b57ce277`) | 2026-11-22 |
+| ssl | `5` | `ImportClientPki` | — | **D** (ResultNotSupported sans backend PKCS#12/client-cert ; vendor `b57ce277`) | 2026-11-22 |
 | ssl | `6` | `RemoveServerPki` | — | **NULL** ([source C++][ns1-src-028]) | 2026-11-22 |
 | ssl | `7` | `RemoveClientPki` | — | **NULL** ([source C++][ns1-src-028]) | 2026-11-22 |
 | ssl | `8` | `RegisterInternalPki` | — | **NULL** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `nullptr`, ID/nom et corps analysés; handler nul) | 2026-11-22 |
@@ -5852,9 +5860,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | csrng | `0` | `GenerateRandomBytes` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `0` | `GetConfig` | — | **PARTIEL** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `1` | `ExpMod` | — | **IMPL-SRC** (ID 1 HOS 23.0.1 = `ModularExponentiate`; alias historique `ExpMod`, même commande. Encore raccorde `SPL::ModularExponentiate` à l'ID 1 sur les interfaces concernées ; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `2` | `GenerateAesKek` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `2` | `GenerateAesKek` | — | **D** (fail-closed SecureMonitorNotImplemented, aucune clé nulle fictive ; vendor `94c61421`) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `3` | `LoadAesKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `4` | `GenerateAesKey` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `4` | `GenerateAesKey` | — | **D** (fail-closed SecureMonitorNotImplemented, aucune clé nulle fictive ; vendor `94c61421`) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `5` | `SetConfig` | — | **D** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `7` | `GenerateRandomBytes` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `9` | `ImportLotusKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |

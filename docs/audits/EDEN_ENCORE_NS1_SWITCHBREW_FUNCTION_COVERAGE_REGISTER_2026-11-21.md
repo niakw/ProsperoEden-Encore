@@ -2811,3 +2811,10 @@ Un fork Eglantine récent possède un vrai `ImportServerPki`, mais il dépend d'
 **Résidu historique désormais prouvé ouvert dans cette famille STUB :** `CanUseApplicationCore` et `GetOperationModeSystemInfo` seulement. Libounce/SwitchBrew confirment leurs ABI, mais pas la sémantique nécessaire pour produire une valeur fidèle ; Encore n'implémente pas davantage `omm` cmd26. Ils restent ouverts plutôt que d'être figés sur des constantes supposées.
 
 Build natif PS5 non déclenché ; aucune validation console revendiquée.
+
+
+### 2026-11-24 — Réconciliation du résidu STUB historique
+
+Les 26 lignes encore marquées STUB dans l'annexe SwitchBrew ont été recroisées avec le runtime actif au vendor `b57ce2770c82aef425bc34e2fed2492f63adfe4d`. 24 étaient des statuts historiques déjà dépassés par les correctifs de la branche : **4 → IMPL-SRC, 7 → PARTIEL, 4 → NOOP, 1 → NULL, 8 → D**. Le résidu STUB réellement prouvé est donc limité à **`CanUseApplicationCore`** et **`GetOperationModeSystemInfo`**. Le premier est bloqué par la règle firmware NPDM→ApplicationCore non documentée ; le second par la sémantique inconnue du `u32` OMM cmd26. Aucun bit/retour supposé n'est introduit. NIM `IShopServiceAsync::Prepare` est reclassé NOOP : les implémentations de compatibilité sans eShop (notamment S2Arm/Ryujinx) acceptent cette préparation sans état distant, tandis que `Request` reste PARTIEL avec son corps JSON de compatibilité.
+
+Cette opération répare le suivi du lot STUB ; elle **ne prétend pas recalculer exhaustivement le pool NULL/PARTIEL/ABI-DIFF**. Build natif PS5 non déclenché ; validation console non revendiquée.

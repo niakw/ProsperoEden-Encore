@@ -2356,6 +2356,30 @@ astc_maintained = active / "eden-core/src/video_core/texture_cache/util.cpp"
 # Preserve the complete R428 source except named 3D-layout/policy changes.
 import hashlib
 astc_previous = astc_maintained.read_text()
+# The PS5 native GOB decoder flag was added only to the maintained
+# texture-cache upload/readback sites. Revert those two exact blocks before
+# replaying the already-qualified R428 ASTC and R312 TIC source hashes.
+native_upload = '''            // Guest-physical image uploads must use the channel's native GOB
+            // layout, exactly like MaxwellDMA, I2M and the Fermi blitter.
+            SwizzleTexture(dst, src, bytes_per_block, num_tiles.width, num_tiles.height,
+                           num_tiles.depth, block.height, block.depth
+#ifdef PS5_NATIVE
+                           , 1, gpu_memory.UsesNativeTiling()
+#endif
+            );'''
+old_upload = '''            SwizzleTexture(dst, src, bytes_per_block, num_tiles.width, num_tiles.height,
+                           num_tiles.depth, block.height, block.depth);'''
+native_download = '''            UnswizzleTexture(dst, src, 1U << bpp_log2, num_tiles.width, num_tiles.height,
+                             num_tiles.depth, block.height, block.depth, stride_alignment
+#ifdef PS5_NATIVE
+                             , gpu_memory.UsesNativeTiling()
+#endif
+            );'''
+old_download = '''            UnswizzleTexture(dst, src, 1U << bpp_log2, num_tiles.width, num_tiles.height,
+                             num_tiles.depth, block.height, block.depth, stride_alignment);'''
+assert astc_previous.count(native_upload) == 1
+assert astc_previous.count(native_download) == 1
+astc_previous = astc_previous.replace(native_upload, old_upload).replace(native_download, old_download)
 # This selected translation unit now includes the native-only R312 texture
 # descriptor guard. Verify its complete semantics, then reverse *only* this
 # reviewed delta before comparing against the pinned R428 ASTC git blob.
@@ -2597,7 +2621,7 @@ else:
           "mesh_source=versioned native_only=1 ns1_baseline=unchanged")
 
 assert reader_maintained.is_file() and not (root / "headless/shader_cache_reader.inc").exists()
-if subprocess.check_output(["git", "-C", str(vendor), "rev-parse", "HEAD"], text=True).strip() in {"1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a"}:
+if subprocess.check_output(["git", "-C", str(vendor), "rev-parse", "HEAD"], text=True).strip() in {"1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570"}:
     check_canonical_git_object(reader_maintained, "4ae7312c2bf0abbd52eefcf2705e6ba2ff410483", "shader cache reader OOM successor")
     oom_delta = b'        // Allocation or prewarm admission failure is not evidence of corruption.\n        // Keep every disk record for the next launch; already admitted work is\n        // drained by the loading owner. Do not turn memory pressure into a cold cache.\n        std::fputs("[Eden Encore] shader cache: allocation failed; file preserved\\n", stderr);\n        return;\n'
     raw = reader_maintained.read_bytes()

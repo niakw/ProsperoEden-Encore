@@ -2978,14 +2978,15 @@ _parallel_translation_reverse = [
         "    ([&] { auto cost = Eden::Performance::VulkanTimer(19); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderPoolReset, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return main_pools.ReleaseContents(); }());\n    auto pipeline{\n        CreateGraphicsPipeline(main_pools, graphics_key, environments.Span(), nullptr, true)};"
     ]
 ]
-# The first historical pair only adds <exception>/<stdexcept>. Earlier
-# reviewed include transforms changed their adjacency, so handle those two
-# standard-library headers structurally and keep every runtime delta below
-# byte-exact.
-_diag_marker = "// ENCORE_PS5_CACHE_DIAG_BEGIN"
-if shader_source.count(_diag_marker) != 1:
-    raise RuntimeError("FC27 Vulkan cache diagnostic include marker drift")
-_prefix, _suffix = shader_source.split(_diag_marker, 1)
+# The first historical pair only adds <exception>/<stdexcept>. Their
+# original adjacency changed as earlier reviewed include transforms evolved.
+# Restrict normalization to the include prefix before namespace Vulkan and
+# insert after the first (top-level) <cstdio>; the PS5 affinity block owns a
+# second <cstdio> later in the same prefix.
+_namespace_marker = "namespace Vulkan {"
+if shader_source.count(_namespace_marker) != 1:
+    raise RuntimeError("FC27 Vulkan namespace anchor drift")
+_prefix, _suffix = shader_source.split(_namespace_marker, 1)
 for _header in ("#include <exception>", "#include <stdexcept>"):
     if _prefix.count(_header) > 1:
         raise RuntimeError(f"duplicate FC27 shader header: {_header}")
@@ -2994,7 +2995,15 @@ _missing_headers = [
     if _header not in _prefix
 ]
 if _missing_headers:
-    shader_source = _prefix + "".join(_header + "\n" for _header in _missing_headers) + _diag_marker + _suffix
+    _cstdio = "#include <cstdio>\n"
+    _first_cstdio = _prefix.find(_cstdio)
+    if _first_cstdio < 0:
+        raise RuntimeError("FC27 shader top-level cstdio include missing")
+    _insert = _first_cstdio + len(_cstdio)
+    _prefix = (_prefix[:_insert] +
+               "".join(_header + "\n" for _header in _missing_headers) +
+               _prefix[_insert:])
+    shader_source = _prefix + _namespace_marker + _suffix
 
 for index, (newer, predecessor) in enumerate(_parallel_translation_reverse):
     if index == 0:

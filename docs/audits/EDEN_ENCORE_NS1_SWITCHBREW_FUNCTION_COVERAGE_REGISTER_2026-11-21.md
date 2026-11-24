@@ -2643,3 +2643,7 @@ Vendor `99879eef9fb743cf2757b2d76f765487db70e337` : IDisplayController cmd5/6/7 
 ### 2026-11-24 — I2C : suppression des sessions matérielles factices
 
 Vendor `3b25cbfba01518d17cf27e4869db986c70d70b82` : `OpenSessionForDev` (0), `OpenSession` (1) et `OpenSession2` (4) ne créent plus un `I2CSession` fictif alors que `HasDevice` / `HasDeviceForDev` annoncent déjà l'absence de matériel. Sans backend I2C Switch sur PS5, ces ouvertures échouent explicitement par `ResultUnknown`; aucune transaction n'est présentée comme exécutée. Les commandes session 10/11/12 deviennent INACCESSIBLE plutôt qu'ABI-DIFF puisque l'interface enfant ne peut plus être obtenue. **Pool restant = 1 573** (1 186 NULL + 35 STUB + 156 PARTIEL + 187 ABI-DIFF + 9 AMBIGU). Build natif et console non lancés.
+
+### 2026-11-24 — HID console six-axis : Start/Stop effectifs
+
+Vendor `a68dd1eb50cc71bffe385baaa54da5dddb0926aa` : cmd301/302 ne sont plus des succès sans effet. `ConsoleSixAxis` conserve maintenant l'ARUID du sampler actif ; `OnUpdate` n'écrit la shared memory que lorsque le contrôleur est activé **et** le sampling démarré pour l'ARUID courant. Stop désactive ce flux, et Unregister/FreeAppletResourceId l'arrête avant de libérer l'applet. Le handle console 4 octets reste opaque dans la documentation publique et n'est pas interprété comme une identité matérielle supplémentaire ; Encore ne possède qu'un capteur console. **Pool restant = 1 571** (1 186 NULL + 33 STUB + 156 PARTIEL + 187 ABI-DIFF + 9 AMBIGU). Build natif/console non lancés.

@@ -25,14 +25,14 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 806 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 806 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 808 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 808 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 726 | 80 | **1 806** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 728 | 80 | **1 808** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 153 | 3 | **156** |
-| **STUB — Stub / résultat simulé** | 35 | 0 | **35** |
+| **STUB — Stub / résultat simulé** | 33 | 0 | **33** |
 | **NOOP — No-op documenté** | 218 | 0 | **218** |
 | **NULL — Handler NULL** | 1 186 | 0 | **1 186** |
 | **D — Rejet explicite / historique** | 224 | 33 | **257** |
@@ -1144,8 +1144,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid | `210` | `EndPermitVibrationSession` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `211` | `IsVibrationDeviceMounted` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `300` | `ActivateConsoleSixAxisSensor` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `301` | `StartConsoleSixAxisSensor` | 3.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `302` | `StopConsoleSixAxisSensor` | 3.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `301` | `StartConsoleSixAxisSensor` | 3.0.0+ | **IMPL-SRC** ([vendor a68dd1eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/a68dd1eb50cc71bffe385baaa54da5dddb0926aa) ; commande raccordée au sampler ConsoleSixAxis réel, état d'échantillonnage lié à l'ARUID et nettoyé au départ de l'applet ; handle opaque conservé/loggé ; PS5 non validé) | 2026-11-24 |
+| hid | `302` | `StopConsoleSixAxisSensor` | 3.0.0+ | **IMPL-SRC** ([vendor a68dd1eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/a68dd1eb50cc71bffe385baaa54da5dddb0926aa) ; commande raccordée au sampler ConsoleSixAxis réel, état d'échantillonnage lié à l'ARUID et nettoyé au départ de l'applet ; handle opaque conservé/loggé ; PS5 non validé) | 2026-11-24 |
 | hid | `303` | `ActivateSevenSixAxisSensor` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `304` | `StartSevenSixAxisSensor` | 5.0.0+ | **IMPL-SRC** ([vendor b1a597f8](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/b1a597f87c6de6f473cc533a0668f4d7d27ee092) ; contrôle aruid et état d'échantillonnage sous mutex, mémoire de transfert retenue et libérée à la finalisation ; PS5 non validé) | 2026-11-24 |
 | hid | `305` | `StopSevenSixAxisSensor` | 5.0.0+ | **IMPL-SRC** ([vendor b1a597f8](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/b1a597f87c6de6f473cc533a0668f4d7d27ee092) ; contrôle aruid et état d'échantillonnage sous mutex, mémoire de transfert retenue et libérée à la finalisation ; PS5 non validé) | 2026-11-24 |

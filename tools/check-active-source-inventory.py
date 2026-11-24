@@ -13,6 +13,28 @@ import hashlib
 
 root = Path(__file__).resolve().parents[1]
 active = root / "vendor/encore-active"
+# November 23 stabilization is a reviewed exact successor, not a new
+# historical F07 baseline. Preserve prior classifications for unchanged owners.
+shipping_vendor = subprocess.check_output(
+    ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+stabilization_trees = {
+    "9632ac089f8b2d89a6856a42e8fb55206cdba1fa": "51c9a38eba78d69893c48db6f3e48a169ea879e3",
+    "b5c6f089a6aecd321d08a40238f3cd502f505b26": "668fb8effa6963be062d780e3bd145a5233d6b7e",
+}
+stabilization_selected = shipping_vendor in stabilization_trees
+stabilization_new_headers = set()
+if stabilization_selected:
+    assert subprocess.check_output(
+        ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
+        text=True).strip() == stabilization_trees[shipping_vendor]
+    # Both new headers are shipping Vulkan inputs, not historical F07 files.
+    for relative, expected in {
+        "eden-vulkan/include/video_core/renderer_vulkan/frame_pacer.h": "c3f6f99dd427fb9fd0acb84bb50ba88dc25d9a89",
+        "eden-vulkan/include/video_core/renderer_vulkan/vk_swapchain.h": "c4df1ab813495b8014e0eda5ed4bcd8fb0be855c",
+    }.items():
+        raw = (active / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
+        stabilization_new_headers.add(relative)
 document = (root / "docs/EDEN_ACTIVE_SOURCE_CATALOG.md").read_text()
 audit = (root / "docs/EDEN_CORE_AUDIT_DEPENDENCIES.md").read_text()
 begin, end = "<!-- ACTIVE_SOURCE_CATALOG_START -->", "<!-- ACTIVE_SOURCE_CATALOG_END -->"
@@ -1361,6 +1383,8 @@ post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
 # The tracker workflow also explicitly tests historical vendor 1ec7b42.
 # Only that known historical checkout (not a missing production TU) may omit it.
 gpu_table_vendor_pin = checked_guest_cache_lock_vendor(subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip())
+if stabilization_selected:
+    gpu_table_vendor_pin = "9db97fb12db1a390d6b2410f0c18333aa31e37da"
 gpu_table_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if gpu_table_vendor_pin in {
     "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else gpu_table_vendor_pin
@@ -1634,6 +1658,14 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
             # each behind an exact full-source SHA and byte-identical predecessor.
             data = (active / path).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+            stabilization_pair_blobs = {
+                "eden-core/overrides/core/gpu_dirty_memory_manager.h": "7769e314fbefeb8393e6d11b115c88bc0a8a0e58",
+                "eden-core/src/video_core/buffer_cache/buffer_cache.h": "7f07e392ea0cc828d862da29d32ada1ebc3966aa",
+                "eden-core/src/video_core/gpu_vulkan.cpp": "f083c985451563dcfe387d1bc61f54bd02ed762e",
+            }
+            if stabilization_selected and path in stabilization_pair_blobs:
+                assert actual == stabilization_pair_blobs[path], ("Stabilization pair owner drift", path, actual)
+                continue
             if path == "eden-core/src/video_core/buffer_cache/buffer_cache.h" and actual == "6aa9754506ee82b4d25a4e36d4f3be646a62456b":
                 successor = "    if (!IsRegionGpuModified(aligned_start, aligned_end - aligned_start)) {\n        // WriteMemory's clean-page branch does exactly this mark. Re-entering\n        // it would scan the same GPU-modified ranges again under the buffer\n        // cache mutex, even though this full-page query already proved that\n        // no GPU-owned sibling bytes need a download.\n        memory_tracker.MarkRegionAsCpuModified(device_addr, size);\n        return;\n    }"
                 predecessor = "    if (!IsRegionGpuModified(aligned_start, aligned_end - aligned_start)) {\n        WriteMemory(device_addr, size);\n        return;\n    }"
@@ -2137,6 +2169,8 @@ post_f07_plaintext_nca_present = {
 } & set(physical_all)
 actual_vendor = subprocess.check_output(
     ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip()
+if stabilization_selected:
+    actual_vendor = "9db97fb12db1a390d6b2410f0c18333aa31e37da"
 
 # Current vendor source additions postdate the immutable 337-path F07
 # catalogue. One exact ledger serves both source inventories.
@@ -2202,7 +2236,7 @@ if actual_vendor in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff
     # These changed C++ owners are not all in the post-F07 path table.
     for relative, digest in {
         "eden-core/src/core/hle/service/sm/sm.h": "7069439e66a6f28ffa56229e08906a21222e2801",
-        "ns2-runtime/process/core/core.cpp": "83fc9a903b05ed9fd096c35102db54a966d736c2",
+        "ns2-runtime/process/core/core.cpp": ("0e0aadb72c8de5bb2c66ce9105b1dd2d381b5f98" if stabilization_selected else "83fc9a903b05ed9fd096c35102db54a966d736c2"),
         "ns2-runtime/am/core/hle/service/am/service/application_functions.cpp": "9bfaa26664361994902d5b7f73d6a41ff0eadb07",
     }.items():
         raw=(active/relative).read_bytes()
@@ -2265,7 +2299,7 @@ else:
     assert not post_f07_plaintext_nca_present
 
 physical = [p for p in physical_all
-            if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | merged_owner_present | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+            if p not in stabilization_new_headers | post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | merged_owner_present | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
             shared_gpu_scalar_owners | shared_gpu_remap_owners |

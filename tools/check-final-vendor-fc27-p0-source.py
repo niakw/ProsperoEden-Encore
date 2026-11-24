@@ -113,8 +113,11 @@ selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
 shipping_vendor_pin = gitlink_vendor_pin
-if actual_vendor_pin == "9632ac089f8b2d89a6856a42e8fb55206cdba1fa":
-    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "51c9a38eba78d69893c48db6f3e48a169ea879e3"
+if actual_vendor_pin in {"9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26"}:
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == {
+        "9632ac089f8b2d89a6856a42e8fb55206cdba1fa": "51c9a38eba78d69893c48db6f3e48a169ea879e3",
+        "b5c6f089a6aecd321d08a40238f3cd502f505b26": "668fb8effa6963be062d780e3bd145a5233d6b7e",
+    }[actual_vendor_pin]
     for relative, expected in {
         "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp": "fc537323bb9f63d70ef5f8cedd65886e6a0099c0",
         "tests/fc27_xmad_pointer_fold_host.py": "3d3f97ec6e3e9d182558908849306d8cc7c4a78e",
@@ -122,6 +125,16 @@ if actual_vendor_pin == "9632ac089f8b2d89a6856a42e8fb55206cdba1fa":
     }.items():
         raw = (V / relative).read_bytes()
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
+if actual_vendor_pin == "b5c6f089a6aecd321d08a40238f3cd502f505b26":
+    for relative, expected in {
+        "sources/eden/src/core/hle/service/am/applet.h": "a8309188928c796d439cd828b756e481f3f6fa2c",
+        "sources/eden/src/core/hle/service/am/event_observer.cpp": "4a132abde4b6e70407b3267ea2298e8a6f0ce239",
+        "sources/eden/src/core/hle/service/am/event_observer.h": "2213d4bac622dc1476a4f1821e2e4fdfe6096acd",
+        "sources/eden/src/core/hle/service/am/process_holder.cpp": "deb72de87cbb46c158a88e84eb2ef5c692079dd7",
+        "sources/eden/src/core/hle/service/am/process_holder.h": "a2df53cbd7c25ed43cdf9cd97f453e65816c7202",
+    }.items():
+        raw = (V / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, ("AM observer owner drift", relative)
 if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f"}:
     if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f"}:
         # A merge commit, but exactly the reviewed 17253dc9 source tree.
@@ -1347,7 +1360,7 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
-    if actual_vendor_pin == "9632ac089f8b2d89a6856a42e8fb55206cdba1fa":
+    if actual_vendor_pin in {"9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26"}:
         translation_drain_exact = {
             "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp": "fc537323bb9f63d70ef5f8cedd65886e6a0099c0",
             "tests/fc27_xmad_pointer_fold_host.py": "3d3f97ec6e3e9d182558908849306d8cc7c4a78e",
@@ -1357,7 +1370,7 @@ def reviewed_blob(relative, expected):
             return translation_drain_exact[relative]
     if actual_vendor_pin in {"44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
         keyed_timing_exact = {
-            "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp": ("ad07512d129667a617b49b448d898c5756c99025" if actual_vendor_pin in {"70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da", "60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa"} else "52470b6160f6049801d963960adf6952c79a45cf"),
+            "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp": ("ad07512d129667a617b49b448d898c5756c99025" if actual_vendor_pin in {"70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da", "60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26"} else "52470b6160f6049801d963960adf6952c79a45cf"),
             "tests/fc27_dynamic_texture_static_sampler_host.py": "b30c6b062108ec3414bfc5a5ff4a6fe9b22be331",
             "tests/fc27_xmad_pointer_fold_host.py": "09e566db7ddd141ef6554a1e0b8f649d7551ed6e",
             "tests/ns1_r23_35_attribute_handle.py": "b6a7c5468048987883b7fa12f8803e193e456c2e",
@@ -1905,12 +1918,12 @@ REVIEWED_PINS.add("fab5ebbfda09ebd3fc414b3127e135c66025ccb8")
 if actual_vendor_pin in {"acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
     for relative, expected in {
         "encore-active/eden-core/src/video_core/shader_environment.cpp":
-            ("2ed48cbbcc9b1c5ee963c78410a6e5caeeafaab1" if actual_vendor_pin in {"70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da", "60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa"} else "253771ae3f57ec04afa4e41ef081f9d730246276"),
+            ("2ed48cbbcc9b1c5ee963c78410a6e5caeeafaab1" if actual_vendor_pin in {"70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da", "60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26"} else "253771ae3f57ec04afa4e41ef081f9d730246276"),
         "encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_pipeline_cache.h":
             "fcf26ecce586e3cedc17abe6d111ee35f76ad705",
         "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp":
             ("ad07512d129667a617b49b448d898c5756c99025"
-             if actual_vendor_pin in {"70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da", "60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa"}
+             if actual_vendor_pin in {"70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da", "60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26"}
              else "52470b6160f6049801d963960adf6952c79a45cf"
              if actual_vendor_pin == "44f5b75bc93bcea146ad6fba3ac294405ae8709b"
              else "b28a190e92ca80b0385148a0b558828353326f12"),
@@ -1930,7 +1943,7 @@ if actual_vendor_pin in {"99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186a
         "integrated VideoOut handoff owner drift", actual)
 if actual_vendor_pin in {"44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
     for relative, expected in {
-            "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp": ("ad07512d129667a617b49b448d898c5756c99025" if actual_vendor_pin in {"70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da", "60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa"} else "52470b6160f6049801d963960adf6952c79a45cf"),
+            "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp": ("ad07512d129667a617b49b448d898c5756c99025" if actual_vendor_pin in {"70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da", "60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26"} else "52470b6160f6049801d963960adf6952c79a45cf"),
             "tests/fc27_dynamic_texture_static_sampler_host.py": "b30c6b062108ec3414bfc5a5ff4a6fe9b22be331",
             "tests/fc27_xmad_pointer_fold_host.py": "09e566db7ddd141ef6554a1e0b8f649d7551ed6e",
             "tests/ns1_r23_35_attribute_handle.py": "b6a7c5468048987883b7fa12f8803e193e456c2e",
@@ -1968,7 +1981,7 @@ REVIEWED_PINS.add("70789b12dea4d72ce9e7f054c5b6f552ec488f5d")
 REVIEWED_PINS.add("9db97fb12db1a390d6b2410f0c18333aa31e37da")
 # Nov23 stabilization successor: runtime shutdown/cache/fidelity plus guest-frame pacing.
 # Seal every changed selected owner exactly; all older audit receipts remain immutable.
-if actual_vendor_pin in {"60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa"}:
+if actual_vendor_pin in {"60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26"}:
     for relative, expected in {
         "encore-active/eden-core/overrides/core/gpu_dirty_memory_manager.h": "7769e314fbefeb8393e6d11b115c88bc0a8a0e58",
         "encore-active/eden-core/src/core/hle/kernel/kernel_dev.cpp": "48c48318f2d6587bc8d7dc4ca7bbe9f73d107c6e",
@@ -1989,18 +2002,18 @@ if actual_vendor_pin in {"60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == expected, ("Nov23 stabilization owner drift", relative, actual)
-    if actual_vendor_pin in {"bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa"}:
+    if actual_vendor_pin in {"bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26"}:
         reviewed_blob("tests/fc27_xmad_pointer_fold_host.py",
                       "11bd172c540b19eeb9a920afb6213c6e95d111f9")
-    if actual_vendor_pin in {"8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa"}:
+    if actual_vendor_pin in {"8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26"}:
         reviewed_blob("tests/fc27_dynamic_texture_static_sampler_host.py",
                       "756534a44355dafa43809ac012ccb69a0de35660")
-    if actual_vendor_pin in {"887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa"}:
+    if actual_vendor_pin in {"887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26"}:
         reviewed_blob("tests/shutdown_teardown_lifetime_source.py",
                       "b15fd52a0a3b5e39d5f80c71b88d7357a81026fb")
         reviewed_blob("tests/shutdown_general_channel_lifetime_source.py",
                       "fee3dfced900d8a7bba70ab6748451db2a2b6e79")
-    if actual_vendor_pin in {"1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa"}:
+    if actual_vendor_pin in {"1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26"}:
         reviewed_blob("tests/ns1_r23_18_tir_host.py", "005280fde5bbd862d64a4def0d17d90a35bbe5e9")
     REVIEWED_PINS.add(actual_vendor_pin)
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()

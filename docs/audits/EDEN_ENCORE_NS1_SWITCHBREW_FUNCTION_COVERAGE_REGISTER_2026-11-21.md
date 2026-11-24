@@ -3348,3 +3348,11 @@ Vendor `f8e15a9c11ed569facf06edce7ca1b77c9c1fd3d` : `caps_u.cpp/.h` deviennent d
 Les movie-read streams 2001–2005 et `OpenAccessorSessionForApplication` sont rejetés explicitement. `PrecheckToCreateContentsByAruid` et `GetAllAlbumFileList3AaeAruid` restent ouverts pour une vraie implémentation.
 
 Croisement 4 853 : **6 NULL → D. Pool restant = 740 / 4 853.** Aucun build PS5 ni validation console revendiqués.
+
+### 2026-11-24 — NOTIF : paramètres d'alarme réellement conservés
+
+Vendor `f9856b407eebd3533ea4687089849887c769240b` : `notif.cpp/.h` deviennent des owners shipping. `NotificationServiceImpl` conserve désormais pour chaque `AlarmSettingId` les octets `application_parameter` et leur taille réelle, les remplace lors d'un update, les restitue lors de `LoadApplicationParameter` et les supprime avec l'alarme. La limite de 8 alarmes corrige aussi l'off-by-one `> MaxAlarms` en `>= MaxAlarms`. L'include `<iterator>` est explicite pour l'indexation par `std::distance`.
+
+Le changement ne prétend pas persister les alarmes entre redémarrages et ne modifie pas le scheduler système encore absent. Il complète strictement le CRUD mémoire déjà exposé par `notif:a` et `notif:s`.
+
+Croisement 4 853 : les commandes 500/510/530 des deux services passent **6 PARTIEL → IMPL-SRC**. **Pool restant = 734 / 4 853.** Aucun build PS5 ni validation console revendiqués.

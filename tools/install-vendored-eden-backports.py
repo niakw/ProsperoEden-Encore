@@ -1006,6 +1006,45 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         print('NS1_CAPS_U_EXACT_POST_BACKPORT_REPLAY_PASS',
               'movie_session_rejections=6', 'remaining_slots=2')
 
+        # NOTIF alarm CRUD keeps the exact application parameter bytes alongside
+        # each AlarmSetting. This removes the previous data-loss TODO without claiming
+        # persistent Horizon scheduling across process restarts.
+        notif_overlays={
+            'src/core/hle/service/glue/notif.cpp': {
+                'before_sha256':'e8a7f633f1ca9e577fe9d7125d490bb32846204ebc65e5b3a2b16fa7da8b2716',
+                'before_bytes':12051,
+                'after_sha256':'76fa32489de5befb16d0dc141c843fd65e0f5de5a78b287232571b356ad50bd7',
+                'after_bytes':12913,
+            },
+            'src/core/hle/service/glue/notif.h': {
+                'before_sha256':'593c6fff73fcbc2b3a27d16d4106dfcea51ea548072b3ec2fc5e5bbc73758d36',
+                'before_bytes':5452,
+                'after_sha256':'149d671724b9a599ecf3df99223015b1f58095063b3c6d24a345ca8cfa6d2b9d',
+                'after_bytes':5627,
+            },
+        }
+        for rel,entry in notif_overlays.items():
+            assert rel not in observed, ('NOTIF unexpectedly changed by frozen replay',rel)
+            assert rel in spec['entries'], ('Missing NOTIF shipping overlay',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], ('NOTIF pinned drift',rel)
+            assert spec['entries'][rel]['upstream']==entry['before_sha256'], rel
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], ('NOTIF active drift',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
+            observed[rel]=spec['entries'][rel]
+        notif_cpp=(ACTIVE/'src/core/hle/service/glue/notif.cpp').read_text()
+        notif_h=(ACTIVE/'src/core/hle/service/glue/notif.h').read_text()
+        assert 'alarms.size() >= MaxAlarms' in notif_cpp
+        assert 'application_parameters.push_back(stored);' in notif_cpp
+        assert 'application_parameters.erase(application_parameters.begin() + index);' in notif_cpp
+        assert 'StoredApplicationParameter' in notif_h
+        assert 'TODO: Save application parameter data' not in notif_cpp
+        assert 'TODO: Read application parameter related to this setting id' not in notif_cpp
+        print('NS1_NOTIF_ALARM_PARAMETER_REPLAY_PASS',
+              'shared_crud=notif_a+notif_s', 'parameter_bytes=preserved')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

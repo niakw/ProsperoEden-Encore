@@ -102,6 +102,7 @@ struct FramebufferConfig {std::uint64_t address{};};
 }
 struct Frame {
     std::uint32_t game{},hud{},index{};
+    std::uint32_t game_frame_presents{1};
     inline static int ready{};
     int* render_ready{&ready};
     struct PresentFence {void Wait(){}void Reset(){}} present_done;
@@ -163,6 +164,7 @@ public:
             hold_cv.wait(lock,[this]{return !hold_copy;});
         }
         std::lock_guard lock{result_mutex};
+        assert(frame->game_frame_presents==1);
         presented.emplace_back(frame->game,frame->hud);
         ++copies;
     }
@@ -217,6 +219,8 @@ static void Deliver(RendererVulkan& renderer,std::uint32_t game,std::uint32_t hu
 }
 int main(){
     PresentManager present{7};
+    // Every reused real frame must discard the previous synthetic pacing count.
+    for(auto& frame:present.frames) frame.game_frame_presents=3;
     RendererVulkan renderer{present};
     // OnFrameDisplayed is a GPU-worker callback, not a swapchain ACK.
     // Hold the real PresentThread's copy while the callback returns.

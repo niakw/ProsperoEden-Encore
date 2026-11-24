@@ -2981,3 +2981,12 @@ Vendor `aea632e0144cb4721a6469300fbdfda7d8d2f3eb` : quatre NULL de l'owner actif
 
 Références croisées : dump firmware NS1 23.0.1, Citron/Eden pour l'état core-usage et la détection QLaunch. **Pool restant = 1 551 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM LibraryAppletAccessor : enfant courant + sortie process réelle
+
+Vendor `0ca719fa2b0c93e5cd77ec2e181f588bef34bc65` : deux slots HOS23 d'`ILibraryAppletAccessor` sont maintenant raccordés au runtime actif.
+
+- Cmd110 `NeedsToExitProcess` suit l'ABI firmware (zéro entrée, bool u8) et retourne l'état réel `LifecycleManager::GetExitRequested() || Process::IsTerminated()`. Cette sémantique recoupe Napple et les chemins `RequestExit`/`Terminate` déjà actifs dans Encore. **1 NULL → IMPL-SRC.**
+- Cmd81 `GetCurrentChildLibraryApplet` suit l'ABI HOS19+ (zéro entrée, interface `IAppletAccessor` en sortie). Encore relit le dernier `child_applets` réel de l'applet, puis l'expose via `IApplicationAccessor`, dont le sous-ensemble de commandes 0/1/10/20/25/30 correspond à l'interface firmware `IAppletAccessor`. En l'absence d'enfant, Encore renvoie provisoirement `ResultUnknown` car le résultat Horizon exact n'est pas documenté : **NULL → PARTIEL**, pas IMPL-SRC complet.
+
+Le header réellement consommé reste `sources/eden/src/core/hle/service/am/service/library_applet_accessor.h` (aucun override header dans le manifeste), tandis que le CPP actif est l'overlay `encore-active/eden-backports`. **Pool restant = 1 550 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

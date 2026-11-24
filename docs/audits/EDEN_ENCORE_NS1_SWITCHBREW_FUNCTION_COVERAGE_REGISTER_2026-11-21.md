@@ -3222,3 +3222,9 @@ Croisement catalogue 4 853 : NIM **56 NULL**, Friends **23 NULL**, ERPT **11 NUL
 
 **Pool restant = 1 019 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — BPC : matériel power/RTC Switch absent rejeté explicitement
+
+Vendor `95313ec1089b64f884abe3106eb2996ff74a5f90` : l'overlay actif `bpc.cpp` ne contient plus aucun slot `nullptr`. Les **34 slots physiques** des interfaces `bpc`, `bpc:r`, `bpc:c`, `bpc:b`, `bpc:w` et `bpc:ams` sont dispatchés vers un rejet explicite commun. Encore ne relaie pas un shutdown/reboot Horizon vers la PS5, ne fabrique pas d'état AC/wakeup/power-button et n'émule pas le RTC matériel ou les timers de réveil Switch.
+
+Croisement avec l'annexe 4 853 et la cible HOS23 : **12 lignes NULL** restent réellement comptées dans le pool (7 `bpc` + 5 `bpc:r`) ; les anciens wakeup-timer/sleep-button sont déjà HORS-VERSION et ne sont pas redécomptés. **12 NULL → D. Pool restant = 1 007 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

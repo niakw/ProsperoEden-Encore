@@ -2062,6 +2062,18 @@ if actual_vendor_pin in {"60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39
         raw = (V / "tests/fc27_deferred_page_protection_host.py").read_bytes()
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == "172989eea550754d8ca19191cb99eb5c08546ab5"
     REVIEWED_PINS.add(actual_vendor_pin)
+if actual_vendor_pin == "042204fde8e5b74aa5048c6213a8af4450d26fe5":
+    # libounce-reviewed direct successor: only decoder lease + GPU worker 213 ABI changed.
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "08ff1d3ef45b03cbe3396079bcb91fa5dce4f160"
+    for relative, expected_blob in {
+        "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp": "64bc5c0728dc023ff2a2793cb424560f36ddcfed",
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "aabe3379c6d2a2961f4725423c11fb149b10d9ea",
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h": "ca001d8f2bf787f01026000199a9bbf4b87f61c2",
+    }.items():
+        raw=(V/relative).read_bytes()
+        actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert actual == expected_blob, ("libounce NS2 successor drift", relative, actual)
+    REVIEWED_PINS.add(actual_vendor_pin)
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

@@ -390,7 +390,13 @@ for kind, name in (("dma", "dma_pusher"), ("puller", "engines/puller")):
         base = expected(kind, dev)
         expected_owner = (apply_reviewed_kepler_bounds(apply_reviewed_native_gpfifo_replay(expected_dma_unified(base))) if not dev else expected_dma_unified(base)) if kind == "dma" else base
         actual_owner = (ACTIVE / path).read_text()
-        if path == "dma_pusher.cpp" and git_blob(actual_owner) == "c24623f5c2aaf1660f818004ff418354c36aacd9":
+        if path == "dma_pusher.cpp" and git_blob(actual_owner) == "a8c95c51445ddafc2b8f42a92099359aae33e836":
+            assert git_blob(expected_owner) == "bf6d179292a749e9be1e89c619803c4700407f90"
+            restored = once(actual_owner, '#include "video_core/host1x/host1x.h"\n', '')
+            begin = restored.index("#ifdef PS5_NATIVE\nbool DmaPusher::ResumeNativeAcquire() {")
+            end = restored.index("void DmaPusher::DispatchCalls()", begin)
+            assert git_blob(restored[:begin] + restored[end:]) == "c24623f5c2aaf1660f818004ff418354c36aacd9"
+        elif path == "dma_pusher.cpp" and git_blob(actual_owner) == "c24623f5c2aaf1660f818004ff418354c36aacd9":
             # fab5ebbf is a reviewed successor after this G20 oracle: pin BOTH
             # complete versions. Exact hashes reject any unrelated source drift.
             assert git_blob(expected_owner) == "bf6d179292a749e9be1e89c619803c4700407f90"

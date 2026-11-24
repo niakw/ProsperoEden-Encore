@@ -55,12 +55,15 @@ cpp = r'''
 #include <cstdio>
 #include <map>
 #include <optional>
+#include <atomic>
+#include <memory>
+#include <new>
 #include "core/hle/service/nvdrv/devices/native_gpu_submission.h"
 using u32 = std::uint32_t;
 using Service::Nvidia::Devices::PlanNativeSubmission;
 using Service::Nvidia::Devices::NativeSubmissionPlan;
 namespace Kernel { struct KProcess { int identity{}; }; }
-enum class NvResult { Success, BadParameter, InvalidState, NotImplemented };
+enum class NvResult { Success, BadParameter, InvalidState, NotImplemented, InsufficientMemory };
 struct SubmissionFlags {
     u32 raw{};
     struct FenceWait {
@@ -69,12 +72,18 @@ struct SubmissionFlags {
     } fence_wait{};
 };
 struct Fence { u32 id{}; u32 value{}; };
+namespace Tegra {
+struct NativeSyncpointWait {u32 id,threshold; std::shared_ptr<const std::atomic<bool>> lease;};
+struct Entries {std::optional<NativeSyncpointWait> native_syncpoint_wait;};
+}
 struct SyncpointManager {
-    bool satisfied{};
-    // Model only the live native channel syncpoint, never trust an arbitrary
-    // guest-provided fence ID. The extracted C++ owner must reject 0/99.
-    bool IsSyncpointAllocated(u32 id) const { return id == 1; }
-    bool IsFenceSignalled(const Fence&) const { return satisfied; }
+    bool fail{};
+    std::shared_ptr<std::atomic<bool>> lease=std::make_shared<std::atomic<bool>>(true);
+    std::shared_ptr<const std::atomic<bool>> CaptureNativeSyncpointLease(u32 id) {
+        if(id!=1) return {};
+        if(fail) throw std::bad_alloc{};
+        return lease;
+    }
 };
 struct Params { SubmissionFlags flags{}; Fence fence{}; };
 struct Session { const Kernel::KProcess* process{}; };
@@ -93,9 +102,12 @@ struct Gpu {
     SessionRegistry core;
     SyncpointManager syncpoint_manager;
     unsigned initializations{}, binds{}, enqueues{}, reservations{};
+    std::optional<Tegra::NativeSyncpointWait> submitted_wait;
     bool UsesNativeAbi(int) const { return native; }
     NvResult Submit(Params& params,int fd) {
+        Tegra::Entries entries{};
 __ADMISSION__
+        submitted_wait=entries.native_syncpoint_wait;
         ++initializations;
         if (native) ++binds;
         ++reservations;
@@ -146,9 +158,10 @@ int main() {
     gpu.native_channel_enabled=false;
     denied(0x102,3,NvResult::InvalidState); // disabled native channel fails closed
     gpu.native_channel_enabled=true;
-    // Execute the newly integrated REAL owner wait admission: no fake
-    // native queue publication when the input syncpoint is unsatisfied.
-    denied(0x1,7,NvResult::NotImplemented);
+    // Allocation failure and invalid reservation must precede publication.
+    gpu.syncpoint_manager.fail=true;
+    denied(0x1,7,NvResult::InsufficientMemory);
+    gpu.syncpoint_manager.fail=false;
     Params invalid_syncpoint{{0x1,{true}},{99,7}};
     assert(gpu.Submit(invalid_syncpoint,42)==NvResult::BadParameter);
     assert(gpu.initializations==0 && gpu.binds==0 &&
@@ -159,10 +172,11 @@ int main() {
            gpu.reservations==1 && gpu.enqueues==1);
     const auto plan=PlanNativeSubmission(valid.flags.raw,valid.fence.value,true);
     assert(plan && plan->increment_total==66 && plan->completion_count==64);
-    // Signalled input fence is admitted without a synthetic wait packet.
-    gpu.syncpoint_manager.satisfied=true;
+    // An unsatisfied wait is admitted as host-only metadata, not a guest command.
     Params ready{{0x1,{true}},{1,7}};
     assert(gpu.Submit(ready,42)==NvResult::Success);
+    assert(gpu.submitted_wait && gpu.submitted_wait->id==1 &&
+           gpu.submitted_wait->threshold==7 && gpu.submitted_wait->lease==gpu.syncpoint_manager.lease);
     assert(gpu.initializations==2 && gpu.binds==2 &&
            gpu.reservations==2 && gpu.enqueues==2);
     Gpu maxwell;
@@ -172,7 +186,7 @@ int main() {
     assert(maxwell.initializations==1 && maxwell.binds==0 &&
            maxwell.reservations==1 && maxwell.enqueues==1);
     std::puts("P2_7_GPFIFO_PREINIT_NATIVE_REJECTION_PASS flags=4 foreign_fd=1 "
-              "retired_fd=1 max_completion=64 ns1_unchanged=1 native_wait_refused=1 bad_syncpoint=1 signalled_wait=1 channel_disable=1 unallocated_submit=1");
+              "retired_fd=1 max_completion=64 ns1_unchanged=1 native_wait_queued=1 bad_syncpoint=1 lease_oom=1 channel_disable=1 unallocated_submit=1");
 }
 '''.replace("__ADMISSION__", admission)
 includes = ROOT / "vendor/encore-active/ns2-runtime/hle"
@@ -200,3 +214,102 @@ with tempfile.TemporaryDirectory(prefix="encore-native-preinit-") as temp:
             assert result.returncode==0,(compiler,opt,result.stderr[-4000:])
             print(compiler,opt,result.stdout.strip(),flush=True)
 print("P2_7_GPFIFO_PREFLIGHT_HOST_ALL_PASS",flush=True)
+
+# Execute the production lease retirement and pusher wait code, not a copy
+# of the predicate. Host and guest counters deliberately diverge.
+sync_src=(ROOT/"vendor/encore-active/eden-sync/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp").read_text()
+lease_code=sync_src[ sync_src.index("void SyncpointManager::FreeSyncpoint("):sync_src.index("bool SyncpointManager::IsSyncpointAllocated(")]
+dma_src=(ROOT/"vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp").read_text()
+resume_code=dma_src[dma_src.index("bool DmaPusher::ResumeNativeAcquire() {"):dma_src.index("#endif\n\nvoid DmaPusher::DispatchCalls()")]
+wait_cpp=r'''
+#include <atomic>
+#include <cassert>
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <queue>
+#include <stdexcept>
+#include <functional>
+#include <array>
+using u32=std::uint32_t;
+#define ASSERT(x) assert(x)
+struct SyncpointManager {
+    static constexpr unsigned SyncpointCount=192;
+    struct Info {bool reserved{}; std::shared_ptr<std::atomic<bool>> native_wait_lease;};
+    std::array<Info,SyncpointCount> syncpoints{};
+    std::mutex reservation_lock;
+    void FreeSyncpoint(u32 id);
+    std::shared_ptr<const std::atomic<bool>> CaptureNativeSyncpointLease(u32 id);
+};
+__LEASE__
+struct Counter {
+    u32 host{},guest{};
+    std::function<void()> on_read;
+    u32 GetHostSyncpointValue(u32 id) {assert(id==1); if(on_read) on_read(); return host;}
+};
+struct Host {Counter counter; Counter& GetSyncpointManager(){return counter;}};
+struct System {Host h; Host& Host1x(){return h;}};
+struct Channel {};
+namespace Service::Nvidia::Devices {
+struct NativeGpuChannelRegistry {
+    static NativeGpuChannelRegistry& Instance(){static NativeGpuChannelRegistry r;return r;}
+    bool IsNative(Channel*){return true;}
+};
+}
+struct Rasterizer {unsigned polls{};void ReleaseFences(bool force){assert(!force);++polls;}};
+struct DmaPusher;
+struct Puller {bool ready=true;bool ResumeNativeAcquire(DmaPusher&){return ready;}};
+struct Wait {u32 id,threshold;std::shared_ptr<const std::atomic<bool>> lease;};
+struct List {std::optional<Wait> native_syncpoint_wait;};
+struct DmaPusher {
+    Puller puller;std::queue<List> dma_pushbuffer;Channel channel_state;
+    System system;Rasterizer raster;Rasterizer* rasterizer=&raster;
+    bool ResumeNativeAcquire();
+};
+__RESUME__
+int main(){
+    SyncpointManager m;
+    assert(!m.CaptureNativeSyncpointLease(0));
+    assert(!m.CaptureNativeSyncpointLease(1));
+    m.syncpoints[1].reserved=true;
+    auto old=m.CaptureNativeSyncpointLease(1);
+    assert(old && old==m.CaptureNativeSyncpointLease(1));
+    DmaPusher d;
+    d.dma_pushbuffer.push({Wait{1,7,old}});
+    d.system.h.counter.guest=99; d.system.h.counter.host=6;
+    assert(!d.ResumeNativeAcquire() && d.raster.polls==1);
+    d.puller.ready=false;
+    assert(!d.ResumeNativeAcquire() && d.raster.polls==1);
+    d.puller.ready=true;d.system.h.counter.host=7;
+    assert(d.ResumeNativeAcquire() && d.raster.polls==2);
+    assert(d.ResumeNativeAcquire() && d.raster.polls==2);
+    d.dma_pushbuffer.pop();
+    d.dma_pushbuffer.push({Wait{1,0,old}});
+    d.system.h.counter.host=0xffffffffu;
+    assert(!d.ResumeNativeAcquire());
+    d.system.h.counter.host=0;
+    assert(d.ResumeNativeAcquire());
+    d.dma_pushbuffer.pop();
+    d.dma_pushbuffer.push({Wait{1,9,old}});
+    m.FreeSyncpoint(1); m.syncpoints[1].reserved=true;
+    auto fresh=m.CaptureNativeSyncpointLease(1);
+    assert(fresh && fresh!=old && !old->load() && fresh->load());
+    try {d.ResumeNativeAcquire();assert(false);} catch(const std::runtime_error&){}
+    d.dma_pushbuffer.pop();
+    d.dma_pushbuffer.push({Wait{1,9,fresh}});
+    d.system.h.counter.host=9;
+    d.system.h.counter.on_read=[&]{m.FreeSyncpoint(1);};
+    try {d.ResumeNativeAcquire();assert(false);} catch(const std::runtime_error&){}
+    return 0;
+}
+'''.replace("__LEASE__",lease_code).replace("__RESUME__",resume_code)
+with tempfile.TemporaryDirectory(prefix="encore-native-wait-") as temp:
+    source=Path(temp)/"wait.cpp"
+    source.write_text(wait_cpp)
+    for compiler in ("clang++","g++"):
+        for opt in ("-O0","-O2"):
+            output=Path(temp)/"wait"
+            subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror","-fsanitize=undefined","-fno-sanitize-recover=all",str(source),"-o",str(output)],check=True,env=env,timeout=80)
+            subprocess.run([str(output)],check=True,env=env,timeout=30)
+            print(compiler,opt,"NATIVE_GPFIFO_HOST_FENCE_LEASE_PASS",flush=True)

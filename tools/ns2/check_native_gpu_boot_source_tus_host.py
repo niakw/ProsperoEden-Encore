@@ -7,7 +7,7 @@ rendering, link the console app, or authorize the runtime release flags.
 from pathlib import Path
 import os, subprocess, shutil, sys, tempfile
 r=Path(__file__).resolve().parents[2];deps=r/'vendor/sources/eden-cpm';sdk15=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk');sdk26=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk');env=os.environ.copy();env['SDKROOT']=str(sdk15)
-inc=['vendor/encore-active/eden-core/overrides/native-tiling','vendor/encore-active/ns2-runtime/kernel_wait64','vendor/encore-active/ns2-runtime/gpu_access_svc','vendor/encore-active/ns2-runtime/gpu_dispatch','vendor/encore-active/ns2-runtime/nvdrv_gpu','vendor/encore-active/ns2-runtime/nvdrv_as','vendor/encore-active/ns2-runtime/gpu_session','vendor/encore-active/ns2-runtime/graphics_supervisor','vendor/encore-active/ns2-runtime/video_decoder','vendor/encore-active/ns2-runtime/self_controller','vendor/encore-active/ns2-runtime/hle','vendor/encore-active/ns2-runtime/nvdrv','vendor/encore-active/ns2-runtime/ampere','vendor/encore-active/ns2-helpers/include','vendor/sources/eden/src','vendor/sources/fmt/include','vendor/sources/eden/src/dynarmic/src']
+inc=['vendor/encore-active/eden-sync/overrides/h05-syncpoint','vendor/encore-active/eden-core/overrides/native-tiling','vendor/encore-active/ns2-runtime/kernel_wait64','vendor/encore-active/ns2-runtime/gpu_access_svc','vendor/encore-active/ns2-runtime/gpu_dispatch','vendor/encore-active/ns2-runtime/nvdrv_gpu','vendor/encore-active/ns2-runtime/nvdrv_as','vendor/encore-active/ns2-runtime/gpu_session','vendor/encore-active/ns2-runtime/graphics_supervisor','vendor/encore-active/ns2-runtime/video_decoder','vendor/encore-active/ns2-runtime/self_controller','vendor/encore-active/ns2-runtime/hle','vendor/encore-active/ns2-runtime/nvdrv','vendor/encore-active/ns2-runtime/ampere','vendor/encore-active/ns2-helpers/include','vendor/sources/eden/src','vendor/sources/fmt/include','vendor/sources/eden/src/dynarmic/src']
 # Match the one maintained IOCTL header staged into the native CMake include
 # overlay. The pinned Eden header lacks the InputCapacity template signature.
 ioctl=r/'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
@@ -141,8 +141,8 @@ dma_header = r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pus
 def git_blob(path):
     raw=path.read_bytes()
     return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-assert git_blob(dma_owner) == 'c24623f5c2aaf1660f818004ff418354c36aacd9'
-assert git_blob(dma_header) == '8cdac916355c715c554682cc29c48ce4e1b21c69'
+assert git_blob(dma_owner) == 'a8c95c51445ddafc2b8f42a92099359aae33e836'
+assert git_blob(dma_header) == '7965c196bff1364f64e747f152bcc314b1db3658'
 dma_text=dma_owner.read_text()
 dma_header_text=dma_header.read_text()
 for token in (

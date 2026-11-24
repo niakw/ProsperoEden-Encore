@@ -31,10 +31,10 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 |---|---:|---:|---:|
 | **IMPL-SRC — Implémentation source retrouvée** | 1 736 | 80 | **1 816** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 165 | 3 | **168** |
+| **PARTIEL — Implémentation partielle** | 169 | 3 | **172** |
 | **STUB — Stub / résultat simulé** | 2 | 0 | **2** |
 | **NOOP — No-op documenté** | 222 | 0 | **222** |
-| **NULL — Handler NULL** | 1 173 | 0 | **1 173** |
+| **NULL — Handler NULL** | 1 169 | 0 | **1 169** |
 | **D — Rejet explicite / historique** | 241 | 33 | **274** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 199 | 0 | **199** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1657,11 +1657,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `20` | `GetApplicationFunctions` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/application_proxy.cpp)) | 2026-11-22 |
 | appletAE | `1` | `PopLaunchParameter` | — | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `10` | `CreateApplicationAndPushAndRequestToStart` | — | **IMPL-SRC** (IStorage poussé dans le user channel puis délégation au cmd12 ; rollback du push en cas d'échec ; vendor `54f03c30`) | 2026-11-24 |
-| appletAE | `11` | `CreateApplicationAndPushAndRequestToStartForQuest` | 3.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `11` | `CreateApplicationAndPushAndRequestToStartForQuest` | 3.0.0+ | **PARTIEL** (lancement réel + user-channel storage réutilisé ; deux attributs Quest u32 consommé mais politique kiosk/volume non appliquée ; vendor `230caf1f`) | 2026-11-24 |
 | appletAE | `12` | `CreateApplicationAndRequestToStart` | 4.0.0+ | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `13` | `CreateApplicationAndRequestToStartForQuest` | 4.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `14` | `CreateApplicationWithAttributeAndPushAndRequestToStartForQuest` | 7.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `15` | `CreateApplicationWithAttributeAndRequestToStartForQuest` | 7.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `13` | `CreateApplicationAndRequestToStartForQuest` | 4.0.0+ | **PARTIEL** (lancement réel réutilisé ; deux attributs Quest u32 consommé mais politique kiosk/volume non appliquée ; vendor `230caf1f`) | 2026-11-24 |
+| appletAE | `14` | `CreateApplicationWithAttributeAndPushAndRequestToStartForQuest` | 7.0.0+ | **PARTIEL** (lancement réel + user-channel storage réutilisé ; buffer AppletApplicationAttribute 0x20 consommé mais politique kiosk/volume non appliquée ; vendor `230caf1f`) | 2026-11-24 |
+| appletAE | `15` | `CreateApplicationWithAttributeAndRequestToStartForQuest` | 7.0.0+ | **PARTIEL** (lancement réel réutilisé ; buffer AppletApplicationAttribute 0x20 consommé mais politique kiosk/volume non appliquée ; vendor `230caf1f`) | 2026-11-24 |
 | appletAE | `20` | `EnsureSaveData` | — | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `21` | `GetDesiredLanguage` | — | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `22` | `SetTerminateResult` | — | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
@@ -6643,3 +6643,10 @@ Les acquisitions shared-buffer modernes 22/24/26 restent le chemin fonctionnel E
 Vendor `f48a197733474dd1b12400eec775a88e9f89828f` : les commandes 11/13/15 `Release*CaptureBuffer` renvoyaient `Success` alors que, sur HOS 23, les acquisitions legacy 10/12/14/16/17/18 échouent et aucun état « acquired » ne peut être établi. SwitchBrew documente que la release échoue lorsque son état est déjà nul ; Ryujinx identifie le résultat comme **AM description 504, BufferNotAcquired**. Encore définit désormais `ResultBufferNotAcquired{ErrorModule::AM, 504}` et l'utilise pour ces trois releases. **3 IMPL-SRC → D.**
 
 Les commandes shared-buffer modernes 22–27 restent indépendantes et ne sont pas affectées. Aucun build natif PS5 ni résultat console revendiqué.
+
+
+### 2026-11-24 — AM application : variantes Quest raccordées au launcher actif
+
+Vendor `230caf1fd48d5f03c9dbdab77178a12c6738a65e` : les commandes 11/13/14/15 de `IApplicationFunctions` ne sont plus NULL. Libnx confirme leurs ABI : 11/13 ajoutent deux champs Quest `u32`; 14/15 utilisent un buffer `AppletApplicationAttribute` de 0x20 octets, et 11/14 transportent aussi le `IStorage` user-channel. Encore réutilise désormais les chemins réels cmd10/cmd12 : le storage est réellement empilé et rollbacké si le relaunch échoue, et l'ApplicationId suit les mêmes vérifications de base-title/program-index. Les attributs Quest (timers inconnus et volume) sont consommés mais ne pilotent pas encore une politique kiosk/audio du frontend PS5. **4 NULL → PARTIEL.**
+
+Le correctif vise l'overlay réellement sélectionné `encore-active/eden-backports/src/core/hle/service/am/service/application_functions.*` et son manifeste a été recalculé. Aucun build natif PS5 ni résultat console revendiqué.

@@ -2886,3 +2886,10 @@ Les acquisitions shared-buffer modernes 22/24/26 restent le chemin fonctionnel E
 Vendor `f48a197733474dd1b12400eec775a88e9f89828f` : les commandes 11/13/15 `Release*CaptureBuffer` renvoyaient `Success` alors que, sur HOS 23, les acquisitions legacy 10/12/14/16/17/18 échouent et aucun état « acquired » ne peut être établi. SwitchBrew documente que la release échoue lorsque son état est déjà nul ; Ryujinx identifie le résultat comme **AM description 504, BufferNotAcquired**. Encore définit désormais `ResultBufferNotAcquired{ErrorModule::AM, 504}` et l'utilise pour ces trois releases. **3 IMPL-SRC → D.**
 
 Les commandes shared-buffer modernes 22–27 restent indépendantes et ne sont pas affectées. Aucun build natif PS5 ni résultat console revendiqué.
+
+
+### 2026-11-24 — AM application : variantes Quest raccordées au launcher actif
+
+Vendor `230caf1fd48d5f03c9dbdab77178a12c6738a65e` : les commandes 11/13/14/15 de `IApplicationFunctions` ne sont plus NULL. Libnx confirme leurs ABI : 11/13 ajoutent deux champs Quest `u32`; 14/15 utilisent un buffer `AppletApplicationAttribute` de 0x20 octets, et 11/14 transportent aussi le `IStorage` user-channel. Encore réutilise désormais les chemins réels cmd10/cmd12 : le storage est réellement empilé et rollbacké si le relaunch échoue, et l'ApplicationId suit les mêmes vérifications de base-title/program-index. Les attributs Quest (timers inconnus et volume) sont consommés mais ne pilotent pas encore une politique kiosk/audio du frontend PS5. **4 NULL → PARTIEL.**
+
+Le correctif vise l'overlay réellement sélectionné `encore-active/eden-backports/src/core/hle/service/am/service/application_functions.*` et son manifeste a été recalculé. Aucun build natif PS5 ni résultat console revendiqué.

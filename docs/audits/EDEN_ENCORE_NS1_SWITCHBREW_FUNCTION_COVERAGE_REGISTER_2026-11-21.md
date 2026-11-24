@@ -2951,3 +2951,11 @@ Vendor `5fa1a189b96500929514986a86d2926fe2ff9f5c`.
 
 Le **pool global reste 1 557 / 4 853**. Les quatre owners AM ciblés ont maintenant **9 slots `nullptr` physiques**, dont **8 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM Overlay : Nintendo logo + startup movie depuis la partition Logo réelle
+
+Vendor `694561edac085c49be40022a574d9e6481bb5448` : les commandes HOS18+ `IOverlayFunctions::GetApplicationNintendoLogo` (cmd40) et `GetApplicationStartupMovie` (cmd41) sont raccordées au contenu installé réel. Le dump IPC NS1 23.0.1 confirme pour chacune **0 entrée + buffer out type 6 + sortie u64 taille**. Encore résout l'ApplicationId avec la même identité que `GetApplicationIdForLogo`, ouvre le Program NCA via le `ContentProviderUnion` (avec repli base-title si nécessaire), puis lit respectivement `NintendoLogo.png` et `StartupMovie.gif` dans la partition Logo. Le buffer invité est borné avant copie ; absence de programme, partition, fichier ou capacité suffisante retourne une erreur au lieu d'un succès vide.
+
+Ces ressources sont déjà les sources de vérité utilisées par `AppLoader_NCA::ReadLogo` / `ReadBanner` et par NS `GetApplicationLogoData`. **2 NULL → IMPL-SRC.**
+
+**Pool restant = 1 555 / 4 853.** Dans les quatre owners AM ciblés, il reste **7 slots `nullptr` physiques**, dont **6 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build natif PS5 ni validation console revendiqués.
+

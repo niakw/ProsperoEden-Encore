@@ -91,6 +91,13 @@ def normalize_g21_shutdown_source(filename: str, source: str) -> tuple[str, bool
     if filename not in OLD:
         raise AssertionError(("Unrecognized G21 source owner", filename))
     current = git_blob(source)
+    # 65112443: reverse the exact empty-gather fast path on the audit copy.
+    if filename == "gpu_vulkan.cpp" and current == "f083c985451563dcfe387d1bc61f54bd02ed762e":
+        fast_path = "#if defined(PS5_NATIVE)\n        // Maxwell issues this barrier very frequently, including frames with\n        // no guest CPU writes. Avoid allocating a vector/function and taking\n        // every dirty-manager gather lock when no manager can contribute.\n        // A Collect racing after this acquire load is ordered after this\n        // barrier and remains visible to the next invalidation.\n        bool may_have_pending = false;\n        for (const auto& manager : system.GetGPUDirtyMemoryManager()) {\n            if (manager.MayHavePending()) {\n                may_have_pending = true;\n                break;\n            }\n        }\n        if (!may_have_pending) {\n            return;\n        }\n#endif\n"
+        assert source.count(fast_path) == 1, "Reviewed empty gather delta drift"
+        source = source.replace(fast_path, "", 1)
+        current = git_blob(source)
+        assert current == "90b8f8c99878b21558b3996e8b1e95a5fc6ad9a6", ("GPU dirty gather predecessor drift", current)
     if filename == "gpu_vulkan.cpp" and current == VULKAN_LIFETIME_CURRENT:
         for newer, older in VULKAN_LIFETIME_REVERSE:
             assert source.count(newer) == 1, ("Vulkan lifetime owner drift", newer[:100])

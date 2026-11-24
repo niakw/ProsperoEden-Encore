@@ -12,7 +12,9 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-SOURCE=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_present_manager.cpp").read_text()
+SOURCE=(ROOT/"headless/vulkan_present_manager_ps5.cpp").read_text()
+cmake=(ROOT/"headless/vulkan.cmake").read_text()
+assert 'configure_file("${EDEN_PORT_DIR}/vulkan_present_manager_ps5.cpp"' in cmake
 GEN=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 CI=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 start=SOURCE.index("Frame* PresentManager::GetRenderFrame() {")
@@ -26,7 +28,9 @@ assert sync.index("free_queue.push_back(frame);") < sync.index("free_cv.notify_o
 assert "wake_free_waiter = free_waiters != 0;" in sync
 assert "if (wake_free_waiter) free_cv.notify_one();" in sync
 assert "std::scoped_lock lock{free_mutex};" in sync
-assert "free_cv.wait(lock, [this] { return present_failure || !free_queue.empty(); });" in METHODS
+assert "free_cv.wait_for(lock, std::chrono::milliseconds(10));" in METHODS
+assert "while (!present_failure && free_queue.empty() && !::Eden::PeekGpuFailure())" in METHODS
+assert "frame->game_frame_presents = 1;" in METHODS
 assert "std::unique_lock lock{queue_mutex};" in METHODS
 assert "Synchronous presentation must publish its recycled frame" in GEN
 assert "python3 -B tools/check-vulkan-sync-recycle-host.py" in CI
@@ -37,6 +41,8 @@ CPP=r"""
 #include <chrono>
 #include <condition_variable>
 #include <cstddef>
+#include <cstdint>
+#include "gpu_failure.h"
 #include <deque>
 #include <exception>
 #include <functional>
@@ -45,7 +51,9 @@ CPP=r"""
 #include <thread>
 #include <utility>
 #include <vector>
-namespace vk { using CommandBuffer=int; }
+using VkResult=int;
+constexpr VkResult VK_SUCCESS=0,VK_TIMEOUT=2,VK_ERROR_DEVICE_LOST=-4;
+namespace vk { using CommandBuffer=int; void Check(VkResult r){if(r!=VK_SUCCESS)throw std::runtime_error("fence failure");} }
 namespace Eden::Performance {
 inline constexpr int gpu_present_wait=0;
 inline constexpr int gpu_present_free_wait=1;
@@ -53,9 +61,11 @@ inline constexpr int gpu_present_fence_wait=2;
 struct DiagnosticTimer { explicit DiagnosticTimer(int) {} };
 }
 struct Frame {
+    std::uint32_t game_frame_presents{3};
     struct Fence {
         unsigned waits=0, resets=0;
-        void Wait() { ++waits; }
+        VkResult result=VK_SUCCESS;
+        VkResult Wait(std::uint64_t) { ++waits; return result; }
         void Reset() { ++resets; }
     } present_done;
 };
@@ -63,12 +73,16 @@ struct CheckedMutex {
     std::mutex mutex;
     std::atomic<bool> locked{false};
     std::atomic<unsigned> locks{0};
+    inline static thread_local const CheckedMutex* owned=nullptr;
     void lock() {
         mutex.lock();
+        owned=this;
         locked.store(true);
         locks.fetch_add(1);
     }
     void unlock() {
+        assert(owned==this);
+        owned=nullptr;
         locked.store(false);
         mutex.unlock();
     }
@@ -77,10 +91,10 @@ struct CheckedFrames {
     CheckedMutex* gate=nullptr;
     std::deque<Frame*> items;
     bool empty() const { return items.empty(); }
-    Frame* front() { assert(gate->locked.load()); return items.front(); }
-    void pop_front() { assert(gate->locked.load()); items.pop_front(); }
+    Frame* front() { assert(CheckedMutex::owned==gate); return items.front(); }
+    void pop_front() { assert(CheckedMutex::owned==gate); items.pop_front(); }
     void push_back(Frame* frame) {
-        assert(gate->locked.load() && "free_queue writer must own free_mutex");
+        assert(CheckedMutex::owned==gate && "free_queue writer must own free_mutex");
         items.push_back(frame);
     }
 };
@@ -88,9 +102,9 @@ struct FreeCV {
     std::condition_variable_any condition;
     std::atomic<bool> entered{false};
     std::atomic<unsigned> notifications{0};
-    template <class Lock, class Predicate> void wait(Lock& lock, Predicate&& pred) {
+    template <class Lock, class Duration> void wait_for(Lock& lock, Duration duration) {
         entered.store(true);
-        condition.wait(lock, std::forward<Predicate>(pred));
+        condition.wait_for(lock, duration);
     }
     void notify_one() { ++notifications; condition.notify_one(); }
 };
@@ -123,7 +137,7 @@ struct PresentManager {
     std::exception_ptr present_failure;
     Scheduler scheduler;
     void CopyToSwapchain(Frame*) {
-        assert(!free_mutex.locked.load() && "no free mutex during GPU copy");
+        assert(CheckedMutex::owned!=&free_mutex && "copy caller must not hold free mutex");
         ++copies;
         if (throw_copy) throw std::runtime_error("native copy failed");
     }
@@ -138,16 +152,14 @@ int main() {
         std::atomic<Frame*> received{nullptr};
         std::thread waiter([&] { received.store(p.GetRenderFrame()); });
         const auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(4);
-        // The waiter publishes entered just before condition_variable_any
-        // releases free_mutex. Observe both events, not just the flag.
-        while ((!p.free_cv.entered.load() || p.free_mutex.locked.load()) &&
-               std::chrono::steady_clock::now()<deadline)
+        // Present acquires the same mutex; timed wakes do not invalidate the handshake.
+        while (!p.free_cv.entered.load() && std::chrono::steady_clock::now()<deadline)
             std::this_thread::yield();
-        assert(p.free_cv.entered.load() && !p.free_mutex.locked.load());
+        assert(p.free_cv.entered.load());
         p.Present(&frame);
         waiter.join();
         assert(received.load()==&frame && frame.present_done.waits==1);
-        assert(frame.present_done.resets==1 && p.scheduler.drains==1);
+        assert(frame.game_frame_presents==1 && frame.present_done.resets==1 && p.scheduler.drains==1);
         assert(p.copies==1 && p.free_cv.notifications.load()==1);
         assert(p.present_ready_cv.notifications.load()==0);
         assert(p.free_waiters==0);
@@ -161,6 +173,15 @@ int main() {
         try { p.Present(&frame); } catch (const std::runtime_error&) { threw=true; }
         assert(threw && p.scheduler.drains==1 && p.copies==1);
         assert(p.free_queue.empty() && p.free_cv.notifications.load()==0);
+    }
+    {
+        PresentManager p(false);
+        Frame frame;
+        frame.present_done.result=VK_ERROR_DEVICE_LOST;
+        p.Present(&frame);
+        bool threw=false;
+        try { p.GetRenderFrame(); } catch (const std::runtime_error&) { threw=true; }
+        assert(threw && frame.present_done.resets==0 && frame.game_frame_presents==3 && p.free_queue.empty());
     }
     {
         PresentManager p(true);
@@ -185,7 +206,7 @@ with tempfile.TemporaryDirectory(prefix="encore-sync-present-recycle-") as tmp:
     compile_result=subprocess.run(
         [compiler,"-std=c++20","-O1","-Wall","-Wextra","-Werror",
          "-pthread","-fsanitize=address,undefined",
-         "-fno-sanitize-recover=all",str(src),"-o",str(exe)],
+         "-fno-sanitize-recover=all","-I",str(ROOT/"headless"),str(src),"-o",str(exe)],
         capture_output=True,text=True,timeout=80)
     assert compile_result.returncode==0, (
         compile_result.returncode,compile_result.stderr[-4000:])

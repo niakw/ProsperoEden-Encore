@@ -4,6 +4,41 @@ from pathlib import Path
 import subprocess
 import tempfile
 
+
+# 942c51be: exact service-owner lifetime successor, reversed only in the
+# historical G19 oracle. The real kernel retains refused service owners.
+import hashlib
+
+def git_blob(source):
+    raw = source.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+
+G19_SHUTDOWN_RECEIPTS = {
+    "kernel_standard.cpp": ("6ca8f7a848a2c39cba906374049b55badf418d46", "b5f280799b71dd3946f480329412aa98cfb14d56", (
+        ("            std::scoped_lock lk{server_lock};\n            services_closing = true;\n            closing_managers.swap(server_managers);\n            for (auto& refused : refused_servers) {\n                closing_managers.emplace_back(std::move(refused));\n            }\n            refused_servers.clear();\n        }\n        for (auto& manager : closing_managers) manager->RequestStop();\n        closing_managers.clear();", "            std::scoped_lock lk{server_lock};\n            services_closing = true;\n            closing_managers.swap(server_managers);\n        }\n        for (auto& manager : closing_managers) manager->RequestStop();\n        closing_managers.clear();"),
+        ("    bool services_closing = false;\n    std::mutex server_lock;\n    std::vector<std::unique_ptr<Service::ServerManager>> server_managers;\n    // Servers whose startup raced CloseServices cannot run, but their\n    // handlers/ports may still be referenced by SM or another service.\n    // Keep ownership until the next CloseServices during kernel shutdown.\n    std::vector<std::unique_ptr<Service::ServerManager>> refused_servers;\n\n    std::array<std::optional<Kernel::PhysicalCore>, Core::Hardware::NUM_CPU_CORES> cores;\n", "    bool services_closing = false;\n    std::mutex server_lock;\n    std::vector<std::unique_ptr<Service::ServerManager>> server_managers;\n\n    std::array<std::optional<Kernel::PhysicalCore>, Core::Hardware::NUM_CPU_CORES> cores;\n"),
+        ("\nvoid KernelCore::RunServer(std::unique_ptr<Service::ServerManager>&& server_manager) {\n    auto* manager = server_manager.get();\n    bool refused = false;\n\n    {\n        std::scoped_lock lk{impl->server_lock};\n        if (!impl->services_closing && !impl->is_shutting_down) {\n            impl->server_managers.emplace_back(std::move(server_manager));\n        } else {\n            refused = true;\n        }\n    }\n\n    if (refused) {\n        // Closing a title can race a service that has only just reached\n        // RunServer. Do not enter a loop backed by a kernel that is being\n        // dismantled, and do not destroy the server here: SM/PSC handlers\n        // may still retain references to it until the kernel shutdown pass.\n        manager->SkipLoop();\n        std::scoped_lock lk{impl->server_lock};\n        impl->refused_servers.emplace_back(std::move(server_manager));\n        return;\n    }\n\n    manager->LoopProcess();\n}\n", "\nvoid KernelCore::RunServer(std::unique_ptr<Service::ServerManager>&& server_manager) {\n    auto* manager = server_manager.get();\n\n    {\n        std::scoped_lock lk{impl->server_lock};\n        if (!impl->services_closing && !impl->is_shutting_down) {\n            impl->server_managers.emplace_back(std::move(server_manager));\n        }\n    }\n\n    if (server_manager) manager->RequestStop();\n    manager->LoopProcess();\n}\n"),
+    )),
+    "kernel_dev.cpp": ("48c48318f2d6587bc8d7dc4ca7bbe9f73d107c6e", "208951b56fd1232f19f4a08b4020774f62f2d0cc", (
+        ("            std::scoped_lock lk{server_lock};\n            services_closing = true;\n            closing_managers.swap(server_managers);\n            for (auto& refused : refused_servers) {\n                closing_managers.emplace_back(std::move(refused));\n            }\n            refused_servers.clear();\n            closing_names.swap(server_names);\n        }\n        const double eden_lock_ms = eden_ms(eden_start);", "            std::scoped_lock lk{server_lock};\n            services_closing = true;\n            closing_managers.swap(server_managers);\n            closing_names.swap(server_names);\n        }\n        const double eden_lock_ms = eden_ms(eden_start);"),
+        ("    std::vector<std::string> server_names;\n    std::mutex server_lock;\n    std::vector<std::unique_ptr<Service::ServerManager>> server_managers;\n    // Servers whose startup raced CloseServices cannot run, but their\n    // handlers/ports may still be referenced by SM or another service.\n    // Keep ownership until the next CloseServices during kernel shutdown.\n    std::vector<std::unique_ptr<Service::ServerManager>> refused_servers;\n\n    std::array<std::optional<Kernel::PhysicalCore>, Core::Hardware::NUM_CPU_CORES> cores;\n", "    std::vector<std::string> server_names;\n    std::mutex server_lock;\n    std::vector<std::unique_ptr<Service::ServerManager>> server_managers;\n\n    std::array<std::optional<Kernel::PhysicalCore>, Core::Hardware::NUM_CPU_CORES> cores;\n"),
+        ("\nvoid KernelCore::RunServer(std::unique_ptr<Service::ServerManager>&& server_manager) {\n    auto* manager = server_manager.get();\n    bool refused = false;\n\n    {\n        std::scoped_lock lk{impl->server_lock};\n        if (!impl->services_closing && !impl->is_shutting_down) {\n            impl->server_managers.emplace_back(std::move(server_manager));\n        } else {\n            refused = true;\n        }\n    }\n\n    if (refused) {\n        // Closing a title can race a service that has only just reached\n        // RunServer. Do not enter a loop backed by a kernel that is being\n        // dismantled, and do not destroy the server here: SM/PSC handlers\n        // may still retain references to it until the kernel shutdown pass.\n        manager->SkipLoop();\n        std::scoped_lock lk{impl->server_lock};\n        impl->refused_servers.emplace_back(std::move(server_manager));\n        return;\n    }\n\n    manager->LoopProcess();\n}\n", "\nvoid KernelCore::RunServer(std::unique_ptr<Service::ServerManager>&& server_manager) {\n    auto* manager = server_manager.get();\n\n    {\n        std::scoped_lock lk{impl->server_lock};\n        if (!impl->services_closing && !impl->is_shutting_down) {\n            impl->server_managers.emplace_back(std::move(server_manager));\n        }\n    }\n\n    if (server_manager) manager->RequestStop();\n    manager->LoopProcess();\n}\n"),
+    )),
+}
+
+def historical_kernel(path):
+    source = path.read_text()
+    successor, predecessor, hunks = G19_SHUTDOWN_RECEIPTS[path.name]
+    actual = git_blob(source)
+    if actual == predecessor:
+        return source
+    assert actual == successor, ("Unreviewed G19 kernel source", path.name, actual)
+    for current, previous in hunks:
+        assert source.count(current) == 1, ("G19 shutdown hunk drift", path.name)
+        source = source.replace(current, previous, 1)
+    assert git_blob(source) == predecessor, ("G19 shutdown predecessor drift", path.name)
+    return source
+
 root = Path(__file__).resolve().parents[1]
 cmake = (root / "headless/CMakeLists.txt").read_text()
 legacy = (root / "tools/fixtures/legacy-g19-kernel.cmake").read_text()
@@ -128,14 +163,14 @@ file(WRITE "${PORT_BUILD_DIR}/selected.txt" "${g19_selected}")
         assert "hle/kernel/k_process.cpp" in live_sources, name
         assert not any("vendor/encore-active/" in p and p.endswith("/k_process.cpp")
                        for p in live_sources), name
-        assert owned_kernel.read_text() == units["standard"], name
+        assert historical_kernel(owned_kernel) == units["standard"], name
 
     # Compare maintained G19 translation units against historical CMake
     # output byte-for-byte; the active selector is migrated only afterwards.
     for name in ("standard", "dev"):
         maintained = root/"vendor/encore-active/eden-core/src/core/hle/kernel"/(
             "kernel_standard.cpp" if name == "standard" else "kernel_dev.cpp")
-        assert maintained.read_text() == units[name], "G19 maintained kernel drift " + name
+        assert historical_kernel(maintained) == units[name], "G19 maintained kernel drift " + name
     print("ENCORE_G19_MAINTAINED_KERNEL_PARITY_PASS profiles=2")
     assert units["standard"] != units["dev"]
     assert len(units["dev"]) > len(units["standard"])

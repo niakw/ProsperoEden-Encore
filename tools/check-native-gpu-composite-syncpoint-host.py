@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 NV = (ROOT/"vendor/sources/eden/src/core/hle/service/nvdrv/devices/nvdisp_disp0.cpp").read_text()
 GPU = (ROOT/"vendor/sources/eden/src/video_core/gpu.cpp").read_text()
 SYNC = (ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp").read_text()
-SYNC_HDR = (ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h").read_text()
+SYNC_HDR = (ROOT/"vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h").read_text()
 FAST = (ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 FULL = (ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 NAME = "python3 -B tools/check-native-gpu-composite-syncpoint-host.py"
@@ -106,11 +106,17 @@ public:
         u32 expected_value{};
         u64 id{};
         std::function<void()> action;
+        u64 native_target{};
+        bool native_wide{};
         RegisteredAction(u32 v,u64 id_,std::function<void()>&& a)
             : expected_value(v),id(id_),action(std::move(a)) {}
     };
     using ActionHandle=u64;
-    using GuestMirror=std::function<void(u32,u32)>;
+    using GuestMirror=std::function<void(u32,u64)>;
+    static constexpr bool IsNativeGuestActionReady(u64 current,u64 target,bool wide) {
+        return wide ? current >= target
+                    : ((static_cast<u32>(current) - static_cast<u32>(target)) & 0x80000000U) == 0;
+    }
     template<typename Func>
     ActionHandle RegisterGuestAction(u32 id,u32 expected,Func&& action) {
         if (id>=NUM_MAX_SYNCPOINTS) return {};
@@ -129,6 +135,8 @@ private:
         std::thread::id thread{std::this_thread::get_id()};
     };
     std::array<std::atomic<u32>,NUM_MAX_SYNCPOINTS> syncpoints_guest{};
+    std::array<std::atomic<u64>,NUM_MAX_SYNCPOINTS> native_guest_counts{};
+    std::array<std::list<RegisteredAction>,NUM_MAX_SYNCPOINTS> native_guest_actions;
     std::array<std::list<RegisteredAction>,NUM_MAX_SYNCPOINTS> guest_action_storage;
     std::mutex guard;
     u64 last_action_id{};

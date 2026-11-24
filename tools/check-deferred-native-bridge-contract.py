@@ -335,6 +335,16 @@ r23_raster = next(item for item in r23_m07["files"]
 def m07_source_blob(value):
     raw = value.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+def reverse_collected_batch_preflight_successor(source):
+    if m07_source_blob(source) != "fcd174ed2326f3c205365b192c98f9d2f4d82ec3":
+        return source
+    newer = "    // One owner-witness pass for the complete collected batch, as in\n    // InnerInvalidation. Each witness is monotonic and fails closed; once both\n    // cache domains may overlap, no later range can change the lock decision.\n    bool may_claim_buffer = false;\n    bool may_touch_texture = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr == 0 || size == 0) continue;\n        if (!may_claim_buffer && !::Eden::BufferPages::NeverRegistered(addr, size))\n            may_claim_buffer = true;\n        if (!may_touch_texture && !::Eden::ImagePages::NeverHeld(addr, size))\n            may_touch_texture = true;\n        if (may_claim_buffer && may_touch_texture) break;\n    }\n    // GPU-collected write batches acquire each cache domain only once. Claim\n    // still precedes every BufferCache write/readback below.\n"
+    older = "    // Remove the complete CPU-write batch from GPU-owned ranges before any\n    // individual invalidation can download stale bytes over a later write.\n    // No registered buffer page in this CPU-write batch means no buffer can\n    // own GPU bytes to claim. Avoid the buffer mutex entirely in that case.\n    // NeverRegistered is monotonic and fails closed on unknown address spans.\n    bool may_claim_buffer = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr != 0 && size != 0 && !::Eden::BufferPages::NeverRegistered(addr, size)) {\n            may_claim_buffer = true;\n            break;\n        }\n    }\n    // The single-range invalidation callback takes the texture and buffer\n    // mutex once PER range. GPU-collected write batches often contain many\n    // pages; acquire each domain only once, as InnerInvalidation already\n    // does for the same texture -> buffer -> shader ordering. The prior\n    // ClaimCpuWrites still precedes every possible GPU sibling readback.\n    bool may_touch_texture = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr != 0 && size != 0 && !::Eden::ImagePages::NeverHeld(addr, size)) {\n            may_touch_texture = true;\n            break;\n        }\n    }\n"
+    assert source.count(newer) == 1
+    source = source.replace(newer, older, 1)
+    assert m07_source_blob(source) == "e4948333ed15fba8024aeb4ffaa143a2e010f991"
+    return source
+
 def reverse_collected_batch_lock_successor(source):
     if m07_source_blob(source) != "e4948333ed15fba8024aeb4ffaa143a2e010f991":
         return source
@@ -351,6 +361,7 @@ def reverse_collected_batch_lock_successor(source):
 # Verify both full blobs and undo only the reviewed owner hunk in memory.
 # Keep the original source checks below; never modify the selected vendor.
 m07_selected_sha = m07_source_blob(original_m07)
+original_m07 = reverse_collected_batch_preflight_successor(original_m07)
 original_m07 = reverse_collected_batch_lock_successor(original_m07)
 m07_selected_sha = m07_source_blob(original_m07)
 if m07_selected_sha == "e5baa7f438d8caf11327989087db38ed1ca053a4":

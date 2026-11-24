@@ -131,6 +131,16 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     def _ns1_read_blob(data):
         encoded=data.encode('utf-8')
         return hashlib.sha1(b'blob '+str(len(encoded)).encode()+bytes([0])+encoded).hexdigest()
+    def reverse_collected_batch_preflight_successor(source):
+        if _ns1_read_blob(source) != "fcd174ed2326f3c205365b192c98f9d2f4d82ec3":
+            return source
+        newer = "    // One owner-witness pass for the complete collected batch, as in\n    // InnerInvalidation. Each witness is monotonic and fails closed; once both\n    // cache domains may overlap, no later range can change the lock decision.\n    bool may_claim_buffer = false;\n    bool may_touch_texture = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr == 0 || size == 0) continue;\n        if (!may_claim_buffer && !::Eden::BufferPages::NeverRegistered(addr, size))\n            may_claim_buffer = true;\n        if (!may_touch_texture && !::Eden::ImagePages::NeverHeld(addr, size))\n            may_touch_texture = true;\n        if (may_claim_buffer && may_touch_texture) break;\n    }\n    // GPU-collected write batches acquire each cache domain only once. Claim\n    // still precedes every BufferCache write/readback below.\n"
+        older = "    // Remove the complete CPU-write batch from GPU-owned ranges before any\n    // individual invalidation can download stale bytes over a later write.\n    // No registered buffer page in this CPU-write batch means no buffer can\n    // own GPU bytes to claim. Avoid the buffer mutex entirely in that case.\n    // NeverRegistered is monotonic and fails closed on unknown address spans.\n    bool may_claim_buffer = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr != 0 && size != 0 && !::Eden::BufferPages::NeverRegistered(addr, size)) {\n            may_claim_buffer = true;\n            break;\n        }\n    }\n    // The single-range invalidation callback takes the texture and buffer\n    // mutex once PER range. GPU-collected write batches often contain many\n    // pages; acquire each domain only once, as InnerInvalidation already\n    // does for the same texture -> buffer -> shader ordering. The prior\n    // ClaimCpuWrites still precedes every possible GPU sibling readback.\n    bool may_touch_texture = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr != 0 && size != 0 && !::Eden::ImagePages::NeverHeld(addr, size)) {\n            may_touch_texture = true;\n            break;\n        }\n    }\n"
+        assert source.count(newer) == 1
+        source = source.replace(newer, older, 1)
+        assert _ns1_read_blob(source) == "e4948333ed15fba8024aeb4ffaa143a2e010f991"
+        return source
+
     def reverse_collected_batch_lock_successor(source):
         if _ns1_read_blob(source) != "e4948333ed15fba8024aeb4ffaa143a2e010f991":
             return source
@@ -169,6 +179,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         if relative.endswith("eden-vulkan/vulkan_rasterizer.cpp"):
             # Prove the two corrected call-site deltas on an audit copy,
             # then reuse the pre-integration readback and Vulkan receipts.
+            source=reverse_collected_batch_preflight_successor(source)
             source=reverse_collected_batch_lock_successor(source)
             if _ns1_read_blob(source)=="e5baa7f438d8caf11327989087db38ed1ca053a4":
                 assert source.count(strict_cpp_delta)==1
@@ -1229,6 +1240,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             # unrelated old vendor commit ID.
             fixture = runpy.run_path(str(receipt_path))
             source = (root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+            source=reverse_collected_batch_preflight_successor(source)
             source=reverse_collected_batch_lock_successor(source)
             if raster_blob(source) == 'e5baa7f438d8caf11327989087db38ed1ca053a4':
                 assert source.count(strict_cpp_delta)==1

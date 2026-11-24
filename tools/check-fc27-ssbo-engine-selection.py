@@ -132,6 +132,14 @@ if selected == "06705357e48b33d837b1f97dbb1c3979cb3d7c31":
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip() == "8bd2b8d1378cefffaf0f4e397289ba62ef009112"
     expected.add(selected)
+if selected == "90dbd6c9b3aba2673aadcdf0b39be4c32107eb02":
+    # Exact NS2-only queued-GPFIFO/H:17 successor. Authenticate the complete
+    # vendor tree; the immutable FC27 shader/CMake hashes below remain the
+    # actual proof that this successor does not alter FC27 source ownership.
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "2cb8d9316b7172fef943b8b3bc9b9857d5a0bf9b"
+    expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"

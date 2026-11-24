@@ -29,7 +29,13 @@ group_end = raster.index("void RasterizerVulkan::OnCacheInvalidation(", group_st
 group = raster[group_start:group_end]
 assert group.count("::Eden::ImagePages::NeverHeld(addr, size)") == 2
 assert "buffer_cache.ClaimCpuWrites(ranges);" in group
-assert group.index("buffer_cache.ClaimCpuWrites(ranges);") < group.index("texture_cache.WriteMemory(addr, size)")
+# TextureCache and BufferCache are independent owners under distinct locks.
+# The grouped FC27 path handles textures first, then claims every CPU write
+# before touching BufferCache, finally invalidating shaders. Do not require a
+# claim before an unrelated texture-cache invalidation.
+assert group.index("texture_cache.WriteMemory(addr, size)") < group.index("buffer_cache.ClaimCpuWrites(ranges);")
+assert group.index("buffer_cache.ClaimCpuWrites(ranges);") < group.index("buffer_cache.WriteMemory(addr, size)")
+assert group.index("buffer_cache.WriteMemory(addr, size)") < group.index("pipeline_cache.InvalidateRegion(addr, size)")
 write_start = raster.index("bool RasterizerVulkan::OnCPUWrite")
 write_end = raster.index("void RasterizerVulkan::OnCacheInvalidation", write_start)
 write_method = raster[write_start:write_end]

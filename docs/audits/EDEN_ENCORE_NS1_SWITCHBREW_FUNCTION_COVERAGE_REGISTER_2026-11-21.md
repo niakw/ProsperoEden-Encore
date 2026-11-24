@@ -2879,3 +2879,10 @@ Les cmd5/6/7 `*Ex` restent les seuls getters de capture fonctionnels et ne sont 
 Vendor `9ff0457f18f3d06771f450a665f75c454dae2f61` : les six commandes d'acquisition legacy 10/12/14/16/17/18 sont maintenant raccordées à un rejet explicite `ResultUnknown`. SwitchBrew documente 10/12/14 comme stubs Horizon. Pour 16/17/18, la TransferMemory RW 0x384000 n'est fournie que sur les anciens sysvers ; sur les firmwares récents, l'appel interne échoue systématiquement. La cible Encore HOS 23 ne doit donc pas recréer ce chemin historique. Les trois commandes 10/12/14 étaient déjà classées **D** ; **16/17/18 passent NULL → D**, soit **3 NULL → D** au compteur.
 
 Les acquisitions shared-buffer modernes 22/24/26 restent le chemin fonctionnel Encore. Aucun build natif PS5 ni résultat console revendiqué.
+
+
+### 2026-11-24 — AM DisplayController : release legacy ne renvoie plus un faux succès
+
+Vendor `f48a197733474dd1b12400eec775a88e9f89828f` : les commandes 11/13/15 `Release*CaptureBuffer` renvoyaient `Success` alors que, sur HOS 23, les acquisitions legacy 10/12/14/16/17/18 échouent et aucun état « acquired » ne peut être établi. SwitchBrew documente que la release échoue lorsque son état est déjà nul ; Ryujinx identifie le résultat comme **AM description 504, BufferNotAcquired**. Encore définit désormais `ResultBufferNotAcquired{ErrorModule::AM, 504}` et l'utilise pour ces trois releases. **3 IMPL-SRC → D.**
+
+Les commandes shared-buffer modernes 22–27 restent indépendantes et ne sont pas affectées. Aucun build natif PS5 ni résultat console revendiqué.

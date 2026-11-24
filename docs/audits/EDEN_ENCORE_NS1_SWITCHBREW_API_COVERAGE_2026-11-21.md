@@ -29,13 +29,13 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 739 | 80 | **1 819** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 736 | 80 | **1 816** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 165 | 3 | **168** |
 | **STUB — Stub / résultat simulé** | 2 | 0 | **2** |
 | **NOOP — No-op documenté** | 222 | 0 | **222** |
 | **NULL — Handler NULL** | 1 173 | 0 | **1 173** |
-| **D — Rejet explicite / historique** | 238 | 33 | **271** |
+| **D — Rejet explicite / historique** | 241 | 33 | **274** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 199 | 0 | **199** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 474 | 1 | **475** |
@@ -1832,11 +1832,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `8` | `TakeScreenShotOfOwnLayer` | 2.0.0+ | **IMPL-SRC** ([vendor 99879eef](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/99879eef9fb743cf2757b2d76f765487db70e337) ; permission screenshot respectée, capture GPU tuilée copiée vers le slot 0/1/2 demandé ; ABI recroisée libnx/SwitchBrew ; PS5 non validé) | 2026-11-24 |
 | appletAE | `9` | `CopyBetweenCaptureBuffers` | 5.0.0+ | **IMPL-SRC** ([vendor 99879eef](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/99879eef9fb743cf2757b2d76f765487db70e337) ; copie brute du slot tuilé source vers destination avec état de validité propagé ; ABI recroisée libnx/SwitchBrew ; PS5 non validé) | 2026-11-24 |
 | appletAE | `10` | `AcquireLastApplicationCaptureBuffer` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
-| appletAE | `11` | `ReleaseLastApplicationCaptureBuffer` | — | **IMPL-SRC** (release explicite du chemin legacy ; le port PS5 copie le snapshot de façon synchrone et ne conserve aucun ownership après Acquire ; vendor `f48b5172`) | 2026-11-23 |
+| appletAE | `11` | `ReleaseLastApplicationCaptureBuffer` | — | **D** (AM/504 `BufferNotAcquired` : sur HOS 23 les acquisitions legacy associées échouent, donc aucun ownership n'existe à libérer ; vendor `f48a1977`) | 2026-11-24 |
 | appletAE | `12` | `AcquireLastForegroundCaptureBuffer` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
-| appletAE | `13` | `ReleaseLastForegroundCaptureBuffer` | — | **IMPL-SRC** (release explicite cohérente avec le backend capture synchrone Encore, sans ownership persistant ; vendor `f48b5172`) | 2026-11-23 |
+| appletAE | `13` | `ReleaseLastForegroundCaptureBuffer` | — | **D** (AM/504 `BufferNotAcquired` : sur HOS 23 les acquisitions legacy associées échouent, donc aucun ownership n'existe à libérer ; vendor `f48a1977`) | 2026-11-24 |
 | appletAE | `14` | `AcquireCallerAppletCaptureBuffer` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
-| appletAE | `15` | `ReleaseCallerAppletCaptureBuffer` | — | **IMPL-SRC** (release explicite cohérente avec le backend capture synchrone Encore, sans ownership persistant ; vendor `f48b5172`) | 2026-11-23 |
+| appletAE | `15` | `ReleaseCallerAppletCaptureBuffer` | — | **D** (AM/504 `BufferNotAcquired` : sur HOS 23 les acquisitions legacy associées échouent, donc aucun ownership n'existe à libérer ; vendor `f48a1977`) | 2026-11-24 |
 | appletAE | `16` | `AcquireLastApplicationCaptureBufferEx` | — | **D** (HOS moderne appelle un chemin interne qui retourne une erreur ; rejet explicite `ResultUnknown`, sans exposer la TransferMemory 0x384000 des anciens sysvers ; vendor `9ff0457f`) | 2026-11-24 |
 | appletAE | `17` | `AcquireLastForegroundCaptureBufferEx` | — | **D** (HOS moderne appelle un chemin interne qui retourne une erreur ; rejet explicite `ResultUnknown`, sans exposer la TransferMemory 0x384000 des anciens sysvers ; vendor `9ff0457f`) | 2026-11-24 |
 | appletAE | `18` | `AcquireCallerAppletCaptureBufferEx` | — | **D** (HOS moderne appelle un chemin interne qui retourne une erreur ; rejet explicite `ResultUnknown`, sans exposer la TransferMemory 0x384000 des anciens sysvers ; vendor `9ff0457f`) | 2026-11-24 |
@@ -6636,3 +6636,10 @@ Les cmd5/6/7 `*Ex` restent les seuls getters de capture fonctionnels et ne sont 
 Vendor `9ff0457f18f3d06771f450a665f75c454dae2f61` : les six commandes d'acquisition legacy 10/12/14/16/17/18 sont maintenant raccordées à un rejet explicite `ResultUnknown`. SwitchBrew documente 10/12/14 comme stubs Horizon. Pour 16/17/18, la TransferMemory RW 0x384000 n'est fournie que sur les anciens sysvers ; sur les firmwares récents, l'appel interne échoue systématiquement. La cible Encore HOS 23 ne doit donc pas recréer ce chemin historique. Les trois commandes 10/12/14 étaient déjà classées **D** ; **16/17/18 passent NULL → D**, soit **3 NULL → D** au compteur.
 
 Les acquisitions shared-buffer modernes 22/24/26 restent le chemin fonctionnel Encore. Aucun build natif PS5 ni résultat console revendiqué.
+
+
+### 2026-11-24 — AM DisplayController : release legacy ne renvoie plus un faux succès
+
+Vendor `f48a197733474dd1b12400eec775a88e9f89828f` : les commandes 11/13/15 `Release*CaptureBuffer` renvoyaient `Success` alors que, sur HOS 23, les acquisitions legacy 10/12/14/16/17/18 échouent et aucun état « acquired » ne peut être établi. SwitchBrew documente que la release échoue lorsque son état est déjà nul ; Ryujinx identifie le résultat comme **AM description 504, BufferNotAcquired**. Encore définit désormais `ResultBufferNotAcquired{ErrorModule::AM, 504}` et l'utilise pour ces trois releases. **3 IMPL-SRC → D.**
+
+Les commandes shared-buffer modernes 22–27 restent indépendantes et ne sont pas affectées. Aucun build natif PS5 ni résultat console revendiqué.

@@ -2172,25 +2172,30 @@ if actual_vendor_pin in {"294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert actual == expected_blob, ("libounce VM/channel successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
-if actual_vendor_pin == "a14dc71f1a6211695f0d3542a46f385f20c2be4c":
+if actual_vendor_pin == "837cc411464a7ccf8217055b57aec4441a40a23c":
     # Exact NS2 GPU lifecycle/VA successor. The downstream FC27/P0 source
     # receipts remain authoritative; this only qualifies the selected tree.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "64c182b1497242b87b7c059606b27607092beef3"
+    ).strip() == "bd4a972384eaee74f4e6063345002a9843ae57ee"
     # Seal every changed owner in the NS2 strict-completion successor.
     # Later FC27/P0 checks may replay historical receipts only after these
     # exact blobs and the complete vendor tree have been authenticated.
     for relative, expected_blob in {
+        "encore-active/eden-backports/manifest.json": "9e7289bbf316d4f23c4e559c1503d24250043291",
         "encore-active/eden-backports/src/video_core/fence_manager.h": "f1c72747a9d8ecd38eb042bcffadb1209cc9fe80",
         "encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp": "abe89b570a18508123a5c14c49cf5a43935f620c",
         "encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "8bd6f2a4e489aa608fc4420d2ff5847b7c12e165",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "e5baa7f438d8caf11327989087db38ed1ca053a4",
         "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "0eef39a957e2413b07a6d92b7295479248a88a60",
+        "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "04078c6ae13b5a5714a1e9d2e71565edb34a8b82",
+        "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "bd164314b8a55da4e64b96e9615b817fa5fbc12f",
+        "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "5946911f40fed8e1eb622b73e3c0736031d94b9a",
         "encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp": "c917dfa128d05792edd942e562eab62d83808abf",
         "encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "74587c78870735bb23d2430415f3742b9e7cca68",
+        "sources/eden/src/common/address_space.inc": "9cdbbd21f10c593147df35ddcaec45d98dd6db38",
         "tests/fc27_deferred_page_protection_host.py": "552298832efad742a0cf8f0619e6da197a4b3427",
-        "tests/ns2_gpu_identity_mapping_source.py": "70f1a05c62f278ab0f01677c5be9577ac3eed4d3",
+        "tests/ns2_gpu_identity_mapping_source.py": "2afc4cdc5e87fbe8f130428e78a065d2a99677da",
         "tests/ns2_syncpt_bootstrap_source.py": "22383b8e49626e1ac3f022563adad446616f5420",
         "tests/ps5_host1x_wait_notification_host.py": "3365c5e9b857cca98d80a4bc8134306695feb171",
     }.items():

@@ -24,7 +24,7 @@ def git_blob(data: str) -> str:
 assert upstream != backport
 assert git_blob(backport) == "f014de1b85eb1667024a7b5a7162d7c6307d80f6"
 assert "floor/ceil yield ordinary pixel coordinates" in backport
-assert git_blob(maintained) == "212648a456594522345b3b7724449006a54b492b", (
+assert git_blob(maintained) == "6a18c9825936bd72b9919335ce5f8c2590183ab9", (
     "Unreviewed shipping PS5 Fermi2D software blitter; historical predecessor was "
     "2c5aaf8fe19835dc72eee40f3c9eebc17f17350b")
 assert "#include <optional>" in maintained
@@ -120,3 +120,41 @@ with tempfile.TemporaryDirectory(prefix="encore-ns1-sw-blitter-") as tmp:
 print("VENDOR_MAINTAINED_SW_BLITTER_PARITY_PASS padded_GOB_64bit=1 "
       "u32_wrap_rejected=1 pitch_valid=1 volume_valid=1 "
       "unsupported_geometry_rejected=1 native_tiling_unchanged=1 asan_ubsan=1")
+
+# Exercise both exact nearest-neighbor paths against an integer-coordinate oracle.
+nearest = maintained[maintained.index("template <typename T>\nvoid NearestNeighborRows("):maintained.index("void Bilinear(")]
+nearest_cpp = r"""
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <span>
+#include <vector>
+using u8=std::uint8_t; using u32=std::uint32_t; using u64=std::uint64_t; using f32=float;
+constexpr size_t ir_components=4;
+""" + nearest + r"""
+int main() {
+    for(u32 sh=1;sh<=12;++sh) for(u32 sw=1;sw<=12;++sw)
+    for(u32 dh=1;dh<=12;++dh) for(u32 dw=1;dw<=12;++dw) {
+        std::vector<u8> a(sw*sh*4), b(dw*dh*4);
+        std::vector<f32> f(sw*sh*4), g(dw*dh*4);
+        for(size_t i=0;i<a.size();++i) {a[i]=static_cast<u8>((i*31+i/256)%251); f[i]=static_cast<f32>(i);}
+        NearestNeighbor(a,b,sw,sh,dw,dh,4);
+        NearestNeighborFast(f,g,sw,sh,dw,dh);
+        for(u32 y=0;y<dh;++y) for(u32 x=0;x<dw;++x) for(size_t c=0;c<4;++c) {
+            const size_t s=((static_cast<u64>(y)*sh/dh)*sw+static_cast<u64>(x)*sw/dw)*4+c;
+            const size_t d=(y*dw+x)*4+c;
+            assert(a[s]==b[d] && f[s]==g[d]);
+        }
+    }
+}
+"""
+with tempfile.TemporaryDirectory(prefix="encore-blitter-nearest-") as tmp:
+    source = Path(tmp) / "nearest.cpp"
+    executable = Path(tmp) / "nearest"
+    source.write_text(nearest_cpp)
+    for opt in ("-O0", "-O2"):
+        subprocess.run([clang, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror",
+                        "-fsanitize=address,undefined", "-fno-sanitize-recover=all",
+                        str(source), "-o", str(executable)], check=True, timeout=45)
+        subprocess.run([str(executable)], check=True, timeout=20)
+print("VENDOR_NEAREST_NEIGHBOR_PASS geometries=20736 packed_and_float=1 asan_ubsan=1")

@@ -3204,3 +3204,11 @@ Croisement catalogue 4 853 : **30 lignes NULL** sortent du pool ; 15 anciennes l
 
 **Pool restant = 1 170 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — NS/FSP : maintenance locale résiduelle rejetée
+
+Vendor `a64bcf8c38473234474aca49b4013ed3617e0dec` : **30 slots NS** de maintenance/admin locale (entity cleanup/move, SD cleanup, auto-delete, crash-report/thread-dump, network-account unregister, application-control cache administration, task-status cleanup, preinstalled/visibility flags, shutdown/system-seed, notifications et rights-cache invalidation) plus **5 slots FSP** host/save-delete sont raccordés aux rejets explicites existants. Les lectures/écritures SaveData normales, OpenFileSystem, rights lookup, content metadata, tickets et lancement d'application restent inchangés.
+
+Croisement catalogue 4 853 : **35 lignes NULL** sortent du pool.
+
+**Pool restant = 1 135 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

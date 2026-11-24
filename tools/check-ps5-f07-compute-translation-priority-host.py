@@ -74,15 +74,21 @@ assert outer_cmp.count("ComputeTranslationPriorityScope first_use_preparation_pr
 assert outer_cmp.index("ComputeTranslationPriorityScope first_use_preparation_priority{true};") < outer_cmp.index("ComputeEnvironment env{")
 assert outer_cmp.index("ComputeTranslationPriorityScope first_use_preparation_priority{true};") < outer_cmp.index("main_pools.ReleaseContents()")
 assert "F07 reserve graphics translation before CFG IR SPIRV" in generator
-graphics_method_start = "    bool build_in_parallel) try {\n#ifdef PS5_NATIVE\n    // The optional optimizer"
+graphics_method_start = ("    bool build_in_parallel, bool parallel_translate_stages) try {\n"
+                         "#ifdef PS5_NATIVE\n    // The optional optimizer")
 graphics_method_end = "    auto hash = key.Hash();\n    LOG_DEBUG(Render_Vulkan, \"{:#016x}\", hash);"
 assert source.count(graphics_method_start) == source.count(graphics_method_end) == 1
 graphics_fragment = source[source.index(graphics_method_start):source.index(graphics_method_end, source.index(graphics_method_start))]
 assert "GraphicsTranslationPriorityScope translation_priority{" in graphics_fragment
 assert "build_in_parallel && ::Eden::DevVulkan::fast_first_pipelines" in graphics_fragment
-assert source.index("GraphicsTranslationPriorityScope translation_priority") < source.index(
-    "Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);",
-    source.index(graphics_method_start))
+priority_pos = source.index("GraphicsTranslationPriorityScope translation_priority",
+                            source.index(graphics_method_start))
+# Both the worker and owner CFG paths must execute inside the foreground scope.
+assert priority_pos < source.index("shader_translation_workers.QueueWork(", priority_pos)
+assert priority_pos < source.index(
+    "Shader::Maxwell::Flow::CFG cfg(\n                            *env, stage_pools->flow_block,", priority_pos)
+assert priority_pos < source.index(
+    "Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);", priority_pos)
 
 assert source.index("ComputeTranslationPriorityScope translation_priority") < source.index(
     "Shader::Maxwell::Flow::CFG cfg{env, pools.flow_block, env.StartAddress()};"

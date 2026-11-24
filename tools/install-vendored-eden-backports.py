@@ -683,6 +683,64 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'successors=2', 'rejected_historical_slots=11',
               'unqualified_physical_slots=4', 'pinned_sources=immutable')
 
+        # System update is intentionally offline in Encore. Preserve the already
+        # reviewed local state/event behavior, but expose it from shipping owners
+        # and reject transfer/card/firmware operations that have no Horizon backend.
+        system_update_overlays={
+            'src/core/hle/service/ns/system_update_interface.cpp': {
+                'before_sha256':'0ee7723f6edd55c94aabc8e41c50696aa779922247df9931127f982e189cae72',
+                'before_bytes':2584,
+                'after_sha256':'98fec76ca0b9aefcd502dbd810cb8d7eefa6bf7611a131ab40ab38a9d5232611',
+                'after_bytes':5406,
+            },
+            'src/core/hle/service/ns/system_update_interface.h': {
+                'before_sha256':'446ca472ebabcdba5160c9436eae668a24239282751739a3a335fbb96512de94',
+                'before_bytes':1120,
+                'after_sha256':'e7e5ad346667a12f4b03d7f2f5abbf0fc076b02e4ecfbba97b561e3fbbaea5de',
+                'after_bytes':1695,
+            },
+            'src/core/hle/service/ns/system_update_control.cpp': {
+                'before_sha256':'3c4f396c17c0bbe2c8b69e851eaf08b9421c95436cdc53ad096ae84535452530',
+                'before_bytes':1733,
+                'after_sha256':'5216661fcb40960e519f0071b891fae82bf9c3fc6fe19e85731d6eb0f869f7be',
+                'after_bytes':3058,
+            },
+            'src/core/hle/service/ns/system_update_control.h': {
+                'before_sha256':'8d81d0a6877e1819ca550e56e67fffe88e116addd2ae4b3c62770c648a16c028',
+                'before_bytes':406,
+                'after_sha256':'35d9565f0bdbd5671efa6ebc97c42d5ea7368d2e615ef27a1c51e1503362d2f9',
+                'after_bytes':480,
+            },
+        }
+        for rel,entry in system_update_overlays.items():
+            assert rel not in observed, ('NS:SU unexpectedly changed by frozen replay',rel)
+            assert rel in spec['entries'], ('Missing NS:SU shipping overlay',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'NS:SU pinned source drift',rel)
+            assert spec['entries'][rel]['upstream']==entry['before_sha256'], rel
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed NS:SU maintained source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
+            observed[rel]=spec['entries'][rel]
+        ns_su=(ACTIVE/'src/core/hle/service/ns/system_update_interface.cpp').read_text()
+        ns_su_control=(ACTIVE/'src/core/hle/service/ns/system_update_control.cpp').read_text()
+        assert ns_su.count('&ISystemUpdateInterface::RejectUnavailableSystemUpdateTransfer')==2
+        assert ns_su_control.count('&ISystemUpdateControl::RejectUnavailableSystemUpdate')==23
+        assert ns_su_control.count('nullptr')==0
+        for command in (
+            '{12, nullptr, "Unknown12"}',
+            '{13, nullptr, "Unknown13"}',
+            '{14, nullptr, "Unknown14"}',
+            '{15, nullptr, "Unknown15"}',
+        ):
+            assert ns_su.count(command)==1, command
+        print('NS1_SYSTEM_UPDATE_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'successors=4', 'rejected_historical_slots=25',
+              'unqualified_interface_slots=4', 'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

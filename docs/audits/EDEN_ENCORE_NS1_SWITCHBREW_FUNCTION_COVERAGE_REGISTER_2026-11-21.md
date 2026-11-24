@@ -3282,3 +3282,11 @@ Vendor `fc4894a72071fcabf7ad7363d5783f6c0d0bf609` : `nsd.cpp/.h` deviennent des 
 Les **11 commandes historiques** encore ouvertes qui dépendent de réglages/FQDN NAS Nintendo (10, 12–14, 30–31, 40–43, 50) sont raccordées à `RejectUnavailableNintendoSetting` avec `ResultNotSupported`. Les slots physiques 5/64/101/102 restent volontairement `nullptr` car ils ne sont pas des lignes qualifiées du miroir utilisé pour le compteur.
 
 Croisement 4 853 : **11 NULL → D**. **Pool restant = 926 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — NS:SU : politique offline shipping, transferts/update firmware fail-closed
+
+Vendor `4915afc7bebe87da64c5eeb64843a24727a887dd` : les quatre owners `system_update_interface.cpp/.h` et `system_update_control.cpp/.h` sont désormais installés par `eden-backports`. Les comportements offline déjà développés (état réseau `None`, vrai `ISystemUpdateControl`, événement content-delivery local, notifications exFAT/background et shutdown sans tâche hôte) ne dépendent plus de copies `sources/eden` dormantes.
+
+Les commandes historiques `RequestSendSystemUpdate` / `GetSendSystemUpdateProgress` et les **23 commandes** de `ISystemUpdateControl` sont raccordées à un rejet explicite : Encore ne télécharge, ne prépare, n'applique, ne transmet et ne reçoit aucun firmware/card-update Horizon, et ne touche jamais au firmware PS5. Les quatre slots physiques `Unknown12–15` restent volontairement `nullptr`.
+
+Croisement 4 853 : **25 NULL → D**. **Pool restant = 901 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

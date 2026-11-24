@@ -2675,3 +2675,9 @@ Vendor `670673aff581924cc430d600f07ebfeea5559e07` : `IApplicationFunctions::Crea
 ### 2026-11-24 — SPL général : RSA mod-exp et boot reason
 
 Vendor `594eacbef099b3f97f7975e19b5b64d57910ae77` : `ModularExponentiate` applique désormais le contrat libnx/Atmosphère (buffers RSA-2048 bornés à 0x100, exposant variable borné, calcul big-endian par OpenSSL `BN_mod_exp`, rejet du module nul et des tailles invalides) au lieu de `ResultSecureMonitorNotImplemented`. `SetBootReason` et `GetBootReason` partagent maintenant l'état du module SPL entre interfaces, avec `ResultBootReasonAlreadySet` / `ResultBootReasonNotSet` comme Atmosphère. `SetConfig`, `IsDevelopment` et les dérivations AES restent volontairement ouverts : aucune constante/clé factice n'a été ajoutée. L'ancien reclassement HOS23 avait déjà sorti `ExpMod` du pool sur la seule équivalence d'alias malgré son corps UNIMPLEMENTED ; ce correctif rend enfin ce statut vrai mais **ne retranche pas artificiellement une seconde fois le compteur canonique**. Pool conservé à **1 560** tant qu'une ligne de snapshot distincte pour Set/GetBootReason n'est pas prouvée.
+
+### 2026-11-24 — NS : classification réelle des corruptions FS
+
+Vendor `25d561a0fd182584da68d53bca65f5ec6dbee3c8` : `IReadOnlyApplicationRecordInterface::IsDataCorruptedResult` ne renvoie plus `false` pour tous les résultats. Le contrat LibHac `ResultFs.DataCorrupted` couvre exactement le module FS et les descriptions 4000–4999 ; le handler utilise désormais `Result::GetModule()` et `GetDescription()` pour cette plage, sans heuristique par code brut. **STUB → IMPL-SRC.**
+
+**Pool restant = 1 559** : 1 186 NULL + 24 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Qualification source/CI en cours ; aucune validation console PS5 revendiquée.

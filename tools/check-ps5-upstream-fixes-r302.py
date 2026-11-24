@@ -51,6 +51,8 @@ fixture = r"""
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <iterator>
+#include <new>
 #include <stdexcept>
 #include <stop_token>
 #include <string>
@@ -73,9 +75,12 @@ std::string PathToUTF8String(const std::filesystem::path& p) { return p.string()
 namespace Shader { enum class Stage { Compute, Vertex }; }
 namespace VideoCommon {
 constexpr std::array<char,8> MAGIC_NUMBER={'y','u','z','u','c','a','c','h'};
+int fail_deserialize = -1;
+int deserialize_count = 0;
 class FileEnvironment {
 public:
     void Deserialize(std::ifstream& file) {
+        if (deserialize_count++ == fail_deserialize) throw std::bad_alloc{};
         std::array<u64,5> sizes{};
         file.read(reinterpret_cast<char*>(sizes.data()),sizeof(sizes));
         if(sizes[0]>1000000) throw std::length_error("unexpected");
@@ -103,14 +108,16 @@ std::string Header() {
   Put<u32>(s,7);
   return s;
 }
-int Run(std::filesystem::path p,std::string data,bool stop=false) {
+int Run(std::filesystem::path p,std::string data,bool stop=false,int fail_callback=-1,int fail_deserialize=-1) {
+  VideoCommon::fail_deserialize=fail_deserialize;
+  VideoCommon::deserialize_count=0;
   {std::ofstream f(p,std::ios::binary|std::ios::trunc);f.write(data.data(),data.size());}
   int loaded=0;
   std::stop_source source;
   if(stop) source.request_stop();
   VideoCommon::LoadPipelines(source.get_token(),p,7,
       [&](std::ifstream& stream,VideoCommon::FileEnvironment) {
-        char key[8];stream.read(key,8);++loaded;
+        char key[8];stream.read(key,8);if(loaded==fail_callback) throw std::bad_alloc{};++loaded;
       },
       [&](std::ifstream& stream,std::vector<VideoCommon::FileEnvironment>) {
         char key[8];stream.read(key,8);++loaded;
@@ -130,6 +137,14 @@ int main(){
  assert(Run(p,Header()+std::string(200,'\0'))==0 && std::filesystem::file_size(p)==Header().size());
  assert(Run(p,std::string())==0 && !std::filesystem::exists(p));
  assert(Run(p,whole,true)==0 && std::filesystem::file_size(p)==whole.size());
+ for(int i=0;i<2;++i) {
+   for(bool callback : {false,true}) {
+     assert(Run(p,whole,false,callback?i:-1,callback?-1:i)==i);
+     std::ifstream f(p,std::ios::binary);
+     assert(std::string(std::istreambuf_iterator<char>(f),{})==whole);
+   }
+ }
+ assert(Run(p,whole)==2 && std::filesystem::file_size(p)==whole.size());
  std::filesystem::remove(p);
  std::puts("PASS: native shader-cache reader preserves whole entries on damaged tails");
 }

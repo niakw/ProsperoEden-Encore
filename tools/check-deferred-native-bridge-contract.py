@@ -339,6 +339,12 @@ def m07_source_blob(value):
 # Verify both full blobs and undo only the reviewed owner hunk in memory.
 # Keep the original source checks below; never modify the selected vendor.
 m07_selected_sha = m07_source_blob(original_m07)
+if m07_selected_sha == "e5baa7f438d8caf11327989087db38ed1ca053a4":
+    strict_completion = "#ifdef PS5_NATIVE\nbool RasterizerVulkan::SignalNativeSyncPoint(u32 value) {\n    fence_manager.SignalNativeSyncPoint(value);\n    return true;\n}\n#endif\n\n"
+    assert original_m07.count(strict_completion) == 1
+    original_m07 = original_m07.replace(strict_completion, "", 1)
+    m07_selected_sha = m07_source_blob(original_m07)
+    assert m07_selected_sha == "f67815618d25657dcf64a87944b0c0bc5c2d8993"
 if m07_selected_sha == "f67815618d25657dcf64a87944b0c0bc5c2d8993":
     # The merged native rasterizer has two independently qualified successors.
     # The vendor's source witness proves GuestCacheLock and all 16 integrated

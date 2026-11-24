@@ -2251,6 +2251,8 @@ if actual_vendor_pin in {"191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec
     if actual_vendor_pin in {"4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6"}:
         successor_blobs["encore-active/eden-core/overrides/usage-tracker/video_core/buffer_cache/usage_tracker.h"] = "f7f1273ba8314689b3fac5bf108205513c21f5d8"
         successor_blobs["tests/ps5_buffer_usage_granularity_host.py"] = "a3e3f90825df12d026b69ab9475a667234696768"
+    if actual_vendor_pin == "84d3b0398ae7db1618899815bc1f98894453fbf6":
+        successor_blobs.update({"encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h":"bbb55dc7b1648fa1e6fd730a1b3515f2969221c7","tests/ns1_r23_18_tir_host.py":"ea964bd9dd455f0e1b9a36fa5d0a3b9c5fd42a9b","tests/fc27_deferred_page_protection_host.py":"a4962e7b00c7a8ee6626b359551d2241400feb1f"})
     if actual_vendor_pin == "b92d4183cec69e65216162cf61e451eff643caa0":
         successor_blobs.update({"encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h":"45659d2fa8ae336d28e7ccbd02b3104d96229378","tests/ns1_r23_18_tir_host.py":"9e835a870dac4e7728978328814e57cab58d85c5","tests/fc27_deferred_page_protection_host.py":"c4b49d84e9714d64ae4e72942a32274d6fc1bc7f"})
     for relative, expected_blob in successor_blobs.items():

@@ -26,6 +26,7 @@ stabilization_trees = {
     "44540549ee9a65eb8078e271f43ccded0e8e984f": "86d6068c438cc36ffd01513fc178d2590fb010cb",
     "d63d82dfb9c2afbacac4c9dc1491f743fb083d52": "290d8c51e8ab40dd56651d50483abe42e11fa404",
     "d634b381d85dae30492dd6291fc4e6e96143f363": "a51ee73257c13fce70cbaf5d3e26c62010abf2e9",
+    "692e9819a7a1f1b818bf3739c72d8e5252cae661": "6743fed9174ee7e3451afbbad230dca6c2e4203c",
 }
 stabilization_selected = shipping_vendor in stabilization_trees
 stabilization_new_headers = set()
@@ -2222,7 +2223,8 @@ current_vendor_post_f07_owner_blobs = {
     "ns2-runtime/nx/core/file_sys/decrypted_nca.h": "623f142cfffea3194b9a39842750c3b715e1fdf8",
     "ns2-runtime/nx/core/file_sys/nx_content.cpp": "c374fab2fa5dbc6174099db309a2f6ebbf9e849c",
     "ns2-runtime/nx/core/loader/loader.h": "9efa7b4e54790942f5699c63b1286e6023873a65",
-    "ns2-runtime/nx/core/loader/nx.cpp": "8a64df9a95675c1c9655f838efd6328645915d71",
+    "ns2-runtime/nx/core/loader/nx.cpp": ("5d999ca68668133ea3f151669ecd6ac6a17ae1c5"
+        if shipping_vendor == "692e9819a7a1f1b818bf3739c72d8e5252cae661" else "8a64df9a95675c1c9655f838efd6328645915d71"),
     "ns2-runtime/nx/core/loader/nx.h": "508939fbd0d6eadafe488a19eb18dde5404919fd",
     "ns2-runtime/nx/nxformat/nx_reader.hpp": "7deff5cb5a4fbe5f9a04edf359ccd0504568b657",
     "ns2-runtime/nx/nxformat/nx_session.hpp": "1b12f29c85cb02cea79fa9a08f401c88182c8c6e",

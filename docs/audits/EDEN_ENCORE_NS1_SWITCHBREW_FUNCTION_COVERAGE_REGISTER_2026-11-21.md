@@ -2900,3 +2900,10 @@ Le correctif vise l'overlay réellement sélectionné `encore-active/eden-backpo
 Vendor `85b37ea44ef1ca0d8c3c001ee4186aa42bd051d5` : les commandes 500–503 ne sont plus NULL. `DisableSleepTillShutdown` conserve l'interdiction de sleep jusqu'à destruction du contexte invité ; `SuppressDisablingSleepTemporarily` consomme la durée libnx en nanosecondes et mémorise un deadline monotone saturé ; `IsSleepEnabled` et `IsDisablingSleepSuppressed` relisent ce même état sous verrou. Ce modèle reste séparé de `auto_sleep_disabled`, qui concerne l'auto-sleep. Aucun thread timer et aucune action de mise en veille de la PS5 hôte ne sont introduits. ABI recoupée avec libnx et les interfaces nn::am publiées. **4 NULL → PARTIEL** : l'état Horizon est cohérent, mais Encore ne possède pas de gestionnaire de veille matérielle Switch/PS5 à piloter.
 
 Aucun build natif PS5 déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — AM OverlayFunctions : politiques GPU HOS23
+
+Vendor `ea322a8365ee7190757a7389c8538971e467b9a6` : cmd50 `SetGpuTimeSliceBoostForApplication` et cmd90 `SetRequiresGpuResourceUse` ne sont plus NULL. Le dump HOS23 confirme respectivement une entrée u64 et une entrée bool u8, sans sortie. SwitchBrew documente cmd90 comme un setter qui « just returns 0 » ; Ryujinx accepte également les deux commandes sans backend de politique GPU distinct. Encore consomme donc les payloads avec leur ABI exacte et les traite comme **NOOP de politique explicites**, sans modifier artificiellement le scheduler Vulkan/PS5 ni le time-slice déjà exposé par les autres commandes AM. **2 NULL → NOOP.**
+
+Aucun build natif PS5 déclenché ; validation console non revendiquée.

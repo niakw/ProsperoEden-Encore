@@ -2907,3 +2907,10 @@ Aucun build natif PS5 déclenché ; validation console non revendiquée.
 Vendor `ea322a8365ee7190757a7389c8538971e467b9a6` : cmd50 `SetGpuTimeSliceBoostForApplication` et cmd90 `SetRequiresGpuResourceUse` ne sont plus NULL. Le dump HOS23 confirme respectivement une entrée u64 et une entrée bool u8, sans sortie. SwitchBrew documente cmd90 comme un setter qui « just returns 0 » ; Ryujinx accepte également les deux commandes sans backend de politique GPU distinct. Encore consomme donc les payloads avec leur ABI exacte et les traite comme **NOOP de politique explicites**, sans modifier artificiellement le scheduler Vulkan/PS5 ni le time-slice déjà exposé par les autres commandes AM. **2 NULL → NOOP.**
 
 Aucun build natif PS5 déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — AM CommonStateGetter : rejets explicites des backends absents
+
+Vendor `114aafbd10411faa65d0194775fd93f4a358fc21` : quatre slots jusque-là NULL sont désormais raccordés à un rejet AM explicite commun : cmd59 `SetVrPositionForDebug`, cmd110 `OpenMyGpuErrorHandler`, cmd400 `ActivateMigrationService` et cmd401 `DeactivateMigrationService`. Encore ne possède ni backend VR debug positionnel, ni objet GPU-error AM dédié, ni service de migration Horizon ; aucun objet, état ou succès fictif n'est créé. **4 NULL → D.**
+
+Aucun build natif PS5 déclenché ; validation console non revendiquée.

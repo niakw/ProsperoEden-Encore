@@ -16,6 +16,18 @@ ioctl_temp=tempfile.TemporaryDirectory(prefix='encore-ioctl-')
 ioctl_dest=Path(ioctl_temp.name)/'core/hle/service/nvdrv/devices/ioctl_serialization.h'
 ioctl_dest.parent.mkdir(parents=True,exist_ok=True)
 shutil.copyfile(ioctl,ioctl_dest)
+# R457's compiled Host1x ABI is materialized by native CMake as a narrow
+# one-header include root. The generic h05-syncpoint path does not contain
+# the GSV's 64-bit guest-action API; syntax-check the selected shipping header.
+syncpoint=r/'vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h'
+assert syncpoint.is_file()
+syncpoint_text=syncpoint.read_text()
+for name in ('GetNativeGuestSyncpointValue', 'RegisterNativeGuestAction',
+             'DeregisterNativeGuestAction'):
+    assert name in syncpoint_text, name
+syncpoint_dest=Path(ioctl_temp.name)/'video_core/host1x/syncpoint_manager.h'
+syncpoint_dest.parent.mkdir(parents=True,exist_ok=True)
+shutil.copyfile(syncpoint,syncpoint_dest)
 inc=[Path(ioctl_temp.name),*[r/i for i in inc],*list((deps/'boost/boost-1.90.0/libs').glob('*/include'))]
 # The PS5 native NVDRV/AM owners instantiate a large C++20 template graph.
 # Ubuntu's Clang 18 frontend has repeatedly crashed while parsing it, even
@@ -38,6 +50,8 @@ assert flags[0] and all((r/i).exists() for i in [
     'vendor/encore-active/ns2-runtime/video_decoder']), 'Expected pinned NS2 source owners missing'
 cmake=(r/'headless/CMakeLists.txt').read_text()
 assert 'configure_file("${EDEN_MAINTAINED_IOCTL}"' in cmake
+assert 'configure_file("${EDEN_MAINTAINED_HOST1X_HEADER}"' in cmake
+assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}")' in cmake
 # This syntax gate must select the same MemoryManager public header as the
 # shipping PS5 graph. The NS2 NVDRV owner calls the syncpoint shim API
 # unconditionally, while pinned Eden does not expose that combined shim/tiling ABI.

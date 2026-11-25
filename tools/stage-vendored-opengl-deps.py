@@ -11,6 +11,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tarfile
 import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -44,6 +45,22 @@ def stage(opengl_root:Path):
    shutil.copytree(recovered,checkout,symlinks=True)
   actual=subprocess.check_output(['git','-C',str(checkout),'rev-parse','HEAD'],text=True).strip()
   if actual!=locked['commit']:raise RuntimeError(f'PS5 OpenGL staged {name} SHA mismatch')
+  if name=='opengnm-psbc':
+   patch=declared['psbc_patch']
+   patch_path=opengl_root/patch['path']
+   if sha(patch_path)!=patch['sha256']:
+    raise RuntimeError('PS5 OpenGL compiler patch checksum mismatch')
+   tree=subprocess.check_output(['git','-C',str(checkout),'write-tree'],text=True).strip()
+   if tree!=patch['patched_tree']:
+    subprocess.run(['git','-C',str(checkout),'diff','--cached','--exit-code','--quiet'],check=True)
+    subprocess.run(['git','-C',str(checkout),'apply','--index',str(patch_path)],check=True)
+    tree=subprocess.check_output(['git','-C',str(checkout),'write-tree'],text=True).strip()
+   if tree!=patch['patched_tree']:
+    raise RuntimeError('PS5 OpenGL compiler patched tree mismatch')
+   subprocess.run(['git','-C',str(checkout),'diff','--exit-code','--quiet'],check=True)
+   print('OPENGL_PSBC_PATCH_OFFLINE',tree,flush=True)
+  else:
+   subprocess.run(['git','-C',str(checkout),'diff','--cached','--exit-code','--quiet'],check=True)
   print('OPENGL_GIT_DEP_OFFLINE',name,actual[:12],flush=True)
 
  # Restore and preserve the ORIGINAL Mesa release archive; the audited PS5
@@ -56,7 +73,13 @@ def stage(opengl_root:Path):
  target=workspace/f"mesa-{mesa['version']}.tar.xz"
  if not target.is_file():shutil.copy2(ROOT/locked['save'],target)
  if sha(target)!=mesa['sha256']:raise RuntimeError('Wrong vendored Mesa 26.2 archive')
- print('OPENGL_MESA_ARCHIVE_OFFLINE',target.stat().st_size,flush=True)
+ directory=workspace/f"mesa-{mesa['version']}"
+ if not directory.exists():
+  with tarfile.open(target) as stream:
+   stream.extractall(workspace,filter='data')
+ if not (directory/'VERSION').is_file() or (directory/'VERSION').read_text().strip()!=mesa['version']:
+  raise RuntimeError('Wrong vendored Mesa source version after extraction')
+ print('OPENGL_MESA_ARCHIVE_OFFLINE',target.stat().st_size,'sources-ready',flush=True)
 
  boiler=declared['native_boilerplate']
  locked=next(x for x in deps.MANIFEST['items'] if x['name']=='opengl-native-boilerplate')

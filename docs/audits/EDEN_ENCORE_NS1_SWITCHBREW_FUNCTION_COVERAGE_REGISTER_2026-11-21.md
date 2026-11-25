@@ -3806,3 +3806,36 @@ LibraryAppletAccessor, HID system et PCTL : delta nul ; le self_controller backp
 **Le catalogue détaillé n'est pas synchronisé avec ce jalon** : ses lignes portent encore 1 169 NULL, 172 PARTIEL, 2 STUB, 187 ABI-DIFF et 9 AMBIGU, soit 1 539 lignes ouvertes selon leurs étiquettes actuelles. Ce total documentaire obsolète ne remplace pas le bilan opérationnel historique de 689. Ne pas soustraire les 158 slots physiques au pool historique : les deux ensembles ne sont pas bijectifs, et les rejets explicites ne constituent pas automatiquement des implémentations. Le nouveau total fonctionnel exact requiert la réconciliation par service/interface/ID/version et classification des corps actifs, y compris les partiels, stubs et ABI.
 
 HEAD vendor de branche observé : `fb19607934561712877d3e00a45e2188cae9c4c3` (deux commits après le gitlink, PCTL et AM self-controller). Non repinné dans ce contrôle ; aucun changement C++ ni build PS5. Maintenir le suivi dans ce registre existant et ne pas remplacer un chiffre non qualifié par une estimation présentée comme exacte.
+
+### 2026-11-26 — Recalcul global conservateur du catalogue matérialisé
+
+**Nouveau pool de revue : 631 lignes ouvertes**, sur le catalogue physiquement présent, au couple moteur `b4173b4b9472588f77bbaccab28388a7f29d759e` / gitlink vendor `7be1675e767f5b41e1462dade2b8900ccf7e0706`. Base catalogue blob `158ebed45188c9ce1f1bc3ec94ab6286038d071d`.
+
+Recomptage des statuts de lignes IPC/SVC : 1 539 lignes initialement ouvertes (1 169 NULL, 172 PARTIEL, 187 ABI-DIFF, 2 STUB, 9 AMBIGU). Rapprochement des lignes NULL via propriétaire historique, manifeste backports, overrides natifs de `tools/ns1/active_ipc_source_inventory.py`, identifiant décimal et nom exact de FunctionInfo, puis vérification des handlers de rejet et de leur corps (résultat d'erreur explicite, pas de succès). Lecture directe des fichiers au gitlink, complétée par les lignes ajoutées et corps de rejet du diff Git `230caf1fd48d5f03c9dbdab77178a12c6738a65e...7be1675e767f5b41e1462dade2b8900ccf7e0706`. En cas de correspondances multiples contradictoires, d'ABI inconnue ou de corps non qualifié, conserver l'entrée ouverte. Les raccordements non qualifiés ne sont pas des implémentations closes.
+
+| Groupe de rapprochement | Rejet explicite D | Raccordé à qualifier |
+|---|---:|---:|
+| NS app manager, ACC, HID sys, NIM, FSP srv, BTM, VI sys, PCTL | 457 | 26 |
+| Autres propriétaires avec patch et corps de rejet explicite (hors groupes directs) | 216 | 16 |
+| NS system update control, friend, SET factory, SSL, NPNS, USB, SPL, NSD | 111 | 26 |
+| NS droits dynamiques, SFDNSRES, SET debug, NFC, NIFM, NS download/ecommerce/ns | 40 | 21 |
+| BSD, PSC, NS query, FSP storage, PM (LDR déjà compté, aucun delta) | 24 | 9 |
+| CAPS vidéo sans référence initiale, NS cmd23, content/version, PCV, PL | 43 | 4 |
+| VI manager, FSP pr, AM application functions, NS system update/async, PSM/TS/LBL | 7 | 5 |
+| NCM, NVDRV, PCIe, HID, NS account/document, audio renderer manager, PREPO | 6 | 4 |
+| Audio debug natif, TMA, OVLN, SET, WLAN, VI application display | 4 | 3 |
+| **Total** | **908** | **114** |
+
+| Statut restant | Lignes |
+|---|---:|
+| NULL historique / correspondance non résolue | 147 |
+| RACCORDÉ à qualifier (ancien NULL) | 114 |
+| PARTIEL (statut historique conservé) | 172 |
+| ABI-DIFF (statut historique conservé) | 187 |
+| AMBIGU (statut historique conservé) | 9 |
+| STUB (statut historique conservé) | 2 |
+| **Total global de revue recalculé** | **631** |
+
+Arithmétique : 1 539 - 908 = 631. Les 114 raccordements restent dans le pool. Les 908 exclusions D suivent la convention historique : elles attestent d'un traitement explicite de l'appel, pas d'une implémentation fonctionnelle du service. Le chiffre de 689 précédemment rapporté n'était pas accompagné d'une réconciliation complète des lignes et n'est pas utilisé comme base de soustraction.
+
+**Limites :** pool conservateur, pas certification exhaustive HOS23 ni nouveau comptage de tous les corps PARTIEL/ABI-DIFF/STUB/AMBIGU. Les 370 lignes de ces quatre statuts restent ouvertes par prudence ; elles n'ont pas toutes été requalifiées individuellement à ce gitlink. Les 147 NULL historiques incluent les correspondances non résolues et ne sont pas un compteur physique. Le catalogue matérialisé conserve l'écart de neuf références vis-à-vis du dénominateur historique de 4 853 ; ces références non identifiées ne sont pas inventées. Ce bilan remplace l'ancien compteur de revue rapporté pour les lignes effectivement matérialisées, mais ne prétend pas donner le nombre exact des fonctionnalités non implémentées de l'intégralité du firmware. Le catalogue annexe lui-même reste à synchroniser ligne par ligne. Aucun patch C++, changement de gitlink ni build PS5 dans cette passe.

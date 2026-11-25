@@ -3487,3 +3487,18 @@ Vendor `202667f02b0ebe909bf0e5c93af15f8966fc5814` (arbre `6961f669459cab8f90a98c
 Le replay moteur reconstruit chaque fichier bit-à-bit depuis les sources post-backport, vérifie tailles/SHA-256, sélection CMake et manifeste. **NULL physiques attendus : 1 387 → 1 336.** Le compteur historique reste **689 / 4 853** jusqu'au rapprochement ligne-à-ligne : plusieurs entrées de ce lot étaient déjà HORS-VERSION ou INACCESSIBLE et ne doivent pas être soustraites une seconde fois.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — accélération WLAN/STPL/FGM/BCAT : 30 NULL physiques supplémentaires
+
+Vendor final de ce palier : `84a8db4464e4989a067779b86605905e0f52ca52` (arbre `05343b44eaee0433f61e95c433b9d3c4e433e437`).
+
+Après le lot 51-slots précédent, quatre successeurs ciblés retirent **30 `nullptr` physiques supplémentaires** sans transformer un backend absent en succès :
+
+- **WLAN moderne : 3** — les créateurs `wlan:p` / `wlan:nd` sont HOS15+ et répondent explicitement en erreur sans radio Switch privée/driver. Les 141 slots physiques des six interfaces WLAN legacy restent compilés pour les firmwares <15 mais ne sont pas atteignables sur HOS23 ; le service moderne `wlan` et son interface de 61 commandes restent inchangés.
+- **STPL/NGC : 12** — cinq commandes de save-data shim et sept commandes system shim renvoient `IPC::ResultNotSupported`, cohérent avec les méthodes voisines déjà non supportées. Les lectures/écritures locales NGC existantes ne sont pas redirigées.
+- **FGM IRequest : 4** — l'interface de requête horloge retournée par `fgm` échoue explicitement sur Initialize/Set/Get/Cancel plutôt que de laisser quatre dispatch inconnus. Le retrait précédent de `fgm:dbg` demeure.
+- **BCAT/News : 11** — deux variantes de sync par ApplicationId rejoignent le rejet delivery-task existant ; deux créateurs de progress service autonomes échouent faute de backend de téléchargement Nintendo ; sept commandes réception/subscription/archive News échouent explicitement. Les services DeliveryCacheStorage/Directory/File, ClearStorage, TopicList et autres chemins de cache/news local déjà implémentés restent actifs.
+
+Le manifeste shipping porte les SHA-256 exacts des successeurs ; le replay moteur vérifie tailles, SHA, CMake et propriétaires avant de les accepter. **Inventaire physique attendu : 1 336 → 1 306 `nullptr`**. Le pool historique reste **689 / 4 853** jusqu'au rapprochement ligne-à-ligne : WLAN legacy, FGM debug, PTM manufacture et plusieurs interfaces modernes ne doivent pas être retranchés deux fois d'un index qui les classait déjà hors-version/inaccessibles ou ne les contenait pas.
+
+Build PS5 et test console : non exécutés.

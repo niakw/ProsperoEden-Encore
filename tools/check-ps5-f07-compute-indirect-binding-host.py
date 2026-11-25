@@ -39,6 +39,9 @@ assert direct_chunk.index("cmdbuf.PipelineBarrier") < direct_chunk.index("if (!p
 assert method.count(branch_start) == method.count(branch_end) == 1
 chunk = method[method.index(branch_start):method.index(branch_end)]
 assert chunk.count("buffer_cache.ObtainBuffer(*indirect_address, 12, sync_info, post_op)") == 1
+assert "ObtainBufferOperation::DoNothing" in chunk
+assert "ObtainBufferOperation::DiscardWrite" not in chunk
+assert chunk.count("buffer->MarkUsage(offset, 12);") == 1
 assert chunk.count("if (!buffer || buffer->Handle() == VK_NULL_HANDLE) {") == 1
 assert chunk.count("scheduler.RequestOutsideRenderPassOperationContext();") == 1
 assert chunk.count("indirect_buffer = buffer->Handle()") == 1
@@ -57,7 +60,7 @@ cpp = r"""
 #include <utility>
 namespace VideoCommon {
 enum class ObtainBufferSynchronize { FullSynchronize };
-enum class ObtainBufferOperation { DiscardWrite };
+enum class ObtainBufferOperation { DiscardWrite, DoNothing };
 }
 namespace Eden::DevVulkan { inline bool compute_barriers = false; }
 inline constexpr int VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT=1;
@@ -83,14 +86,26 @@ struct CommandBuffer {
 };
 }
 inline constexpr int VK_NULL_HANDLE=0;
-struct Buffer {int value{91};int Handle() const {return value;}};
+struct Buffer {
+    int value{91};
+    bool gpu_dirty{true};
+    unsigned reads{};
+    int argument{73};
+    int Handle() const {return value;}
+    void MarkUsage(std::size_t offset, std::size_t size) {
+        assert(offset==24 && size==12);
+        ++reads;
+    }
+    void UploadNeighbor() { if (!gpu_dirty) argument=0; }
+};
 struct BufferCache {
     Buffer* active{};
     std::pair<Buffer*,std::size_t> ObtainBuffer(
         std::uint64_t address,std::size_t size,
         VideoCommon::ObtainBufferSynchronize,
-        VideoCommon::ObtainBufferOperation) {
+        VideoCommon::ObtainBufferOperation op) {
         assert(address==48 && size==12);
+        if (active && op==VideoCommon::ObtainBufferOperation::DiscardWrite) active->gpu_dirty=false;
         return {active,24};
     }
 };
@@ -143,6 +158,9 @@ int main(){
     assert(valid.scheduler.events.barriers==0);
     assert(valid.scheduler.events.handle==91);
     assert(valid.scheduler.events.offset==24);
+    assert(valid.storage.gpu_dirty && valid.storage.reads==1);
+    valid.storage.UploadNeighbor();
+    assert(valid.storage.argument==73);
 
     Eden::DevVulkan::compute_barriers=true;
     Cache with_barriers;
@@ -177,4 +195,4 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-indirect-compute-") as directo
             assert built.returncode==0,(native,opt,built.stderr[-6500:])
             ran=subprocess.run([str(exe)],capture_output=True,text=True,timeout=20)
             assert ran.returncode==0,(native,opt,ran.stderr[-5000:])
-print("F07_COMPUTE_INDIRECT_BINDING_PASS native_null_reject=1 native_null_vk_reject=1 no_barrier_on_null=1 valid_dispatch=1 full_barriers=1 folded_scheduler_command=1 unbound_pipeline=1 desktop_original=1 O0=1 O2=1")
+print("F07_COMPUTE_INDIRECT_BINDING_PASS native_null_reject=1 native_null_vk_reject=1 no_barrier_on_null=1 valid_dispatch=1 full_barriers=1 folded_scheduler_command=1 unbound_pipeline=1 indirect_gpu_dirty_preserved=1 read_usage=1 O0=1 O2=1")

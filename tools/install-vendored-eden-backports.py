@@ -4397,6 +4397,73 @@ private:
               'nvdrv_ioctl_untouched=1', 'gpu_submission_untouched=1',
               'fake_success=0', 'pinned_sources=immutable')
 
+        # NS1 remaining-owner completeness: exact small NS/HID overlays.
+        # These commands are either explicitly unsupported or legacy firmware
+        # surfaces; pinned Eden stays byte-identical and the maintained blobs
+        # are admitted only by exact before/after receipts.
+        remaining_owner_overlays = {
+            'src/core/hle/service/ns/account_proxy_interface.cpp': {
+                'before_sha256':'a2625f6c14acbbc3e8889eb01c7f1de9a230eede57fbcb1e36c22e86aa320d6c',
+                'before_bytes':592,
+                'after_sha256':'b6704a64c75584ad9f7d748de296148ebfde5e7cdd8b6e508f6bd93e252256f4',
+                'after_bytes':938,
+            },
+            'src/core/hle/service/ns/account_proxy_interface.h': {
+                'before_sha256':'a35cff8b66fce154da5a20009213a6061b77475afbd0cfe197c7b9d9b9d0d888',
+                'before_bytes':414,
+                'after_sha256':'ee5aa007299fb56870bd9ef84566b05ff3b06845a24c0765cb45104722c2d5b5',
+                'after_bytes':491,
+            },
+            'src/core/hle/service/ns/read_only_application_record_interface.cpp': {
+                'before_sha256':'19d1fe312489a9d57fe640533247543e5925743af3eed4d0f76c860b2ccc7deb',
+                'before_bytes':2923,
+                'after_sha256':'01812d71ae1c8ea744b378ecdc87dfda786814fdef35103668216ffaf73253e2',
+                'after_bytes':3310,
+            },
+            'src/core/hle/service/ns/read_only_application_record_interface.h': {
+                'before_sha256':'e84ef0ac8181ffc7031f6bd4284a5edb1e30a725c651a5c0200f20bcfe064c43',
+                'before_bytes':1004,
+                'after_sha256':'628c59ef8f6e937dc54d75b7ea2c9cea8b9e599acb9d5d01c4a60a8ea552bb7b',
+                'after_bytes':1075,
+            },
+            'src/core/hle/service/hid/hid.cpp': {
+                'before_sha256':'c2af2d840988a87b4bffe84beee4fecadd2c5b00791a1ea294bac034ef175df8',
+                'before_bytes':3695,
+                'after_sha256':'2041e0ff35a86d24448e904d71bbda55b6f83c825cb1669599bb8c0d250c275d',
+                'after_bytes':4891,
+            },
+        }
+        for rel, entry in remaining_owner_overlays.items():
+            assert rel not in observed, ('Remaining-owner source unexpectedly changed by frozen replay', rel)
+            generated = (stage / rel).read_bytes()
+            current = (ACTIVE / rel).read_bytes()
+            assert len(generated) == entry['before_bytes'] and sha(generated) == entry['before_sha256'], (
+                'Remaining-owner pinned source drift', rel)
+            assert len(current) == entry['after_bytes'] and sha(current) == entry['after_sha256'], (
+                'Unreviewed remaining-owner maintained source', rel)
+            assert spec['entries'][rel] == {
+                'active':entry['after_sha256'],
+                'bytes':entry['after_bytes'],
+                'upstream':entry['before_sha256'],
+            }, rel
+            observed[rel] = spec['entries'][rel]
+
+        account_live = (ACTIVE/'src/core/hle/service/ns/account_proxy_interface.cpp').read_text()
+        record_live = (ACTIVE/'src/core/hle/service/ns/read_only_application_record_interface.cpp').read_text()
+        hid_live = (ACTIVE/'src/core/hle/service/hid/hid.cpp').read_text()
+        assert account_live.count('&IAccountProxyInterface::RejectUnsupportedAccountMutation') == 1
+        assert record_live.count('&IReadOnlyApplicationRecordInterface::RejectUnsupportedFailureNotification') == 1
+        assert hid_live.count('RejectUnavailableLegacyCommand') == 15
+        assert hid_live.count('&IHidTemporaryServer::RejectUnavailableLegacyCommand') == 1
+        assert hid_live.count('&AHID_CD::RejectUnavailableLegacyCommand') == 5
+        assert hid_live.count('&AHID_HDR::RejectUnavailableLegacyCommand') == 6
+        assert 'firmware_major >= 3 && firmware_major < 8' in hid_live
+        assert hid_live.count('RegisterNamedService("hid:tmp"') == 1
+        print('NS1_REMAINING_SMALL_OWNER_EXACT_SOURCE_PASS',
+              'physical_nulls_closed=14', 'hid_tmp_hos3_7_only=1',
+              'ahid_runtime_exposed=0', 'fake_success=0',
+              'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

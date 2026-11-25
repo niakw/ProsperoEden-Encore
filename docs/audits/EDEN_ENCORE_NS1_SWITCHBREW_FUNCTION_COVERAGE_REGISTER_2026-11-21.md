@@ -3502,3 +3502,11 @@ Après le lot 51-slots précédent, quatre successeurs ciblés retirent **30 `nu
 Le manifeste shipping porte les SHA-256 exacts des successeurs ; le replay moteur vérifie tailles, SHA, CMake et propriétaires avant de les accepter. **Inventaire physique attendu : 1 336 → 1 306 `nullptr`**. Le pool historique reste **689 / 4 853** jusqu'au rapprochement ligne-à-ligne : WLAN legacy, FGM debug, PTM manufacture et plusieurs interfaces modernes ne doivent pas être retranchés deux fois d'un index qui les classait déjà hors-version/inaccessibles ou ne les contenait pas.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — NS cmd3 : raccordement fonctionnel réel
+
+Vendor `b57110e18a26f3a4e518765a02726579866d02c4` : `IApplicationManagerInterface` cmd3 `GetApplicationViewDeprecated` passe du dispatch `nullptr` à la méthode CMIF déjà implémentée dans le même propriétaire shipping. L'ABI (buffers ApplicationId → ApplicationViewDeprecated) correspond au service HOS courant ; aucune nouvelle valeur synthétique ni backend réseau n'est ajouté. Le replay moteur inverse uniquement ce pointeur, retrouve exactement le propriétaire précédent `1c0af884...`, puis poursuit les preuves NS existantes.
+
+**Inventaire physique attendu : 1 306 → 1 305.** Ce slot est un handler fonctionnel, pas un NOOP/rejet. Le compteur historique reste à rapprocher avant modification afin d'éviter un double comptage d'une entrée précédemment classée IMPL-SRC par analyse de méthode.
+
+Build PS5 et validation console : non exécutés.

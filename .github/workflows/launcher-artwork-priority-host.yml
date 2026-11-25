@@ -1,0 +1,29 @@
+name: Launcher artwork priority (branch-only host checks)
+on:
+  push:
+    branches:
+      - fix/launcher-artwork-priority-20261125
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: launcher-artwork-priority-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  host:
+    if: github.ref == 'refs/heads/fix/launcher-artwork-priority-20261125'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Index categories, platform order and first fanart
+        run: python3 -B tools/launcher/build-box-art-index.py --self-test
+      - name: Icon scheduling, cache and selected media
+        if: success() || failure()
+        run: python3 -B tools/check-home-media.py
+      - name: Native case source and candidate retry contracts
+        if: success() || failure()
+        run: python3 -B tools/check-launch-case-artwork.py
+      - name: Actual C++ rear media selector
+        if: success() || failure()
+        run: python3 -B tools/check-encore-case-media-selection-host.py

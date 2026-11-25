@@ -41,6 +41,7 @@ with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
         'hle/service/nvdrv/devices/nvhost_as_gpu.cpp',
         'hle/service/nvdrv/devices/nvhost_gpu.cpp',
         'hle/service/nvdrv/nvdrv_interface.cpp',
+        'hle/service/nvdrv/nvdrv.cpp',
         'hle/service/am/service/self_controller.cpp',
         'hle/service/ns/platform_service_manager.cpp',
         'hle/service/friend/friend.cpp',
@@ -69,6 +70,7 @@ add_library(core STATIC dummy.cpp
     hle/service/nvdrv/devices/nvhost_as_gpu.cpp
     hle/service/nvdrv/devices/nvhost_gpu.cpp
     hle/service/nvdrv/nvdrv_interface.cpp
+    hle/service/nvdrv/nvdrv.cpp
     hle/service/am/service/self_controller.cpp
     hle/service/ns/platform_service_manager.cpp
     hle/service/friend/friend.cpp)
@@ -91,6 +93,16 @@ add_library(dynarmic STATIC dummy.cpp)
 add_executable(eden-headless dummy.cpp)
 '''+owner+'''
 get_target_property(selected_core core SOURCES)
+list(FIND selected_core "hle/service/nvdrv/nvdrv.cpp" legacy_nvdrv_module)
+if(NOT legacy_nvdrv_module EQUAL -1)
+    message(FATAL_ERROR "Pinned NVDRV Module compiled beside maintained lifetime owner")
+endif()
+string(REGEX MATCHALL "vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv[.]cpp"
+    native_nvdrv_module_owners "${selected_core}")
+list(LENGTH native_nvdrv_module_owners native_nvdrv_module_count)
+if(NOT native_nvdrv_module_count EQUAL 1)
+    message(FATAL_ERROR "Expected exactly one native NVDRV Module owner")
+endif()
 get_target_property(selected_video video_core SOURCES)
 get_target_property(selected_shader shader_recompiler SOURCES)
 get_target_property(core_definitions core COMPILE_DEFINITIONS)

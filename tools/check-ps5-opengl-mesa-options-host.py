@@ -32,6 +32,7 @@ with tempfile.TemporaryDirectory(prefix="encore-mesa-options-") as td:
     p.write_bytes(raw)
     subprocess.run(["python3", "-B", str(PATCHER), str(p)], cwd=ROOT, check=True)
     out = p.read_text(encoding="utf-8")
+    assert out.count("--wrap-mode=nodownload") == 1
     for opt in flags:
         assert out.count(f"-D{opt}=disabled") == 1
     for language in ("c_args", "cpp_args"):

@@ -25,8 +25,14 @@ for required in ('libvulkan_radeon.ps5.a','libps5vk.a','radv_GetInstanceProcAddr
 package=source('tools/build-package.sh'); assert 'EDEN_VULKAN_DRIVER=RADV' in package
 build=source('tools/build-radv-dependencies.sh')
 for required in ('tools/deps.json','mihawk-vulkan-review','mihawk-mesa-review','PS5_MESA_FORK',
-                 'tools/build-radv.sh','release','install-vendored-radv.py','EDEN_WSI_SHA256'):
+                 'tools/build-radv.sh','release','install-vendored-radv.py','EDEN_WSI_SHA256',
+                 'vendor/sources/zlib-1.3.1','MESON_WRAP_MODE=nodownload',
+                 'ps5-payload-sdk.zip','zlib-1.3.2.tar.gz'):
     assert required in build,required
+zlib_h=source('vendor/sources/zlib-1.3.1/zlib.h')
+zlib_meson=source('vendor/sources/zlib-1.3.1/meson.build')
+assert '#define ZLIB_VERSION "1.3.1"' in zlib_h
+assert "version: '1.3.1'" in zlib_meson and "zlib_dep = declare_dependency" in zlib_meson
 wsi=source('tools/patch-radv-wsi.py')
 assert 'wsi_common_videoout.c' in wsi and 'videoout_unref' in wsi
 assert 'EDEN_VIDEOOUT_120HZ' in wsi and 'sceVideoOutSetFlipRate' in wsi

@@ -2280,6 +2280,44 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'physical_closed=6', 'real_event=1', 'auto_power_down_requested=false',
               'host_power_untouched=1', 'unknown23_rejected=1')
 
+        # PSM battery charge events: return stable Horizon events and signal the
+        # charge-info event only when already-emulated charge policy fields change.
+        psm_event_contracts = {
+            'src/core/hle/service/ptm/psm.cpp':
+                (11776, 'f16c0d350be649221e93c7d76728245f0a84bf0331a5f68359422740c3e98af3',
+                 14379, '73ad237a6fdbfde40cf584a10d99265311882d2688c740591d8e31d991a3058f'),
+            'src/core/hle/service/ptm/psm.h':
+                (1718, '57ba579b672d7757a3708a3696fd77bed64354cf1ea59a9f2b8841ff4f7e80bb',
+                 2255, '5d9df80981089a775d4efd6d8fd0f7b573ee9dd6092e5b9e1ccdb0b9f603f302'),
+        }
+        psm_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        assert psm_cmake.count('hle/service/ptm/psm.cpp')==1
+        for rel, (before_bytes, before_hash, after_bytes, after_hash) in psm_event_contracts.items():
+            before=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(before)==before_bytes and sha(before)==before_hash, ('PSM event prior drift',rel)
+            assert len(current)==after_bytes and sha(current)==after_hash, ('PSM event active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':before_hash
+            }, ('PSM event manifest drift',rel)
+            observed[rel]=spec['entries'][rel]
+        psm_cpp=(ACTIVE/'src/core/hle/service/ptm/psm.cpp').read_text()
+        psm_h=(ACTIVE/'src/core/hle/service/ptm/psm.h').read_text()
+        assert psm_cpp.count('{16, &PSM::GetBatteryChargeInfoEvent, "GetBatteryChargeInfoEvent"}')==1
+        assert psm_cpp.count('{18, &PSM::GetBatteryChargeCalibratedEvent, "GetBatteryChargeCalibratedEvent"}')==1
+        assert psm_cpp.count('service_context.CreateEvent("PSM::BatteryChargeInfoEvent")')==1
+        assert psm_cpp.count('service_context.CreateEvent("PSM::BatteryChargeCalibratedEvent")')==1
+        assert psm_cpp.count('service_context.CloseEvent(battery_charge_info_event)')==1
+        assert psm_cpp.count('service_context.CloseEvent(battery_charge_calibrated_event)')==1
+        assert psm_cpp.count('SignalBatteryChargeInfoChanged();')==6
+        assert psm_cpp.count('battery_charge_info_event->Signal(system.Kernel())')==1
+        assert psm_cpp.count('battery_charge_calibrated_event->Signal')==0
+        assert psm_h.count('Kernel::KEvent* battery_charge_info_event{};')==1
+        assert psm_h.count('Kernel::KEvent* battery_charge_calibrated_event{};')==1
+        print('NS1_PSM_BATTERY_EVENTS_EXACT_SOURCE_PASS',
+              'real_handlers=2', 'stable_handles=2', 'charge_info_signal_sites=6',
+              'calibration_fabricated=0', 'host_power_untouched=1')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

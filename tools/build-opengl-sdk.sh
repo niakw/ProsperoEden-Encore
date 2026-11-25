@@ -59,28 +59,24 @@ git -C "$source_dir" diff --quiet -- && git -C "$source_dir" diff --cached --qui
     exit 1
 }
 
-if [[ ! -d $template/.git ]]; then
-    rm -rf "$template"
-    git clone --quiet "$template_url" "$template"
-fi
-if [[ $(git -C "$template" rev-parse HEAD) != "$template_revision" ]]; then
-    git -C "$template" fetch --quiet origin "$template_revision" || true
-    git -C "$template" -c advice.detachedHead=false checkout --quiet --detach "$template_revision"
-fi
+# The complete native boilerplate is staged from vendor/objects above.
+# A missing or wrong checkout is a broken vendored closure, never permission
+# to contact its recorded GitHub origin during the standard PS5 build.
+[[ -d $template/.git ]] || {
+    echo "Vendored PS5 OpenGL boilerplate staging is missing" >&2; exit 1;
+}
 [[ $(git -C "$template" rev-parse HEAD) == "$template_revision" ]] || {
-    echo "PS5 OpenGL boilerplate pin mismatch" >&2; exit 1;
+    echo "Vendored PS5 OpenGL boilerplate pin mismatch" >&2; exit 1;
 }
 git -C "$template" diff --quiet -- && git -C "$template" diff --cached --quiet -- || {
     echo "PS5 OpenGL boilerplate source is modified" >&2; exit 1;
 }
-if [[ ! -x $sdk/bin/prospero-clang ]]; then
-    if [[ $(uname -s) == Darwin ]]; then
-        (cd "$template" && MAKEFLAGS=-e ARFLAGS=rcs bash tools/setup-native-dependencies.sh)
-    else
-        (cd "$template" && bash tools/setup-native-dependencies.sh)
-    fi
-fi
-[[ -x $sdk/bin/prospero-clang ]] || { echo "PS5 OpenGL PayloadSDK setup failed" >&2; exit 1; }
+# stage-vendored-opengl-deps.py extracts the complete pinned PayloadSDK.
+# Do not let the boilerplate setup script download anything if that closure is
+# incomplete; fail before the expensive graphics build instead.
+[[ -x $sdk/bin/prospero-clang ]] || {
+    echo "Vendored PS5 OpenGL PayloadSDK compiler missing after staging" >&2; exit 1;
+}
 
 valid=0
 if [[ -f $marker && -f $prefix/manifest.sha256 && -s $prefix/lib/libps5_opengl_core33.a ]] &&

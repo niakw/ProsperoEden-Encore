@@ -1123,8 +1123,8 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
             'src/core/hle/service/olsc/transfer_task_list_controller.cpp': (
                 'c391738f09c3d46478de2e86b7b52818d6658493195c79c91319d1c36e7778e6',
                 4631,
-                '8cc97fdba504fa7de0d8ca893239b5674217bd81a134bef27436f3ec3483b57d',
-                6179),
+                '1819ab8a8af01485396cb757230deae61d3cffca1a0f1cf1a23dfe94b0fbe6b6',
+                6166),
             'src/core/hle/service/olsc/transfer_task_list_controller.h': (
                 '686ae36cbe673f1038b936882b822b342ab7cc674d40fc290f9325afd609e594',
                 1252,
@@ -1158,6 +1158,108 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
                 assert reconstructed.count('#include "core/hle/service/ipc_helpers.h"\n') == 1
                 reconstructed = reconstructed.replace('#include "core/hle/service/ipc_helpers.h"\n', '', 1)
             elif rel.endswith('.cpp'):
+                # The completeness pass converted the seven typed fake-success
+                # methods into fail-closed ResultUnknown responses. Reverse that
+                # newest layer first and prove the exact prior active blob before
+                # reversing the earlier 24 raw nullptr bindings.
+                olsc_typed_pairs = (
+                    (
+                        '''Result ITransferTaskListController::GetTransferTaskEndEventNativeHandleHolder(
+    Out<SharedPointer<INativeHandleHolder>> out_holder) {
+    LOG_DEBUG(Service_OLSC, "called; cloud transfer backend unavailable");
+    R_THROW(ResultUnknown);
+}''',
+                        '''Result ITransferTaskListController::GetTransferTaskEndEventNativeHandleHolder(
+    Out<SharedPointer<INativeHandleHolder>> out_holder) {
+    LOG_WARNING(Service_OLSC, "(STUBBED) called");
+    *out_holder = std::make_shared<INativeHandleHolder>(system);
+    R_SUCCEED();
+}''',
+                    ),
+                    (
+                        '''Result ITransferTaskListController::StopNextTransferTaskExecution(
+    Out<SharedPointer<IStopperObject>> out_stopper) {
+    LOG_DEBUG(Service_OLSC, "called; cloud transfer backend unavailable");
+    R_THROW(ResultUnknown);
+}''',
+                        '''Result ITransferTaskListController::StopNextTransferTaskExecution(
+    Out<SharedPointer<IStopperObject>> out_stopper) {
+    LOG_WARNING(Service_OLSC, "(STUBBED) called");
+    *out_stopper = std::make_shared<IStopperObject>(system);
+    R_SUCCEED();
+}''',
+                    ),
+                    (
+                        '''Result ITransferTaskListController::GetTransferTaskStartEventNativeHandleHolder(
+    Out<SharedPointer<INativeHandleHolder>> out_holder) {
+    LOG_DEBUG(Service_OLSC, "called; cloud transfer backend unavailable");
+    R_THROW(ResultUnknown);
+}''',
+                        '''Result ITransferTaskListController::GetTransferTaskStartEventNativeHandleHolder(
+    Out<SharedPointer<INativeHandleHolder>> out_holder) {
+    LOG_WARNING(Service_OLSC, "(STUBBED) called");
+    *out_holder = std::make_shared<INativeHandleHolder>(system);
+    R_SUCCEED();
+}''',
+                    ),
+                    (
+                        '''Result ITransferTaskListController::GetCurrentTransferTaskInfo(Out<std::array<u8, 0x30>> out_info,
+                                                              u8 unknown) {
+    LOG_DEBUG(Service_OLSC, "called, unknown={:#x}; cloud transfer backend unavailable", unknown);
+    R_THROW(ResultUnknown);
+}''',
+                        '''Result ITransferTaskListController::GetCurrentTransferTaskInfo(Out<std::array<u8, 0x30>> out_info,
+                                                              u8 unknown) {
+    LOG_WARNING(Service_OLSC, "(STUBBED) called, unknown={:#x}", unknown);
+    out_info->fill(0);
+    R_SUCCEED();
+}''',
+                    ),
+                    (
+                        '''Result ITransferTaskListController::GetTransferTaskProgress() {
+    LOG_DEBUG(Service_OLSC, "called; cloud transfer backend unavailable");
+    R_THROW(ResultUnknown);
+}''',
+                        '''Result ITransferTaskListController::GetTransferTaskProgress() {
+    LOG_WARNING(Service_OLSC, "(STUBBED) called.");
+    R_SUCCEED();
+}''',
+                    ),
+                    (
+                        '''Result ITransferTaskListController::FindTransferTaskInfo(Out<std::array<u8, 0x30>> out_info,
+                                                        InBuffer<BufferAttr_HipcAutoSelect> in) {
+    LOG_DEBUG(Service_OLSC, "called, in_size={}; cloud transfer backend unavailable", in.size());
+    R_THROW(ResultUnknown);
+}''',
+                        '''Result ITransferTaskListController::FindTransferTaskInfo(Out<std::array<u8, 0x30>> out_info,
+                                                        InBuffer<BufferAttr_HipcAutoSelect> in) {
+    LOG_WARNING(Service_OLSC, "(STUBBED) called, in_size={}", in.size());
+    out_info->fill(0);
+    R_SUCCEED();
+}''',
+                    ),
+                    (
+                        '''Result ITransferTaskListController::GetTransferTaskCount(Out<u32> out_count, u8 unknown) {
+    LOG_DEBUG(Service_OLSC, "called, unknown={:#x}; cloud transfer backend unavailable", unknown);
+    R_THROW(ResultUnknown);
+}''',
+                        '''Result ITransferTaskListController::GetTransferTaskCount(Out<u32> out_count, u8 unknown) {
+    LOG_WARNING(Service_OLSC, "(STUBBED) called, unknown={:#x}", unknown);
+    *out_count = 0;
+    R_SUCCEED();
+}''',
+                    ),
+                )
+                for new_body, old_body in olsc_typed_pairs:
+                    assert reconstructed.count(new_body) == 1
+                    reconstructed = reconstructed.replace(new_body, old_body, 1)
+                prior_active = reconstructed.encode('utf-8')
+                assert len(prior_active) == 6179
+                assert sha(prior_active) == '8cc97fdba504fa7de0d8ca893239b5674217bd81a134bef27436f3ec3483b57d'
+                current_text = after.decode('utf-8')
+                assert '(STUBBED)' not in current_text and '(stubbed)' not in current_text
+                assert current_text.count('R_THROW(ResultUnknown);') >= 7
+
                 pointer = '&ITransferTaskListController::RejectUnavailableCloudTransfer'
                 assert reconstructed.count(pointer) == 24
                 reconstructed = reconstructed.replace(pointer, 'nullptr')
@@ -1179,7 +1281,8 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
             assert reconstructed.encode('utf-8') == before, ('GRC/OLSC reverse mismatch', rel)
             observed[rel] = spec['entries'][rel]
         print('NS1_GRC_OLSC_EXACT_POST_BACKPORT_REPLAY_PASS',
-              'physical_nulls=32', 'reconstructed_owners=3', 'native_handlers_preserved')
+              'reconstructed_owners=3', 'olsc_commands_qualified=31',
+              'olsc_typed_fake_success_removed=7', 'native_handlers_preserved')
 
 
         # NS1 acc:e/u1/u2 supersede the removed acc:u0/u1 on HOS 13+.

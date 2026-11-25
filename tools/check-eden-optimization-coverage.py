@@ -1551,7 +1551,12 @@ if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
     assert not post_f07_gpu_table_present
 else:
     assert post_f07_gpu_table_present == post_f07_gpu_table_owners
-    assert subprocess.check_output(["git","hash-object",next(iter(post_f07_gpu_table_owners))],cwd=ROOT,text=True).strip() == "c55a55498fe300458800b646bfc295db11283b4a"
+    # Authentic production successors supersede only their pinned table blob.
+    table_pin = subprocess.check_output(["git", "-C", str(ROOT/"vendor"), "rev-parse", "HEAD"], text=True).strip()
+    expected_table = ("6dd69f4b09aebc0eb7250975d35b34393e9f5516" if table_pin == "703de6566bb8d1f0f966b0867a42b529e60b6267" else
+                      "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f" if table_pin == "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee" else
+                      "c55a55498fe300458800b646bfc295db11283b4a")
+    assert subprocess.check_output(["git","hash-object",next(iter(post_f07_gpu_table_owners))],cwd=ROOT,text=True).strip() == expected_table
     assert 'list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")' in release_cmake
     assert 'list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")' in release_cmake
 post_f07_vfs_receipts = {

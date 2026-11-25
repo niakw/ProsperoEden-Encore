@@ -22,6 +22,12 @@ def blob(content: str) -> str:
     return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
 
 def recover_prior_memory_manager(actual: str) -> str:
+    # Authentic new 4K/big-page range bounds are removed only on the audit copy.
+    if blob(actual) == "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86":
+        addition = "    // Do not publish out-of-range GPU PTEs, even for a caller that bypasses\n    // the ioctl layer's range validation. Match Eglantine's native guard.\n    if (size != 0 && (gpu_addr >= address_space_size || size > address_space_size - gpu_addr)) {\n        LOG_ERROR(HW_GPU, \"GPU mapping {:#x}+{:#x} is outside the {:#x}-byte address space\",\n                  gpu_addr, size, address_space_size);\n        return gpu_addr;\n    }\n"
+        assert actual.count(addition) == 2, "GPU range guard drift"
+        actual = actual.replace(addition, "")
+        assert blob(actual) == "9a9479580fb2037cc49fe2ed5c6a284331a78b97", "GPU guard predecessor drift"
     # NS2 Worker 212 may change PTE kind without changing physical backing.
     # Reverse the exact reviewed successor before the older owner replay.
     if "A native kind change can reinterpret" in actual:

@@ -3562,3 +3562,20 @@ Vendor `4a68cca38b2622d2250931b74ac524a7fe580d2d` (arbre `14d126aff067eace98f8fb
 Le replay moteur vérifie les SHA-256 source/active, le CMake, les deux bindings, les deux créations/fermetures et six sites de signal charge-info. **Inventaire physique attendu : 1 284 → 1 282 `nullptr`.** Les deux slots sont des handlers fonctionnels.
 
 Build PS5 et validation console : non exécutés.
+
+### 2026-11-25 — palier accéléré sous 1 200 NULL physiques
+
+Base **CI confirmée** avant ce palier : vendor `4a68cca38b2622d2250931b74ac524a7fe580d2d`, **1 282 NULL / 6 448 slots**.
+
+Vendor final du palier : `7a0047acd3329a10ae4162ec7feff4e6a32bc1aa` (arbre `d4f5ebae406fc9997a2b1c1753c6f7bd9502630d`).
+
+**84 slots physiques** supplémentaires sont retirés :
+- PREPO/LM/NFC : **14** — PREPO réutilise 3 handlers statistiques existants, 2 commandes modernes inconnues sont fail-closed ; LM 2 commandes modernes suivent la sémantique retail locale ; NFC complète 7 opérations session/app lifecycle sans inventer de périphérique.
+- OLSC/MII/NCM/CAPS : **32** — OLSC 3, MII import/export 2, retrait `ncm:v` non-retail 1, CAPS 26 commandes capture/album sans backend en erreur explicite. Les chemins album/cache déjà implémentés restent inchangés.
+- BTM/FATAL/APM/PTM/NIFM : **38** — Bluetooth Switch 23, fatal:p 2, politique APM 5, contrôle thermique TS 4, mutations/statut NIFM non qualifiés 4. Les handlers réseau, température, événements batterie, radio offline et performance déjà présents restent sélectionnés.
+
+Les deux lots sont couverts par manifestes SHA-256 actifs/upstream, vérification CMake et contrats moteur sémantiques. Aucun de ces rejets n'est présenté comme backend fonctionnel.
+
+**Inventaire physique attendu : 1 282 → 1 198 NULL**. Validation CI de ce nouveau couple encore requise avant de considérer 1 198 comme confirmé. Le pool historique reste séparé jusqu'au rapprochement ligne-à-ligne.
+
+Build PS5 et test console : non exécutés.

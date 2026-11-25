@@ -1330,10 +1330,52 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # actual main applet rather than leaving an indexed IMPL-SRC false
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_fail_closed_head = (ACTIVE / ns_rel).read_bytes()
+        ns_auto_delete_head = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_auto_delete_head) == 83041 and sha(ns_auto_delete_head) == (
+            '5e1fe9ed99e7f5ed9e2ab68f3e4249c18329fb833c844a7495e6363ba50abf80')
+        assert spec['entries'][ns_rel]['active'] == sha(ns_auto_delete_head)
+        ns_auto_delete_pointer_916 = (
+            '{916, D<&IApplicationManagerInterface::IsApplicationAutoDeleteDisabled>, '
+            '"IsApplicationAutoDeleteDisabled"}')
+        ns_auto_delete_pointer_916_old = '{916, nullptr, "IsApplicationAutoDeleteDisabled"}'
+        ns_auto_delete_pointer_1705 = (
+            '{1705, D<&IApplicationManagerInterface::IsPatchAutoDeletableApplication>, '
+            '"IsPatchAutoDeletableApplication"}')
+        ns_auto_delete_pointer_1705_old = '{1705, nullptr, "IsPatchAutoDeletableApplication"}'
+        ns_auto_delete_methods = """Result IApplicationManagerInterface::IsApplicationAutoDeleteDisabled(
+    Out<bool> out_disabled, u64 application_id) {
+    LOG_DEBUG(Service_NS, "called, application_id={:016X}", application_id);
+
+    // Encore has no background application auto-delete backend on PS5. Report
+    // the effective platform state instead of pretending that auto-delete is active.
+    *out_disabled = true;
+    R_SUCCEED();
+}
+
+Result IApplicationManagerInterface::IsPatchAutoDeletableApplication(
+    Out<bool> out_deletable, u64 application_id) {
+    LOG_DEBUG(Service_NS, "called, application_id={:016X}", application_id);
+
+    // No NS auto-delete worker exists on Encore/PS5, so installed patches are
+    // conservatively non-auto-deletable.
+    *out_deletable = false;
+    R_SUCCEED();
+}
+
+"""
+        ns_auto_delete_text = ns_auto_delete_head.decode('utf-8')
+        assert ns_auto_delete_text.count(ns_auto_delete_pointer_916) == 1
+        assert ns_auto_delete_text.count(ns_auto_delete_pointer_1705) == 1
+        assert ns_auto_delete_text.count(ns_auto_delete_methods) == 1
+        ns_fail_closed_head = ns_auto_delete_text.replace(
+            ns_auto_delete_pointer_916, ns_auto_delete_pointer_916_old, 1).replace(
+            ns_auto_delete_pointer_1705, ns_auto_delete_pointer_1705_old, 1).replace(
+            ns_auto_delete_methods, '', 1).encode('utf-8')
         assert len(ns_fail_closed_head) == 82148 and sha(ns_fail_closed_head) == (
             '12f588b746e3d8c04a4e7e7fbba5330e3e396299ee109ede9794be940b7b8a87')
-        assert spec['entries'][ns_rel]['active'] == sha(ns_fail_closed_head)
+        print('NS1_NS_AUTO_DELETE_POLICY_EXACT_REVERSE_PASS',
+              'commands=916,1705', 'auto_delete_disabled=1',
+              'patch_auto_deletable=0', 'fake_backend=0')
         ns_fail_closed_text = ns_fail_closed_head.decode('utf-8')
         ns_fail_closed = {
             26:'BeginInstallApplication',
@@ -1816,10 +1858,19 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_owner_prior = ns_text.encode('utf-8')
         assert len(ns_owner_prior) == 69013 and sha(ns_owner_prior) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
         ns_header_rel = 'src/core/hle/service/ns/application_manager_interface.h'
-        ns_header_terminate_system_applet = (ACTIVE / ns_header_rel).read_bytes()
+        ns_header_auto_delete = (ACTIVE / ns_header_rel).read_bytes()
+        assert len(ns_header_auto_delete) == 9996 and sha(ns_header_auto_delete) == (
+            '87f05ec209b4e89e93da5efb74e687e4487149d5df556dfc8f7f5dea14fe2320')
+        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_auto_delete)
+        ns_auto_delete_decls = (
+            '    Result IsApplicationAutoDeleteDisabled(Out<bool> out_disabled, u64 application_id);\n'
+            '    Result IsPatchAutoDeletableApplication(Out<bool> out_deletable, u64 application_id);\n')
+        ns_header_auto_delete_text = ns_header_auto_delete.decode('utf-8')
+        assert ns_header_auto_delete_text.count(ns_auto_delete_decls) == 1
+        ns_header_terminate_system_applet = ns_header_auto_delete_text.replace(
+            ns_auto_delete_decls, '', 1).encode('utf-8')
         assert len(ns_header_terminate_system_applet) == 9819 and sha(ns_header_terminate_system_applet) == (
             '5e06d667846decb9c05fd1653b78f08350e3fc5e376c6a08a2c756cf08fb3eea')
-        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_terminate_system_applet)
         ns_terminate_system_applet_decl = '    Result TerminateSystemApplet(u64 program_id);\n'
         ns_header_terminate_system_applet_text = ns_header_terminate_system_applet.decode('utf-8')
         assert ns_header_terminate_system_applet_text.count(ns_terminate_system_applet_decl) == 1
@@ -1956,7 +2007,7 @@ static_assert(sizeof(ApplicationContentStorageRecord) == 0x18);
         ns_previous = (stage / ns_rel).read_bytes()
         assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
         assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_fail_closed_head)
+        assert spec['entries'][ns_rel]['active'] == sha(ns_auto_delete_head)
         import re
         ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
         ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)

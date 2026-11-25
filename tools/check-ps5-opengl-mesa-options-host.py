@@ -31,6 +31,12 @@ with tempfile.TemporaryDirectory(prefix="encore-mesa-options-") as td:
     out = p.read_text(encoding="utf-8")
     for opt in flags:
         assert out.count(f"-D{opt}=disabled") == 1
+    for language in ("c_args", "cpp_args"):
+        line = next(line for line in out.splitlines() if line.startswith(f"-D{language}="))
+        assert "-Wno-thread-safety-analysis" in line
+        assert "-Wno-unreachable-code-generic-assoc" in line
+        assert "-Wno-unused-parameter" in line
+        assert line.count("-Wno-") == 3
     assert p.read_bytes() != raw
     subprocess.run(["python3", "-B", str(PATCHER), str(p)], cwd=ROOT, check=True)
     assert p.read_text(encoding="utf-8") == out
@@ -42,4 +48,4 @@ with tempfile.TemporaryDirectory(prefix="encore-mesa-options-") as td:
     bad = subprocess.run(["python3", "-B", str(PATCHER), str(p)], cwd=ROOT)
     assert bad.returncode != 0
 
-print("PASS PS5 OpenGL Mesa auto-feature selection: display-info/spirv-tools/lmsensors disabled only")
+print("PASS PS5 OpenGL Mesa feature selection + scoped PS5 SDK diagnostic exclusions")

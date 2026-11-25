@@ -1330,10 +1330,90 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # actual main applet rather than leaving an indexed IMPL-SRC false
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_unique_916_head = (ACTIVE / ns_rel).read_bytes()
+        ns_content_record_head = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_content_record_head) == 79065 and sha(ns_content_record_head) == (
+            'e4974150f2b156c43082bdb5e0a543f7337badb6f40edf0a4e27729b7438f01d')
+        assert spec['entries'][ns_rel]['active'] == sha(ns_content_record_head)
+        ns_content_record_pointer = (
+            '{17, D<&IApplicationManagerInterface::ListApplicationRecordContentMeta>, '
+            '"ListApplicationRecordContentMeta"}')
+        ns_content_record_pointer_old = '{17, nullptr, "ListApplicationRecordContentMeta"}'
+        ns_content_record_method = """Result IApplicationManagerInterface::ListApplicationRecordContentMeta(
+    OutArray<ApplicationContentStorageRecord, BufferAttr_HipcMapAlias> out_records,
+    Out<s32> out_count, u64 offset, u64 application_id) {
+    const u64 real_id = FileSys::GetBaseTitleID(application_id);
+    auto& cp = system.GetContentProviderUnion();
+
+    std::vector<ApplicationContentStorageRecord> records;
+    const auto append = [&](u64 title_id, FileSys::TitleType meta_type,
+                            FileSys::ContentRecordType record_type) {
+        if (!cp.HasEntry(title_id, record_type)) {
+            return;
+        }
+        const auto slot = cp.GetSlotForEntry(title_id, record_type);
+        u8 storage_id = static_cast<u8>(FileSys::StorageId::None);
+        if (slot.has_value()) {
+            switch (*slot) {
+            case FileSys::ContentProviderUnionSlot::UserNAND:
+                storage_id = static_cast<u8>(FileSys::StorageId::NandUser);
+                break;
+            case FileSys::ContentProviderUnionSlot::SysNAND:
+                storage_id = static_cast<u8>(FileSys::StorageId::NandSystem);
+                break;
+            case FileSys::ContentProviderUnionSlot::SDMC:
+                storage_id = static_cast<u8>(FileSys::StorageId::SdCard);
+                break;
+            case FileSys::ContentProviderUnionSlot::FrontendManual:
+                storage_id = static_cast<u8>(FileSys::StorageId::Host);
+                break;
+            default:
+                break;
+            }
+        }
+        records.push_back({
+            .title_id = title_id,
+            .version = cp.GetEntryVersion(title_id).value_or(0),
+            .meta_type = static_cast<u8>(meta_type),
+            .install_type = 0,
+            .key_padding = {},
+            .storage_id = storage_id,
+            .storage_padding = {},
+        });
+    };
+
+    append(real_id, FileSys::TitleType::Application, FileSys::ContentRecordType::Program);
+    append(FileSys::GetUpdateTitleID(real_id), FileSys::TitleType::Update,
+           FileSys::ContentRecordType::Program);
+    const auto aocs =
+        cp.ListEntriesFilter(FileSys::TitleType::AOC, FileSys::ContentRecordType::Data);
+    for (const auto& entry : aocs) {
+        if (FileSys::GetBaseTitleID(entry.title_id) == real_id) {
+            append(entry.title_id, FileSys::TitleType::AOC, FileSys::ContentRecordType::Data);
+        }
+    }
+
+    const std::size_t start =
+        static_cast<std::size_t>((std::min)(offset, static_cast<u64>(records.size())));
+    const std::size_t count = (std::min)(out_records.size(), records.size() - start);
+    for (std::size_t i = 0; i < count; ++i) {
+        out_records[i] = records[start + i];
+    }
+    *out_count = static_cast<s32>(count);
+    R_SUCCEED();
+}
+
+"""
+        ns_content_record_text = ns_content_record_head.decode('utf-8')
+        assert ns_content_record_text.count(ns_content_record_pointer) == 1
+        assert ns_content_record_text.count(ns_content_record_method) == 1
+        ns_unique_916_head = ns_content_record_text.replace(
+            ns_content_record_pointer, ns_content_record_pointer_old, 1).replace(
+            ns_content_record_method, '', 1).encode('utf-8')
         assert len(ns_unique_916_head) == 76252 and sha(ns_unique_916_head) == (
             '8e8c3bedc4610ae5f3af1510fe6b00ea03e925e6e77b26ad9bb9a1e8208e3476')
-        assert spec['entries'][ns_rel]['active'] == sha(ns_unique_916_head)
+        print('NS1_NS_CONTENT_STORAGE_RECORD_EXACT_REVERSE_PASS',
+              'command=17', 'layout=0x18', 'install_type=Full',
+              'base_patch_aoc=active_union', 'fake_state=0')
         ns_unique_916_text = ns_unique_916_head.decode('utf-8')
         ns_real_916 = '        {916, nullptr, "IsApplicationAutoDeleteDisabled"},\n'
         ns_duplicate_916 = '        {916, nullptr, "Unknown916"}, //20.0.0+\n'
@@ -1580,10 +1660,33 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_owner_prior = ns_text.encode('utf-8')
         assert len(ns_owner_prior) == 69013 and sha(ns_owner_prior) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
         ns_header_rel = 'src/core/hle/service/ns/application_manager_interface.h'
-        ns_header_program_index = (ACTIVE / ns_header_rel).read_bytes()
+        ns_header_content_record = (ACTIVE / ns_header_rel).read_bytes()
+        assert len(ns_header_content_record) == 9034 and sha(ns_header_content_record) == (
+            'a34c965c3c4ce745b0a8ae6014c89d0288738b8b0f957508a85d07fd73baeade')
+        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_content_record)
+        ns_content_record_struct = """struct ApplicationContentStorageRecord {
+    u64 title_id;
+    u32 version;
+    u8 meta_type;
+    u8 install_type;
+    u8 key_padding[2];
+    u8 storage_id;
+    u8 storage_padding[7];
+};
+static_assert(sizeof(ApplicationContentStorageRecord) == 0x18);
+
+"""
+        ns_content_record_decl = """    Result ListApplicationRecordContentMeta(
+        OutArray<ApplicationContentStorageRecord, BufferAttr_HipcMapAlias> out_records,
+        Out<s32> out_count, u64 offset, u64 application_id);
+"""
+        ns_header_content_record_text = ns_header_content_record.decode('utf-8')
+        assert ns_header_content_record_text.count(ns_content_record_struct) == 1
+        assert ns_header_content_record_text.count(ns_content_record_decl) == 1
+        ns_header_program_index = ns_header_content_record_text.replace(
+            ns_content_record_struct, '', 1).replace(ns_content_record_decl, '', 1).encode('utf-8')
         assert len(ns_header_program_index) == 8588 and sha(ns_header_program_index) == (
             '2f38cdfbc9ac5ab456aa179b364589bc717ecd5263ee702302cd9532ad688f55')
-        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_program_index)
         ns_program_index_decl = (
             '    Result GetMainApplicationProgramIndex(Out<u8> out_program_index, u64 application_id);\n')
         ns_header_program_index_text = ns_header_program_index.decode('utf-8')
@@ -1643,7 +1746,7 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_previous = (stage / ns_rel).read_bytes()
         assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
         assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_unique_916_head)
+        assert spec['entries'][ns_rel]['active'] == sha(ns_content_record_head)
         import re
         ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
         ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)

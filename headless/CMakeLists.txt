@@ -257,6 +257,15 @@ endif()
 list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")
 list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")
 set_property(TARGET common PROPERTY SOURCES "${eden_page_table_sources}")
+# The maintained multi-level GPU page table has a PS5-specific sparse
+# allocator and recoverable bad_alloc path. CMake's PS5_NATIVE option is not
+# a compile definition on the upstream common target: without this source-
+# scoped definition the PS5 build takes the generic mmap/ASSERT(base) path
+# and may publish a null GPU PTE table after reservation failure.
+if(PS5_NATIVE)
+    set_property(SOURCE "${EDEN_MAINTAINED_GPU_PAGE_TABLE}"
+        TARGET_DIRECTORY common APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
+endif()
 # Maintained HLE source selection lives with its code, not in this launcher.
 option(EDEN_BLOCKING_GUEST_CONTEXT_LOCKS
     "Use the paired upstream guest scheduler lock fixes" ON)

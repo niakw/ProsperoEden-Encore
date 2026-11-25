@@ -2509,6 +2509,76 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'physical_closed=38', 'btm=23', 'fatal=2', 'apm=5',
               'ptm=4', 'nifm=4', 'host_hardware_untouched=1')
 
+        # Remaining capture/power-control owners: keep implemented screenshot/album
+        # paths, but make unsupported JPEG/capture variants and PSC power controls
+        # deterministic instead of unknown dispatch.
+        caps_psc_contracts = {
+            'src/core/hle/service/caps/caps.cpp':
+                (2713, '00a8980a3630e0ff3f8ef6ee77cc4e160e38c29563c66e91d2621535375cd4a7',
+                 '4354e34b2e05bc9f2ec762e0c08bedd353b3c391d56c7f1d1e217a765f72436f'),
+            'src/core/hle/service/caps/caps_ss.cpp':
+                (3549, '3d89d1353a18f3382de6b78148f727e5530e66ef47c07b8bde12d148d64dc128',
+                 'ceea1a083cfd55a88b49ee4b1b80cb1a9b0b285288681fe053fd4bb9721ed7f5'),
+            'src/core/hle/service/caps/caps_ss.h':
+                (1580, '6705096697e4dad795a055a6373de9b9e9b1007aaf808f7856cf782bc61de1a5',
+                 '92a4704e15d01ade3d379f4e1d339ce7bcf212fc1bdc5d0e56344bd7f9a8e99f'),
+            'src/core/hle/service/caps/caps_su.cpp':
+                (4664, '181957111129a55e71b332553ece4ec38df16d6f22a1300a65c86bb8bd2bc9e4',
+                 'b63555a4fba4a099db970dc910695100c9ac5305a81a07879e92591c26011950'),
+            'src/core/hle/service/caps/caps_su.h':
+                (2007, '74e17658e4adc9f5299bd7949bbd5fb440dee14cf08fcd30b1e8dd0ee506fa03',
+                 'fbda52fb80c49bb513950ef5bb22558432ef9ee93124a748c55923375220e8f6'),
+            'src/core/hle/service/caps/caps_u.cpp':
+                (10694, '781c5aaf6e34a747f152b2b06a7985e63756f5639b9157b7ab13f665f44ccc7a',
+                 '38fbee7328ffedd64a646d9c8ff6cf0daa9995ac14ec28cd54fbf4b136205189'),
+            'src/core/hle/service/caps/caps_u.h':
+                (4199, '7abdd9083fe5d0df3feebe3167228c01c34e62cd784b815c0b319cb96c05d3e7',
+                 '90deaea4f1586080accec3509a9b63a185aa666f6cc6eb969cced2a8d38185f0'),
+            'src/core/hle/service/psc/pm_control.cpp':
+                (1403, '074785a5522279f4865253db08530e62e709b42bfac85999f5384b849028365d',
+                 'b622cc64d4f2daf955dae3f9fdf14eae2223fcf8f7883e00d176037eb6fe4141'),
+            'src/core/hle/service/psc/pm_control.h':
+                (442, 'fdf1629c6a8d010da0275a53bb67735689ec3ab2f375e49645acc1cdbcc8e6b6',
+                 'fdb94bffa979e8356befec107c0a01151c38ba7a5142f4e910cf5e439dde9858'),
+            'src/core/hle/service/psc/pm_module.cpp':
+                (1106, 'ee35bf86d8b4e0959d6fb905524e1970528e51184e66ea59bd1bc2861850c268',
+                 'fa6c3ed863947c5346b1be5a3ee994dde3253471ae97bd6a5cb4e85a4abb79b1'),
+            'src/core/hle/service/psc/pm_module.h':
+                (437, '2cb2e055fba7f1db8242cd4832216edf91d5b1383e66994dfd8b193c62f63b40',
+                 '5b996783d1823e9cefd7b10722f5932ffe6160f058a384b7b1f79213e7316f77'),
+        }
+        caps_psc_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel,(after_bytes,after_hash,upstream_hash) in caps_psc_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('caps/psc active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('caps/psc manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert caps_psc_cmake.count(rel.removeprefix('src/core/'))==1, ('caps/psc CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        caps_root=(ACTIVE/'src/core/hle/service/caps/caps.cpp').read_text()
+        caps_ss=(ACTIVE/'src/core/hle/service/caps/caps_ss.cpp').read_text()
+        caps_su=(ACTIVE/'src/core/hle/service/caps/caps_su.cpp').read_text()
+        caps_u=(ACTIVE/'src/core/hle/service/caps/caps_u.cpp').read_text()
+        psc_control=(ACTIVE/'src/core/hle/service/psc/pm_control.cpp').read_text()
+        psc_module=(ACTIVE/'src/core/hle/service/psc/pm_module.cpp').read_text()
+        assert caps_root.count('&IDecoderControlService::RejectUnavailableJpegControl')==3
+        assert caps_ss.count('&IScreenShotService::RejectUnavailableCaptureVariant')==5
+        assert caps_su.count('&IScreenShotApplicationService::RejectUnavailableCaptureVariant')==2
+        assert caps_u.count('&IAlbumApplicationService::RejectUnavailableAlbumVariant')==2
+        assert psc_control.count('&IPmControl::RejectUnavailablePowerControl')==9
+        assert psc_module.count('&IPmModule::RejectUnavailablePowerModule')==5
+        for name,text_value in (
+            ('caps_root',caps_root),('caps_ss',caps_ss),('caps_su',caps_su),
+            ('caps_u',caps_u),('psc_control',psc_control),('psc_module',psc_module),
+        ):
+            assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', text_value))==0, name
+        print('NS1_CAPS_PSC_REMAINING_SOURCE_PASS',
+              'physical_closed=26', 'caps=12', 'psc=14',
+              'existing_album_paths_preserved=1', 'host_power_untouched=1')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

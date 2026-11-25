@@ -2489,6 +2489,11 @@ if actual_vendor_pin in {"191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec
         })
         if actual_vendor_pin == "db9c5e6725264412218c3cabdb1d284e6dcb8a5f":
             successor_blobs["tests/fc27_deferred_page_protection_host.py"] = "a1ede36d9f1e95700b9d35966add6385dd504029"
+    if actual_vendor_pin == "d254110d5551a246530a3665995e876e752e7565":
+        successor_blobs.update({
+            "encore-active/eden-vulkan/vulkan_rasterizer.cpp":"4a7ba88e47d686e3d277bee9df48f9b0d81a1248",
+            "tests/fc27_deferred_page_protection_host.py":"47a81f6f8625dacbab10ab1b079080a8a2075350",
+        })
     for relative, expected_blob in successor_blobs.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()

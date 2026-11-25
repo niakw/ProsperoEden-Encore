@@ -15,6 +15,36 @@ def blob(path: Path) -> str:
 
 selected=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 gitlink=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
+
+# HOS19 ApplicationLaunchInfo semantic contract. A later NS cmd96 change once
+# regressed this wire layout while keeping the SHA/source-selection gates green.
+# Keep this causal launch ABI check next to the selected vendor proof.
+ns_am_header=(V/"encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.h").read_text()
+ns_am_cpp=(V/"encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.cpp").read_text()
+launch_begin=ns_am_header.index("struct ApplicationLaunchInfoV19 {")
+launch_end=ns_am_header.index("struct ApplicationContentStorageRecord", launch_begin)
+launch_struct=ns_am_header[launch_begin:launch_end]
+for required in (
+    "u64 patch_id;",
+    "u32 content_meta_type;",
+    "static_assert(sizeof(ApplicationLaunchInfoV19) == 0x80);",
+    "static_assert(offsetof(ApplicationLaunchInfoV19, patch_id) == 0x08);",
+    "static_assert(offsetof(ApplicationLaunchInfoV19, version) == 0x10);",
+    "static_assert(offsetof(ApplicationLaunchInfoV19, content_meta_type) == 0x14);",
+    "static_assert(offsetof(ApplicationLaunchInfoV19, launch_flags) == 0x18);",
+    "static_assert(offsetof(ApplicationLaunchInfoV19, application_storage_id) == 0x1C);",
+    "static_assert(offsetof(ApplicationLaunchInfoV19, update_storage_id) == 0x1D);",
+):
+    assert required in launch_struct, f"HOS19 ApplicationLaunchInfo ABI regression: {required}"
+assert "application_instance_id" not in launch_struct, "HOS19 launch ABI regressed to pre-19 instance-id layout"
+for required in (
+    "out_launch_info->patch_id = has_patch ? update_id : 0;",
+    "out_launch_info->content_meta_type = static_cast<u32>(FileSys::TitleType::Application);",
+    "out_launch_info->launch_flags = 0xB;",
+    "pending_application_launch_info = launch_info;",
+    "pending_application_launch_info.reset();",
+):
+    assert required in ns_am_cpp, f"HOS19 launch semantics regression: {required}"
 expected={"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3","6f4bb38594b273fe7cc4fba960dfe62cdb9f508e","4572e581d011c444fd59428d5c042098f05dcfca","f7ee793f1ee1bb1c2b1a35f68073844163658262","3f019c64c2907ac3e84baa9b6200de8898f30636","f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1","b1bb49abea63b6664e0945df8431e10aac128c2f","89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "0fc157b7ccef428e675ff945bc48eceb08fff607", "42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","e0d4143f55b5d4fee976d241d18ebcf7766ae4cf","1aa641ff566d688fbe34c7ec0ab1e25181e7f3b7","c0d65da6ae50aff83aae83c96bb6acadd34dae9c","b8883667410054db189d00b3a5144088f47d3af9","7eb559a9a2bcf68e91145c241082644c38ff0dfc","3c831706f615566b0eb4c99e9168e6c9236896d2","92d985482a6181c67626794e684f67d9a131a763","fbdd6a44158716d8ba1ae69b85aac30a87af389c","cabc153d337d49871cae36c183d575e834c14383","daff359876ecf35a4f5f4742e483a248c8103d84","463e17ef842b5e230946d47f29409b014a75117f","4bd93a797d922c6234d4a543a36b41462204ce0c","d81f5dd5e08400816b65091645016e97c0dbf3f7","ba3377a0b95db903760c7e7a3c84f60f3c473825","7ccc5721d5525ecacd3d55ea7e59b7f62d0473bb","4934fa18843112cad024ee41f4e28e1dc99d581f","21d480ac95486d545d50371608b038cf98efb24e","20d2457b83e65aa6623ea5d1fed5d2e9d423aeaf","decf9b4a91ca1fc218c33d6829f3e86616b87787","e81e40171ec9e07fd26c1ea8022116ad97e602af","c07a9974d3d91de5fd4780c7849428251a90ed0c","11dcdc5627348a291d7ca0ed89319ffb2049a68f","17b77950adfd0f091e81359cc73cd192e8c18b41","b381340215a07c72075b7114a55bb594cb2bfb86","fa460ecaa86fd6528514ad2283d8fc289639111f","c57862fdec84ef6049fbb24b0fffeba78a81ea9b","6129078b641b12b5ed8028f69b6847a64adf416f","72b27310a39dae20b5a569132133c2486f6d6ce2","69f7e3453d676f7538f62ebe70b9197cd1614f2b","df8a5e2f59895d315b7c3b69f87bb78502afa8c7","bd8424573816c1d80fe4400d0aa4731435bc07d9","0b6214c56f51d59e5a0aa253ea5801b49e2bf475","fde8c9de9e3df8167afe8baa1b40493de7c78758"}
 expected.add("42b34a5dc46b594cb029362e8f130900adf4424e")
 expected.add("77b736148129ffa72c9f6c081695b7c7515c3ed9")

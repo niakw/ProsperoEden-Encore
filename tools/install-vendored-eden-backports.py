@@ -2859,6 +2859,53 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'physical_closed=103', 'acc=92', 'aoc=11',
               'acc_fail_closed=91', 'real_local_dlc_preserved=1')
 
+        # Secondary NS surfaces: update/version infrastructure and platform
+        # authorization/China-data extensions have no backend. Shared fonts and the
+        # application-manager launch surface remain untouched.
+        ns_secondary_contracts = {
+            'src/core/hle/service/ns/application_version_interface.cpp':
+                (2250, 'ab652312d21868163fb8b561d741444de49d2a48b689cb0d8922c6b27b3bf2cf',
+                 'e1a1f07572a07dfd81276cb159ed1b75cb82964e3ccf479121563f288ef42fab'),
+            'src/core/hle/service/ns/application_version_interface.h':
+                (514, '0fbc36e249d699548ff79d381921ece77278e4db63869c2532cb491a3c9c6e56',
+                 '9e94b827349ebf9b77fa02d0f654aa07fa7573c76fc08f34786b7040d79ac847'),
+            'src/core/hle/service/ns/platform_service_manager.cpp':
+                (11474, '4e2aa4ae3164f0a0e21c272bcb14a147b8541456754bd582a80257cf07689bf8',
+                 'c7b2e16f21a67b8303ce19ec610476496c2016bf15b6fefcf4e08e32f0de0158'),
+            'src/core/hle/service/ns/platform_service_manager.h':
+                (2994, '26b183188e989bd330b91f0c945fd82bc7ea3d0d12f02ac3af48083203208c68',
+                 '868baf901534b723e6e89f6b37c49cfe5867fbdcf747659c260dda716f5c56e0'),
+        }
+        ns_secondary_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel,(after_bytes,after_hash,upstream_hash) in ns_secondary_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('NS secondary active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('NS secondary manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert ns_secondary_cmake.count(rel.removeprefix('src/core/'))==1, ('NS secondary CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        ns_version=(ACTIVE/'src/core/hle/service/ns/application_version_interface.cpp').read_text()
+        ns_platform=(ACTIVE/'src/core/hle/service/ns/platform_service_manager.cpp').read_text()
+        assert ns_version.count('&IApplicationVersionInterface::RejectUnavailableVersionService')==13
+        assert ns_platform.count('&IPlatformServiceManager::RejectUnavailablePlatformPolicy')==9
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', ns_version))==0
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', ns_platform))==0
+        for font_handler in (
+            'D<&IPlatformServiceManager::RequestLoad>',
+            'D<&IPlatformServiceManager::GetLoadState>',
+            'D<&IPlatformServiceManager::GetSize>',
+            'D<&IPlatformServiceManager::GetSharedMemoryAddressOffset>',
+            'D<&IPlatformServiceManager::GetSharedMemoryNativeHandle>',
+            'D<&IPlatformServiceManager::GetSharedFontInOrderOfPriority>',
+        ):
+            assert ns_platform.count(font_handler)>=1, font_handler
+        print('NS1_NS_SECONDARY_SOURCE_PASS',
+              'physical_closed=22', 'application_version=13', 'platform_policy=9',
+              'shared_font_handlers_preserved=1', 'application_manager_untouched=1')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

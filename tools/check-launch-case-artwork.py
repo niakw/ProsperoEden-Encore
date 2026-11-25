@@ -415,7 +415,9 @@ assert 'Eden::AppResourceFile("ui/box-art-index.tsv")' in native
 # GamesDB is the only catalog. The companion is byte-identical to the
 # generated index, not a manually curated list of titles.
 assert 'Eden::AppResourceFile("ui/box-art-index.txt")' in native
-assert "load_rows(input);" in native
+assert "LoadCaseIndexRow(items, row);" in native
+assert "catalog.global_start = static_cast<std::streamoff>(input.tellg());" in native
+assert "Eden::CaseIndexDisk::FindSortedRow(" in native
 assert "box-art-fallback.tsv" not in native
 assert 'R"ENCORE_BOX(' not in native
 assert 'cp "$app/ui/box-art-index.tsv" "$app/ui/box-art-index.txt"' in package

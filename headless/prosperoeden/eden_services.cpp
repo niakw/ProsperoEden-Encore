@@ -1176,14 +1176,20 @@ BoxIndex FindGlobalCaseMedia(bool ns2, const std::string& name,
         const auto key = CaseKey(*label);
         const auto standard = StandardCaseKey(key);
         for (const auto* spelling : {&key, &standard}) {
-            if (spelling->empty() || spelling->size() > 160) continue;
+            if (spelling->empty() || spelling->size() > 160 ||
+                (spelling == &standard && standard == key)) continue;
             auto row = Eden::CaseIndexDisk::FindSortedRow(
                 input, catalog.global_start, "global:" + *spelling);
             if (row.empty()) continue;
             // The global row contains no foreign front or spine.
             row.replace(0, 7, ns2 ? "ns2:" : "ns1:");
             LoadCaseIndexRow(result, row);
-            if (!result.empty()) return result;
+            if (!result.empty()) {
+                auto& media = result.begin()->second;
+                media[0].clear(); // never admit foreign front paper
+                media[2].clear(); // never admit foreign spine paper
+                return result;
+            }
         }
     }
     return result;

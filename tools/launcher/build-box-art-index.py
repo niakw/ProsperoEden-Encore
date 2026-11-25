@@ -171,11 +171,23 @@ def parse(source):
         return [next(iter(ids)) for _, ids in sorted(candidates.items())
                 if len(ids) == 1]
 
+    # A Nintendo record is not required for global fallback. Reject
+    # ambiguous Nintendo names and duplicate releases on another platform.
+    def global_ids(title):
+        platforms = platform_names[title]
+        native_counts = [len(platforms.get(p, ())) for p in ("ns1", "ns2")]
+        if any(n > 1 for n in native_counts) or all(native_counts):
+            return []
+        return [next(iter(ids)) for _, ids in sorted(platforms.items())
+                if len(ids) == 1]
+
     eligible = set()
     for key, matching in names.items():
         if len(matching) == 1:
             eligible.update(matching)
             eligible.update(matching_alternatives(key))
+    for title in platform_names:
+        eligible.update(global_ids(title))
     source.seek(0)
     iterator = ET.iterparse(source, events=("start", "end"))
     _, root = next(iterator)
@@ -200,7 +212,7 @@ def parse(source):
         if tag in ("Game", "GameAlternateName", "GameImage"):
             element.clear()
             root.clear()
-    lines = ["# Eden Encore media index v11 (platform-first, cross-platform fallbacks, logo and banner)\n"]
+    lines = ["# Eden Encore media index v12 (platform-first, cross-platform fallbacks, logo and banner)\n"]
     def row(key, gid):
         media = images.get(gid, {})
         front = list(media.get("Box - Front", []))
@@ -220,21 +232,34 @@ def parse(source):
                   regional_candidates(media.get("Banner", []))]
         return fields
 
+    def alternate_fields(ids):
+        alternatives = [[] for _ in range(11)]
+        for other in dict.fromkeys(ids):
+            for col, field in enumerate(row("", other)):
+                if col in (1, 3, 4, 5, 6, 7, 8, 9, 10) and field != "-":
+                    alternatives[col].extend(field.split(";"))
+        return [";".join(list(dict.fromkeys(values))[:12]) or "-" for values in alternatives]
+
     for key, matching in sorted(names.items()):
         if len(matching) != 1:
             continue
         gid = next(iter(matching))
         own = row(key, gid)
         lines.append(key + "\t" + "\t".join(own) + "\n")
-        other_ids = matching_alternatives(key)
-        alternatives = [[] for _ in own]
-        for other in dict.fromkeys(other_ids):
-            for col, field in enumerate(row(key, other)):
-                if col in (1, 3, 4, 5, 6, 7, 8, 9, 10) and field != "-":
-                    alternatives[col].extend(field.split(";"))
-        alt = [";".join(list(dict.fromkeys(values))[:12]) or "-" for values in alternatives]
+        alt = alternate_fields(matching_alternatives(key))
         if any(field != "-" for field in alt):
             lines.append("alt:" + key + "\t" + "\t".join(alt) + "\n")
+    if len(lines) - 1 > 40000:
+        raise ValueError("Nintendo media index exceeds native row limit")
+    # Sorted disk-only section. The launcher never allocates the entire
+    # multiplatform catalogue or accepts a foreign front/spine as paper.
+    lines.append("# global media sorted by standard name\n")
+    for title in sorted(platform_names):
+        if len(title) > 160:
+            continue
+        alt = alternate_fields(global_ids(title))
+        if any(field != "-" for field in alt):
+            lines.append("global:" + title + "\t" + "\t".join(alt) + "\n")
     return "".join(lines)
 
 def build(archive_path):
@@ -360,6 +385,19 @@ def self_test():
         match = next(line for line in standard.splitlines()
                      if line.startswith(f"alt:ns2:{spelling}\\t".replace("\\t", "\t")))
         assert "aaaaaaaa" in match and "bbbbbbbb" not in match
+    global_xml = """<LaunchBox>
+        <Game><DatabaseID>21</DatabaseID><Platform>Windows</Platform><Name>Only Elsewhere</Name></Game>
+        <Game><DatabaseID>22</DatabaseID><Platform>Windows</Platform><Name>Only Elsewhere Deluxe</Name></Game>
+        <GameImage><DatabaseID>21</DatabaseID><Type>Box - Back</Type><FileName>aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg</FileName></GameImage>
+        <GameImage><DatabaseID>21</DatabaseID><Type>Box - Front</Type><FileName>bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.jpg</FileName></GameImage>
+        <GameImage><DatabaseID>22</DatabaseID><Type>Square</Type><FileName>cccccccc-cccc-cccc-cccc-cccccccccccc.png</FileName></GameImage>
+    </LaunchBox>"""
+    global_result = parse(io.BytesIO(global_xml.encode()))
+    foreign = next(row.split("\t") for row in global_result.splitlines()
+                   if row.startswith("global:only elsewhere\t"))
+    assert foreign[1] == foreign[3] == "-" and "aaaaaaaa" in foreign[2]
+    assert "bbbbbbbb" not in global_result and "cccccccc" not in foreign
+    assert "global:ambiguous\t" not in result
     print("PASS standard title, Switch 2 Edition normalization, aliases and exact multiplatform identity")
 
 def main():

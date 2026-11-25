@@ -56,6 +56,7 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
+#include "case_index_disk.hpp"
 #include <future>
 #include <initializer_list>
 #include <mutex>
@@ -983,13 +984,91 @@ std::vector<std::string> LocaleCaseCandidates(
     return sorted;
 }
 
-const BoxIndex& RetailCaseIndex() {
-    static const BoxIndex index = [] {
-        BoxIndex items;
+void LoadCaseIndexRow(BoxIndex& items, const std::string& row) {
+    if (row.empty() || row[0] == '#' || row.size() > 9000) return;
+    const auto a = row.find('\t');
+    if (a == std::string::npos) return;
+    const auto b = row.find('\t', a + 1);
+    if (b == std::string::npos) return;
+    const auto c = row.find('\t', b + 1);
+    const std::string title = row.substr(0, a);
+    const std::string front = row.substr(a + 1, b - a - 1);
+    const std::string back = row.substr(b + 1,
+        c == std::string::npos ? c : c - b - 1);
+    const auto d = c == std::string::npos ? c : row.find('\t', c + 1);
+    const std::string spine = c == std::string::npos ? "-" :
+        row.substr(c + 1, d == std::string::npos ? d : d - c - 1);
+    std::array<std::string, 5> scene_columns{"-", "-", "-", "-", "-"};
+    std::size_t start = d;
+    for (std::string& scene : scene_columns) {
+        if (start == std::string::npos) break; // v4 index remains supported
+        const std::size_t end = row.find('\t', start + 1);
+        scene = row.substr(start + 1,
+            end == std::string::npos ? end : end - start - 1);
+        start = end;
+    }
+    const auto extra = [&]() {
+        if (start == std::string::npos) return std::string{"-"};
+        const auto end = row.find('\t', start + 1);
+        const auto field = row.substr(start + 1, end == std::string::npos ? end : end - start - 1);
+        start = end;
+        return field;
+    };
+    const auto square = extra();
+    const auto logo = extra();
+    const auto banner = extra();
+    if (title.empty() || title.size() > 170) return;
+    const auto split_candidates = [](const std::string& value) {
+        std::vector<std::string> found;
+        if (value == "-") return found;
+        std::size_t start = 0;
+        while (start < value.size() && found.size() < 12) {
+            const auto end = value.find(';', start);
+            const std::string part = value.substr(
+                start, end == std::string::npos ? end : end - start);
+            if (!SafeCaseCandidate(part)) {
+                found.clear();
+                break; // reject an invalid indexed row
+            }
+            found.push_back(part);
+            if (end == std::string::npos) break;
+            start = end + 1;
+        }
+        return found;
+    };
+    auto fronts = split_candidates(front);
+    auto backs = split_candidates(back);
+    auto spines = split_candidates(spine);
+    if ((front != "-" && fronts.empty()) ||
+        (back != "-" && backs.empty()) ||
+        (spine != "-" && spines.empty())) return;
+    std::array<std::vector<std::string>, 5> scenes{};
+    for (int i = 0; i < 5; ++i)
+        scenes[i] = split_candidates(scene_columns[i]);
+    // Invalid optional scene metadata must never invalidate valid
+    // original front/back/spine entries from the same row.
+    std::array<std::vector<std::string>, 11> faces{
+        std::move(fronts), std::move(backs), std::move(spines),
+        std::move(scenes[0]), std::move(scenes[1]), std::move(scenes[2]),
+        std::move(scenes[3]), std::move(scenes[4]), split_candidates(square),
+        split_candidates(logo), split_candidates(banner)};
+    items.emplace(title, std::move(faces));
+}
+
+struct CaseIndexCatalog {
+    BoxIndex items;
+    std::string path;
+    std::streamoff global_start{-1};
+};
+
+const CaseIndexCatalog& RetailCaseCatalog() {
+    static const CaseIndexCatalog index = [] {
+        CaseIndexCatalog catalog;
+        auto& items = catalog.items;
         // Mounted titles can expose eboot.bin but omit auxiliary ui/ files.
         // Use the same fallback search as fonts, translations and launcher art.
         std::string catalog_path = Eden::AppResourceFile("ui/box-art-index.tsv");
-        std::ifstream input(catalog_path);
+        std::ifstream input(catalog_path, std::ios::binary);
         // A projected mount may hide the .tsv extension or report a file
         // that cannot actually be opened. Try the byte-identical generated
         // companion, then the backing installation paths by real open.
@@ -1003,7 +1082,7 @@ const BoxIndex& RetailCaseIndex() {
                 if (!Eden::FilesystemAccess() &&
                     path != Eden::AppResourceFile("ui/box-art-index.txt")) continue;
                 input.clear();
-                input.open(path);
+                input.open(path, std::ios::binary);
                 if (input) {
                     catalog_path = path;
                     break;
@@ -1016,86 +1095,23 @@ const BoxIndex& RetailCaseIndex() {
                          catalog_path.c_str());
         }
         // Only the complete GamesDB-generated index is authoritative.
-        const auto load_rows = [&](std::istream& source) {
+        catalog.path = catalog_path;
         std::string row;
-        while (std::getline(source, row) && items.size() < 40000) {
-            if (row.empty() || row[0] == '#' || row.size() > 9000) continue;
-            const auto a = row.find('\t');
-            if (a == std::string::npos) continue;
-            const auto b = row.find('\t', a + 1);
-            if (b == std::string::npos) continue;
-            const auto c = row.find('\t', b + 1);
-            const std::string title = row.substr(0, a);
-            const std::string front = row.substr(a + 1, b - a - 1);
-            const std::string back = row.substr(b + 1,
-                c == std::string::npos ? c : c - b - 1);
-            const auto d = c == std::string::npos ? c : row.find('\t', c + 1);
-            const std::string spine = c == std::string::npos ? "-" :
-                row.substr(c + 1, d == std::string::npos ? d : d - c - 1);
-            std::array<std::string, 5> scene_columns{"-", "-", "-", "-", "-"};
-            std::size_t start = d;
-            for (std::string& scene : scene_columns) {
-                if (start == std::string::npos) break; // v4 index remains supported
-                const std::size_t end = row.find('\t', start + 1);
-                scene = row.substr(start + 1,
-                    end == std::string::npos ? end : end - start - 1);
-                start = end;
+        while (std::getline(input, row)) {
+            if (row == Eden::CaseIndexDisk::kGlobalMarker) {
+                catalog.global_start = static_cast<std::streamoff>(input.tellg());
+                break;
             }
-            const auto extra = [&]() {
-                if (start == std::string::npos) return std::string{"-"};
-                const auto end = row.find('\t', start + 1);
-                const auto field = row.substr(start + 1, end == std::string::npos ? end : end - start - 1);
-                start = end;
-                return field;
-            };
-            const auto square = extra();
-            const auto logo = extra();
-            const auto banner = extra();
-            if (title.empty() || title.size() > 170) continue;
-            const auto split_candidates = [](const std::string& value) {
-                std::vector<std::string> found;
-                if (value == "-") return found;
-                std::size_t start = 0;
-                while (start < value.size() && found.size() < 12) {
-                    const auto end = value.find(';', start);
-                    const std::string part = value.substr(
-                        start, end == std::string::npos ? end : end - start);
-                    if (!SafeCaseCandidate(part)) {
-                        found.clear();
-                        break; // reject an invalid indexed row
-                    }
-                    found.push_back(part);
-                    if (end == std::string::npos) break;
-                    start = end + 1;
-                }
-                return found;
-            };
-            auto fronts = split_candidates(front);
-            auto backs = split_candidates(back);
-            auto spines = split_candidates(spine);
-            if ((front != "-" && fronts.empty()) ||
-                (back != "-" && backs.empty()) ||
-                (spine != "-" && spines.empty())) continue;
-            std::array<std::vector<std::string>, 5> scenes{};
-            for (int i = 0; i < 5; ++i)
-                scenes[i] = split_candidates(scene_columns[i]);
-            // Invalid optional scene metadata must never invalidate valid
-            // original front/back/spine entries from the same row.
-            std::array<std::vector<std::string>, 11> faces{
-                std::move(fronts), std::move(backs), std::move(spines),
-                std::move(scenes[0]), std::move(scenes[1]), std::move(scenes[2]),
-                std::move(scenes[3]), std::move(scenes[4]), split_candidates(square),
-                split_candidates(logo), split_candidates(banner)};
-            items.emplace(title, std::move(faces));
+            if (items.size() < 40000) LoadCaseIndexRow(items, row);
         }
-        };
-        load_rows(input);
         std::fprintf(stderr, "EDEN_CASE_INDEX status=%s entries=%zu path=%s\n",
                      opened ? "loaded" : "missing", items.size(), catalog_path.c_str());
-        return items;
+        return catalog;
     }();
     return index;
 }
+
+const BoxIndex& RetailCaseIndex() { return RetailCaseCatalog().items; }
 
 // Keep retail artwork keyed by console generation. Legacy unscoped v9
 // indices may serve NS1, but must NEVER feed an NS2 front or square icon.
@@ -1146,6 +1162,31 @@ BoxIndex::const_iterator FindCaseEntry(const BoxIndex& index, bool ns2,
     };
     const auto first = find(name);
     return first == index.end() ? find(alternate_name) : first;
+}
+
+// Read at most one owned global row after both native name lookups miss.
+BoxIndex FindGlobalCaseMedia(bool ns2, const std::string& name,
+                             const std::string& alternate_name) {
+    const auto& catalog = RetailCaseCatalog();
+    BoxIndex result;
+    if (catalog.global_start < 0) return result;
+    std::ifstream input(catalog.path, std::ios::binary);
+    if (!input) return result;
+    for (const auto* label : {&name, &alternate_name}) {
+        const auto key = CaseKey(*label);
+        const auto standard = StandardCaseKey(key);
+        for (const auto* spelling : {&key, &standard}) {
+            if (spelling->empty() || spelling->size() > 160) continue;
+            auto row = Eden::CaseIndexDisk::FindSortedRow(
+                input, catalog.global_start, "global:" + *spelling);
+            if (row.empty()) continue;
+            // The global row contains no foreign front or spine.
+            row.replace(0, 7, ns2 ? "ns2:" : "ns1:");
+            LoadCaseIndexRow(result, row);
+            if (!result.empty()) return result;
+        }
+    }
+    return result;
 }
 
 // Other-platform candidates are indexed only for exact, unambiguous titles.
@@ -1338,7 +1379,11 @@ bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
     if (changed) *changed = false;
     if (title_id == 0 || (cancel && cancel->load(std::memory_order_acquire))) return false;
     const bool had_cached = !CachedGamesDbSquare(title_id, second_generation).empty();
-    const auto& index = RetailCaseIndex();
+    const auto& native_index = RetailCaseIndex();
+    BoxIndex fallback;
+    if (FindCaseEntry(native_index, second_generation, name, alternate_name) == native_index.end())
+        fallback = FindGlobalCaseMedia(second_generation, name, alternate_name);
+    const auto& index = fallback.empty() ? native_index : fallback;
     const auto selected = FindCaseEntry(index, second_generation, name, alternate_name);
     if (selected == index.end()) return had_cached && !force_refresh;
     // Keep the four source tiers separate: a logo may not outrank a square
@@ -1450,7 +1495,11 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
                           const std::string& alternate_name, int language_choice,
                           const std::atomic<bool>* cancel, bool second_generation) {
     if (title_id == 0 || (cancel && cancel->load(std::memory_order_acquire))) return 0;
-    const auto& index = RetailCaseIndex();
+    const auto& native_index = RetailCaseIndex();
+    BoxIndex fallback;
+    if (FindCaseEntry(native_index, second_generation, name, alternate_name) == native_index.end())
+        fallback = FindGlobalCaseMedia(second_generation, name, alternate_name);
+    const auto& index = fallback.empty() ? native_index : fallback;
     const auto selected = FindCaseEntry(index, second_generation, name, alternate_name);
     if (selected == index.end()) {
         std::fprintf(stderr, "EDEN_CASE_LOOKUP title=%016llX status=no-match name=%s alternate=%s index_entries=%zu\n",

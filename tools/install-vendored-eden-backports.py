@@ -2912,9 +2912,16 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         assert 'font_size % sizeof(u32) != 0' in new_archive
         assert 'ReadBytes<u32>(font_data_u32.data(), font_size) != font_size' in new_archive
         assert 'if (!DecryptSharedFont(font_data_u32, impl->shared_font, offset))' in new_archive
-        assert font_generated.replace(old_decode,new_decode,1).replace(
-            old_archive,new_archive,1)==font_reviewed, (
-            'NS1 font successor not derivable from exact backport replay')
+        # The pre-fix *maintained* owner also contains the reviewed
+        # platform-policy handlers, so it is not equal to frozen patch replay.
+        # Reverse only our two new spans and require its exact old full-file
+        # digest and length. This cannot admit unrelated source drift.
+        font_predecessor=font_reviewed.replace(new_decode,old_decode,1).replace(
+            new_archive,old_archive,1).encode('utf-8')
+        assert len(font_predecessor)==11474
+        assert sha(font_predecessor)==(
+            '4e2aa4ae3164f0a0e21c272bcb14a147b8541456754bd582a80257cf07689bf8'), (
+            'NS1 font safety change fails exact maintained predecessor reverse')
         print('NS1_SHARED_FONT_BOUND_REPLAY_PASS', 'immutable_upstream=1',
               'complete_file_reverse=1', 'header=1', 'short_read=1', 'capacity=1')
 

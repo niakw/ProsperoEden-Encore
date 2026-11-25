@@ -4298,6 +4298,78 @@ static_assert(sizeof(ApplicationContentMetaStatus) == 0x10);
               'command=600', 'base_patch_aoc=real_installed', 'current_app_id=resolved',
               'pinned_sources=immutable')
 
+        # xcd:sys is Switch rail MCU/NFC hardware. Encore/PS5 has no
+        # physical Joy-Con rail MCU/NTag/Mifare backend. Reverse the maintained
+        # fail-closed overlay exactly to pinned Eden.
+        xcd_cpp_rel = 'src/core/hle/service/hid/xcd.cpp'
+        xcd_cpp_active = (ACTIVE / xcd_cpp_rel).read_bytes()
+        assert len(xcd_cpp_active) == 2539 and sha(xcd_cpp_active) == (
+            '68532e47906b5ce369e24d87452abc3c51306f1c52a9de5a1cf181e35fdc6219')
+        assert spec['entries'][xcd_cpp_rel] == {
+            'active':'68532e47906b5ce369e24d87452abc3c51306f1c52a9de5a1cf181e35fdc6219',
+            'bytes':2539,
+            'upstream':'7e125f642cddbd42ccd0c8f822c0757a97f8df27f410021173263121fd4a739e',
+        }
+        xcd_cpp_text = xcd_cpp_active.decode('utf-8')
+        assert xcd_cpp_text.count('#include "core/hle/service/ipc_helpers.h"\n') == 1
+        xcd_commands = {
+            0:'GetDataFormat', 1:'SetDataFormat', 2:'GetMcuState', 3:'SetMcuState',
+            4:'GetMcuVersionForNfc', 5:'CheckNfcDevicePower', 10:'SetNfcEvent',
+            11:'GetNfcInfo', 12:'StartNfcDiscovery', 13:'StopNfcDiscovery',
+            14:'StartNtagRead', 15:'StartNtagWrite', 16:'SendNfcRawData',
+            17:'RegisterMifareKey', 18:'ClearMifareKey', 19:'StartMifareRead',
+            20:'StartMifareWrite', 101:'GetAwakeTriggerReasonForLeftRail',
+            102:'GetAwakeTriggerReasonForRightRail',
+            103:'GetAwakeTriggerBatteryLevelTransitionForLeftRail',
+            104:'GetAwakeTriggerBatteryLevelTransitionForRightRail',
+        }
+        for command,name in xcd_commands.items():
+            current=f'{{{command}, &XCD_SYS::UnsupportedPhysicalRailCommand, "{name}"}}'
+            prior=f'{{{command}, nullptr, "{name}"}}'
+            assert xcd_cpp_text.count(current)==1,(command,name)
+            xcd_cpp_text=xcd_cpp_text.replace(current,prior,1)
+        xcd_impl="""void XCD_SYS::UnsupportedPhysicalRailCommand(HLERequestContext& ctx) {
+    // xcd:sys controls the Switch rail MCU/NFC hardware (NTag/Mifare and
+    // physical left/right rail wake state). Encore/PS5 has no such hardware
+    // backend; recognize the command but fail explicitly rather than faking it.
+    IPC::ResponseBuilder rb{ctx, 2};
+    rb.Push(IPC::ResultNotSupported);
+}
+
+"""
+        assert xcd_cpp_text.count(xcd_impl)==1
+        xcd_cpp_text=xcd_cpp_text.replace(xcd_impl,'',1).replace(
+            '#include "core/hle/service/ipc_helpers.h"\n','',1)
+        xcd_cpp_prior=xcd_cpp_text.encode('utf-8')
+        assert len(xcd_cpp_prior)==1423 and sha(xcd_cpp_prior)==(
+            '7e125f642cddbd42ccd0c8f822c0757a97f8df27f410021173263121fd4a739e')
+        assert xcd_cpp_prior==(stage/xcd_cpp_rel).read_bytes(), 'XCD cpp exact reverse mismatch'
+        observed[xcd_cpp_rel]=spec['entries'][xcd_cpp_rel]
+
+        xcd_hdr_rel = 'src/core/hle/service/hid/xcd.h'
+        xcd_hdr_active = (ACTIVE / xcd_hdr_rel).read_bytes()
+        assert len(xcd_hdr_active) == 465 and sha(xcd_hdr_active) == (
+            '5d1391730a4f7ff8dcece1a01c2f9ed6abcc07307fc0c8c3a6aadf2b98d8c3ab')
+        assert spec['entries'][xcd_hdr_rel] == {
+            'active':'5d1391730a4f7ff8dcece1a01c2f9ed6abcc07307fc0c8c3a6aadf2b98d8c3ab',
+            'bytes':465,
+            'upstream':'a4c955126def0af0b0687e7914c97f09b9ba044ad25e0e3cc952a6d8321fc0d4',
+        }
+        xcd_hdr_decl="""
+private:
+    void UnsupportedPhysicalRailCommand(HLERequestContext& ctx);
+"""
+        xcd_hdr_text=xcd_hdr_active.decode('utf-8')
+        assert xcd_hdr_text.count(xcd_hdr_decl)==1
+        xcd_hdr_prior=xcd_hdr_text.replace(xcd_hdr_decl,'',1).encode('utf-8')
+        assert len(xcd_hdr_prior)==390 and sha(xcd_hdr_prior)==(
+            'a4c955126def0af0b0687e7914c97f09b9ba044ad25e0e3cc952a6d8321fc0d4')
+        assert xcd_hdr_prior==(stage/xcd_hdr_rel).read_bytes(), 'XCD header exact reverse mismatch'
+        observed[xcd_hdr_rel]=spec['entries'][xcd_hdr_rel]
+        print('NS1_XCD_PHYSICAL_RAIL_FAIL_CLOSED_EXACT_REVERSE_PASS',
+              'commands=21', 'switch_rail_mcu_only=1', 'generic_hid_untouched=1',
+              'fake_success=0', 'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

@@ -231,6 +231,18 @@ def git(*args, cwd=None):
 
 def fetch_git(item):
     path = location(item)
+    # Refuse a pre-existing checkout with an unexpected revision or tracked
+    # changes BEFORE setup_prefetch/SDK bootstrap can mutate that worktree.
+    # make deps runs fetch before verify, so verify alone is too late.
+    if path.exists():
+        current = revision(path)
+        if current != item['commit']:
+            fail(f'{item["name"]}: existing checkout at {current or "invalid Git HEAD"}, '
+                 f'expected {item["commit"]}; refusing to modify it')
+        dirty = tracked_changes(path)
+        if dirty:
+            fail(f'{item["name"]}: existing checkout has tracked changes; '
+                 'refusing to run dependency bootstrap')
     if not path.exists():
         staging = path.with_name(path.name + f'.partial-{os.getpid()}')
         shutil.rmtree(staging, ignore_errors=True)

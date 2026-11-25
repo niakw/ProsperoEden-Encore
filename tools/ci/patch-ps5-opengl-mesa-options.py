@@ -9,6 +9,7 @@ FLAGS = (
     "-Dlmsensors=disabled",
 )
 ANCHOR = "-Dplatforms=\n"
+WRAP_MODE = "--wrap-mode=nodownload"
 C_ARGS_OLD = "-Dc_args=-Wno-thread-safety-analysis\n"
 CPP_ARGS_OLD = "-Dcpp_args=-Wno-thread-safety-analysis\n"
 C_ARGS_NEW = (
@@ -26,6 +27,8 @@ def patch(path: Path) -> None:
     if present:
         if set(present) != set(FLAGS) or any(text.count(flag) != 1 for flag in FLAGS):
             raise RuntimeError(f"partial/duplicate Mesa PS5 feature selection: {present}")
+        if text.count(WRAP_MODE) != 1:
+            raise RuntimeError("partial/duplicate Mesa PS5 no-download selection")
         if text.count(C_ARGS_NEW) != 1 or text.count(CPP_ARGS_NEW) != 1:
             raise RuntimeError("partial/duplicate Mesa PS5 diagnostic selection")
         if C_ARGS_OLD in text or CPP_ARGS_OLD in text:
@@ -36,7 +39,7 @@ def patch(path: Path) -> None:
         raise RuntimeError("Pinned PS5 OpenGL Mesa meson_args anchor changed")
     if text.count(C_ARGS_OLD) != 1 or text.count(CPP_ARGS_OLD) != 1:
         raise RuntimeError("Pinned PS5 OpenGL Mesa diagnostic flags changed")
-    replacement = ANCHOR + "".join(flag + "\n" for flag in FLAGS)
+    replacement = ANCHOR + WRAP_MODE + "\n" + "".join(flag + "\n" for flag in FLAGS)
     text = text.replace(ANCHOR, replacement, 1)
     text = text.replace(C_ARGS_OLD, C_ARGS_NEW, 1)
     text = text.replace(CPP_ARGS_OLD, CPP_ARGS_NEW, 1)
@@ -44,7 +47,7 @@ def patch(path: Path) -> None:
     print(
         "PS5_OPENGL_MESA_OPTIONAL_FEATURES_PASS "
         + " ".join(FLAGS)
-        + " diagnostics=SDK-generic-assoc,unused-parameter"
+        + " wrap-mode=nodownload diagnostics=SDK-generic-assoc,unused-parameter"
     )
 
 if __name__ == "__main__":

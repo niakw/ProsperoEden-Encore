@@ -118,6 +118,10 @@ int main() {
     assert(first != EGL_NO_CONTEXT);
     assert(eglMakeCurrent(display,surface,surface,first));
     handoff::Clear();
+    assert(!Eden::LoadingCase::UsesPaper(9,0.0f,42));
+    assert(Eden::LoadingCase::UsesPaper(9,1.0f,42));
+    assert(Eden::LoadingCase::UsesPaper(14,0.0f,42));
+    assert(!Eden::LoadingCase::UsesPaper(9,1.0f,0));
     glViewport(3, 4, W-6, H-8);
     glEnable(GL_SCISSOR_TEST);
     glPixelStorei(GL_PACK_ALIGNMENT, 8);

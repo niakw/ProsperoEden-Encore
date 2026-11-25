@@ -448,7 +448,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
                             static_assert(sizeof(instance)==sizeof(q.values));
                             std::memcpy(q.values.data(),&instance,sizeof(instance));
                             const int shape=int(instance.params[3]+0.5f);
-                            if(run.texture&&(shape==9||shape==14)){
+                            if(Case::UsesPaper(shape,instance.params[2],run.texture)){
                                 q.slot=shape==14?3u:p>=2?2u:1u;
                                 if(!baked[q.slot-1]){
                                     const auto& rect=Case::kPaperRects[q.slot-1];const auto& uv=instance.extra;

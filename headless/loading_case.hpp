@@ -38,6 +38,11 @@ inline constexpr std::array<float,4> kTemplateYaw{kFrontYaw,2.0f*kPi-kFrontYaw,k
 struct Quad { std::array<float,24> values{}; std::uint32_t slot{}; };
 struct Scene { std::array<std::vector<Quad>,4> poses; bool reduce_motion{}; };
 inline constexpr std::size_t kMaxQuads=32;
+// DrawList runs deliberately share a texture between untextured and textured
+// instances. Only the actual textured paper may populate an atlas slot.
+inline bool UsesPaper(int shape,float texture_flag,std::uint32_t texture) noexcept {
+    return texture!=0 && ((shape==9 && texture_flag>0.5f)||shape==14);
+}
 inline bool Valid(const Scene& s) noexcept {
     for(const auto& pose:s.poses){
         if(pose.empty()||pose.size()>kMaxQuads)return false;

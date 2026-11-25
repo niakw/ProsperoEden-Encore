@@ -3522,3 +3522,16 @@ Six overlays natifs (LANDiscovery cpp/h + user cpp/h + system cpp/h) ont des cou
 **Inventaire physique attendu : 1 305 → 1 303 `nullptr`.** Ces deux entrées sont des handlers fonctionnels, pas des NOOP/rejets. Le compteur historique reste à rapprocher ligne-à-ligne avant décrément.
 
 Build PS5 et validation console : non exécutés.
+
+### 2026-11-25 — idle:sys : politique d'auto-extinction invitée neutre
+
+Vendor `f1c2e246ffbfa0327ad49aeff10d6541cffefe87` (arbre `6288cb14b8de7a5e6494ad795c3e58836be08054`). Les 6 commandes de `IPolicyManagerSystem` ne sont plus `nullptr`.
+
+- cmd0 fournit un vrai Event Horizon lisible, non signalé tant qu'Encore ne modélise pas de demande d'auto-extinction invitée ;
+- cmd1 retourne `false` pour `IsAutoPowerDownRequested`;
+- cmd3/4/5 acceptent le contexte/politiques/activité utilisateur sans piloter le sleep de la PS5 : l'émulateur n'exécute pas le timer d'auto-extinction Horizon ;
+- cmd2 HOS23 reste sémantiquement inconnu et renvoie explicitement `ResultUnknown`.
+
+Deux overlays CMake actifs (cpp/h) sont couverts par SHA-256 upstream/active et replay bit-à-bit. **Inventaire physique attendu : 1 303 → 1 297 `nullptr`.** Cinq commandes ont un comportement invité cohérent ; la sixième est un rejet explicite. Aucun résultat console n'est revendiqué.
+
+Build PS5 et test console : non exécutés.

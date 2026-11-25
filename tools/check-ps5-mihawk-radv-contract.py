@@ -26,9 +26,11 @@ package=source('tools/build-package.sh'); assert 'EDEN_VULKAN_DRIVER=RADV' in pa
 build=source('tools/build-radv-dependencies.sh')
 for required in ('tools/deps.json','mihawk-vulkan-review','mihawk-mesa-review','PS5_MESA_FORK',
                  'tools/build-radv.sh','release','install-vendored-radv.py','EDEN_WSI_SHA256',
-                 'vendor/sources/zlib-1.3.1','MESON_WRAP_MODE=nodownload',
+                 'vendor/sources/zlib-1.3.1','--wrap-mode=nodownload',
                  'ps5-payload-sdk.zip','zlib-1.3.2.tar.gz'):
     assert required in build,required
+assert 'meson-nodownload' in build and 'export MESON="$meson_wrapper"' in build
+assert 'MESON_WRAP_MODE=nodownload' not in build
 zlib_h=source('vendor/sources/zlib-1.3.1/zlib.h')
 zlib_meson=source('vendor/sources/zlib-1.3.1/meson.build')
 assert '#define ZLIB_VERSION "1.3.1"' in zlib_h

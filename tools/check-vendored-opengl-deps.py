@@ -7,7 +7,10 @@ separately, because it copies and extracts hundreds of MiB of Mesa sources.
 from pathlib import Path
 import json
 import re
+import runpy
+import subprocess
 import sys
+import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
 DEPS=json.loads((ROOT/'tools/deps.json').read_text())['items']
@@ -54,5 +57,57 @@ for forbidden in ('git clone --quiet', 'git -C "$template" fetch', 'setup-native
     assert forbidden not in builder, f"standard OpenGL builder retained network/bootstrap fallback: {forbidden}"
 assert 'Vendored PS5 OpenGL boilerplate staging is missing' in builder
 assert 'Vendored PS5 OpenGL PayloadSDK compiler missing after staging' in builder
+# Reproduce the previously failing cached checkout: original Git index, but
+# the exact audited patch has already been applied to the working tree.
+# Use only a disposable synthetic repository, never reset real build caches.
+apply_pinned_patch = runpy.run_path(
+    str(ROOT/'tools/stage-vendored-opengl-deps.py')
+)['apply_pinned_psbc_patch']
+def git_in(repo, *args):
+    return subprocess.check_output(['git', '-C', str(repo), *args],
+                                   text=True, stderr=subprocess.PIPE).strip()
+with tempfile.TemporaryDirectory(prefix='encore-psbc-reconcile-') as temporary:
+    tmp=Path(temporary)
+    repo=tmp/'source'
+    repo.mkdir()
+    git_in(repo,'init','-q')
+    git_in(repo,'config','user.name','Encore CI')
+    git_in(repo,'config','user.email','ci@example.invalid')
+    (repo/'shader.c').write_text('int main(void) { return 0; }\n')
+    (repo/'build.txt').write_text('base\n')
+    git_in(repo,'add','.')
+    git_in(repo,'commit','-qm','Original pinned source')
+    (repo/'shader.c').write_text('int main(void) { return 1; }\n')
+    (repo/'build.txt').write_text('base\npatch\n')
+    patch_path=tmp/'reviewed.patch'
+    patch_path.write_text(git_in(repo,'diff','HEAD')+'\n')
+    git_in(repo,'add','-u')
+    expected_tree=git_in(repo,'write-tree')
+    original_tree=git_in(repo,'rev-parse','HEAD^{tree}')
+    assert expected_tree!=original_tree
+    for case in ('clean', 'patched-worktree', 'unknown-worktree'):
+        git_in(repo,'reset','--hard','HEAD')
+        if case=='patched-worktree':
+            git_in(repo,'apply',str(patch_path))
+        elif case=='unknown-worktree':
+            (repo/'shader.c').write_text('foreign guest edit\n')
+        previous=(repo/'shader.c').read_bytes()
+        if case=='unknown-worktree':
+            try:
+                apply_pinned_patch(repo,patch_path,expected_tree)
+            except RuntimeError:
+                pass
+            else:
+                raise AssertionError('PSBC reconciliation accepted unrelated worktree edits')
+            assert (repo/'shader.c').read_bytes()==previous
+            assert git_in(repo,'write-tree')==original_tree
+        else:
+            apply_pinned_patch(repo,patch_path,expected_tree)
+            assert git_in(repo,'write-tree')==expected_tree
+            assert subprocess.run(['git','-C',str(repo),'diff','--quiet']).returncode==0
+            # The already patched index must be safely reusable.
+            apply_pinned_patch(repo,patch_path,expected_tree)
+print('PS5_OPENGL_PSBC_INDEX_RECONCILE_OK clean=1 cached_patched=1 unknown_rejected=1')
+
 print('PS5_OPENGL_CLOSURE_OK 7 mandatory source repos + PSBC patch + Mesa 26.2 + native boilerplate staged offline')
 print('PS5_OPENGL_CLOSURE_LIMITS optional CTS/sokol-samples not used by release; Mesa wraps and non-PS5 CPM pins separate')

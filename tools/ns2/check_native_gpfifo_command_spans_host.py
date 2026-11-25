@@ -28,7 +28,10 @@ assert 'static_cast<u64>(command.size) * sizeof(Tegra::CommandHeader)' in real
 assert 'IsFullyMappedRange(address, bytes)' in real
 assert 'return NvResult::InvalidSize;' in real
 assert impl.index(start) < impl.index('system.GPU().InitChannel(')
-assert impl.index(start) < impl.index('NativeGpuChannelRegistry::Instance().Bind(')
+# The maintained owner takes a reference to the native registry and calls
+# Bind through it; keep checking that mapped-span admission precedes binding.
+assert 'auto& native_channel_registry = NativeGpuChannelRegistry::Instance();' in impl
+assert impl.index(start) < impl.index('native_channel_registry.Bind(')
 assert impl.index(start) < impl.index('IncrementSyncpointMaxExt(')
 assert '#include "video_core/memory_manager.h"' in source
 

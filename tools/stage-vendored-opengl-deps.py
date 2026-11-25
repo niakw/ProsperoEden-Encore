@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import tempfile
 import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -24,6 +25,51 @@ def sha(path):
  with open(path,'rb') as stream:
   for part in iter(lambda:stream.read(1<<20),b''):h.update(part)
  return h.hexdigest()
+
+
+def apply_pinned_psbc_patch(checkout: Path, patch_path: Path, expected_tree: str):
+    """Reconcile only the exact audited PSBC patch; never reset a dirty cache."""
+    git = ['git', '-C', str(checkout)]
+
+    def output(*args, env=None):
+        return subprocess.check_output([*git, *args], text=True, env=env).strip()
+
+    index_tree = output('write-tree')
+    original_tree = output('rev-parse', 'HEAD^{tree}')
+    if index_tree != expected_tree:
+        if index_tree != original_tree:
+            raise RuntimeError('PSBC checkout index has unreviewed staged changes')
+        dirty = subprocess.run([*git, 'diff', '--quiet', '--exit-code']).returncode
+        if dirty == 0:
+            # Ordinary empty-cache path: update the index and working tree
+            # together, as required by the original pinned patch contract.
+            subprocess.run(['git','-C',str(checkout),'apply','--index',str(patch_path)], check=True)
+        elif dirty == 1:
+            # A cached upstream checkout may already contain the exact patch
+            # in its working tree while the index was restored to upstream.
+            # git apply --index rejects that state with 49 "does not match
+            # index" errors. First verify with a disposable alternate index,
+            # leaving both source files and the real index untouched.
+            with tempfile.TemporaryDirectory(prefix='encore-psbc-index-') as tmp:
+                candidate_index = Path(tmp) / 'index'
+                shutil.copyfile(checkout / '.git/index', candidate_index)
+                candidate_env = os.environ.copy()
+                candidate_env['GIT_INDEX_FILE'] = str(candidate_index)
+                subprocess.run([*git, 'apply', '--cached', str(patch_path)],
+                               check=True, env=candidate_env)
+                if (output('write-tree', env=candidate_env) != expected_tree or
+                    subprocess.run([*git, 'diff', '--quiet', '--exit-code'],
+                                   env=candidate_env).returncode != 0):
+                    raise RuntimeError('PSBC cached working tree differs from the audited patched tree')
+            # Exact same source bytes and reviewed index: only publish the
+            # matching staged index, without modifying the working tree.
+            subprocess.run([*git, 'apply', '--cached', str(patch_path)], check=True)
+            print('OPENGL_PSBC_PATCH_RECONCILED index-only cached tree', flush=True)
+        else:
+            raise RuntimeError('Cannot inspect cached PSBC working tree')
+    if output('write-tree') != expected_tree:
+        raise RuntimeError('PS5 OpenGL compiler patched tree mismatch')
+    subprocess.run([*git, 'diff', '--exit-code', '--quiet'], check=True)
 
 
 def stage(opengl_root:Path):
@@ -50,15 +96,8 @@ def stage(opengl_root:Path):
    patch_path=opengl_root/patch['path']
    if sha(patch_path)!=patch['sha256']:
     raise RuntimeError('PS5 OpenGL compiler patch checksum mismatch')
-   tree=subprocess.check_output(['git','-C',str(checkout),'write-tree'],text=True).strip()
-   if tree!=patch['patched_tree']:
-    subprocess.run(['git','-C',str(checkout),'diff','--cached','--exit-code','--quiet'],check=True)
-    subprocess.run(['git','-C',str(checkout),'apply','--index',str(patch_path)],check=True)
-    tree=subprocess.check_output(['git','-C',str(checkout),'write-tree'],text=True).strip()
-   if tree!=patch['patched_tree']:
-    raise RuntimeError('PS5 OpenGL compiler patched tree mismatch')
-   subprocess.run(['git','-C',str(checkout),'diff','--exit-code','--quiet'],check=True)
-   print('OPENGL_PSBC_PATCH_OFFLINE',tree,flush=True)
+   apply_pinned_psbc_patch(checkout, patch_path, patch['patched_tree'])
+   print('OPENGL_PSBC_PATCH_OFFLINE',patch['patched_tree'],flush=True)
   else:
    subprocess.run(['git','-C',str(checkout),'diff','--cached','--exit-code','--quiet'],check=True)
   print('OPENGL_GIT_DEP_OFFLINE',name,actual[:12],flush=True)

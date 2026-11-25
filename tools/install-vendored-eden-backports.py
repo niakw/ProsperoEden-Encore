@@ -2438,6 +2438,77 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'physical_closed=32', 'olsc=3', 'mii=2', 'ncm_nonretail=1',
               'caps=26', 'local_album_handlers_preserved=1')
 
+        # NS1 hardware/policy acceleration: deterministic fail-closed owners for
+        # Switch Bluetooth, fatal-process state and unmodeled APM/PTM/NIFM mutation APIs.
+        policy_hw_contracts = {
+            'src/core/hle/service/btm/btm_system_core.cpp':
+                (8111, '728b136a36cd5abfc0f01365adf4e559dff5e5bd0c00157e841257ce3ec7d0bc',
+                 'c6cef4acb0099f4965dd0918c0f6f9b20f52e7442489f89181741e0a43b40492'),
+            'src/core/hle/service/btm/btm_system_core.h':
+                (2723, '6fc2f8d3dc8324b681406f3cfdd09114c479a0adf87dadd39ec43c035c51c416',
+                 'b99cf033f85c185f50509c8966b8f9386a3c0eb9bb06f388e8f090a6caee359e'),
+            'src/core/hle/service/btm/btm_user_core.cpp':
+                (7158, 'efe9818cdfaf0925ca394dd15803f830c18224a92cb1e44f4932d52d505780ba',
+                 'ff77ce3fdd4068e5713a76c3220877d633bc6797d6391baafdf975fa70f5c22b'),
+            'src/core/hle/service/btm/btm_user_core.h':
+                (2164, '8cba276bbf8d6f237e4d7452368453dccdaceb07a026b01181086c2024d3b3e4',
+                 '58ec851477b6999dbc7a9768b6e44c22d792fa9318a05bbd6b31d0f698487e3b'),
+            'src/core/hle/service/fatal/fatal_p.cpp':
+                (815, '466a2a1f93f7ec64e2cf0143a07421153f5ff65640a9d41d6a3b8d8a317efd69',
+                 'faf19671d145f16f26a06aa938d1adbc405839ad168c51882507ad8df4177353'),
+            'src/core/hle/service/fatal/fatal_p.h':
+                (468, 'a7ff910cb51bb52753cabb60cf86c9c2407fa7553abc105c2936cb3dd5428e06',
+                 '4760f1c6d25904b8e6821c645012dd82c0d30778756952919cc29b809b02eb67'),
+            'src/core/hle/service/apm/apm_interface.cpp':
+                (5844, '252998fe90a169de45a0c5e8c2dfb8d590a6cdf2b27e12958078153bb390947d',
+                 'a913465bd636989f8635cff0321568d4510cc82f9ed14ddfcda8f61b0b480819'),
+            'src/core/hle/service/apm/apm_interface.h':
+                (1130, 'd993aa28169aaa98a4ca58e24ab19655a1a24f09a3552a31d69edf61884a5475',
+                 '46a35cb9bf0381ce95529dd9df2932647f0fad3abbff183c318a7eae206d4a3d'),
+            'src/core/hle/service/ptm/ts.cpp':
+                (3317, 'e3d2e26aa808e9d4d26517cef05bf7aab4fb67c9b79ca34dbb0d2f10e603d4a1',
+                 '44fd9b1bf56b212a75afa56a86b732115493033f62c84d518d3c9c176d468a57'),
+            'src/core/hle/service/ptm/ts.h':
+                (595, 'c49fe8933d6b98b3f9977a325760d8f7b033551a11aa329c60c32d5a533c93c9',
+                 '2d94395fdb8a007547c56a4d86095321e48748e77769cfdf471b077d548b7506'),
+            'src/core/hle/service/nifm/nifm.cpp':
+                (64300, '51e3479cd7ecc087d31a590d01abb66ae395f52208d7eaa727c8659aae1a5a6c',
+                 'bef2eaecc5c5a07b217277b691999845b66c3ad8e006ec101881d3218db76a22'),
+        }
+        policy_hw_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel,(after_bytes,after_hash,upstream_hash) in policy_hw_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('policy/hw active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('policy/hw manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert policy_hw_cmake.count(rel.removeprefix('src/core/'))==1, ('policy/hw CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        btm_sys=(ACTIVE/'src/core/hle/service/btm/btm_system_core.cpp').read_text()
+        btm_usr=(ACTIVE/'src/core/hle/service/btm/btm_user_core.cpp').read_text()
+        fatal_p=(ACTIVE/'src/core/hle/service/fatal/fatal_p.cpp').read_text()
+        apm_sys=(ACTIVE/'src/core/hle/service/apm/apm_interface.cpp').read_text()
+        ptm_ts=(ACTIVE/'src/core/hle/service/ptm/ts.cpp').read_text()
+        nifm=(ACTIVE/'src/core/hle/service/nifm/nifm.cpp').read_text()
+        assert btm_sys.count('&IBtmSystemCore::RejectUnsupportedBluetoothAudio')==3
+        assert btm_usr.count('&IBtmUserCore::RejectUnsupportedBleOperation')==20
+        assert fatal_p.count('&Fatal_P::RejectUnavailableFatalProcessState')==2
+        assert apm_sys.count('&APM_Sys::RejectUnsupportedSystemPolicy')==5
+        assert ptm_ts.count('::RejectUnsupportedThermalControl')==4
+        assert nifm.count('&IRequest::RejectUnsupportedNetworkAccessStatus')==1
+        assert nifm.count('&INetworkProfile::RejectUnsupportedProfileMutation')==3
+        for name,text_value in (
+            ('btm_system',btm_sys),('btm_user',btm_usr),('fatal_p',fatal_p),
+            ('apm_sys',apm_sys),('ptm_ts',ptm_ts),
+        ):
+            assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', text_value))==0, name
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', nifm))==0
+        print('NS1_BTM_FATAL_APM_PTM_NIFM_SOURCE_PASS',
+              'physical_closed=38', 'btm=23', 'fatal=2', 'apm=5',
+              'ptm=4', 'nifm=4', 'host_hardware_untouched=1')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

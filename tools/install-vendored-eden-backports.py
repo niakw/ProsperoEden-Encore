@@ -2957,6 +2957,40 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'physical_closed=16', 'functional=1', 'fail_closed=15',
               'pm_process_launch_untouched=1', 'host_vfs_path_not_exposed=1')
 
+        # SM HIPC manager command 1: copy an existing domain object into a
+        # standalone session. This is functional, not fail-closed.
+        sm_domain_contracts = {
+            'src/core/hle/service/sm/sm_controller.cpp':
+                (5360, 'a8e14749160e0957079fbf2371cdb5fb2ce207699ba4b14b9054a0b091728675',
+                 '1a630843d3c8cd4e26c4e8656cb185e0ffebc6fe208631b50d27444768c2c030'),
+            'src/core/hle/service/sm/sm_controller.h':
+                (749, '2dd552c80ddc23803e492bfb743aed57dc06978c75654aefb0f9f1344f761a74',
+                 'aedd606bd5b3f0e3f297b0e20bcd6e8699d0af2addd7db4c066d044a8e42a292'),
+        }
+        sm_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel,(after_bytes,after_hash,upstream_hash) in sm_domain_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('SM domain active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('SM domain manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert sm_cmake.count(rel.removeprefix('src/core/'))==1, ('SM domain CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        sm_controller=(ACTIVE/'src/core/hle/service/sm/sm_controller.cpp').read_text()
+        sm_header=(ACTIVE/'src/core/hle/service/sm/sm_controller.h').read_text()
+        assert sm_controller.count('{1, &Controller::CopyFromCurrentDomain, "CopyFromCurrentDomain"}')==1
+        assert sm_controller.count('manager->DomainHandler(object_id - 1).lock()')==1
+        assert sm_controller.count('ctx.AddMoveInterface(std::move(handler));')==1
+        assert sm_controller.count('object_id > manager->DomainHandlerCount()')==1
+        assert sm_controller.count('Flags::AlwaysMoveHandles')>=2
+        assert sm_header.count('void CopyFromCurrentDomain(HLERequestContext& ctx);')==1
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', sm_controller))==0
+        print('NS1_SM_COPY_FROM_DOMAIN_FUNCTIONAL_PASS',
+              'physical_closed=1', 'functional=1', 'domain_object_clone=1',
+              'new_session=1', 'invalid_object_fail_closed=1')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

@@ -544,8 +544,8 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
             'src/core/hle/service/bcat/bcat_service.cpp': {
                 'before_sha256':'d34a5f0e6cce26635b719dd1f31c295a7db7d8865c29fc9ab83f5c9c764b2a22',
                 'before_bytes':5959,
-                'after_sha256':'c42fa4f0c72cb96fcab8be8f5da35de8cf8a8058b8e231ad198c886118335bea',
-                'after_bytes':7097,
+                'after_sha256':'f48b5d2a2bd7aa9813bac1fce9302956674d1bf7db941442df75e26a989be495',
+                'after_bytes':7171,
             },
             'src/core/hle/service/bcat/bcat_service.h': {
                 'before_sha256':'e5689ca4661a9b49baee97fbc86f2a0b42eb39db577ed27238cf2bb545378b92',
@@ -568,15 +568,58 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
             assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
             observed[rel]=spec['entries'][rel]
         bcat_cpp=(ACTIVE/'src/core/hle/service/bcat/bcat_service.cpp').read_text()
-        assert bcat_cpp.count('&IBcatService::RejectUnavailableDeliveryTask')==19
-        assert bcat_cpp.count('{20100, nullptr, "RequestSyncDeliveryCacheWithApplicationId"}')==1
-        assert bcat_cpp.count('{20101, nullptr, "RequestSyncDeliveryCacheWithApplicationIdAndDirectoryName"}')==1
+        assert bcat_cpp.count('&IBcatService::RejectUnavailableDeliveryTask')==21
+        assert bcat_cpp.count('{20100, nullptr, "RequestSyncDeliveryCacheWithApplicationId"}')==0
+        assert bcat_cpp.count('{20101, nullptr, "RequestSyncDeliveryCacheWithApplicationIdAndDirectoryName"}')==0
         assert bcat_cpp.count('D<&IBcatService::RequestSyncDeliveryCache>')==1
         assert bcat_cpp.count('D<&IBcatService::RequestSyncDeliveryCacheWithDirectoryName>')==1
         assert bcat_cpp.count('D<&IBcatService::RegisterSystemApplicationDeliveryTasks>')==1
         print('NS1_BCAT_EXACT_POST_BACKPORT_REPLAY_PASS',
-              'successors=2', 'rejected_slots=19', 'sync_slots_left=2',
+              'successors=2', 'rejected_slots=21', 'sync_slots_left=0',
               'pinned_sources=immutable')
+
+        # BCAT creator/news successors: retain local DeliveryCache and NewsStorage
+        # handlers, but fail closed remote Nintendo delivery/reception surfaces.
+        bcat_extra = {
+            'src/core/hle/service/bcat/service_creator.cpp':
+                (2899, 'dbe31f2f022c398241a55d651760f0c32d2cb86f7de4a9039d275ac02b4a1f79',
+                 3260, '03ea8235a5e5a28dd14bb5448a6820fb4a36fe4158fd32444ae7f9aab8f6dd50'),
+            'src/core/hle/service/bcat/service_creator.h':
+                (1120, '5d27d3d39660908036b98c18811f628ca10776ea1c96d58bce27d2dbbb90a0d9',
+                 1197, '46507c0de3014066c4dea7f7ccb3f7894a5ec7f57c4d0dc1cb472b066d9b5948'),
+            'src/core/hle/service/bcat/news/news_service.cpp':
+                (4945, '91a10861ac155b4125ece0a5faee874d90ee56b338079e96b8527d58b1fcc6a0',
+                 5473, '8213114b28b51b080e7451efac3aa9f6f2e897debc56a9bab1daad8cea6ad718'),
+            'src/core/hle/service/bcat/news/news_service.h':
+                (1158, 'db79fca3521c6b1afd4a2a6bcc1130b2121d6c5443c6a4508aafbce5fa1cd082',
+                 1231, '89e8791e2aff88485dd74e2daf355c2092ed00e06732b687ea80d095887bd0e4'),
+        }
+        for rel, (before_bytes, before_hash, after_bytes, after_hash) in bcat_extra.items():
+            generated = (stage/rel).read_bytes()
+            current = (ACTIVE/rel).read_bytes()
+            assert len(generated)==before_bytes and sha(generated)==before_hash, ('BCAT extra prior drift',rel)
+            assert len(current)==after_bytes and sha(current)==after_hash, ('BCAT extra active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':before_hash
+            }, ('BCAT extra manifest drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        creator=(ACTIVE/'src/core/hle/service/bcat/service_creator.cpp').read_text()
+        assert creator.count('&IServiceCreator::RejectUnavailableProgressService')==2
+        assert creator.count('D<&IServiceCreator::CreateDeliveryCacheStorageService>')==1
+        assert creator.count('D<&IServiceCreator::CreateDeliveryCacheStorageServiceWithApplicationId>')==1
+        news=(ACTIVE/'src/core/hle/service/bcat/news/news_service.cpp').read_text()
+        assert news.count('&INewsService::RejectUnavailableNewsBackend')==7
+        for local_owner in (
+            'D<&INewsService::PostLocalNews>',
+            'D<&INewsService::GetTopicList>',
+            'D<&INewsService::ClearStorage>',
+            'D<&INewsService::GetNewsDatabaseDump>',
+        ):
+            assert news.count(local_owner)>=1, local_owner
+        print('NS1_BCAT_REMOTE_BACKEND_EXACT_SOURCE_PASS',
+              'physical_closed=11', 'bcat_sync=2', 'progress_creators=2',
+              'news_remote=7', 'local_cache_preserved=1')
 
         # miiimg has an intentionally empty guest-visible database until a Horizon
         # image-file backend exists. The previously source-only empty-database handlers

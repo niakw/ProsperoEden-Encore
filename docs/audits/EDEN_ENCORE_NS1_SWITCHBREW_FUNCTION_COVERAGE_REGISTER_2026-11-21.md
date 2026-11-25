@@ -3724,3 +3724,20 @@ Contrats moteur : SHA-256 upstream/active, sélection CMake, binding cmd1 exact,
 **Inventaire physique attendu : 817 → 816 NULL / 6 447 slots.** Ce slot est fonctionnel, pas fail-closed. Validation CI du couple final encore requise.
 
 Build PS5 et validation console : non exécutés.
+
+### 2026-11-25 — NS réseau/update secondaire : palier 788 attendu
+
+Base : **816 NULL attendus** après le raccordement fonctionnel SM. Vendor final de ce lot : `4751b7f1fec2920f77913706423b0abe5b6e51c8` (arbre `953cc4946aedbd19c2341b5516f4d68416734646`).
+
+**28 NULL physiques** supplémentaires sont retirés sans toucher à `IApplicationManagerInterface` ni aux quatre commandes ContentManagement encore non qualifiées :
+- `pdm:ntfy/ns:vm` : 8 — `NotifyLibraryAppletEvent` rejoint le no-op local de notification sans play-log ; 7 commandes inconnues/safe-version réseau sont fail-closed.
+- `IDownloadTaskInterface` : 7 — aucun backend de téléchargement Nintendo n'est simulé.
+- `IECommerceInterface` : 7 — link-device, sync-rights et e-license réseau échouent explicitement.
+- `ISystemUpdateInterface` : 4 — les extensions 12–15 non qualifiées utilisent le rejet de transfert système existant.
+- `IAsyncResult` : 2 — payload/error-context non modélisés échouent explicitement ; `Cancel` reste fonctionnel.
+
+Le replay moteur verrouille SHA-256, CMake, compte exact des bindings et absence de `nullptr` dans ces cinq propriétaires.
+
+**Inventaire physique attendu : 816 → 788 NULL / 6 447 slots.** Validation CI requise avant confirmation.
+
+Build PS5 et validation console : non exécutés.

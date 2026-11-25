@@ -29,5 +29,5 @@ fi
 exec clang-18 --target=x86_64-sie-ps5 -isysroot "$sdk" -isystem "$sdk/target/include" \
     -fvisibility-nodllstorageclass=default -fno-stack-protector -fno-plt -femulated-tls \
     -ffunction-sections -fdata-sections \
-    -Wno-unreachable-code-generic-assoc -Wno-unused-function -Wno-unused-label \
-    "${arguments[@]}"
+    "${arguments[@]}" \
+    -Wno-unreachable-code-generic-assoc -Wno-unused-function -Wno-unused-label

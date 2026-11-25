@@ -19,6 +19,23 @@ inline constexpr bool IsSwitch2TitleId(std::uint64_t id) noexcept {
 }
 
 
+// Dedicated scene-1 is GamesDB Fanart index 0. All other indexed case
+// scenes are paper/preview media, not the Home or launch background.
+inline bool BackgroundAllowed(std::string_view path) noexcept {
+    if (path.empty()) return false;
+    const auto marker = path.find("/box-scene-");
+    return marker == std::string_view::npos ||
+        path.substr(marker).starts_with("/box-scene-1-");
+}
+inline const std::string* BackgroundScreenshot(const std::vector<std::string>& shots) noexcept {
+    for (const auto& shot : shots)
+        if (BackgroundAllowed(shot) && shot.find("/box-scene-") == std::string::npos)
+            return &shot;
+    for (const auto& shot : shots)
+        if (BackgroundAllowed(shot)) return &shot;
+    return nullptr;
+}
+
 // The front uses an edge-to-edge source: hero, first usable screenshot,
 // finally the icon. All cases preserve the source's aspect via cover UVs.
 inline const std::string* FrontPaper(

@@ -96,6 +96,12 @@ int main() {
     const std::vector<std::string> banner{
         "/cache/box-scene-1-FANART.webp", "/cache/box-scene-6-BANNER.webp",
         "/cache/box-scene-3-GAMEPLAY.webp"};
+    assert(!BackgroundAllowed(banner[1]));
+    assert(!BackgroundAllowed(banner[2]));
+    assert(BackgroundAllowed(banner[0]));
+    assert(BackgroundScreenshot(banner) == &banner[0]);
+    const std::vector<std::string> backgrounds{banner[0], "screen-nlib.webp", banner[1]};
+    assert(BackgroundScreenshot(backgrounds) == &backgrounds[1]);
     const auto banner_pick = BackScenes(hero, icon, banner);
     assert(banner_pick[0] == &banner[1]);
     assert(banner_pick[2] == &banner[2]);

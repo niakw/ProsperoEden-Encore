@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "pe/ui/launcher.hpp"
+#include "pe/ui/case_media_selection.hpp"
 #include "pe/ui/video_presets.hpp"
 
 #include <algorithm>
@@ -599,7 +600,10 @@ void Launcher::draw_home(Canvas &c)
     const std::string &hero_title = hero_recent != nullptr ? hero_recent->title : home_.last_title;
     const std::string &hero_banner = hero_recent != nullptr ? hero_recent->hero : home_.last_hero;
     const std::string &hero_screenshot = hero_recent != nullptr ? hero_recent->screenshot : home_.last_screenshot;
-    const std::string hero_artwork = !hero_banner.empty() ? hero_banner : hero_screenshot;
+    const std::string hero_artwork =
+        case_media::BackgroundAllowed(hero_banner) && !c.textures.known_missing(hero_banner)
+            ? hero_banner
+            : case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};
     const std::string &hero_addons = hero_recent != nullptr ? hero_recent->addons : home_.last_addons;
     const std::string &hero_language = hero_recent != nullptr ? hero_recent->language : home_.last_language;
     const std::string &hero_description =

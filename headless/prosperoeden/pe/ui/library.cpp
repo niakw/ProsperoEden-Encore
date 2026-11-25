@@ -753,7 +753,8 @@ void Launcher::finish_home_media()
         if (enriched.title_id == home_.last_title_id && enriched.file == home_.last_file) {
             if (!enriched.cover.empty()) home_.last_cover = enriched.cover;
             if (!enriched.hero.empty()) home_.last_hero = enriched.hero;
-            if (!enriched.screenshots.empty()) home_.last_screenshot = enriched.screenshots.front();
+            if (const auto* shot = case_media::BackgroundScreenshot(enriched.screenshots))
+                home_.last_screenshot = *shot;
             if (enriched.max_players > 0) home_.last_max_players = enriched.max_players;
             if (!enriched.name.empty()) home_.last_title = enriched.name;
             if (!enriched.intro.empty()) home_.last_intro = enriched.intro;
@@ -767,7 +768,8 @@ void Launcher::finish_home_media()
                     recent.tile_icon = enriched.cover;
             }
             if (!enriched.hero.empty()) recent.hero = enriched.hero;
-            if (!enriched.screenshots.empty()) recent.screenshot = enriched.screenshots.front();
+            if (const auto* shot = case_media::BackgroundScreenshot(enriched.screenshots))
+                recent.screenshot = *shot;
             if (enriched.max_players > 0) recent.max_players = enriched.max_players;
             if (!enriched.name.empty()) recent.title = enriched.name;
             if (!enriched.intro.empty()) recent.intro = enriched.intro;
@@ -1107,7 +1109,8 @@ void Launcher::sync_home_game(const Game& game)
         home_.last_title = game.name;
         if (!game.cover.empty()) home_.last_cover = game.cover;
         if (!game.hero.empty()) home_.last_hero = game.hero;
-        if (!game.screenshots.empty()) home_.last_screenshot = game.screenshots.front();
+        if (const auto* shot = case_media::BackgroundScreenshot(game.screenshots))
+            home_.last_screenshot = *shot;
         if (!game.intro.empty()) home_.last_intro = game.intro;
         if (!game.description.empty()) home_.last_description = game.description;
         if (game.max_players > 0) home_.last_max_players = game.max_players;
@@ -1125,7 +1128,8 @@ void Launcher::sync_home_game(const Game& game)
             if (!game.addons.empty()) recent.addons = game.addons;
             if (!game.language.empty()) recent.language = game.language;
             if (!game.hero.empty()) recent.hero = game.hero;
-            if (!game.screenshots.empty()) recent.screenshot = game.screenshots.front();
+            if (const auto* shot = case_media::BackgroundScreenshot(game.screenshots))
+                recent.screenshot = *shot;
             if (!game.intro.empty()) recent.intro = game.intro;
             if (!game.description.empty()) recent.description = game.description;
             if (game.max_players > 0) recent.max_players = game.max_players;
@@ -1152,8 +1156,8 @@ void Launcher::name_home_games()
             recent.cover = game.cover; // square icon only; case fronts stay in box_front
             recent.tile_icon = game.cover;
             recent.hero = game.hero;
-            recent.screenshot = game.screenshots.empty() ? std::string{} :
-                                game.screenshots.front();
+            if (const auto* shot = case_media::BackgroundScreenshot(game.screenshots))
+                recent.screenshot = *shot;
             recent.max_players = game.max_players;
             recent.intro = game.intro;
             recent.description = game.description;

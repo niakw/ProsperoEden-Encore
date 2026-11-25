@@ -547,8 +547,11 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
         if (launch_screenshots_.empty() && !home_.last_screenshot.empty())
             launch_screenshots_.push_back(home_.last_screenshot);
     }
-    if (launch_hero_.empty() && !launch_screenshots_.empty())
-        launch_hero_ = launch_screenshots_.front();
+    if (!case_media::BackgroundAllowed(launch_hero_) || textures_.known_missing(launch_hero_)) {
+        launch_hero_.clear();
+        if (const auto* fallback = case_media::BackgroundScreenshot(launch_screenshots_))
+            launch_hero_ = *fallback;
+    }
     // Home and Recent launch routes may not have a fully populated Library
     // snapshot. Use their actual cached metadata, never an invented scan.
     launch_case_game_.name = title;

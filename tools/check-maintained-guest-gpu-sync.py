@@ -406,6 +406,34 @@ for kind, name in (("dma", "dma_pusher"), ("puller", "engines/puller")):
                 "parked_methods.clear();",
             ):
                 assert marker in actual_owner, marker
+        elif path == "dma_pusher.cpp" and git_blob(actual_owner) == "5cf42158c7cc4462bc9a12a18b482cbd6de20bf8":
+            # Reviewed shipping NS2 successor: queue revocation leases,
+            # deferred SEM acquire, live GPFIFO mapping and GPU-fault
+            # publication have extended the historical G20 snapshot.
+            # Accept ONLY this complete vendor blob; older DEV and Puller
+            # owners still require byte-for-byte parity with the oracle.
+            assert git_blob(expected_owner) == "bf6d179292a749e9be1e89c619803c4700407f90"
+            for marker in (
+                "bool DmaPusher::ResumeNativeAcquire() {",
+                "bool DmaPusher::SplitResumesLater(const CommandList& list, std::size_t from) const",
+                "NativeGpfifoFetchMapped(",
+                "Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance().ReportFault(&channel_state);",
+                "std::rethrow_exception(error);",
+                'FailNativeSubmission("Native GPFIFO command unmapped at GPU fetch");',
+                'FailNativeSubmission("Native GPFIFO prefetch resume cursor invalid");',
+                'FailNativeSubmission("Native GPFIFO entry shortened during acquire");',
+                "signal_sync = explicit_sync &&",
+                "const bool native_channel =",
+                "parked_methods.clear();",
+            ):
+                assert marker in actual_owner, marker
+            assert actual_owner.count(
+                'FailNativeSubmission("Native GPFIFO method on unbound subchannel")'
+            ) == 2
+            assert actual_owner.index("NativeGpfifoFetchMapped(") < actual_owner.index(
+                "ProcessCommands(headers);"
+            )
+            assert 'throw std::runtime_error("Native GPFIFO command unmapped at GPU fetch")' not in actual_owner
         else:
             assert actual_owner == expected_owner, path
 assert "foreach(unit dma_pusher engines/puller)" not in CMAKE

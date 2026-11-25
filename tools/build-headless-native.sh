@@ -152,6 +152,44 @@ echo "Checking native Ninja graph for duplicate output declarations"
 ninja -C "$scratch/native-local" -t targets all >/dev/null
 echo "ENCORE_NATIVE_NINJA_GRAPH_PASS"
 
+# Validate platform identity on the real Ninja C/C++ graph, even when
+# optional source syntax checks are disabled. A macro set only on a launcher
+# or selected translation unit cannot satisfy this invariant.
+python3 - "$scratch/native-local/compile_commands.json" <<'PY_NATIVE_PLATFORM'
+import json
+from pathlib import Path
+import re
+import shlex
+import sys
+
+records = json.loads(Path(sys.argv[1]).read_text())
+required = {"common", "core", "video_core", "shader_recompiler",
+            "dynarmic", "audio_core", "hid_core", "eden-headless"}
+seen = set()
+errors = []
+for row in records:
+    argv = row.get("arguments") or shlex.split(row["command"])
+    output = row.get("output", "")
+    if not output and "-o" in argv:
+        output = argv[argv.index("-o") + 1]
+    match = re.search(r"(?:^|/)CMakeFiles/([^/]+)\.dir/", output.replace("\\", "/"))
+    if not match or match.group(1) not in required:
+        continue
+    if Path(row["file"]).suffix.lower() not in {".c", ".cc", ".cpp", ".cxx", ".c++"}:
+        continue
+    seen.add(match.group(1))
+    definitions = [flag for flag in argv
+                   if flag == "-DPS5_NATIVE" or flag.startswith("-DPS5_NATIVE=")]
+    if "-DPS5_NATIVE=1" not in definitions or any(
+            flag != "-DPS5_NATIVE=1" for flag in definitions) or "-UPS5_NATIVE" in argv:
+        errors.append(f"{match.group(1)}: {row['file']}: {definitions}")
+if required - seen:
+    errors.append(f"missing native targets: {sorted(required - seen)}")
+if errors:
+    sys.exit("Native platform definition mismatch:\n" + "\n".join(errors[:40]))
+print(f"ENCORE_NATIVE_PLATFORM_GRAPH_PASS targets={len(seen)}")
+PY_NATIVE_PLATFORM
+
 python3 -B "$root/headless/check_slab_lifetime.py" \
     "$scratch/native-local/headless/include/core/hle/kernel/slab_helpers.h" \
     "$scratch/source/src/core/hle/kernel/slab_helpers.h"

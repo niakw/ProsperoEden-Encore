@@ -30,6 +30,8 @@ for required in ('tools/deps.json','mihawk-vulkan-review','mihawk-mesa-review','
                  'ps5-payload-sdk.zip','zlib-1.3.2.tar.gz'):
     assert required in build,required
 assert 'meson-nodownload' in build and 'export MESON="$meson_wrapper"' in build
+assert 'if [[ \\\${1:-} == setup ]]; then' in build
+assert 'exec "$meson_bin" setup --wrap-mode=nodownload "\\\\$@"' in build
 assert 'MESON_WRAP_MODE=nodownload' not in build
 zlib_h=source('vendor/sources/zlib-1.3.1/zlib.h')
 zlib_meson=source('vendor/sources/zlib-1.3.1/meson.build')

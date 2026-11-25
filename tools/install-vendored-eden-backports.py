@@ -2906,6 +2906,57 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'physical_closed=22', 'application_version=13', 'platform_policy=9',
               'shared_font_handlers_preserved=1', 'application_manager_untouched=1')
 
+        # LDR/RO debug controls + remaining AM common-state + NCM guest-path
+        # surfaces. Keep boot/process creation paths outside this batch.
+        ldr_ro_am_ncm_contracts = {
+            'src/core/hle/service/ldr/ldr.cpp':
+                (3732, 'cab66b6cfbd9a6e4af27780c94ba46a641287b6cf3174281cd576e2429418310',
+                 '2ee23f6f39cc1b367c91a7729ec63c6c6a933d7db03eb11a652fe13b917f276b'),
+            'src/core/hle/service/ro/ro.cpp':
+                (22437, '71b3b1e91b34fb4d5dc222a70f84f237b075d2f7a620bf2d489b14923c37ac86',
+                 'c0d3ac321243f96a9dd58b29e18722a762d267b0459c86ec6845d46d019b31f8'),
+            'src/core/hle/service/am/service/common_state_getter.cpp':
+                (27142, '84167d9bd1db5fe3fc56a7e1b7fcfefb35f8aacae4d8b6a13c06147b603004d9',
+                 '16abb5f4185ddc4956771630a987f1d6e8fcb02fe6f4c12d888a1f2be5801484'),
+            'src/core/hle/service/am/service/common_state_getter.h':
+                (4916, '98efbf58eade3510262bd9a41a1db7bd783241db6c79460e53918237876befdb',
+                 '0c1483f111e306fa6038cf5adc0f86538901bf694a9b546817ae5812cbb2d07e'),
+            'src/core/hle/service/ncm/ncm.cpp':
+                (87036, '35f6f228a2a011f4d8679febf54135501116f51ba7818043a48d3e769484d7b0',
+                 '136b67a32b2024c4d9512455f4bb041624e2050b511264377470af631cb2d822'),
+        }
+        ldr_ro_am_ncm_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel,(after_bytes,after_hash,upstream_hash) in ldr_ro_am_ncm_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('LDR/RO/AM/NCM active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('LDR/RO/AM/NCM manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert ldr_ro_am_ncm_cmake.count(rel.removeprefix('src/core/'))==1, ('LDR/RO/AM/NCM CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        ldr=(ACTIVE/'src/core/hle/service/ldr/ldr.cpp').read_text()
+        ro=(ACTIVE/'src/core/hle/service/ro/ro.cpp').read_text()
+        am_csg=(ACTIVE/'src/core/hle/service/am/service/common_state_getter.cpp').read_text()
+        am_csg_h=(ACTIVE/'src/core/hle/service/am/service/common_state_getter.h').read_text()
+        ncm=(ACTIVE/'src/core/hle/service/ncm/ncm.cpp').read_text()
+        assert ldr.count('::RejectUnavailableLoaderCommand')==13
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', ldr))==0
+        assert ro.count('&IDebugMonitorInterface::RejectUnavailableDebugModuleInfo')==1
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', ro))==0
+        assert am_csg.count('D<&ICommonStateGetter::GetWakeupCount>')==1
+        assert am_csg.count('&ICommonStateGetter::RejectUnavailableFeature, "SetHidInputMagnificationForApplication"')==1
+        assert am_csg.count('&ICommonStateGetter::RejectUnavailableFeature, "GetLaunchRequiredTick"')==1
+        assert am_csg.count('*out_wakeup_count = 0;')==1
+        assert am_csg_h.count('Result GetWakeupCount(Out<u64> out_wakeup_count);')==1
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', am_csg))==0
+        assert ncm.count('::RejectUnavailableGuestPath')==4
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', ncm))==0
+        print('NS1_LDR_RO_AM_NCM_817_SOURCE_PASS',
+              'physical_closed=16', 'functional=1', 'fail_closed=15',
+              'pm_process_launch_untouched=1', 'host_vfs_path_not_exposed=1')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

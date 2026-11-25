@@ -428,53 +428,60 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             if (launcher.done() && !launcher.selected_game().empty()) {
-                // Render deterministic launcher poses into explicit 1080p
-                // targets. The stable primary is the final rear pose so the
-                // first loading frame exactly matches the launcher. When a
-                // rear exists or can be composed from local game media,
-                // retain both poses for the graphics handoff. No remote
-                // artwork request or additional launch hold is introduced.
-                const auto capture_pose = [&](pe::ui::Launcher::LoadingCapturePose pose,
-                                              bool alternate) {
-                    launcher.set_loading_capture_pose(pose);
-                    list.clear();
-                    launcher.draw(list);
-                    batch.sync_font_texture(font_texture, font);
-                    return Eden::LoadingArtwork::Capture([&](int w, int h) {
-                        batch.draw(list, pe::gfx::fit_viewport(w, h), w, h);
-                    }, alternate);
-                };
-                const bool animate_case = !reduce_motion;
-                const bool final_back = launcher.loading_final_pose_is_back();
-                const auto primary_pose = animate_case
-                    ? (final_back ? pe::ui::Launcher::LoadingCapturePose::back
-                                  : pe::ui::Launcher::LoadingCapturePose::front)
-                    : pe::ui::Launcher::LoadingCapturePose::live;
-                const auto alternate_pose = final_back
-                    ? pe::ui::Launcher::LoadingCapturePose::front
-                    : pe::ui::Launcher::LoadingCapturePose::back;
-                const bool ready = capture_pose(primary_pose, false);
-                const bool alternate_ready = ready && animate_case &&
-                    capture_pose(alternate_pose, true) &&
-                    launcher.loading_back_available();
-                if (!alternate_ready) Eden::LaunchHandoff::ClearAlternate();
-                launcher.set_loading_capture_pose(pe::ui::Launcher::LoadingCapturePose::live);
-                // capture_pose(front) leaves the reusable draw list on the
-                // alternate image. Rebuild the actual final launcher pose so
-                // a presenter failure falls back to the same frame the user
-                // just saw, never an unexpected front-cover jump.
-                list.clear();
-                launcher.draw(list);
-                batch.sync_font_texture(font_texture, font);
+                // Preserve the exact case draw instances, independent of GL
+                // handles. Bake ONLY the flat paper and a separate 2D scene.
+                using Pose=pe::ui::Launcher::LoadingCapturePose;
+                namespace Case=Eden::LoadingCase;
+                Case::Scene scene;
+                scene.reduce_motion=reduce_motion;
+                pe::gfx::DrawList paper;
+                std::array<bool,3> baked{};
+                constexpr std::array<Pose,4> poses{Pose::front,Pose::front_other,Pose::back_other,Pose::back};
+                for(std::size_t p=0;p<poses.size();++p){
+                    launcher.set_loading_capture_pose(poses[p]);list.clear();launcher.draw(list);
+                    const auto first=launcher.loading_case_first(),last=first+launcher.loading_case_count();
+                    for(const auto& run:list.runs()){
+                        const auto begin=std::max<std::size_t>(run.first,first);
+                        const auto end=std::min<std::size_t>(run.first+run.count,last);
+                        for(std::size_t n=begin;n<end;++n){
+                            const auto& instance=list.instances()[n];Case::Quad q;
+                            static_assert(sizeof(instance)==sizeof(q.values));
+                            std::memcpy(q.values.data(),&instance,sizeof(instance));
+                            const int shape=int(instance.params[3]+0.5f);
+                            if(run.texture&&(shape==9||shape==14)){
+                                q.slot=shape==14?3u:p>=2?2u:1u;
+                                if(!baked[q.slot-1]){
+                                    const auto& rect=Case::kPaperRects[q.slot-1];const auto& uv=instance.extra;
+                                    paper.image(run.texture,{rect[0],rect[1],rect[2],rect[3]},
+                                        {uv[0],uv[1],uv[2]-uv[0],uv[3]-uv[1]},pe::gfx::Color::rgb(0xffffff));
+                                    baked[q.slot-1]=true;
+                                }
+                                q.values[20]=q.values[21]=0.0f;q.values[22]=q.values[23]=1.0f;
+                            }
+                            scene.poses[p].push_back(q);
+                        }
+                    }
+                }
+                launcher.set_loading_capture_pose(Pose::background);list.clear();launcher.draw(list);
+                batch.sync_font_texture(font_texture,font);
+                const bool ready=Eden::LoadingArtwork::Capture([&](int w,int h){
+                    batch.draw(list,pe::gfx::fit_viewport(w,h),w,h);
+                });
+                const bool atlas_ready=ready&&Case::Valid(scene)&&
+                    Eden::LoadingArtwork::Capture([&](int w,int h){
+                        batch.draw(paper,{1.0f,0.0f,0.0f},w,h);
+                    },true,Case::kAtlasWidth,Case::kAtlasHeight);
+                if(atlas_ready)Eden::LaunchHandoff::PublishCase(std::move(scene));
+                else Eden::LaunchHandoff::ClearAlternate();
+                launcher.set_loading_capture_pose(Pose::live);list.clear();launcher.draw(list);
+                batch.sync_font_texture(font_texture,font);
                 Eden::LoadingArtwork::GlPresenter presenter;
-                const bool shown = ready && presenter.Draw(display.width(), display.height(),
+                const bool shown=ready&&presenter.Draw(display.width(),display.height(),
                     Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0));
-                presenter.Release();
-                loading_presented = shown;
-                if (!shown) batch.draw(list, viewport, display.width(), display.height());
-                std::fprintf(stderr,
-                    "EDEN_LOADING_ARTWORK_CAPTURE ready=%d alternate=%d presented=%d\n",
-                    int(ready), int(alternate_ready), int(shown));
+                presenter.Release();loading_presented=shown;
+                if(!shown)batch.draw(list,viewport,display.width(),display.height());
+                std::fprintf(stderr,"EDEN_LOADING_CASE_GEOMETRY scene=%d atlas=%d presented=%d\n",
+                             int(ready),int(atlas_ready),int(shown));
             } else {
                 batch.draw(list, viewport, display.width(), display.height());
             }

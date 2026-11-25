@@ -6,59 +6,24 @@ layout(location = 0) out vec4 color;
 #include "loading_wordmark.glsl"
 #include "loading_scene.glsl"
 #ifdef EDEN_LOADING_ARTWORK
-// Two immutable top-to-bottom RGBA8 launcher captures. One storage buffer
-// keeps the descriptor and upload bounded even at a 4K output extent.
-layout(std430, set = 0, binding = 0) readonly buffer LoadingArt {
-    uint pixels[];
-} artwork;
-vec3 artPixel(bool alternate, ivec2 p) {
-    ivec2 dim = ivec2(text.glyphs[1], text.glyphs[2]);
-    p = clamp(p, ivec2(0), dim - 1);
-    uint index = uint(p.y * dim.x + p.x);
-    if (alternate) index += uint(dim.x * dim.y);
-    return unpackUnorm4x8(artwork.pixels[index]).rgb;
+// First image: 2D title scene. The second is flat paper consumed by the
+// shared original case vertex/fragment shader.
+layout(std430, set = 0, binding = 0) readonly buffer LoadingArt { uint pixels[]; } artwork;
+vec3 artPixel(ivec2 p){
+    ivec2 dim=ivec2(text.glyphs[1],text.glyphs[2]);p=clamp(p,ivec2(0),dim-1);
+    return unpackUnorm4x8(artwork.pixels[uint(p.y*dim.x+p.x)]).rgb;
 }
-vec3 artSample(bool alternate, vec2 uv) {
-    vec2 dim = vec2(text.glyphs[1], text.glyphs[2]);
-    vec2 p = clamp(uv, vec2(0), vec2(1)) * dim - 0.5;
-    ivec2 lo = ivec2(floor(p));
-    vec2 f = fract(p);
-    return mix(mix(artPixel(alternate, lo), artPixel(alternate, lo + ivec2(1, 0)), f.x),
-               mix(artPixel(alternate, lo + ivec2(0, 1)),
-                   artPixel(alternate, lo + ivec2(1, 1)), f.x), f.y);
+vec3 artSample(vec2 uv){
+    vec2 dim=vec2(text.glyphs[1],text.glyphs[2]);
+    vec2 p=clamp(uv,vec2(0),vec2(1))*dim-0.5;ivec2 lo=ivec2(floor(p));vec2 f=fract(p);
+    return mix(mix(artPixel(lo),artPixel(lo+ivec2(1,0)),f.x),
+               mix(artPixel(lo+ivec2(0,1)),artPixel(lo+ivec2(1,1)),f.x),f.y);
 }
-void main() {
-    vec2 size = vec2(text.x, text.y);
-    vec2 source = vec2(text.glyphs[1], text.glyphs[2]);
-    float scale = min(size.x / source.x, size.y / source.y);
-    vec2 fit = source * scale;
-    vec2 uv = clamp((gl_FragCoord.xy - (size - fit) * 0.5) / fit, vec2(0), vec2(1));
-    float seconds = float(text.loading - 1u) * 0.001;
-    float cycle = mod(max(seconds, 0.0), 6.0);
-    // Same turn and readable hold as the existing retained GL presenter.
-    // The endpoints are real launcher case renders, including honest
-    // composed paper when an authentic rear scan is unavailable.
-    bool alternate = cycle >= 2.4 && cycle < 4.4;
-    bool turning_out = cycle >= 1.7 && cycle < 2.4;
-    bool turning_back = cycle >= 4.4 && cycle < 5.1;
-    vec3 base = artSample(alternate || turning_back, uv);
-    if ((turning_out || turning_back) &&
-        uv.x >= 0.185 && uv.x <= 0.442 && uv.y >= 0.102 && uv.y <= 0.810) {
-        float begin = turning_out ? 1.7 : 4.4;
-        float turn = smoothstep(0.0, 1.0, (cycle - begin) / 0.7);
-        float width = max(0.035, abs(cos(turn * 3.14159265)));
-        float center = (0.185 + 0.442) * 0.5;
-        float halfw = (0.442 - 0.185) * 0.5;
-        float local = (uv.x - center) / (halfw * width);
-        float srcx = clamp(center + local * halfw, 0.185, 0.442);
-        bool alternate_face = turning_out ? turn >= 0.5 : turn < 0.5;
-        vec3 face = artSample(alternate_face, vec2(srcx, uv.y));
-        float bgmix = clamp((uv.x - 0.185) / (0.442 - 0.185), 0.0, 1.0);
-        vec3 bg = mix(artSample(false, vec2(0.173, uv.y)),
-                      artSample(false, vec2(0.454, uv.y)), bgmix);
-        float visible = 1.0 - smoothstep(0.96, 1.0, abs(local));
-        base = mix(bg, face * (0.72 + 0.28 * width), visible);
-    }
+void main(){
+    vec2 size=vec2(text.x,text.y),source=vec2(text.glyphs[1],text.glyphs[2]);
+    float scale=min(size.x/source.x,size.y/source.y);vec2 fit=source*scale;
+    vec2 uv=clamp((gl_FragCoord.xy-(size-fit)*0.5)/fit,vec2(0),vec2(1));
+    vec3 base=artSample(uv);
     // Captured pixels are already display-encoded. SRGB attachments encode
     // the shader's output themselves, so undo that encoding only for them.
     if (text.glyphs[3] != 0u)

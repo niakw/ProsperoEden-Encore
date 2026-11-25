@@ -51,24 +51,43 @@ void Paint(int w, int h) {
     rect(w/2, 0, 1, 1, 0);
 }
 
-void PaintAlternate(int w, int h) {
+void PaintAtlas(int w,int h) {
+    assert(w==Eden::LoadingCase::kAtlasWidth && h==Eden::LoadingCase::kAtlasHeight);
     glEnable(GL_SCISSOR_TEST);
-    auto rect = [&](int x, int y, float r, float g, float b) {
-        glScissor(x, y, w/2, h/2);
-        glClearColor(r, g, b, 1.f);
-        glClear(GL_COLOR_BUFFER_BIT);
+    auto rect=[&](int x,int width,float r,float g,float b){
+        glScissor(x,0,width,h);glClearColor(r,g,b,1.0f);glClear(GL_COLOR_BUFFER_BIT);
     };
-    rect(0, h/2, 0, 1, 1);
-    rect(w/2, h/2, 1, 0, 1);
-    rect(0, 0, 1, 1, 1);
-    rect(w/2, 0, 0, 0, 0);
+    rect(0,960,1,0,1);     // front, magenta
+    rect(960,960,0,1,1);   // back, cyan
+    rect(1920,128,1,1,1);  // spine, white
+}
+
+Eden::LoadingCase::Scene Scene(bool calm=false) {
+    using namespace Eden::LoadingCase;
+    Eden::LoadingCase::Scene s;
+    s.reduce_motion=calm;
+    for(unsigned pose=0;pose<4;++pose) {
+        const bool back=pose>=2;
+        Quad face;
+        face.values={381,139,440,704, 1,1,1,1, 1,1,1,1, 0,0,0,0,
+                     kTemplateYaw[pose],back?1.0f:0.0f,1,9, 0,0,1,1};
+        face.slot=back?2u:1u;
+        s.poses[pose].push_back(face);
+        Quad side=face;
+        side.values[17]=44.0f;
+        side.values[18]=0.0f;
+        side.values[19]=14.0f;
+        side.slot=3;
+        s.poses[pose].push_back(side);
+    }
+    return s;
 }
 
 void ExpectCorners() {
-    Expect(Read(W/4, 3*H/4), red);
-    Expect(Read(3*W/4, 3*H/4), green);
-    Expect(Read(W/4, H/4), blue);
-    Expect(Read(3*W/4, H/4), yellow);
+    Expect(Read(40,H-40),red);
+    Expect(Read(W-40,H-40),green);
+    Expect(Read(40,40),blue);
+    Expect(Read(W-40,40),yellow);
 }
 
 std::vector<std::uint8_t> ReadFrame() {
@@ -99,6 +118,10 @@ int main() {
     assert(first != EGL_NO_CONTEXT);
     assert(eglMakeCurrent(display,surface,surface,first));
     handoff::Clear();
+    assert(!Eden::LoadingCase::UsesPaper(9,0.0f,42));
+    assert(Eden::LoadingCase::UsesPaper(9,1.0f,42));
+    assert(Eden::LoadingCase::UsesPaper(14,0.0f,42));
+    assert(!Eden::LoadingCase::UsesPaper(9,1.0f,0));
     glViewport(3, 4, W-6, H-8);
     glEnable(GL_SCISSOR_TEST);
     glPixelStorei(GL_PACK_ALIGNMENT, 8);
@@ -106,7 +129,9 @@ int main() {
     glPixelStorei(GL_PACK_SKIP_ROWS, 2);
     glPixelStorei(GL_PACK_SKIP_PIXELS, 3);
     assert(artwork::Capture(Paint));
-    assert(artwork::Capture(PaintAlternate, true));
+    assert(artwork::Capture(PaintAtlas,true,Eden::LoadingCase::kAtlasWidth,Eden::LoadingCase::kAtlasHeight));
+    handoff::PublishCase(Scene());
+    assert(handoff::PeekCase());
     const auto alternate = handoff::PeekAlternate();
     assert(alternate && handoff::Valid(*alternate));
     GLint state[4]{};
@@ -137,6 +162,7 @@ int main() {
     artwork::GlPresenter launcher;
     assert(launcher.Draw(W,H,1.0));
     ExpectCorners();
+    Expect(Read(300,295),Pixel{255,0,255,255});
     const auto initial = ReadFrame();
     launcher.Release();
     assert(LoadingMockGladDraw(W,H,1.0));
@@ -163,20 +189,33 @@ int main() {
         }
     }
     assert(animated>0);
-    // During the 700ms turn interval the alternate authentic pose is visible.
-    assert(game.Draw(W,H,2.05));
-    const auto turning = ReadFrame();
-    assert(turning != initial);
-    const Pixel turning_corner = Read(W/4, 3*H/4);
-    assert(turning_corner != red && turning_corner != cyan);
-    assert(game.Draw(W,H,1001.0));
+    // The 3D case changes projection, never the 2D scene. The rear stays
+    // readable for the entire original 4.50 second hold.
+    assert(game.Draw(W,H,2.55));
+    const auto turning=ReadFrame();
+    assert(turning!=initial);
+    ExpectCorners();
+    assert(game.Draw(W,H,3.0));
+    Expect(Read(300,295),cyan);
+    ExpectCorners();
+    assert(game.Draw(W,H,7.35));
+    Expect(Read(300,295),cyan);
+    ExpectCorners();
+    assert(game.Draw(W,H,8.5));
+    Expect(Read(300,295),Pixel{255,0,255,255});
+    game.Release();
+    handoff::PublishCase(Scene(true));
+    artwork::GlPresenter calm_game;
+    assert(calm_game.Draw(W,H,1001.0));
     const auto calm=ReadFrame();
-    assert(game.Draw(W,H,1001.4));
+    assert(calm_game.Draw(W,H,1005.0));
     assert(ReadFrame()==calm);
+    calm_game.Release();
     game.Release();
     handoff::Clear();
     assert(!handoff::Peek());
     assert(!handoff::PeekAlternate());
+    assert(!handoff::PeekCase());
     artwork::GlPresenter missing;
     assert(missing.Draw(W,H,1.0));
     Expect(Read(W/4,H/4),Pixel{14,19,27,255});
@@ -186,5 +225,5 @@ int main() {
     assert(eglDestroySurface(display,surface));
     assert(eglTerminate(display));
     std::cout << "ENCORE_LOADING_ARTWORK_MESA_PIXELS_PASS independent_contexts=2 top_row=1 animated_pixels="
-              << animated << " authentic_pair=1 reduced_motion=1 neutral_fallback=1\n";
+              << animated << " native_3d=1 back_hold=4.5 reduced_motion=1 neutral_fallback=1\n";
 }

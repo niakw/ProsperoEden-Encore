@@ -82,6 +82,8 @@ class Textures
     void pump(float dt, int budget = 2);
     // Called only when Nlib atomically replaces an image with the same path.
     void invalidate(const std::string &path);
+    // Read-only: true only for a known failed path, never enqueue another size.
+    bool known_missing(const std::string &path) const;
     // Compose one offline artwork sleeve with the REAL C++/OpenGL UI painter.
     // At most one page per face. A provisional page can be refreshed IN PLACE
     // after its cached input images finish decoding, without a third GPU page.

@@ -753,7 +753,8 @@ void Launcher::finish_home_media()
         if (enriched.title_id == home_.last_title_id && enriched.file == home_.last_file) {
             if (!enriched.cover.empty()) home_.last_cover = enriched.cover;
             if (!enriched.hero.empty()) home_.last_hero = enriched.hero;
-            if (!enriched.screenshots.empty()) home_.last_screenshot = enriched.screenshots.front();
+            if (const auto* shot = case_media::BackgroundScreenshot(enriched.screenshots))
+                home_.last_screenshot = *shot;
             if (enriched.max_players > 0) home_.last_max_players = enriched.max_players;
             if (!enriched.name.empty()) home_.last_title = enriched.name;
             if (!enriched.intro.empty()) home_.last_intro = enriched.intro;
@@ -763,10 +764,12 @@ void Launcher::finish_home_media()
             if (recent.title_id != enriched.title_id || recent.file != enriched.file) continue;
             if (!enriched.cover.empty()) {
                 recent.cover = enriched.cover;
-                if (recent.tile_icon.empty()) recent.tile_icon = enriched.cover;
+                if (recent.tile_icon.empty() || recent.tile_icon.find("/box-square-") != std::string::npos)
+                    recent.tile_icon = enriched.cover;
             }
             if (!enriched.hero.empty()) recent.hero = enriched.hero;
-            if (!enriched.screenshots.empty()) recent.screenshot = enriched.screenshots.front();
+            if (const auto* shot = case_media::BackgroundScreenshot(enriched.screenshots))
+                recent.screenshot = *shot;
             if (enriched.max_players > 0) recent.max_players = enriched.max_players;
             if (!enriched.name.empty()) recent.title = enriched.name;
             if (!enriched.intro.empty()) recent.intro = enriched.intro;
@@ -1106,7 +1109,8 @@ void Launcher::sync_home_game(const Game& game)
         home_.last_title = game.name;
         if (!game.cover.empty()) home_.last_cover = game.cover;
         if (!game.hero.empty()) home_.last_hero = game.hero;
-        if (!game.screenshots.empty()) home_.last_screenshot = game.screenshots.front();
+        if (const auto* shot = case_media::BackgroundScreenshot(game.screenshots))
+            home_.last_screenshot = *shot;
         if (!game.intro.empty()) home_.last_intro = game.intro;
         if (!game.description.empty()) home_.last_description = game.description;
         if (game.max_players > 0) home_.last_max_players = game.max_players;
@@ -1117,13 +1121,15 @@ void Launcher::sync_home_game(const Game& game)
             recent.title = game.name;
             if (!game.cover.empty()) {
                 recent.cover = game.cover;
-                if (recent.tile_icon.empty()) recent.tile_icon = game.cover;
+                if (recent.tile_icon.empty() || recent.tile_icon.find("/box-square-") != std::string::npos)
+                    recent.tile_icon = game.cover;
             }
             if (game.title_id != 0) recent.title_id = game.title_id;
             if (!game.addons.empty()) recent.addons = game.addons;
             if (!game.language.empty()) recent.language = game.language;
             if (!game.hero.empty()) recent.hero = game.hero;
-            if (!game.screenshots.empty()) recent.screenshot = game.screenshots.front();
+            if (const auto* shot = case_media::BackgroundScreenshot(game.screenshots))
+                recent.screenshot = *shot;
             if (!game.intro.empty()) recent.intro = game.intro;
             if (!game.description.empty()) recent.description = game.description;
             if (game.max_players > 0) recent.max_players = game.max_players;
@@ -1150,8 +1156,8 @@ void Launcher::name_home_games()
             recent.cover = game.cover; // square icon only; case fronts stay in box_front
             recent.tile_icon = game.cover;
             recent.hero = game.hero;
-            recent.screenshot = game.screenshots.empty() ? std::string{} :
-                                game.screenshots.front();
+            if (const auto* shot = case_media::BackgroundScreenshot(game.screenshots))
+                recent.screenshot = *shot;
             recent.max_players = game.max_players;
             recent.intro = game.intro;
             recent.description = game.description;
@@ -2926,21 +2932,29 @@ void Launcher::start_home_icons()
     // response from serializing all seven Home square icons. Decoder/GL
     // upload limits remain unchanged: no network or image decode on UI.
     for (const Recent& recent : home_.recents) {
-        if (!recent.title_id || !recent.tile_icon.empty()) continue;
+        if (!recent.title_id) continue;
         if ((home_icon_scan_.valid() &&
              home_icon_scan_file_ == recent.file) ||
             (home_icon_scan_extra_.valid() &&
              home_icon_scan_extra_file_ == recent.file)) continue;
         const auto due = home_icon_next_retry_.find(recent.file);
         if (due != home_icon_next_retry_.end() && now < due->second) continue;
+        const bool provisional = recent.tile_icon.find("/box-square-") != std::string::npos;
+        const bool rejected = !recent.tile_icon.empty() && textures_.known_missing(recent.tile_icon);
+        if (!recent.tile_icon.empty() && !provisional && !rejected) {
+            home_icon_next_retry_[recent.file] = now + std::chrono::seconds(1);
+            continue;
+        }
         Game request;
+        request.artwork_rejected = rejected;
+        if (rejected) request.cover = recent.tile_icon;
         request.title_id = recent.title_id;
         request.file = recent.file;
         request.name = recent.title;
         auto job = std::async(std::launch::async, [this, request = std::move(request)]() mutable {
             return services_.enrich_home_icon(std::move(request), &media_cancel_);
         });
-        home_icon_next_retry_[recent.file] = now + std::chrono::minutes(2);
+        home_icon_next_retry_[recent.file] = now + std::chrono::minutes(provisional ? 5 : 2);
         if (!home_icon_scan_.valid()) {
             home_icon_scan_title_id_ = recent.title_id;
             home_icon_scan_file_ = recent.file;
@@ -2981,6 +2995,10 @@ void Launcher::finish_home_icons()
                     // must not replace the square art of its NS1 package.
                     if (recent.title_id != result.title_id ||
                         recent.file != result.file) continue;
+                    if (!recent.tile_icon.empty() &&
+                        recent.tile_icon.find("/box-square-") == std::string::npos &&
+                        recent.tile_icon != result.cover &&
+                        !textures_.known_missing(recent.tile_icon)) continue;
                     recent.tile_icon = result.cover;
                     recent.cover = result.cover;
                 }

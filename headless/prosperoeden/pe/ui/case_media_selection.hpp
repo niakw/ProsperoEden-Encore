@@ -19,6 +19,23 @@ inline constexpr bool IsSwitch2TitleId(std::uint64_t id) noexcept {
 }
 
 
+// Dedicated scene-1 is GamesDB Fanart index 0. All other indexed case
+// scenes are paper/preview media, not the Home or launch background.
+inline bool BackgroundAllowed(std::string_view path) noexcept {
+    if (path.empty()) return false;
+    const auto marker = path.find("/box-scene-");
+    return marker == std::string_view::npos ||
+        path.substr(marker).starts_with("/box-scene-1-");
+}
+inline const std::string* BackgroundScreenshot(const std::vector<std::string>& shots) noexcept {
+    for (const auto& shot : shots)
+        if (BackgroundAllowed(shot) && shot.find("/box-scene-") == std::string::npos)
+            return &shot;
+    for (const auto& shot : shots)
+        if (BackgroundAllowed(shot)) return &shot;
+    return nullptr;
+}
+
 // The front uses an edge-to-edge source: hero, first usable screenshot,
 // finally the icon. All cases preserve the source's aspect via cover UVs.
 inline const std::string* FrontPaper(
@@ -90,13 +107,19 @@ inline std::array<const std::string*, 3> BackScenes(
             const auto role_at = marker + sizeof("/box-scene-") - 1;
             if (role_at >= image.size()) continue;
             const auto role = image[role_at];
-            if (role < '1' || role > '5' ||
+            if (role < '1' || role > '6' ||
                 image == cover || is_front(image))
                 continue;
             // Scenes 1-3 own dedicated panels. Do not attempt to decode
             // a second file when its canonical category is already filled.
             // Extra independent LaunchBox gameplay shots (4-5) remain
             // eligible to fill an otherwise missing rear slot.
+            if (role == '6') {
+                if (image.compare(marker, sizeof("/box-scene-6-") - 1, "/box-scene-6-") == 0 &&
+                    usable(image))
+                    selected[0] = &image;
+                continue;
+            }
             if (role <= '3') {
                 const auto category = static_cast<std::size_t>(role - '1');
                 if (!selected[category] &&

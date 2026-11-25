@@ -83,30 +83,22 @@ assert 'recent.cover = EnsureCover(name);' in native_home
 assert 'if (!recent.cover.empty()) recent.tile_icon = recent.cover;' in native_home
 # No generic package metadata extraction may run for an ExeFS /main.
 assert 'if (cover.empty()) cover = EnsureCover(home.last_file, &title);' not in native_home
-assert 'if (!nlib.icon.empty() && recent.tile_icon.empty() && !IsNupSelection(name))' in native_home
+assert 'if (!nlib.icon.empty() && recent.tile_icon.empty()' in native_home
 native_icon = svc.split("pe::ui::Game EdenServices::enrich_home_icon(", 1)[1].split("pe::ui::Game EdenServices::enrich_game_media(", 1)[0]
 assert "NlibTitleMutex(game.title_id), std::try_to_lock" in native_icon
 assert '"/icon/512"' in native_icon and "CachedNlibIcon(game.title_id)" in native_icon
 assert "EnsureRetailCase" not in native_icon and "EnsureNlibEnrichment" not in native_icon
 assert "const std::string& art = recent.tile_icon.empty() ? recent.cover : recent.tile_icon;" in home
 assert 'CachedGamesDbSquare(recent.title_id, second_generation)' in svc
-assert 'CachedGamesDbSquare(title_id, true)' in svc
 assert 'CachedGamesDbSquare(title_id, second_generation)' in svc
 assert 'EnsureGamesDbSquare(game.title_id' in native_icon
 full_media = svc.split("pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,\n", 1)[1]
-assert 'if (!enrichment.icon.empty() && game.cover.empty() && !nup)' in full_media
-assert 'NlibEnrichment enrichment = second_generation' in full_media
-assert '? NlibEnrichment{}' in full_media
-assert ': EnsureNlibEnrichment(game.title_id, language_choice, cancel);' in full_media
-assert 'CachedGamesDbSquare(game.title_id, true)' in native_icon
+assert 'NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);' in full_media
 assert 'const bool second_generation = UseNs2CaseIndex(game);' in native_icon
-assert 'CachedGamesDbSquare(game.title_id, false)' in native_icon
-assert 'if (second_generation) {' in native_icon
-assert 'EnsureGamesDbSquare(game.title_id, canonical, game.name,' in native_icon
-assert 'game.cover = CachedGamesDbSquare(game.title_id, true);' in native_icon
-assert native_icon.index('if (second_generation) {') < native_icon.index('NlibTitleMutex(game.title_id)')
 assert 'game.cover = CachedNlibIcon(game.title_id);' in native_icon
-assert 'else if (game.cover.empty() && !nup) {' in full_media
+assert native_icon.index("CachedNlibIcon(game.title_id)") < native_icon.index("EnsureGamesDbSquare(game.title_id")
+assert 'game.cover == CachedGamesDbSquare(game.title_id, second_generation)' in full_media
+assert '? NlibEnrichment{}' not in full_media
 # NLIB screenshot must outrank GamesDB fanart when the banner is missing.
 assert 'home.last_hero = !nlib.hero.empty() ? nlib.hero :' in native_home
 assert '!home.last_screenshot.empty() ? home.last_screenshot :' in native_home
@@ -264,7 +256,7 @@ icon_cpp = r"""
 #include <vector>
 #include <utility>
 enum class Screen { home, library, settings };
-struct Game { std::uint64_t title_id=0; std::string file,name,cover; bool artwork_changed=false; bool artwork_deferred=false; };
+struct Game { std::uint64_t title_id=0; std::string file,name,cover; bool artwork_changed=false; bool artwork_deferred=false; bool artwork_rejected=false; };
 struct Recent { std::uint64_t title_id=0; std::string file,title,cover; std::string tile_icon{}; };
 struct Home { bool setup_ready=true; std::uint64_t last_title_id=0; std::string last_file,last_cover; std::vector<Recent> recents; };
 struct Services {
@@ -272,12 +264,14 @@ struct Services {
     Game enrich_home_icon(Game g,const std::atomic<bool>* cancel) {
         assert(cancel && !cancel->load());
         calls.fetch_add(1);
+        if (g.file == "four") assert(g.artwork_rejected && g.cover == "local-icon");
         g.cover="nlib-icon-"+std::to_string(g.title_id)+"-"+g.file;
         g.artwork_changed=true;
         return g;
     }
 };
-struct Textures { unsigned invalidations=0; void invalidate(const std::string&) { ++invalidations; } };
+struct Textures { unsigned invalidations=0; void invalidate(const std::string&) { ++invalidations; }
+    bool known_missing(const std::string& path) const { return path == "local-icon"; } };
 namespace sys { template<class... T> void log(T...) {} }
 struct Launcher {
     Screen screen_=Screen::library;
@@ -298,7 +292,7 @@ struct Launcher {
 """ + icon_methods + r"""
 int main() {
     Launcher l;
-    l.home_.recents={{1,"selected","A",""},{2,"two","B",""},{3,"three","C","/box-front-3.webp"},{4,"four","D","local-icon"},{3,"different-file","C","fallback","fallback"},{5,"cached","E","fallback","canonical-5"}};
+    l.home_.recents={{1,"selected","A",""},{2,"two","B",""},{3,"three","C","/box-front-3.webp"},{4,"four","D","local-icon","local-icon"},{3,"different-file","C","fallback","fallback"},{5,"cached","E","fallback","canonical-5"}};
     l.home_.last_title_id=2; l.home_.last_file="two";
     l.games_={{2,"two","B","",false},{3,"three","C","",false},{3,"different-file","C","unchanged",false}};
     l.start_home_icons(); assert(!l.home_icon_scan_.valid());
@@ -326,6 +320,7 @@ int main() {
     assert(l.games_[1].cover=="nlib-icon-3-three");
     assert(l.games_[2].cover=="unchanged");
     assert(l.home_.recents[2].cover=="nlib-icon-3-three");
+    assert(l.home_.recents[3].tile_icon=="nlib-icon-4-four");
     // Same numeric program ID but a different edition/file is untouched.
     assert(l.home_.recents[4].tile_icon=="fallback");
     assert(l.home_.recents[4].cover=="fallback");
@@ -334,6 +329,7 @@ int main() {
     // The other installed edition may request its OWN square immediately.
     // A TitleID-wide cooldown previously suppressed it for two minutes.
     l.home_.recents[4].tile_icon.clear();
+    l.home_icon_next_retry_.erase("different-file"); // explicit fixture change, not a failed-fetch retry
     l.start_home_icons();
     assert(l.home_icon_scan_.valid() && l.home_icon_scan_title_id_==3);
     assert(l.home_icon_scan_file_=="different-file");

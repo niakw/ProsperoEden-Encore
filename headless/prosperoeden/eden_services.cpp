@@ -56,6 +56,7 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
+#include "case_index_disk.hpp"
 #include <future>
 #include <initializer_list>
 #include <mutex>
@@ -872,7 +873,7 @@ bool CacheNlibJpeg(const std::string& endpoint, const std::string& path,
 // Optional real retail case images from the build-time filtered public catalog.
 // No full metadata archive, credentials, HTTP or XML parsing on the console.
 // Matching is exact and skips colliding release editions at index-generation time.
-using BoxIndex = std::unordered_map<std::string, std::array<std::vector<std::string>, 9>>;
+using BoxIndex = std::unordered_map<std::string, std::array<std::vector<std::string>, 11>>;
 
 std::string CaseKey(const std::string& title) {
     std::string key;
@@ -926,26 +927,27 @@ std::vector<std::string> LocaleCaseCandidates(
         static_cast<int>(std::size(Eden::kLanguageKeys)) - 1);
     const std::string locale = Eden::kLanguageKeys[language_choice];
     std::vector<std::string> regions;
-    if (locale == "en-US" || locale == "es-419" || locale == "pt-BR")
-        regions = {"us", "ca", "world", "uk", "eu", "fr"};
-    else if (locale == "en-GB")
-        // UK rear copy should stay English; use the US scan before an
-        // unlocalized European back. PEGI European fronts remain preferred.
-        regions = face == 1 ? std::vector<std::string>{"uk", "us", "ca", "world", "eu"} :
-                              std::vector<std::string>{"uk", "eu", "us", "world", "ca"};
-    else if (locale == "fr-CA")
-        regions = {"ca", "fr", "us", "world", "eu"};
-    else if (locale == "fr")
-        regions = {"fr", "eu", "world", "uk", "ca", "us"};
-    else if (locale == "ja")
-        regions = {"jp", "asia", "world", "us", "eu"};
-    else if (locale == "ko" || locale.rfind("zh", 0) == 0)
-        regions = {"asia", "kr", "jp", "world", "us", "eu"};
+    (void)face;
+    if (locale == "en-US") regions = {"us"};
+    else if (locale == "en-GB") regions = {"uk"};
+    else if (locale == "fr-CA") regions = {"ca", "fr"};
+    else if (locale == "fr" || locale == "fr-FR") regions = {"fr", "eu"};
+    else if (locale == "ja" || locale == "ja-JP") regions = {"jp", "asia"};
+    else if (locale == "ko" || locale == "ko-KR") regions = {"kr", "asia"};
+    else if (locale == "zh-Hant") regions = {"tw", "hk", "asia"};
+    else if (locale.rfind("zh", 0) == 0) regions = {"cn", "asia"};
+    else if (locale.rfind("uk", 0) == 0) regions = {"ukr", "eu"};
+    else if (locale == "es-419") regions = {"mx"};
+    else if (locale == "pt-BR") regions = {"br"};
     else {
         const auto hyphen = locale.find('-');
         const std::string lang = locale.substr(0, hyphen);
-        regions = {lang, "eu", "world", "uk", "us", "ca"};
+        regions = {lang, "eu"};
     }
+    // Localized edition, North America/United States/England, then source order.
+    for (const char* fallback : {"us", "uk"})
+        if (std::find(regions.begin(), regions.end(), fallback) == regions.end())
+            regions.push_back(fallback);
     struct Candidate { int priority; std::size_t order; std::string file; };
     std::vector<Candidate> choices;
     choices.reserve(entries.size());
@@ -982,13 +984,91 @@ std::vector<std::string> LocaleCaseCandidates(
     return sorted;
 }
 
-const BoxIndex& RetailCaseIndex() {
-    static const BoxIndex index = [] {
-        BoxIndex items;
+void LoadCaseIndexRow(BoxIndex& items, const std::string& row) {
+    if (row.empty() || row[0] == '#' || row.size() > 9000) return;
+    const auto a = row.find('\t');
+    if (a == std::string::npos) return;
+    const auto b = row.find('\t', a + 1);
+    if (b == std::string::npos) return;
+    const auto c = row.find('\t', b + 1);
+    const std::string title = row.substr(0, a);
+    const std::string front = row.substr(a + 1, b - a - 1);
+    const std::string back = row.substr(b + 1,
+        c == std::string::npos ? c : c - b - 1);
+    const auto d = c == std::string::npos ? c : row.find('\t', c + 1);
+    const std::string spine = c == std::string::npos ? "-" :
+        row.substr(c + 1, d == std::string::npos ? d : d - c - 1);
+    std::array<std::string, 5> scene_columns{"-", "-", "-", "-", "-"};
+    std::size_t start = d;
+    for (std::string& scene : scene_columns) {
+        if (start == std::string::npos) break; // v4 index remains supported
+        const std::size_t end = row.find('\t', start + 1);
+        scene = row.substr(start + 1,
+            end == std::string::npos ? end : end - start - 1);
+        start = end;
+    }
+    const auto extra = [&]() {
+        if (start == std::string::npos) return std::string{"-"};
+        const auto end = row.find('\t', start + 1);
+        const auto field = row.substr(start + 1, end == std::string::npos ? end : end - start - 1);
+        start = end;
+        return field;
+    };
+    const auto square = extra();
+    const auto logo = extra();
+    const auto banner = extra();
+    if (title.empty() || title.size() > 170) return;
+    const auto split_candidates = [](const std::string& value) {
+        std::vector<std::string> found;
+        if (value == "-") return found;
+        std::size_t start = 0;
+        while (start < value.size() && found.size() < 12) {
+            const auto end = value.find(';', start);
+            const std::string part = value.substr(
+                start, end == std::string::npos ? end : end - start);
+            if (!SafeCaseCandidate(part)) {
+                found.clear();
+                break; // reject an invalid indexed row
+            }
+            found.push_back(part);
+            if (end == std::string::npos) break;
+            start = end + 1;
+        }
+        return found;
+    };
+    auto fronts = split_candidates(front);
+    auto backs = split_candidates(back);
+    auto spines = split_candidates(spine);
+    if ((front != "-" && fronts.empty()) ||
+        (back != "-" && backs.empty()) ||
+        (spine != "-" && spines.empty())) return;
+    std::array<std::vector<std::string>, 5> scenes{};
+    for (int i = 0; i < 5; ++i)
+        scenes[i] = split_candidates(scene_columns[i]);
+    // Invalid optional scene metadata must never invalidate valid
+    // original front/back/spine entries from the same row.
+    std::array<std::vector<std::string>, 11> faces{
+        std::move(fronts), std::move(backs), std::move(spines),
+        std::move(scenes[0]), std::move(scenes[1]), std::move(scenes[2]),
+        std::move(scenes[3]), std::move(scenes[4]), split_candidates(square),
+        split_candidates(logo), split_candidates(banner)};
+    items.emplace(title, std::move(faces));
+}
+
+struct CaseIndexCatalog {
+    BoxIndex items;
+    std::string path;
+    std::streamoff global_start{-1};
+};
+
+const CaseIndexCatalog& RetailCaseCatalog() {
+    static const CaseIndexCatalog index = [] {
+        CaseIndexCatalog catalog;
+        auto& items = catalog.items;
         // Mounted titles can expose eboot.bin but omit auxiliary ui/ files.
         // Use the same fallback search as fonts, translations and launcher art.
         std::string catalog_path = Eden::AppResourceFile("ui/box-art-index.tsv");
-        std::ifstream input(catalog_path);
+        std::ifstream input(catalog_path, std::ios::binary);
         // A projected mount may hide the .tsv extension or report a file
         // that cannot actually be opened. Try the byte-identical generated
         // companion, then the backing installation paths by real open.
@@ -1002,7 +1082,7 @@ const BoxIndex& RetailCaseIndex() {
                 if (!Eden::FilesystemAccess() &&
                     path != Eden::AppResourceFile("ui/box-art-index.txt")) continue;
                 input.clear();
-                input.open(path);
+                input.open(path, std::ios::binary);
                 if (input) {
                     catalog_path = path;
                     break;
@@ -1015,77 +1095,23 @@ const BoxIndex& RetailCaseIndex() {
                          catalog_path.c_str());
         }
         // Only the complete GamesDB-generated index is authoritative.
-        const auto load_rows = [&](std::istream& source) {
+        catalog.path = catalog_path;
         std::string row;
-        while (std::getline(source, row) && items.size() < 20000) {
-            if (row.empty() || row[0] == '#' || row.size() > 5000) continue;
-            const auto a = row.find('\t');
-            if (a == std::string::npos) continue;
-            const auto b = row.find('\t', a + 1);
-            if (b == std::string::npos) continue;
-            const auto c = row.find('\t', b + 1);
-            const std::string title = row.substr(0, a);
-            const std::string front = row.substr(a + 1, b - a - 1);
-            const std::string back = row.substr(b + 1,
-                c == std::string::npos ? c : c - b - 1);
-            const auto d = c == std::string::npos ? c : row.find('\t', c + 1);
-            const std::string spine = c == std::string::npos ? "-" :
-                row.substr(c + 1, d == std::string::npos ? d : d - c - 1);
-            std::array<std::string, 5> scene_columns{"-", "-", "-", "-", "-"};
-            std::size_t start = d;
-            for (std::string& scene : scene_columns) {
-                if (start == std::string::npos) break; // v4 index remains supported
-                const std::size_t end = row.find('\t', start + 1);
-                scene = row.substr(start + 1,
-                    end == std::string::npos ? end : end - start - 1);
-                start = end;
+        while (std::getline(input, row)) {
+            if (row == Eden::CaseIndexDisk::kGlobalMarker) {
+                catalog.global_start = static_cast<std::streamoff>(input.tellg());
+                break;
             }
-            const std::string square = start == std::string::npos ? "-" :
-                row.substr(start + 1);
-            if (title.empty() || title.size() > 170) continue;
-            const auto split_candidates = [](const std::string& value) {
-                std::vector<std::string> found;
-                if (value == "-") return found;
-                std::size_t start = 0;
-                while (start < value.size() && found.size() < 12) {
-                    const auto end = value.find(';', start);
-                    const std::string part = value.substr(
-                        start, end == std::string::npos ? end : end - start);
-                    if (!SafeCaseCandidate(part)) {
-                        found.clear();
-                        break; // reject an invalid indexed row
-                    }
-                    found.push_back(part);
-                    if (end == std::string::npos) break;
-                    start = end + 1;
-                }
-                return found;
-            };
-            auto fronts = split_candidates(front);
-            auto backs = split_candidates(back);
-            auto spines = split_candidates(spine);
-            if ((front != "-" && fronts.empty()) ||
-                (back != "-" && backs.empty()) ||
-                (spine != "-" && spines.empty())) continue;
-            std::array<std::vector<std::string>, 5> scenes{};
-            for (int i = 0; i < 5; ++i)
-                scenes[i] = split_candidates(scene_columns[i]);
-            // Invalid optional scene metadata must never invalidate valid
-            // original front/back/spine entries from the same row.
-            std::array<std::vector<std::string>, 9> faces{
-                std::move(fronts), std::move(backs), std::move(spines),
-                std::move(scenes[0]), std::move(scenes[1]), std::move(scenes[2]),
-                std::move(scenes[3]), std::move(scenes[4]), split_candidates(square)};
-            items.emplace(title, std::move(faces));
+            if (items.size() < 40000) LoadCaseIndexRow(items, row);
         }
-        };
-        load_rows(input);
         std::fprintf(stderr, "EDEN_CASE_INDEX status=%s entries=%zu path=%s\n",
                      opened ? "loaded" : "missing", items.size(), catalog_path.c_str());
-        return items;
+        return catalog;
     }();
     return index;
 }
+
+const BoxIndex& RetailCaseIndex() { return RetailCaseCatalog().items; }
 
 // Keep retail artwork keyed by console generation. Legacy unscoped v9
 // indices may serve NS1, but must NEVER feed an NS2 front or square icon.
@@ -1108,6 +1134,17 @@ bool UseNs2CaseIndex(const pe::ui::Game& game) {
     return IsNs2MediaIdentity(game.title_id, game.file) || game.format == "NUP";
 }
 
+std::string StandardCaseKey(std::string key) {
+    for (const std::string_view suffix : {" nintendo switch 2 edition", " switch 2 edition",
+                                          " nintendo switch 2 version", " switch 2 version"}) {
+        if (key.ends_with(suffix)) {
+            key.erase(key.size() - suffix.size());
+            break;
+        }
+    }
+    return key;
+}
+
 BoxIndex::const_iterator FindCaseEntry(const BoxIndex& index, bool ns2,
                                        const std::string& name,
                                        const std::string& alternate_name) {
@@ -1115,6 +1152,11 @@ BoxIndex::const_iterator FindCaseEntry(const BoxIndex& index, bool ns2,
         const std::string key = CaseKey(title);
         if (key.empty()) return index.end();
         auto it = index.find(std::string(ns2 ? "ns2:" : "ns1:") + key);
+        if (it == index.end()) {
+            const auto standard = StandardCaseKey(key);
+            if (standard != key)
+                it = index.find(std::string(ns2 ? "ns2:" : "ns1:") + standard);
+        }
         if (it == index.end() && !ns2) it = index.find(key);
         return it;
     };
@@ -1122,24 +1164,42 @@ BoxIndex::const_iterator FindCaseEntry(const BoxIndex& index, bool ns2,
     return first == index.end() ? find(alternate_name) : first;
 }
 
-// Explicit cross-generation BACK fallback only, for the same base title.
-// A Switch 1 front must never masquerade as the Switch 2 edition.
-const std::vector<std::string>* MatchingNs1Back(
-    const BoxIndex& index, const std::string& name,
-    const std::string& alternate_name) {
-    const auto lookup = [&](const std::string& title)
-        -> const std::vector<std::string>* {
-        std::string key = CaseKey(title);
-        constexpr std::string_view suffix = " nintendo switch 2 edition";
-        if (key.ends_with(suffix)) key.erase(key.size() - suffix.size());
-        if (key.empty()) return nullptr;
-        auto it = index.find("ns1:" + key);
-        if (it == index.end()) it = index.find(key); // legacy v9
-        return it == index.end() || it->second[1].empty()
-            ? nullptr : &it->second[1];
-    };
-    if (const auto* back = lookup(name)) return back;
-    return lookup(alternate_name);
+// Read at most one owned global row after both native name lookups miss.
+BoxIndex FindGlobalCaseMedia(bool ns2, const std::string& name,
+                             const std::string& alternate_name) {
+    const auto& catalog = RetailCaseCatalog();
+    BoxIndex result;
+    if (catalog.global_start < 0) return result;
+    std::ifstream input(catalog.path, std::ios::binary);
+    if (!input) return result;
+    for (const auto* label : {&name, &alternate_name}) {
+        const auto key = CaseKey(*label);
+        const auto standard = StandardCaseKey(key);
+        for (const auto* spelling : {&key, &standard}) {
+            if (spelling->empty() || spelling->size() > 160 ||
+                (spelling == &standard && standard == key)) continue;
+            auto row = Eden::CaseIndexDisk::FindSortedRow(
+                input, catalog.global_start, "global:" + *spelling);
+            if (row.empty()) continue;
+            // The global row contains no foreign front or spine.
+            row.replace(0, 7, ns2 ? "ns2:" : "ns1:");
+            LoadCaseIndexRow(result, row);
+            if (!result.empty()) {
+                auto& media = result.begin()->second;
+                media[0].clear(); // never admit foreign front paper
+                media[2].clear(); // never admit foreign spine paper
+                return result;
+            }
+        }
+    }
+    return result;
+}
+
+// Other-platform candidates are indexed only for exact, unambiguous titles.
+const std::vector<std::string>* OtherCaseMedia(const BoxIndex& index,
+                                              const std::string& key, int side) {
+    const auto other = index.find("alt:" + key);
+    return other == index.end() ? nullptr : &other->second[side];
 }
 
 std::string CaseFacePath(std::uint64_t title_id, const char* side,
@@ -1159,10 +1219,9 @@ std::string CachedGamesDbSquare(std::uint64_t title_id,
     const std::string path = CaseFacePath(title_id, "square", second_generation);
     int width = 0, height = 0;
     if (!ValidNlibWebP(path, &width, &height)) return {};
-    const int larger = std::max(width, height);
-    const int smaller = std::min(width, height);
-    return larger > 0 && static_cast<long long>(larger) * 10 <=
-               static_cast<long long>(smaller) * 11 ? path : std::string{};
+    // The icon cache may contain a transparent Clear Logo. The widget
+    // fits it inside its tile without changing source proportions.
+    return width > 0 && height > 0 ? path : std::string{};
 }
 
 // Scenic images are actual LaunchBox screenshots/fanart, cached separately
@@ -1172,7 +1231,7 @@ std::string CachedGamesDbSquare(std::uint64_t title_id,
 std::string CachedGamesDbHero(std::uint64_t title_id,
                               bool second_generation = false) {
     if (title_id == 0) return {};
-    for (int scene : {1, 3, 4, 5}) {
+    for (int scene : {1}) {
         const std::string side = "scene-" + std::to_string(scene);
         if (auto path = AvailableArtwork(
                 CaseFacePath(title_id, side.c_str(), second_generation));
@@ -1185,7 +1244,7 @@ std::vector<std::string> CachedCaseScenes(std::uint64_t title_id,
                                            bool second_generation = false) {
     std::vector<std::string> scenes;
     if (title_id == 0) return scenes;
-    for (int i : {3, 4, 5, 1, 2}) {
+    for (int i : {6, 3, 4, 5, 1, 2}) {
         const std::string side = "scene-" + std::to_string(i);
         const std::string path =
             CaseFacePath(title_id, side.c_str(), second_generation);
@@ -1199,7 +1258,7 @@ std::vector<std::string> CachedCaseScenes(std::uint64_t title_id,
 void AppendCaseScenes(std::vector<std::string>& screens, std::uint64_t title_id,
                       bool second_generation = false) {
     for (const auto& scene : CachedCaseScenes(title_id, second_generation)) {
-        if (screens.size() >= 6) break;
+        if (screens.size() >= 9) break;
         if (std::find(screens.begin(), screens.end(), scene) == screens.end())
             screens.push_back(scene);
     }
@@ -1207,7 +1266,7 @@ void AppendCaseScenes(std::vector<std::string>& screens, std::uint64_t title_id,
 
 bool FetchCaseFace(const std::vector<std::string>& candidates,
                    const std::string& destination, bool narrow_spine,
-                   const std::atomic<bool>* cancel, bool require_square = false) {
+                   const std::atomic<bool>* cancel, bool require_square = false, bool logo = false, bool banner = false) {
     if (candidates.empty() ||
         (cancel && cancel->load(std::memory_order_acquire))) return false;
     std::size_t attempts = 0;
@@ -1224,7 +1283,7 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
     // Keep a bounded budget while permitting real JPEG alternatives in the
     // SAME source category. Never substitute Reconstructed/merchandise art.
     for (const std::string& filename : candidates) {
-        if (attempts >= 7 ||
+        if (attempts >= 24 ||
             (cancel && cancel->load(std::memory_order_acquire))) break;
         if (!SafeCaseFilename(filename)) {
             ++invalid_responses;
@@ -1251,7 +1310,7 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
             static_cast<unsigned char>(body[1]) == 0xd8;
         const bool png = body.size() >= 8 &&
             std::memcmp(body.data(), "\x89PNG\r\n\x1a\n", 8) == 0;
-        if (body.size() < 1024 || body.size() > (16u << 20) || (!jpeg && !png)) {
+        if (body.size() < (logo || banner ? 64u : 1024u) || body.size() > (16u << 20) || (!jpeg && !png)) {
             ++invalid_responses;
             std::fprintf(stderr, "EDEN_CASE_CDN status=invalid-body file=%s bytes=%zu jpeg=%d png=%d\n",
                          filename.c_str(), body.size(), jpeg, png);
@@ -1261,11 +1320,10 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
         if (!stbi_info_from_memory(
                 reinterpret_cast<const unsigned char*>(body.data()),
                 static_cast<int>(body.size()), &w, &h, &channels) ||
-            w < (narrow_spine ? 16 : 128) ||
-            h < (narrow_spine ? 250 : 200) || w > 4096 || h > 4096 ||
+            w < (narrow_spine || logo || banner ? 16 : 128) ||
+            h < (narrow_spine ? 250 : logo || banner ? 8 : 200) || w > 4096 || h > 4096 ||
             static_cast<std::uint64_t>(w) * h > 3840u * 2160u ||
-            ((destination.find("/box-front-") != std::string::npos ||
-              destination.find("/box-back-") != std::string::npos) &&
+            (destination.find("/box-front-") != std::string::npos &&
              static_cast<std::uint64_t>(h) * 4 < static_cast<std::uint64_t>(w) * 5) ||
             (require_square &&
              static_cast<std::uint64_t>(std::max(w, h)) * 10 >
@@ -1284,7 +1342,7 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
         const std::string staged = destination + ".new";
         bool decode_failed = false;
         const bool encoded = WriteJpegWebP(
-            body, staged, !require_square, &decode_failed, require_square ? 512 : 0);
+            body, staged, !require_square && !logo, &decode_failed, (require_square || logo) ? 512 : 0);
         if (cancel && cancel->load(std::memory_order_acquire)) {
             (void)std::remove(staged.c_str());
             break;
@@ -1322,14 +1380,24 @@ bool LockArtworkUnlessCancelled(std::unique_lock<std::mutex>& lock,
 
 bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
                          const std::string& alternate_name, int language_choice,
-                         const std::atomic<bool>* cancel, bool second_generation) {
+                         const std::atomic<bool>* cancel, bool second_generation,
+                         bool* changed = nullptr, bool force_refresh = false) {
+    if (changed) *changed = false;
     if (title_id == 0 || (cancel && cancel->load(std::memory_order_acquire))) return false;
-    if (!CachedGamesDbSquare(title_id, second_generation).empty()) return true;
-    const auto& index = RetailCaseIndex();
+    const bool had_cached = !CachedGamesDbSquare(title_id, second_generation).empty();
+    const auto& native_index = RetailCaseIndex();
+    BoxIndex fallback;
+    if (FindCaseEntry(native_index, second_generation, name, alternate_name) == native_index.end())
+        fallback = FindGlobalCaseMedia(second_generation, name, alternate_name);
+    const auto& index = fallback.empty() ? native_index : fallback;
     const auto selected = FindCaseEntry(index, second_generation, name, alternate_name);
-    if (selected == index.end() || selected->second[8].empty()) return false;
-    auto candidates = LocaleCaseCandidates(selected->second[8], language_choice, 8);
-    if (candidates.empty()) return false;
+    if (selected == index.end()) return had_cached && !force_refresh;
+    // Keep the four source tiers separate: a logo may not outrank a square
+    // on its own platform, but does outrank every other-platform square.
+    const auto candidates = LocaleCaseCandidates(selected->second[8], language_choice, 8);
+    const auto logos = LocaleCaseCandidates(selected->second[9], language_choice, 9);
+    const auto* other_square = OtherCaseMedia(index, selected->first, 8);
+    const auto* other_logo = OtherCaseMedia(index, selected->first, 9);
     // Home and selected-title media can ask for the same Square concurrently.
     // Serialize the atomic .new writer by generation as well as TitleID; an
     // NS1 request sharing the numeric ID must never delay or satisfy NS2.
@@ -1340,9 +1408,35 @@ bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
         square_locks[ArtworkLockBucket(square_key, square_locks.size())],
         std::defer_lock);
     if (!LockArtworkUnlessCancelled(square_guard, cancel)) return false;
-    if (!CachedGamesDbSquare(title_id, second_generation).empty()) return true;
     const std::string path = CaseFacePath(title_id, "square", second_generation);
-    if (!FetchCaseFace(candidates, path, false, cancel, true)) return false;
+    const bool cached = !force_refresh && !CachedGamesDbSquare(title_id, second_generation).empty();
+    std::string source;
+    if (cached) {
+        std::ifstream receipt(path + ".source");
+        std::getline(receipt, source);
+    }
+    std::array<std::vector<std::string>, 4> tiers{
+        candidates, logos,
+        other_square ? LocaleCaseCandidates(*other_square, language_choice, 8) : std::vector<std::string>{},
+        other_logo ? LocaleCaseCandidates(*other_logo, language_choice, 9) : std::vector<std::string>{}};
+    bool done = false;
+    for (std::size_t tier = 0; tier < tiers.size(); ++tier) {
+        auto& choices = tiers[tier];
+        const auto existing = std::find(choices.begin(), choices.end(), source);
+        const bool stop_at_cached = cached && existing != choices.end();
+        if (stop_at_cached) choices.erase(existing, choices.end());
+        if (FetchCaseFace(choices, path, false, cancel, tier % 2 == 0, tier % 2 == 1)) {
+            if (changed) *changed = true;
+            done = true;
+            break;
+        }
+        if (stop_at_cached) {
+            done = true; // Higher sources failed; retain known-good cached pixels.
+            break;
+        }
+        if (cancel && cancel->load(std::memory_order_acquire)) break;
+    }
+    if (!done && !cached) return false;
     const bool ready = !CachedGamesDbSquare(title_id, second_generation).empty();
     std::fprintf(stderr,
                  "EDEN_GAMESDB_SQUARE title=%016llX status=%s candidates=%zu\n",
@@ -1392,8 +1486,10 @@ bool LimitRetailCasePromotion(std::vector<std::string>& candidates,
     // Preserve narrow authentic NS2 spines even with no back scan.
     if (!ValidNlibWebP(path, &width, &height) ||
         !((side == 2 && width >= 16 && height >= 250) ||
+          (side == 8 && width >= 16 && height >= 8) ||
           (side >= 3 && width >= 128 && height >= 200) ||
-          ((side == 0 || side == 1) && width >= 128 && height >= 200 &&
+          (side == 1 && width >= 128 && height >= 128) ||
+          (side == 0 && width >= 128 && height >= 200 &&
            static_cast<std::uint64_t>(height) * 4 >= static_cast<std::uint64_t>(width) * 5)))
         return false;
     if (cached == candidates.begin()) return true;
@@ -1405,7 +1501,11 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
                           const std::string& alternate_name, int language_choice,
                           const std::atomic<bool>* cancel, bool second_generation) {
     if (title_id == 0 || (cancel && cancel->load(std::memory_order_acquire))) return 0;
-    const auto& index = RetailCaseIndex();
+    const auto& native_index = RetailCaseIndex();
+    BoxIndex fallback;
+    if (FindCaseEntry(native_index, second_generation, name, alternate_name) == native_index.end())
+        fallback = FindGlobalCaseMedia(second_generation, name, alternate_name);
+    const auto& index = fallback.empty() ? native_index : fallback;
     const auto selected = FindCaseEntry(index, second_generation, name, alternate_name);
     if (selected == index.end()) {
         std::fprintf(stderr, "EDEN_CASE_LOOKUP title=%016llX status=no-match name=%s alternate=%s index_entries=%zu\n",
@@ -1437,7 +1537,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     unsigned migrated_faces = 0;
     unsigned side_index = 0;
     for (const char* side : {"front", "back", "spine",
-                             "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"}) {
+                             "scene-1", "scene-2", "scene-3", "scene-4", "scene-5", "scene-6"}) {
         if (cancel && cancel->load(std::memory_order_acquire)) return migrated_faces;
         if (MigrateGeneratedTga(
                 CaseFacePath(title_id, side, second_generation), true))
@@ -1455,8 +1555,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         // disable all retries for four hours on a newly installed game.
         retries[artwork_key] = std::chrono::steady_clock::now() + std::chrono::minutes(5);
     }
-    const auto* ns1_back = second_generation && selected->second[1].empty()
-        ? MatchingNs1Back(index, name, alternate_name) : nullptr;
+    // All own-platform back candidates precede cross-platform back scans.
     bool all_ready = true;
     // Migration to WebP also changes the art; notify the UI even when the
     // underlying CDN candidate was already in cache.
@@ -1467,7 +1566,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     // Front and rear paper remain first. Then fetch Home's hero fallbacks
     // before the optional spine, title-screen and additional rear screenshots.
     // The semantic side indices / changed-face bitmask are unchanged.
-    for (const int side : {0, 1, 3, 5, 2, 4, 6, 7}) {
+    for (const int side : {0, 1, 3, 8, 5, 2, 4, 6, 7}) {
         if (cancel && cancel->load(std::memory_order_acquire)) {
             // Aborted title switch must not lock the next attempt out for
             // five minutes after a partial or cancelled CDN transaction.
@@ -1479,11 +1578,17 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         // otherwise the 5-minute retry could leave a complete paper wrap
         // without its printed spine until the next launcher session.
         // Gameplay previews remain independent of real back paper.
-        const auto& sources = side == 1 && ns1_back ? *ns1_back : selected->second[side];
-        auto candidates = LocaleCaseCandidates(sources, language_choice, side);
+        const int media_column = side == 8 ? 10 : side;
+        auto candidates = LocaleCaseCandidates(selected->second[media_column], language_choice, side);
+        if (side == 1 || side >= 3) {
+            if (const auto* alternate = OtherCaseMedia(index, selected->first, media_column)) {
+                const auto fallback = LocaleCaseCandidates(*alternate, language_choice, side);
+                candidates.insert(candidates.end(), fallback.begin(), fallback.end());
+            }
+        }
         if (candidates.empty()) continue;
         const char* const names[] = {
-            "front", "back", "spine", "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"};
+            "front", "back", "spine", "scene-1", "scene-2", "scene-3", "scene-4", "scene-5", "scene-6"};
         const std::string path =
             CaseFacePath(title_id, names[side], second_generation);
         // User-provided original scans win. Cached low-resolution CDN scans
@@ -1502,7 +1607,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         const bool retained_fallback = candidates.size() < candidate_count;
         // If network retrieval fails, existing cached artwork remains usable;
         // migration can be retried without blocking rendering.
-        if (!FetchCaseFace(candidates, path, side == 2, cancel)) {
+        if (!FetchCaseFace(candidates, path, side == 2, cancel, false, false, side == 8)) {
             all_ready = false;
             if (retained_fallback)
                 std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=retained-fallback\n",
@@ -2200,16 +2305,10 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         const bool second_generation = IsNs2MediaIdentity(title_id, home.last_file);
         const GameLanguage language = LanguageFor(last_path, title_id, selected_language);
         home.last_title_id = title_id;
-        const NlibEnrichment nlib = second_generation
-            ? NlibEnrichment{} : CachedNlibEnrichment(title_id, selected_language);
+        const NlibEnrichment nlib = CachedNlibEnrichment(title_id, selected_language);
         if (home.last_cover.empty()) {
-            // Home's verified extracted Control icon wins. NUP is NS2:
-            // do not replace its square with an unrelated NX/NS1 cache.
-            if (IsNupSelection(home.last_file))
-                home.last_cover = CachedGamesDbSquare(title_id, true);
-            else
-                home.last_cover = nlib.icon.empty() ?
-                    CachedGamesDbSquare(title_id, second_generation) : nlib.icon;
+            home.last_cover = nlib.icon.empty() ?
+                CachedGamesDbSquare(title_id, second_generation) : nlib.icon;
         }
         // NLIB is the first provider, including its screenshots when the
         // title has no NLIB banner. Only then consult GamesDB's first fanart
@@ -2310,10 +2409,8 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
             if (recent.title_id != 0) {
                 const bool second_generation =
                     IsNs2MediaIdentity(recent.title_id, recent.file);
-                const NlibEnrichment nlib = second_generation
-                    ? NlibEnrichment{} :
-                      CachedNlibEnrichment(recent.title_id, selected_language);
-                if (!nlib.icon.empty() && recent.tile_icon.empty() && !IsNupSelection(name)) {
+                const NlibEnrichment nlib = CachedNlibEnrichment(recent.title_id, selected_language);
+                if (!nlib.icon.empty() && recent.tile_icon.empty() ) {
                     recent.cover = nlib.icon;
                     recent.tile_icon = nlib.icon;
                 } else if (recent.cover.empty()) {
@@ -2630,17 +2727,11 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 // Genuine package/Control icons are authoritative. Nlib is
                 // a fallback only; an older NS1 cache must not overwrite the
                 // icon extracted from an ExeFS or NUP package.
-                if (game.cover.empty() && UseNs2CaseIndex(game))
-                    game.cover = CachedGamesDbSquare(game.title_id, true);
-                if (game.cover.empty() && !UseNs2CaseIndex(game)) {
-                    const std::string cached_icon = CachedNlibIcon(game.title_id);
-                    if (!cached_icon.empty()) game.cover = cached_icon;
-                }
+                if (game.cover.empty()) game.cover = CachedNlibIcon(game.title_id);
+                if (game.cover.empty()) game.cover = CachedGamesDbSquare(game.title_id, UseNs2CaseIndex(game));
                 nlohmann::json metadata;
                 NlibEnrichment list_metadata;
-                const bool second_generation = UseNs2CaseIndex(game);
-                if (!second_generation &&
-                    LoadNlibMetadata(game.title_id, NlibLanguageCode(language_choice), &metadata))
+                if (LoadNlibMetadata(game.title_id, NlibLanguageCode(language_choice), &metadata))
                     ApplyNlibMetadata(metadata, &list_metadata);
                 if (!list_metadata.name.empty()) game.name = std::move(list_metadata.name);
                 if (!list_metadata.intro.empty()) game.intro = std::move(list_metadata.intro);
@@ -2680,58 +2771,43 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
                                             const std::atomic<bool>* cancel) {
     if (!game.title_id || (cancel && cancel->load(std::memory_order_acquire)))
         return game;
-    // These files are published via atomic rename, so cached icons can be
-    // consumed even while another title worker holds its download lock.
-    // Previously a perfectly ready ExeFS/Home icon waited for that remote
-    // worker, then remained in the retry queue for up to two minutes.
+    const std::string rejected = game.artwork_rejected ? std::move(game.cover) : std::string{};
+    if (game.artwork_rejected) game.cover.clear();
+    if (!game.cover.empty()) return game;
     const bool second_generation = UseNs2CaseIndex(game);
-    if (second_generation) {
-        // Never discard a verified local Control/ExeFS icon merely because
-        // the generation-specific remote square has not been cached yet.
-        if (!game.cover.empty()) return game;
-        game.cover = CachedGamesDbSquare(game.title_id, true);
-    } else {
-        game.cover = CachedNlibIcon(game.title_id);
-        if (game.cover.empty())
-            game.cover = CachedGamesDbSquare(game.title_id, false);
-    }
-    if (!game.cover.empty()) return game;
-
-    // NS2/NUP does not participate in the Switch 1 Nlib mutex at all.
-    // Its own generation-aware Square writer serializes only matching NS2
-    // requests, so a simultaneous NS1 network request cannot delay this tile.
-    if (second_generation) {
-        const auto* known = Eden::Ns2Catalog::Find(game.title_id);
-        const int language_choice = Eden::LoadPreferences().language;
-        const std::string canonical = known ? std::string(known->name) : game.name;
-        if (EnsureGamesDbSquare(game.title_id, canonical, game.name,
-                                language_choice, cancel, true)) {
-            game.cover = CachedGamesDbSquare(game.title_id, true);
-            game.artwork_changed = !game.cover.empty();
-        }
-        return game;
-    }
-
-    // NS1 icon writes share the Nlib title lock. Do not stall Home teardown
-    // behind another title's retail or Nlib network transaction.
-    std::unique_lock title_lock{NlibTitleMutex(game.title_id), std::try_to_lock};
-    if (!title_lock.owns_lock() || (cancel && cancel->load(std::memory_order_acquire))) {
-        game.artwork_deferred = !title_lock.owns_lock();
-        return game;
-    }
-    // Recheck after acquiring the writer lock; another NS1 worker may have
-    // atomically published either the Nlib icon or GamesDB square meanwhile.
     game.cover = CachedNlibIcon(game.title_id);
-    if (game.cover.empty())
-        game.cover = CachedGamesDbSquare(game.title_id, false);
+    if (game.cover == rejected) game.cover.clear();
     if (!game.cover.empty()) return game;
-    char id[17]{};
-    std::snprintf(id, sizeof(id), "%016llX",
-                  static_cast<unsigned long long>(game.title_id));
-    if (CacheNlibJpeg(std::string{"/nx/"} + id + "/icon/512",
-                      NlibIconPath(game.title_id), 1024, cancel)) {
+    {
+        std::unique_lock title_lock{NlibTitleMutex(game.title_id), std::try_to_lock};
+        if (!title_lock.owns_lock()) {
+            game.artwork_deferred = true;
+            return game;
+        }
         game.cover = CachedNlibIcon(game.title_id);
-        game.artwork_changed = !game.cover.empty();
+        if (game.cover == rejected) game.cover.clear();
+        if (game.cover.empty()) {
+            char id[17]{};
+            std::snprintf(id, sizeof(id), "%016llX", static_cast<unsigned long long>(game.title_id));
+            if (CacheNlibJpeg(std::string{"/nx/"} + id + "/icon/512",
+                              NlibIconPath(game.title_id), 1024, cancel)) {
+                game.cover = CachedNlibIcon(game.title_id);
+                game.artwork_changed = !game.cover.empty();
+            }
+        }
+    }
+    if (game.cover.empty() && !(cancel && cancel->load(std::memory_order_acquire))) {
+        const auto* known = Eden::Ns2Catalog::Find(game.title_id);
+        const std::string canonical = known ? std::string(known->name) : game.name;
+        bool changed = false;
+        const bool force_refresh = !rejected.empty() &&
+            rejected == CachedGamesDbSquare(game.title_id, second_generation);
+        if (EnsureGamesDbSquare(game.title_id, canonical, game.name,
+                                Eden::LoadPreferences().language, cancel, second_generation,
+                                &changed, force_refresh)) {
+            game.cover = CachedGamesDbSquare(game.title_id, second_generation);
+            game.artwork_changed = changed;
+        }
     }
     return game;
 }
@@ -2803,42 +2879,26 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         const auto cached_case = box_art(game.title_id, second_generation);
         game.box_front = cached_case.front;
         game.box_back = cached_case.back;
-        if (game.case_artwork_changed & 0xF8u) {
+        if (game.case_artwork_changed & 0x1F8u) {
             AppendCaseScenes(game.screenshots, game.title_id, second_generation);
             game.artwork_changed = true;
         }
     }
     if (cancel && cancel->load(std::memory_order_acquire)) return game;
-    const bool nup = game.format == "NUP" || IsNupSelection(game.file);
-    if (nup && game.cover.empty()) {
-        // NS2 NUP's real Square outranks any cached NS1 Nlib app icon.
+    NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);
+    game.artwork_changed |= enrichment.artwork_changed;
+    if (!enrichment.icon.empty() &&
+        (game.cover.empty() || game.cover == CachedGamesDbSquare(game.title_id, second_generation))) {
+        game.cover = std::move(enrichment.icon);
+        game.artwork_changed = true;
+    } else if (game.cover.empty() || game.cover == CachedGamesDbSquare(game.title_id, second_generation)) {
         const auto* known = Eden::Ns2Catalog::Find(game.title_id);
         const std::string canonical = known ? std::string(known->name) : scanned_name;
+        bool changed = false;
         if (EnsureGamesDbSquare(game.title_id, canonical, scanned_name,
-                                language_choice, cancel, true)) {
-            game.cover = CachedGamesDbSquare(game.title_id, true);
-            game.artwork_changed |= !game.cover.empty();
-        }
-    }
-    if (cancel && cancel->load(std::memory_order_acquire)) return game;
-    // Nlib's /nx/ service is a Switch 1 source. An NS2/NUP title can reuse
-    // a Switch 1 program TitleID, so querying it would deliberately attach
-    // the wrong generation's banner/icon/screens to the NS2 edition.
-    NlibEnrichment enrichment = second_generation
-        ? NlibEnrichment{}
-        : EnsureNlibEnrichment(game.title_id, language_choice, cancel);
-    game.artwork_changed |= enrichment.artwork_changed;
-    if (!enrichment.icon.empty() && game.cover.empty() && !nup) {
-        game.cover = std::move(enrichment.icon);
-    } else if (game.cover.empty() && !nup) {
-        if (UseNs2CaseIndex(game)) {
-            const auto* known = Eden::Ns2Catalog::Find(game.title_id);
-            const std::string canonical = known ? std::string(known->name) : scanned_name;
-            if (EnsureGamesDbSquare(game.title_id, canonical, scanned_name,
-                                    language_choice, cancel, true)) {
-                game.cover = CachedGamesDbSquare(game.title_id, second_generation);
-                game.artwork_changed |= !game.cover.empty();
-            }
+                                language_choice, cancel, second_generation, &changed)) {
+            game.cover = CachedGamesDbSquare(game.title_id, second_generation);
+            game.artwork_changed |= changed;
         }
     }
     // Missing square icon remains empty only if Control/ExeFS, Nlib and GamesDB Square all miss.
@@ -2849,8 +2909,8 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     const bool nlib_screenshots = !enrichment.screenshots.empty();
     if (nlib_banner) game.hero = std::move(enrichment.hero);
     else if (nlib_screenshots) game.hero = enrichment.screenshots.front();
-    else if (game.hero.empty())
-        game.hero = CachedGamesDbHero(game.title_id, second_generation);
+    else if (const auto hero = CachedGamesDbHero(game.title_id, second_generation); !hero.empty())
+        game.hero = hero;
     if (nlib_screenshots) game.screenshots = std::move(enrichment.screenshots);
     if (enrichment.max_players > 0) game.max_players = enrichment.max_players;
     if (!enrichment.name.empty()) game.name = std::move(enrichment.name);
@@ -2888,7 +2948,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         AppendCaseScenes(game.screenshots, game.title_id, second_generation);
         if (!nlib_banner && !nlib_screenshots && game.hero.empty())
             game.hero = CachedGamesDbHero(game.title_id, second_generation);
-        if (game.case_artwork_changed & 0xF8u)
+        if (game.case_artwork_changed & 0x1F8u)
             game.artwork_changed = true; // refresh GPU copies after replacement
     }
     return game;
@@ -2951,8 +3011,7 @@ pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id, bool second_generat
             }
             // Square CDN jacket photos are not flat retail scans. Manual
             // imports (no generated provenance receipt) remain allowed.
-            if (valid && (std::strcmp(side, "front") == 0 ||
-                          std::strcmp(side, "back") == 0) &&
+            if (valid && std::strcmp(side, "front") == 0 &&
                 IsFile(path + ".source") &&
                 static_cast<std::uint64_t>(height) * 4 <
                     static_cast<std::uint64_t>(width) * 5)

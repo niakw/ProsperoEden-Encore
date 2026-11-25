@@ -79,18 +79,11 @@ class Launcher
         return restart_requested_;
     }
     bool reduce_motion() const noexcept { return prefs_.reduce_motion; }
-    enum class LoadingCapturePose : std::uint8_t { live, front, back };
-    // Used only while the native frontend snapshots the already-composed
-    // loading scene. It never changes launch timing or guest state.
-    void set_loading_capture_pose(LoadingCapturePose pose) noexcept {
-        loading_capture_pose_ = pose;
-    }
-    [[nodiscard]] bool loading_back_available() const noexcept {
-        return native_launch_back_ready_ || launch_composed_back_ != 0;
-    }
-    [[nodiscard]] bool loading_final_pose_is_back() const noexcept {
-        return native_launch_show_back_;
-    }
+    // Export geometry templates, never images of projected poses.
+    enum class LoadingCapturePose : std::uint8_t { live, front, front_other, back_other, back, background };
+    void set_loading_capture_pose(LoadingCapturePose pose) noexcept { loading_capture_pose_=pose; }
+    [[nodiscard]] std::size_t loading_case_first() const noexcept { return loading_case_first_; }
+    [[nodiscard]] std::size_t loading_case_count() const noexcept { return loading_case_count_; }
     // Empty until a game is chosen.
     const std::string &selected_game() const
     {
@@ -403,9 +396,8 @@ class Launcher
     bool first_start_ = true;
     const bool native_artwork_loading_ = false;
     bool native_launch_art_ready_ = false;
-    bool native_launch_back_ready_ = false; // authentic rear reached GPU, even if it arrived late
-    bool native_launch_show_back_ = false; // final native pose already turned to that rear
-    LoadingCapturePose loading_capture_pose_ = LoadingCapturePose::live;
+    LoadingCapturePose loading_capture_pose_=LoadingCapturePose::live;
+    std::size_t loading_case_first_{},loading_case_count_{};
     std::chrono::steady_clock::time_point native_launch_deadline_{};
 
     // library

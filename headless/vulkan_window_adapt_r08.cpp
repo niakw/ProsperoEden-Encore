@@ -151,7 +151,7 @@ void WindowAdaptPass::PrepareQuickMenu(const Device& device, MemoryAllocator& al
 }
 
 #ifdef PS5_NATIVE
-// One immutable pair of captured launcher poses, not guest memory. The
+// One immutable 2D scene and flat material atlas, not guest memory. The
 // same scheduler tick that protects the static transfer protects this
 // descriptor and pipeline. No per-frame allocation or CPU image repack.
 struct WindowAdaptPass::LoadingArtworkResources {
@@ -161,6 +161,9 @@ struct WindowAdaptPass::LoadingArtworkResources {
     vk::DescriptorSets sets;
     vk::PipelineLayout layout;
     vk::Pipeline pipeline;
+    vk::PipelineLayout case_layout;
+    vk::Pipeline case_pipeline;
+    std::shared_ptr<const Eden::LoadingCase::Scene> scene;
     std::uint32_t width{}, height{};
 };
 
@@ -170,11 +173,13 @@ bool WindowAdaptPass::DrawLoadingArtwork(const Device& device, MemoryAllocator& 
         return false;
     if (!loading_artwork) {
         const auto primary = Eden::LaunchHandoff::Peek();
-        const auto alternate = Eden::LaunchHandoff::PeekAlternate();
-        if (!primary || !alternate || !Eden::LaunchHandoff::Valid(*primary) ||
-            !Eden::LaunchHandoff::Valid(*alternate) ||
-            primary->width != alternate->width || primary->height != alternate->height ||
-            primary->width > 1920 || primary->height > 1080)
+        const auto alternate=Eden::LaunchHandoff::PeekAlternate();
+        const auto scene=Eden::LaunchHandoff::PeekCase();
+        if(!primary||!alternate||!scene||!Eden::LoadingCase::Valid(*scene)||
+           !Eden::LaunchHandoff::Valid(*primary)||!Eden::LaunchHandoff::Valid(*alternate)||
+           primary->width!=1920||primary->height!=1080||
+           alternate->width!=Eden::LoadingCase::kAtlasWidth||
+           alternate->height!=Eden::LoadingCase::kAtlasHeight)
             return false;
         try {
             const auto bytes = primary->rgba.size() + alternate->rgba.size();
@@ -228,6 +233,17 @@ bool WindowAdaptPass::DrawLoadingArtwork(const Device& device, MemoryAllocator& 
             auto fragment = BuildShader(device, EDEN_LOADING_ARTWORK_FRAG_SPV);
             next->pipeline = CreateWrappedCoverageBlendingPipeline(
                 device, hud_overlay_render_pass, next->layout, std::tie(vertex, fragment));
+            const VkPushConstantRange case_range{VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT,0,
+                                                  sizeof(Eden::LoadingCase::Push)};
+            next->case_layout=device.GetLogical().CreatePipelineLayout(VkPipelineLayoutCreateInfo{
+                .sType=VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,.setLayoutCount=1,
+                .pSetLayouts=next->descriptor_layout.address(),.pushConstantRangeCount=1,.pPushConstantRanges=&case_range,
+            });
+            auto case_vertex=BuildShader(device,EDEN_LOADING_CASE_VERT_SPV);
+            auto case_fragment=BuildShader(device,EDEN_LOADING_CASE_FRAG_SPV);
+            next->case_pipeline=CreateWrappedCoverageBlendingPipeline(
+                device,hud_overlay_render_pass,next->case_layout,std::tie(case_vertex,case_fragment));
+            next->scene=scene;
             loading_artwork = std::move(next);
         } catch (const std::exception& e) {
             // The prior static upload remains the safe fallback on memory
@@ -250,6 +266,10 @@ bool WindowAdaptPass::DrawLoadingArtwork(const Device& device, MemoryAllocator& 
     const VkPipeline pipeline = *loading_artwork->pipeline;
     const VkPipelineLayout layout = *loading_artwork->layout;
     const VkDescriptorSet set = loading_artwork->sets[0];
+    const VkPipeline case_pipeline=*loading_artwork->case_pipeline;
+    const VkPipelineLayout case_layout=*loading_artwork->case_layout;
+    const auto case_draw=Eden::LoadingCase::MakeBatch(*loading_artwork->scene,
+        Eden::LaunchHandoff::LoadingSeconds(),float(dst->width),float(dst->height),constants.glyphs[3]!=0);
     const VkExtent2D size{dst->width, dst->height};
     scheduler.Record([=](vk::CommandBuffer cmdbuf) {
         BeginRenderPass(cmdbuf, rp, fb, size);
@@ -261,6 +281,13 @@ bool WindowAdaptPass::DrawLoadingArtwork(const Device& device, MemoryAllocator& 
         cmdbuf.BindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, set, {});
         cmdbuf.PushConstants(layout, VK_SHADER_STAGE_FRAGMENT_BIT, constants);
         cmdbuf.Draw(4, 1, 0, 0);
+        cmdbuf.BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS,case_pipeline);
+        cmdbuf.BindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS,case_layout,0,set,{});
+        for(std::size_t i=0;i<case_draw.count;++i){
+            cmdbuf.PushConstants(case_layout,VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT,
+                                 case_draw.quads[i]);
+            cmdbuf.Draw(4,1,0,0);
+        }
         cmdbuf.EndRenderPass();
     });
     return true;

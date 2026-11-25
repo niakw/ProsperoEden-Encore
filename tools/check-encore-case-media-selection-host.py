@@ -62,11 +62,27 @@ assert 'if (painting) reconstructed_cover(c, *painting, r);' in renderer
 assert 'scene(game.cover,' not in renderer
 source = r"""
 #include <cassert>
+#include <sstream>
+#include "case_index_disk.hpp"
 #include <string>
 #include <vector>
 #include "pe/ui/case_media_selection.hpp"
 int main() {
     using namespace pe::ui::case_media;
+    {
+        using Eden::CaseIndexDisk::FindSortedRow;
+        const std::string prefix = "native\t-\n# global media sorted by standard name\n";
+        const std::string long_row = "global:middle\t" + std::string(8500, 'x');
+        std::istringstream index(prefix + "global:alpha\t1\n" + long_row +
+                                 "\nglobal:zeta\t3\n");
+        const auto first = static_cast<std::streamoff>(prefix.size());
+        assert(FindSortedRow(index, first, "global:alpha") == "global:alpha\t1");
+        assert(FindSortedRow(index, first, "global:middle") == long_row);
+        assert(FindSortedRow(index, first, "global:zeta") == "global:zeta\t3");
+        assert(FindSortedRow(index, first, "global:beta").empty());
+        assert(FindSortedRow(index, first, "global:zz").empty());
+        assert(FindSortedRow(index, first, "global:a").empty());
+    }
     // Cold async media is given four seconds; a provisional GPU page
     // refreshes ONLY when every known texture is actually ready.
     assert(!PageInputReady(false, false, 3.99f));
@@ -93,6 +109,21 @@ int main() {
     assert(categorized[0] && *categorized[0] == indexed[3]);
     assert(categorized[1] && *categorized[1] == indexed[2]);
     assert(categorized[2] && *categorized[2] == indexed[1]);
+    const std::vector<std::string> banner{
+        "/cache/box-scene-1-FANART.webp", "/cache/box-scene-6-BANNER.webp",
+        "/cache/box-scene-3-GAMEPLAY.webp"};
+    assert(!BackgroundAllowed(banner[1]));
+    assert(!BackgroundAllowed(banner[2]));
+    assert(BackgroundAllowed(banner[0]));
+    assert(BackgroundScreenshot(banner) == &banner[0]);
+    const std::vector<std::string> backgrounds{banner[0], "screen-nlib.webp", banner[1]};
+    assert(BackgroundScreenshot(backgrounds) == &backgrounds[1]);
+    const auto banner_pick = BackScenes(hero, icon, banner);
+    assert(banner_pick[0] == &banner[1]);
+    assert(banner_pick[2] == &banner[2]);
+    const auto bad_banner = BackScenes(hero, icon, banner,
+        [&](const std::string& image) { return image != banner[1]; });
+    assert(bad_banner[0] == &banner[0]);
     // Bad marker roles stay excluded from the Nlib fallback; only real
     // numbered LaunchBox categories may claim a reserved rear slot.
     const std::vector<std::string> role_noise{

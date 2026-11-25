@@ -26,7 +26,7 @@ assert case_index_staged.is_file(), "retail case index missing from installable 
 case_index_text = case_index_staged.read_text(encoding="utf-8")
 assert case_index_text.count("\n") > 1000, "retail case index is empty/truncated"
 case_rows = [row.split("\t") for row in case_index_text.splitlines() if row.startswith("ns2:")]
-assert case_rows and all(len(row) == 10 for row in case_rows), "missing or malformed NS2 GamesDB rows"
+assert case_rows and all(len(row) == 12 for row in case_rows), "missing or malformed NS2 GamesDB rows"
 for column, role in ((1, "front"), (4, "fanart"), (9, "square")):
     assert any(row[column] != "-" for row in case_rows), f"NS2 GamesDB missing {role}"
 companion = app / "ui/box-art-index.txt"

@@ -114,6 +114,7 @@ add_custom_command(
         "${EDEN_PORT_DIR}/vulkan_hud.frag"
         "${EDEN_PORT_DIR}/loading_wordmark.glsl"
         "${EDEN_PORT_DIR}/loading_scene.glsl"
+        "${EDEN_PORT_DIR}/loading_case_shader_source.hpp"
     COMMENT "Build native Vulkan HUD + Montserrat quick-menu SPIR-V"
     VERBATIM)
 add_custom_target(eden-vulkan-hud-shaders DEPENDS "${EDEN_HUD_SHADER_HEADER}" "${EDEN_HUD_MENU_MAP}" "${EDEN_HUD_MENU_DATA}")

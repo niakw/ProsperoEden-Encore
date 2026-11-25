@@ -4,6 +4,7 @@
 
 #include "pe/ui/launcher.hpp"
 #include "pe/ui/case_media_selection.hpp"
+#include "../../../launch_handoff.hpp"
 #include "pe/core/log.hpp"
 
 #include <algorithm>
@@ -547,8 +548,11 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
         if (launch_screenshots_.empty() && !home_.last_screenshot.empty())
             launch_screenshots_.push_back(home_.last_screenshot);
     }
-    if (launch_hero_.empty() && !launch_screenshots_.empty())
-        launch_hero_ = launch_screenshots_.front();
+    if (!case_media::BackgroundAllowed(launch_hero_) || textures_.known_missing(launch_hero_)) {
+        launch_hero_.clear();
+        if (const auto* fallback = case_media::BackgroundScreenshot(launch_screenshots_))
+            launch_hero_ = *fallback;
+    }
     // Home and Recent launch routes may not have a fully populated Library
     // snapshot. Use their actual cached metadata, never an invented scan.
     launch_case_game_.name = title;
@@ -598,8 +602,6 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     // Native launch leaves as soon as usable front art is composed. A real
     // deadline bounds pending local decodes; there is no mandatory dwell.
     native_launch_art_ready_ = false;
-    native_launch_back_ready_ = false;
-    native_launch_show_back_ = false;
     native_launch_deadline_ = std::chrono::steady_clock::now() + std::chrono::milliseconds(750);
     launch_.start(theme::kLaunchSeconds);
     press_ = 1.0f;
@@ -1297,15 +1299,8 @@ void Launcher::draw_launch(Canvas &c)
 {
     const float t = tween::clamp01(launch_.progress());
     const float seconds = theme::kLaunchSeconds * t;
-    // The launcher UI caps dt to 50ms after long EGL stalls, while native
-    // admission is bounded by a real 750ms deadline. Drive the short cover
-    // turn from the same wall clock as admission: otherwise a slow initial
-    // render could capture the case mid-spine and freeze it for all loading.
-    const float native_phase = native_artwork_loading_
-        ? std::clamp(0.75f - std::chrono::duration<float>(
-              native_launch_deadline_ - std::chrono::steady_clock::now()).count(),
-              0.0f, 0.75f)
-        : seconds;
+    const float case_seconds=native_artwork_loading_
+        ? static_cast<float>(Eden::LaunchHandoff::LoadingSeconds()-1.0):seconds;
     // No fade to black: the Vulkan loading surface reuses this EXACT final
     // launcher picture until the guest actually presents its first frame.
     const float appear = native_artwork_loading_ ? 1.0f : tween::cubic_out(seconds / 0.25f);
@@ -1364,64 +1359,17 @@ void Launcher::draw_launch(Canvas &c)
     c.list.shadow({194.0f, 796.0f, 795.0f, 80.0f}, 42.0f, 94.0f,
                   theme::kSun.with_alpha(0.18f));
 
-    // Every game uses this exact geometric case, independent of the artwork
-    // source. The *same pivot* and camera project front/back and the plastic
-    // side in the OpenGL vertex shader; the scan is a perspective-correct
-    // texture on the face rather than a 2D width squash.
-    // Hold the rear cover 4.5 seconds at full width. A constant 360-degree
-    // spin would make the physical description impossible to read.
-    const float turn_start = theme::kCaseFrontHold;
-    const float back_start = turn_start + theme::kCaseTurnSeconds;
-    const float return_start = back_start + theme::kCaseBackHold;
-    // The front exposes the real LEFT red spine. On the nearly face-on
-    // back, the real clear opening appears on the LEFT through perspective.
-    // No cosmetic red stripe is superimposed on the right edge. Both poses
-    // use the exact same shared case geometry for every game.
-    constexpr float kFrontYaw = 0.52f;
-    constexpr float kBackYaw = 3.14159265358979323846f + 0.18f;
-    constexpr float kFullTurn = 6.28318530717958647692f;
-    float angle = kFrontYaw;
-    if (native_artwork_loading_ && motion() > 0.0f) {
-        // The normal 4.5-second rear-reading hold belongs to the long
-        // preview, NOT the native game-start critical path. A rear that is
-        // already uploaded can make one genuine front-to-back turn within
-        // the existing 750-ms launch budget, then the captured final back
-        // remains readable during the GL/Vulkan loading handoff.
-        // No invented/mirrored rear and no extra game boot delay.
-        if (!native_launch_back_ready_ && !launch_box_back_.empty() &&
-            c.textures.cover(launch_box_back_, 760.0f).texture != 0)
-            native_launch_back_ready_ = true;
-        // Do not jump to a late rear during the 750-ms native admission
-        // window. A rear that arrives later is still retained for the
-        // continuous loading animation after the launcher hands off.
-        if (!native_launch_show_back_ && native_phase <= 0.12f &&
-            native_launch_back_ready_)
-            native_launch_show_back_ = true;
-        if (native_launch_show_back_) {
-            constexpr float native_begin = 0.08f;
-            constexpr float native_end = 0.62f;
-            angle = kFrontYaw + (kBackYaw - kFrontYaw) *
-                tween::cubic_in_out(tween::clamp01(
-                    (native_phase - native_begin) / (native_end - native_begin)));
-        }
-    } else if (motion() > 0.0f) {
-        if (seconds < turn_start) {
-            angle = kFrontYaw;
-        } else if (seconds < back_start) {
-            angle = kFrontYaw + (kBackYaw - kFrontYaw) *
-                tween::cubic_in_out((seconds - turn_start) / theme::kCaseTurnSeconds);
-        } else if (seconds < return_start) {
-            angle = kBackYaw;
-        } else {
-            angle = kBackYaw + (kFullTurn + kFrontYaw - kBackYaw) *
-                tween::cubic_in_out((seconds - return_start) / theme::kCaseTurnSeconds);
-        }
-    }
-    if (native_artwork_loading_) {
-        if (loading_capture_pose_ == LoadingCapturePose::front)
-            angle = kFrontYaw;
-        else if (loading_capture_pose_ == LoadingCapturePose::back)
-            angle = kBackYaw;
+    loading_case_first_=c.list.instances().size();
+    loading_case_count_=0;
+    if(loading_capture_pose_!=LoadingCapturePose::background){
+    // Admission remains bounded, but never shortens the visual cycle.
+    float angle=Eden::LoadingCase::Yaw(case_seconds,motion()<=0.0f);
+    switch(loading_capture_pose_){
+    case LoadingCapturePose::front:angle=Eden::LoadingCase::kTemplateYaw[0];break;
+    case LoadingCapturePose::front_other:angle=Eden::LoadingCase::kTemplateYaw[1];break;
+    case LoadingCapturePose::back_other:angle=Eden::LoadingCase::kTemplateYaw[2];break;
+    case LoadingCapturePose::back:angle=Eden::LoadingCase::kTemplateYaw[3];break;
+    default:break;
     }
     const float facing = std::cos(angle);
     const bool back = facing < 0.0f;
@@ -1550,11 +1498,8 @@ void Launcher::draw_launch(Canvas &c)
                      rear ? "back" : "front");
     };
     prepare_case_page(false);
-    // Compose the honest local rear only during the final explicit capture,
-    // not during the normal 750 ms native launch budget.
-    if (!native_artwork_loading_ ||
-        (done_ && loading_capture_pose_ == LoadingCapturePose::back))
-        prepare_case_page(true);
+    // Prepare both flat paper materials before dropping launcher GL IDs.
+    if (!native_artwork_loading_ || done_) prepare_case_page(true);
     const std::uint32_t composed_page =
         back ? launch_composed_back_ : launch_composed_front_;
     // A queued retail decode is NOT a drawable face. Keep the composed,
@@ -1564,8 +1509,7 @@ void Launcher::draw_launch(Canvas &c)
         use_composed ? composed_page : artwork.texture;
     if (native_artwork_loading_)
         native_launch_art_ready_ = hero_ready && visible_texture != 0 &&
-            (!use_composed || !launch_composed_front_provisional_) &&
-            (!native_launch_show_back_ || native_phase >= 0.62f);
+            (!use_composed || !launch_composed_front_provisional_);
     // One event per visible paper face and state, NEVER a per-frame log.
     // Stored/decoded/uploaded assets can still fail to reach the render list;
     // this is the last observable stage before the case-face GPU draw call.
@@ -1683,6 +1627,9 @@ void Launcher::draw_launch(Canvas &c)
                                ns2_case ? Color::rgb(0xff4759, 0.90f) : Color::rgb(0xdbe5f0, 0.59f),
                                ns2_case ? Color::rgb(0x97091f, 0.84f) : Color::rgb(0x677588, 0.49f));
     }
+
+    loading_case_count_=c.list.instances().size()-loading_case_first_;
+    } // 2D background contains no case or case shadows
 
     // The brand/title column begins well after the 3D case's cast shadow.
     constexpr float brand_x = 1382.0f;

@@ -41,6 +41,21 @@ def normalize(value):
             space = True
     return "".join(out).strip()
 
+# Strip only the explicit console-edition suffix, not Deluxe/Ultimate,
+# remaster, sequel numbers or other semantic distinctions.
+def standard_title(key):
+    for suffix in (" nintendo switch 2 edition", " switch 2 edition",
+                   " nintendo switch 2 version", " switch 2 version"):
+        if key.endswith(suffix):
+            return key.removesuffix(suffix).strip()
+    return key
+
+def title_keys(label):
+    folded = unicodedata.normalize("NFKD", label).encode("ascii", "ignore").decode()
+    return {key for spelling in (label, folded)
+            for normalized in (normalize(spelling),)
+            for key in (normalized, standard_title(normalized)) if key}
+
 def rank(region):
     # User locale first; leave the rest as fallbacks, including a single
     # foreign-region scan. A front and back are ranked independently.
@@ -73,7 +88,12 @@ REGIONS = {
     "canada": "ca", "germany": "de", "belgium": "eu",
     "italy": "it", "spain": "es", "portugal": "pt",
     "australia": "au", "japan": "jp", "brazil": "br",
-    "mexico": "mx", "asia": "asia", "korea": "kr",
+    "mexico": "mx", "asia": "asia", "korea": "kr", "south korea": "kr",
+    "china": "cn", "taiwan": "tw", "hong kong": "hk",
+    "netherlands": "nl", "poland": "pl", "russia": "ru", "thailand": "th",
+    "sweden": "sv", "norway": "nb", "denmark": "da", "finland": "fi",
+    "greece": "el", "czech republic": "cs", "hungary": "hu",
+    "romania": "ro", "turkey": "tr", "ukraine": "ukr", "indonesia": "id",
 }
 REGION_ORDER = ("fr", "eu", "us", "uk", "ca", "world", "de",
                 "es", "it", "pt", "au", "jp", "br", "mx", "asia", "kr", "other")
@@ -93,7 +113,7 @@ def regional_candidates(items, limit=12, per_region=2):
     # First cover every available region, then offer its alternate scan.
     # Otherwise two French/European images may displace a Japanese/US face.
     for variant in range(per_region):
-        for region in REGION_ORDER:
+        for region in grouped:
             group = grouped.get(region, ())
             if len(group) > variant:
                 choices.append(f"{region}:{group[variant]}")
@@ -110,75 +130,136 @@ def parse(source):
             continue
         tag = element.tag.rsplit("}", 1)[-1]
         if tag == "Game":
-            if element.findtext("Platform", "") in ("Nintendo Switch", "Nintendo Switch 2"):
-                gid = element.findtext("DatabaseID", "")
-                if gid.isdecimal():
-                    games[gid] = (element.findtext("Name", ""),
-                                  "ns2" if element.findtext("Platform", "") == "Nintendo Switch 2" else "ns1")
+            platform = element.findtext("Platform", "")
+            gid = element.findtext("DatabaseID", "")
+            if gid.isdecimal() and platform:
+                games[gid] = (element.findtext("Name", ""),
+                              {"Nintendo Switch": "ns1", "Nintendo Switch 2": "ns2"}.get(platform, platform))
         elif tag == "GameAlternateName":
             gid = element.findtext("DatabaseID", "")
-            if gid in games:
+            if gid.isdecimal():
                 aliases.setdefault(gid, []).append(element.findtext("AlternateName", ""))
-        elif tag == "GameImage":
+        # Images are collected on a second streaming pass after title matching.
+        if tag in ("Game", "GameAlternateName", "GameImage"):
+            element.clear()
+            root.clear()
+    names = {}
+    platform_names = {}
+    keys_by_id = {}
+    for gid, (name, platform) in games.items():
+        keys = set().union(*(title_keys(label) for label in (name, *aliases.get(gid, ()))))
+        keys_by_id[gid] = keys
+        for key in keys:
+            platform_names.setdefault(key, {}).setdefault(platform, set()).add(gid)
+            if platform in ("ns1", "ns2"):
+                names.setdefault(f"{platform}:{key}", set()).add(gid)
+
+    def matching_alternatives(key):
+        platform, title = key.split(":", 1)
+        matches = names.get(key, ())
+        if len(matches) != 1:
+            return []
+        gid = next(iter(matches))
+        # Search the STANDARD GamesDB title and every verified alias of the
+        # resolved game, not just the localized string used by the launcher.
+        # Reject ambiguous releases per platform; never pick an arbitrary sequel.
+        candidates = {}
+        for spelling in sorted(keys_by_id[gid] | {standard_title(title)}):
+            for other_platform, ids in platform_names.get(spelling, {}).items():
+                if other_platform != platform:
+                    candidates.setdefault(other_platform, set()).update(ids)
+        return [next(iter(ids)) for _, ids in sorted(candidates.items())
+                if len(ids) == 1]
+
+    # A Nintendo record is not required for global fallback. Reject
+    # ambiguous Nintendo names and duplicate releases on another platform.
+    def global_ids(title):
+        platforms = platform_names[title]
+        native_counts = [len(platforms.get(p, ())) for p in ("ns1", "ns2")]
+        if any(n > 1 for n in native_counts) or all(native_counts):
+            return []
+        return [next(iter(ids)) for _, ids in sorted(platforms.items())
+                if len(ids) == 1]
+
+    eligible = set()
+    for key, matching in names.items():
+        if len(matching) == 1:
+            eligible.update(matching)
+            eligible.update(matching_alternatives(key))
+    for title in platform_names:
+        eligible.update(global_ids(title))
+    source.seek(0)
+    iterator = ET.iterparse(source, events=("start", "end"))
+    _, root = next(iterator)
+    first_fanart = set()
+    for event, element in iterator:
+        if event != "end":
+            continue
+        tag = element.tag.rsplit("}", 1)[-1]
+        if tag == "GameImage":
             gid = element.findtext("DatabaseID", "")
             kind = element.findtext("Type", "")
             filename = element.findtext("FileName", "")
-            if (gid in games and kind in ("Box - Front", "Box - Back", "Box - Spine",
-                                 "Screenshot - Gameplay", "Fanart - Background",
-                                 "Screenshot - Game Title", "Square")
+            first = kind != "Fanart - Background" or gid not in first_fanart
+            if gid in eligible and kind == "Fanart - Background":
+                first_fanart.add(gid)
+            if (gid in eligible and first and kind in
+                    ("Box - Front", "Box - Back", "Box - Spine", "Screenshot - Gameplay",
+                     "Fanart - Background", "Screenshot - Game Title", "Square", "Clear Logo", "Banner")
                     and IMAGE_FILE.fullmatch(filename)):
                 images.setdefault(gid, {}).setdefault(kind, []).append(
                     (region_code(element.findtext("Region", "")), filename))
         if tag in ("Game", "GameAlternateName", "GameImage"):
             element.clear()
             root.clear()
-    names = {}
-    for gid, (name, platform) in games.items():
-        if gid not in images:
-            continue
-        for label in (name, *aliases.get(gid, ())):
-            # NACP/NUP names may omit the accent of a GamesDB title. Keep
-            # both the former ASCII-byte key and a Unicode-folded alias;
-            # runtime CaseKey uses the former for accented local names.
-            folded = unicodedata.normalize("NFKD", label).encode("ascii", "ignore").decode()
-            for spelling in (label, folded):
-                key = normalize(spelling)
-                if not key:
-                    continue
-                # A shared title must never resolve to another generation.
-                names.setdefault(f"{platform}:{key}", set()).add(gid)
-                # NUP sometimes advertises only the base name, while GamesDB
-                # carries the explicit Switch 2 Edition suffix.
-                if platform == "ns2" and key.endswith(" nintendo switch 2 edition"):
-                    base = key.removesuffix(" nintendo switch 2 edition")
-                    if base:
-                        names.setdefault(f"ns2:{base}", set()).add(gid)
-    lines = ["# Eden Encore media index v10 (edition-scoped cases, scenes, square tile)\n"]
+    lines = ["# Eden Encore media index v12 (platform-first, cross-platform fallbacks, logo and banner)\n"]
+    def row(key, gid):
+        media = images.get(gid, {})
+        front = list(media.get("Box - Front", []))
+        if gid in EUROPE_FRONT_PINS:
+            front = [("eu", filename) for filename in EUROPE_FRONT_PINS[gid]] + front
+        # Fanart is index zero in source order, not region-ranked.
+        fanart = ";".join(f"{reg}:{file}" for reg, file in media.get("Fanart - Background", [])[:1]) or "-"
+        gameplay = regional_candidates(media.get("Screenshot - Gameplay", []), per_region=3)
+        shots = [] if gameplay == "-" else gameplay.split(";")
+        fields = [regional_candidates(front),
+                  regional_candidates(media.get("Box - Back", [])),
+                  regional_candidates(media.get("Box - Spine", [])),
+                  fanart, regional_candidates(media.get("Screenshot - Game Title", [])),
+                  *[";".join(shots[i::3]) or "-" for i in range(3)],
+                  regional_candidates(media.get("Square", [])),
+                  regional_candidates(media.get("Clear Logo", [])),
+                  regional_candidates(media.get("Banner", []))]
+        return fields
+
+    def alternate_fields(ids):
+        alternatives = [[] for _ in range(11)]
+        for other in dict.fromkeys(ids):
+            for col, field in enumerate(row("", other)):
+                if col in (1, 3, 4, 5, 6, 7, 8, 9, 10) and field != "-":
+                    alternatives[col].extend(field.split(";"))
+        return [";".join(list(dict.fromkeys(values))[:12]) or "-" for values in alternatives]
+
     for key, matching in sorted(names.items()):
         if len(matching) != 1:
-            continue  # avoid colliding editions / ambiguous matching
-        media = images[next(iter(matching))]
-        front = list(media.get("Box - Front", []))
-        if next(iter(matching)) in EUROPE_FRONT_PINS:
-            pinned = EUROPE_FRONT_PINS[next(iter(matching))]
-            front = [("eu", filename) for filename in pinned] + front
-        back = media.get("Box - Back", [])
-        spine = media.get("Box - Spine", [])
-        # Three independently addressable visual categories for a missing back.
-        # No longer discard Game Title artwork when fanart also exists.
-        fanart = regional_candidates(media.get("Fanart - Background", []))
-        title_screen = regional_candidates(media.get("Screenshot - Game Title", []))
-        square = regional_candidates(media.get("Square", []))
-        # Split three gameplay slots; each gets independent CDN fallback candidates.
-        gameplay = regional_candidates(media.get("Screenshot - Gameplay", []),
-                                       per_region=3)
-        selected = [] if gameplay == "-" else gameplay.split(";")
-        shots = [";".join(selected[i::3]) or "-" for i in range(3)]
-        if front or back or spine or any(
-                v != "-" for v in (fanart, title_screen, *shots, square)):
-            lines.append(f"{key}\t{regional_candidates(front)}\t{regional_candidates(back)}"
-                         f"\t{regional_candidates(spine)}\t{fanart}"
-                         f"\t{title_screen}\t{shots[0]}\t{shots[1]}\t{shots[2]}\t{square}\n")
+            continue
+        gid = next(iter(matching))
+        own = row(key, gid)
+        lines.append(key + "\t" + "\t".join(own) + "\n")
+        alt = alternate_fields(matching_alternatives(key))
+        if any(field != "-" for field in alt):
+            lines.append("alt:" + key + "\t" + "\t".join(alt) + "\n")
+    if len(lines) - 1 > 40000:
+        raise ValueError("Nintendo media index exceeds native row limit")
+    # Sorted disk-only section. The launcher never allocates the entire
+    # multiplatform catalogue or accepts a foreign front/spine as paper.
+    lines.append("# global media sorted by standard name\n")
+    for title in sorted(platform_names):
+        if len(title) > 160:
+            continue
+        alt = alternate_fields(global_ids(title))
+        if any(field != "-" for field in alt):
+            lines.append("global:" + title + "\t" + "\t".join(alt) + "\n")
     return "".join(lines)
 
 def build(archive_path):
@@ -230,7 +311,8 @@ def self_test():
     assert "world:11111111" in result
     assert "ns1:example voyage\t" in result and "eu:22222222" in result
     assert "fr:33333333-3333-3333-3333-333333333333.jpg" in result
-    assert "ns1:ambiguous\t" not in result and "44444444" not in result
+    assert "ns1:ambiguous\t" not in result
+    assert "alt:ns1:example journey\t-\tother:44444444" in result
     assert "ns2:example next gen\t" in result
     ns2 = next(row.split("\t") for row in result.splitlines()
                if row.startswith("ns2:example next gen\t"))
@@ -242,12 +324,32 @@ def self_test():
     assert "eu:77777777-7777-7777-7777-777777777777.png" in result
     fields = next(row.split("\t") for row in result.splitlines()
                   if row.startswith("ns1:example journey\t"))
-    assert len(fields) == 10, fields
+    assert len(fields) == 12, fields
     assert fields[4].startswith("world:aaaaaaaa"), fields
     assert fields[5].startswith("world:bbbbbbbb"), fields
     assert fields[6].startswith("world:88888888"), fields
     assert "99999999" in fields[7], fields
     assert "Box - 3D" not in result
+    # Index zero is authoritative; other-platform fronts are never emitted.
+    extra = """<LaunchBox>
+    <Game><DatabaseID>1</DatabaseID><Platform>Nintendo Switch</Platform><Name>Cross</Name></Game>
+    <Game><DatabaseID>2</DatabaseID><Platform>Windows</Platform><Name>Cross</Name></Game>
+    <GameImage><DatabaseID>1</DatabaseID><Type>Fanart - Background</Type><Region>Japan</Region><FileName>aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg</FileName></GameImage>
+    <GameImage><DatabaseID>1</DatabaseID><Type>Fanart - Background</Type><Region>France</Region><FileName>bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.jpg</FileName></GameImage>
+    <GameImage><DatabaseID>1</DatabaseID><Type>Clear Logo</Type><FileName>cccccccc-cccc-cccc-cccc-cccccccccccc.png</FileName></GameImage>
+    <GameImage><DatabaseID>2</DatabaseID><Type>Square</Type><FileName>dddddddd-dddd-dddd-dddd-dddddddddddd.png</FileName></GameImage>
+    <GameImage><DatabaseID>2</DatabaseID><Type>Box - Front</Type><FileName>eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee.png</FileName></GameImage>
+    <GameImage><DatabaseID>2</DatabaseID><Type>Box - Back</Type><FileName>ffffffff-ffff-ffff-ffff-ffffffffffff.jpg</FileName></GameImage>
+    <GameImage><DatabaseID>2</DatabaseID><Type>Banner</Type><FileName>11111111-1111-1111-1111-111111111111.png</FileName></GameImage>
+    </LaunchBox>"""
+    cross = {line.split("\t")[0]: line.split("\t")[1:] for line in
+             parse(io.BytesIO(extra.encode())).splitlines() if not line.startswith("#")}
+    assert cross["ns1:cross"][3].startswith("jp:aaaaaaaa")
+    assert "bbbbbbbb" not in cross["ns1:cross"][3]
+    assert "cccccccc" in cross["ns1:cross"][9]
+    alt = cross["alt:ns1:cross"]
+    assert alt[0] == "-" and "ffffffff" in alt[1]
+    assert "dddddddd" in alt[8] and "11111111" in alt[10]
     assert candidates([(7, "f" * 36 + ".jpg"), (1, "0" * 36 + ".png")]).count(";") == 1
     assert candidates([(1, "a" * 36 + ".jpg")]) == "a" * 36 + ".jpg"
     assert rank("France") > rank("Europe") > rank("World") > rank("Japan")
@@ -270,7 +372,33 @@ def self_test():
     assert "ns2:pokemon legends z a nintendo switch 2 edition\t" in edition, edition
     assert "eu:aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg" in edition
     assert "de:bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.jpg" in edition
-    print("PASS NS1+NS2 regional case index, independent front/back/spine, collision guards")
+    standard_xml = """<LaunchBox>
+        <Game><DatabaseID>11</DatabaseID><Platform>Nintendo Switch 2</Platform><Name>Example Quest - Switch 2 Edition</Name></Game>
+        <Game><DatabaseID>12</DatabaseID><Platform>Windows</Platform><Name>Example Quest</Name></Game>
+        <Game><DatabaseID>13</DatabaseID><Platform>PlayStation 5</Platform><Name>Example Quest Deluxe</Name></Game>
+        <GameAlternateName><DatabaseID>11</DatabaseID><AlternateName>Quête Exemple</AlternateName></GameAlternateName>
+        <GameImage><DatabaseID>12</DatabaseID><Type>Box - Back</Type><FileName>aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg</FileName></GameImage>
+        <GameImage><DatabaseID>13</DatabaseID><Type>Box - Back</Type><FileName>bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.jpg</FileName></GameImage>
+    </LaunchBox>"""
+    standard = parse(io.BytesIO(standard_xml.encode()))
+    for spelling in ("example quest", "example quest switch 2 edition", "quete exemple"):
+        match = next(line for line in standard.splitlines()
+                     if line.startswith(f"alt:ns2:{spelling}\\t".replace("\\t", "\t")))
+        assert "aaaaaaaa" in match and "bbbbbbbb" not in match
+    global_xml = """<LaunchBox>
+        <Game><DatabaseID>21</DatabaseID><Platform>Windows</Platform><Name>Only Elsewhere</Name></Game>
+        <Game><DatabaseID>22</DatabaseID><Platform>Windows</Platform><Name>Only Elsewhere Deluxe</Name></Game>
+        <GameImage><DatabaseID>21</DatabaseID><Type>Box - Back</Type><FileName>aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg</FileName></GameImage>
+        <GameImage><DatabaseID>21</DatabaseID><Type>Box - Front</Type><FileName>bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.jpg</FileName></GameImage>
+        <GameImage><DatabaseID>22</DatabaseID><Type>Square</Type><FileName>cccccccc-cccc-cccc-cccc-cccccccccccc.png</FileName></GameImage>
+    </LaunchBox>"""
+    global_result = parse(io.BytesIO(global_xml.encode()))
+    foreign = next(row.split("\t") for row in global_result.splitlines()
+                   if row.startswith("global:only elsewhere\t"))
+    assert foreign[1] == foreign[3] == "-" and "aaaaaaaa" in foreign[2]
+    assert "bbbbbbbb" not in global_result and "cccccccc" not in foreign
+    assert "global:ambiguous\t" not in result
+    print("PASS standard title, Switch 2 Edition normalization, aliases and exact multiplatform identity")
 
 def main():
     cli = argparse.ArgumentParser()
@@ -298,7 +426,7 @@ def main():
     # become a production catalog for an NS1/NS2 application.
     ns2_rows = [row for row in rows if row[0].startswith("ns2:")]
     for column, role in ((1, "front"), (4, "fanart"), (9, "square")):
-        if not any(len(row) == 10 and row[column] != "-" for row in ns2_rows):
+        if not any(len(row) == 12 and row[column] != "-" for row in ns2_rows):
             raise ValueError(f"GamesDB snapshot lacks NS2 {role} media")
     print("EDEN_CASE_INDEX_MEDIA fanart={} game_title={} gameplay={} titles={}".format(
         *coverage, len(rows)), flush=True)

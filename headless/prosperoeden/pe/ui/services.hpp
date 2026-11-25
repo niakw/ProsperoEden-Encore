@@ -102,6 +102,8 @@ struct Game
     bool docked = true; // effective mode precomputed on library worker; no settings I/O on D-pad
     // Nlib artwork is complete per title (icon, banner, all advertised screens).
     // No title-specific source or performance override is attached to Game.
+    // Icon-only request: the previous cached path failed actual GPU decoding.
+    bool artwork_rejected = false;
 };
 
 struct Recent

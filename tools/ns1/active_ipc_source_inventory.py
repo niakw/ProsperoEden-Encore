@@ -163,7 +163,7 @@ expected_final = {
     "hle/service/ssl/ssl.cpp": (5, 75, 21),
     "hle/service/sockets/bsd.cpp": (3, 63, 0),
     "hle/service/sockets/sfdnsres.cpp": (2, 19, 0),
-    "hle/service/audio/audio.cpp": (10, 44, 44),
+    "hle/service/audio/audio.cpp": (10, 44, 0),
     "hle/service/bcat/delivery_cache_file_service.cpp": (1, 4, 0),
     "hle/service/am/service/gpu_session.cpp": (1, 12, 0),
     "hle/service/am/service/gpu_worker.cpp": (1, 14, 0),

@@ -18,6 +18,7 @@
 #include "core/hle/service/audio/final_output_recorder_manager_for_applet.h"
 #include "core/hle/service/audio/hardware_opus_decoder_manager.h"
 #include "core/hle/service/server_manager.h"
+#include "core/hle/service/ipc_helpers.h"
 #include "core/hle/service/service.h"
 
 namespace Service::Audio {
@@ -28,15 +29,23 @@ public:
         : ServiceFramework{system_, "audout:a"} {
         // clang-format off
         static const FunctionInfo functions[] = {
-            {0, nullptr, "RequestSuspend"},
-            {1, nullptr, "RequestResume"},
-            {2, nullptr, "GetProcessMasterVolume"},
-            {3, nullptr, "SetProcessMasterVolume"},
-            {4, nullptr, "GetProcessRecordVolume"},
-            {5, nullptr, "SetProcessRecordVolume"},
+            {0, &IAudioOutManagerForApplet::RejectUnavailableAudioControl, "RequestSuspend"},
+            {1, &IAudioOutManagerForApplet::RejectUnavailableAudioControl, "RequestResume"},
+            {2, &IAudioOutManagerForApplet::RejectUnavailableAudioControl, "GetProcessMasterVolume"},
+            {3, &IAudioOutManagerForApplet::RejectUnavailableAudioControl, "SetProcessMasterVolume"},
+            {4, &IAudioOutManagerForApplet::RejectUnavailableAudioControl, "GetProcessRecordVolume"},
+            {5, &IAudioOutManagerForApplet::RejectUnavailableAudioControl, "SetProcessRecordVolume"},
         };
         // clang-format on
         RegisterHandlers(functions);
+    }
+
+private:
+    void RejectUnavailableAudioControl(HLERequestContext& ctx) {
+        // No qualified backend exists for this private/debug audio control surface.
+        // Keep audout:u/audin:u/audren:u untouched and fail explicitly.
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(IPC::ResultNotSupported);
     }
 };
 
@@ -46,14 +55,22 @@ public:
         : ServiceFramework{system_, "auddev"} {
         // clang-format off
         static const FunctionInfo functions[] = {
-            {0, nullptr, "GetDspStatistics"},
-            {1, nullptr, "GetAppletStateSummaries"},
-            {2, nullptr, "SetDspStatisticsParameter"},
-            {3, nullptr, "GetDspStatisticsParameter"},
-            {6, nullptr, "GetDspUsage"},
+            {0, &IAudioSnoopManager::RejectUnavailableAudioControl, "GetDspStatistics"},
+            {1, &IAudioSnoopManager::RejectUnavailableAudioControl, "GetAppletStateSummaries"},
+            {2, &IAudioSnoopManager::RejectUnavailableAudioControl, "SetDspStatisticsParameter"},
+            {3, &IAudioSnoopManager::RejectUnavailableAudioControl, "GetDspStatisticsParameter"},
+            {6, &IAudioSnoopManager::RejectUnavailableAudioControl, "GetDspUsage"},
         };
         // clang-format on
         RegisterHandlers(functions);
+    }
+
+private:
+    void RejectUnavailableAudioControl(HLERequestContext& ctx) {
+        // No qualified backend exists for this private/debug audio control surface.
+        // Keep audout:u/audin:u/audren:u untouched and fail explicitly.
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(IPC::ResultNotSupported);
     }
 };
 
@@ -63,13 +80,21 @@ public:
         : ServiceFramework{system_, "audin:a"} {
         // clang-format off
         static const FunctionInfo functions[] = {
-            {0, nullptr, "RequestSuspend"},
-            {1, nullptr, "RequestResume"},
-            {2, nullptr, "GetProcessMasterVolume"},
-            {3, nullptr, "SetProcessMasterVolume"},
+            {0, &IAudioInManagerForApplet::RejectUnavailableAudioControl, "RequestSuspend"},
+            {1, &IAudioInManagerForApplet::RejectUnavailableAudioControl, "RequestResume"},
+            {2, &IAudioInManagerForApplet::RejectUnavailableAudioControl, "GetProcessMasterVolume"},
+            {3, &IAudioInManagerForApplet::RejectUnavailableAudioControl, "SetProcessMasterVolume"},
         };
         // clang-format on
         RegisterHandlers(functions);
+    }
+
+private:
+    void RejectUnavailableAudioControl(HLERequestContext& ctx) {
+        // No qualified backend exists for this private/debug audio control surface.
+        // Keep audout:u/audin:u/audren:u untouched and fail explicitly.
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(IPC::ResultNotSupported);
     }
 };
 
@@ -79,17 +104,25 @@ public:
         : ServiceFramework{system_, "audren:a"} {
         // clang-format off
         static const FunctionInfo functions[] = {
-            {0, nullptr, "RequestSuspend"},
-            {1, nullptr, "RequestResume"},
-            {2, nullptr, "GetProcessMasterVolume"},
-            {3, nullptr, "SetProcessMasterVolume"},
-            {4, nullptr, "RegisterAppletResourceUserId"},
-            {5, nullptr, "UnregisterAppletResourceUserId"},
-            {6, nullptr, "GetProcessRecordVolume"},
-            {7, nullptr, "SetProcessRecordVolume"},
+            {0, &IAudioRendererManagerForApplet::RejectUnavailableAudioControl, "RequestSuspend"},
+            {1, &IAudioRendererManagerForApplet::RejectUnavailableAudioControl, "RequestResume"},
+            {2, &IAudioRendererManagerForApplet::RejectUnavailableAudioControl, "GetProcessMasterVolume"},
+            {3, &IAudioRendererManagerForApplet::RejectUnavailableAudioControl, "SetProcessMasterVolume"},
+            {4, &IAudioRendererManagerForApplet::RejectUnavailableAudioControl, "RegisterAppletResourceUserId"},
+            {5, &IAudioRendererManagerForApplet::RejectUnavailableAudioControl, "UnregisterAppletResourceUserId"},
+            {6, &IAudioRendererManagerForApplet::RejectUnavailableAudioControl, "GetProcessRecordVolume"},
+            {7, &IAudioRendererManagerForApplet::RejectUnavailableAudioControl, "SetProcessRecordVolume"},
         };
         // clang-format on
         RegisterHandlers(functions);
+    }
+
+private:
+    void RejectUnavailableAudioControl(HLERequestContext& ctx) {
+        // No qualified backend exists for this private/debug audio control surface.
+        // Keep audout:u/audin:u/audren:u untouched and fail explicitly.
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(IPC::ResultNotSupported);
     }
 };
 
@@ -99,11 +132,19 @@ public:
         : ServiceFramework{system_, "audout:d"} {
         // clang-format off
         static const FunctionInfo functions[] = {
-            {0, nullptr, "RequestSuspend"},
-            {1, nullptr, "RequestResume"},
+            {0, &IAudioOutManagerForDebugger::RejectUnavailableAudioControl, "RequestSuspend"},
+            {1, &IAudioOutManagerForDebugger::RejectUnavailableAudioControl, "RequestResume"},
         };
         // clang-format on
         RegisterHandlers(functions);
+    }
+
+private:
+    void RejectUnavailableAudioControl(HLERequestContext& ctx) {
+        // No qualified backend exists for this private/debug audio control surface.
+        // Keep audout:u/audin:u/audren:u untouched and fail explicitly.
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(IPC::ResultNotSupported);
     }
 };
 
@@ -113,11 +154,19 @@ public:
         : ServiceFramework{system_, "audin:d"} {
         // clang-format off
         static const FunctionInfo functions[] = {
-            {0, nullptr, "RequestSuspend"},
-            {1, nullptr, "RequestResume"},
+            {0, &IAudioInManagerForDebugger::RejectUnavailableAudioControl, "RequestSuspend"},
+            {1, &IAudioInManagerForDebugger::RejectUnavailableAudioControl, "RequestResume"},
         };
         // clang-format on
         RegisterHandlers(functions);
+    }
+
+private:
+    void RejectUnavailableAudioControl(HLERequestContext& ctx) {
+        // No qualified backend exists for this private/debug audio control surface.
+        // Keep audout:u/audin:u/audren:u untouched and fail explicitly.
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(IPC::ResultNotSupported);
     }
 };
 
@@ -127,11 +176,19 @@ public:
         : ServiceFramework{system_, "audrec:d"} {
         // clang-format off
         static const FunctionInfo functions[] = {
-            {0, nullptr, "RequestSuspend"},
-            {1, nullptr, "RequestResume"},
+            {0, &IFinalOutputRecorderManagerForDebugger::RejectUnavailableAudioControl, "RequestSuspend"},
+            {1, &IFinalOutputRecorderManagerForDebugger::RejectUnavailableAudioControl, "RequestResume"},
         };
         // clang-format on
         RegisterHandlers(functions);
+    }
+
+private:
+    void RejectUnavailableAudioControl(HLERequestContext& ctx) {
+        // No qualified backend exists for this private/debug audio control surface.
+        // Keep audout:u/audin:u/audren:u untouched and fail explicitly.
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(IPC::ResultNotSupported);
     }
 };
 
@@ -141,11 +198,19 @@ public:
         : ServiceFramework{system_, "audren:d"} {
         // clang-format off
         static const FunctionInfo functions[] = {
-            {0, nullptr, "RequestSuspend"},
-            {1, nullptr, "RequestResume"},
+            {0, &IAudioRendererManagerForDebugger::RejectUnavailableAudioControl, "RequestSuspend"},
+            {1, &IAudioRendererManagerForDebugger::RejectUnavailableAudioControl, "RequestResume"},
         };
         // clang-format on
         RegisterHandlers(functions);
+    }
+
+private:
+    void RejectUnavailableAudioControl(HLERequestContext& ctx) {
+        // No qualified backend exists for this private/debug audio control surface.
+        // Keep audout:u/audin:u/audren:u untouched and fail explicitly.
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(IPC::ResultNotSupported);
     }
 };
 
@@ -155,20 +220,28 @@ public:
         : ServiceFramework{system_, "aud:a"} {
         // clang-format off
         static const FunctionInfo functions[] = {
-            {0, nullptr, "RegisterAppletResourceUserId"},
-            {1, nullptr, "UnregisterAppletResourceUserId"},
-            {2, nullptr, "RequestSuspendAudio"},
-            {3, nullptr, "RequestResumeAudio"},
-            {4, nullptr, "GetAudioOutputProcessMasterVolume"},
-            {5, nullptr, "SetAudioOutputProcessMasterVolume"},
-            {6, nullptr, "GetAudioInputProcessMasterVolume"},
-            {7, nullptr, "SetAudioInputProcessMasterVolume"},
-            {8, nullptr, "GetAudioOutputProcessRecordVolume"},
-            {9, nullptr, "SetAudioOutputProcessRecordVolume"},
-            {10, nullptr, "GetAppletStateSummaries"},
+            {0, &IAudioSystemManagerForApplet::RejectUnavailableAudioControl, "RegisterAppletResourceUserId"},
+            {1, &IAudioSystemManagerForApplet::RejectUnavailableAudioControl, "UnregisterAppletResourceUserId"},
+            {2, &IAudioSystemManagerForApplet::RejectUnavailableAudioControl, "RequestSuspendAudio"},
+            {3, &IAudioSystemManagerForApplet::RejectUnavailableAudioControl, "RequestResumeAudio"},
+            {4, &IAudioSystemManagerForApplet::RejectUnavailableAudioControl, "GetAudioOutputProcessMasterVolume"},
+            {5, &IAudioSystemManagerForApplet::RejectUnavailableAudioControl, "SetAudioOutputProcessMasterVolume"},
+            {6, &IAudioSystemManagerForApplet::RejectUnavailableAudioControl, "GetAudioInputProcessMasterVolume"},
+            {7, &IAudioSystemManagerForApplet::RejectUnavailableAudioControl, "SetAudioInputProcessMasterVolume"},
+            {8, &IAudioSystemManagerForApplet::RejectUnavailableAudioControl, "GetAudioOutputProcessRecordVolume"},
+            {9, &IAudioSystemManagerForApplet::RejectUnavailableAudioControl, "SetAudioOutputProcessRecordVolume"},
+            {10, &IAudioSystemManagerForApplet::RejectUnavailableAudioControl, "GetAppletStateSummaries"},
         };
         // clang-format on
         RegisterHandlers(functions);
+    }
+
+private:
+    void RejectUnavailableAudioControl(HLERequestContext& ctx) {
+        // No qualified backend exists for this private/debug audio control surface.
+        // Keep audout:u/audin:u/audren:u untouched and fail explicitly.
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(IPC::ResultNotSupported);
     }
 };
 
@@ -178,11 +251,19 @@ public:
         : ServiceFramework{system_, "aud:d"} {
         // clang-format off
         static const FunctionInfo functions[] = {
-            {0, nullptr, "RequestSuspendAudioForDebug"},
-            {1, nullptr, "RequestResumeAudioForDebug"},
+            {0, &IAudioSystemManagerForDebugger::RejectUnavailableAudioControl, "RequestSuspendAudioForDebug"},
+            {1, &IAudioSystemManagerForDebugger::RejectUnavailableAudioControl, "RequestResumeAudioForDebug"},
         };
         // clang-format on
         RegisterHandlers(functions);
+    }
+
+private:
+    void RejectUnavailableAudioControl(HLERequestContext& ctx) {
+        // No qualified backend exists for this private/debug audio control surface.
+        // Keep audout:u/audin:u/audren:u untouched and fail explicitly.
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(IPC::ResultNotSupported);
     }
 };
 

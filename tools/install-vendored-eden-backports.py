@@ -2158,6 +2158,116 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'real_handlers=2', 'scan_match=1', 'shared_connect_backend=1',
               'session_intent_security_channel_match=1', 'fabricated_host=0')
 
+        # idle:sys: emulate the absence of an automatic guest power-down
+        # policy without touching host PS5 power state. The readable event is real
+        # but remains unsignalled while the emulated policy never requests sleep.
+        idle_contracts = {
+            'src/core/hle/service/omm/policy_manager_system.cpp':
+                (878, '49b7fae920c0fdb0ef065c14fb68ebb8d63acad8a6951847340ccd688e1ffb8f',
+                 2116, '7a85fc0cb07a316fc581292298a865b37278e94ea7bbf9a1e2af2e03d0300687'),
+            'src/core/hle/service/omm/policy_manager_system.h':
+                (446, '5c96ae7620d3c051ae804cc1b0e2f0c3d9afdc6bba27ef5f8e53ee3d4b51b028',
+                 853, '81098a83a7e4f870e4478908632ac95aadb169e3ba0ceb00a0ef3d94aac8fc77'),
+        }
+        for rel, (before_bytes, before_hash, after_bytes, after_hash) in idle_contracts.items():
+            before=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(before)==before_bytes and sha(before)==before_hash, ('idle prior drift',rel)
+            assert len(current)==after_bytes and sha(current)==after_hash, ('idle active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':before_hash
+            }, ('idle manifest drift',rel)
+        idle_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        assert idle_cmake.count('hle/service/omm/policy_manager_system.cpp')==1
+
+        rel='src/core/hle/service/omm/policy_manager_system.cpp'
+        expected=(stage/rel).read_text()
+        expected=expected.replace(
+            '#include "core/hle/service/omm/policy_manager_system.h"',
+            '#include "core/hle/kernel/k_event.h"\n'
+            '#include "core/hle/service/ipc_helpers.h"\n'
+            '#include "core/hle/service/kernel_helpers.h"\n'
+            '#include "core/hle/service/omm/policy_manager_system.h"', 1)
+        replacements = (
+            ('{0, nullptr, "GetAutoPowerDownEvent"}',
+             '{0, &IPolicyManagerSystem::GetAutoPowerDownEvent, "GetAutoPowerDownEvent"}'),
+            ('{1, nullptr, "IsAutoPowerDownRequested"}',
+             '{1, &IPolicyManagerSystem::IsAutoPowerDownRequested, "IsAutoPowerDownRequested"}'),
+            ('{2, nullptr, "Unknown2"}',
+             '{2, &IPolicyManagerSystem::RejectUnknownPolicyCommand, "Unknown2"}'),
+            ('{3, nullptr, "SetHandlingContext"}',
+             '{3, &IPolicyManagerSystem::AcceptPolicyNoop, "SetHandlingContext"}'),
+            ('{4, nullptr, "LoadAndApplySettings"}',
+             '{4, &IPolicyManagerSystem::AcceptPolicyNoop, "LoadAndApplySettings"}'),
+            ('{5, nullptr, "ReportUserIsActive"}',
+             '{5, &IPolicyManagerSystem::AcceptPolicyNoop, "ReportUserIsActive"}'),
+        )
+        for old,new in replacements:
+            assert expected.count(old)==1
+            expected=expected.replace(old,new,1)
+        ctor='    RegisterHandlers(functions);\n}'
+        assert expected.count(ctor)==1
+        expected=expected.replace(
+            ctor,
+            '    RegisterHandlers(functions);\n'
+            '    auto_power_down_event = service_context.CreateEvent("IPolicyManagerSystem::AutoPowerDownEvent");\n'
+            '}', 1)
+        old='IPolicyManagerSystem::~IPolicyManagerSystem() = default;'
+        methods=(
+            'IPolicyManagerSystem::~IPolicyManagerSystem() {\n'
+            '    service_context.CloseEvent(auto_power_down_event);\n'
+            '}\n\n'
+            'void IPolicyManagerSystem::GetAutoPowerDownEvent(HLERequestContext& ctx) {\n'
+            '    IPC::ResponseBuilder rb{ctx, 2, 1};\n'
+            '    rb.Push(ResultSuccess);\n'
+            '    rb.PushCopyObjects(ctx, auto_power_down_event->GetReadableEvent());\n'
+            '}\n\n'
+            'void IPolicyManagerSystem::IsAutoPowerDownRequested(HLERequestContext& ctx) {\n'
+            '    IPC::ResponseBuilder rb{ctx, 3};\n'
+            '    rb.Push(ResultSuccess);\n'
+            '    rb.Push(false);\n'
+            '}\n\n'
+            'void IPolicyManagerSystem::AcceptPolicyNoop(HLERequestContext& ctx) {\n'
+            '    // Encore does not run Horizon\\'s automatic guest sleep timer. Applying idle\n'
+            '    // settings or reporting guest activity therefore leaves the host PS5 untouched.\n'
+            '    IPC::ResponseBuilder rb{ctx, 2};\n'
+            '    rb.Push(ResultSuccess);\n'
+            '}\n\n'
+            'void IPolicyManagerSystem::RejectUnknownPolicyCommand(HLERequestContext& ctx) {\n'
+            '    IPC::ResponseBuilder rb{ctx, 2};\n'
+            '    rb.Push(ResultUnknown);\n'
+            '}'
+        )
+        assert expected.count(old)==1
+        expected=expected.replace(old,methods,1)
+        assert expected.encode()==(ACTIVE/rel).read_bytes()
+        observed[rel]=spec['entries'][rel]
+
+        rel='src/core/hle/service/omm/policy_manager_system.h'
+        expected=(stage/rel).read_text()
+        old='#include "core/hle/service/service.h"'
+        new='#include "core/hle/service/kernel_helpers.h"\n#include "core/hle/service/service.h"'
+        assert expected.count(old)==1
+        expected=expected.replace(old,new,1)
+        old='    ~IPolicyManagerSystem() override;'
+        new=(
+            '    ~IPolicyManagerSystem() override;\n\n'
+            'private:\n'
+            '    void GetAutoPowerDownEvent(HLERequestContext& ctx);\n'
+            '    void IsAutoPowerDownRequested(HLERequestContext& ctx);\n'
+            '    void AcceptPolicyNoop(HLERequestContext& ctx);\n'
+            '    void RejectUnknownPolicyCommand(HLERequestContext& ctx);\n\n'
+            '    KernelHelpers::ServiceContext service_context{system, "IPolicyManagerSystem"};\n'
+            '    Kernel::KEvent* auto_power_down_event{};'
+        )
+        assert expected.count(old)==1
+        expected=expected.replace(old,new,1)
+        assert expected.encode()==(ACTIVE/rel).read_bytes()
+        observed[rel]=spec['entries'][rel]
+        print('NS1_IDLE_POLICY_NEUTRAL_EXACT_REPLAY_PASS',
+              'physical_closed=6', 'real_event=1', 'auto_power_down_requested=false',
+              'host_power_untouched=1', 'unknown23_rejected=1')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

@@ -1075,14 +1075,14 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
             'src/core/hle/service/glue/notif.cpp': {
                 'before_sha256':'e8a7f633f1ca9e577fe9d7125d490bb32846204ebc65e5b3a2b16fa7da8b2716',
                 'before_bytes':12051,
-                'after_sha256':'76fa32489de5befb16d0dc141c843fd65e0f5de5a78b287232571b356ad50bd7',
-                'after_bytes':12913,
+                'after_sha256':'2a4006fbb09233ffc2cfdfd812a8bec7aa14ac79edc839c4b5f086c0069f931c',
+                'after_bytes':13885,
             },
             'src/core/hle/service/glue/notif.h': {
                 'before_sha256':'593c6fff73fcbc2b3a27d16d4106dfcea51ea548072b3ec2fc5e5bbc73758d36',
                 'before_bytes':5452,
-                'after_sha256':'149d671724b9a599ecf3df99223015b1f58095063b3c6d24a345ca8cfa6d2b9d',
-                'after_bytes':5627,
+                'after_sha256':'4dfa482df32a60c34314fd7c036c044f989494b351e46c46f871e57c5458294d',
+                'after_bytes':5698,
             },
         }
         for rel,entry in notif_overlays.items():
@@ -1104,8 +1104,11 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         assert 'StoredApplicationParameter' in notif_h
         assert 'TODO: Save application parameter data' not in notif_cpp
         assert 'TODO: Read application parameter related to this setting id' not in notif_cpp
+        assert notif_cpp.count('&INotificationServices::RejectUnsupportedNotificationCommand')==12
+        assert notif_h.count('RejectUnsupportedNotificationCommand')==1
         print('NS1_NOTIF_ALARM_PARAMETER_REPLAY_PASS',
-              'shared_crud=notif_a+notif_s', 'parameter_bytes=preserved')
+              'shared_crud=notif_a+notif_s', 'parameter_bytes=preserved',
+              'unsupported_notification_slots=12')
 
 
         # GRC and OLSC: the PS5 build must not advertise Switch hardware
@@ -2578,6 +2581,57 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         print('NS1_CAPS_PSC_REMAINING_SOURCE_PASS',
               'physical_closed=26', 'caps=12', 'psc=14',
               'existing_album_paths_preserved=1', 'host_power_untouched=1')
+
+        # GLUE + SET acceleration: ARP/ECTX unsupported extensions become
+        # deterministic; ECTX_W registrar remains functional; SET HOS17+ monaural
+        # state is implemented while unmodeled modern settings fail closed.
+        glue_set_contracts = {
+            'src/core/hle/service/glue/arp.cpp':
+                (10368, 'b48a3db4b741a938b1497b296ac5e9272ce0c5470272c37a2eb1f8f4d3696fe9',
+                 '21fe3fe2716fc6f34a5cc2908aa561f3a5b8ac594ce68c511f159b492827a043'),
+            'src/core/hle/service/glue/arp.h':
+                (1222, '9bd338bbf4c03eb2dea34f60ee22b13ea0a0b8c1e573017606623c96ccf34308',
+                 '7c264b1e502db1573498743b85fb3bf100b8b8054d7b9f1a2e3b9b0d18e0bf1b'),
+            'src/core/hle/service/glue/ectx.cpp':
+                (3470, '6fbbb428db5bae1d46a65cfb48fd376f139aba5e536520d54278bea80b2712e2',
+                 'eb64936c8a3f2bbeec85e138cfe354a40e8c97941375d5bb4fde22d73a863c59'),
+            'src/core/hle/service/glue/ectx.h':
+                (1114, 'e2257adfa29d04a8e4b5c45f571d56a65e1c05292d31cc1f180b6d62870f400f',
+                 '1e4f227954f4a0b0301158c6be73f9e482217682326c3efc10f6fd942ad14752'),
+            'src/core/hle/service/set/system_settings_server.cpp':
+                (108310, '7c8a67a55832b3848e29b91b967b3dbf443036ec9a0c426feb96391bbd78976b',
+                 '1127251469dd98e57cb475102ea310f6a34e2e64ac3b87ddcef16d0da580f2f2'),
+            'src/core/hle/service/set/system_settings_server.h':
+                (20188, '80e06a2450be4989f43308c80acbb14c5f6392f8b5f31605de45e3284222125a',
+                 '6510e7bc080143ca9468d28b1968597ac599fb8c5fa2ff6e27bc8433aa4b0e55'),
+        }
+        glue_set_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel,(after_bytes,after_hash,upstream_hash) in glue_set_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('GLUE/SET active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('GLUE/SET manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert glue_set_cmake.count(rel.removeprefix('src/core/'))==1, ('GLUE/SET CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        arp=(ACTIVE/'src/core/hle/service/glue/arp.cpp').read_text()
+        ectx=(ACTIVE/'src/core/hle/service/glue/ectx.cpp').read_text()
+        set_sys=(ACTIVE/'src/core/hle/service/set/system_settings_server.cpp').read_text()
+        assert arp.count('&ARP_R::RejectUnsupportedReaderCommand')==6
+        assert arp.count('&ARP_W::RejectUnsupportedWriterCommand')==1
+        assert ectx.count('&ECTX_W::CreateContextRegistrar')==1
+        assert ectx.count('RejectUnsupportedContextCommand')>=9
+        assert set_sys.count('C<&ISystemSettingsServer::GetForceMonauralOutputFlag>')==1
+        assert set_sys.count('C<&ISystemSettingsServer::SetForceMonauralOutputFlag>')==1
+        assert set_sys.count('&ISystemSettingsServer::RejectUnsupportedModernSettingCommand')==13
+        for name,text_value in (('arp',arp),('ectx',ectx),('set_sys',set_sys),('notif',notif_cpp)):
+            assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', text_value))==0, name
+        print('NS1_GLUE_SET_ACCELERATION_SOURCE_PASS',
+              'physical_closed=41', 'glue=26', 'set=15',
+              'real_handlers=ectx_registrar+set_monaural_pair',
+              'unsupported_slots=38')
 
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))

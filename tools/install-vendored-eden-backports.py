@@ -1531,10 +1531,54 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         # unit but ABSENT from the legacy 4853 catalog. Reverse their full
         # error-only closure so both physical owners remain provenance-checked.
         ndrm_rel = 'src/core/hle/service/es/es.cpp'
+        # Reverse the latest known-command fail-closed successor first.
+        es_head = (ACTIVE / ndrm_rel).read_bytes()
+        assert len(es_head) == 22875 and sha(es_head) == '385bc0a4486c6ecbd4d7fdc8944e945a0f6a7c73b1177106db34ba03a5417d75'
+        assert spec['entries'][ndrm_rel]['active'] == sha(es_head)
+        es_text = es_head.decode('utf-8')
+        es_known_fail_closed = {
+            4:'DeletePersonalizedTicket', 18:'OwnTicket', 19:'GetTicketInfo',
+            20:'ListLightTicketInfo', 21:'SignData', 33:'ListPrepurchaseRecordRightsIdsEx',
+            36:'DeleteAllInactiveELicenseRequiredPersonalizedTicket',
+            37:'OwnTicket2', 38:'OwnTicket3',
+        }
+        for command,name in es_known_fail_closed.items():
+            newer = f'{{{command}, &ETicket::RejectUnavailableTicketManagement, "{name}"}}'
+            older = f'{{{command}, nullptr, "{name}"}}'
+            assert es_text.count(newer) == 1, ('Known eTicket successor drift',command,name)
+            es_text = es_text.replace(newer,older,1)
+        es_documented = es_text.encode('utf-8')
+        assert len(es_documented) == 22551 and sha(es_documented) == (
+            '7dca5ae398526b28d662cd05345f9d361e0b6e824adcb2d2e7973e7ffd929acc')
+        print('NS1_ES_KNOWN_UNSUPPORTED_EXACT_REVERSE_PASS',
+              'closed=9', 'fake_success=0', 'unknown_ids_untouched=1')
+
+        # Reverse the pre-existing SwitchBrew-documented 18+/20+ error-result
+        # successor separately; these nine commands return Horizon 0x3F4A91.
+        es_text = es_documented.decode('utf-8')
+        documented_ids = [101,102,103,104,105,201,202,203,204]
+        for command in documented_ids:
+            newer = '{' + str(command) + ', &ETicket::ReturnDocumentedUnavailableResult,'
+            older = '{' + str(command) + ', nullptr,'
+            assert es_text.count(newer) == 1, ('Documented eTicket successor drift',command)
+            es_text = es_text.replace(newer,older,1)
+        documented_method = (
+            '    // Horizon returns 0x3F4A91 for these 18.0+/20.0+ commands (SwitchBrew ETicket).\n'
+            '    // Preserve the observed failure rather than reporting success or a generic IPC error.\n'
+            '    void ReturnDocumentedUnavailableResult(HLERequestContext& ctx) {\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(Result{0x3F4A91});\n'
+            '    }\n\n'
+        )
+        assert es_text.count(documented_method) == 1
+        es_text = es_text.replace(documented_method,'',1)
+        es_newest = es_text.encode('utf-8')
+        assert len(es_newest) == 21899 and sha(es_newest) == (
+            '0df4c4ffce351e618d94d767043fffc0032fb579353a26e7613873521523fda6')
+        print('NS1_ES_DOCUMENTED_ERROR_EXACT_REVERSE_PASS',
+              'commands=9', 'horizon_result=0x3F4A91', 'separate_from_implementation=1')
+
         # Exact reverse of the eight live eTicket first-use query fixes.
-        es_newest = (ACTIVE / ndrm_rel).read_bytes()
-        assert len(es_newest) == 21899 and sha(es_newest) == '0df4c4ffce351e618d94d767043fffc0032fb579353a26e7613873521523fda6'
-        assert spec['entries'][ndrm_rel]['active'] == sha(es_newest)
         es_restored = es_newest.decode('utf-8')
         for family in ('Common', 'Personalized'):
             start = es_restored.index(f'    void List{family}TicketRightsIds(HLERequestContext& ctx) {{')

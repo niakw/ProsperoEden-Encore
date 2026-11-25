@@ -157,7 +157,6 @@ jobs:
             ~/.cache/ccache
             ~/.cache/prosperoeden-deps
             ~/.cache/ps5-eden-headless.*
-            ~/.cache/prosperoeden-mkpfs
             .deps
           key: prospero-eden-encore-040-${{ runner.os }}-${{ hashFiles('tools/deps.json') }}
           restore-keys: |
@@ -384,10 +383,6 @@ jobs:
             echo "::error::One or more source/host contracts failed; native build blocked"
             exit 1
           fi
-
-      - name: Preflight release packaging
-        if: ${{ env.RESUME_STAGE_RUN_ID == '' && env.BUILD_ONLY != 'true' }}
-        run: bash tools/ci/package-image.sh --prepare
 
       # Resume from an internal GitHub cache instead of an extra public
       # build artifact. Historical run artifacts remain a read-only fallback.

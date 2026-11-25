@@ -59,6 +59,24 @@ ninja_bin=$(command -v ninja)
 printf '#!/bin/sh\nexec %s -j%s "$@"\n' "$ninja_bin" "$jobs" > "$root/build/radv-tools/ninja"
 chmod +x "$root/build/radv-tools/ninja"
 export NINJA="$root/build/radv-tools/ninja"
+
+# Mihawk's build-radv.sh controls both native mesa_clc and target RADV Meson
+# setup. Force the real Meson CLI no-download mode for every setup invocation;
+# MESON_WRAP_MODE is not a Meson runtime contract and must not be relied on.
+meson_bin=$(command -v meson)
+meson_wrapper="$root/build/radv-tools/meson-nodownload"
+cat > "$meson_wrapper" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ ${1:-} == setup ]]; then
+    shift
+    exec "$meson_bin" setup --wrap-mode=nodownload "\$@"
+fi
+exec "$meson_bin" "\$@"
+EOF
+chmod +x "$meson_wrapper"
+export MESON="$meson_wrapper"
+
 command -v ccache >/dev/null
 # Cross compilers do not get Meson's automatic native ccache detection. Derive the two-line ccache
 # adaptation temporarily, and always restore the pinned upstream file on exit so dependency repos
@@ -120,8 +138,8 @@ rm -rf "$radv_zlib_stage"
 mkdir -p "$(dirname "$radv_zlib_stage")"
 cp -a "$radv_zlib_vendor" "$radv_zlib_stage"
 # No Meson wrap may contact an upstream server in the production PS5 build.
-# build-radv.sh preserves subprojects/zlib-* when refreshing its Mesa tree.
-export MESON_WRAP_MODE=nodownload
+# build-radv.sh preserves subprojects/zlib-* when refreshing its Mesa tree;
+# the MESON wrapper above enforces the actual CLI --wrap-mode=nodownload.
 
 # Meson may leave a partial directory after a failed host configure. A later
 # setup cannot reliably reuse it unless build.ninja was written.

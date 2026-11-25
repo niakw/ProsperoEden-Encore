@@ -39,11 +39,17 @@ assert b['payload_sdk_archive_sha256']==LOCK['boilerplate']['setup_prefetch'][1]
 original_fetch=(SOURCE/'tools/fetch-sources.py').read_text()
 assert 'third_party' in original_fetch and 'fetch_repo(name, pin)' in original_fetch
 builder=(ROOT/'tools/build-opengl-sdk.sh').read_text()
+stager=(ROOT/'tools/stage-vendored-opengl-deps.py').read_text()
 assert 'tools/stage-vendored-opengl-deps.py' in builder
-assert builder.index('stage-vendored-opengl-deps.py') < builder.index('python3 "$source_dir/tools/fetch-sources.py"')
+assert 'python3 "$source_dir/tools/fetch-sources.py"\n' not in builder
+assert 'python3 "$source_dir/tools/fetch-sources.py" --verify-psbc' in builder
+for required in ("git','-C',str(checkout),'apply','--index'",
+                 "patch['patched_tree']", "tarfile.open(target)",
+                 "Wrong vendored Mesa source version after extraction"):
+    assert required in stager, required
 for forbidden in ('git clone --quiet', 'git -C "$template" fetch', 'setup-native-dependencies.sh'):
     assert forbidden not in builder, f"standard OpenGL builder retained network/bootstrap fallback: {forbidden}"
 assert 'Vendored PS5 OpenGL boilerplate staging is missing' in builder
 assert 'Vendored PS5 OpenGL PayloadSDK compiler missing after staging' in builder
-print('PS5_OPENGL_CLOSURE_OK 7 mandatory source repos + Mesa 26.2 + native boilerplate, all exact pinned bytes retained')
+print('PS5_OPENGL_CLOSURE_OK 7 mandatory source repos + PSBC patch + Mesa 26.2 + native boilerplate staged offline')
 print('PS5_OPENGL_CLOSURE_LIMITS optional CTS/sokol-samples not used by release; Mesa wraps and non-PS5 CPM pins separate')

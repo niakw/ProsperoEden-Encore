@@ -4462,6 +4462,18 @@ private:
                 'after_sha256':'c7dd52009c52cfced1dd1d04aa4630305aad59fafe972f1eab9a2139bcdcfdb0',
                 'after_bytes':860,
             },
+            'src/core/hle/service/am/service/audio_controller.cpp': {
+                'before_sha256':'5c564ca5a734ba107915bc30ce46fd700b45290d57a01c0448700e095c6fa8bd',
+                'before_bytes':2987,
+                'after_sha256':'b97fb4ed91b76af7ece652fa2aadfb8f77ad9b5ac09b83c7d1266cb17d8bfab2',
+                'after_bytes':3391,
+            },
+            'src/core/hle/service/am/service/audio_controller.h': {
+                'before_sha256':'7d0bc7d12f1530d97a98febf6d67611bdb6a847350e24abbe2b3929a2c049d06',
+                'before_bytes':1366,
+                'after_sha256':'87d8b762f32f621fe41e8571f99b177749fca2ec0718302f0879a54625611ce6',
+                'after_bytes':1431,
+            },
         }
         for rel, entry in remaining_owner_overlays.items():
             assert rel not in observed, ('Remaining-owner source unexpectedly changed by frozen replay', rel)
@@ -4504,6 +4516,7 @@ private:
         hidbus_live = (ACTIVE/'src/core/hle/service/hid/hidbus.cpp').read_text()
         audrec_applet_live = (ACTIVE/'src/core/hle/service/audio/final_output_recorder_manager_for_applet.cpp').read_text()
         manager_root_live = (ACTIVE/'src/core/hle/service/vi/manager_root_service.cpp').read_text()
+        am_audio_live = (ACTIVE/'src/core/hle/service/am/service/audio_controller.cpp').read_text()
         assert account_live.count('&IAccountProxyInterface::RejectUnsupportedAccountMutation') == 1
         assert record_live.count('&IReadOnlyApplicationRecordInterface::RejectUnsupportedFailureNotification') == 1
         assert hid_live.count('RejectUnavailableLegacyCommand') == 15
@@ -4518,8 +4531,10 @@ private:
         assert 'Encore exposes no FinalOutputRecorder device/backend on PS5' in audrec_applet_live
         assert manager_root_live.count('&IManagerRootService::RejectUnavailableFatalDisplay') == 4
         assert 'Encore has no Horizon fatal-screen drawing backend on PS5' in manager_root_live
+        assert am_audio_live.count('&IAudioController::RejectUnknownHOS20AudioControl') == 1
+        assert 'HOS 20.0.0+ defines cmd5 as 0x10 bytes of input and no output' in am_audio_live
         print('NS1_REMAINING_SMALL_OWNER_EXACT_SOURCE_PASS',
-              'physical_nulls_closed=21', 'hid_tmp_hos3_7_only=1',
+              'physical_nulls_closed=22', 'hid_tmp_hos3_7_only=1',
               'hidbus_cmd13_hos5_6_only=1', 'audrec_applet_fail_closed=2',
               'vi_manager_fatal_fail_closed=4',
               'ahid_runtime_exposed=0', 'fake_success=0',

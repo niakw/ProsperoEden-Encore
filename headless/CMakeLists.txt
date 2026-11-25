@@ -337,6 +337,28 @@ if(PS5_NATIVE)
     target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")
     target_include_directories(video_core PRIVATE "${EDEN_PORT_DIR}")
 endif()
+
+# C++26 removes the deprecated codecvt conversion machinery used by the
+# pinned Eden string utility. Select Eden upstream's maintained manual UTF
+# conversions as a complete source owner for the PS5 build; do not suppress
+# the deprecation diagnostics or mutate the pinned source cache.
+if(PS5_NATIVE)
+    set(EDEN_NATIVE_STRING_UTIL
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/string_util.cpp")
+    if(NOT EXISTS "${EDEN_NATIVE_STRING_UTIL}")
+        message(FATAL_ERROR "Maintained native string_util.cpp is missing")
+    endif()
+    get_target_property(eden_native_common_sources common SOURCES)
+    list(FIND eden_native_common_sources "string_util.cpp" eden_native_string_util_index)
+    if(eden_native_string_util_index EQUAL -1)
+        message(FATAL_ERROR "Pinned string_util.cpp source owner changed")
+    endif()
+    list(REMOVE_ITEM eden_native_common_sources "string_util.cpp")
+    list(APPEND eden_native_common_sources "${EDEN_NATIVE_STRING_UTIL}")
+    set_property(TARGET common PROPERTY SOURCES "${eden_native_common_sources}")
+    message(STATUS "PS5 native: codecvt-free maintained Eden UTF conversion owner selected")
+endif()
+
 # Use the already-qualified no-arena allocation contract in the full core.
 get_target_property(common_sources common SOURCES)
 list(REMOVE_ITEM common_sources host_memory.cpp sparse_large_vector.cpp)

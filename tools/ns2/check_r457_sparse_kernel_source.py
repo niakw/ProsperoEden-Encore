@@ -375,6 +375,12 @@ if selected in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f
     assert device.count('::Eden::DeferredCachedUpdates::BeginPublish();') == 0
     assert device.count('#include "core/deferred_cached_updates.h"') == 1
 cmake=read("headless/CMakeLists.txt")
+# The selected GPU PTE table must compile its PS5 sparse allocation branch.
+# A CMake option does not propagate as a preprocessor definition to common.
+gpu_pte_source=read("vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp")
+assert "void* base{AllocateSparsePages(alloc_size)};" in gpu_pte_source
+assert "if (!base) throw std::bad_alloc{};" in gpu_pte_source
+assert 'set_property(SOURCE "${EDEN_MAINTAINED_GPU_PAGE_TABLE}"\n        TARGET_DIRECTORY common APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")' in cmake
 kernel_rel="vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp"
 kernel=read(kernel_rel)
 # Preserve every upstream kernel behavior except the four PS5 residency

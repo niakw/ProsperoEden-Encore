@@ -29,16 +29,70 @@ raw = selected.read_bytes()
 raw_h = selected_h.read_bytes()
 gitblob = lambda data: hashlib.sha1(
     b"blob "+str(len(data)).encode()+bytes([0])+data).hexdigest()
-assert gitblob(raw) == "5a455267e3a8d0e313a9e9aa35f087d076a569b9"
-assert gitblob(raw_h) == "656c270f5dabe25ccfbc382370b04d7d4f4f94ad"
+assert gitblob(raw) == "db44446a39249e38f54fbc30d016338696e3bddc"
+assert gitblob(raw_h) == "e91e412211f9c9e964d19560e2226338426be65e"
 source = raw.decode()
 source_h = raw_h.decode()
 
-# ca0407f9 is the reviewed predecessor that merged the NS1 application-function
-# handlers into this final shared owner. The old 9719348d receipt pre-dated that
-# merge and was stale. Reverse only command 37 and require exact ca0407f9 bytes.
+# The preceding green shared-AM receipt pinned blobs
+# 5a455267e3a8d0e313a9e9aa35f087d076a569b9 /
+# 656c270f5dabe25ccfbc382370b04d7d4f4f94ad. The selected final override had
+# silently fallen behind the maintained NS1 backport for nineteen methods.
+# Require exact body parity for those reviewed methods while preserving the
+# NS2-only commands below.
+maintained_am = (
+    root/"vendor/encore-active/eden-backports/src/core/hle/service/am/service/application_functions.cpp"
+).read_text()
+
+def result_method_body(contents, name):
+    start = contents.index(f"Result IApplicationFunctions::{name}(")
+    ends = [
+        p for p in (
+            contents.find("\nResult IApplicationFunctions::", start + 10),
+            contents.find("\nvoid IApplicationFunctions::", start + 10),
+            contents.find("\n} // namespace Service::AM", start + 10),
+        ) if p >= 0
+    ]
+    assert ends, name
+    return contents[start:min(ends)]
+
+synced_methods = (
+    "CreateCacheStorage",
+    "GetSaveDataSizeMax",
+    "BeginBlockingHomeButtonShortAndLongPressed",
+    "EndBlockingHomeButtonShortAndLongPressed",
+    "BeginBlockingHomeButton",
+    "EndBlockingHomeButton",
+    "NotifyRunning",
+    "IsGamePlayRecordingSupported",
+    "SetMediaPlaybackStateForApplication",
+    "SetGamePlayRecordingState",
+    "EnableApplicationCrashReport",
+    "InitializeApplicationCopyrightFrameBuffer",
+    "SetApplicationCopyrightImage",
+    "SetApplicationCopyrightVisibility",
+    "QueryApplicationPlayStatistics",
+    "QueryApplicationPlayStatisticsByUid",
+    "GetPreviousProgramIndex",
+    "GetGpuErrorDetectedSystemEvent",
+    "PrepareForJit",
+)
+for name in synced_methods:
+    assert result_method_body(source, name) == result_method_body(maintained_am, name), (
+        "selected shared AM regressed maintained NS1 method", name
+    )
+
+# The selected header must also retain the state required by the synchronized
+# copyright/play-statistics implementations.
+for fragment in (
+    "std::unique_ptr<PlayTime::PlayTimeManager> m_play_time_manager;",
+    "std::mutex m_copyright_mutex;",
+    "bool m_copyright_framebuffer_initialized{};",
+    "CopyrightImageState m_copyright_image{};",
+):
+    assert fragment in source_h, fragment
+
 cmd37_new = '{37, D<&IApplicationFunctions::GetLimitedApplicationLicenseUpgradableEvent>, "GetLimitedApplicationLicenseUpgradableEvent"}'
-cmd37_old = '{37, nullptr, "GetLimitedApplicationLicenseUpgradableEvent"}'
 cmd37_impl = '''Result IApplicationFunctions::GetLimitedApplicationLicenseUpgradableEvent(
     OutCopyHandle<Kernel::KReadableEvent> out_event) {
     // GetLimitedApplicationLicense reports the normal/full-license path (0), so there is
@@ -55,10 +109,6 @@ cmd37_decl = '''    Result GetLimitedApplicationLicenseUpgradableEvent(
 '''
 assert source.count(cmd37_new) == source.count(cmd37_impl) == 1
 assert source_h.count(cmd37_decl) == 1
-prior = source.replace(cmd37_new, cmd37_old, 1).replace(cmd37_impl, '', 1).encode()
-prior_h = source_h.replace(cmd37_decl, '', 1).encode()
-assert gitblob(prior) == "1984972ed8f49218ff41520695ad879e644af81f"
-assert gitblob(prior_h) == "01ee6d224088ae3fa03ee797806397f83baad679"
 assert 'm_applet->unknown_event.Signal' not in source
 # The merged native AM owner also exposes NS2 command 321 with one byte,
 # without changing the previously reviewed language response path.
@@ -72,4 +122,5 @@ assert 'set(EDEN_SHARED_NS2_AM ON)' in cmake
 assert 'list(APPEND eden_ns2_am_sources "${EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp")' in cmake
 assert '*out_event = m_applet->unknown_event.GetHandle();' in source
 print("SHARED_NATIVE_AM_LANGUAGE_REPLY_SOURCE_PASS exact_blob=1 real_return=1 bounded=32 native_execution=0")
-print("NS1_AM_LIMITED_LICENSE_EVENT_PASS command=37 full_license=1 event_unsignaled=1 exact_reverse=ca0407f9")
+print("NS1_SHARED_AM_COMPLETENESS_PARITY_PASS methods=19 selected_final_override=1")
+print("NS1_AM_LIMITED_LICENSE_EVENT_PASS command=37 full_license=1 event_unsignaled=1")

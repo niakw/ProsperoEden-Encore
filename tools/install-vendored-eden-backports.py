@@ -4432,6 +4432,30 @@ private:
                 'after_sha256':'2041e0ff35a86d24448e904d71bbda55b6f83c825cb1669599bb8c0d250c275d',
                 'after_bytes':4891,
             },
+            'src/core/hle/service/hid/hidbus.cpp': {
+                'before_sha256':'9bad04bff47c378383d561bc1e9fd47d5477e02fd3dc534dc0eabe8dcf0086cd',
+                'before_bytes':17324,
+                'after_sha256':'dfce3cd0cc9b3bb6307adf1887b967d2e3e7a735165a20fe8b2985e27c9ac3a0',
+                'after_bytes':17628,
+            },
+            'src/core/hle/service/hid/hidbus.h': {
+                'before_sha256':'0c30a720c28fef90e72b2797dc3336d22fc2ec02669651292695aec26abf2900',
+                'before_bytes':5265,
+                'after_sha256':'43055bb8caaa03483d6f1744ada0967520e2c113ec04dfcbf2f4fdadbabb41f6',
+                'after_bytes':5324,
+            },
+            'src/core/hle/service/audio/final_output_recorder_manager_for_applet.cpp': {
+                'before_sha256':'3e96e3bbe3faa76c5fc372018ce4596ba45e37c14e7faf00b4e6fe6b24eb29eb',
+                'before_bytes':696,
+                'after_sha256':'c87b6cdceb0fde303c6eb9b0110d0b91a3aebaa072eb498e77d6856ab24389b5',
+                'after_bytes':1206,
+            },
+            'src/core/hle/service/audio/final_output_recorder_manager_for_applet.h': {
+                'before_sha256':'ff99aa15a1f2e30c36ea73a24f60276f28839cc0964b32f296abcfca7fdfedf7',
+                'before_bytes':514,
+                'after_sha256':'ea74597c0ea3786eebb8f0babd03fe8890ebc120f9e4f71bc343420c00fc3293',
+                'after_bytes':591,
+            },
         }
         for rel, entry in remaining_owner_overlays.items():
             assert rel not in observed, ('Remaining-owner source unexpectedly changed by frozen replay', rel)
@@ -4451,6 +4475,8 @@ private:
         account_live = (ACTIVE/'src/core/hle/service/ns/account_proxy_interface.cpp').read_text()
         record_live = (ACTIVE/'src/core/hle/service/ns/read_only_application_record_interface.cpp').read_text()
         hid_live = (ACTIVE/'src/core/hle/service/hid/hid.cpp').read_text()
+        hidbus_live = (ACTIVE/'src/core/hle/service/hid/hidbus.cpp').read_text()
+        audrec_applet_live = (ACTIVE/'src/core/hle/service/audio/final_output_recorder_manager_for_applet.cpp').read_text()
         assert account_live.count('&IAccountProxyInterface::RejectUnsupportedAccountMutation') == 1
         assert record_live.count('&IReadOnlyApplicationRecordInterface::RejectUnsupportedFailureNotification') == 1
         assert hid_live.count('RejectUnavailableLegacyCommand') == 15
@@ -4459,8 +4485,13 @@ private:
         assert hid_live.count('&AHID_HDR::RejectUnavailableLegacyCommand') == 6
         assert 'firmware_major >= 3 && firmware_major < 8' in hid_live
         assert hid_live.count('RegisterNamedService("hid:tmp"') == 1
+        assert hidbus_live.count('&Hidbus::RejectLegacyPollingData') == 1
+        assert 'GetPollingData existed only on HOS 5.0.0-6.2.0' in hidbus_live
+        assert audrec_applet_live.count('&IFinalOutputRecorderManagerForApplet::RejectUnavailableRecorderControl') == 2
+        assert 'Encore exposes no FinalOutputRecorder device/backend on PS5' in audrec_applet_live
         print('NS1_REMAINING_SMALL_OWNER_EXACT_SOURCE_PASS',
-              'physical_nulls_closed=14', 'hid_tmp_hos3_7_only=1',
+              'physical_nulls_closed=17', 'hid_tmp_hos3_7_only=1',
+              'hidbus_cmd13_hos5_6_only=1', 'audrec_applet_fail_closed=2',
               'ahid_runtime_exposed=0', 'fake_success=0',
               'pinned_sources=immutable')
 

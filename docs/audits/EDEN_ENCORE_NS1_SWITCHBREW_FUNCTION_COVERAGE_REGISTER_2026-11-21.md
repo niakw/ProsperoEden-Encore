@@ -3640,3 +3640,19 @@ Hashes actifs/upstream, CMake et nombres de bindings sont verrouillés par le mo
 **Inventaire physique attendu : 1 117 → 1 099 NULL / 6 447 slots.** CI requise pour confirmation.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — ACC + AOC : palier sous 1 000, 996 attendu
+
+Base **CI confirmée** : vendor `a1ae39a3ef6e56c88d47a6425a26ad71cf40f502`, **1 099 NULL / 6 447 slots**, 5 348 handlers.
+
+Vendor successeur : `5db9e6dd27b777b28867a1add277e3fba2c0d821` (arbre `2fad6e874bb443b74dac303284072b8b7ec3c444`).
+
+**103 NULL physiques** supplémentaires sont retirés :
+- ACC **92** : les centaines de handlers locaux profil/utilisateur déjà présents restent inchangés. `ISessionObject::Dummy` devient un succès de compatibilité explicite ; les **91 autres** entrées encore inconnues (Nintendo Account, notifiers, PIN policy, debug, thumbnails/extensions firmware) passent en `ResultNotSupported`. Elles ne sont pas comptées comme implémentations fonctionnelles.
+- AOC **11** : les extensions application-id/debug/host/cache sans backend passent en `ResultNotSupported`. Les chemins DLC locaux existants `CountAddOnContent`, `ListAddOnContent`, `GetAddOnContentBaseId`, `PrepareAddOnContent` ainsi que l'événement de changement restent actifs.
+
+Le replay moteur inverse d'abord exactement la nouvelle couche ACC **102 756 → 95 439 octets** et retrouve bit-à-bit le blob précédemment accepté avant de rejouer toute la provenance ACC historique. AOC vérifie les deux hashes upstream/active, la sélection CMake, les 11 bindings de rejet et la présence des quatre handlers DLC locaux.
+
+**Inventaire physique attendu : 1 099 → 996 NULL / 6 447 slots.** Validation CI requise avant confirmation.
+
+Build PS5 et test console : non exécutés.

@@ -26,6 +26,10 @@ def patch(path: Path) -> None:
     if present:
         if set(present) != set(FLAGS) or any(text.count(flag) != 1 for flag in FLAGS):
             raise RuntimeError(f"partial/duplicate Mesa PS5 feature selection: {present}")
+        if text.count(C_ARGS_NEW) != 1 or text.count(CPP_ARGS_NEW) != 1:
+            raise RuntimeError("partial/duplicate Mesa PS5 diagnostic selection")
+        if C_ARGS_OLD in text or CPP_ARGS_OLD in text:
+            raise RuntimeError("old Mesa PS5 diagnostic flags remained after selection")
         print("PS5_OPENGL_MESA_OPTIONAL_FEATURES_ALREADY_SELECTED")
         return
     if text.count(ANCHOR) != 1:

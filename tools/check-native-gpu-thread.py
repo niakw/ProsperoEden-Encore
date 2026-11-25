@@ -51,6 +51,17 @@ native_pending_wait = """            if (scheduler.HasPendingNativeChannels()) {
             } else {
                 state.queue.PopWait(next, stop_token);
             }"""
+# The native build requires both renderers; the common GPU owner is selected by the GL branch.
+cmake = (root / "headless/CMakeLists.txt").read_text()
+assert 'set(EDEN_MAINTAINED_G21_GPU "${EDEN_G21_GPU_ROOT}/gpu_gl_native.cpp")' in cmake
+owner = (root / "vendor/encore-active/eden-core/src/video_core/gpu_gl_native.cpp").read_text()
+release = owner.split("void ReleaseChannel(Control::ChannelState& to_release) {", 1)[1].split("/// Binds a renderer", 1)[0]
+assert "gpu_thread.RetireChannelAtBoundary(" in release
+assert "scheduler.RetireChannel(owner.get());" in release
+assert "RequestSyncOperation(" not in release and "WaitForSyncOperation(" not in release
+assert release.index("scheduler.RetireChannel(owner.get());") < release.index("std::scoped_lock lock{channel_mutex};")
+assert "last_sync_fence.load(std::memory_order_acquire)" in owner
+assert "std::make_shared<std::vector<u8>>()" in owner
 if sys.argv[1:] == ['--source-only']:
     # Validate the maintained compiled worker without requiring a PS5 SDK,
     # generated cache or host C++ compilation.
@@ -137,7 +148,12 @@ assert untraced.count(progress_marker) == 1
 untraced = untraced.replace(progress_marker, '            state.signaled_fence.store(next.fence);')
 assert untraced.count('        unsigned completed_gpu_commands = 0;\n') == 1
 untraced = untraced.replace('        unsigned completed_gpu_commands = 0;\n', '')
-assert body in untraced, 'GPU worker semantics changed beyond dispatch markers and startup animation wait'
+retire_branch = ('            } else if (auto* retire = std::get_if<RetireChannelCommand>(&next.data)) {\n'
+                 '                // Unlike TickWork from a draw, this is outside all dispatch leases.\n'
+                 '                retire->action();\n')
+assert untraced.count(retire_branch) == 1
+untraced = untraced.replace(retire_branch, '', 1)
+assert body in untraced, 'GPU worker semantics changed beyond reviewed dispatch-boundary retirement and startup wait'
 
 assert 'stop_source.get_token()' in worker and 'thread.get_stop_token()' not in worker
 assert 'ThreadManager::~ThreadManager() { Stop(); }' in worker

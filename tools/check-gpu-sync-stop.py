@@ -23,7 +23,7 @@ struct GPU {
  std::list<std::function<void()>> sync_requests;
  bool sync_requests_stopped{},is_async=true;
  std::atomic_bool shutting_down{};
- std::atomic<u64> current_sync_fence{};u64 last_sync_fence{};
+ std::atomic<u64> current_sync_fence{};std::atomic<u64> last_sync_fence{};
  Worker gpu_thread;
 '''+methods+r'''
 };

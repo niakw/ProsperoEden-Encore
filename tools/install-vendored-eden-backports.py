@@ -2633,6 +2633,47 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'real_handlers=ectx_registrar+set_monaural_pair',
               'unsupported_slots=38')
 
+        # PM debug/resource-limit + PSC wake-lock + TMA host-environment batch.
+        pm_psc_tma_contracts = {
+            'src/core/hle/service/pm/pm.cpp':
+                (13340, '7136735f7e157cd353baa126ca85b8a589ba683205151510180487c7c9f3ae73',
+                 'e6d2758d23ee1760c07d85fbf6edabd2222fec1c17e813e8809a346a93c94cfd'),
+            'src/core/hle/service/psc/time/alarms.cpp':
+                (6833, '0053f2f14fc8ac5061aa967f4626a5737c5eeef6b137e5dc606da75c5189e406',
+                 '79227ed7e721631f4557bf03b9a3ec7cfbb33939c9a6b202c39ff8cc78b07623'),
+            'src/core/hle/service/psc/time/alarms.h':
+                (3730, '27e55ca7155ce98142c58b84a4ac07b4f6337026376c3b3f447933b053f8c184',
+                 'a1c08e78e6adb0077f3de9ff6687cf6af158f2cd46f4fc72c54fe0e350df665b'),
+            'src/core/hle/service/tma/tma.cpp':
+                (1519, '41de1e88443d7a9c1fd82c26e5d26e76f9ea4f75f8e70a829f2e8ec20463b351',
+                 '2205080fe0a08efd7dcb59796d779933e864a24a30773fc9ebc4dfd982919afc'),
+        }
+        pm_psc_tma_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel,(after_bytes,after_hash,upstream_hash) in pm_psc_tma_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('PM/PSC/TMA active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('PM/PSC/TMA manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert pm_psc_tma_cmake.count(rel.removeprefix('src/core/'))==1, ('PM/PSC/TMA CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        pm_cpp=(ACTIVE/'src/core/hle/service/pm/pm.cpp').read_text()
+        psc_alarm=(ACTIVE/'src/core/hle/service/psc/time/alarms.cpp').read_text()
+        tma_cpp=(ACTIVE/'src/core/hle/service/tma/tma.cpp').read_text()
+        assert pm_cpp.count('&DebugMonitor::RejectUnsupportedDebugControl')==6
+        assert pm_cpp.count('&Info::RejectUnsupportedAtmosphereInfo')==2
+        assert pm_cpp.count('&Shell::AcceptResourceLimitNoop')==3
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', pm_cpp))==3
+        assert psc_alarm.count('&ISteadyClockAlarm::AcceptWakeLockNoop')==2
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', psc_alarm))==0
+        assert tma_cpp.count('&HTC_TENV::RejectUnavailableHostEnvironment')==1
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', tma_cpp))==0
+        print('NS1_PM_PSC_TMA_ACCELERATION_SOURCE_PASS',
+              'physical_closed=14', 'pm=11', 'psc_time=2', 'tma=1',
+              'pm_launch_and_process_events_untouched=1')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

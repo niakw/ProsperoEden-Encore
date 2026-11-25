@@ -2389,7 +2389,7 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
                  'adcf67ec6f356fca510b32c6743610bcf93c63992fe1819705d6544c3c1e093d'),
             'src/core/hle/service/ncm/ncm.cpp':
                 (86771, '136b67a32b2024c4d9512455f4bb041624e2050b511264377470af631cb2d822',
-                 86340, '06f4fd31703a7360ab511b46661a722a319fc062b4e83afeea314e94e6772c4c',
+                 86523, 'd415c8e6c70f6751294cb90363175b2243021e554529d2ed02b21bca679e1fef',
                  '136b67a32b2024c4d9512455f4bb041624e2050b511264377470af631cb2d822'),
             'src/core/hle/service/mii/mii.cpp':
                 (15496, 'e3d71bc7189d3675e16aa03bc03ea032581249625cbe3c5dc330c86f1e2dacbd',
@@ -2673,6 +2673,59 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         print('NS1_PM_PSC_TMA_ACCELERATION_SOURCE_PASS',
               'physical_closed=14', 'pm=11', 'psc_time=2', 'tma=1',
               'pm_launch_and_process_events_untouched=1')
+
+        # LDN monitoring surfaces are kept separate from the functional
+        # LANDiscovery user/system backend. Unsupported monitor-only queries fail
+        # closed; NCM path resolvers remain untouched and only memory-report is closed.
+        ldn_monitor_contracts = {
+            'src/core/hle/service/ldn/monitor_service.cpp':
+                (2053, 'a59e09fa47757d5990de1055dbbad835a367ccc3bf7e1164290d89f4db60c477',
+                 '4203f4f772df022d31f9b69052aaa28b6483cb60fe0848115efcb51aeaf3786c'),
+            'src/core/hle/service/ldn/monitor_service.h':
+                (727, '126a124325410fb68c743a4bf65016a670a29612dd6a4e6c58878d2a3f37c8af',
+                 '896a9167547d3c66ea986d1dbcff83114117bf2dfcfa50302c0e94c37d934ce5'),
+            'src/core/hle/service/ldn/sf_monitor_service.cpp':
+                (1557, '3b3481bab7eda307ff5043bc71bd40a820e00496fd49459b2e8a4867e9270795',
+                 'e9511dad0b52f9d378ab602dcf9de795b404fff0b145ac9295aa5407b0367402'),
+            'src/core/hle/service/ldn/sf_monitor_service.h':
+                (700, '7d64b5e3a6469f1ba9cc684d310cb40c9a44f90fb86bf81f15b27006ecfa2e5f',
+                 'ae7102777c0784c66f689abccd2d598477b8e29213ea412174127be8b554275c'),
+            'src/core/hle/service/ldn/sf_service_monitor.cpp':
+                (2512, 'f45bacefdd621e2724ea8a931b456159807708b6d9260222dea394f3f5f5d39d',
+                 '1163e5d1b73b93fa54cc27b9f55a5d87b747bd549fada45c34e76b553b9c7fad'),
+            'src/core/hle/service/ldn/sf_service_monitor.h':
+                (749, '5b6f70d453bb4e2bf7a38ce2077fe2abd9407f3c42caabbde17260f92099ff9b',
+                 '3a7517076f5f80fa9bd6e3bdd44aa0d05cc4e9a34206797a533989c71e1b5e73'),
+        }
+        ldn_monitor_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel,(after_bytes,after_hash,upstream_hash) in ldn_monitor_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('LDN monitor active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('LDN monitor manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert ldn_monitor_cmake.count(rel.removeprefix('src/core/'))==1, ('LDN monitor CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        ldn_mon=(ACTIVE/'src/core/hle/service/ldn/monitor_service.cpp').read_text()
+        ldn_sf_mon=(ACTIVE/'src/core/hle/service/ldn/sf_monitor_service.cpp').read_text()
+        ldn_sf_service_mon=(ACTIVE/'src/core/hle/service/ldn/sf_service_monitor.cpp').read_text()
+        ncm_cpp=(ACTIVE/'src/core/hle/service/ncm/ncm.cpp').read_text()
+        assert ldn_mon.count('&IMonitorService::RejectUnsupportedMonitorQuery')==5
+        assert ldn_sf_mon.count('&ISfMonitorService::RejectUnsupportedSfMonitorQuery')==1
+        assert ldn_sf_service_mon.count('&ISfServiceMonitor::RejectUnsupportedSfMonitorQuery')==11
+        assert ncm_cpp.count('&NCM::RejectUnavailableMemoryReport')==1
+        assert ncm_cpp.count('{4, nullptr, "ResolveDataPath"}')==1
+        assert ncm_cpp.count('{0, nullptr, "ResolveAddOnContentPath"}')==1
+        for name,text_value in (
+            ('ldn_monitor',ldn_mon),('ldn_sf_monitor',ldn_sf_mon),
+            ('ldn_sf_service_monitor',ldn_sf_service_mon),
+        ):
+            assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', text_value))==0, name
+        print('NS1_LDN_MONITOR_NCM_MEMORY_SOURCE_PASS',
+              'physical_closed=18', 'ldn_monitor=17', 'ncm_memory=1',
+              'ldn_core_backend_untouched=1', 'ncm_path_resolvers_untouched=1')
 
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))

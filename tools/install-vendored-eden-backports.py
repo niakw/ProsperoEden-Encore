@@ -2228,7 +2228,7 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
             '    rb.Push(false);\n'
             '}\n\n'
             'void IPolicyManagerSystem::AcceptPolicyNoop(HLERequestContext& ctx) {\n'
-            '    // Encore does not run Horizon\\'s automatic guest sleep timer. Applying idle\n'
+            "    // Encore does not run Horizon's automatic guest sleep timer. Applying idle\\n"
             '    // settings or reporting guest activity therefore leaves the host PS5 untouched.\n'
             '    IPC::ResponseBuilder rb{ctx, 2};\n'
             '    rb.Push(ResultSuccess);\n'

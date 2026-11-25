@@ -1460,6 +1460,62 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'local_handlers=untouched', 'pinned_upstream=immutable')
 
 
+
+        # NS1 migration, Switch PCIe and dynamic rights are native owners,
+        # but lack corresponding PS5 backend devices or Nintendo services.
+        # Prove every pointer and method mutation reverses to pinned bytes.
+        unsupported_sources = [{"rel":"src/core/hle/service/mig/mig.cpp","old":[3091,"5387c8803d0ba6de4cebff8ca332bda476f48812c8b6c6e47091bd09ffd3fff6"],"new":[4475,"b53691cfaa0184daf17dd82987bf94fac66b2a0c1000ddb32529496fa7e35763"],"classes":[["MIG_USR",36]],"include":"service/service.h"},{"rel":"src/core/hle/service/pcie/pcie.cpp","old":[3102,"d7ad1a55a92e91b5e28fc62e7b7f64a9195532b0d80544661078057eb79107ec"],"new":[4550,"78592f53eaee50b23dc63648a8b8d9057524d9c969ee5a8f1d3da540f572afe4"],"classes":[["ISession",24],["PCIE",2],["PCIE_LOG",2]],"include":"service/service.h"},{"rel":"src/core/hle/service/ns/dynamic_rights_interface.cpp","old":[3617,"39d255c2a905b49aa78830470901d32f3edcd348d449867dc507b55e852dd132"],"new":[5039,"241b1a5060032e58e33579b3d5bf23abc9929ec92393d168b9a9b1352a0cea0a"],"classes":[["IDynamicRightsInterface",25]],"include":"cmif_serialization.h"},{"rel":"src/core/hle/service/ns/dynamic_rights_interface.h","old":[855,"42c21b40cb4264eecacc570d8cf8413b25ffd6f56bf2b1303d4d12d73aba78c7"],"new":[920,"60a4afe05c0425fb13e620b77be80adb6be491755dc0358391a7af812135d19f"],"classes":[]}]
+        inline_method = (
+            '\nprivate:\n'
+            '    void RejectUnavailableSwitchBackend(HLERequestContext& ctx) {\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(ResultUnknown);\n'
+            '    }\n'
+        )
+        for doc in unsupported_sources:
+            rel = doc['rel']
+            active = (ACTIVE / rel).read_bytes()
+            before_size, before_sha = doc['old']
+            after_size, after_sha = doc['new']
+            assert len(active) == after_size and sha(active) == after_sha
+            assert spec['entries'][rel]['active'] == after_sha
+            assert spec['entries'][rel]['upstream'] == before_sha
+            assert spec['entries'][rel]['bytes'] == after_size
+            reversed_owner = active.decode('utf-8')
+            if rel.endswith('.h'):
+                declaration = '    void RejectUnavailableSwitchBackend(HLERequestContext& ctx);\n'
+                assert reversed_owner.count(declaration) == 1
+                reversed_owner = reversed_owner.replace(declaration, '', 1)
+            else:
+                if doc['rel'].endswith('dynamic_rights_interface.cpp'):
+                    method = (
+                        'void IDynamicRightsInterface::RejectUnavailableSwitchBackend(HLERequestContext& ctx) {\n'
+                        '    IPC::ResponseBuilder rb{ctx, 2};\n'
+                        '    rb.Push(ResultUnknown);\n'
+                        '}\n\n'
+                    )
+                    assert reversed_owner.count(method) == 1
+                    reversed_owner = reversed_owner.replace(method, '', 1)
+                else:
+                    assert reversed_owner.count(inline_method) == len(doc['classes'])
+                    reversed_owner = reversed_owner.replace(inline_method, '\n')
+                for cls, n in doc['classes']:
+                    ptr = '&' + cls + '::RejectUnavailableSwitchBackend'
+                    assert reversed_owner.count(ptr) == n, ('Unreviewed native failure path', cls)
+                    reversed_owner = reversed_owner.replace(ptr, 'nullptr')
+                include_before = '#include "core/hle/service/' + doc['include'] + '"\n'
+                include_after = include_before + '#include "core/hle/service/ipc_helpers.h"\n'
+                assert reversed_owner.count(include_after) == 1
+                reversed_owner = reversed_owner.replace(include_after, include_before, 1)
+            previous = reversed_owner.encode('utf-8')
+            assert len(previous) == before_size and sha(previous) == before_sha
+            assert previous == (stage / rel).read_bytes(), 'Unsupported Switch backend replay owner changed'
+            observed[rel] = spec['entries'][rel]
+        print('NS1_MIG_PCIE_DYNAMIC_RIGHTS_EXACT_REVERSE_PASS',
+              'physical_fail_closed=89', 'native_overlays=4',
+              'firmware_specific_backends_not_faked=true')
+
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

@@ -72,7 +72,22 @@ assert "NativeGpfifoGuestHeadersReadable(" in base1
 assert "session->process->GetMemory().IsValidVirtualAddressRange(" in base1
 assert "this->GetSessionMemory(fd).ReadBlock(" in base1
 assert nvdrv.count("entries.command_lists.data()") >= 3
-assert "gpu.PushGPUEntries(bind_id, std::move(entries));" in nvdrv
+# The maintained NVDRV now installs the GSV address-space revocation lease on
+# EVERY published native GPU list (including increment/wait packets).
+# A direct push of the original "entries" bypasses this guard and is invalid.
+submit = nvdrv.split("NvResult nvhost_gpu::SubmitGPFIFOImpl(", 1)[1].split(
+    "Core::Memory::Memory& nvhost_gpu::GetSessionMemory(", 1
+)[0]
+lambda_marker = "const auto push_gpu_entries = [&](Tegra::CommandList&& list) {"
+assert lambda_marker in submit
+publish = submit.split(lambda_marker, 1)[1].split("\n    };", 1)[0]
+assert "if (native)" in publish
+assert publish.index("list.native_submission_lease = native_submission_lease;") < publish.index(
+    "gpu.PushGPUEntries(bind_id, std::move(list));"
+)
+assert submit.count("gpu.PushGPUEntries(") == 1, "native lists bypass the lease publisher"
+assert submit.index(lambda_marker) < submit.index("push_gpu_entries(std::move(entries));")
+assert "push_gpu_entries(Tegra::CommandList{BuildWaitCommandList(params.fence)});" in submit
 for helper in (
     "BuildWaitCommandList(params.fence)",
     "BuildIncrementCommandList(params.fence)",

@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          submodules: true
       - name: Index categories, platform order and first fanart
         run: python3 -B tools/launcher/build-box-art-index.py --self-test
       - name: Icon scheduling, cache and selected media

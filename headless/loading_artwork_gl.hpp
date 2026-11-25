@@ -26,7 +26,7 @@ bool Capture(Draw&& draw,bool alternate=false,int width=1920,int height=1080){
     LaunchHandoff::Frame frame;
     frame.width = width;
     frame.height = height;
-    constexpr std::size_t stride = std::size_t(width) * 4;
+    const std::size_t stride = std::size_t(width) * 4;
     try {
         frame.rgba.resize(stride * height);
     } catch (...) {

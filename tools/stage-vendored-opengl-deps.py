@@ -94,8 +94,11 @@ def stage(opengl_root:Path):
  if not archive.exists():shutil.copy2(zlib_tar,archive)
  if sha(archive)!=extras[0]['sha256']:
   raise RuntimeError('Wrong vendored zlib 1.3.2')
- if not (sdk/'bin/prospero-lld').is_file():raise RuntimeError('PS5 SDK missing after vendored extraction')
- print('OPENGL_NATIVE_TEMPLATE_OFFLINE',actual[:12],'SDK and zlib verified',flush=True)
+ for required_tool in ('prospero-lld', 'prospero-clang', 'prospero-clang++'):
+  tool=sdk/'bin'/required_tool
+  if not tool.is_file() or not os.access(tool, os.X_OK):
+   raise RuntimeError(f'PS5 SDK tool missing after vendored extraction: {required_tool}')
+ print('OPENGL_NATIVE_TEMPLATE_OFFLINE',actual[:12],'SDK compiler/linker and zlib verified',flush=True)
 
 if __name__=='__main__':
  if len(sys.argv)!=2:raise SystemExit('usage: stage-vendored-opengl-deps.py PS5_OPENGL_SOURCE_ROOT')

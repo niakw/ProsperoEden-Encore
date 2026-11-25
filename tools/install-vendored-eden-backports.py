@@ -3105,6 +3105,38 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'bsd_data_path_preserved=1', 'nsd_resolve_preserved=1',
               'sfdnsres_untouched=1')
 
+        # Complete SFDNSRES dispatch while preserving the real forward resolver.
+        # Host-error/cancel are functional; reverse/private/options stay fail-closed.
+        sfdnsres_contracts = {
+            'src/core/hle/service/sockets/sfdnsres.cpp':
+                (18710, 'ee1e606c9d73c32c601f3fc73b539aa74b40ae59a367418a1f01a8c7b6731b0d',
+                 '4680cf17e296597d514fb602d1995a16ce71293b7f10d298984548fabc3f0313'),
+            'src/core/hle/service/sockets/sfdnsres.h':
+                (1331, '83ba9a673a9f8e1ce248abaaf5f7fa57dab36b58ef8479a5e92b58c74bd44e2a',
+                 'b1ded778c122781e3ed4113a38a031ca40a2e82450e8b074ed85cf1d89f81143'),
+        }
+        for rel,(after_bytes,after_hash,upstream_hash) in sfdnsres_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('SFDNSRES active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('SFDNSRES manifest drift',rel)
+            observed[rel]=spec['entries'][rel]
+        assert (ACTIVE/'src/core/CMakeLists.txt').read_text().count('hle/service/sockets/sfdnsres.cpp')==1
+        sfdns=(ACTIVE/'src/core/hle/service/sockets/sfdnsres.cpp').read_text()
+        assert sfdns.count('&SFDNSRES::GetHostStringErrorRequest')==1
+        assert sfdns.count('&SFDNSRES::RequestCancelHandleRequest')==1
+        assert sfdns.count('&SFDNSRES::CancelRequest')==1
+        assert sfdns.count('&SFDNSRES::RejectUnsupportedResolverExtension')==7
+        assert sfdns.count('&DNS_PRIV::RejectUnsupportedPrivateDns')==3
+        assert sfdns.count('&SFDNSRES::GetHostByNameRequest')>=2
+        assert sfdns.count('&SFDNSRES::GetAddrInfoRequest')>=2
+        assert sfdns.count('Network::GetAddressInfo(')>=2
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', sfdns))==0
+        print('NS1_SFDNSRES_721_SOURCE_PASS',
+              'physical_closed=13', 'functional=3', 'fail_closed=10',
+              'forward_dns_preserved=1', 'reverse_dns_fabricated=0')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

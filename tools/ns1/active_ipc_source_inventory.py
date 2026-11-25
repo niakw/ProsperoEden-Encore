@@ -80,7 +80,7 @@ for marker in (
     "set(EDEN_REVIEWED_DUAL_NPDM ON)",
     "r23_audren_debug_ps5.cpp",
     "r23_bcat_delivery_cache_file_ps5.cpp",
-    "encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp",
+    "hle/service/aoc/addon_content_manager.cpp",
     "encore-active/eden-core/src/core/hle/service/ssl",
     "encore-active/eden-core/src/core/hle/service/sockets/bsd.cpp",
     "encore-active/ns2-runtime/gamechat",

@@ -4370,6 +4370,33 @@ private:
               'commands=21', 'switch_rail_mcu_only=1', 'generic_hid_untouched=1',
               'fake_success=0', 'pinned_sources=immutable')
 
+        # nvgem:c / nvgem:cd are NVIDIA GPU-exception control and core-dump
+        # diagnostics, not nvdrv IOCTL/GPU execution. Reverse only the local
+        # GEM classes and require the rest of nvdrv.cpp to match pinned Eden.
+        nvdrv_rel = 'src/core/hle/service/nvdrv/nvdrv.cpp'
+        nvdrv_active = (ACTIVE / nvdrv_rel).read_bytes()
+        assert len(nvdrv_active) == 13593 and sha(nvdrv_active) == (
+            '31b712f1e03f8b51fbe91335c626ce7d6488cff84a12ddadcb9c1d7bf050d534')
+        assert spec['entries'][nvdrv_rel] == {
+            'active':'31b712f1e03f8b51fbe91335c626ce7d6488cff84a12ddadcb9c1d7bf050d534',
+            'bytes':13593,
+            'upstream':'f928a12982ee825b5e2925f7ce265c7195fd6670cebf5b115c250a69ebb49a7b',
+        }
+        nvdrv_text = nvdrv_active.decode('utf-8')
+        nv_old = "class NVGEM_C final : public ServiceFramework<NVGEM_C> {\npublic:\n    explicit NVGEM_C(Core::System& system_)\n        : ServiceFramework{system_, \"nvgem:c\"}\n    {\n        static const FunctionInfo functions[] = {\n            {0, nullptr, \"Initialize\"},\n            {1, nullptr, \"GetEventHandle\"},\n            {2, nullptr, \"ControlNotification\"},\n            {3, nullptr, \"SetNotificationPerm\"},\n            {4, nullptr, \"SetCoreDumpPerm\"},\n            {5, nullptr, \"GetAruid\"},\n            {6, nullptr, \"Reset\"},\n            {7, nullptr, \"GetAruid2\"},\n        };\n        RegisterHandlers(functions);\n    }\n};\n\nclass NVGEM_CD final : public ServiceFramework<NVGEM_CD> {\npublic:\n    explicit NVGEM_CD(Core::System& system_)\n        : ServiceFramework{system_, \"nvgem:cd\"}\n    {\n        static const FunctionInfo functions[] = {\n            {0, nullptr, \"Initialize\"},\n            {1, nullptr, \"GetAruid\"},\n            {2, nullptr, \"ReadNextBlock\"},\n            {3, nullptr, \"GetNextBlockSize\"},\n            {4, nullptr, \"ReadNextBlock2\"},\n        };\n        RegisterHandlers(functions);\n    }\n};\n\n"
+        nv_new = "class NVGEM_C final : public ServiceFramework<NVGEM_C> {\npublic:\n    explicit NVGEM_C(Core::System& system_)\n        : ServiceFramework{system_, \"nvgem:c\"}\n    {\n        static const FunctionInfo functions[] = {\n            {0, &NVGEM_C::UnsupportedGemControl, \"Initialize\"},\n            {1, &NVGEM_C::UnsupportedGemControl, \"GetEventHandle\"},\n            {2, &NVGEM_C::UnsupportedGemControl, \"ControlNotification\"},\n            {3, &NVGEM_C::UnsupportedGemControl, \"SetNotificationPerm\"},\n            {4, &NVGEM_C::UnsupportedGemControl, \"SetCoreDumpPerm\"},\n            {5, &NVGEM_C::UnsupportedGemControl, \"GetAruid\"},\n            {6, &NVGEM_C::UnsupportedGemControl, \"Reset\"},\n            {7, &NVGEM_C::UnsupportedGemControl, \"GetAruid2\"},\n        };\n        RegisterHandlers(functions);\n    }\n\nprivate:\n    void UnsupportedGemControl(HLERequestContext& ctx) {\n        // GPU exception management/control is diagnostic state. It is separate\n        // from nvdrv device IOCTL submission and synchronization.\n        IPC::ResponseBuilder rb{ctx, 2};\n        rb.Push(IPC::ResultNotSupported);\n    }\n};\n\nclass NVGEM_CD final : public ServiceFramework<NVGEM_CD> {\npublic:\n    explicit NVGEM_CD(Core::System& system_)\n        : ServiceFramework{system_, \"nvgem:cd\"}\n    {\n        static const FunctionInfo functions[] = {\n            {0, &NVGEM_CD::UnsupportedGemCoreDump, \"Initialize\"},\n            {1, &NVGEM_CD::UnsupportedGemCoreDump, \"GetAruid\"},\n            {2, &NVGEM_CD::UnsupportedGemCoreDump, \"ReadNextBlock\"},\n            {3, &NVGEM_CD::UnsupportedGemCoreDump, \"GetNextBlockSize\"},\n            {4, &NVGEM_CD::UnsupportedGemCoreDump, \"ReadNextBlock2\"},\n        };\n        RegisterHandlers(functions);\n    }\n\nprivate:\n    void UnsupportedGemCoreDump(HLERequestContext& ctx) {\n        // nvgem:cd is the NVIDIA GEM core-dump stream, not a GPU execution path.\n        IPC::ResponseBuilder rb{ctx, 2};\n        rb.Push(IPC::ResultNotSupported);\n    }\n};\n\n"
+        assert nvdrv_text.count(nv_new) == 1
+        nvdrv_prior = nvdrv_text.replace(nv_new, nv_old, 1).encode('utf-8')
+        assert len(nvdrv_prior) == 12729 and sha(nvdrv_prior) == (
+            'f928a12982ee825b5e2925f7ce265c7195fd6670cebf5b115c250a69ebb49a7b')
+        assert nvdrv_prior == (stage / nvdrv_rel).read_bytes(), (
+            'NVGEM diagnostic reverse changed core nvdrv GPU paths')
+        observed[nvdrv_rel] = spec['entries'][nvdrv_rel]
+        print('NS1_NVGEM_DIAGNOSTIC_FAIL_CLOSED_EXACT_REVERSE_PASS',
+              'commands=13', 'nvgem_control=8', 'nvgem_coredump=5',
+              'nvdrv_ioctl_untouched=1', 'gpu_submission_untouched=1',
+              'fake_success=0', 'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

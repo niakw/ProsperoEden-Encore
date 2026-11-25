@@ -5015,6 +5015,20 @@ if(PS5_NATIVE)
         list(APPEND eden_native_bcat_sources "${eden_bcat_active}")
     endforeach()
     set_property(TARGET core PROPERTY SOURCES "${eden_native_bcat_sources}")
+    # Keep the service creator's ProgressServiceBackend object and the
+    # private friend-access ABI consistent for every BCAT compilation unit.
+    # The two maintained headers only add the legacy progress IPC member
+    # and its friendship; the original vendor SDK remains immutable.
+    set(EDEN_NATIVE_BCAT_HEADER_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/bcat")
+    foreach(eden_bcat_header IN ITEMS
+            "core/hle/service/bcat/service_creator.h"
+            "core/hle/service/bcat/backend/backend.h")
+        if(NOT EXISTS "${EDEN_NATIVE_BCAT_HEADER_ROOT}/${eden_bcat_header}")
+            message(FATAL_ERROR "Native BCAT progress ABI header absent: ${eden_bcat_header}")
+        endif()
+    endforeach()
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NATIVE_BCAT_HEADER_ROOT}")
 endif()
 
 # NX is an ordinary production NS1/NS2 game container, with Lichii's

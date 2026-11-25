@@ -8,6 +8,27 @@ refs=$(dirname "$root")
 export PS5_MESA_FORK="$refs/mihawk-mesa-review"
 export PS5_PAYLOAD_SDK_FORK="$refs/mihawk-sdk-review"
 vulkan="$refs/mihawk-vulkan-review"
+
+# Mihawk's pinned setup scripts retain upstream wget fallbacks for zlib and
+# the base PayloadSDK release. Encore already restores those exact archives
+# from vendor/objects while hydrating the main boilerplate. Seed the RADV cache
+# from those verified local bytes so the standard PS5 build never reaches the
+# upstream network branches.
+bootstrap="$refs/ps5-native-app-boilerplate/.deps/native"
+zlib_archive="$bootstrap/zlib/zlib-1.3.2.tar.gz"
+sdk_archive="$bootstrap/ps5-payload-sdk.zip"
+[[ -f "$zlib_archive" && -f "$sdk_archive" ]] || {
+    echo "Vendored RADV bootstrap archives are missing; run offline make deps first" >&2
+    exit 2
+}
+printf '%s  %s\n' bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16 "$zlib_archive" \
+    | sha256sum --check --strict >/dev/null
+printf '%s  %s\n' 8cfbc7cd5811e719eb4f0c47eea668d3dc7b40bc8ab11c4a5031d40c23ec02da "$sdk_archive" \
+    | sha256sum --check --strict >/dev/null
+mkdir -p "$vulkan/.deps/native/zlib"
+install -m 0644 "$zlib_archive" "$vulkan/.deps/native/zlib/zlib-1.3.2.tar.gz"
+install -m 0644 "$sdk_archive" "$vulkan/.deps/native/ps5-payload-sdk.zip"
+
 pin() {
     python3 - "$root/tools/deps.json" "$1" <<'PY'
 import json, sys

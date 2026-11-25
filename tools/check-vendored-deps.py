@@ -80,6 +80,13 @@ with tempfile.TemporaryDirectory(prefix='eden-vendor-airgap-') as tmp:
  assert (isolated/'.deps/fmt-12.1.0.tar.gz').is_file()
  assert deps.revision(isolated/'.deps/zbic-11b08f27')=='11b08f2712264bbed731545085cbd9702096ceb7'
  assert deps.revision(isolated/'repos/encore-overrides-review')=='95f21edf13bfbd2888602f2b419dd856d6d0fbfa'
+ # Vendored restoration is a true air-gap path: it must not even leave an
+ # upstream remote configured that a later generic Git command could contact.
+ import subprocess
+ for checkout in (isolated/'.deps/zbic-11b08f27',
+                  isolated/'repos/encore-overrides-review'):
+  remotes=subprocess.check_output(['git','-C',str(checkout),'remote'],text=True).strip()
+  assert remotes=='',f'{checkout}: vendored restore unexpectedly configured remote {remotes!r}'
  boilerplate=next(x for x in ITEMS if x['name']=='boilerplate')
  sdk=boilerplate['setup_prefetch'][1]
  archive=deps.download(sdk['url'],'sha256',sdk['sha256'],'boilerplate-ps5-payload-sdk.zip')

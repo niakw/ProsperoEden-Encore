@@ -3450,11 +3450,11 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         # a maintained overlay; pinned vendor/sources/eden stays byte-identical.
         cm_rel = 'src/core/hle/service/ns/content_management_interface.cpp'
         cm_active = (ACTIVE / cm_rel).read_bytes()
-        assert len(cm_active) == 7053 and sha(cm_active) == (
-            '1c95d07a05b6b61cc741e12bd17bf4ba57f305f686f956c42ef586dc61c1aff7')
+        assert len(cm_active) == 6383 and sha(cm_active) == (
+            '7a9393a9101f85465b868a3c89c909a6f7482186c58dfa74f2a9f8be637de3d8')
         assert spec['entries'][cm_rel] == {
-            'active':'1c95d07a05b6b61cc741e12bd17bf4ba57f305f686f956c42ef586dc61c1aff7',
-            'bytes':7053,
+            'active':'7a9393a9101f85465b868a3c89c909a6f7482186c58dfa74f2a9f8be637de3d8',
+            'bytes':6383,
             'upstream':'83a8eae9ea9e50190d72315fd3d838cc1f72c3a6eec79c353c9510faf1b9d4a2',
         }
         cm_stage = (stage / cm_rel).read_text()

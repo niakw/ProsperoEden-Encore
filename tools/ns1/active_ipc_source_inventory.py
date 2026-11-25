@@ -153,7 +153,7 @@ for rel, family, tables, commands, nulls, origin, chosen in by_owner:
 # an older service owner.
 expected_final = {
     "hle/service/aoc/addon_content_manager.cpp": (1, 22, 0),
-    "hle/service/am/service/application_functions.cpp": (1, 69, 4),
+    "hle/service/am/service/application_functions.cpp": (1, 69, 3),
     "hle/service/am/service/application_proxy.cpp": (1, 11, 0),
     "hle/service/am/service/application_proxy_service.cpp": (1, 2, 0),
     "hle/service/am/service/self_controller.cpp": (1, 51, 0),

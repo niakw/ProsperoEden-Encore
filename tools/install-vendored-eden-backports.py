@@ -1330,10 +1330,39 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # actual main applet rather than leaving an indexed IMPL-SRC false
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_terminate_overlay_head = (ACTIVE / ns_rel).read_bytes()
+        ns_terminate_system_applet_head = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_terminate_system_applet_head) == 81700 and sha(ns_terminate_system_applet_head) == (
+            'a8dde761f733fe141450a59d93608ba4850bc5b72d4f3b3462f7f48a13e9f053')
+        assert spec['entries'][ns_rel]['active'] == sha(ns_terminate_system_applet_head)
+        ns_terminate_system_applet_pointer = (
+            '{305, D<&IApplicationManagerInterface::TerminateSystemApplet>, '
+            '"TerminateSystemApplet"}')
+        ns_terminate_system_applet_pointer_old = '{305, nullptr, "TerminateSystemApplet"}'
+        ns_terminate_system_applet_method = """Result IApplicationManagerInterface::TerminateSystemApplet(u64 program_id) {
+    constexpr u64 QLaunchProgramId = static_cast<u64>(AM::AppletProgramId::QLaunch);
+    LOG_DEBUG(Service_NS, "called, program_id={:016X}", program_id);
+    R_UNLESS(program_id == QLaunchProgramId, ResultUnknown);
+
+    for (const auto& process : system.Kernel().GetProcessList()) {
+        if (process->GetProgramId() == program_id) {
+            R_RETURN(process->Terminate(system.Kernel()));
+        }
+    }
+    R_THROW(ResultUnknown);
+}
+
+"""
+        ns_terminate_system_applet_text = ns_terminate_system_applet_head.decode('utf-8')
+        assert ns_terminate_system_applet_text.count(ns_terminate_system_applet_pointer) == 1
+        assert ns_terminate_system_applet_text.count(ns_terminate_system_applet_method) == 1
+        ns_terminate_overlay_head = ns_terminate_system_applet_text.replace(
+            ns_terminate_system_applet_pointer, ns_terminate_system_applet_pointer_old, 1).replace(
+            ns_terminate_system_applet_method, '', 1).encode('utf-8')
         assert len(ns_terminate_overlay_head) == 81133 and sha(ns_terminate_overlay_head) == (
             '2fc1905322de73ddb4ec6cb4a65fdf5500e33aaa0856b7891edfa6228123f0f8')
-        assert spec['entries'][ns_rel]['active'] == sha(ns_terminate_overlay_head)
+        print('NS1_NS_TERMINATE_SYSTEM_APPLET_EXACT_REVERSE_PASS',
+              'command=305', 'supported_program=QLaunch', 'kernel_process=real',
+              'event_observer_cleanup=1')
         ns_terminate_overlay_pointer = (
             '{307, D<&IApplicationManagerInterface::TerminateOverlayApplet>, '
             '"TerminateOverlayApplet"}')
@@ -1763,10 +1792,17 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_owner_prior = ns_text.encode('utf-8')
         assert len(ns_owner_prior) == 69013 and sha(ns_owner_prior) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
         ns_header_rel = 'src/core/hle/service/ns/application_manager_interface.h'
-        ns_header_terminate_overlay = (ACTIVE / ns_header_rel).read_bytes()
+        ns_header_terminate_system_applet = (ACTIVE / ns_header_rel).read_bytes()
+        assert len(ns_header_terminate_system_applet) == 9819 and sha(ns_header_terminate_system_applet) == (
+            '5e06d667846decb9c05fd1653b78f08350e3fc5e376c6a08a2c756cf08fb3eea')
+        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_terminate_system_applet)
+        ns_terminate_system_applet_decl = '    Result TerminateSystemApplet(u64 program_id);\n'
+        ns_header_terminate_system_applet_text = ns_header_terminate_system_applet.decode('utf-8')
+        assert ns_header_terminate_system_applet_text.count(ns_terminate_system_applet_decl) == 1
+        ns_header_terminate_overlay = ns_header_terminate_system_applet_text.replace(
+            ns_terminate_system_applet_decl, '', 1).encode('utf-8')
         assert len(ns_header_terminate_overlay) == 9769 and sha(ns_header_terminate_overlay) == (
             '37bfd388b1441ae9d3dbd81a3d6beb766f4cfc06f23e2ccbc736ba4762a7310c')
-        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_terminate_overlay)
         ns_terminate_overlay_decl = '    Result TerminateOverlayApplet(u64 program_id);\n'
         ns_header_terminate_overlay_text = ns_header_terminate_overlay.decode('utf-8')
         assert ns_header_terminate_overlay_text.count(ns_terminate_overlay_decl) == 1
@@ -1896,7 +1932,7 @@ static_assert(sizeof(ApplicationContentStorageRecord) == 0x18);
         ns_previous = (stage / ns_rel).read_bytes()
         assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
         assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_terminate_overlay_head)
+        assert spec['entries'][ns_rel]['active'] == sha(ns_terminate_system_applet_head)
         import re
         ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
         ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)

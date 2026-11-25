@@ -3624,3 +3624,19 @@ Vendor successeur : `f1d3c7f2cfc23836b1fe4020ba989b440da0fe62` (arbre `218870603
 **Inventaire physique attendu : 1 131 → 1 117 NULL.** CI requise pour confirmation.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — LDN monitor + NCM memory : palier 1 099 attendu
+
+Base précédente : **1 117 NULL attendus** après PM/PSC/TMA.
+
+Vendor successeur : `a1ae39a3ef6e56c88d47a6425a26ad71cf40f502` (arbre `e7060657a66ae43d2891ab8dc902f2aeb8318e41`).
+
+**18 NULL physiques** supplémentaires sont retirés :
+- LDN monitor **17** : `IMonitorService` 5, `ISfMonitorService` 1, `ISfServiceMonitor` 11. Ces interfaces de monitoring sans backend indépendant renvoient explicitement `ResultNotSupported`. Les services user/system, LANDiscovery, scan, create-network et connect/private-connect restent inchangés.
+- NCM **1** : `GetMemoryReport` fail-closed. `ResolveDataPath` et `ResolveAddOnContentPath` restent volontairement non traités car ils peuvent affecter le chargement de contenu.
+
+Hashes actifs/upstream, CMake et nombres de bindings sont verrouillés par le moteur.
+
+**Inventaire physique attendu : 1 117 → 1 099 NULL / 6 447 slots.** CI requise pour confirmation.
+
+Build PS5 et test console : non exécutés.

@@ -31,6 +31,11 @@ end = active.index(method_end, start)
 method = active[start:end]
 branch_start = "    if (indirect_address) {\n"
 branch_end = "    const std::array<u32, 3> dim{"
+direct_end = "    // Log compute dispatch"
+direct_chunk = method[method.index(branch_end):method.index(direct_end)]
+assert direct_chunk.count("scheduler.Record(") == 1
+assert "Lichii #1246" in direct_chunk
+assert direct_chunk.index("cmdbuf.PipelineBarrier") < direct_chunk.index("if (!pipeline->IsBound()) {")
 assert method.count(branch_start) == method.count(branch_end) == 1
 chunk = method[method.index(branch_start):method.index(branch_end)]
 assert chunk.count("buffer_cache.ObtainBuffer(*indirect_address, 12, sync_info, post_op)") == 1
@@ -39,6 +44,8 @@ assert chunk.count("scheduler.RequestOutsideRenderPassOperationContext();") == 1
 assert chunk.count("indirect_buffer = buffer->Handle()") == 1
 assert chunk.index("if (!buffer || buffer->Handle() == VK_NULL_HANDLE) {") < chunk.index("scheduler.RequestOutsideRenderPassOperationContext();")
 assert chunk.index("scheduler.RequestOutsideRenderPassOperationContext();") < chunk.index("indirect_buffer = buffer->Handle()")
+assert chunk.count("scheduler.Record(") == 1
+assert chunk.index("COMPUTE_INPUT_BARRIER") < chunk.index("if (!pipeline->IsBound()) {")
 assert "#ifdef PS5_NATIVE\n        // A guest indirect-command address" in chunk
 assert "#endif\n        scheduler.RequestOutsideRenderPassOperationContext();" in chunk
 
@@ -141,14 +148,15 @@ int main(){
     Cache with_barriers;
     with_barriers.Dispatch();
     assert(with_barriers.scheduler.events.contexts==1);
-    assert(with_barriers.scheduler.events.records==2);
+    assert(with_barriers.scheduler.events.records==1);
     assert(with_barriers.scheduler.events.dispatches==1);
     assert(with_barriers.scheduler.events.barriers==2);
 
     Cache not_bound;
     not_bound.pipe.bound=false;
     not_bound.Dispatch();
-    assert(not_bound.scheduler.events.records==2);
+    assert(not_bound.scheduler.events.records==1);
+    assert(not_bound.scheduler.events.barriers==1);
     assert(not_bound.scheduler.events.dispatches==0);
     Eden::DevVulkan::compute_barriers=false;
 }
@@ -169,4 +177,4 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-indirect-compute-") as directo
             assert built.returncode==0,(native,opt,built.stderr[-6500:])
             ran=subprocess.run([str(exe)],capture_output=True,text=True,timeout=20)
             assert ran.returncode==0,(native,opt,ran.stderr[-5000:])
-print("F07_COMPUTE_INDIRECT_BINDING_PASS native_null_reject=1 native_null_vk_reject=1 no_barrier_on_null=1 valid_dispatch=1 full_barriers=1 unbound_pipeline=1 desktop_original=1 O0=1 O2=1")
+print("F07_COMPUTE_INDIRECT_BINDING_PASS native_null_reject=1 native_null_vk_reject=1 no_barrier_on_null=1 valid_dispatch=1 full_barriers=1 folded_scheduler_command=1 unbound_pipeline=1 desktop_original=1 O0=1 O2=1")

@@ -1423,9 +1423,38 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # then demand byte-exact parity with the previous maintained source.
         wlan_rel = 'src/core/hle/service/wlan/wlan.cpp'
         wlan_current = (ACTIVE / wlan_rel).read_bytes()
-        assert len(wlan_current) == 18111 and sha(wlan_current) == '46fe01d4bb77e8a72f2c9d61972b0437684dcc29050983db3a31499fc64ebfbe'
+        assert len(wlan_current) == 18713 and sha(wlan_current) == 'b71e93829ea39fc9ae9eea3d045e78a57d809d72d46c21a6bd10fd7a423cdfee'
         assert spec['entries'][wlan_rel]['active'] == sha(wlan_current)
         wlan_text = wlan_current.decode('utf-8')
+        creator_gated = (
+            '    if (FirmwareManager::GetFirmwareVersion(system).first.major >= 15) {\n'
+            '        server_manager->RegisterNamedService("wlan:p",\n'
+            '                                             std::make_shared<IPrivateServiceCreator>(system), 30);\n'
+            '        server_manager->RegisterNamedService("wlan:nd",\n'
+            '                                             std::make_shared<ISfDriverServiceCreator>(system), 5);\n'
+            '    }'
+        )
+        creator_legacy = (
+            '    server_manager->RegisterNamedService("wlan:p", std::make_shared<IPrivateServiceCreator>(system), 30);\n'
+            '    server_manager->RegisterNamedService("wlan:nd", std::make_shared<ISfDriverServiceCreator>(system), 5);'
+        )
+        assert wlan_text.count(creator_gated) == 1
+        wlan_text = wlan_text.replace(creator_gated, creator_legacy, 1)
+        creator_method = (
+            '\nprivate:\n'
+            '    void RejectUnavailableCreator(HLERequestContext& ctx) {\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(ResultUnknown);\n'
+            '    }\n'
+        )
+        for cls, count in (('IPrivateServiceCreator', 2), ('ISfDriverServiceCreator', 1)):
+            pointer = '&' + cls + '::RejectUnavailableCreator'
+            assert wlan_text.count(pointer) == count, ('WLAN creator pointer drift', cls)
+            wlan_text = wlan_text.replace(pointer, 'nullptr')
+        assert wlan_text.count(creator_method) == 2
+        wlan_text = wlan_text.replace(creator_method, '')
+        wlan_creator_prev = wlan_text.encode('utf-8')
+        assert len(wlan_creator_prev) == 18111 and sha(wlan_creator_prev) == '46fe01d4bb77e8a72f2c9d61972b0437684dcc29050983db3a31499fc64ebfbe'
         wlan_current_registers = "    // Horizon 15 replaced the six legacy WLAN endpoints with \"wlan\".\n    if (FirmwareManager::GetFirmwareVersion(system).first.major >= 15) {\n        server_manager->RegisterNamedService(\n            \"wlan\", std::make_shared<IGeneralServiceCreator>(system), 10);\n    } else {\n        server_manager->RegisterNamedService(\"wlan:lcl\", std::make_shared<ILocalManager>(system), 10);\n        server_manager->RegisterNamedService(\"wlan:lg\", std::make_shared<ILocalGetFrame>(system), 10);\n        server_manager->RegisterNamedService(\"wlan:lga\", std::make_shared<ILocalGetActionFrame>(system), 10);\n        server_manager->RegisterNamedService(\"wlan:sg\", std::make_shared<ISocketGetFrame>(system), 10);\n        server_manager->RegisterNamedService(\"wlan:soc\", std::make_shared<ISocketManager>(system), 10);\n        server_manager->RegisterNamedService(\"wlan:dtc\", std::make_shared<IDetectManager>(system), 4);\n    }"
         wlan_legacy_registers = "    server_manager->RegisterNamedService(\"wlan:lcl\", std::make_shared<ILocalManager>(system), 10);\n    server_manager->RegisterNamedService(\"wlan:lg\", std::make_shared<ILocalGetFrame>(system), 10);\n    server_manager->RegisterNamedService(\"wlan:lga\", std::make_shared<ILocalGetActionFrame>(system), 10);\n    server_manager->RegisterNamedService(\"wlan:sg\", std::make_shared<ISocketGetFrame>(system), 10);\n    server_manager->RegisterNamedService(\"wlan:soc\", std::make_shared<ISocketManager>(system), 10);\n    server_manager->RegisterNamedService(\"wlan:dtc\", std::make_shared<IDetectManager>(system), 4);"
         assert wlan_text.count(wlan_current_registers) == 1
@@ -1720,7 +1749,7 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
             'src/core/hle/service/mnpp/mnpp.cpp': (2706, '1c0423d7b471cb4c0fde484bc622637504d8e063b9ce5f0bbfff984ce122d859',
                                                     3558, 'a14e5af5f2162dd500496c3ddfad34913077d4723aa9e7083702593e0bb5b650'),
             'src/core/hle/service/fgm/fgm.cpp': (2503, '8aecb71864066ab38ed1f88b67a34d56e86237c917ce21b33c3eeda48fbdf37d',
-                                                  1992, '83f59d8c9ceec1f817b496087602cd9002378f12012508cd8d25c74aee01b7de'),
+                                                  2278, 'ed94950adff398bc825051e46386fe0af4c8eeedd7859fc1890bcde7eaee82e4'),
             'src/core/hle/service/ptm/ptm.cpp': (1855, 'ce5f5c76f5b97c70c9635575db979fe8920ad4c6a461eaa0cc3bcba07969be89',
                                                   803, 'a8b2537f5a61ec82d04947a50e5b409762a84af57ea5d7b6e3629c579856181f'),
             'src/core/hle/service/i2c/i2c.cpp': (3499, '56458000c97abab5cc361ee859f8c8fd3c750dc01d260f9d78b5fc8167fd722b',
@@ -1789,6 +1818,15 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         line = '    server_manager->RegisterNamedService("fgm:dbg", std::make_shared<FGM_DBG>(system));\n'
         assert expected.count(line) == 1
         expected = expected.replace(line, '', 1)
+        fgm_method = (
+            '\nprivate:\n'
+            '    void RejectUnavailableClockRequest(HLERequestContext& ctx) {\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(ResultUnknown);\n'
+            '    }\n'
+        )
+        expected = bind_null_class(expected, 'IRequest', 'RejectUnavailableClockRequest',
+                                   4, '\nclass FGM final', fgm_method)
         assert expected.encode() == (ACTIVE/rel).read_bytes()
         observed[rel] = spec['entries'][rel]
 
@@ -1866,7 +1904,7 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         prior = (stage/rel).read_bytes()
         assert len(prior) == 10435 and sha(prior) == 'afae15d9fc27afccce5f830aae5e7f040ef70d5135a719e210bdadf35af54bc8'
         current = (ACTIVE/rel).read_bytes()
-        assert len(current) == 11176 and sha(current) == '9a1beab08458c540b290f7e819815e4ef68cd82d14e4a63673ebb9828901dad3'
+        assert len(current) == 12012 and sha(current) == 'c1f1ef432dbd348f9fdede30a8b92f465bb6f2f6a6959b4cf011c716e9d1d4f1'
         assert spec['entries'][rel]['active'] == sha(current)
         assert spec['entries'][rel]['bytes'] == len(current)
         expected = prior.decode()
@@ -1889,12 +1927,30 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         )
         assert expected.count(old_reg) == 1
         expected = expected.replace(old_reg, new_reg, 1)
+        user_shim_method = (
+            '\n    void RejectUnavailableSaveData(HLERequestContext& ctx) {\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(IPC::ResultNotSupported);\n'
+            '    }\n'
+        )
+        expected = bind_null_class(expected, 'IUserShimScopedObject',
+                                   'RejectUnavailableSaveData', 5,
+                                   '\nclass IUserService', user_shim_method)
+        system_shim_method = (
+            '\n    void RejectUnavailableSystemShim(HLERequestContext& ctx) {\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(IPC::ResultNotSupported);\n'
+            '    }\n'
+        )
+        expected = bind_null_class(expected, 'ISystemShimScopedObject',
+                                   'RejectUnavailableSystemShim', 7,
+                                   '\nclass ISystemService', system_shim_method)
         assert expected.encode() == current
         observed[rel] = spec['entries'][rel]
 
         print('NS1_CLOUD_DEBUG_NETWORK_BATCH_EXACT_REPLAY_PASS',
-              'physical_closed=51', 'mnpp=11', 'fgm_dbg_removed=3',
-              'ptm_nonretail_removed=4', 'i2c=6', 'ngct_s=9', 'ldn_sf=18')
+              'physical_closed=67', 'mnpp=11', 'fgm_dbg_removed=3', 'fgm_request=4',
+              'ptm_nonretail_removed=4', 'i2c=6', 'ngct_s=9', 'stpl=12', 'ldn_sf=18')
 
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))

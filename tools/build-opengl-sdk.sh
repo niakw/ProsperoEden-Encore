@@ -177,9 +177,10 @@ EOF_CROSS
     fi
 fi
 
-# Upstream's own fetcher pins and hashes Mesa/compiler dependencies. Building the SDK here keeps
-# Encore on a reviewed source commit instead of silently consuming an untagged moving HEAD.
-python3 "$source_dir/tools/fetch-sources.py"
+# All mandatory repositories, the exact PSBC patch and Mesa 26.2 sources
+# were staged above from vendor-owned bytes. Never invoke the normal upstream
+# fetch mode in the standard PS5 build; its only remaining use here is the
+# explicit offline --verify-psbc check after temporary build patches are restored.
 
 # Mesa 26.2 declares display-info, SPIRV-Tools and lm-sensors as optional
 # feature options. The frozen PS5 OpenGL profile uses softpipe only, no

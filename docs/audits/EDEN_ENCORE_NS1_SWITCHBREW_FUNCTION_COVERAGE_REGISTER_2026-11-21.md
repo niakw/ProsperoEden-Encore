@@ -3510,3 +3510,15 @@ Vendor `b57110e18a26f3a4e518765a02726579866d02c4` : `IApplicationManagerInterfac
 **Inventaire physique attendu : 1 306 → 1 305.** Ce slot est un handler fonctionnel, pas un NOOP/rejet. Le compteur historique reste à rapprocher avant modification afin d'éviter un double comptage d'une entrée précédemment classée IMPL-SRC par analyse de méthode.
 
 Build PS5 et validation console : non exécutés.
+
+### 2026-11-25 — LDN ConnectPrivate : 2 handlers fonctionnels réels
+
+Vendor `9aeb0c4c87c3776318378084eb1803f627b0d694` (arbre `743adac5cc038ec8fb10e66777addfcec4ba3656`). Les cmd303 `ConnectPrivate` de `IUserLocalCommunicationService` et `ISystemLocalCommunicationService` passent de `nullptr` à des handlers CMIF réels.
+
+L'ABI suit HOS : `SecurityConfig + SecurityParameter + UserConfig + s32 LocalCommunicationVersion + ConnectOption + NetworkConfig`. Le nouveau `LANDiscovery::ConnectPrivate` recherche dans les résultats de scan une entrée correspondant au `SessionId`, à l'`IntentId` (LocalCommunicationId + SceneId), au paramètre/mode de sécurité et au canal demandé ; aucun IP hôte n'est fabriqué. En cas de match, le chemin appelle le même `LANDiscovery::Connect` utilisé par cmd302 ; en l'absence de réseau réellement découvert, il renvoie `ResultConnectionFailed`. La version signée est bornée avant conversion `u16`.
+
+Six overlays natifs (LANDiscovery cpp/h + user cpp/h + system cpp/h) ont des couples SHA-256 upstream/active exacts. Le replay moteur reconstruit les six fichiers bit-à-bit, vérifie la sélection CMake et les deux bindings cmd303. Références croisées : SwitchBrew décrit l'ABI ConnectPrivate actuelle ; Ryujinx expose la même requête 0xBC.
+
+**Inventaire physique attendu : 1 305 → 1 303 `nullptr`.** Ces deux entrées sont des handlers fonctionnels, pas des NOOP/rejets. Le compteur historique reste à rapprocher ligne-à-ligne avant décrément.
+
+Build PS5 et validation console : non exécutés.

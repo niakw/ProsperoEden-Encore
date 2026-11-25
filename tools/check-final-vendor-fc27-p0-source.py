@@ -117,10 +117,14 @@ selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text
 # shutdown owner, VI2 event owner and their existing source contracts).
 # Seal the complete vendor tree and changed blobs BEFORE extending the
 # historical checked-pin list; never equate this to a console pass.
-if selected in {"7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "6d9fc80860ea4324b68b433492ad15e34c35a81d"}:
+if selected in {"7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "6d9fc80860ea4324b68b433492ad15e34c35a81d", "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee"}:
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == ("0ee1ae75649352ed8ddc79271202af9afca258b2" if selected == "6d9fc80860ea4324b68b433492ad15e34c35a81d" else "9e3fd85b084aa76a39ab4c2b8a96123550643e17")
+    ).strip() == {
+        "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac": "9e3fd85b084aa76a39ab4c2b8a96123550643e17",
+        "6d9fc80860ea4324b68b433492ad15e34c35a81d": "0ee1ae75649352ed8ddc79271202af9afca258b2",
+        "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee": "c919c45985060dc3ccee7c958227d2f226422691",
+    }[selected]
     for relative, expected in {
         "encore-active/ns2-runtime/process/core/core.cpp":
             "0f854ca3eab4dd0435d6ac58d401f8359301c168",
@@ -133,9 +137,12 @@ if selected in {"7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "6d9fc80860ea4324b68
     }.items():
         data = (V / relative).read_bytes()
         assert hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest() == expected, relative
-    if selected == "6d9fc80860ea4324b68b433492ad15e34c35a81d":
+    if selected in {"6d9fc80860ea4324b68b433492ad15e34c35a81d", "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee"}:
         changed = V / "encore-active/eden-core/src/core/hle/service/sm/sm.cpp"
         assert subprocess.check_output(["git", "hash-object", str(changed)], text=True).strip() == "2ef914e3f1b24442e1fa0130d5f8175111e7d316"
+    if selected == "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee":
+        changed = V / "encore-active/eden-core/src/common/multi_level_page_table.cpp"
+        assert subprocess.check_output(["git", "hash-object", str(changed)], text=True).strip() == "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f"
     REVIEWED_PINS.add(selected)
 
 gitlink_vendor_pin = selected

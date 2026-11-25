@@ -1609,11 +1609,17 @@ gpu_table_vendor_pin = checked_guest_cache_lock_vendor(subprocess.check_output([
 # The shipping vendor successor modifies only the SM teardown order.
 # Authenticate the entire new tree and its unique changed C++ blob before
 # reusing the predecessor's byte-identical GPU/FC27 source-owner receipts.
-if gpu_table_vendor_pin == "6d9fc80860ea4324b68b433492ad15e34c35a81d":
+if gpu_table_vendor_pin in {"6d9fc80860ea4324b68b433492ad15e34c35a81d", "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee"}:
     assert subprocess.check_output(
         ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
         text=True,
-    ).strip() == "0ee1ae75649352ed8ddc79271202af9afca258b2"
+    ).strip() == {
+        "6d9fc80860ea4324b68b433492ad15e34c35a81d": "0ee1ae75649352ed8ddc79271202af9afca258b2",
+        "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee": "c919c45985060dc3ccee7c958227d2f226422691",
+    }[gpu_table_vendor_pin]
+    if gpu_table_vendor_pin == "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee":
+        table = root / "vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"
+        assert subprocess.check_output(["git", "hash-object", str(table)], text=True).strip() == "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f"
     assert subprocess.check_output(
         ["git", "hash-object", str(root / "vendor" /
          "encore-active/eden-core/src/core/hle/service/sm/sm.cpp")],
@@ -1643,7 +1649,8 @@ if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
 else:
     assert post_f07_gpu_table_present == post_f07_gpu_table_owners
     page_table_bytes = (active / "eden-core/src/common/multi_level_page_table.cpp").read_bytes()
-    assert hashlib.sha1(b"blob " + str(len(page_table_bytes)).encode() + bytes([0]) + page_table_bytes).hexdigest() == "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f"
+    assert hashlib.sha1(b"blob " + str(len(page_table_bytes)).encode() + bytes([0]) + page_table_bytes).hexdigest() == (
+        "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f" if shipping_vendor == "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee" else "c55a55498fe300458800b646bfc295db11283b4a")
     assert 'list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")' in nov13_cmake
     assert 'list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")' in nov13_cmake
 print("ENCORE_POST_F07_GPU_PAGE_TABLE_OWNER_PASS", f"owners={len(post_f07_gpu_table_present)}")

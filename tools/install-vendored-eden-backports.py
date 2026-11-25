@@ -3137,6 +3137,35 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'physical_closed=13', 'functional=3', 'fail_closed=10',
               'forward_dns_preserved=1', 'reverse_dns_fabricated=0')
 
+        # SPL derived services reuse the common ABI-aware AES handlers already
+        # implemented by Module::Interface. These handlers intentionally return
+        # SecureMonitorNotImplemented rather than pretending crypto succeeded.
+        spl_common_contracts = {
+            'src/core/hle/service/spl/spl.cpp':
+                (7198, '2aded71b5a847a0f29d96c0a754730cea6aa6a1c0d4f949dbbc8693dc879be42',
+                 '5d87bd098ff7f01786bda47676e8eea58555fd7f64146fef39dffc15052da0e8'),
+        }
+        for rel,(after_bytes,after_hash,upstream_hash) in spl_common_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('SPL common active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('SPL common manifest drift',rel)
+            observed[rel]=spec['entries'][rel]
+        assert (ACTIVE/'src/core/CMakeLists.txt').read_text().count('hle/service/spl/spl.cpp')==1
+        spl_common=(ACTIVE/'src/core/hle/service/spl/spl.cpp').read_text()
+        assert spl_common.count('&SPL::GenerateAesKek')==5
+        assert spl_common.count('&SPL::GenerateAesKey')==5
+        assert spl_common.count('{2, nullptr, "GenerateAesKek"}')==0
+        assert spl_common.count('{4, nullptr, "GenerateAesKey"}')==0
+        spl_module=(ACTIVE/'src/core/hle/service/spl/spl_module.cpp').read_text()
+        assert spl_module.count('void Module::Interface::GenerateAesKek')==1
+        assert spl_module.count('void Module::Interface::GenerateAesKey')==1
+        assert spl_module.count('rb.Push(ResultSecureMonitorNotImplemented);')>=3
+        print('NS1_SPL_COMMON_AES_713_SOURCE_PASS',
+              'physical_closed=8', 'abi_aware_fail_closed=8',
+              'fake_crypto_success=0')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

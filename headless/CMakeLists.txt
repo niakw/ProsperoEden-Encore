@@ -4215,6 +4215,24 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         "hle/service/nvdrv/nvdrv_interface.cpp")
     list(APPEND eden_ns2_nvdrv_session_sources
         "${EDEN_NS2_NVDRV_SESSION_SOURCE}")
+    # The unified Module owner is tracked in the exact selected vendor tree.
+    # A restored upstream scratch archive may retain its old empty destructor.
+    # Select the complete matching source/header directly, like NVDRV above.
+    set(EDEN_NATIVE_NVDRV_MODULE_SOURCE "${EDEN_NS2_NVDRV_SESSION_ROOT}/nvdrv.cpp")
+    set(EDEN_NATIVE_NVDRV_MODULE_HEADER "${EDEN_NS2_NVDRV_SESSION_ROOT}/nvdrv.h")
+    if(NOT EXISTS "${EDEN_NATIVE_NVDRV_MODULE_SOURCE}" OR
+       NOT EXISTS "${EDEN_NATIVE_NVDRV_MODULE_HEADER}")
+        message(FATAL_ERROR "Missing native NVDRV Module lifetime owner")
+    endif()
+    list(FIND eden_ns2_nvdrv_session_sources
+        "hle/service/nvdrv/nvdrv.cpp" eden_native_nvdrv_module_index)
+    if(eden_native_nvdrv_module_index EQUAL -1)
+        message(FATAL_ERROR "Pinned NVDRV Module owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns2_nvdrv_session_sources "hle/service/nvdrv/nvdrv.cpp")
+    list(APPEND eden_ns2_nvdrv_session_sources "${EDEN_NATIVE_NVDRV_MODULE_SOURCE}")
+    configure_file("${EDEN_NATIVE_NVDRV_MODULE_HEADER}"
+        "${EDEN_NS2_NVDRV_SESSION_INCLUDE}/core/hle/service/nvdrv/nvdrv.h" COPYONLY)
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_nvdrv_session_sources}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_SESSION_INCLUDE}")
     # configure_file() already registers its input header for CMake reruns;

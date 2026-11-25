@@ -52,6 +52,10 @@ module_header=(r/'vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv.h').read_
 assert module_header.index('FilesContainerType open_files;') < module_header.index('KernelHelpers::ServiceContext service_context;')
 destructor=module_source.split('Module::~Module()',1)[1].split('NvResult Module::VerifyFD',1)[0]
 assert 'device.reset();' in destructor
+cmake=(r/'headless/CMakeLists.txt').read_text()
+assert 'list(REMOVE_ITEM eden_ns2_nvdrv_session_sources "hle/service/nvdrv/nvdrv.cpp")' in cmake
+assert 'list(APPEND eden_ns2_nvdrv_session_sources "${EDEN_NATIVE_NVDRV_MODULE_SOURCE}")' in cmake
+assert 'configure_file("${EDEN_NATIVE_NVDRV_MODULE_HEADER}"' in cmake
 fd_model=r'''
 #include <cassert>
 #include <memory>

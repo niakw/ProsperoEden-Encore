@@ -2368,6 +2368,76 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'lm_retail_noop=2', 'nfc_sessionless_noop=7',
               'local_reporting_preserved=1', 'nfc_pass_through_preserved=1')
 
+        # NS1 acceleration batch: preserve existing local backends while
+        # replacing unknown dispatch for unsupported cloud/capture/database APIs,
+        # and removing the non-retail ncm:v service from the shipping graph.
+        acceleration_contracts = {
+            'src/core/hle/service/olsc/daemon_controller.cpp':
+                (5116, '8b99413c7065bdaf4942d61fe3bab7f94e761ee8a34d35f96f8ec07178436966',
+                 5415, 'c348f3a7e34d0959b91421cee009b3f1b3c8dba64f8eb8f6950bb565e2d94ea3',
+                 '8b99413c7065bdaf4942d61fe3bab7f94e761ee8a34d35f96f8ec07178436966'),
+            'src/core/hle/service/olsc/daemon_controller.h':
+                (2578, '73d2ef77ba1b75fc47eada17fc61c8aff768e0c5de5522e843a62f67a3fa262c',
+                 2648, '9cc6b393992214c83309c7844ac04a64e9856b124b7f2096961859afe98cd55d',
+                 '73d2ef77ba1b75fc47eada17fc61c8aff768e0c5de5522e843a62f67a3fa262c'),
+            'src/core/hle/service/olsc/olsc.cpp':
+                (1426, 'adcf67ec6f356fca510b32c6743610bcf93c63992fe1819705d6544c3c1e093d',
+                 1679, 'f7bd765cae1ed45ac71033aaf0f00b276921335980b6ef26bd5f234123dcbd31',
+                 'adcf67ec6f356fca510b32c6743610bcf93c63992fe1819705d6544c3c1e093d'),
+            'src/core/hle/service/ncm/ncm.cpp':
+                (86771, '136b67a32b2024c4d9512455f4bb041624e2050b511264377470af631cb2d822',
+                 86340, '06f4fd31703a7360ab511b46661a722a319fc062b4e83afeea314e94e6772c4c',
+                 '136b67a32b2024c4d9512455f4bb041624e2050b511264377470af631cb2d822'),
+            'src/core/hle/service/mii/mii.cpp':
+                (15496, 'e3d71bc7189d3675e16aa03bc03ea032581249625cbe3c5dc330c86f1e2dacbd',
+                 15733, 'e636313feb0b2de5f8e8529f203fd03b2dd45b2346ada86551a1576c4ea09891',
+                 '5cefdb565a5abd82233f60875d7a0e93fa5d41f16d21df3a86b3cd73d50b826d'),
+            'src/core/hle/service/caps/caps_a.cpp':
+                (16414, '2dbc991930f11b5a1b9610466707bc0c98057d4b69ab2cf8bc2945a33fc41709',
+                 17390, 'bfa3e3f139b0830270b6502822e4d486b078f8ef2ac7dc891a65f2ad8a6464f2',
+                 '87b0ddbd87dfb576b3c3b04132ae4a2b5b4d82b2c47697b894d9e27144614070'),
+            'src/core/hle/service/caps/caps_a.h':
+                (5512, 'd3e63d69825bec5b2ca29d44b53e45257e62b1732255df3b1260ba041344fb18',
+                 5578, 'f88394b90e3d77394cbb406b043e09ffccd6b1009b39d6531edd7d882db3d447',
+                 '8cd0a0575d2bc624f0feed26930c4f9378a56f36afb287d1431a6d5ce76c3450'),
+            'src/core/hle/service/caps/caps_c.cpp':
+                (7549, '8e3d804411b15d512abf536914c4cc52ba81ec63e13900976d0b7024619b3eb6',
+                 8323, '9af073dde8ad2513c9cb98dfe125da39ac16d9bb408ff46bd7059f62f6154f3e',
+                 '4207c00db15d28949c3299ec36814d35ba77625594a454857bf1c97d4ca6bd95'),
+            'src/core/hle/service/caps/caps_c.h':
+                (1734, '74f731531f62a7e26e33a09ffd9623b0613f89075cacab1c052e062a0ef96722',
+                 1800, '5bc82758389b796d72e896654c4291dc9dfd33b1fa6afa11f6da7fb0d8d7b6fd',
+                 '2f6b8e4567725287f959b54928bd74f3516d6a67a404ea48a52d408eafab4d17'),
+        }
+        accel_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel,(prior_bytes,prior_hash,after_bytes,after_hash,upstream_hash) in acceleration_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('NS1 acceleration active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('NS1 acceleration manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert accel_cmake.count(rel.removeprefix('src/core/'))==1, ('NS1 acceleration CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        olsc=(ACTIVE/'src/core/hle/service/olsc/daemon_controller.cpp').read_text()
+        assert olsc.count('&IDaemonController::RejectUnsupportedRemoteSaveCommand')==2
+        olsc_root=(ACTIVE/'src/core/hle/service/olsc/olsc.cpp').read_text()
+        assert olsc_root.count('&ISProfileBgAgentForSystemProcess::RejectUnsupportedBgAgent')==1
+        mii=(ACTIVE/'src/core/hle/service/mii/mii.cpp').read_text()
+        assert mii.count('&IDatabaseService::RejectUnsupportedImportExport')==2
+        ncm=(ACTIVE/'src/core/hle/service/ncm/ncm.cpp').read_text()
+        assert 'class NCM_V final' not in ncm and 'RegisterNamedService("ncm:v"' not in ncm
+        caps_a=(ACTIVE/'src/core/hle/service/caps/caps_a.cpp').read_text()
+        caps_c=(ACTIVE/'src/core/hle/service/caps/caps_c.cpp').read_text()
+        assert caps_a.count('&IAlbumAccessorService::RejectUnavailableCaptureCommand')==15
+        assert caps_c.count('&IAlbumControlService::RejectUnavailableCaptureCommand')==11
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', caps_a))==0
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', caps_c))==0
+        print('NS1_ACCELERATION_OLSC_MII_NCM_CAPS_SOURCE_PASS',
+              'physical_closed=32', 'olsc=3', 'mii=2', 'ncm_nonretail=1',
+              'caps=26', 'local_album_handlers_preserved=1')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

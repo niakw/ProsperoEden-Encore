@@ -1100,6 +1100,23 @@ void CommitSparsePage(std::uintptr_t page) noexcept {
     range->owned[slot].store(true, std::memory_order_release);
 }
 
+// GPU page-table mappings have an NVDRV recovery path for resource pressure.
+// Unlike CommitSparsePage (kept fatal for unrelated sparse owners), this
+// variant leaves the failed slot unpublished and lets the mapping's caller
+// roll back its PTE reservation. Uses the same mutex/lifetime contract.
+bool TryCommitSparsePage(std::uintptr_t page) noexcept {
+    const std::lock_guard lock{sparse_mutex};
+    SparseRange* range = SparseRangeOf(page);
+    if (range == nullptr) return true; // dense fallback is already writable
+    const auto begin = range->begin.load(std::memory_order_relaxed);
+    const std::size_t slot = (page - begin) / SparseSlot;
+    if (range->owned[slot].load(std::memory_order_relaxed)) return true;
+    if (!OwnSlot(begin + slot * SparseSlot, &range->physical[slot])) return false;
+    sparse_committed.fetch_add(SparseSlot, std::memory_order_relaxed);
+    range->owned[slot].store(true, std::memory_order_release);
+    return true;
+}
+
 std::size_t SparseCommitSpan() noexcept {
     return SparseSlot;
 }

@@ -161,6 +161,14 @@ if selected == "ea4d39d5c9bd17074292b8c6f229c53954f8e21e":
     assert blob(V/"encore-active/eden-core/src/common/multi_level_page_table.cpp") == "6dd69f4b09aebc0eb7250975d35b34393e9f5516"
     assert blob(V/"encore-active/eden-core/src/video_core/memory_manager.cpp") == "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86"
     expected.add(selected)
+# Native GPU sparse table commits now expose a recoverable OOM.
+# Verify exact selected tree, shader, GPU table and engine allocator owner.
+if selected == "824a7342a58ad50d399ac0b215155884ced474ea":
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "ea890f123433198c30141f9320dd10090d80ecdc"
+    assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == "44b0edc24e847d4cbcd47de0ed86241787bda38a"
+    assert blob(V/"encore-active/eden-core/src/common/multi_level_page_table.cpp") == "87eed0b2319c719d27332c8e24f97a73e496f108"
+    assert blob(ROOT/"src/memory_pages.cpp") == "aeb7cc5430aefe11ee502ee5a53c70f3f909208f"
+    expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"

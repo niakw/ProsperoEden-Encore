@@ -1461,6 +1461,22 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
 
 
 
+
+        # HOS23 migrations expose mig:usr, not the unregistered mig:user.
+        # Reverse the service name first, then the legacy 36-slot closure.
+        mig_rel = 'src/core/hle/service/mig/mig.cpp'
+        mig_latest = (ACTIVE / mig_rel).read_bytes()
+        assert len(mig_latest) == 4474 and sha(mig_latest) == '95a32643a3c4cad5036a467b10a09274f1508ecd3e7eddfe06d69ea86312aa88'
+        assert spec['entries'][mig_rel]['active'] == sha(mig_latest)
+        mig_correct = 'server_manager->RegisterNamedService("mig:usr", std::make_shared<MIG_USR>(system));'
+        mig_wrong = 'server_manager->RegisterNamedService("mig:user", std::make_shared<MIG_USR>(system));'
+        mig_text = mig_latest.decode('utf-8')
+        assert mig_text.count(mig_correct) == 1 and mig_text.count(mig_wrong) == 0
+        mig_previous = mig_text.replace(mig_correct, mig_wrong, 1).encode('utf-8')
+        assert len(mig_previous) == 4475 and sha(mig_previous) == 'b53691cfaa0184daf17dd82987bf94fac66b2a0c1000ddb32529496fa7e35763'
+        print('NS1_MIG_SERVICE_NAME_EXACT_REVERSE_PASS', 'modern_ns1=mig:usr',
+              'phantom_service=mig:user', 'cloud_backend=unsupported')
+
         # NS1 migration, Switch PCIe and dynamic rights are native owners,
         # but lack corresponding PS5 backend devices or Nintendo services.
         # Prove every pointer and method mutation reverses to pinned bytes.
@@ -1474,11 +1490,12 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         )
         for doc in unsupported_sources:
             rel = doc['rel']
-            active = (ACTIVE / rel).read_bytes()
+            active = mig_previous if rel == mig_rel else (ACTIVE / rel).read_bytes()
             before_size, before_sha = doc['old']
             after_size, after_sha = doc['new']
             assert len(active) == after_size and sha(active) == after_sha
-            assert spec['entries'][rel]['active'] == after_sha
+            assert spec['entries'][rel]['active'] == (
+                sha(mig_latest) if rel == mig_rel else after_sha)
             assert spec['entries'][rel]['upstream'] == before_sha
             assert spec['entries'][rel]['bytes'] == after_size
             reversed_owner = active.decode('utf-8')

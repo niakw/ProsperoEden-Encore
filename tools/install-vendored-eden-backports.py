@@ -2003,6 +2003,161 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'physical_closed=67', 'mnpp=11', 'fgm_dbg_removed=3', 'fgm_request=4',
               'ptm_nonretail_removed=4', 'i2c=6', 'ngct_s=9', 'stpl=12', 'ldn_sf=18')
 
+        # LDN cmd303 ConnectPrivate: reconstruct both user/system CMIF owners and
+        # the shared LANDiscovery scan-match backend exactly. Private connect uses
+        # already discovered NetworkInfo and never invents a host address.
+        ldn_private_contracts = {
+            'src/core/hle/service/ldn/lan_discovery.cpp':
+                (17814, 'e0dc813cd13fd8a44fd35e8ea61bb3e4ee786a6099da74fbfdffc9134c693235',
+                 19554, '91ff5de90476905497fcfafacfaec9c900d6c52d1f2c9b6d43efefd0812d9e25'),
+            'src/core/hle/service/ldn/lan_discovery.h':
+                (3989, '603829307bb5df88199beb4c98ef6a450cff12e68539dc64313245eaaa99cfe6',
+                 4301, 'c905fad3cdf47b92ae41e666ba449ea2e2ee6338db14d5ab5eddace42806047c'),
+            'src/core/hle/service/ldn/user_local_communication_service.cpp':
+                (13957, '915368e033067a7a5dc9182bf59cf8ce3f7d52d7b061e5679fa605437430928d',
+                 14849, '4b3e806c7c25532ee31308eb3dff3236bb346ff1e50e28c4a41af2b2d85f09f8'),
+            'src/core/hle/service/ldn/user_local_communication_service.h':
+                (3471, 'e30df6060a832c4016e9f7c36a9ccb4b7969133cc9dd564b46d54850e4afe058',
+                 3784, 'c61c8a2517cf78ab4f6c49431b8459f37032b5f601912cc3b1e60513fd38a1a8'),
+            'src/core/hle/service/ldn/system_local_communication_service.cpp':
+                (12209, '09d019e4111e71e6f4d8b7e6f711b66c69b9e8cfcb114c4c4094070236e80c60',
+                 13105, 'ea23edb79cd15fc5116ee5134b50f8879778e0ec8525c8bc88f6a6de46e987e3'),
+            'src/core/hle/service/ldn/system_local_communication_service.h':
+                (3214, 'ab4633368634aaa026497c9157ee9721492abcbe1d5c09a197057ecffcd8542f',
+                 3527, 'f2ab513f40a1878b580c0332625a31fb1fecdc5a14ef5dfab50808c8631135a5'),
+        }
+        ldn_cmake = (ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel, (before_bytes, before_hash, after_bytes, after_hash) in ldn_private_contracts.items():
+            before = (stage/rel).read_bytes()
+            current = (ACTIVE/rel).read_bytes()
+            assert len(before)==before_bytes and sha(before)==before_hash, ('LDN private prior drift',rel)
+            assert len(current)==after_bytes and sha(current)==after_hash, ('LDN private active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':before_hash
+            }, ('LDN private manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert ldn_cmake.count(rel.removeprefix('src/core/')) == 1, ('LDN private CMake owner drift',rel)
+
+        rel = 'src/core/hle/service/ldn/lan_discovery.h'
+        expected = (stage/rel).read_text()
+        old = (
+            '    Result Connect(const NetworkInfo& network_info_, const UserConfig& user_config,\n'
+            '                   u16 local_communication_version);\n'
+            '    Result Disconnect();'
+        )
+        new = (
+            '    Result Connect(const NetworkInfo& network_info_, const UserConfig& user_config,\n'
+            '                   u16 local_communication_version);\n'
+            '    Result ConnectPrivate(const SecurityConfig& security_config,\n'
+            '                          const SecurityParameter& security_parameter,\n'
+            '                          const UserConfig& user_config, u16 local_communication_version,\n'
+            '                          ConnectOption option, const NetworkConfig& network_config);\n'
+            '    Result Disconnect();'
+        )
+        assert expected.count(old)==1
+        expected = expected.replace(old,new,1)
+        assert expected.encode()==(ACTIVE/rel).read_bytes()
+        observed[rel]=spec['entries'][rel]
+
+        rel = 'src/core/hle/service/ldn/lan_discovery.cpp'
+        expected = (stage/rel).read_text()
+        private_method = (
+            'Result LANDiscovery::ConnectPrivate(const SecurityConfig& security_config,\n'
+            '                                    const SecurityParameter& security_parameter,\n'
+            '                                    const UserConfig& user_config, u16 local_communication_version,\n'
+            '                                    ConnectOption option, const NetworkConfig& network_config) {\n'
+            '    [[maybe_unused]] const auto connect_option = option;\n'
+            '    NetworkInfo matched_network{};\n'
+            '    bool found{};\n\n'
+            '    {\n'
+            '        std::scoped_lock lock{packet_mutex};\n'
+            '        for (const auto& [mac_address, info] : scan_results) {\n'
+            '            [[maybe_unused]] const auto& scanned_mac = mac_address;\n'
+            '            const auto& intent = info.network_id.intent_id;\n'
+            '            const bool intent_matches =\n'
+            '                intent.local_communication_id == network_config.intent_id.local_communication_id &&\n'
+            '                intent.scene_id == network_config.intent_id.scene_id;\n'
+            '            const bool session_matches =\n'
+            '                info.network_id.session_id == security_parameter.session_id;\n'
+            '            const bool security_matches =\n'
+            '                info.ldn.security_parameter == security_parameter.data &&\n'
+            '                info.ldn.security_mode == security_config.security_mode;\n'
+            '            const bool channel_matches =\n'
+            '                network_config.channel == WifiChannel::Default ||\n'
+            '                info.common.channel == network_config.channel;\n\n'
+            '            if (intent_matches && session_matches && security_matches && channel_matches) {\n'
+            '                matched_network = info;\n'
+            '                found = true;\n'
+            '                break;\n'
+            '            }\n'
+            '        }\n'
+            '    }\n\n'
+            '    R_UNLESS(found, ResultConnectionFailed);\n'
+            '    R_RETURN(Connect(matched_network, user_config, local_communication_version));\n'
+            '}\n\n'
+        )
+        marker='Result LANDiscovery::Disconnect() {\n'
+        assert expected.count(marker)==1
+        expected=expected.replace(marker,private_method+marker,1)
+        assert expected.encode()==(ACTIVE/rel).read_bytes()
+        observed[rel]=spec['entries'][rel]
+
+        service_specs = (
+            ('user', 'IUserLocalCommunicationService',
+             'src/core/hle/service/ldn/user_local_communication_service.cpp',
+             'src/core/hle/service/ldn/user_local_communication_service.h'),
+            ('system', 'ISystemLocalCommunicationService',
+             'src/core/hle/service/ldn/system_local_communication_service.cpp',
+             'src/core/hle/service/ldn/system_local_communication_service.h'),
+        )
+        for label, cls, cpp_rel, header_rel in service_specs:
+            expected=(stage/cpp_rel).read_text()
+            first_include=expected.index('#include ')
+            expected=expected[:first_include]+'#include <limits>\n'+expected[first_include:]
+            old='{303, nullptr, "ConnectPrivate"}'
+            new=f'{{303, D<&{cls}::ConnectPrivate>, "ConnectPrivate"}}'
+            assert expected.count(old)==1
+            expected=expected.replace(old,new,1)
+            disconnect=f'Result {cls}::Disconnect() {{'
+            method=(
+                f'Result {cls}::ConnectPrivate(\n'
+                '    const SecurityConfig& security_config, const SecurityParameter& security_parameter,\n'
+                '    const UserConfig& user_config, s32 local_communication_version, ConnectOption option,\n'
+                '    const NetworkConfig& network_config) {\n'
+                '    LOG_INFO(Service_LDN,\n'
+                '             "called, security_mode={}, local_communication_version={}, channel={}",\n'
+                '             security_config.security_mode, local_communication_version, network_config.channel);\n\n'
+                '    R_UNLESS(local_communication_version >= 0 &&\n'
+                '                 local_communication_version <= std::numeric_limits<u16>::max(),\n'
+                '             ResultBadInput);\n'
+                '    R_RETURN(lan_discovery.ConnectPrivate(\n'
+                '        security_config, security_parameter, user_config,\n'
+                '        static_cast<u16>(local_communication_version), option, network_config));\n'
+                '}\n\n'
+            )
+            assert expected.count(disconnect)==1
+            expected=expected.replace(disconnect,method+disconnect,1)
+            assert expected.encode()==(ACTIVE/cpp_rel).read_bytes(), ('LDN ConnectPrivate cpp reverse mismatch',label)
+            observed[cpp_rel]=spec['entries'][cpp_rel]
+
+            expected=(stage/header_rel).read_text()
+            old='    Result Disconnect();'
+            new=(
+                '    Result ConnectPrivate(const SecurityConfig& security_config,\n'
+                '                          const SecurityParameter& security_parameter,\n'
+                '                          const UserConfig& user_config, s32 local_communication_version,\n'
+                '                          ConnectOption option, const NetworkConfig& network_config);\n\n'
+                '    Result Disconnect();'
+            )
+            assert expected.count(old)==1
+            expected=expected.replace(old,new,1)
+            assert expected.encode()==(ACTIVE/header_rel).read_bytes(), ('LDN ConnectPrivate header reverse mismatch',label)
+            observed[header_rel]=spec['entries'][header_rel]
+
+        print('NS1_LDN_CONNECT_PRIVATE_EXACT_REPLAY_PASS',
+              'real_handlers=2', 'scan_match=1', 'shared_connect_backend=1',
+              'session_intent_security_channel_match=1', 'fabricated_host=0')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

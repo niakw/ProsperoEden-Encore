@@ -39,6 +39,9 @@ on:
       - 'docs/EDEN_OVERRIDE_SOURCE_OF_TRUTH.md'
       - 'docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md'
       - 'docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md'
+      # Native build recipe changes can alter dependency/bootstrap behavior before Clang.
+      # Requalify the host source/build contracts before spending a PS5 full build.
+      - '.github/workflows/build-040-zbic.yml'
       - '.github/workflows/encore-core-fast-gate.yml'
       # A release sign-off changes its finite acceptance contract without
       # changing executable source. Requalify at the exact resulting SHA.

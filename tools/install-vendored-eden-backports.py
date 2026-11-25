@@ -798,14 +798,14 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
             'src/core/hle/service/ns/query_service.cpp': {
                 'before_sha256':'90b9da8dfff82c9141685249153f373ad4d4a477b8d9dbcd049f0637228c5581',
                 'before_bytes':4583,
-                'after_sha256':'cf5b5014ac388fbcb94f5448f9d14a1b1a16ce89eed4fbf93640cb44b451421f',
-                'after_bytes':6968,
+                'after_sha256':'8acc95fba8b1871c20dc4a64140654a3471c26557857e68cec139b3c1f2198c0',
+                'after_bytes':10195,
             },
             'src/core/hle/service/ns/query_service.h': {
                 'before_sha256':'c892d6cc75b1b7df5d87bb2f39540096765a0569397a31dc07b71cc2947a3dbd',
                 'before_bytes':2326,
-                'after_sha256':'259d4b74611d366535dd44bcc2d35b5481629fdb894b8848bee8114eecef19db',
-                'after_bytes':2762,
+                'after_sha256':'fb7bc2c8358e0e152bbcec15a3ae7df26c85ca049e372f484d15371d9ba3ea55',
+                'after_bytes':3758,
             },
         }
         for rel,entry in pdm_query_overlays.items():
@@ -822,12 +822,24 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
             assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
             observed[rel]=spec['entries'][rel]
         pdm_query=(ACTIVE/'src/core/hle/service/ns/query_service.cpp').read_text()
+        pdm_header=(ACTIVE/'src/core/hle/service/ns/query_service.h').read_text()
         assert pdm_query.count('D<&IQueryService::QueryPlayStatisticsByApplicationId>')==1
-        assert pdm_query.count('&IQueryService::RejectUnavailablePlayLogQuery')==6
         assert pdm_query.count('D<&IQueryService::QueryPlayStatisticsByApplicationIdAndUserAccountId>')==1
+        assert pdm_query.count('D<&IQueryService::QueryLastPlayTimeV0>')==1
+        assert pdm_query.count('D<&IQueryService::QueryApplicationPlayStatisticsForSystemV0>')==1
+        assert pdm_query.count('D<&IQueryService::QueryApplicationPlayStatisticsByUserAccountIdForSystemV0>')==1
+        assert pdm_query.count('&IQueryService::RejectUnavailablePlayLogQuery')==16
+        assert pdm_query.count('nullptr')==0
+        assert 'constexpr s64 HorizonMinuteEpoch = 946598400' in pdm_query
+        assert 'InArray<u64, BufferAttr_HipcMapAlias> application_ids' in pdm_query
+        assert 'static_assert(sizeof(LastPlayTime) == 0x18' in pdm_header
+        assert 'u32 minutes_since_last_played{};' in pdm_header
+        assert 'u8 has_minutes_since_last_played{};' in pdm_header
         print('NS1_PDM_QUERY_EXACT_POST_BACKPORT_REPLAY_PASS',
-              'successors=2', 'real_application_stats=1',
-              'raw_playlog_rejections=6', 'pinned_sources=immutable')
+              'successors=2', 'real_application_stats=2',
+              'v0_functional_wrappers=3', 'last_play_time_abi=0x18',
+              'raw_playlog_rejections=16', 'physical_nulls=0',
+              'pinned_sources=immutable')
 
         # btdrv/bt are Switch Bluetooth UART/BSA services. Encore has no guest
         # Bluetooth controller backend on PS5; keep the real bt event and fail closed

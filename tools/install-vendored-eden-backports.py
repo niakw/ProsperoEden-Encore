@@ -4456,6 +4456,12 @@ private:
                 'after_sha256':'ea74597c0ea3786eebb8f0babd03fe8890ebc120f9e4f71bc343420c00fc3293',
                 'after_bytes':591,
             },
+            'src/core/hle/service/vi/manager_root_service.h': {
+                'before_sha256':'8bb348adfddec6676e0deca4b5cf37a981ef999928e64e1148d1539d14c79ed1',
+                'before_bytes':795,
+                'after_sha256':'c7dd52009c52cfced1dd1d04aa4630305aad59fafe972f1eab9a2139bcdcfdb0',
+                'after_bytes':860,
+            },
         }
         for rel, entry in remaining_owner_overlays.items():
             assert rel not in observed, ('Remaining-owner source unexpectedly changed by frozen replay', rel)
@@ -4472,11 +4478,32 @@ private:
             }, rel
             observed[rel] = spec['entries'][rel]
 
+        # manager_root_service.cpp was already a reviewed backport before this
+        # completeness pass (cmd3). Preserve that replayed baseline, then admit
+        # only the exact reviewed fatal-surface delta.
+        manager_root_rel = 'src/core/hle/service/vi/manager_root_service.cpp'
+        manager_root_generated = (stage / manager_root_rel).read_bytes()
+        manager_root_current = (ACTIVE / manager_root_rel).read_bytes()
+        assert observed[manager_root_rel] == {
+            'active':'e4c9cdb0c053aa56aea27958ce5da78e1d2ba5804f704050d521475f449545d5',
+            'bytes':1621,
+            'upstream':'51868893a55f90bbc4d0a7375048c388120e03acc415908781cd635bc906d1c5',
+        }, 'manager root prior backport receipt drift'
+        assert len(manager_root_generated) == 1621 and sha(manager_root_generated) == 'e4c9cdb0c053aa56aea27958ce5da78e1d2ba5804f704050d521475f449545d5', 'manager root replay baseline drift'
+        assert len(manager_root_current) == 2165 and sha(manager_root_current) == '18c357a27b6360dbaa3fbcbcdf92ed0f4414f0b781bf30ae6f5016d1d8c2b7c8', 'manager root fatal delta drift'
+        assert spec['entries'][manager_root_rel] == {
+            'active':'18c357a27b6360dbaa3fbcbcdf92ed0f4414f0b781bf30ae6f5016d1d8c2b7c8',
+            'bytes':2165,
+            'upstream':'51868893a55f90bbc4d0a7375048c388120e03acc415908781cd635bc906d1c5',
+        }
+        observed[manager_root_rel] = spec['entries'][manager_root_rel]
+
         account_live = (ACTIVE/'src/core/hle/service/ns/account_proxy_interface.cpp').read_text()
         record_live = (ACTIVE/'src/core/hle/service/ns/read_only_application_record_interface.cpp').read_text()
         hid_live = (ACTIVE/'src/core/hle/service/hid/hid.cpp').read_text()
         hidbus_live = (ACTIVE/'src/core/hle/service/hid/hidbus.cpp').read_text()
         audrec_applet_live = (ACTIVE/'src/core/hle/service/audio/final_output_recorder_manager_for_applet.cpp').read_text()
+        manager_root_live = (ACTIVE/'src/core/hle/service/vi/manager_root_service.cpp').read_text()
         assert account_live.count('&IAccountProxyInterface::RejectUnsupportedAccountMutation') == 1
         assert record_live.count('&IReadOnlyApplicationRecordInterface::RejectUnsupportedFailureNotification') == 1
         assert hid_live.count('RejectUnavailableLegacyCommand') == 15
@@ -4489,9 +4516,12 @@ private:
         assert 'GetPollingData existed only on HOS 5.0.0-6.2.0' in hidbus_live
         assert audrec_applet_live.count('&IFinalOutputRecorderManagerForApplet::RejectUnavailableRecorderControl') == 2
         assert 'Encore exposes no FinalOutputRecorder device/backend on PS5' in audrec_applet_live
+        assert manager_root_live.count('&IManagerRootService::RejectUnavailableFatalDisplay') == 4
+        assert 'Encore has no Horizon fatal-screen drawing backend on PS5' in manager_root_live
         print('NS1_REMAINING_SMALL_OWNER_EXACT_SOURCE_PASS',
-              'physical_nulls_closed=17', 'hid_tmp_hos3_7_only=1',
+              'physical_nulls_closed=21', 'hid_tmp_hos3_7_only=1',
               'hidbus_cmd13_hos5_6_only=1', 'audrec_applet_fail_closed=2',
+              'vi_manager_fatal_fail_closed=4',
               'ahid_runtime_exposed=0', 'fake_success=0',
               'pinned_sources=immutable')
 

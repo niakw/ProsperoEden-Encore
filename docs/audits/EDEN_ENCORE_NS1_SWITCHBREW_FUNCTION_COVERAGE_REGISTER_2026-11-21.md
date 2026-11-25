@@ -3472,3 +3472,18 @@ Deux unités CMake natives `omm/operation_mode_manager.cpp` et `omm/power_state_
 Vendor `8b8227178f5e8062d95e7692e087d7fb0ac37abb` ; quatre overlays natifs sélectionnés par `eden-backports/src/core/CMakeLists.txt` (trois CPP et le header du gestionnaire audio), avec manifestes SHA-256 des sources primitives et maintenues. **79 slots physiques** précédemment `nullptr` sont raccordés à un rejet explicite : **36 PCV/CLKRST**, **30 PSC/INS/HSHL**, **13 audrec:u / IFinalOutputRecorder**. Aucun de ces 79 rejets n'est compté comme backend fonctionnel ; les clock sessions `clkrst`, les services PSC réels existants et la lecture audio restent inchangés. **8 nouvelles commandes HSHL HOS23** (16–21 et 6–7) absentes des anciennes tables sont enregistrées en erreur explicite sans inventer de réponse batterie/voltage. `pcv:arb` et `pcv:imm` ne sont enregistrés que sous HOS inférieur à 8 ; `clkrst` et `clkrst:i/a` sont exposés à partir de HOS8. Les sources originales `sources/eden` restent intactes.
 
 Provenance : contrôles de tailles, de hashes, de sources CMake et de transformation inverse exacte prévus dans le replay moteur. **NULL physiques attendus : 1 466 → 1 387** (à confirmer en CI). **Pool canonique historique maintenu à 689 / 4 853** tant que la correspondance commandes/HOS23 du catalogue n'est pas recalculée ; aucun chiffre historique arbitrairement soustrait. Ce lot est un traitement fail-closed de matériel absent, pas une amélioration mesurée du gameplay PS5. Test console et build PS5 non effectués.
+
+### 2026-11-25 — lot massif cloud/debug/réseau/matériel : 51 NULL physiques retirés
+
+Vendor `202667f02b0ebe909bf0e5c93af15f8966fc5814` (arbre `6961f669459cab8f90a98c5356fcb71be18f5839`). Six nouveaux overlays et un successeur NGC sont sélectionnés par le CMake natif et couverts par le replay moteur exact.
+
+- **MNPP sys/web : 11 NULL → erreur explicite**. Les handlers application déjà présents restent inchangés ; aucun upload Nintendo mission/reporting n'est simulé.
+- **FGM debug : 3 NULL physiques supprimés** avec la classe et le service `fgm:dbg`, déjà hors-version sur HOS23. Les services `fgm`, `fgm:0`, `fgm:9` restent inchangés.
+- **PTM manufacture : 4 NULL physiques supprimés** en retirant `psm:manu` et `powctl`, absents des unités retail. Les services `psm` et `ts` restent inchangés.
+- **I2C : 6 NULL → erreur explicite** dans l'interface enfant déjà inaccessible puisque les ouvertures de session échouent sans matériel I2C Switch.
+- **LDN SF : 18 NULL → erreur explicite**. Aucun backend local-wireless PS5 n'est inventé.
+- **NGCT management : 9 NULL → erreur explicite** sur l'interface legacy ; `ngct:s` n'est plus enregistré à partir de HOS21, tandis que les chemins NGC/STPL existants sont préservés.
+
+Le replay moteur reconstruit chaque fichier bit-à-bit depuis les sources post-backport, vérifie tailles/SHA-256, sélection CMake et manifeste. **NULL physiques attendus : 1 387 → 1 336.** Le compteur historique reste **689 / 4 853** jusqu'au rapprochement ligne-à-ligne : plusieurs entrées de ce lot étaient déjà HORS-VERSION ou INACCESSIBLE et ne doivent pas être soustraites une seconde fois.
+
+Build PS5 et test console : non exécutés.

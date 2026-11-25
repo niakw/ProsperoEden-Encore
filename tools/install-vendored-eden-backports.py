@@ -1330,9 +1330,34 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # actual main applet rather than leaving an indexed IMPL-SRC false
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_head = (ACTIVE / ns_rel).read_bytes()
-        assert len(ns_head) == 74134 and sha(ns_head) == '0993b8bc20950394a43fa627fe120bfa378bec45214e53878d5b016f1ac3ebdc'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_head)
+        ns_dispatch_head = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_dispatch_head) == 74582 and sha(ns_dispatch_head) == (
+            'de040b8b6be1107bef5577c3f701fb647fc47fdf7216e9552fb7326da0f1c500')
+        assert spec['entries'][ns_rel]['active'] == sha(ns_dispatch_head)
+        ns_dispatch_text = ns_dispatch_head.decode('utf-8')
+        hos23_fail_closed = {
+            417:'InvalidateAllApplicationControlCacheOfTheStage',
+            418:'InvalidateApplicationControlCacheOfTheStage',
+            420:'CloneApplicationControlDataCacheForDebug',
+            507:'EnsureGameCardAccess',
+            508:'GetLastGameCardMountFailureResult',
+            510:'GetGameCardPlatformRegion',
+            905:'RequestApplicationUpdate',
+            1902:'GetApplicationTicketInfo',
+        }
+        for command,name in hos23_fail_closed.items():
+            current = (
+                f'{{{command}, &IApplicationManagerInterface::RejectUnavailablePlatformCommand, '
+                f'"{name}"}}')
+            prior = f'{{{command}, nullptr, "{name}"}}'
+            assert ns_dispatch_text.count(current) == 1, (command,name)
+            ns_dispatch_text = ns_dispatch_text.replace(current, prior, 1)
+        ns_head = ns_dispatch_text.encode('utf-8')
+        assert len(ns_head) == 74134 and sha(ns_head) == (
+            '0993b8bc20950394a43fa627fe120bfa378bec45214e53878d5b016f1ac3ebdc')
+        print('NS1_NS_HOS23_UNAVAILABLE_EXACT_REVERSE_PASS',
+              'closed=8', 'stage_debug=3', 'gamecard=3', 'network_update=1',
+              'ticket_info=1', 'fake_success=0')
         ns_cmd11_pointer = '{11, D<&IApplicationManagerInterface::CalculateApplicationOccupiedSize>, "CalculateApplicationOccupiedSize"}'
         ns_cmd11_pointer_old = '{11, nullptr, "CalculateApplicationOccupiedSize"}'
         ns_cmd11_method = """Result IApplicationManagerInterface::CalculateApplicationOccupiedSize(
@@ -1529,7 +1554,7 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_previous = (stage / ns_rel).read_bytes()
         assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
         assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_head)
+        assert spec['entries'][ns_rel]['active'] == sha(ns_dispatch_head)
         import re
         ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
         ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)

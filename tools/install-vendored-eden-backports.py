@@ -1546,9 +1546,48 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # Verify exact current byte hash, strip the one approved successor,
         # then demand byte-exact parity with the previous maintained source.
         wlan_rel = 'src/core/hle/service/wlan/wlan.cpp'
-        wlan_current = (ACTIVE / wlan_rel).read_bytes()
+        wlan_newest = (ACTIVE / wlan_rel).read_bytes()
+        assert len(wlan_newest) == 25220 and sha(wlan_newest) == '5b494e40ffc55e6d7c1bb19b3e215871d20d4a6f9904ab2ab398a98b14e01ecf'
+        assert spec['entries'][wlan_rel]['active'] == sha(wlan_newest)
+        assert spec['entries'][wlan_rel]['bytes'] == len(wlan_newest)
+        legacy_wlan_owners = {
+            'ILocalManager':97, 'ILocalGetFrame':1, 'ILocalGetActionFrame':1,
+            'ISocketGetFrame':1, 'ISocketManager':13, 'IDetectManager':28,
+        }
+        legacy_lines = wlan_newest.decode('utf-8').splitlines(keepends=True)
+        legacy_owner = ''
+        legacy_counts = dict.fromkeys(legacy_wlan_owners, 0)
+        for i, line in enumerate(legacy_lines):
+            class_match = re.match(r'^class ([A-Za-z0-9_]+) final', line)
+            if class_match:
+                legacy_owner = class_match.group(1)
+            if line.startswith('void LoopProcess'):
+                legacy_owner = ''
+            if legacy_owner not in legacy_wlan_owners:
+                continue
+            pointer = '&' + legacy_owner + '::RejectLegacyWlanCommand'
+            if pointer in line:
+                assert line.count(pointer) == 1
+                legacy_lines[i] = line.replace(pointer, 'nullptr', 1)
+                legacy_counts[legacy_owner] += 1
+        assert legacy_counts == legacy_wlan_owners
+        legacy_method = (
+            '\nprivate:\n'
+            '    void RejectLegacyWlanCommand(HLERequestContext& ctx) {\n'
+            '        // These interfaces are registered only before HOS 15. Modern HOS uses\n'
+            '        // the wlan creator/service path below; no legacy Switch radio backend exists.\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(IPC::ResultNotSupported);\n'
+            '    }\n'
+        )
+        wlan_reconstructed = ''.join(legacy_lines)
+        assert wlan_reconstructed.count(legacy_method) == 6
+        wlan_reconstructed = wlan_reconstructed.replace(legacy_method, '')
+        wlan_current = wlan_reconstructed.encode('utf-8')
         assert len(wlan_current) == 18713 and sha(wlan_current) == 'b71e93829ea39fc9ae9eea3d045e78a57d809d72d46c21a6bd10fd7a423cdfee'
-        assert spec['entries'][wlan_rel]['active'] == sha(wlan_current)
+        print('NS1_WLAN_LEGACY_EXACT_REVERSE_PASS',
+              'physical_closed=141', 'registered_only_before_hos15=1',
+              'modern_wlan_untouched=1')
         wlan_text = wlan_current.decode('utf-8')
         creator_gated = (
             '    if (FirmwareManager::GetFirmwareVersion(system).first.major >= 15) {\n'

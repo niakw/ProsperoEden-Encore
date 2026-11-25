@@ -5,6 +5,7 @@ No remote network and no PS5 compiler required. A full staging test is done
 separately, because it copies and extracts hundreds of MiB of Mesa sources.
 """
 from pathlib import Path
+import ast
 import json
 import re
 import runpy
@@ -57,6 +58,37 @@ for forbidden in ('git clone --quiet', 'git -C "$template" fetch', 'setup-native
     assert forbidden not in builder, f"standard OpenGL builder retained network/bootstrap fallback: {forbidden}"
 assert 'Vendored PS5 OpenGL boilerplate staging is missing' in builder
 assert 'Vendored PS5 OpenGL PayloadSDK compiler missing after staging' in builder
+# Native Mesa's C11 shim declares struct timespec unless the SDK already
+# owns it. Both C and C++ compiler args must arrive as four separate Meson
+# list entries, not one comma-joined unknown -Wno option. The frozen upstream
+# shell expands meson_args unquoted, so a whitespace-free array is required.
+mesa_opts=runpy.run_path(str(ROOT/'tools/ci/patch-ps5-opengl-mesa-options.py'))
+expected_flags=[
+    '-Wno-thread-safety-analysis',
+    '-Wno-unreachable-code-generic-assoc',
+    '-Wno-unused-parameter',
+    '-DHAVE_STRUCT_TIMESPEC=1',
+]
+for language in ('C','CPP'):
+    option=mesa_opts[f'{language}_ARGS_NEW'].strip()
+    assert len(option.split())==1, ('Mesa shell would split compiler flags',option)
+    assert option.startswith('-D'+('c' if language=='C' else 'cpp')+'_args=')
+    assert ast.literal_eval(option.split('=',1)[1])==expected_flags
+assert '#ifndef HAVE_STRUCT_TIMESPEC' in (
+    VENDOR/'opengl-mesa-26-2/src/c11/time.h'
+).read_text()
+with tempfile.TemporaryDirectory(prefix='encore-mesa-opts-') as temporary:
+    script=Path(temporary)/'build-mesa-ps5.sh'
+    script.write_text((SOURCE/'toolchain/build-mesa-ps5.sh').read_text())
+    mesa_opts['patch'](script)
+    patched=script.read_text()
+    for language in ('C','CPP'):
+        assert patched.count(mesa_opts[f'{language}_ARGS_NEW'])==1
+    assert '--wrap-mode=nodownload' in patched
+    mesa_opts['patch'](script)
+    assert script.read_text()==patched
+print('PS5_OPENGL_MESA_TIMESPEC_ARGS_OK sdk_timespec=1 c_args=4 cpp_args=4 nodownload=1')
+
 # Reproduce the previously failing cached checkout: original Git index, but
 # the exact audited patch has already been applied to the working tree.
 # Use only a disposable synthetic repository, never reset real build caches.

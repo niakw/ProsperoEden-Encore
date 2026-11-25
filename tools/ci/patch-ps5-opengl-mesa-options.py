@@ -12,13 +12,18 @@ ANCHOR = "-Dplatforms=\n"
 WRAP_MODE = "--wrap-mode=nodownload"
 C_ARGS_OLD = "-Dc_args=-Wno-thread-safety-analysis\n"
 CPP_ARGS_OLD = "-Dcpp_args=-Wno-thread-safety-analysis\n"
+# This upstream script expands meson_args with shell word splitting.
+# The Meson array has NO whitespace: it stays one argv token, while Meson
+# passes each compiler argument independently (never one comma-joined -Wno).
+# PS5's PayloadSDK already declares struct timespec in sys/_timespec.h;
+# only this SDK cross-build needs to tell Mesa's C11 shim not to redefine it.
 C_ARGS_NEW = (
-    "-Dc_args=-Wno-thread-safety-analysis,-Wno-unreachable-code-generic-assoc,"
-    "-Wno-unused-parameter\n"
+    "-Dc_args=['-Wno-thread-safety-analysis','-Wno-unreachable-code-generic-assoc',"
+    "'-Wno-unused-parameter','-DHAVE_STRUCT_TIMESPEC=1']\n"
 )
 CPP_ARGS_NEW = (
-    "-Dcpp_args=-Wno-thread-safety-analysis,-Wno-unreachable-code-generic-assoc,"
-    "-Wno-unused-parameter\n"
+    "-Dcpp_args=['-Wno-thread-safety-analysis','-Wno-unreachable-code-generic-assoc',"
+    "'-Wno-unused-parameter','-DHAVE_STRUCT_TIMESPEC=1']\n"
 )
 
 def patch(path: Path) -> None:

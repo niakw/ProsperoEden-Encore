@@ -174,7 +174,18 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     ioctl_target=ioctl_stage/'core/hle/service/nvdrv/devices/ioctl_serialization.h'
     ioctl_target.parent.mkdir(parents=True,exist_ok=True)
     shutil.copyfile(ioctl_owner,ioctl_target)
-    includes=[native_tiling,nvdec_stage,ioctl_stage,shader,abi,ROOT/'headless',
+    # Native core's vendor/eden-threading CMake stages the H05 NVDRV
+    # SyncpointManager ABI BEFORE pinned Eden. Include the same root in this
+    # real-TU compilation witness, otherwise GCC sees the obsolete upstream
+    # header and reports CaptureNativeSyncpointLease as undeclared.
+    h05=ROOT/'vendor/encore-active/eden-sync/overrides/h05-syncpoint'
+    h05_header=h05/'core/hle/service/nvdrv/core/syncpoint_manager.h'
+    h05_cmake=(ROOT/'vendor/encore-active/eden-threading/native-hle-overrides.cmake').read_text()
+    assert h05_header.is_file()
+    assert 'CaptureNativeSyncpointLease(u32 id)' in h05_header.read_text()
+    assert 'target_include_directories(core BEFORE PUBLIC "${_encore_h05_header_root}")' in h05_cmake
+    assert 'include("${PORT_ROOT}/vendor/encore-active/eden-threading/native-hle-overrides.cmake")' in cmake
+    includes=[h05,native_tiling,nvdec_stage,ioctl_stage,shader,abi,ROOT/'headless',
               *[ROOT/'vendor/encore-active/ns2-runtime'/n for n in (
                   'kernel_wait64','gpu_access_svc','gpu_dispatch','nvdrv_gpu',
                   'nvdrv_as','gpu_session','graphics_supervisor','self_controller',

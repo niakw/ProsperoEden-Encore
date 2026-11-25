@@ -3755,3 +3755,18 @@ Base : **788 NULL attendus** après le lot NS réseau/update. Vendor final : `21
 **Inventaire physique attendu : 788 → 734 NULL / 6 447 slots.** Validation CI requise.
 
 Build PS5 et validation console : non exécutés.
+
+### 2026-11-25 — SFDNSRES : famille sockets à zéro NULL, palier 721 attendu
+
+Vendor final : `50009086f7a428c11ff75f4cbac9567a8bcb8df5` (arbre `3c3259177c211d2c5c94f39553c64b62bf49036c`).
+
+Les **13 NULL SFDNSRES** restants sont traités :
+- **3 fonctionnels** : `GetHostStringErrorRequest`, génération de cancel handle monotone, `CancelRequest` idempotent pour le resolver synchrone Encore.
+- **10 fail-closed** : reverse DNS, DNS privé Switch et options opaques non modélisés.
+- Les chemins réels `GetHostByNameRequest`, `GetAddrInfoRequest` et variantes avec options restent raccordés à `Network::GetAddressInfo`.
+
+Avec le lot sockets précédent, la famille sockets passe à **0 NULL physique** sans neutraliser le forward DNS ni le data-path BSD.
+
+**Inventaire physique attendu : 734 → 721 NULL / 6 447 slots.** Validation CI requise.
+
+Build PS5 et validation console : non exécutés.

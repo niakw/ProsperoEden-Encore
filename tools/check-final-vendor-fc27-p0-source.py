@@ -2608,6 +2608,13 @@ if actual_vendor_pin in {"cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972
             expected_blob = "1a8a4c64c37370537ad587e02f1a4d1bc247cb99"
         if actual_vendor_pin in {"dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16"} and relative == "tests/ns2_native_tiling_activation_source.py":
             expected_blob = "464ff642ad3bb4eb402f87232b667f87fd369813" if actual_vendor_pin in {"47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16"} else "e1db2cf687114f49d69a377b0ac5f55bf078f7a0" if actual_vendor_pin == "f4a90f02ad5383998d08b45cca534d1b73b166c1" else "bf3821cd7bfae91c38a05fe22534696f8cba9472"
+        if actual_vendor_pin == "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16":
+            # Only NVDRV's nonassignable-VM rollback and its host witness
+            # differ from the verified predecessor in this exact receipt.
+            if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+                expected_blob = "6f56e2a08c9966cd6756d3faf110514247bbce38"
+            elif relative == "tests/ns2_gpu_identity_mapping_source.py":
+                expected_blob = "7f5231eeffb5d0c0ed0451d37657ad17e986a757"
         raw=(V/relative).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert actual == expected_blob, ("queued GPFIFO/Puller H17 successor drift", relative, actual)

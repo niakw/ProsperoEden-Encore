@@ -113,6 +113,28 @@ REVIEWED_PINS.add("82634fc0f2b2c7ffab2dbb50e658b20f911dbd16")
 REVIEWED_PINS.add("720bdb0e81c57462338be480cecae13f2e205110")
 REVIEWED_PINS.add("bde537edf37e1f21e483993ca8582f44ff0f5555")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
+# Successor from R457: exactly four reviewed files changed (NVDRV
+# shutdown owner, VI2 event owner and their existing source contracts).
+# Seal the complete vendor tree and changed blobs BEFORE extending the
+# historical checked-pin list; never equate this to a console pass.
+if selected == "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac":
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "9e3fd85b084aa76a39ab4c2b8a96123550643e17"
+    for relative, expected in {
+        "encore-active/ns2-runtime/process/core/core.cpp":
+            "0f854ca3eab4dd0435d6ac58d401f8359301c168",
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp":
+            "5a768b5f380666cbb53a0167fca6d4c6dc925d13",
+        "tests/fc27_sm_nvdrv_shutdown_lifetime_source.py":
+            "62529ef07652d342ee29bc4c60e9d33f4ce5f2cc",
+        "tests/ns2_syncpt_bootstrap_source.py":
+            "8edd2cda0e019156adc20694d7d98030528db58d",
+    }.items():
+        data = (V / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest() == expected, relative
+    REVIEWED_PINS.add(selected)
+
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
 shipping_vendor_pin = gitlink_vendor_pin

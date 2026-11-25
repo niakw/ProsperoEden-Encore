@@ -2318,6 +2318,56 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'real_handlers=2', 'stable_handles=2', 'charge_info_signal_sites=6',
               'calibration_fabricated=0', 'host_power_untouched=1')
 
+        # Low-risk retail/sessionless owners: PREPO local statistics, retail LM
+        # no-op extensions and NFC session bookkeeping. Preserve existing data paths.
+        low_risk_contracts = {
+            'src/core/hle/service/prepo/prepo.cpp':
+                (14311, '9fc008ff8edebb5fb661ab6e54905c3e85da73bb4926b0365bf648486e602060',
+                 14467, '7b714291320e150a4ff77ddea2bcdd8f89d167e9ebe0efa8b324b1336cb1ad4c'),
+            'src/core/hle/service/lm/lm.cpp':
+                (13032, 'ae16237f1447fb221c35627528c36c8778c70b7b6159a404bbe8bebaa8199561',
+                 13277, '21cc95aa002c2901f72e993ab28bb98e15bdfd282f1e3ae49ca7dd81bd7591f1'),
+            'src/core/hle/service/nfc/nfc.cpp':
+                (9184, 'c2dbe38ad9c7d4b09b01d37bc667cbaaa757e9f699a7706451dfd298582a68ca',
+                 10160, '10725d237d49c6c56bf8c303f46fd2f0087bfbf5b264870a8921e8911af0538b'),
+        }
+        low_risk_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel, (before_bytes, before_hash, after_bytes, after_hash) in low_risk_contracts.items():
+            before=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(before)==before_bytes and sha(before)==before_hash, ('low-risk prior drift',rel)
+            assert len(current)==after_bytes and sha(current)==after_hash, ('low-risk active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':before_hash
+            }, ('low-risk manifest drift',rel)
+            assert low_risk_cmake.count(rel.removeprefix('src/core/'))==1, ('low-risk CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        prepo=(ACTIVE/'src/core/hle/service/prepo/prepo.cpp').read_text()
+        assert prepo.count('&PlayReport::GetStatistics')==2
+        assert prepo.count('&PlayReport::GetThroughputHistory')==2
+        assert prepo.count('&PlayReport::GetLastUploadError')==2
+        assert prepo.count('&PlayReport::RejectUnknownModernCommand')==2
+        assert prepo.count('nullptr')==0
+
+        lm=(ACTIVE/'src/core/hle/service/lm/lm.cpp').read_text()
+        assert lm.count('&ILogger::AcceptRetailNoop')==2
+        assert lm.count('&ILogger::Log')==1
+        assert lm.count('&ILogger::SetDestination')==1
+        assert lm.count('rb.Push(ResultSuccess);')>=1
+        assert lm.count('nullptr')==0
+
+        nfc=(ACTIVE/'src/core/hle/service/nfc/nfc.cpp').read_text()
+        assert nfc.count('&IUser::AcceptSessionlessPassThrough')==2
+        assert nfc.count('&ISystem::AcceptSessionlessPassThrough')==2
+        assert nfc.count('&IAm::AcceptAppletLifecycle')==3
+        assert nfc.count('&NfcInterface::SendCommandByPassThrough')==2
+        assert nfc.count('nullptr')==0
+        print('NS1_PREPO_LM_NFC_LOW_RISK_SOURCE_PASS',
+              'physical_closed=14', 'prepo_real=3', 'prepo_rejected=2',
+              'lm_retail_noop=2', 'nfc_sessionless_noop=7',
+              'local_reporting_preserved=1', 'nfc_pass_through_preserved=1')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

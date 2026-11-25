@@ -1330,10 +1330,43 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # actual main applet rather than leaving an indexed IMPL-SRC false
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_terminate_head = (ACTIVE / ns_rel).read_bytes()
+        ns_program_index_head = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_program_index_head) == 76300 and sha(ns_program_index_head) == (
+            '0c8e7a0588c376b2c67a0ed6ceba5c3e72f3c48d3498ebc25903453f1b646c4e')
+        assert spec['entries'][ns_rel]['active'] == sha(ns_program_index_head)
+        ns_program_index_pointer = (
+            '{93, D<&IApplicationManagerInterface::GetMainApplicationProgramIndex>, '
+            '"GetMainApplicationProgramIndex"}')
+        ns_program_index_pointer_old = '{93, nullptr, "GetMainApplicationProgramIndex"}'
+        ns_program_index_method = """Result IApplicationManagerInterface::GetMainApplicationProgramIndex(
+    Out<u8> out_program_index, u64 application_id) {
+    auto* const window_system = system.GetAppletManager().GetWindowSystem();
+    R_UNLESS(window_system != nullptr, AM::ResultApplicationRecordNotFound);
+    const auto applet = window_system->GetMainApplet();
+    R_UNLESS(applet != nullptr, AM::ResultApplicationRecordNotFound);
+
+    const u64 running_program_id = applet->program_id;
+    const u64 running_base_id = FileSys::GetBaseTitleID(running_program_id);
+    const u64 requested_base_id = FileSys::GetBaseTitleID(application_id);
+    R_UNLESS(running_base_id == requested_base_id, AM::ResultApplicationRecordNotFound);
+
+    const u64 program_index = running_program_id - running_base_id;
+    R_UNLESS(program_index <= std::numeric_limits<u8>::max(), AM::ResultApplicationRecordNotFound);
+    *out_program_index = static_cast<u8>(program_index);
+    R_SUCCEED();
+}
+
+"""
+        ns_program_index_text = ns_program_index_head.decode('utf-8')
+        assert ns_program_index_text.count(ns_program_index_pointer) == 1
+        assert ns_program_index_text.count(ns_program_index_method) == 1
+        ns_terminate_head = ns_program_index_text.replace(
+            ns_program_index_pointer, ns_program_index_pointer_old, 1).replace(
+            ns_program_index_method, '', 1).encode('utf-8')
         assert len(ns_terminate_head) == 75298 and sha(ns_terminate_head) == (
             '4a47ffe1e590064d85e742108fe2193d9ba1403b1e20a3a88da03fb1e67c5c22')
-        assert spec['entries'][ns_rel]['active'] == sha(ns_terminate_head)
+        print('NS1_NS_MAIN_PROGRAM_INDEX_EXACT_REVERSE_PASS',
+              'command=93', 'source=live_program_id', 'u8_bounded=1', 'fake_state=0')
         ns_raw_pointer = (
             '{2101, D<&IApplicationManagerInterface::GetRawApplicationTerminateResult>, '
             '"GetRawApplicationTerminateResult"}')
@@ -1535,10 +1568,18 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_owner_prior = ns_text.encode('utf-8')
         assert len(ns_owner_prior) == 69013 and sha(ns_owner_prior) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
         ns_header_rel = 'src/core/hle/service/ns/application_manager_interface.h'
-        ns_header_active = (ACTIVE / ns_header_rel).read_bytes()
+        ns_header_program_index = (ACTIVE / ns_header_rel).read_bytes()
+        assert len(ns_header_program_index) == 8588 and sha(ns_header_program_index) == (
+            '2f38cdfbc9ac5ab456aa179b364589bc717ecd5263ee702302cd9532ad688f55')
+        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_program_index)
+        ns_program_index_decl = (
+            '    Result GetMainApplicationProgramIndex(Out<u8> out_program_index, u64 application_id);\n')
+        ns_header_program_index_text = ns_header_program_index.decode('utf-8')
+        assert ns_header_program_index_text.count(ns_program_index_decl) == 1
+        ns_header_active = ns_header_program_index_text.replace(
+            ns_program_index_decl, '', 1).encode('utf-8')
         assert len(ns_header_active) == 8498 and sha(ns_header_active) == (
             '1ac640df42d324896f3caf3980108ee1d93fffc5e702c689714a8406f06fd311')
-        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_active)
         ns_raw_decl = (
             '    Result GetRawApplicationTerminateResult(Out<u32> out_raw_result, u64 application_id);\n')
         ns_header_active_text = ns_header_active.decode('utf-8')
@@ -1590,7 +1631,7 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_previous = (stage / ns_rel).read_bytes()
         assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
         assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_terminate_head)
+        assert spec['entries'][ns_rel]['active'] == sha(ns_program_index_head)
         import re
         ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
         ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)

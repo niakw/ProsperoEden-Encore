@@ -163,7 +163,7 @@ if selected == "ea4d39d5c9bd17074292b8c6f229c53954f8e21e":
     expected.add(selected)
 # NS2 queue-semaphore + BCAT successor. The complete vendor tree and all
 # seven changed objects are sealed here; the FC27 runtime owners remain exact.
-if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc":
+if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc"}:
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip() == {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea": "62a3bdbad43931dd19494fc24cb57bf5389211b8", "68cf19e736158b815629ea74a494c5536706dbc2": "c1a6951364c337e8012a6cfb46f31f305271231e", "b9dae898866d290d5ce1b15838492854680dc6d6": "cbb2c60a9bcc11478c4a420b2d03106a58fdcb20", "7130ede3236e2726f3f1b4718b0618240805e9bc": "c518f70d7e3b1e15495af73ccbd1bf29efb91e27"}[selected]

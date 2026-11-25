@@ -50,7 +50,11 @@ assert chunk.index("scheduler.RequestOutsideRenderPassOperationContext();") < ch
 assert chunk.count("scheduler.Record(") == 1
 assert chunk.index("COMPUTE_INPUT_BARRIER") < chunk.index("if (!pipeline->IsBound()) {")
 assert "#ifdef PS5_NATIVE\n        // A guest indirect-command address" in chunk
-assert "#endif\n        scheduler.RequestOutsideRenderPassOperationContext();" in chunk
+# The source marks the complete, validated indirect argument range as used
+# before recording; do not require the obsolete immediate #endif -> scheduler
+# adjacency. Neither MarkUsage nor a Vulkan command may run on a null handle.
+assert "#endif\n        buffer->MarkUsage(offset, 12);\n        scheduler.RequestOutsideRenderPassOperationContext();" in chunk
+assert chunk.index("if (!buffer || buffer->Handle() == VK_NULL_HANDLE) {") < chunk.index("buffer->MarkUsage(offset, 12);") < chunk.index("scheduler.RequestOutsideRenderPassOperationContext();")
 
 cpp = r"""
 #include <cassert>

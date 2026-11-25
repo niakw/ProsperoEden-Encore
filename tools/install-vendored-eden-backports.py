@@ -3551,17 +3551,157 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         # 8/2/12-GiB placeholder with exact installed CNMT/NCA sizes. This is
         # a maintained overlay; pinned vendor/sources/eden stays byte-identical.
         cm_rel = 'src/core/hle/service/ns/content_management_interface.cpp'
-        cm_active = (ACTIVE / cm_rel).read_bytes()
-        assert len(cm_active) == 7397 and sha(cm_active) == (
-            '4cdcb68b593381cc31e3d6dc4c192a345d4e13ba3d598d5427063f9a412d196e')
+        cm_list_active = (ACTIVE / cm_rel).read_bytes()
+        assert len(cm_list_active) == 9795 and sha(cm_list_active) == (
+            '502ae7498e1f444bc6811112231cbbb1bbd0f97bd7a9b643c5d5b252f6d4c5f1')
         assert spec['entries'][cm_rel] == {
-            'active':'4cdcb68b593381cc31e3d6dc4c192a345d4e13ba3d598d5427063f9a412d196e',
-            'bytes':7397,
+            'active':'502ae7498e1f444bc6811112231cbbb1bbd0f97bd7a9b643c5d5b252f6d4c5f1',
+            'bytes':9795,
             'upstream':'83a8eae9ea9e50190d72315fd3d838cc1f72c3a6eec79c353c9510faf1b9d4a2',
         }
         cm_stage = (stage / cm_rel).read_text()
         assert len(cm_stage.encode('utf-8')) == 4004
         assert sha(cm_stage.encode('utf-8')) == spec['entries'][cm_rel]['upstream']
+
+        cm_list_text = cm_list_active.decode('utf-8')
+        cm_list_pointer = (
+            '{601, D<&IContentManagementInterface::ListApplicationContentMetaStatus>, '
+            '"ListApplicationContentMetaStatus"}')
+        cm_list_pointer_old = '{601, nullptr, "ListApplicationContentMetaStatus"}'
+        cm_status_helper = """FileSys::StorageId GetStorageIdForContentSlot(
+    std::optional<FileSys::ContentProviderUnionSlot> slot) {
+    if (!slot.has_value()) {
+        return FileSys::StorageId::None;
+    }
+    switch (*slot) {
+    case FileSys::ContentProviderUnionSlot::UserNAND:
+        return FileSys::StorageId::NandUser;
+    case FileSys::ContentProviderUnionSlot::SysNAND:
+        return FileSys::StorageId::NandSystem;
+    case FileSys::ContentProviderUnionSlot::SDMC:
+        return FileSys::StorageId::SdCard;
+    case FileSys::ContentProviderUnionSlot::FrontendManual:
+        return FileSys::StorageId::Host;
+    default:
+        return FileSys::StorageId::None;
+    }
+}
+
+std::vector<ApplicationContentMetaStatus> BuildApplicationContentMetaStatuses(
+    Core::System& system, u64 application_id) {
+    const u64 requested_id =
+        application_id != 0 ? application_id : system.GetApplicationProcessProgramID();
+    const u64 real_id = FileSys::GetBaseTitleID(requested_id);
+    auto& cp = system.GetContentProviderUnion();
+
+    std::vector<ApplicationContentMetaStatus> statuses;
+    const auto append = [&](u64 title_id, FileSys::TitleType meta_type,
+                            FileSys::ContentRecordType record_type) {
+        if (!cp.HasEntry(title_id, record_type)) {
+            return;
+        }
+        statuses.push_back({
+            .meta_type = static_cast<u8>(meta_type),
+            .storage_id = GetStorageIdForContentSlot(cp.GetSlotForEntry(title_id, record_type)),
+            .rights_check = 0,
+            .reserved = 0,
+            .version = cp.GetEntryVersion(title_id).value_or(0),
+            .application_id = title_id,
+        });
+    };
+
+    append(real_id, FileSys::TitleType::Application, FileSys::ContentRecordType::Program);
+    append(FileSys::GetUpdateTitleID(real_id), FileSys::TitleType::Update,
+           FileSys::ContentRecordType::Program);
+
+    const auto aocs =
+        cp.ListEntriesFilter(FileSys::TitleType::AOC, FileSys::ContentRecordType::Data);
+    for (const auto& entry : aocs) {
+        if (FileSys::GetBaseTitleID(entry.title_id) == real_id) {
+            append(entry.title_id, FileSys::TitleType::AOC, FileSys::ContentRecordType::Data);
+        }
+    }
+    return statuses;
+}
+
+"""
+        cm_count_list_methods = """Result IContentManagementInterface::CountApplicationContentMeta(Out<s32> out_count,
+                                                                u64 application_id) {
+    const auto statuses = BuildApplicationContentMetaStatuses(system, application_id);
+    *out_count = static_cast<s32>(statuses.size());
+    R_SUCCEED();
+}
+
+Result IContentManagementInterface::ListApplicationContentMetaStatus(
+    OutArray<ApplicationContentMetaStatus, BufferAttr_HipcMapAlias> out_statuses,
+    Out<s32> out_count, s32 index, u64 application_id) {
+    const auto statuses = BuildApplicationContentMetaStatuses(system, application_id);
+    const std::size_t start = static_cast<std::size_t>(std::max(0, index));
+    if (start >= statuses.size()) {
+        *out_count = 0;
+        R_SUCCEED();
+    }
+
+    const std::size_t count = (std::min)(out_statuses.size(), statuses.size() - start);
+    for (std::size_t i = 0; i < count; ++i) {
+        out_statuses[i] = statuses[start + i];
+    }
+    *out_count = static_cast<s32>(count);
+    R_SUCCEED();
+}
+
+"""
+        cm_count_prior = """Result IContentManagementInterface::CountApplicationContentMeta(Out<s32> out_count,
+                                                                u64 application_id) {
+    const u64 requested_id =
+        application_id != 0 ? application_id : system.GetApplicationProcessProgramID();
+    const u64 real_id = FileSys::GetBaseTitleID(requested_id);
+    const auto& cp = system.GetContentProviderUnion();
+
+    s32 count = 0;
+    if (cp.HasEntry(real_id, FileSys::ContentRecordType::Program)) {
+        ++count;
+    }
+    if (cp.HasEntry(FileSys::GetUpdateTitleID(real_id), FileSys::ContentRecordType::Program)) {
+        ++count;
+    }
+    const auto aocs = cp.ListEntriesFilterOrigin(
+        std::nullopt, FileSys::TitleType::AOC, FileSys::ContentRecordType::Data);
+    for (const auto& [slot, entry] : aocs) {
+        if (FileSys::GetBaseTitleID(entry.title_id) == real_id) {
+            ++count;
+        }
+    }
+
+    *out_count = count;
+    R_SUCCEED();
+}
+
+"""
+        cm_list_includes = """#include <algorithm>
+#include <array>
+#include <limits>
+#include <set>
+#include <vector>
+"""
+        cm_prior_includes = """#include <array>
+#include <limits>
+#include <set>
+"""
+        assert cm_list_text.count(cm_list_pointer) == 1
+        assert cm_list_text.count(cm_status_helper) == 1
+        assert cm_list_text.count(cm_count_list_methods) == 1
+        assert cm_list_text.count(cm_list_includes) == 1
+        cm_text = cm_list_text.replace(cm_list_pointer, cm_list_pointer_old, 1)
+        cm_text = cm_text.replace(cm_status_helper, '', 1)
+        cm_text = cm_text.replace(cm_count_list_methods, cm_count_prior, 1)
+        cm_text = cm_text.replace(cm_list_includes, cm_prior_includes, 1)
+        cm_active = cm_text.encode('utf-8')
+        assert len(cm_active) == 7397 and sha(cm_active) == (
+            '4cdcb68b593381cc31e3d6dc4c192a345d4e13ba3d598d5427063f9a412d196e')
+        print('NS1_NS_CONTENT_META_LIST_EXACT_REVERSE_PASS',
+              'command=601', 'layout=0x10', 'rights_check=0',
+              'base_patch_aoc=active_union', 'count_list_consistent=1')
         cm_text = cm_active.decode('utf-8')
         cm_count_pointer = (
             '{600, D<&IContentManagementInterface::CountApplicationContentMeta>, '
@@ -3630,14 +3770,36 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
               'aoc=exact', 'saturating=1', 'pinned_sources=immutable')
 
         cm_header_rel = 'src/core/hle/service/ns/content_management_interface.h'
-        cm_header_active = (ACTIVE / cm_header_rel).read_bytes()
-        assert len(cm_header_active) == 1220 and sha(cm_header_active) == (
-            '51e39d3dac28b309e8cd34e84d9b08fea79fb55afa5f16c3b731bd736615c3a3')
+        cm_header_list_active = (ACTIVE / cm_header_rel).read_bytes()
+        assert len(cm_header_list_active) == 1646 and sha(cm_header_list_active) == (
+            '40be7d3f2d4feec6fa9a74487ceab2eca7a05767fe1a270c808cb6529d696223')
         assert spec['entries'][cm_header_rel] == {
-            'active':'51e39d3dac28b309e8cd34e84d9b08fea79fb55afa5f16c3b731bd736615c3a3',
-            'bytes':1220,
+            'active':'40be7d3f2d4feec6fa9a74487ceab2eca7a05767fe1a270c808cb6529d696223',
+            'bytes':1646,
             'upstream':'7891715802a786423749e02e324697fa8c42b338f00fc19499a93acc1965201f',
         }
+        cm_status_struct = """struct ApplicationContentMetaStatus {
+    u8 meta_type;
+    FileSys::StorageId storage_id;
+    u8 rights_check;
+    u8 reserved;
+    u32 version;
+    u64 application_id;
+};
+static_assert(sizeof(ApplicationContentMetaStatus) == 0x10);
+
+"""
+        cm_list_decl = """    Result ListApplicationContentMetaStatus(
+        OutArray<ApplicationContentMetaStatus, BufferAttr_HipcMapAlias> out_statuses,
+        Out<s32> out_count, s32 index, u64 application_id);
+"""
+        cm_header_list_text = cm_header_list_active.decode('utf-8')
+        assert cm_header_list_text.count(cm_status_struct) == 1
+        assert cm_header_list_text.count(cm_list_decl) == 1
+        cm_header_active = cm_header_list_text.replace(cm_status_struct, '', 1).replace(
+            cm_list_decl, '', 1).encode('utf-8')
+        assert len(cm_header_active) == 1220 and sha(cm_header_active) == (
+            '51e39d3dac28b309e8cd34e84d9b08fea79fb55afa5f16c3b731bd736615c3a3')
         cm_header_decl = (
             '    Result CountApplicationContentMeta(Out<s32> out_count, u64 application_id);\n')
         cm_header_text = cm_header_active.decode('utf-8')

@@ -1299,6 +1299,23 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# Native NS2 GPU worker and maintained NVMap implementation must compile against
+# the SAME handle lifetime ABI. The pinned include cache lacks native_retired
+# and FreeHandleIfUnpinned; install the reviewed vendor header before other
+# Eden include roots rather than modifying the immutable upstream SDK cache.
+if(PS5_NATIVE)
+    set(EDEN_NATIVE_NVMAP_HEADER
+        "${PORT_ROOT}/vendor/sources/eden/src/core/hle/service/nvdrv/core/nvmap.h")
+    if(NOT EXISTS "${EDEN_NATIVE_NVMAP_HEADER}")
+        message(FATAL_ERROR "NS2 native NVMap lifetime header missing")
+    endif()
+    set(EDEN_NATIVE_NVMAP_INCLUDE "${PORT_BUILD_DIR}/ns2-nvmap/include")
+    configure_file("${EDEN_NATIVE_NVMAP_HEADER}"
+        "${EDEN_NATIVE_NVMAP_INCLUDE}/core/hle/service/nvdrv/core/nvmap.h" COPYONLY)
+    target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_NVMAP_INCLUDE}")
+    message(STATUS "NS2: selected NVMap lifetime header matches maintained native implementation")
+endif()
+
 # R23 #80 — vendor workaround IR and VkPipelineCache need the SAME
 # HasBrokenPattern ABI. Compile the maintained shader TU exactly once and
 # stage the public IR declaration before video_core/shader_recompiler.

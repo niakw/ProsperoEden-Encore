@@ -1330,10 +1330,22 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # actual main applet rather than leaving an indexed IMPL-SRC false
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_program_index_head = (ACTIVE / ns_rel).read_bytes()
+        ns_unique_916_head = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_unique_916_head) == 76252 and sha(ns_unique_916_head) == (
+            '8e8c3bedc4610ae5f3af1510fe6b00ea03e925e6e77b26ad9bb9a1e8208e3476')
+        assert spec['entries'][ns_rel]['active'] == sha(ns_unique_916_head)
+        ns_unique_916_text = ns_unique_916_head.decode('utf-8')
+        ns_real_916 = '        {916, nullptr, "IsApplicationAutoDeleteDisabled"},\n'
+        ns_duplicate_916 = '        {916, nullptr, "Unknown916"}, //20.0.0+\n'
+        assert ns_unique_916_text.count(ns_real_916) == 1
+        assert ns_duplicate_916 not in ns_unique_916_text
+        ns_program_index_head = ns_unique_916_text.replace(
+            ns_real_916, ns_real_916 + ns_duplicate_916, 1).encode('utf-8')
         assert len(ns_program_index_head) == 76300 and sha(ns_program_index_head) == (
             '0c8e7a0588c376b2c67a0ed6ceba5c3e72f3c48d3498ebc25903453f1b646c4e')
-        assert spec['entries'][ns_rel]['active'] == sha(ns_program_index_head)
+        print('NS1_NS_DUPLICATE_916_EXACT_REVERSE_PASS',
+              'physical_duplicate_removed=1', 'real_command_preserved=1',
+              'hos23_unique_id=916')
         ns_program_index_pointer = (
             '{93, D<&IApplicationManagerInterface::GetMainApplicationProgramIndex>, '
             '"GetMainApplicationProgramIndex"}')
@@ -1631,7 +1643,7 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_previous = (stage / ns_rel).read_bytes()
         assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
         assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_program_index_head)
+        assert spec['entries'][ns_rel]['active'] == sha(ns_unique_916_head)
         import re
         ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
         ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)

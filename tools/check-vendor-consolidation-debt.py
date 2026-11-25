@@ -213,7 +213,7 @@ assert storage_pinned.count(storage_old) == 1
 storage_receipt = json.loads(
     (root / "tools/fixtures/r23-i-storage-backport-reverse.json").read_text())
 assert storage_receipt["schema_version"] == 1
-assert len(storage_receipt["hunks"]) == 2
+assert len(storage_receipt["hunks"]) == 5
 import hashlib
 def source_git_blob(source):
     data = source.encode("utf-8")
@@ -227,11 +227,15 @@ assert source_git_blob(storage_prior) == storage_receipt["pre_r23_blob"]
 assert storage_prior == '#include "performance.h"\n' + storage_pinned.replace(storage_old, storage_new), (
     "Maintained IStorage historic profile TU cannot be reconstructed")
 assert "next_read_tick" in storage_maintained and "out_bytes.size()" in storage_maintained
+assert '{5, D<&IStorage::OperateRange>, "OperateRange"}' in storage_maintained
+assert "FileSys::OperationId::Invalidate" in storage_maintained
+assert "FileSys::OperationId::QueryRange" in storage_maintained
+assert "R_THROW(FileSys::ResultNotImplemented);" in storage_maintained
 assert 'EDEN_MAINTAINED_PROFILE_FS_STORAGE' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/fs_i_storage.cpp"' not in c
 assert "fs_storage_source" not in c
 assert counts["write_derived("] <= 63, counts
-print("VENDOR_MAINTAINED_FS_ISTORAGE_PARITY_PASS: read, short read, quiet policy")
+print("VENDOR_MAINTAINED_FS_ISTORAGE_PARITY_PASS: read, short read, quiet policy, operate-range")
 
 
 # FS open diagnostics used to be a CMake loop patching three calls.

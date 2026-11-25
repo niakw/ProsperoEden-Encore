@@ -107,6 +107,7 @@ assert service.index("IsSafeOptionalNoOp") < service.index("SaveUnimplementedFun
 maintained = Path(__file__).resolve().parents[1] / "vendor/encore-active/eden-core/src/core/hle/service/filesystem/fsp"
 fs_file = (maintained / "fs_i_file.cpp").read_text()
 fs_storage = (maintained / "fs_i_storage.cpp").read_text()
+fs_storage_header = (Path(__file__).resolve().parents[1] / "vendor/encore-active/eden-core/include/core/hle/service/filesystem/fsp/fs_i_storage.h").read_text()
 assert 'EDEN_MAINTAINED_PROFILE_FS_FILE' not in cmake
 assert 'EDEN_MAINTAINED_PROFILE_FS_STORAGE' not in cmake
 for fragment, name in [(fs_file, "guest_fs_file"), (fs_storage, "guest_fs_storage")]:
@@ -115,6 +116,12 @@ for fragment, name in [(fs_file, "guest_fs_file"), (fs_storage, "guest_fs_storag
 assert fs_file.index("backend->Read(") < fs_file.index("if (fs_start)") < fs_file.index("EDEN_FS_FILE_READ")
 assert fs_storage.index("EDEN_FS_SHORT_STORAGE") < fs_storage.index("if (fs_start)")
 assert "fs_read != static_cast<std::size_t>(length)" in fs_storage
+assert '{5, D<&IStorage::OperateRange>, "OperateRange"}' in fs_storage
+assert "FileSys::OperationId::Invalidate" in fs_storage
+assert "FileSys::OperationId::QueryRange" in fs_storage
+assert "struct StorageQueryRangeInfo" in fs_storage_header
+assert "static_assert(sizeof(StorageQueryRangeInfo) == 0x40);" in fs_storage_header
+assert "Result OperateRange(Out<StorageQueryRangeInfo>" in fs_storage_header
 fs_open = (maintained / "fs_i_filesystem.cpp").read_text()
 assert 'EDEN_MAINTAINED_PROFILE_FS_SYSTEM' not in cmake
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_FS_SYSTEM}")' not in cmake

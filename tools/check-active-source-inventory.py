@@ -1846,7 +1846,7 @@ ns2_font_service_receipts = {
     "ns2-runtime/font_service/core/hle/service/ns/font_merge.h":
         "4380ec17e9d602e26839f6c8a4dddddb916a0f02",
     "ns2-runtime/font_service/core/hle/service/ns/platform_service_manager.cpp":
-        "87994714900728c1c7acabfc94fc5cfa6d2028ca",
+        "8aa077c5449b9dcbad1b3e343e393da71338f53a",
     "ns2-runtime/font_service/core/hle/service/ns/platform_service_manager.h":
         "ed0bb0a17d01d10339bb8263f690aa52666158ad",
 }

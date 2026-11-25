@@ -20,6 +20,14 @@ if "$link"; then
         -Wl,-e,main -Wl,--no-undefined -L "$sdk/target/lib"
         -lSceLibcInternal -lkernel -lc -lSceNet)
 fi
+# FFmpeg is a pinned third-party dependency built with a deliberately small
+# decoder/filter profile. Clang 18 diagnoses the PS5 SDK math.h _Generic
+# const/volatile associations even though those branches are discarded by C
+# lvalue conversion, while this profile also leaves VP7-only helpers/labels
+# unused. Keep these exclusions scoped to FFmpeg; Encore sources retain their
+# normal warning policy.
 exec clang-18 --target=x86_64-sie-ps5 -isysroot "$sdk" -isystem "$sdk/target/include" \
     -fvisibility-nodllstorageclass=default -fno-stack-protector -fno-plt -femulated-tls \
-    -ffunction-sections -fdata-sections "${arguments[@]}"
+    -ffunction-sections -fdata-sections \
+    -Wno-unreachable-code-generic-assoc -Wno-unused-function -Wno-unused-label \
+    "${arguments[@]}"

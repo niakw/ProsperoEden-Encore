@@ -168,7 +168,7 @@ expected_final = {
     "hle/service/am/service/gpu_session.cpp": (1, 12, 0),
     "hle/service/am/service/gpu_worker.cpp": (1, 14, 0),
     "hle/service/am/service/graphics_video_decoder_session.cpp": (1, 17, 0),
-    "hle/service/am/service/graphics_supervisor.cpp": (4, 178, 0),
+    "hle/service/am/service/graphics_supervisor.cpp": (4, 140, 0),
 }
 actual = {rel: (tables, commands, nulls)
           for rel, family, tables, commands, nulls, origin, chosen in by_owner}

@@ -284,19 +284,19 @@ if selected in {"06705357e48b33d837b1f97dbb1c3979cb3d7c31",
     reviewed_vendors.add(selected)
 # 12cd57b changes only four BCAT files and three native queue-semaphore
 # owners. Seal all seven before reusing the unchanged sparse-kernel graph.
-if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733"}:
+if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2"}:
     assert subprocess.check_output(
         ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea": "62a3bdbad43931dd19494fc24cb57bf5389211b8", "68cf19e736158b815629ea74a494c5536706dbc2": "c1a6951364c337e8012a6cfb46f31f305271231e", "b9dae898866d290d5ce1b15838492854680dc6d6": "cbb2c60a9bcc11478c4a420b2d03106a58fdcb20", "7130ede3236e2726f3f1b4718b0618240805e9bc": "c518f70d7e3b1e15495af73ccbd1bf29efb91e27", "203736df06915c10d379a67f52c8614c7010d733": "35c8a1e26f95dd48bdacb4f4a32f1ead48a9beee"}[selected]
-    if selected == "203736df06915c10d379a67f52c8614c7010d733":
+    ).strip() == {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea": "62a3bdbad43931dd19494fc24cb57bf5389211b8", "68cf19e736158b815629ea74a494c5536706dbc2": "c1a6951364c337e8012a6cfb46f31f305271231e", "b9dae898866d290d5ce1b15838492854680dc6d6": "cbb2c60a9bcc11478c4a420b2d03106a58fdcb20", "7130ede3236e2726f3f1b4718b0618240805e9bc": "c518f70d7e3b1e15495af73ccbd1bf29efb91e27", "203736df06915c10d379a67f52c8614c7010d733": "35c8a1e26f95dd48bdacb4f4a32f1ead48a9beee", "637edccbbf9dc403008192eaf04b14615b0500e2": "c4b3a2e07d89caea7327a00dd8b107f12e12166e"}[selected]
+    if selected in {"203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2"}:
         assert subprocess.check_output(["git", "hash-object", str(root/"vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp")], text=True).strip() == "dbe0a8fd0c931481688c8eb7d7b32896fb21e866"
-    if selected in {"7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733"}:
+    if selected in {"7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2"}:
         assert subprocess.check_output(["git", "hash-object", str(root/"vendor/encore-active/eden-core/src/core/hle/kernel/k_page_table_base.cpp")], text=True).strip() == "a2d6d658ae391e0acd64e68d495c00333e2032ca"
-    if selected in {"68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733"}:
+    if selected in {"68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2"}:
         raw=(root/"vendor/tests/ns2_gpu_identity_mapping_source.py").read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-        assert actual == ("9755354e5a49f50f75f1f04894686f7838f80ea8" if selected in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733"} else "3a9a1679bc2795cf08863370403b2bc4ad89a553"), ("R457 identity source drift",selected,actual)
-    if selected in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733"}:
+        assert actual == ("9755354e5a49f50f75f1f04894686f7838f80ea8" if selected in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2"} else "3a9a1679bc2795cf08863370403b2bc4ad89a553"), ("R457 identity source drift",selected,actual)
+    if selected in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2"}:
         raw=(root/"vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h").read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert actual=="6e1d185f086969caef3dded1a4b383c34a4d8657",("R457 214 decode drift",actual)
@@ -312,7 +312,7 @@ if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b81562
         "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
             "576a9d697da398aa6f42901b1764aa7574155411",
         "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
-            ("b1be989fb564a1c9ef269470ca5897af4491c9c2" if selected in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733"} else "9c35b43bc4f61d67395897fb63fce57419bc3331"),
+            ("b1be989fb564a1c9ef269470ca5897af4491c9c2" if selected in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2"} else "9c35b43bc4f61d67395897fb63fce57419bc3331"),
         "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h":
             "a22b96c04f6f06aef36c36857dcf124521ca2cb7",
     }.items():
@@ -339,7 +339,7 @@ if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b81562
 if selected in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
     reviewed_vendors.add(selected)
 assert pinned==selected and pinned in reviewed_vendors,(pinned,selected)
-if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733"}:
+if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2"}:
     selected = "3abd88bc1a3c334f53f345998b72e9cf8ae87abf"
 # The reviewed NS2 strict-completion/VA-lifecycle successor changes no sparse PTE/slab owner.
 # Its sparse-residency owners are byte-identical to the reviewed 3abd88bc

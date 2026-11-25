@@ -1607,6 +1607,110 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'unsupported_power_commands=38', 'selected_cpp=2', 'no_host_power=1')
 
 
+        # PCV, PSC/HSHL and audrec have no PS5 guest hardware backend.
+        # Reconstruct the frozen Eden files from the four shipping overlays.
+        # Both immutable SHA256 receipts and the exact inverse are required.
+        unsupported_hw = [
+            ('src/core/hle/service/pcv/pcv.cpp', 11296, '80648faaf1103f71df863a9f29107aa24e3b6efb5dd386771ae1092cc5934090', 13864, 'c2fda0b5766f25f242fa2e1bd242ece41271610d9e441e852bd3447a092e3714'),
+            ('src/core/hle/service/psc/psc.cpp', 5106, 'bdf44cd651a7b6eaa0e273959fa15314514fed0e3763601649462349ef18fd96', 7924, '5cb40750e568b2fd35feb11ef29dddae7d9ffcfd178d73fc8d6106f3eaf9eba4'),
+            ('src/core/hle/service/audio/final_output_recorder_manager.cpp', 1620, '9a800607a59ea78ab3c33e0c147855973edab8155555402318e287f0533ebffd', 2780, '0ba9b25d81b4f723445e257b0430709a417a7615537a6376faea60615bb8cce3'),
+            ('src/core/hle/service/audio/final_output_recorder_manager.h', 474, '9987c004a6c9f3973b3ac139be7783b5c2188ce7104ed209c7bb90d87103b9eb', 542, '154a4bae6d4d5f65af9024ead1ac41cab106ee368aea7c2149c481b24cd53dcf'),
+        ]
+        hardware_rejection = (
+            '\nprivate:\n'
+            '    void RejectUnsupportedDevice(HLERequestContext& ctx) {\n'
+            '        // Missing physical Switch power/clock/capture peripheral on the PS5.\n'
+            '        // Do not manufacture successful completion for guest requests.\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(ResultUnknown);\n'
+            '    }\n'
+        )
+        pcv_old_ports = (
+            '    server_manager->RegisterNamedService("pcv", std::make_shared<PCV>(system));\n'
+            '    server_manager->RegisterNamedService("pcv:arb", std::make_shared<PCV_ARB>(system));\n'
+            '    server_manager->RegisterNamedService("pcv:imm", std::make_shared<PCV_IMM>(system));\n'
+            '    server_manager->RegisterNamedService("clkrst", std::make_shared<CLKRST>(system, "clkrst"));\n'
+            '    server_manager->RegisterNamedService("clkrst:i", std::make_shared<CLKRST>(system, "clkrst:i"));\n'
+            '    server_manager->RegisterNamedService("clkrst:a", std::make_shared<CLKRST_A>(system));'
+        )
+        pcv_hos8_ports = (
+            '    server_manager->RegisterNamedService("pcv", std::make_shared<PCV>(system));\n'
+            '    // HOS 8 replaced pcv:arb/imm with clkrst. Keep old ports for old guests.\n'
+            '    const auto major = FirmwareManager::GetFirmwareVersion(system).first.major;\n'
+            '    if (major < 8) {\n'
+            '        server_manager->RegisterNamedService("pcv:arb", std::make_shared<PCV_ARB>(system));\n'
+            '        server_manager->RegisterNamedService("pcv:imm", std::make_shared<PCV_IMM>(system));\n'
+            '    } else {\n'
+            '        server_manager->RegisterNamedService("clkrst", std::make_shared<CLKRST>(system, "clkrst"));\n'
+            '        server_manager->RegisterNamedService("clkrst:i", std::make_shared<CLKRST>(system, "clkrst:i"));\n'
+            '        server_manager->RegisterNamedService("clkrst:a", std::make_shared<CLKRST_A>(system));\n'
+            '    }'
+        )
+        audio_manager_method = (
+            'void IFinalOutputRecorderManager::RejectUnsupportedDevice(HLERequestContext& ctx) {\n'
+            '    // No guest final-output recording backend. Playback continues through\n'
+            '    // the existing audio rendering path without this optional capture device.\n'
+            '    IPC::ResponseBuilder rb{ctx, 2};\n'
+            '    rb.Push(ResultUnknown);\n'
+            '}\n\n'
+        )
+        cmake_native = (ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel, old_bytes, old_hash, new_bytes, new_hash in unsupported_hw:
+            original = (stage/rel).read_bytes()
+            pristine = (ORIGINAL/rel).read_bytes()
+            current = (ACTIVE/rel).read_bytes()
+            assert original == pristine and len(original) == old_bytes and sha(original) == old_hash, rel
+            assert len(current) == new_bytes and sha(current) == new_hash, rel
+            assert spec['entries'][rel] == {
+                'active': new_hash, 'bytes': new_bytes, 'upstream': old_hash
+            }, rel
+            if rel.endswith('.cpp'):
+                cmake_owner = rel.removeprefix('src/core/')
+                assert cmake_native.count(cmake_owner) == 1, rel
+            reversed_cpp = current.decode('utf-8')
+            if rel.endswith('/pcv/pcv.cpp'):
+                classes = [('PCV',30), ('PCV_ARB',1), ('PCV_IMM',1),
+                           ('CLKRST',3), ('CLKRST_A',1)]
+                assert reversed_cpp.count(pcv_hos8_ports) == 1
+                reversed_cpp = reversed_cpp.replace(pcv_hos8_ports, pcv_old_ports, 1)
+                assert reversed_cpp.count('#include "frontend_common/firmware_manager.h"\n') == 1
+                reversed_cpp = reversed_cpp.replace('#include "frontend_common/firmware_manager.h"\n', '', 1)
+            elif rel.endswith('/psc/psc.cpp'):
+                classes = [('PSC_L',5), ('INS_R',2), ('INS_S',1),
+                           ('HSHL_SYS',16), ('HSHL_SET',6)]
+                for start, stop, cls in ((16,22,'HSHL_SYS'), (6,8,'HSHL_SET')):
+                    for n in range(start,stop):
+                        line = f'            {{{n}, &{cls}::RejectUnsupportedDevice, "Cmd{n}"}},\n'
+                        assert reversed_cpp.count(line) == 1
+                        reversed_cpp = reversed_cpp.replace(line,'',1)
+                assert reversed_cpp.count('#include "core/hle/service/ipc_helpers.h"\n') == 1
+                reversed_cpp = reversed_cpp.replace('#include "core/hle/service/ipc_helpers.h"\n', '', 1)
+            elif rel.endswith('/audio/final_output_recorder_manager.cpp'):
+                classes = [('IFinalOutputRecorder',12)]
+                assert reversed_cpp.count('&IFinalOutputRecorderManager::RejectUnsupportedDevice') == 1
+                reversed_cpp = reversed_cpp.replace('&IFinalOutputRecorderManager::RejectUnsupportedDevice', 'nullptr', 1)
+                assert reversed_cpp.count(audio_manager_method) == 1
+                reversed_cpp = reversed_cpp.replace(audio_manager_method, '', 1)
+                assert reversed_cpp.count('#include "core/hle/service/ipc_helpers.h"\n') == 1
+                reversed_cpp = reversed_cpp.replace('#include "core/hle/service/ipc_helpers.h"\n', '', 1)
+            else:
+                classes = []
+                declaration = '\nprivate:\n    void RejectUnsupportedDevice(HLERequestContext& ctx);'
+                assert reversed_cpp.count(declaration) == 1
+                reversed_cpp = reversed_cpp.replace(declaration, '', 1)
+            for cls, count in classes:
+                pointer = '&'+cls+'::RejectUnsupportedDevice'
+                assert reversed_cpp.count(pointer) == count, (rel,cls)
+                reversed_cpp = reversed_cpp.replace(pointer,'nullptr')
+            assert reversed_cpp.count(hardware_rejection) == len(classes), rel
+            reversed_cpp = reversed_cpp.replace(hardware_rejection,'')
+            assert reversed_cpp.encode('utf-8') == original, ('NS1 PCV/PSC/audrec exact reverse drift',rel)
+            observed[rel] = spec['entries'][rel]
+        print('NS1_PCV_PSC_AUDIO_HARDWARE_EXACT_REVERSE_PASS',
+              'physical_closed=79', 'hos23_hshl_added=8', 'native_overlays=4',
+              'legacy_ports_versioned=1', 'playback_untouched=1')
+
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

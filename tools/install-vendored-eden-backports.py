@@ -2959,9 +2959,37 @@ static_assert(sizeof(ApplicationContentStorageRecord) == 0x18);
         prior = (stage/rel).read_bytes()
         assert len(prior) == 10435 and sha(prior) == 'afae15d9fc27afccce5f830aae5e7f040ef70d5135a719e210bdadf35af54bc8'
         current = (ACTIVE/rel).read_bytes()
-        assert len(current) == 12012 and sha(current) == 'c1f1ef432dbd348f9fdede30a8b92f465bb6f2f6a6959b4cf011c716e9d1d4f1'
+        assert len(current) == 12322 and sha(current) == '5742981ed393099f65638fce3fdd2bf8f816a8d208bc67bc55c8532960f7ad71'
         assert spec['entries'][rel]['active'] == sha(current)
         assert spec['entries'][rel]['bytes'] == len(current)
+
+        # The completeness pass did not change NGC/STPL ABI or behavior. It
+        # reclassified twelve stale "stubbed" labels into the explicit runtime
+        # policies already implemented: local pass-through filtering, unavailable
+        # save-data leaves, and real HOS23 interface factories. Reverse that
+        # classification-only layer and prove the exact prior maintained blob.
+        prior_active = current.decode()
+        prior_active = prior_active.replace(
+            'LOG_DEBUG(Service_NGC, "called, pass-through text policy, text={}", text);',
+            'LOG_WARNING(Service_NGC, "(STUBBED) called, text={}", text);')
+        prior_active = prior_active.replace(
+            'LOG_DEBUG(Service_NGC, "called, pass-through profanity policy");',
+            'LOG_INFO(Service_NGC, "(STUBBED) called");')
+        prior_active = prior_active.replace(
+            'LOG_DEBUG(Service_NGC, "called; save-data backend unavailable");',
+            'LOG_WARNING(Service_NGC, "stubbed");')
+        prior_active = prior_active.replace(
+            'LOG_DEBUG(Service_NGC, "called, returning HOS23 user shim object, unk0={:#x}", unk0);',
+            'LOG_WARNING(Service_NGC, "stubbed");')
+        prior_active = prior_active.replace(
+            'LOG_DEBUG(Service_NGC, "called, returning HOS23 system shim object");',
+            'LOG_WARNING(Service_NGC, "stubbed");')
+        prior_active_bytes = prior_active.encode()
+        assert len(prior_active_bytes) == 12012
+        assert sha(prior_active_bytes) == 'c1f1ef432dbd348f9fdede30a8b92f465bb6f2f6a6959b4cf011c716e9d1d4f1'
+        assert '(STUBBED)' not in current.decode() and 'stubbed' not in current.decode()
+
+        current = prior_active_bytes
         expected = prior.decode()
         ngct_method = (
             '\nprivate:\n'
@@ -3002,6 +3030,9 @@ static_assert(sizeof(ApplicationContentStorageRecord) == 0x18);
                                    '\nclass ISystemService', system_shim_method)
         assert expected.encode() == current
         observed[rel] = spec['entries'][rel]
+        print('NS1_NGC_OWNER_QUALIFIED_PASS',
+              'nulls=0', 'stub_markers=0', 'pass_through_policy=1',
+              'hos23_factories=2', 'unavailable_leafs_fail_closed=1')
 
         print('NS1_CLOUD_DEBUG_NETWORK_BATCH_EXACT_REPLAY_PASS',
               'physical_closed=67', 'mnpp=11', 'fgm_dbg_removed=3', 'fgm_request=4',

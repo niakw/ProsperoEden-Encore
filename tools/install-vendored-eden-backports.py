@@ -3339,6 +3339,44 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
               'physical_closed=8', 'abi_aware_fail_closed=8',
               'fake_crypto_success=0')
 
+        # VI maintained-owner successor: correct Horizon Z-order bounds and
+        # advertise the logical resolution selected by docked/portable mode.
+        # Reverse exactly these three edits back to the prior generated owner.
+        vi_rel='src/core/hle/service/vi/system_display_service.cpp'
+        vi_current=(ACTIVE/vi_rel).read_bytes()
+        assert len(vi_current)==9723 and sha(vi_current)==(
+            '04be16b40b45bb4a13cbbf7a534dae37e2862c0914d94aff7581f02524f434b1')
+        assert spec['entries'][vi_rel]['active']==sha(vi_current)
+        vi_text=vi_current.decode('utf-8')
+        assert vi_text.count('    *out_min = 1;')==1
+        assert vi_text.count('    *out_max = 255;')==1
+        vi_text=vi_text.replace('    *out_min = 1;','    *out_min = 0;',1)
+        vi_text=vi_text.replace('    *out_max = 255;','    *out_max = 15;',1)
+        vi_mode_new="""        const bool docked = Settings::IsDockedMode();
+        out_display_modes[0] = {
+            .width = static_cast<u32>(docked ? DisplayResolution::DockedWidth
+                                             : DisplayResolution::UndockedWidth),
+            .height = static_cast<u32>(docked ? DisplayResolution::DockedHeight
+                                              : DisplayResolution::UndockedHeight),
+            .refresh_rate = 60.f,
+            .unknown = {},
+        };"""
+        vi_mode_old="""        out_display_modes[0] = {
+            .width = 1920,
+            .height = 1080,
+            .refresh_rate = 60.f,
+            .unknown = {},
+        };"""
+        assert vi_text.count(vi_mode_new)==1
+        vi_prior=vi_text.replace(vi_mode_new,vi_mode_old,1).encode('utf-8')
+        assert len(vi_prior)==9399 and sha(vi_prior)==(
+            '374cc862b8949a32f6937ee3b7697e458d980556ed77a14307f4c6229cd7a705')
+        assert vi_prior==(stage/vi_rel).read_bytes(), 'VI system-display exact reverse mismatch'
+        observed[vi_rel]=spec['entries'][vi_rel]
+        print('NS1_VI_ZORDER_MODE_EXACT_REVERSE_PASS',
+              'z_min=1', 'z_max=255', 'logical_mode=docked_or_portable',
+              'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

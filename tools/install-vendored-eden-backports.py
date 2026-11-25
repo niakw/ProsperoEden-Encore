@@ -1330,10 +1330,34 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # actual main applet rather than leaving an indexed IMPL-SRC false
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_terminate_system_applet_head = (ACTIVE / ns_rel).read_bytes()
+        ns_fail_closed_head = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_fail_closed_head) == 82148 and sha(ns_fail_closed_head) == (
+            '12f588b746e3d8c04a4e7e7fbba5330e3e396299ee109ede9794be940b7b8a87')
+        assert spec['entries'][ns_rel]['active'] == sha(ns_fail_closed_head)
+        ns_fail_closed_text = ns_fail_closed_head.decode('utf-8')
+        ns_fail_closed = {
+            26:'BeginInstallApplication',
+            603:'GetOwnedApplicationContentMetaStatus',
+            605:'ListApplicationContentMetaStatusWithRightsCheck',
+            609:'ListAvailabilityAssuredAddOnContent',
+            611:'PrepareAddOnContent',
+            2522:'IsRomRedirectionAvailable',
+            3104:'GetApplicationNintendoLogo',
+            3105:'GetApplicationStartupMovie',
+        }
+        for command,name in ns_fail_closed.items():
+            current = (
+                f'{{{command}, &IApplicationManagerInterface::RejectUnavailablePlatformCommand, '
+                f'"{name}"}}')
+            prior = f'{{{command}, nullptr, "{name}"}}'
+            assert ns_fail_closed_text.count(current) == 1, (command,name)
+            ns_fail_closed_text = ns_fail_closed_text.replace(current, prior, 1)
+        ns_terminate_system_applet_head = ns_fail_closed_text.encode('utf-8')
         assert len(ns_terminate_system_applet_head) == 81700 and sha(ns_terminate_system_applet_head) == (
             'a8dde761f733fe141450a59d93608ba4850bc5b72d4f3b3462f7f48a13e9f053')
-        assert spec['entries'][ns_rel]['active'] == sha(ns_terminate_system_applet_head)
+        print('NS1_NS_HOS23_BACKEND_ABSENT_BATCH_EXACT_REVERSE_PASS',
+              'closed=8', 'fake_success=0', 'launch_paths_untouched=1',
+              'rights_backend_faked=0')
         ns_terminate_system_applet_pointer = (
             '{305, D<&IApplicationManagerInterface::TerminateSystemApplet>, '
             '"TerminateSystemApplet"}')
@@ -1932,7 +1956,7 @@ static_assert(sizeof(ApplicationContentStorageRecord) == 0x18);
         ns_previous = (stage / ns_rel).read_bytes()
         assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
         assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_terminate_system_applet_head)
+        assert spec['entries'][ns_rel]['active'] == sha(ns_fail_closed_head)
         import re
         ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
         ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)

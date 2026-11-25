@@ -3535,3 +3535,20 @@ Vendor `f1c2e246ffbfa0327ad49aeff10d6541cffefe87` (arbre `6288cb14b8de7a5e6494ad
 Deux overlays CMake actifs (cpp/h) sont couverts par SHA-256 upstream/active et replay bit-à-bit. **Inventaire physique attendu : 1 303 → 1 297 `nullptr`.** Cinq commandes ont un comportement invité cohérent ; la sixième est un rejet explicite. Aucun résultat console n'est revendiqué.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — pdm:qry : LastPlayTime HOS courant + 3 wrappers V0, table sans NULL
+
+Vendor `2a1baf9350e04b1d973c7f751e59098b192dccdc` (arbre `2644ebafcdba94a3da5932c00c874bd5af768b90`). Le propriétaire actif `ns/query_service.cpp` passe de 13 `nullptr` à 0.
+
+Correctifs fonctionnels :
+- `LastPlayTime` n'est plus une structure vide : ABI **0x18**, ApplicationId u64, timestamps user/network u32 au format minutes Horizon depuis 1999-12-31, minutes depuis dernière exécution et flag de validité ;
+- cmd17 `QueryLastPlayTime` écrit désormais jusqu'au nombre d'ApplicationId réellement demandé, à partir de `LaunchTimestampCache`, sans inventer une exécution lorsque le launch-count est nul ;
+- cmd7 `QueryLastPlayTimeV0` appelle cmd17 avec flag=0 ;
+- cmd13 `QueryApplicationPlayStatisticsForSystemV0` appelle cmd18 avec flag=0 ;
+- cmd16 `QueryApplicationPlayStatisticsByUserAccountIdForSystemV0` appelle cmd19 avec flag=0.
+
+Les cmd1/2/3/6, retirées après HOS6.2, et les six slots 30/31/100/110/118/119 dont la sémantique moderne n'est pas qualifiée sont raccordés à `ResultNotSupported` via le propriétaire existant ; ils ne sont pas présentés comme implémentés. Le contrat moteur exige `sizeof(LastPlayTime)==0x18`, les trois wrappers V0, 16 pointeurs de rejet contrôlés et zéro `nullptr` dans la table.
+
+**Inventaire physique attendu : 1 297 → 1 284 `nullptr`** après le lot idle:sys. Sur ces 13 slots, **3 sont des bindings fonctionnels** et 10 sont fail-closed. Le pool historique reste **689 / 4 853** jusqu'au rapprochement exact des commandes legacy/V0.
+
+Build PS5 et test console : non exécutés.

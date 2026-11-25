@@ -1330,10 +1330,76 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # actual main applet rather than leaving an indexed IMPL-SRC false
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_auto_delete_head = (ACTIVE / ns_rel).read_bytes()
+        ns_launch_info_head = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_launch_info_head) == 85321 and sha(ns_launch_info_head) == (
+            'b7226741915a343f70af7efae1a4a0f79210f4744a29bf7b43422c4694da1643')
+        assert spec['entries'][ns_rel]['active'] == sha(ns_launch_info_head)
+        ns_launch_info_pointer = (
+            '{95, D<&IApplicationManagerInterface::GetApplicationLaunchInfo>, '
+            '"GetApplicationLaunchInfo"}')
+        ns_launch_info_pointer_old = '{95, nullptr, "GetApplicationLaunchInfo"}'
+        ns_launch_info_method = """Result IApplicationManagerInterface::GetApplicationLaunchInfo(
+    Out<ApplicationLaunchInfoV19> out_launch_info, u64 application_id) {
+    auto& storage = system.GetContentProviderUnion();
+    const u64 base_application_id = FileSys::GetBaseTitleID(application_id);
+    const u64 program_id =
+        storage.HasEntry(application_id, FileSys::ContentRecordType::Program)
+            ? application_id
+            : base_application_id;
+
+    R_UNLESS(storage.HasEntry(program_id, FileSys::ContentRecordType::Program),
+             AM::ResultApplicationRecordNotFound);
+
+    const auto storage_id_for_slot = [](std::optional<FileSys::ContentProviderUnionSlot> slot) {
+        if (!slot.has_value()) {
+            return FileSys::StorageId::None;
+        }
+        switch (*slot) {
+        case FileSys::ContentProviderUnionSlot::UserNAND:
+            return FileSys::StorageId::NandUser;
+        case FileSys::ContentProviderUnionSlot::SysNAND:
+            return FileSys::StorageId::NandSystem;
+        case FileSys::ContentProviderUnionSlot::SDMC:
+            return FileSys::StorageId::SdCard;
+        case FileSys::ContentProviderUnionSlot::FrontendManual:
+            return FileSys::StorageId::Host;
+        default:
+            return FileSys::StorageId::None;
+        }
+    };
+
+    FileSys::PatchManager patch_manager{program_id, system.GetFileSystemController(), storage};
+
+    *out_launch_info = {};
+    out_launch_info->application_id = base_application_id;
+    out_launch_info->program_id = program_id;
+    out_launch_info->version = patch_manager.GetGameVersion().value_or(0);
+    out_launch_info->application_storage_id = static_cast<u8>(storage_id_for_slot(
+        storage.GetSlotForEntry(program_id, FileSys::ContentRecordType::Program)));
+    out_launch_info->update_storage_id = static_cast<u8>(storage_id_for_slot(
+        storage.GetSlotForEntry(FileSys::GetUpdateTitleID(base_application_id),
+                                FileSys::ContentRecordType::Program)));
+    // GetApplicationLaunchInfo is the pre-launch form. Horizon fills the
+    // application-instance id at 0x30 later, during CreateApplicationInstance.
+    out_launch_info->application_instance_id = 0;
+    R_SUCCEED();
+}
+
+"""
+        ns_launch_info_text = ns_launch_info_head.decode('utf-8')
+        assert ns_launch_info_text.count('#include <optional>\n') == 1
+        assert ns_launch_info_text.count(ns_launch_info_pointer) == 1
+        assert ns_launch_info_text.count(ns_launch_info_method) == 1
+        ns_auto_delete_head = ns_launch_info_text.replace(
+            '#include <optional>\n', '', 1).replace(
+            ns_launch_info_pointer, ns_launch_info_pointer_old, 1).replace(
+            ns_launch_info_method, '', 1).encode('utf-8')
         assert len(ns_auto_delete_head) == 83041 and sha(ns_auto_delete_head) == (
             '5e1fe9ed99e7f5ed9e2ab68f3e4249c18329fb833c844a7495e6363ba50abf80')
-        assert spec['entries'][ns_rel]['active'] == sha(ns_auto_delete_head)
+        print('NS1_NS_LAUNCH_INFO_QUERY_EXACT_REVERSE_PASS',
+              'command=95', 'layout=0x80', 'program_id_offset=0x08',
+              'version_offset=0x10', 'instance_offset=0x30',
+              'prelaunch_instance_zero=1', 'command96_untouched=1')
         ns_auto_delete_pointer_916 = (
             '{916, D<&IApplicationManagerInterface::IsApplicationAutoDeleteDisabled>, '
             '"IsApplicationAutoDeleteDisabled"}')
@@ -1858,10 +1924,52 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_owner_prior = ns_text.encode('utf-8')
         assert len(ns_owner_prior) == 69013 and sha(ns_owner_prior) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
         ns_header_rel = 'src/core/hle/service/ns/application_manager_interface.h'
-        ns_header_auto_delete = (ACTIVE / ns_header_rel).read_bytes()
+        ns_header_launch_info = (ACTIVE / ns_header_rel).read_bytes()
+        assert len(ns_header_launch_info) == 10547 and sha(ns_header_launch_info) == (
+            '93afe0ea721e6e53d89dbb0711d84d6dc669ead08b3102af9069c7c80bb9adc7')
+        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_launch_info)
+        ns_launch_info_struct_new = """struct ApplicationLaunchInfoV19 {
+    u64 application_id;
+    u64 program_id;
+    u32 version;
+    u8 reserved_14[0x8];
+    u8 application_storage_id;
+    u8 update_storage_id;
+    u8 reserved_1e[0x12];
+    u64 application_instance_id;
+    u8 reserved_38[0x48];
+};
+static_assert(sizeof(ApplicationLaunchInfoV19) == 0x80);
+static_assert(offsetof(ApplicationLaunchInfoV19, program_id) == 0x08);
+static_assert(offsetof(ApplicationLaunchInfoV19, version) == 0x10);
+static_assert(offsetof(ApplicationLaunchInfoV19, application_storage_id) == 0x1C);
+static_assert(offsetof(ApplicationLaunchInfoV19, application_instance_id) == 0x30);
+
+"""
+        ns_launch_info_struct_old = """struct ApplicationLaunchInfoV19 {
+    u64 application_id;
+    u32 version;
+    u32 launch_flags;
+    u8 application_storage_id;
+    u8 update_storage_id;
+    u8 reserved[0x6E];
+};
+static_assert(sizeof(ApplicationLaunchInfoV19) == 0x80);
+
+"""
+        ns_launch_info_decl = """    Result GetApplicationLaunchInfo(Out<ApplicationLaunchInfoV19> out_launch_info,
+                                    u64 application_id);
+"""
+        ns_header_launch_info_text = ns_header_launch_info.decode('utf-8')
+        assert ns_header_launch_info_text.count('#include <cstddef>\n\n') == 1
+        assert ns_header_launch_info_text.count(ns_launch_info_struct_new) == 1
+        assert ns_header_launch_info_text.count(ns_launch_info_decl) == 1
+        ns_header_auto_delete = ns_header_launch_info_text.replace(
+            '#include <cstddef>\n\n', '', 1).replace(
+            ns_launch_info_struct_new, ns_launch_info_struct_old, 1).replace(
+            ns_launch_info_decl, '', 1).encode('utf-8')
         assert len(ns_header_auto_delete) == 9996 and sha(ns_header_auto_delete) == (
             '87f05ec209b4e89e93da5efb74e687e4487149d5df556dfc8f7f5dea14fe2320')
-        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_auto_delete)
         ns_auto_delete_decls = (
             '    Result IsApplicationAutoDeleteDisabled(Out<bool> out_disabled, u64 application_id);\n'
             '    Result IsPatchAutoDeletableApplication(Out<bool> out_deletable, u64 application_id);\n')
@@ -2007,7 +2115,7 @@ static_assert(sizeof(ApplicationContentStorageRecord) == 0x18);
         ns_previous = (stage / ns_rel).read_bytes()
         assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
         assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_auto_delete_head)
+        assert spec['entries'][ns_rel]['active'] == sha(ns_launch_info_head)
         import re
         ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
         ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)

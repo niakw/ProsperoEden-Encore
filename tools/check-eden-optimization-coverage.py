@@ -1735,7 +1735,9 @@ print("ENCORE_TYPOGRAPHY_F07_ISOLATION_PASS owners=2 historical_F07=518")
 # headers; neither belongs to the immutable F07 baseline.
 post_f07_loading_artwork_receipts = {
     "headless/loading_artwork_transfer.hpp": "2594c4ea8c3d08ec1c04e9c08de717f61ffb7df1",
-    "headless/loading_artwork_gl.hpp": "b08c16fa6650e89dbbd6b8f1b73d26f66a1f441e",
+    # Exact 3D case-renderer handoff. Its historical pre-merge source blob
+    # was b08c16fa6650e89dbbd6b8f1b73d26f66a1f441e.
+    "headless/loading_artwork_gl.hpp": "7bf2c800ef6524f7d582a08c27ef4fbf63d25d7e",
 }
 post_f07_loading_artwork_owners = set(post_f07_loading_artwork_receipts)
 assert post_f07_loading_artwork_owners <= all_owners

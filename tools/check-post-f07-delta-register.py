@@ -165,6 +165,9 @@ for entry in entries:
             if actual in {
                 "c80d171b9177987f4f29cf675c41a75771c62685",
                 "c35e938004587f5912e34acce38431a9bc5ce27a",
+                # Exact merged case-artwork and standard title-name successor.
+                # The immutable Nov23 file is recovered only for this SHA.
+                "bccd866c676bd9cece33732b4912cdd9eb5aae4d",
             }:
                 service_audit_source = subprocess.check_output(
                     ["git", "show",

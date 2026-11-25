@@ -9,7 +9,7 @@ lib=(root/"headless/prosperoeden/pe/ui/library.cpp").read_text()
 native=(root/"headless/prosperoeden/eden_services.cpp").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
 begin="Cover Textures::cover(const std::string &path, float size, bool urgent)"
-end="\nvoid Textures::invalidate("
+end="\nbool Textures::known_missing("
 assert src.count(begin)==1 and end in src.split(begin,1)[1]
 cover=begin+src.split(begin,1)[1].split(end,1)[0]
 avatar_begin="bool IsProfileAvatarImage(std::string_view path)"

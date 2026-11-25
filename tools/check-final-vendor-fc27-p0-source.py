@@ -117,16 +117,22 @@ selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text
 # four BCAT owners plus the three active NS2 queue-semaphore owners changed.
 # Seal the complete tree and every changed blob before replaying predecessor
 # receipts for all byte-identical FC27/P0 owners.
-if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2"}:
+if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6"}:
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == ("c1a6951364c337e8012a6cfb46f31f305271231e" if selected == "68cf19e736158b815629ea74a494c5536706dbc2" else "62a3bdbad43931dd19494fc24cb57bf5389211b8")
-    if selected == "68cf19e736158b815629ea74a494c5536706dbc2":
+    ).strip() == {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea": "62a3bdbad43931dd19494fc24cb57bf5389211b8", "68cf19e736158b815629ea74a494c5536706dbc2": "c1a6951364c337e8012a6cfb46f31f305271231e", "b9dae898866d290d5ce1b15838492854680dc6d6": "cbb2c60a9bcc11478c4a420b2d03106a58fdcb20"}[selected]
+    if selected in {"68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6"}:
         raw = (V / "tests/ns2_gpu_identity_mapping_source.py").read_bytes()
-        actual = hashlib.sha1(
-            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
-        ).hexdigest()
-        assert actual == "3a9a1679bc2795cf08863370403b2bc4ad89a553", ("68cf19e test-only successor drift", actual)
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ("9755354e5a49f50f75f1f04894686f7838f80ea8" if selected == "b9dae898866d290d5ce1b15838492854680dc6d6" else "3a9a1679bc2795cf08863370403b2bc4ad89a553"), ("NS2 identity successor drift", selected, actual)
+    if selected == "b9dae898866d290d5ce1b15838492854680dc6d6":
+        for relative, expected in {
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h": "6e1d185f086969caef3dded1a4b383c34a4d8657",
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp": "b1be989fb564a1c9ef269470ca5897af4491c9c2",
+        }.items():
+            raw=(V/relative).read_bytes()
+            actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+            assert actual==expected,("GPU 214 sparse successor drift",relative,actual)
     for relative, expected in {
         "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h":
             "8c93a3d6aef8a45f85cb9c2344e3427daff4d131",
@@ -139,7 +145,7 @@ if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b81562
         "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
             "576a9d697da398aa6f42901b1764aa7574155411",
         "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
-            "9c35b43bc4f61d67395897fb63fce57419bc3331",
+            ("b1be989fb564a1c9ef269470ca5897af4491c9c2" if selected == "b9dae898866d290d5ce1b15838492854680dc6d6" else "9c35b43bc4f61d67395897fb63fce57419bc3331"),
         "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h":
             "a22b96c04f6f06aef36c36857dcf124521ca2cb7",
     }.items():
@@ -227,7 +233,7 @@ if selected in {"7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "6d9fc80860ea4324b68
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
 shipping_vendor_pin = gitlink_vendor_pin
-if actual_vendor_pin in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2"}:
+if actual_vendor_pin in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6"}:
     # The exact successor tree/blobs are sealed above. Reuse the 29b91308
     # historical receipt graph for every owner that is byte-identical.
     selected = "29b91308ba1fc69978cd2cc39222fe7dc59b668c"
@@ -1553,17 +1559,20 @@ def reviewed_blob(relative, expected):
     # to BCAT. They were sealed against the exact vendor tree above; expose
     # their current identities while older receipt chains replay unchanged
     # owners from the qualified 29b91308 profile.
-    if actual_vendor_pin in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2"}:
+    if actual_vendor_pin in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6"}:
         semaphore_successor = {
             "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
                 "576a9d697da398aa6f42901b1764aa7574155411",
             "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
-                "9c35b43bc4f61d67395897fb63fce57419bc3331",
+                ("b1be989fb564a1c9ef269470ca5897af4491c9c2" if actual_vendor_pin == "b9dae898866d290d5ce1b15838492854680dc6d6" else "9c35b43bc4f61d67395897fb63fce57419bc3331"),
             "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h":
                 "a22b96c04f6f06aef36c36857dcf124521ca2cb7",
         }
         if actual_vendor_pin == "68cf19e736158b815629ea74a494c5536706dbc2":
             semaphore_successor["tests/ns2_gpu_identity_mapping_source.py"] = "3a9a1679bc2795cf08863370403b2bc4ad89a553"
+        elif actual_vendor_pin == "b9dae898866d290d5ce1b15838492854680dc6d6":
+            semaphore_successor["encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h"] = "6e1d185f086969caef3dded1a4b383c34a4d8657"
+            semaphore_successor["tests/ns2_gpu_identity_mapping_source.py"] = "9755354e5a49f50f75f1f04894686f7838f80ea8"
         if relative in semaphore_successor:
             return semaphore_successor[relative]
     # Exact NVDRV A:9 rollback successor: no other selected owner changed.

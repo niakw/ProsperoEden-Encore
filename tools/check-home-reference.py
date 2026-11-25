@@ -35,8 +35,9 @@ assert "if (home.recents.size() == 7) break" in service
 # R457 preserves the actual canonical square rail icon across focus
 # and game return. Do not prefer arbitrary fallback art over it.
 assert "const std::string& art = recent.tile_icon.empty() ? recent.cover : recent.tile_icon;" in home
-assert "recent.tile_icon = game.cover;" in (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
-assert "if (recent.tile_icon.empty()) recent.tile_icon = game.cover;" in (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
+library = (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
+assert "recent.tile_icon = game.cover;" in library
+assert 'if (recent.tile_icon.empty() || recent.tile_icon.find("/box-square-") != std::string::npos)' in library
 rail = home.split("const std::string& art = recent.tile_icon.empty()", 1)[1].split("// ---- utility cards:", 1)[0]
 assert "art, std::max(card_w - 8.0f, card_h - 8.0f), true);" in rail
 assert "cover(c, art, icon, 20.0f, 0.0f)" in rail and "cover_crop(c, art, icon" not in rail

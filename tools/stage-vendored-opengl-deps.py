@@ -74,10 +74,19 @@ def stage(opengl_root:Path):
  if not target.is_file():shutil.copy2(ROOT/locked['save'],target)
  if sha(target)!=mesa['sha256']:raise RuntimeError('Wrong vendored Mesa 26.2 archive')
  directory=workspace/f"mesa-{mesa['version']}"
- if not directory.exists():
+ mesa_required=('VERSION','meson.build','src/mesa/main/context.c',
+                'src/gallium/drivers/softpipe/sp_screen.c')
+ mesa_complete=(directory.is_dir() and
+                all((directory/name).is_file() for name in mesa_required) and
+                (directory/'VERSION').read_text().strip()==mesa['version'])
+ if not mesa_complete:
+  if directory.exists():
+   shutil.rmtree(directory)
   with tarfile.open(target) as stream:
    stream.extractall(workspace,filter='data')
- if not (directory/'VERSION').is_file() or (directory/'VERSION').read_text().strip()!=mesa['version']:
+ if not all((directory/name).is_file() for name in mesa_required):
+  raise RuntimeError('Incomplete vendored Mesa source after extraction')
+ if (directory/'VERSION').read_text().strip()!=mesa['version']:
   raise RuntimeError('Wrong vendored Mesa source version after extraction')
  print('OPENGL_MESA_ARCHIVE_OFFLINE',target.stat().st_size,'sources-ready',flush=True)
 
@@ -102,7 +111,12 @@ def stage(opengl_root:Path):
   raise RuntimeError('Mismatch in pinned OpenGL bootstrap prefetch')
  native=dest/'.deps/native';native.mkdir(parents=True,exist_ok=True)
  sdk=native/'ps5-payload-sdk'
- if not (sdk/'bin/prospero-lld').is_file():
+ required_tools=('prospero-lld','prospero-clang','prospero-clang++')
+ sdk_complete=all((sdk/'bin'/name).is_file() and os.access(sdk/'bin'/name,os.X_OK)
+                  for name in required_tools)
+ if not sdk_complete:
+  if sdk.exists():
+   shutil.rmtree(sdk)
   with zipfile.ZipFile(sdk_zip) as archive:
    for entry in archive.infolist():
     path=Path(entry.filename)
@@ -114,10 +128,11 @@ def stage(opengl_root:Path):
     if bits and not entry.is_dir():os.chmod(native/entry.filename,bits)
  archive=native/'zlib/zlib-1.3.2.tar.gz'
  archive.parent.mkdir(parents=True,exist_ok=True)
- if not archive.exists():shutil.copy2(zlib_tar,archive)
+ if not archive.exists() or sha(archive)!=extras[0]['sha256']:
+  shutil.copy2(zlib_tar,archive)
  if sha(archive)!=extras[0]['sha256']:
-  raise RuntimeError('Wrong vendored zlib 1.3.2')
- for required_tool in ('prospero-lld', 'prospero-clang', 'prospero-clang++'):
+  raise RuntimeError('Wrong vendored zlib 1.3.2 after repair')
+ for required_tool in required_tools:
   tool=sdk/'bin'/required_tool
   if not tool.is_file() or not os.access(tool, os.X_OK):
    raise RuntimeError(f'PS5 SDK tool missing after vendored extraction: {required_tool}')

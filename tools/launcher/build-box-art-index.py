@@ -41,6 +41,21 @@ def normalize(value):
             space = True
     return "".join(out).strip()
 
+# Strip only the explicit console-edition suffix, not Deluxe/Ultimate,
+# remaster, sequel numbers or other semantic distinctions.
+def standard_title(key):
+    for suffix in (" nintendo switch 2 edition", " switch 2 edition",
+                   " nintendo switch 2 version", " switch 2 version"):
+        if key.endswith(suffix):
+            return key.removesuffix(suffix).strip()
+    return key
+
+def title_keys(label):
+    folded = unicodedata.normalize("NFKD", label).encode("ascii", "ignore").decode()
+    return {key for spelling in (label, folded)
+            for normalized in (normalize(spelling),)
+            for key in (normalized, standard_title(normalized)) if key}
+
 def rank(region):
     # User locale first; leave the rest as fallbacks, including a single
     # foreign-region scan. A front and back are ranked independently.
@@ -129,38 +144,32 @@ def parse(source):
             element.clear()
             root.clear()
     names = {}
-    other_names = {}
+    platform_names = {}
+    keys_by_id = {}
     for gid, (name, platform) in games.items():
-        for label in (name, *aliases.get(gid, ())):
-            # NACP/NUP names may omit the accent of a GamesDB title. Keep
-            # both the former ASCII-byte key and a Unicode-folded alias;
-            # runtime CaseKey uses the former for accented local names.
-            folded = unicodedata.normalize("NFKD", label).encode("ascii", "ignore").decode()
-            for spelling in (label, folded):
-                key = normalize(spelling)
-                if not key:
-                    continue
-                if platform not in ("ns1", "ns2"):
-                    other_names.setdefault(key, {}).setdefault(platform, set()).add(gid)
-                    continue
+        keys = set().union(*(title_keys(label) for label in (name, *aliases.get(gid, ()))))
+        keys_by_id[gid] = keys
+        for key in keys:
+            platform_names.setdefault(key, {}).setdefault(platform, set()).add(gid)
+            if platform in ("ns1", "ns2"):
                 names.setdefault(f"{platform}:{key}", set()).add(gid)
-                # NUP sometimes advertises only the base name, while GamesDB
-                # carries the explicit Switch 2 Edition suffix.
-                if platform == "ns2" and key.endswith(" nintendo switch 2 edition"):
-                    base = key.removesuffix(" nintendo switch 2 edition")
-                    if base:
-                        names.setdefault(f"ns2:{base}", set()).add(gid)
+
     def matching_alternatives(key):
         platform, title = key.split(":", 1)
-        base = title.removesuffix(" nintendo switch 2 edition")
-        other_ids = []
-        opposite = names.get(("ns1" if platform == "ns2" else "ns2") + ":" + base, set())
-        if len(opposite) == 1:
-            other_ids.extend(opposite)
-        for _, matches in sorted(other_names.get(base, {}).items()):
-            if len(matches) == 1:
-                other_ids.extend(matches)
-        return list(dict.fromkeys(other_ids))
+        matches = names.get(key, ())
+        if len(matches) != 1:
+            return []
+        gid = next(iter(matches))
+        # Search the STANDARD GamesDB title and every verified alias of the
+        # resolved game, not just the localized string used by the launcher.
+        # Reject ambiguous releases per platform; never pick an arbitrary sequel.
+        candidates = {}
+        for spelling in sorted(keys_by_id[gid] | {standard_title(title)}):
+            for other_platform, ids in platform_names.get(spelling, {}).items():
+                if other_platform != platform:
+                    candidates.setdefault(other_platform, set()).update(ids)
+        return [next(iter(ids)) for _, ids in sorted(candidates.items())
+                if len(ids) == 1]
 
     eligible = set()
     for key, matching in names.items():
@@ -338,7 +347,20 @@ def self_test():
     assert "ns2:pokemon legends z a nintendo switch 2 edition\t" in edition, edition
     assert "eu:aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg" in edition
     assert "de:bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.jpg" in edition
-    print("PASS NS1+NS2 regional case index, independent front/back/spine, collision guards")
+    standard_xml = """<LaunchBox>
+        <Game><DatabaseID>11</DatabaseID><Platform>Nintendo Switch 2</Platform><Name>Example Quest - Switch 2 Edition</Name></Game>
+        <Game><DatabaseID>12</DatabaseID><Platform>Windows</Platform><Name>Example Quest</Name></Game>
+        <Game><DatabaseID>13</DatabaseID><Platform>PlayStation 5</Platform><Name>Example Quest Deluxe</Name></Game>
+        <GameAlternateName><DatabaseID>11</DatabaseID><AlternateName>Quête Exemple</AlternateName></GameAlternateName>
+        <GameImage><DatabaseID>12</DatabaseID><Type>Box - Back</Type><FileName>aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg</FileName></GameImage>
+        <GameImage><DatabaseID>13</DatabaseID><Type>Box - Back</Type><FileName>bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.jpg</FileName></GameImage>
+    </LaunchBox>"""
+    standard = parse(io.BytesIO(standard_xml.encode()))
+    for spelling in ("example quest", "example quest switch 2 edition", "quete exemple"):
+        match = next(line for line in standard.splitlines()
+                     if line.startswith(f"alt:ns2:{spelling}\\t".replace("\\t", "\t")))
+        assert "aaaaaaaa" in match and "bbbbbbbb" not in match
+    print("PASS standard title, Switch 2 Edition normalization, aliases and exact multiplatform identity")
 
 def main():
     cli = argparse.ArgumentParser()

@@ -1118,6 +1118,17 @@ bool UseNs2CaseIndex(const pe::ui::Game& game) {
     return IsNs2MediaIdentity(game.title_id, game.file) || game.format == "NUP";
 }
 
+std::string StandardCaseKey(std::string key) {
+    for (const std::string_view suffix : {" nintendo switch 2 edition", " switch 2 edition",
+                                          " nintendo switch 2 version", " switch 2 version"}) {
+        if (key.ends_with(suffix)) {
+            key.erase(key.size() - suffix.size());
+            break;
+        }
+    }
+    return key;
+}
+
 BoxIndex::const_iterator FindCaseEntry(const BoxIndex& index, bool ns2,
                                        const std::string& name,
                                        const std::string& alternate_name) {
@@ -1125,6 +1136,11 @@ BoxIndex::const_iterator FindCaseEntry(const BoxIndex& index, bool ns2,
         const std::string key = CaseKey(title);
         if (key.empty()) return index.end();
         auto it = index.find(std::string(ns2 ? "ns2:" : "ns1:") + key);
+        if (it == index.end()) {
+            const auto standard = StandardCaseKey(key);
+            if (standard != key)
+                it = index.find(std::string(ns2 ? "ns2:" : "ns1:") + standard);
+        }
         if (it == index.end() && !ns2) it = index.find(key);
         return it;
     };

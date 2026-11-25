@@ -1330,10 +1330,32 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # actual main applet rather than leaving an indexed IMPL-SRC false
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_content_record_head = (ACTIVE / ns_rel).read_bytes()
+        ns_content_status_head = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_content_status_head) == 79478 and sha(ns_content_status_head) == (
+            '9a950f9353595f6eb13a5e7a9c95168766d88c7b040f2a5c6691275d39f5f847')
+        assert spec['entries'][ns_rel]['active'] == sha(ns_content_status_head)
+        ns_content_status_pointer = (
+            '{601, D<&IApplicationManagerInterface::ListApplicationContentMetaStatus>, '
+            '"ListApplicationContentMetaStatus"}')
+        ns_content_status_pointer_old = '{601, nullptr, "ListApplicationContentMetaStatus"}'
+        ns_content_status_method = """Result IApplicationManagerInterface::ListApplicationContentMetaStatus(
+    OutArray<ApplicationContentMetaStatus, BufferAttr_HipcMapAlias> out_statuses,
+    Out<s32> out_count, s32 index, u64 application_id) {
+    R_RETURN(IContentManagementInterface(system).ListApplicationContentMetaStatus(
+        out_statuses, out_count, index, application_id));
+}
+
+"""
+        ns_content_status_text = ns_content_status_head.decode('utf-8')
+        assert ns_content_status_text.count(ns_content_status_pointer) == 1
+        assert ns_content_status_text.count(ns_content_status_method) == 1
+        ns_content_record_head = ns_content_status_text.replace(
+            ns_content_status_pointer, ns_content_status_pointer_old, 1).replace(
+            ns_content_status_method, '', 1).encode('utf-8')
         assert len(ns_content_record_head) == 79065 and sha(ns_content_record_head) == (
             'e4974150f2b156c43082bdb5e0a543f7337badb6f40edf0a4e27729b7438f01d')
-        assert spec['entries'][ns_rel]['active'] == sha(ns_content_record_head)
+        print('NS1_NS_CONTENT_META_STATUS_DELEGATION_EXACT_REVERSE_PASS',
+              'command=601', 'owner=content_management', 'duplicate_logic=0')
         ns_content_record_pointer = (
             '{17, D<&IApplicationManagerInterface::ListApplicationRecordContentMeta>, '
             '"ListApplicationRecordContentMeta"}')
@@ -1660,10 +1682,22 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_owner_prior = ns_text.encode('utf-8')
         assert len(ns_owner_prior) == 69013 and sha(ns_owner_prior) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
         ns_header_rel = 'src/core/hle/service/ns/application_manager_interface.h'
-        ns_header_content_record = (ACTIVE / ns_header_rel).read_bytes()
+        ns_header_content_status = (ACTIVE / ns_header_rel).read_bytes()
+        assert len(ns_header_content_status) == 9287 and sha(ns_header_content_status) == (
+            '6d1ff41f54fd11a2fea4dbd8bb927ba86476826bd31f132c7cf14c4c880b55e0')
+        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_content_status)
+        ns_content_status_include = '#include "core/hle/service/ns/content_management_interface.h"\n'
+        ns_content_status_decl = """    Result ListApplicationContentMetaStatus(
+        OutArray<ApplicationContentMetaStatus, BufferAttr_HipcMapAlias> out_statuses,
+        Out<s32> out_count, s32 index, u64 application_id);
+"""
+        ns_header_content_status_text = ns_header_content_status.decode('utf-8')
+        assert ns_header_content_status_text.count(ns_content_status_include) == 1
+        assert ns_header_content_status_text.count(ns_content_status_decl) == 1
+        ns_header_content_record = ns_header_content_status_text.replace(
+            ns_content_status_include, '', 1).replace(ns_content_status_decl, '', 1).encode('utf-8')
         assert len(ns_header_content_record) == 9034 and sha(ns_header_content_record) == (
             'a34c965c3c4ce745b0a8ae6014c89d0288738b8b0f957508a85d07fd73baeade')
-        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_content_record)
         ns_content_record_struct = """struct ApplicationContentStorageRecord {
     u64 title_id;
     u32 version;
@@ -1746,7 +1780,7 @@ static_assert(sizeof(ApplicationContentStorageRecord) == 0x18);
         ns_previous = (stage / ns_rel).read_bytes()
         assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
         assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_content_record_head)
+        assert spec['entries'][ns_rel]['active'] == sha(ns_content_status_head)
         import re
         ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
         ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)

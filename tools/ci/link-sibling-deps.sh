@@ -14,7 +14,7 @@ mkdir -p "$store"
 # preserve this CI-owned copy in the runner temp folder, then let deps.py
 # rehydrate the exact pinned commit from the immutable vendor Git bundle.
 # This is only for the ephemeral Actions cache, never for a local sibling repo.
-if [[ "\${GITHUB_ACTIONS:-}" == "true" && "$store" == "$root/.deps/repos" ]]; then
+if [[ "${GITHUB_ACTIONS:-}" == "true" && "$store" == "$root/.deps/repos" ]]; then
     cached_opengl="$store/ps5-opengl-review"
     if [[ ! -L "$cached_opengl" && -d "$cached_opengl/.git" ]] &&
        [[ -n "$(git -C "$cached_opengl" status --porcelain --untracked-files=no)" ]]; then
@@ -38,7 +38,7 @@ PY
             echo "Refusing to relocate OpenGL outside the expected CI cache root" >&2
             exit 1
         fi
-        quarantine=$(mktemp -d "\${RUNNER_TEMP:?}/encore-opengl-cache-XXXXXX")
+        quarantine=$(mktemp -d "${RUNNER_TEMP:?}/encore-opengl-cache-XXXXXX")
         mv -- "$cached_opengl" "$quarantine/ps5-opengl-review"
         echo "Encore CI: preserved dirty pinned OpenGL cache in runner temp; deps.py will restore vendor Git bundle"
     fi

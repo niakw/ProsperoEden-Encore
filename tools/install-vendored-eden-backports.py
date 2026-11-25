@@ -1415,6 +1415,51 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'new_service=wlan', 'modern_dispatch=61',
               'legacy_ports_retired=6', 'legacy_source_preserved=144')
 
+
+        # NS1 OLSC online backup/repair paths: preserve existing local
+        # transfer/event interfaces and prove 100 explicit errors reverse
+        # to the unchanged pinned Eden sources (six shipping overlays).
+        olsc_review = [{"stem":"olsc_service_for_system_service","cls":"IOlscServiceForSystemService","total":55,"cpp":[6394,"8559d301b3754dd3501a25edcbaef81c0fac076785a7aeaa8a6005a28e08945c",9601,"9f9df2f68ea4d09f92f1dce9f1fce1751ce7ad6ad9ddf83488edcbe3910feac3"],"h":[1736,"73e3339dfce8c8c0040b0a15aadf9f8d492f4556ac0685356a226bba20653222",1800,"49dcf923894dde7eead1a5e69ab73d4d65eae3560c886aa16bec2bf6b2a88c7b"]},{"stem":"remote_storage_controller","cls":"IRemoteStorageController","total":26,"cpp":[3476,"5fa3abd9dbebf13c56f7029111289b7f7c23b335f11f4d7738d8de567f43ac91",5038,"8a2aefc2418aa22ceb2739b668eb14387ec8827fd323ddb5595b44cf5de6b71b"],"h":[898,"2900c4246f1f035304c426f8daf7dc9a9776acd0703864d4a7866b47364fefe2",962,"c527516fe2652bf38681c2a0a8c74e5a0e232cd3d2e75fe7d53a1df615b43007"]},{"stem":"olsc_service_for_application","cls":"IOlscServiceForApplication","total":19,"cpp":[2900,"851c3ddf254b7468a9bdce025b9767bb1082d8a807876e0c0788a00fd5130667",4159,"492bcad65f8ee6c531ccf4d0bdd7e4b8a75f1be88887f63cc91121dcb3cdeb51"],"h":[866,"c7967190b4067f71d434d71bead934694226403931002ae71ace67ffd1cbc86d",930,"adba6f6793229d9f20d42cb6ff42ea50c430842cc26cbe8ca6f86fd50c1e5815"]}]
+        for checked in olsc_review:
+            cls = checked['cls']
+            for suffix, bounds in [('cpp', checked['cpp']), ('h', checked['h'])]:
+                rel = 'src/core/hle/service/olsc/' + checked['stem'] + '.' + suffix
+                active_source = (ACTIVE / rel).read_bytes()
+                before_size, before_hash, after_size, after_hash = bounds
+                assert len(active_source) == after_size and sha(active_source) == after_hash
+                assert spec['entries'][rel]['active'] == after_hash
+                assert spec['entries'][rel]['upstream'] == before_hash
+                assert spec['entries'][rel]['bytes'] == after_size
+                prior = active_source.decode('utf-8')
+                if suffix == 'cpp':
+                    method = (
+                        'void ' + cls + '::RejectUnavailableCloudBackend(HLERequestContext& ctx) {\n'
+                        '    // OLSC backup/transfer operations require Nintendo cloud authorization and storage.\n'
+                        '    IPC::ResponseBuilder rb{ctx, 2};\n'
+                        '    rb.Push(ResultUnknown);\n'
+                        '}\n\n'
+                    )
+                    ptr = '&' + cls + '::RejectUnavailableCloudBackend'
+                    assert prior.count(ptr) == checked['total'], (rel, 'unreviewed cloud reject count')
+                    assert prior.count(method) == 1, (rel, 'unreviewed cloud method')
+                    prior = prior.replace(ptr, 'nullptr').replace(method, '', 1)
+                    inc = '#include "core/hle/service/cmif_serialization.h"\n#include "core/hle/service/ipc_helpers.h"\n'
+                    assert prior.count(inc) == 1
+                    prior = prior.replace(inc, '#include "core/hle/service/cmif_serialization.h"\n', 1)
+                else:
+                    signature = '    void RejectUnavailableCloudBackend(HLERequestContext& ctx);\n'
+                    assert prior.count(signature) == 1
+                    prior = prior.replace(signature, '', 1)
+                assert len(prior.encode('utf-8')) == before_size
+                assert sha(prior.encode('utf-8')) == before_hash
+                assert prior.encode('utf-8') == (stage / rel).read_bytes(), (
+                    'OLSC native owner reverse mismatch', rel)
+                observed[rel] = spec['entries'][rel]
+        print('NS1_OLSC_CLOUD_BACKEND_EXACT_REVERSE_PASS',
+              'physical_closed=100', 'native_overlays=6',
+              'local_handlers=untouched', 'pinned_upstream=immutable')
+
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

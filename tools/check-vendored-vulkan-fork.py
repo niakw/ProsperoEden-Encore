@@ -983,7 +983,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
                             "8d14c398fd604733cfcc05d4dcd1d612ee53a921",
                             "4df98ff0a70343fca54c12146303ac84e0337546",
                             "f8e15a9c11ed569facf06edce7ca1b77c9c1fd3d",
-                            "f9856b407eebd3533ea4687089849887c769240b", "7ea2306eee8d69671336252a2018697b98f46112", "aca5aba40ab556d32a2ae9aec25c2fbd6f783f00", "518176771ae50589313b7dc5955fe118f9f2c0d1", "1c1f244beddb9e1620830a352e6b4c0adb9424f9", "0e5f7b03f26bae7f950e9293d632b6bd7b80d280", "ee53db178e3bb04fb41792602d5d47e68b3f0b21", "727d6de6ab259ce3103f5f244985fb1632e1202b", "b3f8efa1d434a1d5d1568302f83ed18d4e33e9f1", "69c1c7adda95aaa854f311011a50552d3036ebd8", "f5a1d9b7e439084203d901bfddd4371d2fe33718", "e964a6879a29531bcad73ac219225fb065ee2d81", "cf2237b8d710536a5c75ce1e36b62eeccb2e6c53"}:
+                            "f9856b407eebd3533ea4687089849887c769240b", "7ea2306eee8d69671336252a2018697b98f46112", "aca5aba40ab556d32a2ae9aec25c2fbd6f783f00", "518176771ae50589313b7dc5955fe118f9f2c0d1", "1c1f244beddb9e1620830a352e6b4c0adb9424f9", "0e5f7b03f26bae7f950e9293d632b6bd7b80d280", "ee53db178e3bb04fb41792602d5d47e68b3f0b21", "727d6de6ab259ce3103f5f244985fb1632e1202b", "b3f8efa1d434a1d5d1568302f83ed18d4e33e9f1", "69c1c7adda95aaa854f311011a50552d3036ebd8", "f5a1d9b7e439084203d901bfddd4371d2fe33718", "e964a6879a29531bcad73ac219225fb065ee2d81", "cf2237b8d710536a5c75ce1e36b62eeccb2e6c53", "535e1ee030ff343554f5c8b194f3b869a00b6894"}:
         # Merge commit retains precisely the source tree of the reviewed
         # GuestCacheLock predecessor; historical rollback uses its receipts.
         reviewed_tree = subprocess.check_output(
@@ -1251,6 +1251,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             'f5a1d9b7e439084203d901bfddd4371d2fe33718': '471a191c4c9e113ca6e1416f910ef12092a0d696',
             'e964a6879a29531bcad73ac219225fb065ee2d81': 'b70b8ad6e7613cf651f9361b16b2985a995e9f4f',
             'cf2237b8d710536a5c75ce1e36b62eeccb2e6c53': '160e4b16bd1af1538ab9e20b0a46882d62e97545',
+            '535e1ee030ff343554f5c8b194f3b869a00b6894': '1a892ee0dc61931c24a92396d2d41c249cb638ea',
         }[exact_vendor_pin], ('Vendor reviewed source tree drift', exact_vendor_pin, reviewed_tree)
         exact_vendor_pin = '17253dc91e9fe1eb2d9980f261f59d227bfcd1a1'
         actual_vendor_pin = exact_vendor_pin

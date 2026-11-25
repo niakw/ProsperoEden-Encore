@@ -284,11 +284,17 @@ if selected in {"06705357e48b33d837b1f97dbb1c3979cb3d7c31",
     reviewed_vendors.add(selected)
 # 12cd57b changes only four BCAT files and three native queue-semaphore
 # owners. Seal all seven before reusing the unchanged sparse-kernel graph.
-if selected == "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea":
+if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2"}:
     assert subprocess.check_output(
         ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"],
         text=True,
-    ).strip() == "62a3bdbad43931dd19494fc24cb57bf5389211b8"
+    ).strip() == ("c1a6951364c337e8012a6cfb46f31f305271231e" if selected == "68cf19e736158b815629ea74a494c5536706dbc2" else "62a3bdbad43931dd19494fc24cb57bf5389211b8")
+    if selected == "68cf19e736158b815629ea74a494c5536706dbc2":
+        raw = (root/"vendor/tests/ns2_gpu_identity_mapping_source.py").read_bytes()
+        actual = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        assert actual == "3a9a1679bc2795cf08863370403b2bc4ad89a553", ("R457 68cf19e test drift", actual)
     for relative, digest in {
         "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h":
             "8c93a3d6aef8a45f85cb9c2344e3427daff4d131",
@@ -328,7 +334,7 @@ if selected == "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea":
 if selected in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
     reviewed_vendors.add(selected)
 assert pinned==selected and pinned in reviewed_vendors,(pinned,selected)
-if selected == "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea":
+if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2"}:
     selected = "3abd88bc1a3c334f53f345998b72e9cf8ae87abf"
 # The reviewed NS2 strict-completion/VA-lifecycle successor changes no sparse PTE/slab owner.
 # Its sparse-residency owners are byte-identical to the reviewed 3abd88bc

@@ -163,10 +163,12 @@ if selected == "ea4d39d5c9bd17074292b8c6f229c53954f8e21e":
     expected.add(selected)
 # NS2 queue-semaphore + BCAT successor. The complete vendor tree and all
 # seven changed objects are sealed here; the FC27 runtime owners remain exact.
-if selected == "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea":
+if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2"}:
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "62a3bdbad43931dd19494fc24cb57bf5389211b8"
+    ).strip() == ("c1a6951364c337e8012a6cfb46f31f305271231e" if selected == "68cf19e736158b815629ea74a494c5536706dbc2" else "62a3bdbad43931dd19494fc24cb57bf5389211b8")
+    if selected == "68cf19e736158b815629ea74a494c5536706dbc2":
+        assert blob(V/"tests/ns2_gpu_identity_mapping_source.py") == "3a9a1679bc2795cf08863370403b2bc4ad89a553"
     for relative, digest in {
         "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h":
             "8c93a3d6aef8a45f85cb9c2344e3427daff4d131",

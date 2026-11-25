@@ -117,10 +117,16 @@ selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text
 # four BCAT owners plus the three active NS2 queue-semaphore owners changed.
 # Seal the complete tree and every changed blob before replaying predecessor
 # receipts for all byte-identical FC27/P0 owners.
-if selected == "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea":
+if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2"}:
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "62a3bdbad43931dd19494fc24cb57bf5389211b8"
+    ).strip() == ("c1a6951364c337e8012a6cfb46f31f305271231e" if selected == "68cf19e736158b815629ea74a494c5536706dbc2" else "62a3bdbad43931dd19494fc24cb57bf5389211b8")
+    if selected == "68cf19e736158b815629ea74a494c5536706dbc2":
+        raw = (V / "tests/ns2_gpu_identity_mapping_source.py").read_bytes()
+        actual = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        assert actual == "3a9a1679bc2795cf08863370403b2bc4ad89a553", ("68cf19e test-only successor drift", actual)
     for relative, expected in {
         "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h":
             "8c93a3d6aef8a45f85cb9c2344e3427daff4d131",
@@ -221,7 +227,7 @@ if selected in {"7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "6d9fc80860ea4324b68
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
 shipping_vendor_pin = gitlink_vendor_pin
-if actual_vendor_pin == "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea":
+if actual_vendor_pin in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2"}:
     # The exact successor tree/blobs are sealed above. Reuse the 29b91308
     # historical receipt graph for every owner that is byte-identical.
     selected = "29b91308ba1fc69978cd2cc39222fe7dc59b668c"
@@ -1547,7 +1553,7 @@ def reviewed_blob(relative, expected):
     # to BCAT. They were sealed against the exact vendor tree above; expose
     # their current identities while older receipt chains replay unchanged
     # owners from the qualified 29b91308 profile.
-    if actual_vendor_pin == "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea":
+    if actual_vendor_pin in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2"}:
         semaphore_successor = {
             "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
                 "576a9d697da398aa6f42901b1764aa7574155411",
@@ -1556,6 +1562,8 @@ def reviewed_blob(relative, expected):
             "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h":
                 "a22b96c04f6f06aef36c36857dcf124521ca2cb7",
         }
+        if actual_vendor_pin == "68cf19e736158b815629ea74a494c5536706dbc2":
+            semaphore_successor["tests/ns2_gpu_identity_mapping_source.py"] = "3a9a1679bc2795cf08863370403b2bc4ad89a553"
         if relative in semaphore_successor:
             return semaphore_successor[relative]
     # Exact NVDRV A:9 rollback successor: no other selected owner changed.
@@ -2783,7 +2791,7 @@ if actual_vendor_pin in {"ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b920336
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
     assert "EDEN_MAINTAINED_BUFFER_HOTPATH" in (V.parent / "headless/CMakeLists.txt").read_text()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
-assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
+assert actual_vendor_pin==checked and actual_vendor_pin in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point
 # replay the predecessor's exact historical receipt graph for all unaffected
 # owners; otherwise reviewed_blob() sees the successor SHA and misses c74's

@@ -41,5 +41,9 @@ assert 'third_party' in original_fetch and 'fetch_repo(name, pin)' in original_f
 builder=(ROOT/'tools/build-opengl-sdk.sh').read_text()
 assert 'tools/stage-vendored-opengl-deps.py' in builder
 assert builder.index('stage-vendored-opengl-deps.py') < builder.index('python3 "$source_dir/tools/fetch-sources.py"')
+for forbidden in ('git clone --quiet', 'git -C "$template" fetch', 'setup-native-dependencies.sh'):
+    assert forbidden not in builder, f"standard OpenGL builder retained network/bootstrap fallback: {forbidden}"
+assert 'Vendored PS5 OpenGL boilerplate staging is missing' in builder
+assert 'Vendored PS5 OpenGL PayloadSDK compiler missing after staging' in builder
 print('PS5_OPENGL_CLOSURE_OK 7 mandatory source repos + Mesa 26.2 + native boilerplate, all exact pinned bytes retained')
 print('PS5_OPENGL_CLOSURE_LIMITS optional CTS/sokol-samples not used by release; Mesa wraps and non-PS5 CPM pins separate')

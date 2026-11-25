@@ -1330,9 +1330,26 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # actual main applet rather than leaving an indexed IMPL-SRC false
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_current = (ACTIVE / ns_rel).read_bytes()
+        ns_head = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_head) == 74134 and sha(ns_head) == '0993b8bc20950394a43fa627fe120bfa378bec45214e53878d5b016f1ac3ebdc'
+        assert spec['entries'][ns_rel]['active'] == sha(ns_head)
+        ns_cmd11_pointer = '{11, D<&IApplicationManagerInterface::CalculateApplicationOccupiedSize>, "CalculateApplicationOccupiedSize"}'
+        ns_cmd11_pointer_old = '{11, nullptr, "CalculateApplicationOccupiedSize"}'
+        ns_cmd11_method = """Result IApplicationManagerInterface::CalculateApplicationOccupiedSize(
+    Out<ApplicationOccupiedSize> out_size, u64 application_id) {
+    R_RETURN(IContentManagementInterface(system).CalculateApplicationOccupiedSize(out_size,
+                                                                                  application_id));
+}
+
+"""
+        ns_head_text = ns_head.decode('utf-8')
+        assert ns_head_text.count(ns_cmd11_pointer) == ns_head_text.count(ns_cmd11_method) == 1
+        ns_current = ns_head_text.replace(
+            ns_cmd11_pointer, ns_cmd11_pointer_old, 1).replace(
+            ns_cmd11_method, '', 1).encode('utf-8')
         assert len(ns_current) == 73744 and sha(ns_current) == '57ca38ad298dbac19f8ef61be71255245114be133c37576d9b5f9167833b5e93'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_current)
+        print('NS1_NS_OCCUPIED_SIZE_DISPATCH_EXACT_REVERSE_PASS',
+              'command=11', 'backend=content_management', 'fake_sizes=0')
         ns_query_methods = """Result IApplicationManagerInterface::GetApplicationShellEvent(
     OutCopyHandle<Kernel::KReadableEvent> out_event) {
     LOG_DEBUG(Service_NS, "called");
@@ -1465,9 +1482,16 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_owner_prior = ns_text.encode('utf-8')
         assert len(ns_owner_prior) == 69013 and sha(ns_owner_prior) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
         ns_header_rel = 'src/core/hle/service/ns/application_manager_interface.h'
-        ns_header_current = (ACTIVE / ns_header_rel).read_bytes()
+        ns_header_head = (ACTIVE / ns_header_rel).read_bytes()
+        assert len(ns_header_head) == 8408 and sha(ns_header_head) == '4302b5f47deeb6b0fb0c3d9f3a666f0f0fcfd9d79ce80f5ecfc30cf0c11f7817'
+        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_head)
+        ns_cmd11_decl = """    Result CalculateApplicationOccupiedSize(Out<ApplicationOccupiedSize> out_size,
+                                            u64 application_id);
+"""
+        ns_header_head_text = ns_header_head.decode('utf-8')
+        assert ns_header_head_text.count(ns_cmd11_decl) == 1
+        ns_header_current = ns_header_head_text.replace(ns_cmd11_decl, '', 1).encode('utf-8')
         assert len(ns_header_current) == 8260 and sha(ns_header_current) == '643fdf52be5909bdc9dc1c4d32b878641269776564877d574b8090e547289bd6'
-        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_current)
         ns_header_text = ns_header_current.decode('utf-8')
         ns_header_queries = """    Result GetApplicationShellEvent(OutCopyHandle<Kernel::KReadableEvent> out_event);
     Result PopApplicationShellEventInfo(Out<u32> out_event_info_type, Out<u64> out_application_id);
@@ -1505,7 +1529,7 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_previous = (stage / ns_rel).read_bytes()
         assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
         assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_latest)
+        assert spec['entries'][ns_rel]['active'] == sha(ns_head)
         import re
         ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
         ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)
@@ -3420,6 +3444,50 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         print('NS1_VI_ZORDER_MODE_EXACT_REVERSE_PASS',
               'z_min=1', 'z_max=255', 'logical_mode=docked_or_portable',
               'pinned_sources=immutable')
+
+        # Content-management occupied size successor: replace the historical
+        # 8/2/12-GiB placeholder with exact installed CNMT/NCA sizes. This is
+        # a maintained overlay; pinned vendor/sources/eden stays byte-identical.
+        cm_rel = 'src/core/hle/service/ns/content_management_interface.cpp'
+        cm_active = (ACTIVE / cm_rel).read_bytes()
+        assert len(cm_active) == 7053 and sha(cm_active) == (
+            '1c95d07a05b6b61cc741e12bd17bf4ba57f305f686f956c42ef586dc61c1aff7')
+        assert spec['entries'][cm_rel] == {
+            'active':'1c95d07a05b6b61cc741e12bd17bf4ba57f305f686f956c42ef586dc61c1aff7',
+            'bytes':7053,
+            'upstream':'83a8eae9ea9e50190d72315fd3d838cc1f72c3a6eec79c353c9510faf1b9d4a2',
+        }
+        cm_stage = (stage / cm_rel).read_text()
+        assert len(cm_stage.encode('utf-8')) == 4004
+        assert sha(cm_stage.encode('utf-8')) == spec['entries'][cm_rel]['upstream']
+        cm_text = cm_active.decode('utf-8')
+        extra_includes = """#include <array>
+#include <limits>
+#include <set>
+
+"""
+        assert cm_text.count(extra_includes) == 1
+        cm_text = cm_text.replace(extra_includes, '', 1)
+        active_begin = 'namespace {\n\nu64 SaturatingAddSize('
+        calc_begin = 'Result IContentManagementInterface::CalculateApplicationOccupiedSize('
+        next_begin = 'Result IContentManagementInterface::CheckSdCardMountStatus('
+        assert cm_text.count(active_begin) == cm_text.count(next_begin) == 1
+        assert cm_stage.count(calc_begin) == cm_stage.count(next_begin) == 1
+        active_start = cm_text.index(active_begin)
+        active_end = cm_text.index(next_begin)
+        original_start = cm_stage.index(calc_begin)
+        original_end = cm_stage.index(next_begin)
+        cm_reversed = (
+            cm_text[:active_start] +
+            cm_stage[original_start:original_end] +
+            cm_text[active_end:]
+        ).encode('utf-8')
+        assert cm_reversed == cm_stage.encode('utf-8'), (
+            'Occupied-size maintained owner not exact-reversible to pinned Eden')
+        observed[cm_rel] = spec['entries'][cm_rel]
+        print('NS1_NS_OCCUPIED_SIZE_REAL_NCA_REVERSE_PASS',
+              'storages=SysNAND,UserNAND,SDMC', 'base=exact', 'patch=exact',
+              'aoc=exact', 'saturating=1', 'pinned_sources=immutable')
 
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))

@@ -1568,6 +1568,45 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'firmware_specific_backends_not_faked=true')
 
 
+        # OMM/SPSM share real guest dock mode with AM; unsupported power
+        # transitions must return an error, never manipulate the host PS5.
+        omm_owners = [
+            ('operation_mode_manager.cpp', 2055, '608d4d783dfce7c7a1e6b1ccc4f903acb686eb18070e9efb42a55af379372b93',
+             4497, '105f9ab1292bec4a49a6b477fbcd907f3c9fd716904b043a87f1811564e1608b'),
+            ('operation_mode_manager.h', 446, '1443851d46bdc6559852b2988fa8c651975119ffff2d60ede4f3d7cd55824f2f',
+             679, 'b5fd33cc7be4a210bed4e3d0bd027d6a34489405c89f8d9ed5e07faaff17204d'),
+            ('power_state_interface.cpp', 1112, '8a8f647a8650614ad51494a6b83e642c2b12b347adc7e80fcb5d642da62a2876',
+             1999, 'd51935cfe62c9d956778d3ab6b30ba0660ec12cf7d56da2f07178a1ea59bd528'),
+            ('power_state_interface.h', 442, '650897d9c03aedb21a713aa50e91cf51218bc2378b7e6923fd8532f042a4803c',
+             516, '557a3c3b7341880d7893bedbaefe8b84ffe8a0ae14937f8b2b6b1725ccd3621b'),
+        ]
+        omm_cmake = (ACTIVE / 'src/core/CMakeLists.txt').read_text()
+        for name, before_bytes, before_hash, after_bytes, after_hash in omm_owners:
+            rel = 'src/core/hle/service/omm/' + name
+            before = (stage / rel).read_bytes()
+            upstream = (ORIGINAL / rel).read_bytes()
+            current = (ACTIVE / rel).read_bytes()
+            assert before == upstream and len(before) == before_bytes and sha(before) == before_hash, rel
+            assert len(current) == after_bytes and sha(current) == after_hash, rel
+            assert spec['entries'][rel] == {
+                'active': after_hash, 'bytes': after_bytes, 'upstream': before_hash
+            }, rel
+            if name.endswith('.cpp'):
+                assert omm_cmake.count('hle/service/omm/' + name) == 1, rel
+            observed[rel] = spec['entries'][rel]
+        omm_live = (ACTIVE / 'src/core/hle/service/omm/operation_mode_manager.cpp').read_text()
+        spsm_live = (ACTIVE / 'src/core/hle/service/omm/power_state_interface.cpp').read_text()
+        for name in ('GetOperationMode', 'GetCradleStatus', 'GetDefaultDisplayResolution'):
+            assert omm_live.count('&IOperationModeManager::' + name) == 1, name
+        assert omm_live.count('&IOperationModeManager::RejectUnavailableHardware') == 26
+        assert spsm_live.count('&IPowerStateInterface::RejectUnavailablePowerControl') == 12
+        assert omm_live.count('Settings::IsDockedMode()') == 3
+        assert 'VI::DisplayResolution::DockedWidth' in omm_live
+        assert 'VI::DisplayResolution::UndockedHeight' in omm_live
+        print('NS1_OMM_SPSM_NATIVE_OWNER_PASS', 'real_docked_queries=3',
+              'unsupported_power_commands=38', 'selected_cpp=2', 'no_host_power=1')
+
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

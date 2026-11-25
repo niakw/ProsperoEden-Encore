@@ -3694,3 +3694,21 @@ Les six handlers shared-font déjà réels restent présents et vérifiés ; auc
 **Inventaire physique attendu : 855 → 833 NULL / 6 447 slots.** CI requise pour confirmation.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — LDR/RO/AM/NCM : palier 817 attendu
+
+Base CI confirmée : vendor `a1d47a90e418d3bd12e20f6151bcb31a34d0c594`, **833 NULL / 6 447 slots**.
+
+Vendor final : `1452e213198f1dfbf508fe37fd1b548d6186ca2c` (arbre `06883df88d6b0d7366ffbf28d0b897102cbd3a8d`).
+
+**16 NULL physiques** sont retirés :
+- **LDR 10** : les trois tables `ldr:dmnt`, `ldr:pm`, `ldr:shel` n'exposent plus de dispatch inconnu. Les commandes loader/process-manager non modélisées sont fail-closed ; aucun second chemin de lancement hôte n'est inventé.
+- **RO 1** : `ro:dmnt GetProcessModuleInfo` devient une erreur explicite, sans toucher au chargement NRO réel.
+- **AM 3** : `GetWakeupCount` est implémenté avec un `u64=0` tant qu'Encore ne simule aucun cycle veille/réveil invité ; `SetHidInputMagnificationForApplication` et `GetLaunchRequiredTick` restent fail-closed.
+- **NCM 2** : `ResolveDataPath` et `ResolveAddOnContentPath` échouent explicitement tant qu'Encore ne modélise pas un chemin Horizon fs-common ; aucun chemin PS5 hôte n'est exposé.
+
+Contrats moteur : SHA-256 upstream/active, sélection CMake, bindings exacts, absence de `nullptr` dans ces propriétaires et maintien des chemins de chargement/album/contenu existants.
+
+**Inventaire physique attendu : 833 → 817 NULL / 6 447 slots.** Validation CI encore requise avant de considérer 817 comme confirmé.
+
+Build PS5 et test console : non exécutés.

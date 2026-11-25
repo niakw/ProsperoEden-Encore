@@ -23,9 +23,19 @@ method=START+source.split(START,1)[1].split(END,1)[0]
 assert method.count('dma_pusher.BindSubchannel(nullptr, method_call.subchannel,')==1
 assert method.count('retire_native_3d();')==3
 assert method.count('retire_native_compute();')==3
-assert 'throw std::runtime_error("Native GPFIFO SET_OBJECT class unsupported")' in method
-assert method.index('dma_pusher.BindSubchannel(nullptr, method_call.subchannel,') < method.index(
-    'throw std::runtime_error("Native GPFIFO SET_OBJECT class unsupported")')
+# The shipping Puller now calls the DmaPusher fatal helper to report the
+# authenticated native fault before throwing. A direct throw bypasses the
+# channel registry's fault publication; do not require that old behavior.
+fatal = 'dma_pusher.FailNativeSubmission("Native GPFIFO SET_OBJECT class unsupported");'
+assert fatal in method
+assert method.index('dma_pusher.BindSubchannel(nullptr, method_call.subchannel,') < method.index(fatal)
+dma = DMA.read_text()
+helper = dma.split(
+    '[[noreturn]] void DmaPusher::FailNativeSubmission(const char* message) {', 1
+)[1].split('\n}', 1)[0]
+assert 'NativeGpuChannelRegistry::Instance().ReportFault(&channel_state);' in helper
+assert 'std::rethrow_exception(error);' in helper
+assert 'throw std::runtime_error(message);' in helper
 for path in (DMA,DMA_DEV):
     text=path.read_text()
     assert text.count('if (!subchannel) {')==2, 'Unbound native class requires safe shared DMA'
@@ -72,6 +82,13 @@ struct DmaPusher {
     Control::ChannelState channel_state;
     std::array<Engine*,8> subchannels{};
     std::array<Engines::EngineTypes,8> kinds{};
+    unsigned reported_native_faults{};
+    // The fixture executes the unchanged Puller owner. Production's helper
+    // also publishes the registry fault; verify its source implementation.
+    [[noreturn]] void FailNativeSubmission(const char* message) {
+        ++reported_native_faults;
+        throw std::runtime_error(message);
+    }
     void BindSubchannel(Engine* engine,u32 index, Engines::EngineTypes kind) {
         assert(index<8);
         subchannels[index]=engine;
@@ -140,6 +157,7 @@ int main() {
     bind(0xdead);
 #ifdef PS5_NATIVE
     assert(dma.subchannels[2] == nullptr && rejected==0 && native_faults==1);
+    assert(dma.reported_native_faults==1);
 #else
     assert(dma.subchannels[2] == nullptr && rejected==1 && native_faults==0);
 #endif
@@ -160,7 +178,7 @@ int main() {
     bind(0xfff1);
     assert(dma.subchannels[2] == nullptr);
 #ifdef PS5_NATIVE
-    assert(native_faults==4 &&
+    assert(native_faults==4 && dma.reported_native_faults==4 &&
            "native SET_OBJECT unsupported class must fault before queue completion");
 #else
     assert(native_faults==0);
@@ -174,7 +192,8 @@ int main() {
     bind(0xc797);
     assert(dma.subchannels[2] == &dma.channel_state.payload->maxwell_3d);
 #ifdef PS5_NATIVE
-    assert(native_faults==4 && "NS1 must not inherit native fatal binding policy");
+    assert(native_faults==4 && dma.reported_native_faults==4 &&
+           "NS1 must not inherit native fatal binding policy");
 #endif
     // An invalid owner/failed native 3D bind must not disturb current owner.
     registry.native=true;

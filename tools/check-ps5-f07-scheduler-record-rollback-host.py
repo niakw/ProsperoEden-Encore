@@ -6,9 +6,14 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_scheduler.h").read_text()
-implementation=(root/"vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp").read_text()
+header=(root/"headless/vk_scheduler_ps5.h").read_text()
+implementation=(root/"headless/vulkan_scheduler_ps5.cpp").read_text()
+rasterizer=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+buffer_runtime=(root/"vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp").read_text()
+cmake=(root/"headless/vulkan.cmake").read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()
+assert 'configure_file("${EDEN_PORT_DIR}/vulkan_scheduler_ps5.cpp"' in cmake
+assert 'configure_file("${EDEN_PORT_DIR}/vk_scheduler_ps5.h"' in cmake
 begin="    template <typename T>\n        requires std::is_invocable_v<T, vk::CommandBuffer, vk::CommandBuffer>\n    void RecordWithUploadBuffer(T&& command) {"
 stop="    template <typename T>\n        requires std::is_invocable_v<T, vk::CommandBuffer>\n    void Record(T&& c) {"
 assert header.count(begin)==header.count(stop)==1
@@ -22,6 +27,34 @@ assert "F07 include bad_alloc declaration for native rejected scheduler rollover
 assert "#include <new>" in header
 assert method.index("} catch (...) {") > method.index("(void)chunk->Record(command)")
 assert "F07 invalidate native Vulkan binding memo after rejected record" in generator
+epoch_begin="    [[nodiscard]] bool RecordedSinceSubmit() const noexcept {"
+epoch_end="\n\n    /// Requests to begin a renderpass."
+assert header.count(epoch_begin)==1
+epoch_method=header[header.index(epoch_begin):header.index(epoch_end,header.index(epoch_begin))]
+assert "recorded_command_serial != submitted_command_serial" in epoch_method
+assert "deferred_clear.framebuffer != nullptr" in epoch_method
+flush_begin=implementation.index("u64 Scheduler::Flush(")
+flush_end=implementation.index("\n}\n",flush_begin)
+finish_begin=implementation.index("void Scheduler::Finish(")
+finish_end=implementation.index("\n}\n",finish_begin)
+flush=implementation[flush_begin:flush_end]
+finish=implementation[finish_begin:finish_end]
+assert flush.count("submitted_command_serial = recorded_command_serial;")==1
+assert finish.count("submitted_command_serial = recorded_command_serial;")==1
+assert flush.index("SubmitExecution(") < flush.index("submitted_command_serial = recorded_command_serial;")
+assert finish.index("SubmitExecution(") < finish.index("submitted_command_serial = recorded_command_serial;")
+flush_commands=rasterizer[rasterizer.index("void RasterizerVulkan::FlushCommands() {"):
+                          rasterizer.index("\nvoid RasterizerVulkan::TickFrame()",rasterizer.index("void RasterizerVulkan::FlushCommands() {"))]
+assert "scheduler.RecordedSinceSubmit()" in flush_commands
+assert flush_commands.index("draw_counter = 0;") < flush_commands.index("scheduler.RecordedSinceSubmit()")
+clear_begin=buffer_runtime.index("void BufferCacheRuntime::ClearBuffer(")
+clear_end=buffer_runtime.index("\nbool BufferCacheRuntime::BindMultiRangeStorageBuffer",clear_begin)
+copy_begin=buffer_runtime.index("void BufferCacheRuntime::CopyBuffer(")
+copy_end=buffer_runtime.index("\nvoid BufferCacheRuntime::PreCopyBarrier()",copy_begin)
+assert "scheduler.Record(" in buffer_runtime[clear_begin:clear_end]
+assert "scheduler.Record" in buffer_runtime[copy_begin:copy_end]
+assert "FlushWork" not in buffer_runtime[clear_begin:clear_end]
+assert "FlushWork" not in buffer_runtime[copy_begin:copy_end]
 start=implementation.index("void Scheduler::InvalidateState() {")
 invalidate=implementation[start:implementation.index("\n}",start)]
 for required in ("state.graphics_pipeline = nullptr;",
@@ -65,6 +98,13 @@ struct Scheduler {
     unsigned invalidations{};
     unsigned dispatches{};
     std::uint64_t recorded_command_serial{};
+    std::uint64_t submitted_command_serial{};
+    struct DeferredClear { const void* framebuffer{}; } deferred_clear{};
+    bool device_retired{};
+    [[nodiscard]] bool RecordedSinceSubmit() const noexcept {
+        return recorded_command_serial != submitted_command_serial ||
+               deferred_clear.framebuffer != nullptr;
+    }
     void DispatchWork() {
         if (throw_dispatch) throw std::bad_alloc{};
         ++dispatches;
@@ -84,6 +124,13 @@ int main() {
         normal.RecordWithUploadBuffer(cmd);
         assert(normal.storage.recorded==1 && normal.invalidations==0);
         assert(normal.recorded_command_serial==1);
+        assert(normal.RecordedSinceSubmit());
+        normal.submitted_command_serial=normal.recorded_command_serial;
+        assert(!normal.RecordedSinceSubmit());
+        normal.deferred_clear.framebuffer=&normal;
+        assert(normal.RecordedSinceSubmit());
+        normal.deferred_clear.framebuffer=nullptr;
+        assert(!normal.RecordedSinceSubmit());
         assert(normal.pipeline_memo && normal.descriptor_memo);
     }
     {
@@ -159,4 +206,4 @@ with tempfile.TemporaryDirectory(prefix="f07-record-memo-") as temp:
             assert built.returncode==0,(native,opt,built.stderr[-4000:])
             tested=subprocess.run([str(output)],capture_output=True,text=True,timeout=15)
             assert tested.returncode==0,(native,opt,tested.stderr[-4000:])
-print("F07_SCHEDULER_RECORD_ROLLBACK_PASS first_accept=1 rollover=1 reject_record=1 reject_dispatch=1 replay=1 renderpass_preserved=1 desktop_original=1 O0=1 O2=1 UBSan=1")
+print("F07_SCHEDULER_RECORD_ROLLBACK_PASS first_accept=1 rollover=1 reject_record=1 reject_dispatch=1 replay=1 renderpass_preserved=1 dma_epoch_submit=1 deferred_clear=1 O0=1 O2=1 UBSan=1")

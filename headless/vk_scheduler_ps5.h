@@ -83,6 +83,13 @@ public:
         return recorded_command_serial;
     }
 
+    // End-of-list submission is driven by actual Vulkan recording, not by
+    // graphics draw count. DMA/transfer-only command lists have no draw.
+    // A deferred clear is materialized only when the next submit begins.
+    [[nodiscard]] bool RecordedSinceSubmit() const noexcept {
+        return recorded_command_serial != submitted_command_serial ||
+               deferred_clear.framebuffer != nullptr;
+    }
 
     /// Requests to begin a renderpass.
     void RequestRenderpass(const Framebuffer* framebuffer);
@@ -456,6 +463,9 @@ private:
 
     State state;
     u64 recorded_command_serial{};
+    // Command epoch captured after the submission closure itself is recorded.
+    // If SubmitExecution throws, this remains unchanged and the work stays due.
+    u64 submitted_command_serial{};
 #if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)
     // Producer-thread command chunk rollover identity (NOT a GPU queue fence).
     u64 r2_dispatched_chunks{};

@@ -237,6 +237,7 @@ u64 Scheduler::Flush(VkSemaphore signal_semaphore, VkSemaphore wait_semaphore) {
     if (device_retired) throw std::logic_error("submit after device retirement");
     // When flushing, we only send data to the worker thread; no waiting is necessary.
     const u64 signal_value = SubmitExecution(signal_semaphore, wait_semaphore);
+    submitted_command_serial = recorded_command_serial;
     if (::Eden::DevVulkan::sync_submissions) {
         Wait(signal_value);
     }
@@ -251,6 +252,7 @@ void Scheduler::Finish(VkSemaphore signal_semaphore, VkSemaphore wait_semaphore)
     // When finishing, we need to wait for the submission to have executed on the device.
     const u64 presubmit_tick = CurrentTick();
     SubmitExecution(signal_semaphore, wait_semaphore);
+    submitted_command_serial = recorded_command_serial;
     Wait(presubmit_tick);
     AllocateNewContext();
 }

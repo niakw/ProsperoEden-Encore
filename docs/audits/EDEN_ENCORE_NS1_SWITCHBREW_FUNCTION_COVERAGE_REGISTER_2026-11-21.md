@@ -3678,3 +3678,19 @@ Le replay moteur inverse exactement les 141 pointeurs et 6 méthodes puis retrou
 **Inventaire physique attendu : 996 → 855 NULL / 6 447 slots.** Ce gain est uniquement fail-closed legacy ; il ne représente pas 141 nouvelles fonctionnalités HOS23.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — NS secondaires version/platform : palier 833 attendu
+
+Base précédente : **855 NULL attendus** après fermeture fail-closed des interfaces WLAN pré-HOS15.
+
+Vendor successeur : `a1d47a90e418d3bd12e20f6151bcb31a34d0c594` (arbre `24212c303b767d3fc31e60044382f972bc8e6551`).
+
+**22 NULL physiques** supplémentaires sont retirés sans toucher à `IApplicationManagerInterface` :
+- `IApplicationVersionInterface` **13** : version-list, required-version et auto-update Nintendo sans backend renvoient explicitement `ResultNotSupported`;
+- `IPlatformServiceManager` **9** : authorization blacklist / debug / China NG-word data fail-closed.
+
+Les six handlers shared-font déjà réels restent présents et vérifiés ; aucun chemin de lancement d'application n'est modifié.
+
+**Inventaire physique attendu : 855 → 833 NULL / 6 447 slots.** CI requise pour confirmation.
+
+Build PS5 et test console : non exécutés.

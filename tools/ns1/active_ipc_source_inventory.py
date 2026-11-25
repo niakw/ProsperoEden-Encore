@@ -62,8 +62,10 @@ by_family = Counter()
 for rel, family, tables, commands, nulls in by_owner:
     by_family[family] += nulls
 es = [x for x in by_owner if x[0] == "hle/service/es/es.cpp"]
-if len(es) != 1 or es[0][4] != 63:
-    raise SystemExit(f"ES/NDRM physical count mismatch; parser or owner drift: {es}")
+# Preserve the three ES/NDRM tables and 153 command declarations while
+# allowing genuine, reviewed reductions in null slots (63 at the baseline).
+if len(es) != 1 or es[0][2] != 3 or es[0][3] != 153 or es[0][4] > 63:
+    raise SystemExit(f"ES/NDRM owner regression or parser drift: {es}")
 
 pin = subprocess.check_output(
     ["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()

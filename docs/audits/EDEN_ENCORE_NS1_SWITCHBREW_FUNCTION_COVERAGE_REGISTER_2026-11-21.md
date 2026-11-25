@@ -3609,3 +3609,18 @@ Le contrat moteur exige zéro `nullptr` dans ARP/ECTX/NOTIF/SET, les nombres exa
 **Inventaire physique attendu : 1 172 → 1 131 NULL.** Validation CI du couple requise avant confirmation.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — PM debug/boost + PSC wake lock + TMA : palier 1 117 attendu
+
+Base **CI confirmée** : vendor `c499a3118340dc899091f9c98a2d03da584fceda`, **1 131 NULL / 6 447 slots**, 5 316 handlers.
+
+Vendor successeur : `f1d3c7f2cfc23836b1fe4020ba989b440da0fe62` (arbre `218870603571d269f9dc06d9cc44c1ba92188a12`).
+
+**14 NULL physiques** supplémentaires sont retirés :
+- PM **11** : 8 commandes `pm:dmnt` / Atmosphère debug en `ResultNotSupported`; 3 boosts de resource-limit `pm:shell` sont des succès neutres puisque ces quotas Horizon ne sont pas modélisés. `LaunchProgram`, `GetProcessEventHandle` et `GetProcessEventInfo` restent intacts/non traités.
+- PSC time **2** : `CreateWakeLock` / `DestroyWakeLock` deviennent des succès neutres ; aucun état d'alimentation PS5 n'est modifié.
+- TMA **1** : `htc:tenv::GetServiceInterface` fail-closed faute d'environnement host de kit de développement.
+
+**Inventaire physique attendu : 1 131 → 1 117 NULL.** CI requise pour confirmation.
+
+Build PS5 et test console : non exécutés.

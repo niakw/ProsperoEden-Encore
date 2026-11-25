@@ -102,6 +102,23 @@ for name in (
     assert name in linker
 assert '.deps/repos' in linker
 
+# The native build must not reuse a tracked-dirty OpenGL checkout from a
+# previous runner cache as though it were our immutable upstream source.
+# Guard ONLY the Actions-owned cache path; preserve the old checkout and
+# rehydrate from the pinned vendor pack rather than resetting local work.
+for required in (
+    'if [[ "${GITHUB_ACTIONS:-}" == "true" && "$store" == "$root/.deps/repos" ]]; then',
+    'git -C "$cached_opengl" status --porcelain --untracked-files=no',
+    'pinned_opengl=$(python3 - "$root/tools/deps.json"',
+    'vendor/objects/opengl-source/chunks.json',
+    'quarantine=$(mktemp -d "${RUNNER_TEMP:?}/encore-opengl-cache-XXXXXX")',
+    'mv -- "$cached_opengl" "$quarantine/ps5-opengl-review"',
+):
+    assert required in linker, ("Pinned CI OpenGL cache recovery guard missing", required)
+assert "git reset --hard" not in linker
+assert "git clean -fd" not in linker
+
+
 assert "fork-source-stamps.json" in build
 assert "sha256(path.read_bytes())" in build
 assert "os.utime(path" in build

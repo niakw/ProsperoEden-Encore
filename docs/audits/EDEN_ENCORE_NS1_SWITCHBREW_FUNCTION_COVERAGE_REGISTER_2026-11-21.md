@@ -3741,3 +3741,17 @@ Le replay moteur verrouille SHA-256, CMake, compte exact des bindings et absence
 **Inventaire physique attendu : 816 → 788 NULL / 6 447 slots.** Validation CI requise avant confirmation.
 
 Build PS5 et validation console : non exécutés.
+
+### 2026-11-25 — sockets hors data-path : palier 734 attendu
+
+Base : **788 NULL attendus** après le lot NS réseau/update. Vendor final : `21df36e8ef5963b50765cbafb9428a744940c419` (arbre `6c784562a3a0c8a62512fdea4d4fdb8e47ce662e`).
+
+**54 NULL physiques** sont retirés sans modifier le data-path BSD réel ni SFDNSRES :
+- **BSD 37** : 20 extensions/statistiques modernes, 16 commandes `bsdcfg/ifcfg` de contrôle interface/ARP/DHCP et le factory `bsd:nu` non qualifié deviennent fail-closed. Les handlers `Socket/Select/Poll/Recv/Send/Accept/Bind/Connect/GetSockOpt/SetSockOpt/Shutdown/Close` restent inchangés.
+- **Ethernet matériel 13** : `ethc:c`, `ethc:i`, `eth:nd` échouent explicitement ; Encore conserve son abstraction réseau hôte sans exposer de contrôleur Ethernet Switch.
+- **NSD 4** : les derniers réglages/environnements Nintendo non modélisés rejoignent le rejet existant. `Resolve/ResolveEx` restent actifs.
+- **SFDNSRES 13** restent ouverts volontairement pour une implémentation DNS réelle ultérieure.
+
+**Inventaire physique attendu : 788 → 734 NULL / 6 447 slots.** Validation CI requise.
+
+Build PS5 et validation console : non exécutés.

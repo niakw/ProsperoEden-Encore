@@ -1711,6 +1711,191 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'legacy_ports_versioned=1', 'playback_untouched=1')
 
 
+
+        # NS1 batch: modern retail/runtime pruning and explicit fail-closed
+        # owners for cloud, local-network and unreachable hardware services.
+        # Derive every maintained file exactly from the post-backport stage.
+        import re
+        batch_contracts = {
+            'src/core/hle/service/mnpp/mnpp.cpp': (2706, '1c0423d7b471cb4c0fde484bc622637504d8e063b9ce5f0bbfff984ce122d859',
+                                                    3558, 'a14e5af5f2162dd500496c3ddfad34913077d4723aa9e7083702593e0bb5b650'),
+            'src/core/hle/service/fgm/fgm.cpp': (2503, '8aecb71864066ab38ed1f88b67a34d56e86237c917ce21b33c3eeda48fbdf37d',
+                                                  1992, '83f59d8c9ceec1f817b496087602cd9002378f12012508cd8d25c74aee01b7de'),
+            'src/core/hle/service/ptm/ptm.cpp': (1855, 'ce5f5c76f5b97c70c9635575db979fe8920ad4c6a461eaa0cc3bcba07969be89',
+                                                  803, 'a8b2537f5a61ec82d04947a50e5b409762a84af57ea5d7b6e3629c579856181f'),
+            'src/core/hle/service/i2c/i2c.cpp': (3499, '56458000c97abab5cc361ee859f8c8fd3c750dc01d260f9d78b5fc8167fd722b',
+                                                   3800, '4882be0a73353ad6aaa6a7ac59f9629348ed8834136026e29ff0b404c1a0dfbe'),
+            'src/core/hle/service/ldn/sf_service.cpp': (1332, 'e4cb9c9104ddf629c40782cfd0adb759ef3d85404ee053996cafcbef7fc98553',
+                                                         2050, '8b94f50318e47db6283faf839366e43c4587a656fb5b8fa8fe75b6741eec945d'),
+            'src/core/hle/service/ldn/sf_service.h': (443, 'c63d32507ba049731f6ef3ec56e4d5a7803f8b97c52399ffc875754eeafe8f35',
+                                                       512, '18007dd388a2722d2a13f5a5c855a877244c6814b6c6789b139c672ecd671969'),
+        }
+        cmake_batch = (ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel, (before_bytes, before_hash, after_bytes, after_hash) in batch_contracts.items():
+            before = (stage/rel).read_bytes()
+            current = (ACTIVE/rel).read_bytes()
+            assert len(before) == before_bytes and sha(before) == before_hash, ('NS1 batch prior drift', rel)
+            assert len(current) == after_bytes and sha(current) == after_hash, ('NS1 batch active drift', rel)
+            assert spec['entries'][rel] == {
+                'active': after_hash, 'bytes': after_bytes, 'upstream': before_hash
+            }, ('NS1 batch manifest drift', rel)
+            if rel.endswith('.cpp'):
+                owner = rel.removeprefix('src/core/')
+                assert cmake_batch.count(owner) == 1, ('NS1 batch CMake owner drift', rel)
+
+        def bind_null_class(text, class_name, method_name, expected, end_marker, method_block):
+            start = text.index(f'class {class_name} final')
+            end = text.index(end_marker, start)
+            chunk = text[start:end]
+            pattern = re.compile(r'\{(\s*\d+\s*),\s*nullptr,\s*"([^"]+)"')
+            count = 0
+            def repl(match):
+                nonlocal count
+                count += 1
+                return f'{{{match.group(1)}, &{class_name}::{method_name}, "{match.group(2)}"'
+            chunk = pattern.sub(repl, chunk)
+            assert count == expected, ('NS1 batch NULL owner drift', class_name, count)
+            close = chunk.rfind('\n};')
+            assert close >= 0
+            chunk = chunk[:close] + method_block + chunk[close:]
+            return text[:start] + chunk + text[end:]
+
+        # MNPP: preserve application-side local handlers, reject only system/web
+        # Nintendo mission/reporting commands for which Encore has no backend.
+        rel = 'src/core/hle/service/mnpp/mnpp.cpp'
+        expected = (stage/rel).read_text()
+        mnpp_method = (
+            '\nprivate:\n'
+            '    void RejectUnavailableMissionPlatform(HLERequestContext& ctx) {\n'
+            '        // Nintendo mission/reporting backend is not available on PS5.\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(ResultUnknown);\n'
+            '    }\n'
+        )
+        expected = bind_null_class(expected, 'MNPP_SYS', 'RejectUnavailableMissionPlatform',
+                                   6, '\nclass MNPP_WEB', mnpp_method)
+        expected = bind_null_class(expected, 'MNPP_WEB', 'RejectUnavailableMissionPlatform',
+                                   5, '\nvoid LoopProcess', mnpp_method)
+        assert expected.encode() == (ACTIVE/rel).read_bytes()
+        observed[rel] = spec['entries'][rel]
+
+        # fgm:dbg disappeared long before HOS23; remove the obsolete debugger
+        # class and service registration while preserving fgm/fgm:0/fgm:9.
+        rel = 'src/core/hle/service/fgm/fgm.cpp'
+        expected = (stage/rel).read_text()
+        start = expected.index('class FGM_DBG final')
+        end = expected.index('\nvoid LoopProcess', start)
+        expected = expected[:start] + expected[end:]
+        line = '    server_manager->RegisterNamedService("fgm:dbg", std::make_shared<FGM_DBG>(system));\n'
+        assert expected.count(line) == 1
+        expected = expected.replace(line, '', 1)
+        assert expected.encode() == (ACTIVE/rel).read_bytes()
+        observed[rel] = spec['entries'][rel]
+
+        # psm:manu and powctl are manufacture/non-retail services.
+        rel = 'src/core/hle/service/ptm/ptm.cpp'
+        expected = (stage/rel).read_text()
+        start = expected.index('class PSM_MANU final')
+        end = expected.index('\nvoid LoopProcess', start)
+        expected = expected[:start] + expected[end:]
+        non_retail = (
+            '    if (1 /* not retail */) {\n'
+            '        server_manager->RegisterNamedService("psm:manu", std::make_shared<PSM_MANU>(system));\n'
+            '        server_manager->RegisterNamedService("powctl", std::make_shared<POWCTL>(system));\n'
+            '    }\n'
+        )
+        assert expected.count(non_retail) == 1
+        expected = expected.replace(non_retail, '', 1)
+        assert expected.encode() == (ACTIVE/rel).read_bytes()
+        observed[rel] = spec['entries'][rel]
+
+        # I2C sessions are already unreachable because all OpenSession variants
+        # fail without Switch hardware. Harden the six dormant transaction slots.
+        rel = 'src/core/hle/service/i2c/i2c.cpp'
+        expected = (stage/rel).read_text()
+        i2c_method = (
+            '\nprivate:\n'
+            '    void RejectUnavailableI2C(HLERequestContext& ctx) {\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(ResultUnknown);\n'
+            '    }\n'
+        )
+        expected = bind_null_class(expected, 'I2CSession', 'RejectUnavailableI2C',
+                                   6, '\nenum class I2CDevice', i2c_method)
+        assert expected.encode() == (ACTIVE/rel).read_bytes()
+        observed[rel] = spec['entries'][rel]
+
+        # LDN SF has no native local-wireless backend on PS5. Keep the service
+        # surface deterministic and fail closed instead of unknown dispatch.
+        rel = 'src/core/hle/service/ldn/sf_service.cpp'
+        expected = (stage/rel).read_text()
+        inc = '#include "core/hle/service/ldn/sf_service.h"'
+        assert expected.count(inc) == 1
+        expected = expected.replace(inc, '#include "core/hle/service/ipc_helpers.h"\n' + inc, 1)
+        ldn_pattern = re.compile(r'\{(\s*\d+\s*),\s*nullptr,\s*"([^"]+)"')
+        matches = list(ldn_pattern.finditer(expected))
+        assert len(matches) == 18
+        expected = ldn_pattern.sub(
+            lambda m: f'{{{m.group(1)}, &ISfService::RejectUnavailableNetwork, "{m.group(2)}"',
+            expected)
+        dtor = 'ISfService::~ISfService() = default;'
+        ldn_method = (
+            'void ISfService::RejectUnavailableNetwork(HLERequestContext& ctx) {\n'
+            '    IPC::ResponseBuilder rb{ctx, 2};\n'
+            '    rb.Push(ResultUnknown);\n'
+            '}\n\n'
+        )
+        assert expected.count(dtor) == 1
+        expected = expected.replace(dtor, ldn_method + dtor, 1)
+        assert expected.encode() == (ACTIVE/rel).read_bytes()
+        observed[rel] = spec['entries'][rel]
+
+        rel = 'src/core/hle/service/ldn/sf_service.h'
+        expected = (stage/rel).read_text()
+        old = '    ~ISfService() override;'
+        new = old + '\n\nprivate:\n    void RejectUnavailableNetwork(HLERequestContext& ctx);'
+        assert expected.count(old) == 1
+        expected = expected.replace(old, new, 1)
+        assert expected.encode() == (ACTIVE/rel).read_bytes()
+        observed[rel] = spec['entries'][rel]
+
+        # NGCT legacy management was part of the pre-21 surface. The previous
+        # replay already produces the maintained NGC/STPL owner; derive the
+        # HOS21+ ngct:s retirement and nine fail-closed legacy slots from it.
+        rel = 'src/core/hle/service/ngc/ngc.cpp'
+        prior = (stage/rel).read_bytes()
+        assert len(prior) == 10435 and sha(prior) == 'afae15d9fc27afccce5f830aae5e7f040ef70d5135a719e210bdadf35af54bc8'
+        current = (ACTIVE/rel).read_bytes()
+        assert len(current) == 11176 and sha(current) == '9a1beab08458c540b290f7e819815e4ef68cd82d14e4a63673ebb9828901dad3'
+        assert spec['entries'][rel]['active'] == sha(current)
+        assert spec['entries'][rel]['bytes'] == len(current)
+        expected = prior.decode()
+        ngct_method = (
+            '\nprivate:\n'
+            '    void RejectUnavailableManagementApi(HLERequestContext& ctx) {\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(ResultUnknown);\n'
+            '    }\n'
+        )
+        expected = bind_null_class(expected, 'IServiceWithManagementApi',
+                                   'RejectUnavailableManagementApi', 9,
+                                   '\nstruct SaveDataHandle', ngct_method)
+        old_reg = '    server_manager->RegisterNamedService("ngct:s", std::make_shared<IServiceWithManagementApi>(system), 4);'
+        new_reg = (
+            '    if (FirmwareManager::GetFirmwareVersion(system).first.major < 21) {\n'
+            '        server_manager->RegisterNamedService("ngct:s",\n'
+            '                                             std::make_shared<IServiceWithManagementApi>(system), 4);\n'
+            '    }'
+        )
+        assert expected.count(old_reg) == 1
+        expected = expected.replace(old_reg, new_reg, 1)
+        assert expected.encode() == current
+        observed[rel] = spec['entries'][rel]
+
+        print('NS1_CLOUD_DEBUG_NETWORK_BATCH_EXACT_REPLAY_PASS',
+              'physical_closed=51', 'mnpp=11', 'fgm_dbg_removed=3',
+              'ptm_nonretail_removed=4', 'i2c=6', 'ngct_s=9', 'ldn_sf=18')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

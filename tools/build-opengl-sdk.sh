@@ -190,7 +190,7 @@ python3 "$source_dir/tools/fetch-sources.py"
 [[ -f "$mesa_build_script" && ! -L "$mesa_build_script" ]] || {
     echo "Missing pinned PS5 OpenGL Mesa build script" >&2; exit 1;
 }
-mesa_build_script_backup="${mesa_build_script}.encore-backup.$"
+mesa_build_script_backup="${mesa_build_script}.encore-backup.$$"
 cp -p "$mesa_build_script" "$mesa_build_script_backup"
 python3 -B "$root/tools/ci/patch-ps5-opengl-mesa-options.py" "$mesa_build_script"
 
@@ -201,7 +201,7 @@ python3 -B "$root/tools/ci/patch-ps5-opengl-mesa-options.py" "$mesa_build_script
 [[ -f "$runtime_makefile" && ! -L "$runtime_makefile" ]] || {
     echo "Missing pinned PS5 OpenGL runtime makefile" >&2; exit 1;
 }
-runtime_makefile_backup="${runtime_makefile}.encore-backup.$"
+runtime_makefile_backup="${runtime_makefile}.encore-backup.$$"
 cp -p "$runtime_makefile" "$runtime_makefile_backup"
 python3 -B "$root/tools/ci/patch-ps5-opengl-runtime-warning-flags.py" "$runtime_makefile"
 

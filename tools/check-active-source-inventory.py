@@ -2467,7 +2467,7 @@ if actual_vendor in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff
     # These changed C++ owners are not all in the post-F07 path table.
     for relative, digest in {
         "eden-core/src/core/hle/service/sm/sm.h": "7069439e66a6f28ffa56229e08906a21222e2801",
-        "ns2-runtime/process/core/core.cpp": ("0e0aadb72c8de5bb2c66ce9105b1dd2d381b5f98" if stabilization_selected else "83fc9a903b05ed9fd096c35102db54a966d736c2"),
+        "ns2-runtime/process/core/core.cpp": ("0f854ca3eab4dd0435d6ac58d401f8359301c168" if shipping_vendor == "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac" else "0e0aadb72c8de5bb2c66ce9105b1dd2d381b5f98" if stabilization_selected else "83fc9a903b05ed9fd096c35102db54a966d736c2"),
         "ns2-runtime/am/core/hle/service/am/service/application_functions.cpp": "9bfaa26664361994902d5b7f73d6a41ff0eadb07",
     }.items():
         raw=(active/relative).read_bytes()

@@ -93,7 +93,7 @@ def regional_candidates(items, limit=12, per_region=2):
     # First cover every available region, then offer its alternate scan.
     # Otherwise two French/European images may displace a Japanese/US face.
     for variant in range(per_region):
-        for region in REGION_ORDER:
+        for region in grouped:
             group = grouped.get(region, ())
             if len(group) > variant:
                 choices.append(f"{region}:{group[variant]}")
@@ -110,11 +110,11 @@ def parse(source):
             continue
         tag = element.tag.rsplit("}", 1)[-1]
         if tag == "Game":
-            if element.findtext("Platform", "") in ("Nintendo Switch", "Nintendo Switch 2"):
-                gid = element.findtext("DatabaseID", "")
-                if gid.isdecimal():
-                    games[gid] = (element.findtext("Name", ""),
-                                  "ns2" if element.findtext("Platform", "") == "Nintendo Switch 2" else "ns1")
+            platform = element.findtext("Platform", "")
+            gid = element.findtext("DatabaseID", "")
+            if gid.isdecimal() and platform:
+                games[gid] = (element.findtext("Name", ""),
+                              {"Nintendo Switch": "ns1", "Nintendo Switch 2": "ns2"}.get(platform, platform))
         elif tag == "GameAlternateName":
             gid = element.findtext("DatabaseID", "")
             if gid in games:
@@ -125,7 +125,7 @@ def parse(source):
             filename = element.findtext("FileName", "")
             if (gid in games and kind in ("Box - Front", "Box - Back", "Box - Spine",
                                  "Screenshot - Gameplay", "Fanart - Background",
-                                 "Screenshot - Game Title", "Square")
+                                 "Screenshot - Game Title", "Square", "Clear Logo", "Banner")
                     and IMAGE_FILE.fullmatch(filename)):
                 images.setdefault(gid, {}).setdefault(kind, []).append(
                     (region_code(element.findtext("Region", "")), filename))
@@ -133,6 +133,7 @@ def parse(source):
             element.clear()
             root.clear()
     names = {}
+    other_names = {}
     for gid, (name, platform) in games.items():
         if gid not in images:
             continue
@@ -145,7 +146,9 @@ def parse(source):
                 key = normalize(spelling)
                 if not key:
                     continue
-                # A shared title must never resolve to another generation.
+                if platform not in ("ns1", "ns2"):
+                    other_names.setdefault(key, {}).setdefault(platform, set()).add(gid)
+                    continue
                 names.setdefault(f"{platform}:{key}", set()).add(gid)
                 # NUP sometimes advertises only the base name, while GamesDB
                 # carries the explicit Switch 2 Edition suffix.
@@ -153,32 +156,51 @@ def parse(source):
                     base = key.removesuffix(" nintendo switch 2 edition")
                     if base:
                         names.setdefault(f"ns2:{base}", set()).add(gid)
-    lines = ["# Eden Encore media index v10 (edition-scoped cases, scenes, square tile)\n"]
+    lines = ["# Eden Encore media index v11 (platform-first, cross-platform fallbacks, logo and banner)\n"]
+    def row(key, gid):
+        media = images[gid]
+        front = list(media.get("Box - Front", []))
+        if gid in EUROPE_FRONT_PINS:
+            front = [("eu", filename) for filename in EUROPE_FRONT_PINS[gid]] + front
+        # Fanart is index zero in source order, not region-ranked.
+        fanart = ";".join(f"{reg}:{file}" for reg, file in media.get("Fanart - Background", [])[:1]) or "-"
+        gameplay = regional_candidates(media.get("Screenshot - Gameplay", []), per_region=3)
+        shots = [] if gameplay == "-" else gameplay.split(";")
+        fields = [regional_candidates(front),
+                  regional_candidates(media.get("Box - Back", [])),
+                  regional_candidates(media.get("Box - Spine", [])),
+                  fanart, regional_candidates(media.get("Screenshot - Game Title", [])),
+                  *[";".join(shots[i::3]) or "-" for i in range(3)],
+                  regional_candidates(media.get("Square", [])),
+                  regional_candidates(media.get("Clear Logo", [])),
+                  regional_candidates(media.get("Banner", []))]
+        return fields
+
     for key, matching in sorted(names.items()):
         if len(matching) != 1:
-            continue  # avoid colliding editions / ambiguous matching
-        media = images[next(iter(matching))]
-        front = list(media.get("Box - Front", []))
-        if next(iter(matching)) in EUROPE_FRONT_PINS:
-            pinned = EUROPE_FRONT_PINS[next(iter(matching))]
-            front = [("eu", filename) for filename in pinned] + front
-        back = media.get("Box - Back", [])
-        spine = media.get("Box - Spine", [])
-        # Three independently addressable visual categories for a missing back.
-        # No longer discard Game Title artwork when fanart also exists.
-        fanart = regional_candidates(media.get("Fanart - Background", []))
-        title_screen = regional_candidates(media.get("Screenshot - Game Title", []))
-        square = regional_candidates(media.get("Square", []))
-        # Split three gameplay slots; each gets independent CDN fallback candidates.
-        gameplay = regional_candidates(media.get("Screenshot - Gameplay", []),
-                                       per_region=3)
-        selected = [] if gameplay == "-" else gameplay.split(";")
-        shots = [";".join(selected[i::3]) or "-" for i in range(3)]
-        if front or back or spine or any(
-                v != "-" for v in (fanart, title_screen, *shots, square)):
-            lines.append(f"{key}\t{regional_candidates(front)}\t{regional_candidates(back)}"
-                         f"\t{regional_candidates(spine)}\t{fanart}"
-                         f"\t{title_screen}\t{shots[0]}\t{shots[1]}\t{shots[2]}\t{square}\n")
+            continue
+        gid = next(iter(matching))
+        own = row(key, gid)
+        lines.append(key + "\t" + "\t".join(own) + "\n")
+        platform, title = key.split(":", 1)
+        base = title.removesuffix(" nintendo switch 2 edition")
+        # Exact normalized title/alias and unique edition per other platform.
+        # Do not use fuzzy name matches or front scans from another platform.
+        other_ids = []
+        opposite = names.get(("ns1" if platform == "ns2" else "ns2") + ":" + base, set())
+        if len(opposite) == 1:
+            other_ids.extend(opposite)
+        for _, matches in sorted(other_names.get(base, {}).items()):
+            if len(matches) == 1:
+                other_ids.extend(matches)
+        alternatives = [[] for _ in own]
+        for other in dict.fromkeys(other_ids):
+            for col, field in enumerate(row(key, other)):
+                if col in (1, 3, 4, 5, 6, 7, 8, 9, 10) and field != "-":
+                    alternatives[col].extend(field.split(";"))
+        alt = [";".join(list(dict.fromkeys(values))[:12]) or "-" for values in alternatives]
+        if any(field != "-" for field in alt):
+            lines.append("alt:" + key + "\t" + "\t".join(alt) + "\n")
     return "".join(lines)
 
 def build(archive_path):
@@ -230,7 +252,8 @@ def self_test():
     assert "world:11111111" in result
     assert "ns1:example voyage\t" in result and "eu:22222222" in result
     assert "fr:33333333-3333-3333-3333-333333333333.jpg" in result
-    assert "ns1:ambiguous\t" not in result and "44444444" not in result
+    assert "ns1:ambiguous\t" not in result
+    assert "alt:ns1:example journey\t-\tother:44444444" in result
     assert "ns2:example next gen\t" in result
     ns2 = next(row.split("\t") for row in result.splitlines()
                if row.startswith("ns2:example next gen\t"))
@@ -242,7 +265,7 @@ def self_test():
     assert "eu:77777777-7777-7777-7777-777777777777.png" in result
     fields = next(row.split("\t") for row in result.splitlines()
                   if row.startswith("ns1:example journey\t"))
-    assert len(fields) == 10, fields
+    assert len(fields) == 12, fields
     assert fields[4].startswith("world:aaaaaaaa"), fields
     assert fields[5].startswith("world:bbbbbbbb"), fields
     assert fields[6].startswith("world:88888888"), fields
@@ -298,7 +321,7 @@ def main():
     # become a production catalog for an NS1/NS2 application.
     ns2_rows = [row for row in rows if row[0].startswith("ns2:")]
     for column, role in ((1, "front"), (4, "fanart"), (9, "square")):
-        if not any(len(row) == 10 and row[column] != "-" for row in ns2_rows):
+        if not any(len(row) == 12 and row[column] != "-" for row in ns2_rows):
             raise ValueError(f"GamesDB snapshot lacks NS2 {role} media")
     print("EDEN_CASE_INDEX_MEDIA fanart={} game_title={} gameplay={} titles={}".format(
         *coverage, len(rows)), flush=True)

@@ -1606,6 +1606,20 @@ post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
 # The tracker workflow also explicitly tests historical vendor 1ec7b42.
 # Only that known historical checkout (not a missing production TU) may omit it.
 gpu_table_vendor_pin = checked_guest_cache_lock_vendor(subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip())
+# The shipping vendor successor modifies only the SM teardown order.
+# Authenticate the entire new tree and its unique changed C++ blob before
+# reusing the predecessor's byte-identical GPU/FC27 source-owner receipts.
+if gpu_table_vendor_pin == "6d9fc80860ea4324b68b433492ad15e34c35a81d":
+    assert subprocess.check_output(
+        ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
+        text=True,
+    ).strip() == "0ee1ae75649352ed8ddc79271202af9afca258b2"
+    assert subprocess.check_output(
+        ["git", "hash-object", str(root / "vendor" /
+         "encore-active/eden-core/src/core/hle/service/sm/sm.cpp")],
+        text=True,
+    ).strip() == "2ef914e3f1b24442e1fa0130d5f8175111e7d316"
+    gpu_table_vendor_pin = "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac"
 if stabilization_selected:
     gpu_table_vendor_pin = "9db97fb12db1a390d6b2410f0c18333aa31e37da"
 gpu_table_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if gpu_table_vendor_pin in {

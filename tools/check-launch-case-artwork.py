@@ -135,30 +135,17 @@ for marker in (
     assert marker in draw, ("bounded transient compositor retry missing", marker)
 assert "const std::string& scan = back ? launch_box_back_ : launch_box_front_;" in draw
 assert "std::vector<std::string> launch_screenshots_;" in header
-assert "constexpr float kCaseBackHold = 4.50f;" in theme
-assert "constexpr float kCaseTurnSeconds = 0.72f;" in theme
-assert "constexpr float kCaseBackHold = 4.50f;" in theme
+clock = (root / "headless/loading_case.hpp").read_text()
+assert "kFrontHold=1.20f,kTurn=0.72f,kBackHold=4.50f,kSettle=0.50f" in clock
+assert "Eden::LoadingCase::kCycle" in theme
 assert "s.wait(0.51f); // instantaneous ~90-degree spine glimpse, no dwell" in (
     root / "headless/prosperoeden/host/preview_main.cpp").read_text()
-assert "constexpr float kLaunchSeconds = kCaseFrontHold" in theme
-# Native game start never delays the emulator just to animate a missing
-# physical back. A GPU-resident authentic rear can turn once within the
-# existing 750-ms cap and remain visible through the loading capture.
-assert "native_launch_back_ready_ = false;" in launch_setup
-assert "native_launch_show_back_ = false;" in launch_setup
-assert "native_launch_back_ready_ = true;" in draw
-assert "native_launch_back_ready_" in header
-assert "loading_final_pose_is_back() const noexcept" in header
-assert "c.textures.cover(launch_box_back_, 760.0f).texture != 0" in draw
-assert "native_launch_show_back_ = true;" in draw
-assert "constexpr float native_end = 0.62f;" in draw
-assert "(!native_launch_show_back_ || native_phase >= 0.62f)" in draw
-assert 'native_launch_deadline_ - std::chrono::steady_clock::now()' in draw
-assert 'if (!native_launch_show_back_ && native_phase <= 0.12f' in draw
 assert "std::chrono::milliseconds(750)" in launcher
-assert "LoadingCapturePose::front" in draw
-assert "LoadingCapturePose::back" in draw
-assert "loading_back_available() const noexcept" in header
+assert "Eden::LaunchHandoff::LoadingSeconds()-1.0" in draw
+assert "Eden::LoadingCase::Yaw(case_seconds" in draw
+assert "native_launch_show_back_" not in launcher + header
+assert "LoadingCapturePose::front" in draw and "LoadingCapturePose::back" in draw
+assert "LoadingCapturePose::background" in draw
 assert "set_loading_capture_pose(LoadingCapturePose pose)" in header
 
 # The temporary FBO painter must be bounded (two faces) and cleaned up
@@ -188,7 +175,7 @@ assert 'if (shots[0] && !ready(*shots[0], paper_w)) return false;' in library_sr
 assert 'if (shots[1] && !ready(*shots[1], std::max(left_w - gap, top_h)))' in library_src
 assert 'if (shots[2] && !ready(*shots[2], paper_w))' in library_src
 assert 'prepare_case_page(false);' in draw
-assert "(done_ && loading_capture_pose_ == LoadingCapturePose::back)" in draw
+assert "if (!native_artwork_loading_ || done_) prepare_case_page(true);" in draw
 assert "prepare_case_page(true);" in draw
 assert 'Color::rgb(0x08111d, 0.45f)' in library_src
 assert 'c.list.gradient_rect({r.x, r.y, r.w, dynamic_h}, 0.0f,' in library_src
@@ -345,9 +332,8 @@ assert "c.list.case_plastic(physical, angle, back," in draw
 assert "ns2_case ? Color::rgb(0xf1273e, 0.96f) : Color::rgb(0xd9e8f7, 0.93f)" in draw
 assert draw.count("c.list.case_plastic(physical, angle, back") == 1
 assert "for (int hinge" not in draw
-assert "const float return_start = back_start + theme::kCaseBackHold;" in draw
-assert "constexpr float kFrontYaw = 0.52f;" in draw
-assert "constexpr float kBackYaw = 3.14159265358979323846f + 0.18f;" in draw
+assert "Eden::LoadingCase::Yaw(case_seconds" in draw
+assert "kFrontYaw=0.52f,kBackYaw=kPi+0.18f" in clock
 assert "case_depth, 3.2f" not in draw
 assert "const bool printed_side_visible = std::sin(angle) >= 0.0f;" in draw
 assert "Color::rgb(0xb61626, 0.78f)" not in draw
@@ -534,7 +520,8 @@ assert "const std::string& scan = back ? launch_box_back_ : launch_box_front_;" 
 assert "0x01007EF00011E000" not in draw
 shapes = (root / "headless/prosperoeden/pe/gfx/draw_list.hpp").read_text()
 drawlist = (root / "headless/prosperoeden/pe/gfx/draw_list.cpp").read_text()
-shader = (root / "headless/prosperoeden/pe/gfx/gl_batch.cpp").read_text()
+shader = (root / "headless/loading_case_shader_source.hpp").read_text()
+assert 'using Eden::LoadingCase::kVertex;' in (root / "headless/prosperoeden/pe/gfx/gl_batch.cpp").read_text()
 assert "case_face = 9" in shapes and "case_spine = 10" in shapes
 assert "case_plastic = 11" in shapes
 assert "case_cap = 12" in shapes
@@ -736,8 +723,8 @@ assert "01-launch-case-spine" in preview_source
 assert "02-launch-case-back" in preview_source
 assert "PE_PREVIEW_NO_BOX_SCANS" in preview_workflow
 assert "UNIVERSAL_CASE_NO_RETAIL_ART: PASS" in preview_workflow
-assert "const float return_start = back_start + theme::kCaseBackHold;" in draw
-assert "angle = kBackYaw;" in draw
+assert "Eden::LoadingCase::Yaw(case_seconds" in draw
+assert "case LoadingCapturePose::back:angle=Eden::LoadingCase::kTemplateYaw[3]" in draw
 assert "const Cover ink = c.textures.cover(launch_box_spine_, 760.0f);" in draw
 assert "std::string fallback;" not in draw
 assert "constexpr float kPaperSideInset = 7.0f;" in draw

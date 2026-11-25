@@ -192,7 +192,9 @@ public:
         glUniform2f(glGetUniformLocation(program_, "size"), float(width), float(height));
         glUniform1f(glGetUniformLocation(program_, "seconds"), float(seconds));
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        if(scene_&&alternate_texture_&&(case_program_||BuildCase())){
+        if(scene_ && (!alternate_texture_ || (!case_program_ && !BuildCase())))
+            return false;
+        if(scene_ && alternate_texture_){
             const auto draw=LoadingCase::MakeBatch(*scene_,seconds,float(width),float(height));
             glUseProgram(case_program_);
             glEnable(GL_BLEND);
@@ -210,7 +212,10 @@ public:
             const GLint slot=glGetUniformLocation(case_program_,"u_slot");
             for(std::size_t n=0;n<draw.count;++n){
                 const auto& q=draw.quads[n];
-                for(int i=0;i<6;++i)glUniform4fv(loc[i],1,q.values.data()+4*i);
+                for(int i=0;i<6;++i) {
+                    const auto* value=q.values.data()+4*i;
+                    glUniform4f(loc[i],value[0],value[1],value[2],value[3]);
+                }
                 glUniform1i(slot,int(q.output[2]));glDrawArrays(GL_TRIANGLES,0,6);
             }
             glDisable(GL_BLEND);

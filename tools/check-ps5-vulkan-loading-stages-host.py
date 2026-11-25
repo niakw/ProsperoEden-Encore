@@ -56,8 +56,9 @@ assert "Eden::LaunchHandoff::BeginLoading();" in frontend
 assert "Eden::LoadingArtwork::Capture(" in frontend
 assert "LaunchHandoff::Publish(std::move(frame), alternate)" in gl_art
 assert "LaunchHandoff::PeekAlternate()" in gl_art
-assert "LoadingCapturePose::back" in frontend
-assert "LoadingCapturePose::front" in frontend
+assert "Pose::back" in frontend and "Pose::front" in frontend
+assert "Pose::background" in frontend
+assert "PublishCase(std::move(scene))" in frontend
 assert "handoff_captured" not in frontend
 assert "handoff_attempts" not in frontend
 assert frontend.index("PresentUnifiedLoading(display, reduce_motion)") < frontend.index(

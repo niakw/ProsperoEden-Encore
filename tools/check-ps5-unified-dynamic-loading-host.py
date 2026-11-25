@@ -53,14 +53,14 @@ assert "bool native_artwork_loading = false" in launcher_h
 assert "pe::ui::Launcher launcher(services, textures, fonts, first_start, true)" in frontend
 assert "native_launch_art_ready_ || std::chrono::steady_clock::now() >= native_launch_deadline_" in launcher
 assert "std::chrono::milliseconds(750)" in launcher
-assert "(done_ && loading_capture_pose_ == LoadingCapturePose::back)" in launcher
+assert "if (!native_artwork_loading_ || done_) prepare_case_page(true);" in launcher
 assert "prepare_case_page(true);" in launcher
 assert "!(native_artwork_loading_ && done_)" in launcher
 assert "const float appear = native_artwork_loading_ ? 1.0f" in launcher
 
 # Composition is read only from the explicitly owned offscreen target.
 assert "Eden::LoadingArtwork::Capture(" in frontend
-assert "constexpr int width = 1920, height = 1080;" in gl_art
+assert "int width=1920,int height=1080" in gl_art
 assert gl_art.index("glFramebufferTexture2D") < gl_art.index("glReadPixels")
 assert "glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo)" in gl_art
 assert "glBindBuffer(GL_PIXEL_PACK_BUFFER, 0)" in gl_art
@@ -69,16 +69,13 @@ assert "std::swap_ranges" in gl_art
 assert "LaunchHandoff::Publish(std::move(frame), alternate)" in gl_art
 assert "LaunchHandoff::PeekAlternate()" in gl_art
 assert "alternate_texture_" in gl_art
-assert "has_alternate" in gl_art
-assert "seconds<1000.0" in gl_art
-assert "LoadingCapturePose::back" in frontend
-assert "LoadingCapturePose::front" in frontend
-assert "const bool animate_case = !reduce_motion;" in frontend
-assert "launcher.loading_back_available();" in frontend
-assert "if (!alternate_ready) Eden::LaunchHandoff::ClearAlternate();" in frontend
-assert "launcher.loading_final_pose_is_back()" in frontend
-assert "const auto primary_pose = animate_case" in frontend
-assert "const auto alternate_pose = final_back" in frontend
+assert "has_alternate" not in gl_art
+assert "abs(cos(turn" not in gl_art + shader
+assert "Pose::front" in frontend and "Pose::back" in frontend
+assert "Pose::background" in frontend and "paper.image(run.texture" in frontend
+assert "PublishCase(std::move(scene))" in frontend
+assert "LoadingCase::MakeBatch" in gl_art and "LoadingCase::MakeBatch" in window
+assert "EDEN_LOADING_CASE_VERT_SPV" in window and "EDEN_LOADING_CASE_FRAG_SPV" in window
 assert "LaunchHandoff::Peek()" in gl_art
 assert "LaunchHandoff::Valid(*artwork)" in gl_art
 assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in frontend

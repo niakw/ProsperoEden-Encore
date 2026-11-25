@@ -27,3 +27,20 @@ jobs:
       - name: Actual C++ rear media selector
         if: success() || failure()
         run: python3 -B tools/check-encore-case-media-selection-host.py
+      - name: Install isolated Mesa and SPIR-V host tools
+        if: success() || failure()
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libegl1-mesa-dev libgl1-mesa-dev libgl1-mesa-dri glslang-tools spirv-tools
+      - name: Original case geometry in independent EGL contexts
+        if: success() || failure()
+        run: python3 -B tools/check-loading-artwork-egl-host.py
+      - name: Compile and validate the same case shader for Vulkan 1.1
+        if: success() || failure()
+        run: |
+          python3 -B tools/graphics/build-vulkan-hud-shaders.py --case-only --source-dir headless --include-dir headless --output /tmp/loading-case-spv.h --glslang glslangValidator --spirv-val spirv-val
+      - name: Source contracts for the single-owner loading transition
+        if: success() || failure()
+        run: |
+          python3 -B tools/check-ps5-unified-dynamic-loading-host.py
+          python3 -B tools/check-ps5-vulkan-loading-stages-host.py

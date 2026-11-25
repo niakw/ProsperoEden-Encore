@@ -8,6 +8,12 @@ workflow = (root / ".github/workflows/build-040-zbic.yml").read_text()
 linker = (root / "tools/ci/link-sibling-deps.sh").read_text()
 build = (root / "tools/build-headless-native.sh").read_text()
 deps = (root / "tools/deps.py").read_text()
+makefile = (root / "Makefile").read_text()
+deps_target = makefile.split("deps:", 1)[1].split("\n\n", 1)[0]
+assert "tools/deps.py fetch" in deps_target
+assert "tools/deps.py verify" in deps_target
+assert deps_target.index("tools/deps.py fetch") < deps_target.index("tools/deps.py verify")
+assert "release dependency verification failed" in deps
 
 for path in (
     "../ps5-native-app-boilerplate",

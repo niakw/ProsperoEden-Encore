@@ -1382,6 +1382,39 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         print('NS1_ES_TICKET_MANAGEMENT_EXACT_REVERSE_PASS',
               'offline_commands=19', 'upstream_ticket_reads=immutable')
 
+
+        # WLAN HOS15+: modern service ownership, not a fake coverage gain.
+        # Verify exact current byte hash, strip the one approved successor,
+        # then demand byte-exact parity with the previous maintained source.
+        wlan_rel = 'src/core/hle/service/wlan/wlan.cpp'
+        wlan_current = (ACTIVE / wlan_rel).read_bytes()
+        assert len(wlan_current) == 18111 and sha(wlan_current) == '46fe01d4bb77e8a72f2c9d61972b0437684dcc29050983db3a31499fc64ebfbe'
+        assert spec['entries'][wlan_rel]['active'] == sha(wlan_current)
+        wlan_text = wlan_current.decode('utf-8')
+        wlan_current_registers = "    // Horizon 15 replaced the six legacy WLAN endpoints with \"wlan\".\n    if (FirmwareManager::GetFirmwareVersion(system).first.major >= 15) {\n        server_manager->RegisterNamedService(\n            \"wlan\", std::make_shared<IGeneralServiceCreator>(system), 10);\n    } else {\n        server_manager->RegisterNamedService(\"wlan:lcl\", std::make_shared<ILocalManager>(system), 10);\n        server_manager->RegisterNamedService(\"wlan:lg\", std::make_shared<ILocalGetFrame>(system), 10);\n        server_manager->RegisterNamedService(\"wlan:lga\", std::make_shared<ILocalGetActionFrame>(system), 10);\n        server_manager->RegisterNamedService(\"wlan:sg\", std::make_shared<ISocketGetFrame>(system), 10);\n        server_manager->RegisterNamedService(\"wlan:soc\", std::make_shared<ISocketManager>(system), 10);\n        server_manager->RegisterNamedService(\"wlan:dtc\", std::make_shared<IDetectManager>(system), 4);\n    }"
+        wlan_legacy_registers = "    server_manager->RegisterNamedService(\"wlan:lcl\", std::make_shared<ILocalManager>(system), 10);\n    server_manager->RegisterNamedService(\"wlan:lg\", std::make_shared<ILocalGetFrame>(system), 10);\n    server_manager->RegisterNamedService(\"wlan:lga\", std::make_shared<ILocalGetActionFrame>(system), 10);\n    server_manager->RegisterNamedService(\"wlan:sg\", std::make_shared<ISocketGetFrame>(system), 10);\n    server_manager->RegisterNamedService(\"wlan:soc\", std::make_shared<ISocketManager>(system), 10);\n    server_manager->RegisterNamedService(\"wlan:dtc\", std::make_shared<IDetectManager>(system), 4);"
+        assert wlan_text.count(wlan_current_registers) == 1
+        wlan_text = wlan_text.replace(wlan_current_registers, wlan_legacy_registers, 1)
+        wlan_class_prefix = '\nclass IWirelessCommunicationService final : public ServiceFramework<IWirelessCommunicationService> {'
+        wlan_loop = 'void LoopProcess(Core::System& system) {'
+        assert wlan_text.count(wlan_class_prefix) == 1
+        wlan_a = wlan_text.index(wlan_class_prefix)
+        wlan_b = wlan_text.index(wlan_loop, wlan_a)
+        wlan_new_classes = wlan_text[wlan_a:wlan_b]
+        assert wlan_new_classes.count('class IGeneralServiceCreator final') == 1
+        assert wlan_new_classes.count('RegisterHandlers(functions);') == 2
+        assert wlan_new_classes.count('RejectUnavailableRadio') == 62
+        wlan_text = wlan_text[:wlan_a] + wlan_text[wlan_b:]
+        assert wlan_text.count('#include "frontend_common/firmware_manager.h"\n') == 1
+        wlan_text = wlan_text.replace('#include "frontend_common/firmware_manager.h"\n', '', 1)
+        wlan_prev = wlan_text.encode('utf-8')
+        assert len(wlan_prev) == 10653 and sha(wlan_prev) == 'df1a2a35a3cfa6e6925cebf38df42c17114668277eb84f52a573593d1b658b37'
+        assert wlan_prev == (stage / wlan_rel).read_bytes(), 'WLAN firmware owner reverse mismatch'
+        observed[wlan_rel] = spec['entries'][wlan_rel]
+        print('NS1_WLAN_HOS15_NATIVE_SERVICE_EXACT_REVERSE_PASS',
+              'new_service=wlan', 'modern_dispatch=61',
+              'legacy_ports_retired=6', 'legacy_source_preserved=144')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

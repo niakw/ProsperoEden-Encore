@@ -87,6 +87,7 @@ stabilization_trees = {
     "ea4d39d5c9bd17074292b8c6f229c53954f8e21e": "e87b8613fed706ae8f09ee50200c737812ade91c",
     "824a7342a58ad50d399ac0b215155884ced474ea": "ea890f123433198c30141f9320dd10090d80ecdc",
     "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed": "b7548392480ec7bb16aafdcbb330a60834270d09",
+    "29b91308ba1fc69978cd2cc39222fe7dc59b668c": "45e1f9d536403dfcb2136ff653bae2e07ba85fd4",
 }
 
 # The FC27 collected-write successor changes only lock acquisition placement.
@@ -1614,7 +1615,7 @@ gpu_table_vendor_pin = checked_guest_cache_lock_vendor(subprocess.check_output([
 # The shipping vendor successor modifies only the SM teardown order.
 # Authenticate the entire new tree and its unique changed C++ blob before
 # reusing the predecessor's byte-identical GPU/FC27 source-owner receipts.
-if gpu_table_vendor_pin in {"6d9fc80860ea4324b68b433492ad15e34c35a81d", "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee", "703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e", "824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed"}:
+if gpu_table_vendor_pin in {"6d9fc80860ea4324b68b433492ad15e34c35a81d", "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee", "703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e", "824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c":
     assert subprocess.check_output(
         ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
         text=True,
@@ -1625,15 +1626,16 @@ if gpu_table_vendor_pin in {"6d9fc80860ea4324b68b433492ad15e34c35a81d", "a0c3da6
         "ea4d39d5c9bd17074292b8c6f229c53954f8e21e": "e87b8613fed706ae8f09ee50200c737812ade91c",
     "824a7342a58ad50d399ac0b215155884ced474ea": "ea890f123433198c30141f9320dd10090d80ecdc",
     "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed": "b7548392480ec7bb16aafdcbb330a60834270d09",
+    "29b91308ba1fc69978cd2cc39222fe7dc59b668c": "45e1f9d536403dfcb2136ff653bae2e07ba85fd4",
     }[gpu_table_vendor_pin]
-    if gpu_table_vendor_pin in {"a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee", "703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e", "824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed"}:
+    if gpu_table_vendor_pin in {"a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee", "703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e", "824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c":
         table = root / "vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"
-        expected = "87eed0b2319c719d27332c8e24f97a73e496f108" if gpu_table_vendor_pin in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed"} else "6dd69f4b09aebc0eb7250975d35b34393e9f5516" if gpu_table_vendor_pin in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e"} else "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f"
+        expected = "87eed0b2319c719d27332c8e24f97a73e496f108" if gpu_table_vendor_pin in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c" else "6dd69f4b09aebc0eb7250975d35b34393e9f5516" if gpu_table_vendor_pin in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e"} else "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f"
         assert subprocess.check_output(["git", "hash-object", str(table)], text=True).strip() == expected
-        if gpu_table_vendor_pin in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e", "824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed"}:
+        if gpu_table_vendor_pin in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e", "824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c":
             manager = root / "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp"
             assert subprocess.check_output(["git", "hash-object", str(manager)], text=True).strip() == "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86"
-            if gpu_table_vendor_pin in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed"}:
+            if gpu_table_vendor_pin in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c":
                 assert subprocess.check_output(["git", "hash-object", str(root / "src/memory_pages.cpp")], text=True).strip() == "aeb7cc5430aefe11ee502ee5a53c70f3f909208f"
     assert subprocess.check_output(
         ["git", "hash-object", str(root / "vendor" /
@@ -1665,7 +1667,7 @@ else:
     assert post_f07_gpu_table_present == post_f07_gpu_table_owners
     page_table_bytes = (active / "eden-core/src/common/multi_level_page_table.cpp").read_bytes()
     assert hashlib.sha1(b"blob " + str(len(page_table_bytes)).encode() + bytes([0]) + page_table_bytes).hexdigest() == (
-        "87eed0b2319c719d27332c8e24f97a73e496f108" if shipping_vendor in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed"} else "6dd69f4b09aebc0eb7250975d35b34393e9f5516" if shipping_vendor in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e"} else "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f" if shipping_vendor == "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee" else "c55a55498fe300458800b646bfc295db11283b4a")
+        "87eed0b2319c719d27332c8e24f97a73e496f108" if shipping_vendor in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c" else "6dd69f4b09aebc0eb7250975d35b34393e9f5516" if shipping_vendor in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e"} else "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f" if shipping_vendor == "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee" else "c55a55498fe300458800b646bfc295db11283b4a")
     assert 'list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")' in nov13_cmake
     assert 'list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")' in nov13_cmake
 print("ENCORE_POST_F07_GPU_PAGE_TABLE_OWNER_PASS", f"owners={len(post_f07_gpu_table_present)}")

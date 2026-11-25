@@ -1330,10 +1330,32 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # actual main applet rather than leaving an indexed IMPL-SRC false
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_terminate_application_head = (ACTIVE / ns_rel).read_bytes()
+        ns_launch_info_index_head = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_launch_info_index_head) == 80599 and sha(ns_launch_info_index_head) == (
+            '88c4245bac9091da4e97add58cf553443eefcf94dce8ed185077bcf58e68a5af')
+        assert spec['entries'][ns_rel]['active'] == sha(ns_launch_info_index_head)
+        ns_launch_info_index_pointer = (
+            '{97, D<&IApplicationManagerInterface::GetMainApplicationProgramIndexByApplicationLaunchInfo>, '
+            '"GetMainApplicationProgramIndexByApplicationLaunchInfo"}')
+        ns_launch_info_index_pointer_old = (
+            '{97, nullptr, "GetMainApplicationProgramIndexByApplicationLaunchInfo"}')
+        ns_launch_info_index_method = """Result IApplicationManagerInterface::GetMainApplicationProgramIndexByApplicationLaunchInfo(
+    Out<u8> out_program_index, ApplicationLaunchInfoV19 launch_info) {
+    R_RETURN(GetMainApplicationProgramIndex(out_program_index, launch_info.application_id));
+}
+
+"""
+        ns_launch_info_index_text = ns_launch_info_index_head.decode('utf-8')
+        assert ns_launch_info_index_text.count(ns_launch_info_index_pointer) == 1
+        assert ns_launch_info_index_text.count(ns_launch_info_index_method) == 1
+        ns_terminate_application_head = ns_launch_info_index_text.replace(
+            ns_launch_info_index_pointer, ns_launch_info_index_pointer_old, 1).replace(
+            ns_launch_info_index_method, '', 1).encode('utf-8')
         assert len(ns_terminate_application_head) == 80260 and sha(ns_terminate_application_head) == (
             '008abc68077e8a3da38871adcc76b48439230110514b7101056dffebb24a4379')
-        assert spec['entries'][ns_rel]['active'] == sha(ns_terminate_application_head)
+        print('NS1_NS_LAUNCH_INFO_PROGRAM_INDEX_EXACT_REVERSE_PASS',
+              'command=97', 'wire_size=0x80', 'stable_prefix=application_id',
+              'delegate=cmd93_live_identity')
         ns_terminate_application_pointer = (
             '{22, D<&IApplicationManagerInterface::TerminateApplication>, "TerminateApplication"}')
         ns_terminate_application_pointer_old = '{22, nullptr, "TerminateApplication"}'
@@ -1713,10 +1735,31 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         ns_owner_prior = ns_text.encode('utf-8')
         assert len(ns_owner_prior) == 69013 and sha(ns_owner_prior) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
         ns_header_rel = 'src/core/hle/service/ns/application_manager_interface.h'
-        ns_header_terminate_application = (ACTIVE / ns_header_rel).read_bytes()
+        ns_header_launch_info_index = (ACTIVE / ns_header_rel).read_bytes()
+        assert len(ns_header_launch_info_index) == 9718 and sha(ns_header_launch_info_index) == (
+            'c689aa4c94d6c073641728af7803546ae804d470362c9a8c4fc83dba4ee8f1db')
+        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_launch_info_index)
+        ns_launch_info_struct = """struct ApplicationLaunchInfoV19 {
+    u64 application_id;
+    u32 version;
+    u32 launch_flags;
+    u8 application_storage_id;
+    u8 update_storage_id;
+    u8 reserved[0x6E];
+};
+static_assert(sizeof(ApplicationLaunchInfoV19) == 0x80);
+
+"""
+        ns_launch_info_index_decl = """    Result GetMainApplicationProgramIndexByApplicationLaunchInfo(
+        Out<u8> out_program_index, ApplicationLaunchInfoV19 launch_info);
+"""
+        ns_header_launch_info_index_text = ns_header_launch_info_index.decode('utf-8')
+        assert ns_header_launch_info_index_text.count(ns_launch_info_struct) == 1
+        assert ns_header_launch_info_index_text.count(ns_launch_info_index_decl) == 1
+        ns_header_terminate_application = ns_header_launch_info_index_text.replace(
+            ns_launch_info_struct, '', 1).replace(ns_launch_info_index_decl, '', 1).encode('utf-8')
         assert len(ns_header_terminate_application) == 9340 and sha(ns_header_terminate_application) == (
             '0ce6c19f41bcf76e59e337c411a4c7ac201b9c166318fc66b74cce02b13c436f')
-        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_terminate_application)
         ns_terminate_application_decl = '    Result TerminateApplication(u64 application_id);\n'
         ns_header_terminate_application_text = ns_header_terminate_application.decode('utf-8')
         assert ns_header_terminate_application_text.count(ns_terminate_application_decl) == 1
@@ -1818,7 +1861,7 @@ static_assert(sizeof(ApplicationContentStorageRecord) == 0x18);
         ns_previous = (stage / ns_rel).read_bytes()
         assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
         assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_terminate_application_head)
+        assert spec['entries'][ns_rel]['active'] == sha(ns_launch_info_index_head)
         import re
         ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
         ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)

@@ -68,7 +68,7 @@ meson_wrapper="$root/build/radv-tools/meson-nodownload"
 cat > "$meson_wrapper" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
-if [[ ${1:-} == setup ]]; then
+if [[ \${1:-} == setup ]]; then
     shift
     exec "$meson_bin" setup --wrap-mode=nodownload "\$@"
 fi

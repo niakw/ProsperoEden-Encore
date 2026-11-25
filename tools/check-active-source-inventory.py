@@ -2913,7 +2913,7 @@ post_f07_gpu_wait_receipts = {
     "headless/vk_scheduler_ps5.h": "b174c9891530eddaf7ebbf3aba39dcfab3009fa8",
     "headless/vulkan_present_manager_ps5.cpp": "32bee8ceea4d05de1be5a4acc89e594f72805e43",
     "headless/vk_rasterizer_shutdown_ps5.h": "07e18cab8a8df1c862903d9e99a521797dd7cf3e",
-    "headless/vk_buffer_cache_shutdown_ps5.cpp": "141826498b2b89bb5273468a8a3c9dde9c3b543f",
+    "headless/vk_buffer_cache_shutdown_ps5.cpp": "fb55d7b30e95afbe567d41ebcd4b89229d6447b0",
 }
 post_f07_gpu_wait_owners = set(post_f07_gpu_wait_receipts)
 for path, blob in post_f07_gpu_wait_receipts.items():

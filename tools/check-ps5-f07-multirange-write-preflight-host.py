@@ -11,8 +11,10 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-source = (ROOT / "vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp").read_text()
+source = (ROOT / "headless/vk_buffer_cache_shutdown_ps5.cpp").read_text()
 generator = (ROOT / "tools/prepare-vulkan-port.py").read_text()
+cmake = (ROOT / "headless/vulkan.cmake").read_text()
+assert 'configure_file("${EDEN_PORT_DIR}/vk_buffer_cache_shutdown_ps5.cpp"' in cmake
 fast = (ROOT / ".github/workflows/encore-core-fast-gate.yml").read_text()
 pre = (ROOT / ".github/workflows/encore-core-preflight.yml").read_text()
 call = "python3 -B tools/check-ps5-f07-multirange-write-preflight-host.py"

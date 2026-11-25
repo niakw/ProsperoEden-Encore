@@ -9,11 +9,12 @@ root=Path(__file__).resolve().parents[1]
 header=(root/"headless/vk_scheduler_ps5.h").read_text()
 implementation=(root/"headless/vulkan_scheduler_ps5.cpp").read_text()
 rasterizer=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-buffer_runtime=(root/"vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp").read_text()
+buffer_runtime=(root/"headless/vk_buffer_cache_shutdown_ps5.cpp").read_text()
 cmake=(root/"headless/vulkan.cmake").read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()
 assert 'configure_file("${EDEN_PORT_DIR}/vulkan_scheduler_ps5.cpp"' in cmake
 assert 'configure_file("${EDEN_PORT_DIR}/vk_scheduler_ps5.h"' in cmake
+assert 'configure_file("${EDEN_PORT_DIR}/vk_buffer_cache_shutdown_ps5.cpp"' in cmake
 begin="    template <typename T>\n        requires std::is_invocable_v<T, vk::CommandBuffer, vk::CommandBuffer>\n    void RecordWithUploadBuffer(T&& command) {"
 stop="    template <typename T>\n        requires std::is_invocable_v<T, vk::CommandBuffer>\n    void Record(T&& c) {"
 assert header.count(begin)==header.count(stop)==1

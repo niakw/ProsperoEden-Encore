@@ -11,9 +11,11 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-source=(ROOT/"vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp").read_text()
+source=(ROOT/"headless/vk_buffer_cache_shutdown_ps5.cpp").read_text()
 pinned=(ROOT/"vendor/sources/eden/src/video_core/renderer_vulkan/vk_buffer_cache.cpp").read_text()
 generator=(ROOT/"tools/prepare-vulkan-port.py").read_text()
+cmake=(ROOT/"headless/vulkan.cmake").read_text()
+assert 'configure_file("${EDEN_PORT_DIR}/vk_buffer_cache_shutdown_ps5.cpp"' in cmake
 fast=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 preflight=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 invoke="python3 -B tools/check-ps5-f07-empty-buffer-copy-host.py"
@@ -78,6 +80,11 @@ assert "copies.empty()" not in original
 assert selected.index("dst_buffer == VK_NULL_HANDLE") < selected.index("copies.empty()")
 assert source.count("scheduler.RecordWithUploadBuffer(")>=1
 assert source.count("scheduler.RequestOutsideRenderPassOperationContext();")>=1
+copy_body=source[source.index("void BufferCacheRuntime::CopyBuffer("):source.index("\nvoid BufferCacheRuntime::PreCopyBarrier()")]
+post_body=source[source.index("void BufferCacheRuntime::PostCopyBarrier()"):source.index("\nvoid BufferCacheRuntime::ClearBuffer(")]
+assert "vk::PIPELINE_STAGE_GRAPHICS_COMPUTE_TRANSFER, 0, WRITE_BARRIER" in copy_body
+assert "vk::PIPELINE_STAGE_GRAPHICS_COMPUTE_TRANSFER, 0, WRITE_BARRIER" in post_body
+assert "Lichii #1245" in copy_body
 
 cpp=r"""
 #include <cassert>

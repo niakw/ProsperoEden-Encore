@@ -1272,9 +1272,30 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # unit but ABSENT from the legacy 4853 catalog. Reverse their full
         # error-only closure so both physical owners remain provenance-checked.
         ndrm_rel = 'src/core/hle/service/es/es.cpp'
-        ndrm_source = (ACTIVE / ndrm_rel).read_bytes()
+        # Exact reverse of the eight live eTicket first-use query fixes.
+        es_newest = (ACTIVE / ndrm_rel).read_bytes()
+        assert len(es_newest) == 21899 and sha(es_newest) == '0df4c4ffce351e618d94d767043fffc0032fb579353a26e7613873521523fda6'
+        assert spec['entries'][ndrm_rel]['active'] == sha(es_newest)
+        es_restored = es_newest.decode('utf-8')
+        for family in ('Common', 'Personalized'):
+            start = es_restored.index(f'    void List{family}TicketRightsIds(HLERequestContext& ctx) {{')
+            end = es_restored.index('\n    void ', start + 10)
+            body = es_restored[start:end]
+            newer = f'        const auto& tickets = keys.Get{family}Tickets();'
+            older = f'        keys.PopulateTickets();\n        const auto tickets = keys.Get{family}Tickets();'
+            assert body.count(newer) == 1
+            es_restored = es_restored[:start] + body.replace(newer, older, 1) + es_restored[end:]
+        for name in ('CountCommonTicket', 'CountPersonalizedTicket',
+                     'ListCommonTicketRightsIds', 'ListPersonalizedTicketRightsIds',
+                     'GetCommonTicketSize', 'GetPersonalizedTicketSize',
+                     'GetCommonTicketData', 'GetPersonalizedTicketData'):
+            old = f'    void {name}(HLERequestContext& ctx) {{\n'
+            new = old + '        keys.PopulateTickets();\n'
+            assert es_restored.count(new) == 1, ('Ticket reader owner drift', name)
+            es_restored = es_restored.replace(new, old, 1)
+        ndrm_source = es_restored.encode('utf-8')
         assert len(ndrm_source) == 21705 and sha(ndrm_source) == 'cecad076878369841f655d7e36b754ef45a1d6e5454b1b02642f2bdc2ed84d09'
-        assert spec['entries'][ndrm_rel]['active'] == sha(ndrm_source)
+        print('NS1_ES_TICKET_FIRST_USE_EXACT_REVERSE_PASS', 'queries=8')
         ndrm_text = ndrm_source.decode('utf-8')
         ndrm_method = (
             '\nprivate:\n'
@@ -1300,7 +1321,7 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         es_rel = 'src/core/hle/service/es/es.cpp'
         es_shipping = ndrm_previous
         assert len(es_shipping) == 19829 and sha(es_shipping) == 'ce91acfa09973cbdf79303eb44488a9723e88bcec468cd22972da21314fac66e'
-        assert spec['entries'][es_rel]['active'] == sha(ndrm_source)
+        assert spec['entries'][es_rel]['active'] == sha(es_newest)
         es_old = es_shipping.decode('utf-8')
         es_new_ticket_methods = "    void CountTicket(HLERequestContext& ctx) {\n        keys.PopulateTickets();\n        const auto count = static_cast<u32>(\n            keys.GetCommonTickets().size() + keys.GetPersonalizedTickets().size());\n        IPC::ResponseBuilder rb{ctx, 3};\n        rb.Push(ResultSuccess);\n        rb.Push<u32>(count);\n    }\n\n    void ListTicketRightsIds(HLERequestContext& ctx) {\n        keys.PopulateTickets();\n        const auto& common = keys.GetCommonTickets();\n        const auto& personalized = keys.GetPersonalizedTickets();\n        std::vector<u128> ids;\n        ids.reserve(common.size() + personalized.size());\n        for (const auto& [rights_id, ticket] : common) {\n            ids.push_back(rights_id);\n        }\n        for (const auto& [rights_id, ticket] : personalized) {\n            ids.push_back(rights_id);\n        }\n        std::sort(ids.begin(), ids.end());\n        const auto count = (std::min)(ids.size(), ctx.GetWriteBufferNumElements<u128>());\n        if (count != 0) {\n            ctx.WriteBuffer(ids.data(), count * sizeof(u128));\n        }\n        IPC::ResponseBuilder rb{ctx, 3};\n        rb.Push(ResultSuccess);\n        rb.Push<u32>(static_cast<u32>(count));\n    }\n\n"
         es_raw_variant_write = "std::visit(\n            [&](const auto& ticket_variant) {\n                using T = std::decay_t<decltype(ticket_variant)>;\n                if constexpr (!std::is_same_v<T, std::monostate>) {\n                    ctx.WriteBuffer(&ticket_variant, write_size);\n                }\n            },\n            ticket.data);"
@@ -1335,9 +1356,23 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         assert len(es_previous_active) == 16737 and sha(es_previous_active) == 'e5bd1ed9088fa00c7e5758aaf5d09142dbe90c440b0104259005b7b281d042ff'
 
         key_rel = 'src/core/crypto/key_manager.cpp'
-        key_active = (ACTIVE / key_rel).read_bytes()
+        key_latest = (ACTIVE / key_rel).read_bytes()
+        assert len(key_latest) == 47847 and sha(key_latest) == 'fe6a5a0077dc71cfc5ef31c3d1768a4c79c0cd3b3253ede9d609bbbb027137f8'
+        assert spec['entries'][key_rel]['active'] == sha(key_latest)
+        key_restored = key_latest.decode('utf-8')
+        raw_ticket_span = '            auto ticket = Ticket::Read(std::span{buffer.data() + offset, sizeof(RSA2048Ticket)});'
+        ticket_tail_guard = ('            // A signature near the end of a save does not imply a complete ticket.\n'
+                             '            if (buffer.size() - offset < sizeof(RSA2048Ticket)) {\n'
+                             '                break;\n'
+                             '            }\n')
+        assert key_restored.count(ticket_tail_guard + raw_ticket_span) == 1
+        key_restored = key_restored.replace(ticket_tail_guard + raw_ticket_span, raw_ticket_span, 1)
+        assert key_restored.count('            offset += sizeof(RSA2048Ticket) - 1;') == 1
+        key_restored = key_restored.replace('            offset += sizeof(RSA2048Ticket) - 1;',
+                                            '            offset += sizeof(RSA2048Ticket);', 1)
+        key_active = key_restored.encode('utf-8')
         assert len(key_active) == 47656 and sha(key_active) == '4618f776b9d3e4f857444ed99c09592132f1bce7addce595bfd4baa7fe96426b'
-        assert spec['entries'][key_rel]['active'] == sha(key_active)
+        print('NS1_TICKET_SAVE_BOUNDS_EXACT_REVERSE_PASS', 'bounds=1', 'adjacent=1')
         key_prev = reverse_exact_owner(key_active.decode('utf-8'),
             'std::memcpy(&ticket, raw_data.data(), std::min(raw_data.size(), sizeof(ticket)));',
             'std::memcpy(&ticket, raw_data.data(), sizeof(ticket));', 3).encode('utf-8')
@@ -1358,7 +1393,7 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         es_active = es_previous_active
         assert len(es_active) == 16737 and sha(es_active) == 'e5bd1ed9088fa00c7e5758aaf5d09142dbe90c440b0104259005b7b281d042ff'
         assert es_rel in spec['entries']
-        assert spec['entries'][es_rel]['active'] == sha(ndrm_source)
+        assert spec['entries'][es_rel]['active'] == sha(es_newest)
         assert spec['entries'][es_rel]['upstream'] == sha(es_upstream)
         es_ids = [2,3,5,6,7,13,22,23,24,25,26,27,28,29,32,34,35,39,40]
         es_reviewed_method = (

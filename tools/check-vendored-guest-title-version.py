@@ -29,7 +29,7 @@ raw = selected.read_bytes()
 raw_h = selected_h.read_bytes()
 gitblob = lambda data: hashlib.sha1(
     b"blob "+str(len(data)).encode()+bytes([0])+data).hexdigest()
-assert gitblob(raw) == "db44446a39249e38f54fbc30d016338696e3bddc"
+assert gitblob(raw) == "61469b2c7510ca3738de23025232a627aaf4b481"
 assert gitblob(raw_h) == "e91e412211f9c9e964d19560e2226338426be65e"
 source = raw.decode()
 source_h = raw_h.decode()
@@ -122,5 +122,14 @@ assert 'set(EDEN_SHARED_NS2_AM ON)' in cmake
 assert 'list(APPEND eden_ns2_am_sources "${EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp")' in cmake
 assert '*out_event = m_applet->unknown_event.GetHandle();' in source
 print("SHARED_NATIVE_AM_LANGUAGE_REPLY_SOURCE_PASS exact_blob=1 real_return=1 bounded=32 native_execution=0")
+# The remaining source labels are real unresolved items, not stale markers:
+# GetPseudoDeviceId lacks the system 0x20-byte seed; Unknown321 semantics remain NS2-only/unknown.
+assert source.count("(STUBBED)") + source.count("(stubbed)") == 2
+assert 'Result IApplicationFunctions::GetPseudoDeviceId' in source
+assert 'Result IApplicationFunctions::Unknown321' in source
+for resolved in ("SetTerminateResult", "InitializeGamePlayRecording", "ExecuteProgram"):
+    body = result_method_body(source, resolved)
+    assert "STUBBED" not in body and "stubbed" not in body, resolved
 print("NS1_SHARED_AM_COMPLETENESS_PARITY_PASS methods=19 selected_final_override=1")
+print("NS1_SHARED_AM_CLASSIFICATION_PASS resolved=3 remaining_stub_markers=2")
 print("NS1_AM_LIMITED_LICENSE_EVENT_PASS command=37 full_license=1 event_unsignaled=1")

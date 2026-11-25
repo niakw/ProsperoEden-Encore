@@ -3656,3 +3656,25 @@ Le replay moteur inverse d'abord exactement la nouvelle couche ACC **102 756 →
 **Inventaire physique attendu : 1 099 → 996 NULL / 6 447 slots.** Validation CI requise avant confirmation.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — WLAN legacy pré-HOS15 : palier 855 attendu
+
+Base précédente : **996 NULL attendus** après ACC + AOC.
+
+Vendor successeur : `7cbc3897ac97ddcd0c2bb3915e56a09e6e589d1e` (arbre `8d28a58ff0cf2e275f1ffb76ca496e63f90ce9bb`).
+
+**141 NULL physiques** supplémentaires sont retirés des six interfaces WLAN legacy, déjà enregistrées uniquement lorsque le firmware invité est **< HOS15** :
+- `ILocalManager` : 97 ;
+- `ILocalGetFrame` : 1 ;
+- `ILocalGetActionFrame` : 1 ;
+- `ISocketGetFrame` : 1 ;
+- `ISocketManager` : 13 ;
+- `IDetectManager` : 28.
+
+Tous passent à un même rejet explicite `ResultNotSupported`. Pour HOS15+ / HOS23, ces interfaces ne sont jamais enregistrées : le service moderne `wlan`, `wlan:p`, `wlan:nd` et leurs handlers existants restent byte-for-byte indépendants de cette couche.
+
+Le replay moteur inverse exactement les 141 pointeurs et 6 méthodes puis retrouve **bit-à-bit** l'ancien propriétaire WLAN de 18 713 octets avant de poursuivre le replay HOS15 déjà validé.
+
+**Inventaire physique attendu : 996 → 855 NULL / 6 447 slots.** Ce gain est uniquement fail-closed legacy ; il ne représente pas 141 nouvelles fonctionnalités HOS23.
+
+Build PS5 et test console : non exécutés.

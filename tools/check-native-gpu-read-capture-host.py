@@ -192,6 +192,7 @@ struct FakeGpu {
     std::mutex sync_request_mutex;
     std::list<std::function<void()>> sync_requests;
     std::atomic<u64> current_sync_fence{};
+    std::atomic<u64> last_sync_fence{};
     std::condition_variable sync_request_cv;
 @@TICK@@
 };
@@ -204,7 +205,9 @@ int main() {
             ++executed;
             std::scoped_lock lock2{gpu.sync_request_mutex};
             gpu.sync_requests.emplace_back([&] { ++executed; });
+            ++gpu.last_sync_fence;
         });
+        ++gpu.last_sync_fence;
     }
     gpu.TickWork();
     assert(executed == 2 && gpu.current_sync_fence == 2);
@@ -214,6 +217,7 @@ int main() {
             ++executed;
             throw std::runtime_error("GPU channel release failed");
         });
+        ++gpu.last_sync_fence;
     }
     try {
         gpu.TickWork();
@@ -225,6 +229,7 @@ int main() {
         std::unique_lock lock{gpu.sync_request_mutex, std::try_to_lock};
         assert(lock.owns_lock());
         gpu.sync_requests.emplace_back([&] { ++executed; });
+        ++gpu.last_sync_fence;
     }
     gpu.TickWork();
     assert(executed == 4 && gpu.current_sync_fence == 3);
@@ -290,7 +295,7 @@ struct FakeGpu {
     std::mutex sync_request_mutex;
     FailQueue sync_requests;
     std::atomic<u64> current_sync_fence{};
-    u64 last_sync_fence{};
+    std::atomic<u64> last_sync_fence{};
     std::condition_variable sync_request_cv;
 @@REQUEST@@
 @@TICK@@
@@ -343,3 +348,69 @@ print("NS1_GPU_SYNC_FENCE_OOM_PASS native_request=1 rejected_alloc=2 "
       "no_fence_gap=1 worker_ack=1 profiles=O0_O2 sanitizers=address_undefined")
 
 print("NATIVE_GPU_READ_CAPTURE_HOST_PASS original_stack_use_after_return=1 native_callback_owns_range=1 vulkan_real_owner=1 failure_aware_wait=1 shutdown_exit=1 normal_wait=1 preemptive_skip=1 sanitizer=address_undefined")
+
+# The selected capture request must own its output across early shutdown or
+# failed waits. Test the actual method with a callback executed after return.
+capture_start = "    std::vector<u8> GetAppletCaptureBuffer() {"
+capture_end = "\n\n    Core::System& system;"
+capture_method = capture_start + vulkan.split(capture_start, 1)[1].split(capture_end, 1)[0]
+assert "std::make_shared<std::vector<u8>>()" in capture_method
+assert "if (CurrentSyncRequestFence() < wait_fence)" in capture_method
+capture_fixture = r"""
+#include <atomic>
+#include <cassert>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <stdexcept>
+#include <vector>
+#include <utility>
+using u8 = std::uint8_t;
+using u64 = std::uint64_t;
+struct Renderer {
+    std::vector<u8> GetAppletCaptureBuffer() { return {1,2,3}; }
+};
+struct FakeGpu {
+    Renderer backing;
+    Renderer* renderer = &backing;
+    struct Worker { void TickGPU(bool) {} } gpu_thread;
+    bool is_async = true, cancelled = false, failure = false;
+    u64 last{}, current{};
+    std::function<void()> pending;
+    template<class F> u64 RequestSyncOperation(F&& f) {
+        pending = std::forward<F>(f);
+        return ++last;
+    }
+    u64 CurrentSyncRequestFence() const { return current; }
+    void Complete() { auto callback = std::move(pending); callback(); ++current; }
+    void WaitForSyncOperation(u64) {
+        if (failure) throw std::runtime_error("worker failed");
+        if (!cancelled) Complete();
+    }
+@@CAPTURE@@
+};
+int main() {
+    FakeGpu gpu;
+    assert((gpu.GetAppletCaptureBuffer() == std::vector<u8>{1,2,3}));
+    gpu.cancelled = true;
+    assert(gpu.GetAppletCaptureBuffer().empty());
+    gpu.Complete();
+    assert(gpu.current == 2);
+    gpu.failure = true;
+    try { (void)gpu.GetAppletCaptureBuffer(); assert(false); }
+    catch (const std::runtime_error&) {}
+    gpu.Complete();
+    assert(gpu.current == 3);
+}
+"""
+with tempfile.TemporaryDirectory(prefix="encore-applet-capture-") as tmp:
+    source = Path(tmp) / "capture.cpp"
+    source.write_text(capture_fixture.replace("@@CAPTURE@@", capture_method))
+    for opt in ("0", "2"):
+        binary = Path(tmp) / ("capture_O" + opt)
+        subprocess.run([clang, "-std=c++20", "-O" + opt, "-Wall", "-Wextra",
+                        "-Werror", "-fsanitize=address,undefined",
+                        "-fno-sanitize-recover=all", str(source), "-o", str(binary)],
+                       check=True, timeout=45)
+        subprocess.run([str(binary)], check=True, timeout=45)
+print("NATIVE_GPU_APPLET_CAPTURE_LIFETIME_PASS success=1 cancellation=1 failure=1")

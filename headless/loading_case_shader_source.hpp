@@ -84,10 +84,10 @@ void main()
     if (shape == 9 || shape == 10 || shape == 11 || shape == 12 || shape == 13 || shape == 14 || shape == 15) {
         // A real projective quad, not a horizontally squashed 2D image.
         // Shared retail-case geometry across all titles and console/host.
-        const float a = a_params.x;
-        const float cs = cos(a), sn = sin(a);
-        const vec2 centre = a_rect.xy + 0.5 * size;
-        const vec2 local = (corner - 0.5) * size;
+        float a = a_params.x;
+        float cs = cos(a), sn = sin(a);
+        vec2 centre = a_rect.xy + 0.5 * size;
+        vec2 local = (corner - 0.5) * size;
         float x, z;
         if (shape == 9 || shape == 11) {
             // Place a real back surface on the FAR plane of the case.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Focused contract for the continuous native loading compositor.
 
-The actual Encore jacket is composed once, then the same title artwork and
+The actual Encore jacket is projected per frame from shared geometry, and
 three animated dots must survive GL -> retained EGL -> Vulkan/OpenGL.
 Reject the old purple full-screen/band paths, and require the existing
 stop/join ownership boundary. No physical PS5 continuity is claimed.
@@ -194,7 +194,7 @@ assert "inline void EndLoading() noexcept" in handoff
 assert "inline double LoadingSeconds(double calm_offset = 0.0) noexcept" in handoff
 assert "loading_started_ns" in handoff
 # Updated exact shader source receipt; preserve historical source reviews.
-assert subprocess.check_output(["git", "hash-object", "headless/vulkan_hud.frag"], cwd=root, text=True).strip() == "69d947756a2c02896d2ab3d1d46d782729bfb2d7"
+assert subprocess.check_output(["git", "hash-object", "headless/vulkan_hud.frag"], cwd=root, text=True).strip() == "9fde027ac8dbbd9bca6bfd133e7415bab014e7f8"
 subprocess.run([sys.executable, "-B", str(root / "tools/check-loading-artwork-transfer-host.py")], check=True)
 
 print("PS5_CONTINUOUS_GL_VULKAN_LOADING_SOURCE_PASS shared_artwork=1 shared_epoch=1 animated_system_load=1 single_videoout_owner=1 purple_loader=0 console_pending=1")

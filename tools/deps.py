@@ -231,13 +231,16 @@ def git(*args, cwd=None):
 def fetch_git(item):
     path = location(item)
     if not path.exists():
-        print(f'deps: fetching {item["url"]} at {item["commit"][:12]} into {path}', flush=True)
         staging = path.with_name(path.name + f'.partial-{os.getpid()}')
         shutil.rmtree(staging, ignore_errors=True)
         git('init', '-q', str(staging))
-        git('remote', 'add', 'origin', item['url'], cwd=staging)
         bundle = vault_bundle(item)
         if bundle is not None:
+            print(
+                f'deps: restoring vendored Git pack {item["name"]} '
+                f'at {item["commit"][:12]} into {path}',
+                flush=True,
+            )
             # Our committed Git bundles are intentionally made from shallow,
             # exact-SHA snapshots. Standard `git fetch bundle` rejects their
             # absent ancestor objects. Extract the *self-contained pack* and
@@ -266,6 +269,11 @@ def fetch_git(item):
             if OFFLINE:
                 shutil.rmtree(staging, ignore_errors=True)
                 fail(f'offline Git source missing in vendor/objects: {item["name"]}')
+            print(
+                f'deps: network fallback {item["url"]} at {item["commit"][:12]} into {path}',
+                flush=True,
+            )
+            git('remote', 'add', 'origin', item['url'], cwd=staging)
             git('fetch', '-q', '--depth', '1', 'origin', item['commit'], cwd=staging)
             git('-c', 'advice.detachedHead=false', 'checkout', '-q', '--detach', 'FETCH_HEAD', cwd=staging)
         head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=staging, text=True).strip()

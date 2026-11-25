@@ -111,6 +111,25 @@ with tempfile.TemporaryDirectory(prefix='encore-worker-drain-') as temp:
                   f'O{opt}', 'cases=128','powered_shutdown_guard=1','failed_drain_quarantine=1','NS1=untouched',flush=True)
 
 
+# The native build must pair this maintained implementation with the one header
+# that declares its retirement ABI. This source-level ownership check prevents
+# the exact PS5 compiler failure where cached Eden's older nvmap.h hid
+# native_retired / FreeHandleIfUnpinned.
+nvmap_header=ROOT/'vendor/sources/eden/src/core/hle/service/nvdrv/core/nvmap.h'
+header_text=nvmap_header.read_text()
+for token in ('bool native_retired{};', 'FreeHandleIfUnpinned(Handle::Id handle);',
+              'FreeHandleImpl(Handle::Id handle, bool internal_session,'):
+    assert token in header_text, token
+cmake=(ROOT/'headless/CMakeLists.txt').read_text()
+assert 'set(EDEN_NATIVE_NVMAP_HEADER' in cmake
+assert 'vendor/sources/eden/src/core/hle/service/nvdrv/core/nvmap.h' in cmake
+assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_NVMAP_INCLUDE}")' in cmake
+for overlay in ('vendor/encore-active/eden-core/include',
+                'vendor/encore-active/ns2-runtime/nvdrv',
+                'vendor/encore-active/ns2-runtime/nvdrv_as',
+                'vendor/encore-active/ns2-runtime/nvdrv_gpu'):
+    assert not (ROOT/overlay/'core/hle/service/nvdrv/core/nvmap.h').exists(), overlay
+
 # Compile the exact maintained NvMap final-free methods. Only the device
 # mapping backend is simulated; the exclusive ownership check, mutex,
 # destructive count, native retirement and weak lifetime are production C++.

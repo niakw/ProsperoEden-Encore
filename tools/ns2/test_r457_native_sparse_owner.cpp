@@ -40,6 +40,10 @@ void* ReserveMemoryRange(std::size_t bytes) noexcept {
     auto* p = mmap(nullptr,bytes,PROT_NONE,MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE,-1,0);
     return p == MAP_FAILED ? nullptr : p;
 }
+// The host model exercises ZERO/OWN lifecycle independently of PS5 VA hints.
+void* ReserveGuestMemoryRange(std::size_t bytes) noexcept {
+    return ReserveMemoryRange(bytes);
+}
 bool CommitMemoryRange(void* at, std::size_t bytes, std::int64_t* physical) noexcept {
     if (fail_at == successful_commits) {
         if (destructive_fail) {

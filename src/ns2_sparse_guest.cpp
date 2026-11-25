@@ -19,7 +19,7 @@
 #endif
 
 namespace Common {
-void* ReserveMemoryRange(std::size_t) noexcept;
+void* ReserveGuestMemoryRange(std::size_t) noexcept;
 bool CommitMemoryRange(void*, std::size_t, std::int64_t*) noexcept;
 }
 extern "C" {
@@ -140,7 +140,7 @@ struct Runtime::Impl {
       : plan(capacity, budget), bytes(capacity),
         physical(plan.ChunkCount(), -1) {
         if (!plan.Valid()) return;
-        base = static_cast<std::uint8_t*>(Common::ReserveMemoryRange(capacity));
+        base = static_cast<std::uint8_t*>(Common::ReserveGuestMemoryRange(capacity));
         if (!base) return;
 
         // One real 2 MiB block supplies zeroes to all untouched guest chunks.

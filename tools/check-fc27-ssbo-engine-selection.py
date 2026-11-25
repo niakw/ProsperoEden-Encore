@@ -168,7 +168,7 @@ if selected in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca15
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == expected_tree
     assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == "44b0edc24e847d4cbcd47de0ed86241787bda38a"
     assert blob(V/"encore-active/eden-core/src/common/multi_level_page_table.cpp") == "87eed0b2319c719d27332c8e24f97a73e496f108"
-    assert blob(ROOT/"src/memory_pages.cpp") == "aeb7cc5430aefe11ee502ee5a53c70f3f909208f"
+    assert blob(ROOT/"src/memory_pages.cpp") == "e90dd13badd48257c25db6317cc523f97b92e1e6"
     if selected in {"3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
         assert blob(V/"tests/fc27_xmad_pointer_fold_host.py") == "2456b50bfecf8e25b2f725cff59f823abf3f4e3d"
     if selected == "29b91308ba1fc69978cd2cc39222fe7dc59b668c":

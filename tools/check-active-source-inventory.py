@@ -1636,7 +1636,7 @@ if gpu_table_vendor_pin in {"6d9fc80860ea4324b68b433492ad15e34c35a81d", "a0c3da6
             manager = root / "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp"
             assert subprocess.check_output(["git", "hash-object", str(manager)], text=True).strip() == "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86"
             if gpu_table_vendor_pin in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
-                assert subprocess.check_output(["git", "hash-object", str(root / "src/memory_pages.cpp")], text=True).strip() == "aeb7cc5430aefe11ee502ee5a53c70f3f909208f"
+                assert subprocess.check_output(["git", "hash-object", str(root / "src/memory_pages.cpp")], text=True).strip() == "e90dd13badd48257c25db6317cc523f97b92e1e6"
     assert subprocess.check_output(
         ["git", "hash-object", str(root / "vendor" /
          "encore-active/eden-core/src/core/hle/service/sm/sm.cpp")],

@@ -1174,6 +1174,37 @@ void* ReserveMemoryRange(std::size_t size) noexcept {
 #endif
 }
 
+// Guest DRAM is not a CPU heap, JIT region or RADV allocation. Keep its
+// backing outside the 39-bit guest VA: a host-minus-guest page-table delta
+// of zero is decoded as a null pointer by non-identity-aware consumers.
+// EglantinePS5 proved this failure mode on console. The hint is not fixed;
+// on unsupported VA layouts preserve the previous low-VA fallback.
+void* ReserveGuestMemoryRange(std::size_t size) noexcept {
+    if (size == 0 || size % LargePage != 0) return nullptr;
+#ifdef PS5_NATIVE
+    constexpr std::uintptr_t GuestAddressSpaceEnd = 0x8000000000ull;
+    void* const hint = reinterpret_cast<void*>(GuestAddressSpaceEnd);
+    void* address = hint;
+    const auto rc = sceKernelReserveVirtualRange(&address, size, 0, LargePage);
+    if (rc == 0) {
+        const auto start = reinterpret_cast<std::uintptr_t>(address);
+        if (address != nullptr && address != MAP_FAILED &&
+            start >= GuestAddressSpaceEnd &&
+            size <= std::numeric_limits<std::uintptr_t>::max() - start)
+            return address;
+        // The PS5 may ignore placement hints. Never retain a low reservation
+        // on this first attempt; release it before using the known fallback.
+        if (address == nullptr || address == MAP_FAILED ||
+            munmap(address, size) != 0)
+            std::abort();
+    } else if (address != hint) {
+        // Failed reservations must not mutate a live owner pointer.
+        std::abort();
+    }
+#endif
+    return ReserveMemoryRange(size);
+}
+
 bool CommitMemoryRange(void* address, std::size_t size, std::int64_t* physical_out) noexcept {
     if (physical_out) *physical_out = -1;
     if (address == nullptr || size == 0 || size % LargePage != 0 ||

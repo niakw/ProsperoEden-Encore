@@ -278,7 +278,7 @@ if selected in {"06705357e48b33d837b1f97dbb1c3979cb3d7c31",
             assert subprocess.check_output(["git", "hash-object", str(manager)], text=True).strip() == "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86"
             if selected in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
                 allocator = root / "src/memory_pages.cpp"
-                assert subprocess.check_output(["git", "hash-object", str(allocator)], text=True).strip() == "aeb7cc5430aefe11ee502ee5a53c70f3f909208f"
+                assert subprocess.check_output(["git", "hash-object", str(allocator)], text=True).strip() == "e90dd13badd48257c25db6317cc523f97b92e1e6"
                 assert "bool TryCommitSparsePage(std::uintptr_t page) noexcept" in allocator.read_text()
                 assert "if (!TryCommitSparsePage(page)) throw std::bad_alloc{};" in selected_table.read_text()
     reviewed_vendors.add(selected)
@@ -473,6 +473,12 @@ if selected in {"05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6
         assert "size >= (2_MiB)" in page_heap
     assert "EDEN_R457_SPARSE_PAGE_HEAP_SRC" in cmake
 physical=read("src/ns2_sparse_guest.cpp")
+assert "Common::ReserveGuestMemoryRange(capacity)" in physical
+allocator_owner = read("src/memory_pages.cpp")
+assert "GuestAddressSpaceEnd = 0x8000000000ull" in allocator_owner
+assert "start >= GuestAddressSpaceEnd" in allocator_owner
+assert "return ReserveMemoryRange(size);" in allocator_owner
+
 start=physical.index("    bool CommitLocked(std::size_t offset, std::size_t length)")
 end=physical.index("\n    bool Commit(std::size_t offset",start)
 transaction=physical[start:end]

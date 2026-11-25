@@ -153,7 +153,7 @@ if selected in {"7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "6d9fc80860ea4324b68
             manager = V / "encore-active/eden-core/src/video_core/memory_manager.cpp"
             assert subprocess.check_output(["git", "hash-object", str(manager)], text=True).strip() == "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86"
             if selected in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
-                assert subprocess.check_output(["git", "hash-object", str(ROOT / "src/memory_pages.cpp")], text=True).strip() == "aeb7cc5430aefe11ee502ee5a53c70f3f909208f"
+                assert subprocess.check_output(["git", "hash-object", str(ROOT / "src/memory_pages.cpp")], text=True).strip() == "e90dd13badd48257c25db6317cc523f97b92e1e6"
         if selected in {"3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
             receipt = V / "tests/fc27_xmad_pointer_fold_host.py"
             assert subprocess.check_output(["git", "hash-object", str(receipt)], text=True).strip() == "2456b50bfecf8e25b2f725cff59f823abf3f4e3d"

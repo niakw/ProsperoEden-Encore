@@ -4993,6 +4993,30 @@ if(PS5_NATIVE AND EDEN_SHARED_NS2_AM)
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_SERVICE_PARITY_ROOT}")
 endif()
 
+# Native BCAT: same functional service for NS1 and NS2. Keep upstream
+# vendor/sources/eden immutable, select exactly the two maintained C++ units.
+# A missing delivery-cache root yields a valid empty IPC cache object, not a
+# nullable VFS object. Directory enumeration reflects real BCAT contents.
+if(PS5_NATIVE)
+    set(EDEN_NATIVE_BCAT_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/bcat")
+    get_target_property(eden_native_bcat_sources core SOURCES)
+    foreach(eden_bcat_name IN ITEMS service_creator delivery_cache_storage_service)
+        set(eden_bcat_original "hle/service/bcat/${eden_bcat_name}.cpp")
+        set(eden_bcat_active "${EDEN_NATIVE_BCAT_ROOT}/${eden_bcat_name}.cpp")
+        if(NOT EXISTS "${eden_bcat_active}")
+            message(FATAL_ERROR "Maintained native BCAT source missing: ${eden_bcat_active}")
+        endif()
+        list(FIND eden_native_bcat_sources "${eden_bcat_original}" eden_bcat_index)
+        if(eden_bcat_index LESS 0)
+            message(FATAL_ERROR "Native BCAT original source selection changed: ${eden_bcat_original}")
+        endif()
+        list(REMOVE_ITEM eden_native_bcat_sources "${eden_bcat_original}")
+        list(APPEND eden_native_bcat_sources "${eden_bcat_active}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_native_bcat_sources}")
+endif()
+
 # NX is an ordinary production NS1/NS2 game container, with Lichii's
 # verified NxFormat reader, real snapshot loader and read-only VFS.
 # The one native core selects a matching loader FileType ABI; no second

@@ -48,8 +48,9 @@ dev: prepare ## Development build that boots DEV_TITLE: build/dev/PPSA99008
 prepare: deps ## Build cache, Eden source, FFmpeg, packaging tool, driver stub, RADV (what is missing)
 	bash tools/prepare-build.sh
 
-deps: ## Fetch missing dependencies at their pinned revisions
+deps: ## Restore dependencies at their pinned revisions and reject stale/dirty cache inputs
 	$(PYTHON) tools/deps.py fetch
+	$(PYTHON) tools/deps.py verify
 
 vendor-verify: ## Verify that all vendored source archives and full Git packs are present and SHA-locked
 	$(PYTHON) tools/check-vendored-deps.py

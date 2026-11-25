@@ -460,6 +460,17 @@
       "required_source_fragment": "program_index == 0 && type == ContentRecordType::Program",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
       "review_note": "2026-11-19: Lichii PR #159 commit 2ae4c3e; vendor main commit 67759611 modifies only this production RomFSFactory source and one isolated C++ host test compared with its parent 8e564f61. Old F07 SHA cd11cb unchanged. New source blob 4775cf pin. Engine NUP replacement has an identical guarded method, test CI #44555226402 green; PS5 runtime/first game frame unverified."
+    },
+    {
+      "path": "headless/zbic_compression.cpp",
+      "historical_reviewed_git_blob": "b980c2b53bf188e6607e1ecb2d5d7fdb45e6a0d4",
+      "post_snapshot_git_blob": "7ca344e9a48c1b2991828a1c1ae5adeb44dc65ab",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "PS5 native ZBIC adapter scopes Clang unused-function suppression only around the bundled third-party zstd.c implementation; decompression behavior and project diagnostics remain unchanged.",
+      "review_kind": "source_contract",
+      "required_source_fragment": "#pragma clang diagnostic ignored \"-Wunused-function\"",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-25 native warning cleanup after run 45529584703: 96 unused static Zstd helper warnings were emitted by the included third-party single-file implementation. The diagnostic push/pop is limited to zstd.c; no decompression semantics, guest ABI, performance claim, or console qualification changed."
     }
   ]
 }

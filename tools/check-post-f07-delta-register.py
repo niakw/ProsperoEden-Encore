@@ -14,7 +14,7 @@ data=json.loads(register.read_text())
 assert data["schema_version"]==1
 assert data["historical_f07_source_snapshots_preserved"] is True
 entries=data["files"]
-assert len(entries)==42  # 41 previous successors + reviewed NS2 program-index-zero RomFS owner
+assert len(entries)==43  # 42 previous successors + reviewed native ZBIC warning-scope delta
 # The additional vendor entry is a documented source-interface successor,
 # not a relaxation of historical F07 provenance or a console performance claim.
 thread_entry=next(e for e in entries if e["path"]==
@@ -34,6 +34,11 @@ assert romfs["review_kind"] == "source_contract"
 stop_entry=next(e for e in entries if e["path"]=="headless/stop_limit.cpp")
 assert stop_entry["post_snapshot_git_blob"]=="a8124257c1a3a068973d6b1e98970f717ac40559"
 assert stop_entry["required_source_fragment"]=="game stop exceeded 10s; exiting app without automatic restart"
+zbic_entry=next(e for e in entries if e["path"]=="headless/zbic_compression.cpp")
+assert zbic_entry["historical_reviewed_git_blob"]=="b980c2b53bf188e6607e1ecb2d5d7fdb45e6a0d4"
+assert zbic_entry["post_snapshot_git_blob"]=="7ca344e9a48c1b2991828a1c1ae5adeb44dc65ab"
+assert zbic_entry["required_source_fragment"]=='#pragma clang diagnostic ignored "-Wunused-function"'
+assert zbic_entry["review_kind"]=="source_contract"
 # Nov15-Nov16 launcher/service successors. Preserve each prior
 # register blob and admit only the exact currently selected reviewed successor;
 # Later reviewed ExeFS/media/diagnostics changes do not rewrite the frozen

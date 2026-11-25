@@ -3770,3 +3770,17 @@ Avec le lot sockets précédent, la famille sockets passe à **0 NULL physique**
 **Inventaire physique attendu : 734 → 721 NULL / 6 447 slots.** Validation CI requise.
 
 Build PS5 et validation console : non exécutés.
+
+### 2026-11-25 — SPL common AES : palier 713 attendu
+
+Base CI confirmée : vendor `50009086f7a428c11ff75f4cbac9567a8bcb8df5`, **721 NULL / 6 447 slots**.
+
+Vendor final : `94ae95f0a556ff8b79cb54e9cb1c9bc8b05ec8b2` (arbre `074b6e3a4c5b420c0c8c2bfb3f0a483a6265789d`).
+
+Les quatre tables dérivées SPL FS/SSL/ES/MANU raccordent désormais leurs commandes `GenerateAesKek` et `GenerateAesKey` aux handlers communs déjà présents dans `Module::Interface`, comme `spl:mig` le faisait déjà. **8 NULL physiques** sont retirés.
+
+Ces handlers consomment l'ABI attendue mais retournent explicitement `ResultSecureMonitorNotImplemented` faute de backend secure-monitor de dérivation de clés. Aucun succès crypto fictif n'est introduit.
+
+**Inventaire physique attendu : 721 → 713 NULL / 6 447 slots.** Validation CI requise.
+
+Build PS5 et validation console : non exécutés.

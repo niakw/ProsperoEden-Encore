@@ -22,7 +22,8 @@ assert "required : get_option('display-info')" in MESA_BUILD
 assert "required : get_option('lmsensors')" in MESA_BUILD
 assert 'patch-ps5-opengl-mesa-options.py" "$mesa_build_script"' in BUILDER
 assert 'mv -f "$mesa_build_script_backup" "$mesa_build_script"' in BUILDER
-assert 'mesa_build_script_backup="${mesa_build_script}.encore-backup.$"' in BUILDER
+assert 'mesa_build_script_backup="${mesa_build_script}.encore-backup.' + chr(36) * 2 + '"' in BUILDER
+assert 'runtime_makefile_backup="${runtime_makefile}.encore-backup.' + chr(36) * 2 + '"' in BUILDER
 assert 'legacy_mesa_backup="$source_dir/toolchain/build-mesa-ps5.sh.encore-backup.$"' in BUILDER
 assert 'backup_mesa_sha' in BUILDER and 'expected_mesa_sha' in BUILDER
 

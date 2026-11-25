@@ -3475,17 +3475,55 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         # a maintained overlay; pinned vendor/sources/eden stays byte-identical.
         cm_rel = 'src/core/hle/service/ns/content_management_interface.cpp'
         cm_active = (ACTIVE / cm_rel).read_bytes()
-        assert len(cm_active) == 6383 and sha(cm_active) == (
-            '7a9393a9101f85465b868a3c89c909a6f7482186c58dfa74f2a9f8be637de3d8')
+        assert len(cm_active) == 7397 and sha(cm_active) == (
+            '4cdcb68b593381cc31e3d6dc4c192a345d4e13ba3d598d5427063f9a412d196e')
         assert spec['entries'][cm_rel] == {
-            'active':'7a9393a9101f85465b868a3c89c909a6f7482186c58dfa74f2a9f8be637de3d8',
-            'bytes':6383,
+            'active':'4cdcb68b593381cc31e3d6dc4c192a345d4e13ba3d598d5427063f9a412d196e',
+            'bytes':7397,
             'upstream':'83a8eae9ea9e50190d72315fd3d838cc1f72c3a6eec79c353c9510faf1b9d4a2',
         }
         cm_stage = (stage / cm_rel).read_text()
         assert len(cm_stage.encode('utf-8')) == 4004
         assert sha(cm_stage.encode('utf-8')) == spec['entries'][cm_rel]['upstream']
         cm_text = cm_active.decode('utf-8')
+        cm_count_pointer = (
+            '{600, D<&IContentManagementInterface::CountApplicationContentMeta>, '
+            '"CountApplicationContentMeta"}')
+        cm_count_pointer_old = '{600, nullptr, "CountApplicationContentMeta"}'
+        cm_count_method = """Result IContentManagementInterface::CountApplicationContentMeta(Out<s32> out_count,
+                                                                u64 application_id) {
+    const u64 requested_id =
+        application_id != 0 ? application_id : system.GetApplicationProcessProgramID();
+    const u64 real_id = FileSys::GetBaseTitleID(requested_id);
+    const auto& cp = system.GetContentProviderUnion();
+
+    s32 count = 0;
+    if (cp.HasEntry(real_id, FileSys::ContentRecordType::Program)) {
+        ++count;
+    }
+    if (cp.HasEntry(FileSys::GetUpdateTitleID(real_id), FileSys::ContentRecordType::Program)) {
+        ++count;
+    }
+    const auto aocs = cp.ListEntriesFilterOrigin(
+        std::nullopt, FileSys::TitleType::AOC, FileSys::ContentRecordType::Data);
+    for (const auto& [slot, entry] : aocs) {
+        if (FileSys::GetBaseTitleID(entry.title_id) == real_id) {
+            ++count;
+        }
+    }
+
+    *out_count = count;
+    R_SUCCEED();
+}
+
+"""
+        assert cm_text.count(cm_count_pointer) == cm_text.count(cm_count_method) == 1
+        cm_text = cm_text.replace(cm_count_pointer, cm_count_pointer_old, 1).replace(
+            cm_count_method, '', 1)
+        cm_prior = cm_text.encode('utf-8')
+        assert len(cm_prior) == 6383 and sha(cm_prior) == (
+            '7a9393a9101f85465b868a3c89c909a6f7482186c58dfa74f2a9f8be637de3d8')
+        cm_text = cm_prior.decode('utf-8')
         extra_includes = """#include <array>
 #include <limits>
 #include <set>
@@ -3513,6 +3551,29 @@ Result IApplicationManagerInterface::ListAvailableAddOnContent(
         print('NS1_NS_OCCUPIED_SIZE_REAL_NCA_REVERSE_PASS',
               'storages=SysNAND,UserNAND,SDMC', 'base=exact', 'patch=exact',
               'aoc=exact', 'saturating=1', 'pinned_sources=immutable')
+
+        cm_header_rel = 'src/core/hle/service/ns/content_management_interface.h'
+        cm_header_active = (ACTIVE / cm_header_rel).read_bytes()
+        assert len(cm_header_active) == 1220 and sha(cm_header_active) == (
+            '51e39d3dac28b309e8cd34e84d9b08fea79fb55afa5f16c3b731bd736615c3a3')
+        assert spec['entries'][cm_header_rel] == {
+            'active':'51e39d3dac28b309e8cd34e84d9b08fea79fb55afa5f16c3b731bd736615c3a3',
+            'bytes':1220,
+            'upstream':'7891715802a786423749e02e324697fa8c42b338f00fc19499a93acc1965201f',
+        }
+        cm_header_decl = (
+            '    Result CountApplicationContentMeta(Out<s32> out_count, u64 application_id);\n')
+        cm_header_text = cm_header_active.decode('utf-8')
+        assert cm_header_text.count(cm_header_decl) == 1
+        cm_header_prior = cm_header_text.replace(cm_header_decl, '', 1).encode('utf-8')
+        assert len(cm_header_prior) == 1140 and sha(cm_header_prior) == (
+            '7891715802a786423749e02e324697fa8c42b338f00fc19499a93acc1965201f')
+        assert cm_header_prior == (stage / cm_header_rel).read_bytes(), (
+            'Content-management header exact reverse mismatch')
+        observed[cm_header_rel] = spec['entries'][cm_header_rel]
+        print('NS1_NS_CONTENT_META_COUNT_EXACT_REVERSE_PASS',
+              'command=600', 'base_patch_aoc=real_installed', 'current_app_id=resolved',
+              'pinned_sources=immutable')
 
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))

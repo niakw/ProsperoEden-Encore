@@ -9,6 +9,16 @@ FLAGS = (
     "-Dlmsensors=disabled",
 )
 ANCHOR = "-Dplatforms=\n"
+C_ARGS_OLD = "-Dc_args=-Wno-thread-safety-analysis\n"
+CPP_ARGS_OLD = "-Dcpp_args=-Wno-thread-safety-analysis\n"
+C_ARGS_NEW = (
+    "-Dc_args=-Wno-thread-safety-analysis,-Wno-unreachable-code-generic-assoc,"
+    "-Wno-unused-parameter\n"
+)
+CPP_ARGS_NEW = (
+    "-Dcpp_args=-Wno-thread-safety-analysis,-Wno-unreachable-code-generic-assoc,"
+    "-Wno-unused-parameter\n"
+)
 
 def patch(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
@@ -20,9 +30,18 @@ def patch(path: Path) -> None:
         return
     if text.count(ANCHOR) != 1:
         raise RuntimeError("Pinned PS5 OpenGL Mesa meson_args anchor changed")
+    if text.count(C_ARGS_OLD) != 1 or text.count(CPP_ARGS_OLD) != 1:
+        raise RuntimeError("Pinned PS5 OpenGL Mesa diagnostic flags changed")
     replacement = ANCHOR + "".join(flag + "\n" for flag in FLAGS)
-    path.write_text(text.replace(ANCHOR, replacement, 1), encoding="utf-8")
-    print("PS5_OPENGL_MESA_OPTIONAL_FEATURES_PASS " + " ".join(FLAGS))
+    text = text.replace(ANCHOR, replacement, 1)
+    text = text.replace(C_ARGS_OLD, C_ARGS_NEW, 1)
+    text = text.replace(CPP_ARGS_OLD, CPP_ARGS_NEW, 1)
+    path.write_text(text, encoding="utf-8")
+    print(
+        "PS5_OPENGL_MESA_OPTIONAL_FEATURES_PASS "
+        + " ".join(FLAGS)
+        + " diagnostics=SDK-generic-assoc,unused-parameter"
+    )
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()

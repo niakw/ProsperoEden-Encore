@@ -1281,6 +1281,7 @@ if gpu_table_vendor_pin in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473
     "720bdb0e81c57462338be480cecae13f2e205110": "0eadff0bbeec17fdb1e03ae91834e8ecd0bb7248",
     "bde537edf37e1f21e483993ca8582f44ff0f5555": "d7ac5724fd94d7ee2372e5e2b6e3e3fadbd5d9b7",
     "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd": "c245ee471877e0b0cd77e046bb23b2cf032cf3cd",
+    "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac": "9e3fd85b084aa76a39ab4c2b8a96123550643e17",
     }[gpu_table_vendor_pin])
 
 # The FC27 collected-write successor changes only lock acquisition placement.

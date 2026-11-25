@@ -763,7 +763,8 @@ void Launcher::finish_home_media()
             if (recent.title_id != enriched.title_id || recent.file != enriched.file) continue;
             if (!enriched.cover.empty()) {
                 recent.cover = enriched.cover;
-                if (recent.tile_icon.empty()) recent.tile_icon = enriched.cover;
+                if (recent.tile_icon.empty() || recent.tile_icon.find("/box-square-") != std::string::npos)
+                    recent.tile_icon = enriched.cover;
             }
             if (!enriched.hero.empty()) recent.hero = enriched.hero;
             if (!enriched.screenshots.empty()) recent.screenshot = enriched.screenshots.front();
@@ -1117,7 +1118,8 @@ void Launcher::sync_home_game(const Game& game)
             recent.title = game.name;
             if (!game.cover.empty()) {
                 recent.cover = game.cover;
-                if (recent.tile_icon.empty()) recent.tile_icon = game.cover;
+                if (recent.tile_icon.empty() || recent.tile_icon.find("/box-square-") != std::string::npos)
+                    recent.tile_icon = game.cover;
             }
             if (game.title_id != 0) recent.title_id = game.title_id;
             if (!game.addons.empty()) recent.addons = game.addons;
@@ -2926,7 +2928,10 @@ void Launcher::start_home_icons()
     // response from serializing all seven Home square icons. Decoder/GL
     // upload limits remain unchanged: no network or image decode on UI.
     for (const Recent& recent : home_.recents) {
-        if (!recent.title_id || !recent.tile_icon.empty()) continue;
+        if (!recent.title_id) continue;
+        const bool provisional = recent.tile_icon.find("/box-square-") != std::string::npos;
+        if (!recent.tile_icon.empty() && !provisional &&
+            !textures_.cover(recent.tile_icon, 512.0f, true).missing) continue;
         if ((home_icon_scan_.valid() &&
              home_icon_scan_file_ == recent.file) ||
             (home_icon_scan_extra_.valid() &&
@@ -2940,7 +2945,7 @@ void Launcher::start_home_icons()
         auto job = std::async(std::launch::async, [this, request = std::move(request)]() mutable {
             return services_.enrich_home_icon(std::move(request), &media_cancel_);
         });
-        home_icon_next_retry_[recent.file] = now + std::chrono::minutes(2);
+        home_icon_next_retry_[recent.file] = now + std::chrono::minutes(provisional ? 5 : 2);
         if (!home_icon_scan_.valid()) {
             home_icon_scan_title_id_ = recent.title_id;
             home_icon_scan_file_ = recent.file;

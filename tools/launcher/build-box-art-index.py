@@ -73,7 +73,12 @@ REGIONS = {
     "canada": "ca", "germany": "de", "belgium": "eu",
     "italy": "it", "spain": "es", "portugal": "pt",
     "australia": "au", "japan": "jp", "brazil": "br",
-    "mexico": "mx", "asia": "asia", "korea": "kr",
+    "mexico": "mx", "asia": "asia", "korea": "kr", "south korea": "kr",
+    "china": "cn", "taiwan": "tw", "hong kong": "hk",
+    "netherlands": "nl", "poland": "pl", "russia": "ru", "thailand": "th",
+    "sweden": "sv", "norway": "nb", "denmark": "da", "finland": "fi",
+    "greece": "el", "czech republic": "cs", "hungary": "hu",
+    "romania": "ro", "turkey": "tr", "ukraine": "ukr", "indonesia": "id",
 }
 REGION_ORDER = ("fr", "eu", "us", "uk", "ca", "world", "de",
                 "es", "it", "pt", "au", "jp", "br", "mx", "asia", "kr", "other")
@@ -117,26 +122,15 @@ def parse(source):
                               {"Nintendo Switch": "ns1", "Nintendo Switch 2": "ns2"}.get(platform, platform))
         elif tag == "GameAlternateName":
             gid = element.findtext("DatabaseID", "")
-            if gid in games:
+            if gid.isdecimal():
                 aliases.setdefault(gid, []).append(element.findtext("AlternateName", ""))
-        elif tag == "GameImage":
-            gid = element.findtext("DatabaseID", "")
-            kind = element.findtext("Type", "")
-            filename = element.findtext("FileName", "")
-            if (gid in games and kind in ("Box - Front", "Box - Back", "Box - Spine",
-                                 "Screenshot - Gameplay", "Fanart - Background",
-                                 "Screenshot - Game Title", "Square", "Clear Logo", "Banner")
-                    and IMAGE_FILE.fullmatch(filename)):
-                images.setdefault(gid, {}).setdefault(kind, []).append(
-                    (region_code(element.findtext("Region", "")), filename))
+        # Images are collected on a second streaming pass after title matching.
         if tag in ("Game", "GameAlternateName", "GameImage"):
             element.clear()
             root.clear()
     names = {}
     other_names = {}
     for gid, (name, platform) in games.items():
-        if gid not in images:
-            continue
         for label in (name, *aliases.get(gid, ())):
             # NACP/NUP names may omit the accent of a GamesDB title. Keep
             # both the former ASCII-byte key and a Unicode-folded alias;
@@ -156,9 +150,50 @@ def parse(source):
                     base = key.removesuffix(" nintendo switch 2 edition")
                     if base:
                         names.setdefault(f"ns2:{base}", set()).add(gid)
+    def matching_alternatives(key):
+        platform, title = key.split(":", 1)
+        base = title.removesuffix(" nintendo switch 2 edition")
+        other_ids = []
+        opposite = names.get(("ns1" if platform == "ns2" else "ns2") + ":" + base, set())
+        if len(opposite) == 1:
+            other_ids.extend(opposite)
+        for _, matches in sorted(other_names.get(base, {}).items()):
+            if len(matches) == 1:
+                other_ids.extend(matches)
+        return list(dict.fromkeys(other_ids))
+
+    eligible = set()
+    for key, matching in names.items():
+        if len(matching) == 1:
+            eligible.update(matching)
+            eligible.update(matching_alternatives(key))
+    source.seek(0)
+    iterator = ET.iterparse(source, events=("start", "end"))
+    _, root = next(iterator)
+    first_fanart = set()
+    for event, element in iterator:
+        if event != "end":
+            continue
+        tag = element.tag.rsplit("}", 1)[-1]
+        if tag == "GameImage":
+            gid = element.findtext("DatabaseID", "")
+            kind = element.findtext("Type", "")
+            filename = element.findtext("FileName", "")
+            first = kind != "Fanart - Background" or gid not in first_fanart
+            if gid in eligible and kind == "Fanart - Background":
+                first_fanart.add(gid)
+            if (gid in eligible and first and kind in
+                    ("Box - Front", "Box - Back", "Box - Spine", "Screenshot - Gameplay",
+                     "Fanart - Background", "Screenshot - Game Title", "Square", "Clear Logo", "Banner")
+                    and IMAGE_FILE.fullmatch(filename)):
+                images.setdefault(gid, {}).setdefault(kind, []).append(
+                    (region_code(element.findtext("Region", "")), filename))
+        if tag in ("Game", "GameAlternateName", "GameImage"):
+            element.clear()
+            root.clear()
     lines = ["# Eden Encore media index v11 (platform-first, cross-platform fallbacks, logo and banner)\n"]
     def row(key, gid):
-        media = images[gid]
+        media = images.get(gid, {})
         front = list(media.get("Box - Front", []))
         if gid in EUROPE_FRONT_PINS:
             front = [("eu", filename) for filename in EUROPE_FRONT_PINS[gid]] + front
@@ -182,17 +217,7 @@ def parse(source):
         gid = next(iter(matching))
         own = row(key, gid)
         lines.append(key + "\t" + "\t".join(own) + "\n")
-        platform, title = key.split(":", 1)
-        base = title.removesuffix(" nintendo switch 2 edition")
-        # Exact normalized title/alias and unique edition per other platform.
-        # Do not use fuzzy name matches or front scans from another platform.
-        other_ids = []
-        opposite = names.get(("ns1" if platform == "ns2" else "ns2") + ":" + base, set())
-        if len(opposite) == 1:
-            other_ids.extend(opposite)
-        for _, matches in sorted(other_names.get(base, {}).items()):
-            if len(matches) == 1:
-                other_ids.extend(matches)
+        other_ids = matching_alternatives(key)
         alternatives = [[] for _ in own]
         for other in dict.fromkeys(other_ids):
             for col, field in enumerate(row(key, other)):
@@ -271,6 +296,26 @@ def self_test():
     assert fields[6].startswith("world:88888888"), fields
     assert "99999999" in fields[7], fields
     assert "Box - 3D" not in result
+    # Index zero is authoritative; other-platform fronts are never emitted.
+    extra = """<LaunchBox>
+    <Game><DatabaseID>1</DatabaseID><Platform>Nintendo Switch</Platform><Name>Cross</Name></Game>
+    <Game><DatabaseID>2</DatabaseID><Platform>Windows</Platform><Name>Cross</Name></Game>
+    <GameImage><DatabaseID>1</DatabaseID><Type>Fanart - Background</Type><Region>Japan</Region><FileName>aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg</FileName></GameImage>
+    <GameImage><DatabaseID>1</DatabaseID><Type>Fanart - Background</Type><Region>France</Region><FileName>bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.jpg</FileName></GameImage>
+    <GameImage><DatabaseID>1</DatabaseID><Type>Clear Logo</Type><FileName>cccccccc-cccc-cccc-cccc-cccccccccccc.png</FileName></GameImage>
+    <GameImage><DatabaseID>2</DatabaseID><Type>Square</Type><FileName>dddddddd-dddd-dddd-dddd-dddddddddddd.png</FileName></GameImage>
+    <GameImage><DatabaseID>2</DatabaseID><Type>Box - Front</Type><FileName>eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee.png</FileName></GameImage>
+    <GameImage><DatabaseID>2</DatabaseID><Type>Box - Back</Type><FileName>ffffffff-ffff-ffff-ffff-ffffffffffff.jpg</FileName></GameImage>
+    <GameImage><DatabaseID>2</DatabaseID><Type>Banner</Type><FileName>11111111-1111-1111-1111-111111111111.png</FileName></GameImage>
+    </LaunchBox>"""
+    cross = {line.split("\t")[0]: line.split("\t")[1:] for line in
+             parse(io.BytesIO(extra.encode())).splitlines() if not line.startswith("#")}
+    assert cross["ns1:cross"][3].startswith("jp:aaaaaaaa")
+    assert "bbbbbbbb" not in cross["ns1:cross"][3]
+    assert "cccccccc" in cross["ns1:cross"][9]
+    alt = cross["alt:ns1:cross"]
+    assert alt[0] == "-" and "ffffffff" in alt[1]
+    assert "dddddddd" in alt[8] and "11111111" in alt[10]
     assert candidates([(7, "f" * 36 + ".jpg"), (1, "0" * 36 + ".png")]).count(";") == 1
     assert candidates([(1, "a" * 36 + ".jpg")]) == "a" * 36 + ".jpg"
     assert rank("France") > rank("Europe") > rank("World") > rank("Japan")

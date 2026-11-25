@@ -357,7 +357,7 @@ workflow = (root / ".github/workflows/build-040-zbic.yml").read_text()
 assert '::notice::Optional case index unavailable; cached/user-provided artwork remains supported' in workflow
 assert '::warning::Optional case index unavailable' not in workflow
 packager = (root / "tools/package-headless-native.sh").read_text()
-assert '"Nintendo Switch", "Nintendo Switch 2"' in indexer
+assert '"Nintendo Switch": "ns1", "Nintendo Switch 2": "ns2"' in indexer
 assert '"https://gamesdb-images.launchbox.gg"' in native
 assert 'const bool r2 = filename.rfind("r2_", 0) == 0;' in native
 assert "return FetchKnownNs2Front" not in native
@@ -373,12 +373,12 @@ subprocess.run([sys.executable, str(root / "tools/launcher/build-box-art-index.p
                 "--self-test"], check=True)
 assert "Nintendo Switch" in indexer
 assert "def candidates(items, limit=6):" in indexer
-assert "fanart" in indexer and "title_screen" in indexer and "gameplay" in indexer
+assert "fanart" in indexer and '"Screenshot - Game Title"' in indexer and "gameplay" in indexer
 assert "Box - Front" in indexer and "Box - Back" in indexer
 assert "gamesdb.launchbox-app.com/Metadata.zip" in indexer
 assert "if len(matching) != 1:" in indexer
 assert "SafeCaseFilename" in native
-assert 'std::array<std::vector<std::string>, 9>' in native
+assert 'std::array<std::vector<std::string>, 11>' in native
 # A physical scan remains independent; only missing backs use LaunchBox
 # game-specific scenic art and all CDN traffic stays on the worker.
 assert '"Screenshot - Gameplay"' in indexer
@@ -391,7 +391,7 @@ assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' not in 
 assert "// Gameplay previews remain independent of real back paper." in native
 assert 'const char* const names[]' in native
 assert '"scene-1", "scene-2", "scene-3", "scene-4", "scene-5"' in native
-assert "for (const int side : {0, 1, 3, 5, 2, 4, 6, 7})" in native
+assert "for (const int side : {0, 1, 3, 8, 5, 2, 4, 6, 7})" in native
 assert 'selected->second[8]' in native
 assert 'scene_columns{"-", "-", "-", "-", "-"}' in native
 assert "if (receipt) receipt << filename" in native
@@ -405,18 +405,17 @@ assert 'region_code(element.findtext("Region", ""))' in indexer
 assert '"north america": "us"' in indexer
 assert 'region:filename' in native
 assert "SafeCaseCandidate(part)" in native
-assert "LocaleCaseCandidates(sources, language_choice, side)" in native
+assert "LocaleCaseCandidates(selected->second[media_column], language_choice, side)" in native
 assert "FindCaseEntry(index, second_generation, name, alternate_name)" in native
-assert "MatchingNs1Back(index, name, alternate_name)" in native
-assert "const auto* ns1_back = second_generation && selected->second[1].empty()" in native
-assert "side == 1 && ns1_back ? *ns1_back : selected->second[side]" in native
+assert 'OtherCaseMedia(index, selected->first, media_column)' in native
+assert 'side == 1 || side >= 3' in native
+assert 'side == 8 ? 10 : side' in native
 assert 'std::string(ns2 ? "ns2:" : "ns1:") + key' in native
 assert 'if (it == index.end() && !ns2) it = index.find(key);' in native
 assert "CachedGamesDbHero(std::uint64_t title_id," in native
-assert "for (int scene : {1, 3, 4, 5})" in native
-assert 'regions = {"us", "ca", "world", "uk", "eu", "fr"};' in native
-assert 'regions = {"fr", "eu", "world", "uk", "ca", "us"};' in native
-assert "face == 1" in native
+assert "for (int scene : {1})" in native
+assert 'regions = {"fr", "eu"};' in native
+assert 'for (const char* fallback : {"us", "uk"})' in native
 assert "game.title_id, scanned_name, CleanTitle(game.file)," in native
 assert "Eden::Ns2Catalog::Find(game.title_id)" in native
 assert "game.title_id, std::string(ns2->name), scanned_name," in native
@@ -468,7 +467,7 @@ assert "return changed_faces;" in case_fetch
 assert 'if (side == 2 && !both_faces_cached_at_start &&' not in case_fetch
 assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' not in case_fetch
 assert '// Gameplay previews remain independent of real back paper.' in case_fetch
-# Original sleeve JPEG alternatives are tried after undecodable PNGs.\n# Keep the bounded seven-candidate retry; do not accept reconstructed covers.\nassert "if (attempts >= 7 ||" in native\nassert "if (attempts >= 3 ||" not in native
+# Original sleeve JPEG alternatives are tried after undecodable PNGs.\n# Keep the bounded seven-candidate retry; do not accept reconstructed covers.\nassert "if (attempts >= 24 ||" in native\nassert "if (attempts >= 3 ||" not in native
 assert 'std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=unavailable' in native
 assert "const bool both_faces_cached_at_start =" not in native
 # Preserve the already resident GPU jacket when a background metadata scan
@@ -492,7 +491,7 @@ assert 'const bool opened = static_cast<bool>(input);' in native
 case_worker = native.split("pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,", 1)[1].split("pe::ui::BoxArt EdenServices::box_art(", 1)[0]
 assert "const auto cached_case = box_art(game.title_id, second_generation);" in case_worker
 assert "const auto box = box_art(game.title_id, second_generation);" in case_worker
-assert "CachedGamesDbSquare(game.title_id, true)" in case_worker
+assert "CachedGamesDbSquare(game.title_id, second_generation)" in case_worker
 assert "CachedGamesDbHero(game.title_id, second_generation)" in case_worker
 assert case_worker.index("game.case_artwork_changed = EnsureRetailCase(") < case_worker.index("EnsureNlibEnrichment(game.title_id")
 # A generated retail TGA must not be fetched again merely because stb_image's
@@ -910,9 +909,10 @@ int main(int argc,char** argv) {
     assert(!FetchCaseFace({"good.jpg","unused.jpg"},dst,false,&cancelled));
     assert(fetched.size()==1 && encodes==1 && read(receipt)=="good.jpg\n");
     fail_write=false; fetched.clear(); encodes=0;
-    assert(!FetchCaseFace({"bad1.png","bad2.png","bad3.png","bad4.png",
-        "bad5.png","bad6.png","bad7.png","good.jpg"},dst,false,&cancelled));
-    assert(fetched.size()==7 && encodes==7 && read(dst)=="decoded");
+    std::vector<string> exhausted(24, "bad.png");
+    exhausted.push_back("good.jpg");
+    assert(!FetchCaseFace(exhausted,dst,false,&cancelled));
+    assert(fetched.size()==24 && encodes==24 && read(dst)=="decoded");
     fetched.clear(); encodes=0; cancel_encode=true;
     assert(!FetchCaseFace({"good.jpg","unused.jpg"},dst,false,&cancelled));
     assert(fetched.size()==1 && encodes==1 && read(receipt)=="good.jpg\n");
@@ -933,7 +933,7 @@ int main(int argc,char** argv) {
         subprocess.run([compiler, "-std=c++20", opt, "-Wall", "-Wextra",
                         "-Werror", str(cpp), "-o", str(exe)], check=True)
         subprocess.run([str(exe), str(tmp)], check=True)
-print("R457_REAL_RETAIL_CANDIDATE_LOOP_PASS decode_retry=1 write_stop=1 budget=7 cancel=1 provenance=1")
+print("R457_REAL_RETAIL_CANDIDATE_LOOP_PASS decode_retry=1 write_stop=1 budget=24 cancel=1 provenance=1")
 
 # Both actual mutex owners must use the same folded identity; the Home
 # nonblocking path uses NlibTitleMutex as well as the full Library worker.

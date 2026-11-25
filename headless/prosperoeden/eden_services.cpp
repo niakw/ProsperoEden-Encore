@@ -933,7 +933,9 @@ std::vector<std::string> LocaleCaseCandidates(
     else if (locale == "fr" || locale == "fr-FR") regions = {"fr", "eu"};
     else if (locale == "ja" || locale == "ja-JP") regions = {"jp", "asia"};
     else if (locale == "ko" || locale == "ko-KR") regions = {"kr", "asia"};
-    else if (locale.rfind("zh", 0) == 0) regions = {"asia"};
+    else if (locale == "zh-Hant") regions = {"tw", "hk", "asia"};
+    else if (locale.rfind("zh", 0) == 0) regions = {"cn", "asia"};
+    else if (locale.rfind("uk", 0) == 0) regions = {"ukr", "eu"};
     else if (locale == "es-419") regions = {"mx"};
     else if (locale == "pt-BR") regions = {"br"};
     else {
@@ -1179,7 +1181,7 @@ std::vector<std::string> CachedCaseScenes(std::uint64_t title_id,
                                            bool second_generation = false) {
     std::vector<std::string> scenes;
     if (title_id == 0) return scenes;
-    for (int i : {3, 4, 5, 1, 2}) {
+    for (int i : {6, 3, 4, 5, 1, 2}) {
         const std::string side = "scene-" + std::to_string(i);
         const std::string path =
             CaseFacePath(title_id, side.c_str(), second_generation);
@@ -1193,7 +1195,7 @@ std::vector<std::string> CachedCaseScenes(std::uint64_t title_id,
 void AppendCaseScenes(std::vector<std::string>& screens, std::uint64_t title_id,
                       bool second_generation = false) {
     for (const auto& scene : CachedCaseScenes(title_id, second_generation)) {
-        if (screens.size() >= 6) break;
+        if (screens.size() >= 9) break;
         if (std::find(screens.begin(), screens.end(), scene) == screens.end())
             screens.push_back(scene);
     }
@@ -1201,7 +1203,7 @@ void AppendCaseScenes(std::vector<std::string>& screens, std::uint64_t title_id,
 
 bool FetchCaseFace(const std::vector<std::string>& candidates,
                    const std::string& destination, bool narrow_spine,
-                   const std::atomic<bool>* cancel, bool require_square = false, bool logo = false) {
+                   const std::atomic<bool>* cancel, bool require_square = false, bool logo = false, bool banner = false) {
     if (candidates.empty() ||
         (cancel && cancel->load(std::memory_order_acquire))) return false;
     std::size_t attempts = 0;
@@ -1245,7 +1247,7 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
             static_cast<unsigned char>(body[1]) == 0xd8;
         const bool png = body.size() >= 8 &&
             std::memcmp(body.data(), "\x89PNG\r\n\x1a\n", 8) == 0;
-        if (body.size() < 1024 || body.size() > (16u << 20) || (!jpeg && !png)) {
+        if (body.size() < (logo || banner ? 64u : 1024u) || body.size() > (16u << 20) || (!jpeg && !png)) {
             ++invalid_responses;
             std::fprintf(stderr, "EDEN_CASE_CDN status=invalid-body file=%s bytes=%zu jpeg=%d png=%d\n",
                          filename.c_str(), body.size(), jpeg, png);
@@ -1255,11 +1257,10 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
         if (!stbi_info_from_memory(
                 reinterpret_cast<const unsigned char*>(body.data()),
                 static_cast<int>(body.size()), &w, &h, &channels) ||
-            w < (narrow_spine ? 16 : 128) ||
-            h < (narrow_spine ? 250 : logo ? 16 : 200) || w > 4096 || h > 4096 ||
+            w < (narrow_spine || logo || banner ? 16 : 128) ||
+            h < (narrow_spine ? 250 : logo || banner ? 8 : 200) || w > 4096 || h > 4096 ||
             static_cast<std::uint64_t>(w) * h > 3840u * 2160u ||
-            ((destination.find("/box-front-") != std::string::npos ||
-              destination.find("/box-back-") != std::string::npos) &&
+            (destination.find("/box-front-") != std::string::npos &&
              static_cast<std::uint64_t>(h) * 4 < static_cast<std::uint64_t>(w) * 5) ||
             (require_square &&
              static_cast<std::uint64_t>(std::max(w, h)) * 10 >
@@ -1318,10 +1319,10 @@ bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
                          const std::string& alternate_name, int language_choice,
                          const std::atomic<bool>* cancel, bool second_generation) {
     if (title_id == 0 || (cancel && cancel->load(std::memory_order_acquire))) return false;
-    if (!CachedGamesDbSquare(title_id, second_generation).empty()) return true;
+    const bool had_cached = !CachedGamesDbSquare(title_id, second_generation).empty();
     const auto& index = RetailCaseIndex();
     const auto selected = FindCaseEntry(index, second_generation, name, alternate_name);
-    if (selected == index.end()) return false;
+    if (selected == index.end()) return had_cached;
     // Keep the four source tiers separate: a logo may not outrank a square
     // on its own platform, but does outrank every other-platform square.
     const auto candidates = LocaleCaseCandidates(selected->second[8], language_choice, 8);
@@ -1338,14 +1339,34 @@ bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
         square_locks[ArtworkLockBucket(square_key, square_locks.size())],
         std::defer_lock);
     if (!LockArtworkUnlessCancelled(square_guard, cancel)) return false;
-    if (!CachedGamesDbSquare(title_id, second_generation).empty()) return true;
     const std::string path = CaseFacePath(title_id, "square", second_generation);
-    if (!FetchCaseFace(candidates, path, false, cancel, true) &&
-        !FetchCaseFace(logos, path, false, cancel, false, true) &&
-        !(other_square && FetchCaseFace(LocaleCaseCandidates(*other_square, language_choice, 8),
-                                       path, false, cancel, true)) &&
-        !(other_logo && FetchCaseFace(LocaleCaseCandidates(*other_logo, language_choice, 9),
-                                     path, false, cancel, false, true))) return false;
+    const bool cached = !CachedGamesDbSquare(title_id, second_generation).empty();
+    std::string source;
+    if (cached) {
+        std::ifstream receipt(path + ".source");
+        std::getline(receipt, source);
+    }
+    std::array<std::vector<std::string>, 4> tiers{
+        candidates, logos,
+        other_square ? LocaleCaseCandidates(*other_square, language_choice, 8) : std::vector<std::string>{},
+        other_logo ? LocaleCaseCandidates(*other_logo, language_choice, 9) : std::vector<std::string>{}};
+    bool done = false;
+    for (std::size_t tier = 0; tier < tiers.size(); ++tier) {
+        auto& choices = tiers[tier];
+        const auto existing = std::find(choices.begin(), choices.end(), source);
+        const bool stop_at_cached = cached && existing != choices.end();
+        if (stop_at_cached) choices.erase(existing, choices.end());
+        if (FetchCaseFace(choices, path, false, cancel, tier % 2 == 0, tier % 2 == 1)) {
+            done = true;
+            break;
+        }
+        if (stop_at_cached) {
+            done = true; // Higher sources failed; retain known-good cached pixels.
+            break;
+        }
+        if (cancel && cancel->load(std::memory_order_acquire)) break;
+    }
+    if (!done && !cached) return false;
     const bool ready = !CachedGamesDbSquare(title_id, second_generation).empty();
     std::fprintf(stderr,
                  "EDEN_GAMESDB_SQUARE title=%016llX status=%s candidates=%zu\n",
@@ -1395,8 +1416,10 @@ bool LimitRetailCasePromotion(std::vector<std::string>& candidates,
     // Preserve narrow authentic NS2 spines even with no back scan.
     if (!ValidNlibWebP(path, &width, &height) ||
         !((side == 2 && width >= 16 && height >= 250) ||
+          (side == 8 && width >= 16 && height >= 8) ||
           (side >= 3 && width >= 128 && height >= 200) ||
-          ((side == 0 || side == 1) && width >= 128 && height >= 200 &&
+          (side == 1 && width >= 128 && height >= 128) ||
+          (side == 0 && width >= 128 && height >= 200 &&
            static_cast<std::uint64_t>(height) * 4 >= static_cast<std::uint64_t>(width) * 5)))
         return false;
     if (cached == candidates.begin()) return true;
@@ -1440,7 +1463,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     unsigned migrated_faces = 0;
     unsigned side_index = 0;
     for (const char* side : {"front", "back", "spine",
-                             "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"}) {
+                             "scene-1", "scene-2", "scene-3", "scene-4", "scene-5", "scene-6"}) {
         if (cancel && cancel->load(std::memory_order_acquire)) return migrated_faces;
         if (MigrateGeneratedTga(
                 CaseFacePath(title_id, side, second_generation), true))
@@ -1469,7 +1492,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     // Front and rear paper remain first. Then fetch Home's hero fallbacks
     // before the optional spine, title-screen and additional rear screenshots.
     // The semantic side indices / changed-face bitmask are unchanged.
-    for (const int side : {0, 1, 3, 5, 2, 4, 6, 7}) {
+    for (const int side : {0, 1, 3, 8, 5, 2, 4, 6, 7}) {
         if (cancel && cancel->load(std::memory_order_acquire)) {
             // Aborted title switch must not lock the next attempt out for
             // five minutes after a partial or cancelled CDN transaction.
@@ -1481,16 +1504,17 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         // otherwise the 5-minute retry could leave a complete paper wrap
         // without its printed spine until the next launcher session.
         // Gameplay previews remain independent of real back paper.
-        auto candidates = LocaleCaseCandidates(selected->second[side], language_choice, side);
+        const int media_column = side == 8 ? 10 : side;
+        auto candidates = LocaleCaseCandidates(selected->second[media_column], language_choice, side);
         if (side == 1 || side >= 3) {
-            if (const auto* alternate = OtherCaseMedia(index, selected->first, side)) {
+            if (const auto* alternate = OtherCaseMedia(index, selected->first, media_column)) {
                 const auto fallback = LocaleCaseCandidates(*alternate, language_choice, side);
                 candidates.insert(candidates.end(), fallback.begin(), fallback.end());
             }
         }
         if (candidates.empty()) continue;
         const char* const names[] = {
-            "front", "back", "spine", "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"};
+            "front", "back", "spine", "scene-1", "scene-2", "scene-3", "scene-4", "scene-5", "scene-6"};
         const std::string path =
             CaseFacePath(title_id, names[side], second_generation);
         // User-provided original scans win. Cached low-resolution CDN scans
@@ -1509,7 +1533,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         const bool retained_fallback = candidates.size() < candidate_count;
         // If network retrieval fails, existing cached artwork remains usable;
         // migration can be retried without blocking rendering.
-        if (!FetchCaseFace(candidates, path, side == 2, cancel)) {
+        if (!FetchCaseFace(candidates, path, side == 2, cancel, false, false, side == 8)) {
             all_ready = false;
             if (retained_fallback)
                 std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=retained-fallback\n",
@@ -2773,7 +2797,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         const auto cached_case = box_art(game.title_id, second_generation);
         game.box_front = cached_case.front;
         game.box_back = cached_case.back;
-        if (game.case_artwork_changed & 0xF8u) {
+        if (game.case_artwork_changed & 0x1F8u) {
             AppendCaseScenes(game.screenshots, game.title_id, second_generation);
             game.artwork_changed = true;
         }
@@ -2785,7 +2809,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         (game.cover.empty() || game.cover == CachedGamesDbSquare(game.title_id, second_generation))) {
         game.cover = std::move(enrichment.icon);
         game.artwork_changed = true;
-    } else if (game.cover.empty()) {
+    } else if (game.cover.empty() || game.cover == CachedGamesDbSquare(game.title_id, second_generation)) {
         const auto* known = Eden::Ns2Catalog::Find(game.title_id);
         const std::string canonical = known ? std::string(known->name) : scanned_name;
         if (EnsureGamesDbSquare(game.title_id, canonical, scanned_name,
@@ -2802,8 +2826,8 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     const bool nlib_screenshots = !enrichment.screenshots.empty();
     if (nlib_banner) game.hero = std::move(enrichment.hero);
     else if (nlib_screenshots) game.hero = enrichment.screenshots.front();
-    else if (game.hero.empty())
-        game.hero = CachedGamesDbHero(game.title_id, second_generation);
+    else if (const auto hero = CachedGamesDbHero(game.title_id, second_generation); !hero.empty())
+        game.hero = hero;
     if (nlib_screenshots) game.screenshots = std::move(enrichment.screenshots);
     if (enrichment.max_players > 0) game.max_players = enrichment.max_players;
     if (!enrichment.name.empty()) game.name = std::move(enrichment.name);
@@ -2841,7 +2865,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         AppendCaseScenes(game.screenshots, game.title_id, second_generation);
         if (!nlib_banner && !nlib_screenshots && game.hero.empty())
             game.hero = CachedGamesDbHero(game.title_id, second_generation);
-        if (game.case_artwork_changed & 0xF8u)
+        if (game.case_artwork_changed & 0x1F8u)
             game.artwork_changed = true; // refresh GPU copies after replacement
     }
     return game;
@@ -2904,8 +2928,7 @@ pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id, bool second_generat
             }
             // Square CDN jacket photos are not flat retail scans. Manual
             // imports (no generated provenance receipt) remain allowed.
-            if (valid && (std::strcmp(side, "front") == 0 ||
-                          std::strcmp(side, "back") == 0) &&
+            if (valid && std::strcmp(side, "front") == 0 &&
                 IsFile(path + ".source") &&
                 static_cast<std::uint64_t>(height) * 4 <
                     static_cast<std::uint64_t>(width) * 5)

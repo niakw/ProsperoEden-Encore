@@ -1330,9 +1330,125 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # actual main applet rather than leaving an indexed IMPL-SRC false
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_latest = (ACTIVE / ns_rel).read_bytes()
+        ns_current = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_current) == 73744 and sha(ns_current) == '57ca38ad298dbac19f8ef61be71255245114be133c37576d9b5f9167833b5e93'
+        assert spec['entries'][ns_rel]['active'] == sha(ns_current)
+        ns_query_methods = """Result IApplicationManagerInterface::GetApplicationShellEvent(
+    OutCopyHandle<Kernel::KReadableEvent> out_event) {
+    LOG_DEBUG(Service_NS, "called");
+    application_shell_event.Clear();
+    *out_event = application_shell_event.GetHandle();
+    R_SUCCEED();
+}
+
+Result IApplicationManagerInterface::PopApplicationShellEventInfo(
+    Out<u32> out_event_info_type, Out<u64> out_application_id) {
+    LOG_DEBUG(Service_NS, "called");
+    *out_event_info_type = 0;
+    *out_application_id = 0;
+    R_SUCCEED();
+}
+
+Result IApplicationManagerInterface::GetApplicationControlProperty(
+    OutBuffer<BufferAttr_HipcMapAlias> out_buffer, u64 application_id) {
+    u32 actual_size{};
+    R_RETURN(IReadOnlyApplicationControlDataInterface(system).GetApplicationControlData(
+        out_buffer, &actual_size, ApplicationControlSource::Storage, application_id));
+}
+
+Result IApplicationManagerInterface::GetGameCardAttachmentEvent(
+    OutCopyHandle<Kernel::KReadableEvent> out_event) {
+    *out_event = gamecard_mount_status_event.GetHandle();
+    R_SUCCEED();
+}
+
+Result IApplicationManagerInterface::GetSdCardRemovedEvent(
+    OutCopyHandle<Kernel::KReadableEvent> out_event) {
+    *out_event = sd_card_mount_status_event.GetHandle();
+    R_SUCCEED();
+}
+
+Result IApplicationManagerInterface::ListApplicationIdOnGameCard(
+    OutArray<u64, BufferAttr_HipcMapAlias> out_ids, Out<s32> out_count) {
+    // Encore has no physical Switch game-card backend on PS5. This matches
+    // IsGameCardInserted=false and reports an empty, internally consistent list.
+    (void)out_ids;
+    *out_count = 0;
+    R_SUCCEED();
+}
+
+Result IApplicationManagerInterface::CountApplicationContentMeta(
+    Out<s32> out_count, u64 application_id) {
+    const auto& disabled = Settings::values.disabled_addons[application_id];
+    if (std::find(disabled.begin(), disabled.end(), "DLC") != disabled.end()) {
+        *out_count = 0;
+        R_SUCCEED();
+    }
+
+    const auto installed = system.GetContentProviderUnion().ListEntriesFilterOrigin(
+        std::nullopt, FileSys::TitleType::AOC, FileSys::ContentRecordType::Data);
+    s32 count = 0;
+    for (const auto& [slot, entry] : installed) {
+        if (FileSys::GetBaseTitleID(entry.title_id) == application_id) {
+            ++count;
+        }
+    }
+    *out_count = count;
+    R_SUCCEED();
+}
+
+Result IApplicationManagerInterface::ListAvailableAddOnContent(
+    OutArray<u32, BufferAttr_HipcMapAlias> out_addons, Out<u32> out_count, u32 offset,
+    u64 application_id) {
+    std::vector<u32> addons;
+    const auto& disabled = Settings::values.disabled_addons[application_id];
+    if (std::find(disabled.begin(), disabled.end(), "DLC") == disabled.end()) {
+        const auto installed = system.GetContentProviderUnion().ListEntriesFilterOrigin(
+            std::nullopt, FileSys::TitleType::AOC, FileSys::ContentRecordType::Data);
+        for (const auto& [slot, entry] : installed) {
+            if (FileSys::GetBaseTitleID(entry.title_id) == application_id) {
+                addons.push_back(static_cast<u32>(FileSys::GetAOCID(entry.title_id)));
+            }
+        }
+        std::sort(addons.begin(), addons.end());
+        addons.erase(std::unique(addons.begin(), addons.end()), addons.end());
+    }
+
+    R_UNLESS(offset <= addons.size(), AM::ResultApplicationRecordNotFound);
+    const auto count = (std::min)(out_addons.size(), addons.size() - offset);
+    for (std::size_t i = 0; i < count; ++i) {
+        out_addons[i] = addons[offset + i];
+    }
+    *out_count = static_cast<u32>(count);
+    R_SUCCEED();
+}
+
+"""
+        ns_text = ns_current.decode('utf-8')
+        ns_text = ns_text.replace('#include "common/settings.h"\n#include "core/file_sys/common_funcs.h"\n', '', 1)
+        ns_text = ns_text.replace(
+            '      present_event{service_context}, application_shell_event{service_context} {',
+            '      present_event{service_context} {', 1)
+        for command,name in (
+            (45,'GetGameCardAttachmentEvent'), (49,'GetSdCardRemovedEvent'),
+            (300,'GetApplicationShellEvent'), (301,'PopApplicationShellEventInfo'),
+            (406,'GetApplicationControlProperty'), (509,'ListApplicationIdOnGameCard'),
+            (600,'CountApplicationContentMeta'), (602,'ListAvailableAddOnContent'),
+            (607,'ListAvailableAddOnContent'),
+        ):
+            new=f'{{{command}, D<&IApplicationManagerInterface::{name}>, "{name}"}}'
+            old=f'{{{command}, nullptr, "{name}"}}'
+            assert ns_text.count(new)==1, (command,name)
+            ns_text=ns_text.replace(new,old,1)
+        ns_all_new='{913, D<&IApplicationManagerInterface::ListApplicationRecord>, "ListAllApplicationRecord"}'
+        ns_all_old='{913, nullptr, "ListAllApplicationRecord"}'
+        assert ns_text.count(ns_all_new)==1 and ns_text.count(ns_query_methods)==1
+        ns_text=ns_text.replace(ns_all_new,ns_all_old,1).replace(ns_query_methods,'',1)
+        ns_latest=ns_text.encode('utf-8')
         assert len(ns_latest) == 69568 and sha(ns_latest) == '4e56c70f94896da6ddbd885bb178091b367c8de5b76b0bca0ca624ee6d4d0ee0'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_latest)
+        print('NS1_NS_APP_MANAGER_LOCAL_QUERY_REVERSE_PASS',
+              'closed=10', 'dlc_local=3', 'events=4', 'nacp=1',
+              'gamecard_empty=1', 'list_all=1', 'pinned_sources=immutable')
         ns_view_pointer = '{3, D<&IApplicationManagerInterface::GetApplicationViewDeprecated>, "GetApplicationViewDeprecated"},'
         ns_view_pointer_old = '{3, nullptr, "GetApplicationViewDeprecated"},'
         ns_text = ns_latest.decode('utf-8')
@@ -1349,9 +1465,28 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         ns_owner_prior = ns_text.encode('utf-8')
         assert len(ns_owner_prior) == 69013 and sha(ns_owner_prior) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
         ns_header_rel = 'src/core/hle/service/ns/application_manager_interface.h'
-        ns_header_latest = (ACTIVE / ns_header_rel).read_bytes()
+        ns_header_current = (ACTIVE / ns_header_rel).read_bytes()
+        assert len(ns_header_current) == 8260 and sha(ns_header_current) == '643fdf52be5909bdc9dc1c4d32b878641269776564877d574b8090e547289bd6'
+        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_current)
+        ns_header_text = ns_header_current.decode('utf-8')
+        ns_header_queries = """    Result GetApplicationShellEvent(OutCopyHandle<Kernel::KReadableEvent> out_event);
+    Result PopApplicationShellEventInfo(Out<u32> out_event_info_type, Out<u64> out_application_id);
+    Result GetApplicationControlProperty(OutBuffer<BufferAttr_HipcMapAlias> out_buffer,
+                                         u64 application_id);
+    Result GetGameCardAttachmentEvent(OutCopyHandle<Kernel::KReadableEvent> out_event);
+    Result GetSdCardRemovedEvent(OutCopyHandle<Kernel::KReadableEvent> out_event);
+    Result ListApplicationIdOnGameCard(OutArray<u64, BufferAttr_HipcMapAlias> out_ids,
+                                       Out<s32> out_count);
+    Result CountApplicationContentMeta(Out<s32> out_count, u64 application_id);
+    Result ListAvailableAddOnContent(OutArray<u32, BufferAttr_HipcMapAlias> out_addons,
+                                     Out<u32> out_count, u32 offset, u64 application_id);
+"""
+        assert ns_header_text.count(ns_header_queries)==1
+        assert ns_header_text.count('    Event application_shell_event;\n')==1
+        ns_header_text=ns_header_text.replace(ns_header_queries,'',1).replace(
+            '    Event application_shell_event;\n','',1)
+        ns_header_latest=ns_header_text.encode('utf-8')
         assert len(ns_header_latest) == 7313 and sha(ns_header_latest) == '450200ef9e54f2f7989f46960055e4591d00c4ca5a870b7141d2bb1f69163908'
-        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_latest)
         ns_signature = '    Result GetRunningApplicationProgramId(Out<u64> out_program_id);\n'
         assert ns_header_latest.decode('utf-8').count(ns_signature) == 1
         ns_header_prior = ns_header_latest.decode('utf-8').replace(ns_signature, '', 1).encode('utf-8')

@@ -2929,16 +2929,21 @@ void Launcher::start_home_icons()
     // upload limits remain unchanged: no network or image decode on UI.
     for (const Recent& recent : home_.recents) {
         if (!recent.title_id) continue;
-        const bool provisional = recent.tile_icon.find("/box-square-") != std::string::npos;
-        if (!recent.tile_icon.empty() && !provisional &&
-            !textures_.cover(recent.tile_icon, 512.0f, true).missing) continue;
         if ((home_icon_scan_.valid() &&
              home_icon_scan_file_ == recent.file) ||
             (home_icon_scan_extra_.valid() &&
              home_icon_scan_extra_file_ == recent.file)) continue;
         const auto due = home_icon_next_retry_.find(recent.file);
         if (due != home_icon_next_retry_.end() && now < due->second) continue;
+        const bool provisional = recent.tile_icon.find("/box-square-") != std::string::npos;
+        const bool rejected = !recent.tile_icon.empty() && textures_.known_missing(recent.tile_icon);
+        if (!recent.tile_icon.empty() && !provisional && !rejected) {
+            home_icon_next_retry_[recent.file] = now + std::chrono::seconds(1);
+            continue;
+        }
         Game request;
+        request.artwork_rejected = rejected;
+        if (rejected) request.cover = recent.tile_icon;
         request.title_id = recent.title_id;
         request.file = recent.file;
         request.name = recent.title;
@@ -2986,6 +2991,10 @@ void Launcher::finish_home_icons()
                     // must not replace the square art of its NS1 package.
                     if (recent.title_id != result.title_id ||
                         recent.file != result.file) continue;
+                    if (!recent.tile_icon.empty() &&
+                        recent.tile_icon.find("/box-square-") == std::string::npos &&
+                        recent.tile_icon != result.cover &&
+                        !textures_.known_missing(recent.tile_icon)) continue;
                     recent.tile_icon = result.cover;
                     recent.cover = result.cover;
                 }

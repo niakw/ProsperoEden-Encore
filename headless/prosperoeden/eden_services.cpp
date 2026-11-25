@@ -1317,12 +1317,14 @@ bool LockArtworkUnlessCancelled(std::unique_lock<std::mutex>& lock,
 
 bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
                          const std::string& alternate_name, int language_choice,
-                         const std::atomic<bool>* cancel, bool second_generation) {
+                         const std::atomic<bool>* cancel, bool second_generation,
+                         bool* changed = nullptr, bool force_refresh = false) {
+    if (changed) *changed = false;
     if (title_id == 0 || (cancel && cancel->load(std::memory_order_acquire))) return false;
     const bool had_cached = !CachedGamesDbSquare(title_id, second_generation).empty();
     const auto& index = RetailCaseIndex();
     const auto selected = FindCaseEntry(index, second_generation, name, alternate_name);
-    if (selected == index.end()) return had_cached;
+    if (selected == index.end()) return had_cached && !force_refresh;
     // Keep the four source tiers separate: a logo may not outrank a square
     // on its own platform, but does outrank every other-platform square.
     const auto candidates = LocaleCaseCandidates(selected->second[8], language_choice, 8);
@@ -1340,7 +1342,7 @@ bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
         std::defer_lock);
     if (!LockArtworkUnlessCancelled(square_guard, cancel)) return false;
     const std::string path = CaseFacePath(title_id, "square", second_generation);
-    const bool cached = !CachedGamesDbSquare(title_id, second_generation).empty();
+    const bool cached = !force_refresh && !CachedGamesDbSquare(title_id, second_generation).empty();
     std::string source;
     if (cached) {
         std::ifstream receipt(path + ".source");
@@ -1357,6 +1359,7 @@ bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
         const bool stop_at_cached = cached && existing != choices.end();
         if (stop_at_cached) choices.erase(existing, choices.end());
         if (FetchCaseFace(choices, path, false, cancel, tier % 2 == 0, tier % 2 == 1)) {
+            if (changed) *changed = true;
             done = true;
             break;
         }
@@ -2697,9 +2700,12 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
                                             const std::atomic<bool>* cancel) {
     if (!game.title_id || (cancel && cancel->load(std::memory_order_acquire)))
         return game;
+    const std::string rejected = game.artwork_rejected ? std::move(game.cover) : std::string{};
+    if (game.artwork_rejected) game.cover.clear();
     if (!game.cover.empty()) return game;
     const bool second_generation = UseNs2CaseIndex(game);
     game.cover = CachedNlibIcon(game.title_id);
+    if (game.cover == rejected) game.cover.clear();
     if (!game.cover.empty()) return game;
     {
         std::unique_lock title_lock{NlibTitleMutex(game.title_id), std::try_to_lock};
@@ -2708,6 +2714,7 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
             return game;
         }
         game.cover = CachedNlibIcon(game.title_id);
+        if (game.cover == rejected) game.cover.clear();
         if (game.cover.empty()) {
             char id[17]{};
             std::snprintf(id, sizeof(id), "%016llX", static_cast<unsigned long long>(game.title_id));
@@ -2721,10 +2728,14 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
     if (game.cover.empty() && !(cancel && cancel->load(std::memory_order_acquire))) {
         const auto* known = Eden::Ns2Catalog::Find(game.title_id);
         const std::string canonical = known ? std::string(known->name) : game.name;
+        bool changed = false;
+        const bool force_refresh = !rejected.empty() &&
+            rejected == CachedGamesDbSquare(game.title_id, second_generation);
         if (EnsureGamesDbSquare(game.title_id, canonical, game.name,
-                                Eden::LoadPreferences().language, cancel, second_generation)) {
+                                Eden::LoadPreferences().language, cancel, second_generation,
+                                &changed, force_refresh)) {
             game.cover = CachedGamesDbSquare(game.title_id, second_generation);
-            game.artwork_changed = !game.cover.empty();
+            game.artwork_changed = changed;
         }
     }
     return game;
@@ -2812,10 +2823,11 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     } else if (game.cover.empty() || game.cover == CachedGamesDbSquare(game.title_id, second_generation)) {
         const auto* known = Eden::Ns2Catalog::Find(game.title_id);
         const std::string canonical = known ? std::string(known->name) : scanned_name;
+        bool changed = false;
         if (EnsureGamesDbSquare(game.title_id, canonical, scanned_name,
-                                language_choice, cancel, second_generation)) {
+                                language_choice, cancel, second_generation, &changed)) {
             game.cover = CachedGamesDbSquare(game.title_id, second_generation);
-            game.artwork_changed |= !game.cover.empty();
+            game.artwork_changed |= changed;
         }
     }
     // Missing square icon remains empty only if Control/ExeFS, Nlib and GamesDB Square all miss.

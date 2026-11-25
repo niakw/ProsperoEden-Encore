@@ -93,6 +93,15 @@ int main() {
     assert(categorized[0] && *categorized[0] == indexed[3]);
     assert(categorized[1] && *categorized[1] == indexed[2]);
     assert(categorized[2] && *categorized[2] == indexed[1]);
+    const std::vector<std::string> banner{
+        "/cache/box-scene-1-FANART.webp", "/cache/box-scene-6-BANNER.webp",
+        "/cache/box-scene-3-GAMEPLAY.webp"};
+    const auto banner_pick = BackScenes(hero, icon, banner);
+    assert(banner_pick[0] == &banner[1]);
+    assert(banner_pick[2] == &banner[2]);
+    const auto bad_banner = BackScenes(hero, icon, banner,
+        [&](const std::string& image) { return image != banner[1]; });
+    assert(bad_banner[0] == &banner[0]);
     // Bad marker roles stay excluded from the Nlib fallback; only real
     // numbered LaunchBox categories may claim a reserved rear slot.
     const std::vector<std::string> role_noise{

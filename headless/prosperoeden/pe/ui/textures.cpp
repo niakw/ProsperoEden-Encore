@@ -321,6 +321,19 @@ Cover Textures::cover(const std::string &path, float size, bool urgent)
             it->second.aspect};
 }
 
+bool Textures::known_missing(const std::string &path) const
+{
+    if (path.empty()) return true;
+    bool failed = false;
+    for (int size = 64; size <= 2048; size *= 2) {
+        const auto it = covers_.find(path + '#' + std::to_string(size));
+        if (it == covers_.end()) continue;
+        if (it->second.texture != 0) return false;
+        failed |= it->second.loaded || it->second.failed_loads != 0;
+    }
+    return failed;
+}
+
 void Textures::invalidate(const std::string &path)
 {
     if (path.empty()) return;

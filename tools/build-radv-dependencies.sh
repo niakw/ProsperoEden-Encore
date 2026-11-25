@@ -99,6 +99,30 @@ if [[ $(uname -s) == Darwin ]]; then
 else
     bash "$vulkan/tools/setup-native-dependencies.sh"
 fi
+
+# Mesa's RADV profile forces the zlib fallback subproject for its shader
+# cache. Keep the exact 1.3.1 version requested by PS5_Mesa, but stage the
+# source + matching WrapDB Meson metadata from our pinned vendor instead of
+# allowing Meson to download zlib or its patch archive.
+radv_zlib_vendor="$root/vendor/sources/zlib-1.3.1"
+radv_zlib_stage="$vulkan/.deps/work/radv-src/subprojects/zlib-1.3.1"
+for required in zlib.h zconf.h zutil.c meson.build meson_options.txt test/meson.build; do
+    [[ -f "$radv_zlib_vendor/$required" ]] || {
+        echo "Vendored RADV zlib 1.3.1 closure is incomplete: $required" >&2
+        exit 2
+    }
+done
+grep -Fq "ZLIB_VERSION \"1.3.1\"" "$radv_zlib_vendor/zlib.h" || {
+    echo "Vendored RADV zlib source version mismatch" >&2
+    exit 2
+}
+rm -rf "$radv_zlib_stage"
+mkdir -p "$(dirname "$radv_zlib_stage")"
+cp -a "$radv_zlib_vendor" "$radv_zlib_stage"
+# No Meson wrap may contact an upstream server in the production PS5 build.
+# build-radv.sh preserves subprojects/zlib-* when refreshing its Mesa tree.
+export MESON_WRAP_MODE=nodownload
+
 # Meson may leave a partial directory after a failed host configure. A later
 # setup cannot reliably reuse it unless build.ninja was written.
 for partial in "$vulkan/.deps/work/radv-clc-build" "$vulkan/.deps/work/radv-build-ps5-release"; do

@@ -3784,3 +3784,25 @@ Ces handlers consomment l'ABI attendue mais retournent explicitement `ResultSecu
 **Inventaire physique attendu : 721 → 713 NULL / 6 447 slots.** Validation CI requise.
 
 Build PS5 et validation console : non exécutés.
+
+### 2026-11-26 — rapprochement du reliquat global et de l'inventaire physique
+
+Dernier bilan opérationnel rapporté (moteur `8777873e`, vendor `4a807c67`) : **689 / 4 853 entrées historiques à revoir = 392 NULL + 17 STUB + 153 PARTIEL + 118 ABI-DIFF + 9 AMBIGU** ; inventaire physique rapporté : **343 NULL / 6 670 slots**. Ce bilan reste un jalon historique, pas une certification de l'état courant.
+
+Au moteur `d36638114f70d4acdd58c4d0b079cf71b4441ad3`, gitlink `7be1675e767f5b41e1462dade2b8900ccf7e0706`, le comparatif Git des 33 commits vendor depuis ce jalon ne change pas les listes CMake ; le script d'inventaire moteur ne change que deux sentinelles. Les tables FunctionInfo des propriétaires modifiés ont été recomptées directement sur les deux révisions (IRS : source originale puis overlay du manifeste ; application_functions : propriétaire final partagé) :
+
+| Propriétaire | NULL avant | NULL après | Delta slots |
+|---|---:|---:|---:|
+| NS application manager | 156 | 12 | +22 |
+| NS content management | 1 | 0 | +1 |
+| VI application display | 1 | 0 | 0 |
+| PM | 3 | 0 | 0 |
+| Audio controller | 5 | 0 | 0 |
+| IRS | 1 | 0 | 0 |
+| AM application functions | 3 | 0 | 0 |
+
+LibraryAppletAccessor, HID system et PCTL : delta nul ; le self_controller backport n'est pas le propriétaire final. **Delta statique : -158 NULL, +23 slots. Projection physique sur le jalon rapporté : 185 / 6 693 (6 508 handlers raccordés).** Il s'agit d'un recomptage différentiel, pas d'une exécution complète de la gate ; aucune validation CI de ce nouveau chiffre n'est revendiquée.
+
+**Le catalogue détaillé n'est pas synchronisé avec ce jalon** : ses lignes portent encore 1 169 NULL, 172 PARTIEL, 2 STUB, 187 ABI-DIFF et 9 AMBIGU, soit 1 539 lignes ouvertes selon leurs étiquettes actuelles. Ce total documentaire obsolète ne remplace pas le bilan opérationnel historique de 689. Ne pas soustraire les 158 slots physiques au pool historique : les deux ensembles ne sont pas bijectifs, et les rejets explicites ne constituent pas automatiquement des implémentations. Le nouveau total fonctionnel exact requiert la réconciliation par service/interface/ID/version et classification des corps actifs, y compris les partiels, stubs et ABI.
+
+HEAD vendor de branche observé : `fb19607934561712877d3e00a45e2188cae9c4c3` (deux commits après le gitlink, PCTL et AM self-controller). Non repinné dans ce contrôle ; aucun changement C++ ni build PS5. Maintenir le suivi dans ce registre existant et ne pas remplacer un chiffre non qualifié par une estimation présentée comme exacte.

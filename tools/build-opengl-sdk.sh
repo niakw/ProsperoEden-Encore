@@ -371,7 +371,7 @@ done
 psbc_scripts=()
 python3 "$source_dir/tools/fetch-sources.py" --verify-psbc
 for cfg in "${psbc_configs[@]}"; do
-    mv -f "${cfg}.encore-backup.$" "$cfg"
+    mv -f "${cfg}.encore-backup.$$" "$cfg"
 done
 psbc_configs=()
 if [[ -n ${runtime_makefile_backup:-} && -f $runtime_makefile_backup ]]; then

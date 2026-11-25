@@ -153,6 +153,14 @@ if selected == "6d9fc80860ea4324b68b433492ad15e34c35a81d":
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "0ee1ae75649352ed8ddc79271202af9afca258b2"
     assert blob(V/"encore-active/eden-core/src/core/hle/service/sm/sm.cpp") == "2ef914e3f1b24442e1fa0130d5f8175111e7d316"
     expected.add(selected)
+# Keep FC27's shader SSBO owner proof intact: authenticate the new
+# vendor tree and only its exact Vulkan prewarm successor.
+if selected == "ea4d39d5c9bd17074292b8c6f229c53954f8e21e":
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "e87b8613fed706ae8f09ee50200c737812ade91c"
+    assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == "44b0edc24e847d4cbcd47de0ed86241787bda38a"
+    assert blob(V/"encore-active/eden-core/src/common/multi_level_page_table.cpp") == "6dd69f4b09aebc0eb7250975d35b34393e9f5516"
+    assert blob(V/"encore-active/eden-core/src/video_core/memory_manager.cpp") == "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86"
+    expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"

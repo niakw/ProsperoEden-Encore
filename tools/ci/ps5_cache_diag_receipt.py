@@ -332,6 +332,13 @@ DISTINCT_PREWARM_REVERSES = [
 ]
 
 def reverse_distinct_prewarm(source: str) -> str:
+    # Reverse only the exact FC27 prewarm policy on an in-memory audit copy.
+    if git_blob(source) == "44b0edc24e847d4cbcd47de0ed86241787bda38a":
+        new_policy = "    // FC27 PS5 25/11: 598 valid cached keys, only 128 restored in 704 ms,\n    // and 243 first-use translations during gameplay. Prebuild the newest\n    // 768 DISTINCT cached keys before guest Run when the existing file-size\n    // limit allows it. Keep the 32-entry prefix for large/absent caches;\n    // this changes no GPU barriers, shader output or draw ordering.\n    constexpr size_t kStartupPrewarmPipelines = 32;\n    constexpr size_t kRecentPrewarmPipelines = 768;"
+        old_policy = "    // For a modest, already populated cache, admit the newest 128 builders\n    // before gameplay; preserve the 32-entry prefix for large/absent caches.\n    // This shifts some first-use work to loading without skipping any draw.\n    constexpr size_t kStartupPrewarmPipelines = 32;\n    constexpr size_t kRecentPrewarmPipelines = 128;"
+        assert source.count(new_policy) == 1, "FC27 shader prewarm policy drift"
+        source = source.replace(new_policy, old_policy, 1)
+        assert git_blob(source) == "7db0462ad24aa4c6356ce4efa0086b356f171be6", "FC27 prewarm predecessor drift"
     if git_blob(source) == "7db0462ad24aa4c6356ce4efa0086b356f171be6":
         guard = "\n        // Disk records are untrusted: the six guest programs include both\n        // VertexA and VertexB, even though Vulkan exposes five graphics stages.\n        size_t env_index = 0;\n        for (size_t index = 0; index < key.unique_hashes.size(); ++index) {\n            if (key.unique_hashes[index] == 0) continue;\n            if (env_index == envs.size() ||\n                envs[env_index].ShaderStage() != (index == 0 ? Shader::Stage::VertexA\n                                                            : Shader::StageFromIndex(index - 1))) {\n                return;\n            }\n            ++env_index;\n        }\n        if (env_index == 0 || env_index != envs.size()) return;\n"
         capacity = "boost::container::static_vector<Shader::Environment*, Maxwell::MaxShaderProgram> env_ptrs;"

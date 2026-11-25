@@ -10,7 +10,8 @@
 
 Optional immutable source vault: vendor/source-vault (or PROSPEROEDEN_DEPS_VAULT).
 Verified blobs and Git bundles are preferred to all network fetching.
-PROSPEROEDEN_DEPS_OFFLINE=1 refuses network access when a pinned input is missing.
+Network access is refused by default when a pinned input is missing.
+Only explicit PROSPEROEDEN_DEPS_OFFLINE=0 permits upstream maintenance fetches.
 
 Nothing that already exists is modified: an existing checkout stays at whatever revision it
 has (status reports it), an existing file or folder is not downloaded again. Downloads are
@@ -35,7 +36,7 @@ CACHE = pathlib.Path(os.environ.get('PROSPEROEDEN_DEPS_CACHE') or
                      pathlib.Path(os.environ.get('XDG_CACHE_HOME') or pathlib.Path.home() / '.cache')
                      / 'prosperoeden-deps')
 VAULT = pathlib.Path(os.environ.get('PROSPEROEDEN_DEPS_VAULT') or ROOT / 'vendor').expanduser()
-OFFLINE = os.environ.get('PROSPEROEDEN_DEPS_OFFLINE', '').lower() in ('1', 'true', 'yes')
+OFFLINE = os.environ.get('PROSPEROEDEN_DEPS_OFFLINE', '1').strip() != '0'
 
 
 def vault_source(item):

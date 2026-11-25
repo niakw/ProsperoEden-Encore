@@ -60,7 +60,12 @@ print(f'VENDOR_COMPLETE_OK pinned={len(ITEMS)} source_roots={sum((V / 'sources' 
 import tempfile
 import sys
 sys.path.insert(0,str(ROOT/'tools'))
-import deps
+import os
+from unittest.mock import patch
+with patch.dict(os.environ):
+ os.environ.pop('PROSPEROEDEN_DEPS_OFFLINE',None)
+ import deps
+ assert deps.OFFLINE,'dependency loader must default to offline'
 with tempfile.TemporaryDirectory(prefix='eden-vendor-airgap-') as tmp:
  isolated=Path(tmp)
  # Keep the extra git dependency inside this temporary airgap, not in /tmp
@@ -69,7 +74,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vendor-airgap-') as tmp:
  os.environ['PROSPEROEDEN_GIT_DEPS_ROOT']=str(isolated/'repos')
  deps.ROOT=isolated
  deps.CACHE=isolated/'empty-source-cache'
- deps.OFFLINE=True
+ assert deps.OFFLINE
  for name in ('eden','fmt','compiler-rt','zbic','encore-overrides'):
   dep=next(x for x in ITEMS if x['name']==name)
   deps.fetch(dep)

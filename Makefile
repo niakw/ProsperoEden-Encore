@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # ProsperoEden build. `make` builds the release files in dist/; `make help` lists every target.
-# Missing dependencies are fetched at their pinned revisions (tools/deps.json); nothing that
-# already exists is changed. Release CI runs on Linux (Ubuntu 24.04); local PS5 builds also support Apple Silicon macOS.
+# Missing dependencies are restored offline at their pinned revisions (tools/deps.json).
+# Release CI runs on Linux (Ubuntu 24.04); local PS5 builds also support Apple Silicon macOS.
 
 SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
@@ -11,6 +11,9 @@ MAKEFLAGS += --no-print-directory
 # Parallel compile jobs.
 JOBS ?= $(shell (command -v nproc >/dev/null 2>&1 && nproc) || (command -v sysctl >/dev/null 2>&1 && sysctl -n hw.logicalcpu 2>/dev/null) || (command -v getconf >/dev/null 2>&1 && getconf _NPROCESSORS_ONLN 2>/dev/null) || echo 4)
 export EDEN_BUILD_JOBS := $(JOBS)
+# Normal native/host builds never acquire product sources from upstream.
+# Upstream maintenance is explicit and runs deps.py outside the Makefile.
+override export PROSPEROEDEN_DEPS_OFFLINE := 1
 # make dev: the title ID (16 hex digits) the development build boots.
 DEV_TITLE ?= $(shell cat .local/dev-profile-title 2>/dev/null)
 # make install: the console's address, and the port of its FTP server.

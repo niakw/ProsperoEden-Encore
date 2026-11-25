@@ -339,3 +339,12 @@ with tempfile.TemporaryDirectory(prefix='eden-gpu-thread-') as folder:
     failed = subprocess.run([str(temp / 'check'), 'throw'], capture_output=True, text=True, timeout=15)
     assert failed.returncode == 0 and '[ProsperoEden] GPU worker: injected worker failure' in failed.stderr
 print('Native GPU stack, stop/wake/join, creation failures and blocked-command teardown ordering/rejection PASS')
+
+# Native channel retirement must use a distinct worker FIFO command: a draw's
+# TickWork may execute inside the scheduler's shared epoch/execution leases.
+owner = (root / "vendor/encore-active/eden-core/src/video_core/gpu_vulkan.cpp").read_text()
+release = owner.split("void ReleaseChannel(Control::ChannelState& to_release) {", 1)[1].split("/// Binds a renderer", 1)[0]
+assert "gpu_thread.RetireChannelAtBoundary(" in release
+assert "scheduler.RetireChannel(owner.get());" in release
+assert "RequestSyncOperation(" not in release and "WaitForSyncOperation(" not in release
+assert release.index("scheduler.RetireChannel(owner.get());") < release.index("std::scoped_lock lock{channel_mutex};")

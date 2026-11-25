@@ -2516,6 +2516,8 @@ if(EDEN_PS5_OPENGL)
         list(REMOVE_ITEM video_sources macro.cpp)
         list(APPEND video_sources "${EDEN_MAINTAINED_MACRO}")
     endif()
+endif() # EDEN_PS5_OPENGL renderer-specific owners
+# R345 GPU worker ownership is platform-specific, not renderer-specific.
     # R345: PS5 compiles our versioned, complete GPU worker and queue sources.
     # No source-code string rewrites execute during native configuration.
     if(PS5_NATIVE)
@@ -2543,6 +2545,14 @@ if(EDEN_PS5_OPENGL)
         "${PORT_BUILD_DIR}/include/video_core/gpu_thread.h" COPYONLY)
     endif()
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
+if(PS5_NATIVE)
+    list(FIND video_sources "${PORT_BUILD_DIR}/gpu_thread.cpp" eden_native_worker_selected)
+    list(FIND video_sources "gpu_thread.cpp" eden_pinned_worker_selected)
+    if(eden_native_worker_selected LESS 0 OR NOT eden_pinned_worker_selected LESS 0)
+        message(FATAL_ERROR "Native GPU worker must be selected exactly from maintained source")
+    endif()
+endif()
+if(EDEN_PS5_OPENGL)
     # G20: select maintained normal/DEV guest GPU command processor units.
     # The DMA input already contains the shipping #4473/#4477 backport.
     set(EDEN_MAINTAINED_GUEST_GPU_ROOT

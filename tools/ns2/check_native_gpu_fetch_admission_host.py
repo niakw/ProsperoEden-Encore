@@ -37,13 +37,27 @@ for name in ('dma_pusher.cpp','dma_pusher_dev.cpp'):
     assert '#ifdef PS5_NATIVE' in step
     assert 'NativeGpfifoFetchMapped(' in step
     assert 'memory_manager.IsFullyMappedRange(addr, bytes)' in step
-    assert 'throw std::runtime_error("Native GPFIFO command unmapped at GPU fetch")' in step
+    # Shipping dma_pusher.cpp reports the native fault and rethrows through
+    # FailNativeSubmission; the dev-only variant retains a direct throw.
+    # Neither may silently return false and publish an unexecuted GPU fence.
+    fatal = 'Native GPFIFO command unmapped at GPU fetch'
+    if name == 'dma_pusher.cpp':
+        fatal_call = f'FailNativeSubmission("{fatal}");'
+        helper_body = source.split(
+            '[[noreturn]] void DmaPusher::FailNativeSubmission(const char* message) {', 1
+        )[1].split('\n}', 1)[0]
+        assert 'NativeGpuChannelRegistry::Instance().ReportFault(&channel_state);' in helper_body
+        assert 'std::rethrow_exception(error);' in helper_body
+        assert 'throw std::runtime_error(message);' in helper_body
+    else:
+        fatal_call = f'throw std::runtime_error("{fatal}");'
+    assert fatal_call in step
     assert 'return false;' in step.split('NativeGpfifoFetchMapped(',1)[1].split('if (subchannels[dma_state.subchannel]',1)[0]
     fetch=step.index('NativeGpfifoFetchMapped(')
     assert step.index('dma_state.dma_get = header.addr;') < fetch
     assert fetch < step.index('memory_manager.IsMemoryDirty(') < step.index('ProcessCommands(headers);')
     assert step.index('if (signal_sync && !synced)') < fetch
-    assert step.index('throw std::runtime_error(') < step.index('ProcessCommands(headers);')
+    assert step.index(fatal_call) < step.index('ProcessCommands(headers);')
     assert 'signal_sync = explicit_sync && user_sync;' in step
     assert 'NativeGpuChannelRegistry::Instance().IsNative(' in step
     assert 'if (header.size > 0) {' in step

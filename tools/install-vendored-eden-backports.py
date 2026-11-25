@@ -2991,6 +2991,66 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'physical_closed=1', 'functional=1', 'domain_object_clone=1',
               'new_session=1', 'invalid_object_fail_closed=1')
 
+        # Secondary NS surfaces without a Nintendo network/update backend.
+        # ContentManagement remains intentionally outside this batch.
+        ns_network_update_contracts = {
+            'src/core/hle/service/ns/ns.cpp':
+                (6454, '5f9670df67de8f4288692d15c310376b1b2f320fc93ff33149100417761d2663',
+                 '0f937e715ef2fbac9783e7b4e46003bade0eb1cf03ab33e78eac4256a6328f88'),
+            'src/core/hle/service/ns/download_task_interface.cpp':
+                (2049, 'b56bce3deba22e3d7f965c787627e27efff51713dcd78431f3410bfe9ccf1c88',
+                 'a5588bd78fb277ff6375862bab373732b57ca1cdfa5fa649b8ef25148b4f26b9'),
+            'src/core/hle/service/ns/download_task_interface.h':
+                (561, 'a3ceb02804c417f23158e0fc5107fa491a22bac986c34017521c1a5430191c11',
+                 '4ef0ad2bb1d1dfd96b9865acdadd3e889fca017aaf19b3ebe16db3981898c3f2'),
+            'src/core/hle/service/ns/ecommerce_interface.cpp':
+                (1470, '5f3e8428a386acd7590d532cd4bf9a417c9da2ed3d35f48cc5eb72d9fec55a8e',
+                 'bad57c16a64a90a48391ef960a8572b9206654080f944d682d586bd07ebd798c'),
+            'src/core/hle/service/ns/ecommerce_interface.h':
+                (473, '2aef8961396822751e941437cf3f89fd054146cd56f78f3fd1ec1f7407af0047',
+                 '76f9e9fc404c076a7ac9f85baa2797e826ecfc2802f0a27a8997ac5a07a52b4e'),
+            'src/core/hle/service/ns/system_update_interface.cpp':
+                (5626, '62dd45bd70a5f5e0ce112370130259673930b50cf9ca973529da2ac161811b6f',
+                 '0ee7723f6edd55c94aabc8e41c50696aa779922247df9931127f982e189cae72'),
+            'src/core/hle/service/ns/i_async_result.cpp':
+                (1175, '300ab1b8004dabdc2a312b347cd102537eda4133198306b498f9f531a0a519c5',
+                 None),
+            'src/core/hle/service/ns/i_async_result.h':
+                (508, 'b78df1e77b8144060afdb20eda17acbdf6b4fa2b4824ad1ad458c60b6c40fb0d',
+                 None),
+        }
+        ns_net_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel,(after_bytes,after_hash,upstream_hash) in ns_network_update_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('NS network/update active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('NS network/update manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert ns_net_cmake.count(rel.removeprefix('src/core/'))==1, ('NS network/update CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        ns_root=(ACTIVE/'src/core/hle/service/ns/ns.cpp').read_text()
+        ns_dl=(ACTIVE/'src/core/hle/service/ns/download_task_interface.cpp').read_text()
+        ns_ec=(ACTIVE/'src/core/hle/service/ns/ecommerce_interface.cpp').read_text()
+        ns_su=(ACTIVE/'src/core/hle/service/ns/system_update_interface.cpp').read_text()
+        ns_async=(ACTIVE/'src/core/hle/service/ns/i_async_result.cpp').read_text()
+        assert ns_root.count('&INotifyService::AcceptLocalPlayLogNotification')==7
+        assert ns_root.count('&INotifyService::UnsupportedDebugCommand')==6
+        assert ns_root.count('&IVulnerabilityManagerInterface::UnsupportedDebugCommand')==3
+        assert ns_dl.count('&IDownloadTaskInterface::RejectUnavailableDownloadTask')==7
+        assert ns_ec.count('&IECommerceInterface::RejectUnavailableECommerce')==7
+        assert ns_su.count('&ISystemUpdateInterface::RejectUnavailableSystemUpdateTransfer')==6
+        assert ns_async.count('&IAsyncResult::RejectUnavailableAsyncPayload')==2
+        for name,text_value in (
+            ('ns_root',ns_root),('ns_download',ns_dl),('ns_ecommerce',ns_ec),
+            ('ns_system_update',ns_su),('ns_async',ns_async),
+        ):
+            assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', text_value))==0, name
+        print('NS1_NS_NETWORK_UPDATE_788_SOURCE_PASS',
+              'physical_closed=28', 'notify_local_noop=1', 'fail_closed=27',
+              'content_management_untouched=1', 'application_manager_untouched=1')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

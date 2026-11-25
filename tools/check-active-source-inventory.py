@@ -1643,7 +1643,7 @@ if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
 else:
     assert post_f07_gpu_table_present == post_f07_gpu_table_owners
     page_table_bytes = (active / "eden-core/src/common/multi_level_page_table.cpp").read_bytes()
-    assert hashlib.sha1(b"blob " + str(len(page_table_bytes)).encode() + bytes([0]) + page_table_bytes).hexdigest() == "c55a55498fe300458800b646bfc295db11283b4a"
+    assert hashlib.sha1(b"blob " + str(len(page_table_bytes)).encode() + bytes([0]) + page_table_bytes).hexdigest() == "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f"
     assert 'list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")' in nov13_cmake
     assert 'list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")' in nov13_cmake
 print("ENCORE_POST_F07_GPU_PAGE_TABLE_OWNER_PASS", f"owners={len(post_f07_gpu_table_present)}")

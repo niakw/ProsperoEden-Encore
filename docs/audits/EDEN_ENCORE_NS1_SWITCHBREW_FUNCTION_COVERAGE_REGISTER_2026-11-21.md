@@ -3579,3 +3579,17 @@ Les deux lots sont couverts par manifestes SHA-256 actifs/upstream, vérificatio
 **Inventaire physique attendu : 1 282 → 1 198 NULL**. Validation CI de ce nouveau couple encore requise avant de considérer 1 198 comme confirmé. Le pool historique reste séparé jusqu'au rapprochement ligne-à-ligne.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — CAPS restant + PSC : palier 1 172 attendu
+
+Vendor final : `107de63757c661e3084fcd7acc4c3c1fabca536e` (arbre `48bb2d967c876ed188e25fa63d4a81f00872ed38`).
+
+À partir du palier **1 198 attendu**, **26 NULL physiques** supplémentaires sont retirés :
+- CAPS : **12** — contrôle JPEG 3, screenshot service 5, screenshot application 2, album application 2. Les chemins de sauvegarde/listage/image déjà implémentés ne sont pas remplacés ; seules les variantes sans backend sont fail-closed.
+- PSC : **14** — `psc:c` 9 et `IPmModule` 5. Ces commandes de power-state management n'ont pas de backend invité PS5 ; elles renvoient explicitement `ResultNotSupported` sans piloter l'alimentation hôte.
+
+Manifestes SHA-256 et sélection CMake sont verrouillés ; le moteur vérifie le nombre exact de bindings et l'absence de `nullptr` dans ces propriétaires.
+
+**Inventaire physique attendu : 1 198 → 1 172 NULL / 6 448 slots.** Validation CI du couple final requise avant de considérer 1 172 comme confirmé.
+
+Build PS5 et test console : non exécutés.

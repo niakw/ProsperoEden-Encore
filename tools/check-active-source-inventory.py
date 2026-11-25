@@ -88,6 +88,7 @@ stabilization_trees = {
     "824a7342a58ad50d399ac0b215155884ced474ea": "ea890f123433198c30141f9320dd10090d80ecdc",
     "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed": "b7548392480ec7bb16aafdcbb330a60834270d09",
     "29b91308ba1fc69978cd2cc39222fe7dc59b668c": "45e1f9d536403dfcb2136ff653bae2e07ba85fd4",
+    "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea": "62a3bdbad43931dd19494fc24cb57bf5389211b8",
 }
 
 # The FC27 collected-write successor changes only lock acquisition placement.
@@ -1612,6 +1613,54 @@ post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
 # The tracker workflow also explicitly tests historical vendor 1ec7b42.
 # Only that known historical checkout (not a missing production TU) may omit it.
 gpu_table_vendor_pin = checked_guest_cache_lock_vendor(subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip())
+if gpu_table_vendor_pin == "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea":
+    assert subprocess.check_output(
+        ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
+        text=True,
+    ).strip() == "62a3bdbad43931dd19494fc24cb57bf5389211b8"
+    for relative, expected in {
+        "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h":
+            "8c93a3d6aef8a45f85cb9c2344e3427daff4d131",
+        "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/service_creator.h":
+            "de582d12ef1025735a741817ac4e365f59789809",
+        "encore-active/eden-core/src/core/hle/service/bcat/delivery_cache_storage_service.cpp":
+            "9f98f2da3f865da69399467133436e64e4e4d67b",
+        "encore-active/eden-core/src/core/hle/service/bcat/service_creator.cpp":
+            "1635bc091413a2f118b166216f91410b6338686d",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
+            "576a9d697da398aa6f42901b1764aa7574155411",
+        "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+            "9c35b43bc4f61d67395897fb63fce57419bc3331",
+        "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h":
+            "a22b96c04f6f06aef36c36857dcf124521ca2cb7",
+    }.items():
+        raw = (root / "vendor" / relative).read_bytes()
+        actual = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        assert actual == expected, ("NS2 semaphore successor drift", relative, actual)
+    assert subprocess.check_output(
+        ["git", "hash-object", str(root / "vendor" /
+         "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp")],
+        text=True,
+    ).strip() == "44b0edc24e847d4cbcd47de0ed86241787bda38a"
+    assert subprocess.check_output(
+        ["git", "hash-object", str(root / "vendor" /
+         "encore-active/eden-core/src/common/multi_level_page_table.cpp")],
+        text=True,
+    ).strip() == "87eed0b2319c719d27332c8e24f97a73e496f108"
+    assert subprocess.check_output(
+        ["git", "hash-object", str(root / "vendor" /
+         "encore-active/eden-core/src/video_core/memory_manager.cpp")],
+        text=True,
+    ).strip() == "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86"
+    assert subprocess.check_output(
+        ["git", "hash-object", str(root / "src/memory_pages.cpp")],
+        text=True,
+    ).strip() == "e90dd13badd48257c25db6317cc523f97b92e1e6"
+    # These seven objects are the only successor delta. Every historic active
+    # source classification below therefore reuses the qualified 29b profile.
+    gpu_table_vendor_pin = "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac"
 # The shipping vendor successor modifies only the SM teardown order.
 # Authenticate the entire new tree and its unique changed C++ blob before
 # reusing the predecessor's byte-identical GPU/FC27 source-owner receipts.

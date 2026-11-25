@@ -161,6 +161,37 @@ if selected == "ea4d39d5c9bd17074292b8c6f229c53954f8e21e":
     assert blob(V/"encore-active/eden-core/src/common/multi_level_page_table.cpp") == "6dd69f4b09aebc0eb7250975d35b34393e9f5516"
     assert blob(V/"encore-active/eden-core/src/video_core/memory_manager.cpp") == "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86"
     expected.add(selected)
+# NS2 queue-semaphore + BCAT successor. The complete vendor tree and all
+# seven changed objects are sealed here; the FC27 runtime owners remain exact.
+if selected == "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea":
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "62a3bdbad43931dd19494fc24cb57bf5389211b8"
+    for relative, digest in {
+        "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h":
+            "8c93a3d6aef8a45f85cb9c2344e3427daff4d131",
+        "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/service_creator.h":
+            "de582d12ef1025735a741817ac4e365f59789809",
+        "encore-active/eden-core/src/core/hle/service/bcat/delivery_cache_storage_service.cpp":
+            "9f98f2da3f865da69399467133436e64e4e4d67b",
+        "encore-active/eden-core/src/core/hle/service/bcat/service_creator.cpp":
+            "1635bc091413a2f118b166216f91410b6338686d",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
+            "576a9d697da398aa6f42901b1764aa7574155411",
+        "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+            "9c35b43bc4f61d67395897fb63fce57419bc3331",
+        "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h":
+            "a22b96c04f6f06aef36c36857dcf124521ca2cb7",
+    }.items():
+        assert blob(V / relative) == digest, relative
+    assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == "44b0edc24e847d4cbcd47de0ed86241787bda38a"
+    assert blob(V/"encore-active/eden-core/src/common/multi_level_page_table.cpp") == "87eed0b2319c719d27332c8e24f97a73e496f108"
+    assert blob(V/"encore-active/eden-core/src/video_core/memory_manager.cpp") == "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86"
+    assert blob(ROOT/"src/memory_pages.cpp") == "e90dd13badd48257c25db6317cc523f97b92e1e6"
+    assert blob(V/"tests/fc27_xmad_pointer_fold_host.py") == "2456b50bfecf8e25b2f725cff59f823abf3f4e3d"
+    assert blob(V/"tests/fc27_dynamic_texture_static_sampler_host.py") == "dbf70f23a25cc97d2425f968fb536a92ceaec84e"
+    assert blob(V/"tests/ns1_r23_35_attribute_handle.py") == "5ee069608e164e0f97a5c38f8c9345823250bbb9"
+    expected.add(selected)
 # Native GPU sparse table commits now expose a recoverable OOM.
 # Verify exact selected tree, shader, GPU table and engine allocator owner.
 if selected in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:

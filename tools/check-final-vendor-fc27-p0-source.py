@@ -113,6 +113,58 @@ REVIEWED_PINS.add("82634fc0f2b2c7ffab2dbb50e658b20f911dbd16")
 REVIEWED_PINS.add("720bdb0e81c57462338be480cecae13f2e205110")
 REVIEWED_PINS.add("bde537edf37e1f21e483993ca8582f44ff0f5555")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
+# 12cd57b is the exact successor of the qualified 29b91308 profile:
+# four BCAT owners plus the three active NS2 queue-semaphore owners changed.
+# Seal the complete tree and every changed blob before replaying predecessor
+# receipts for all byte-identical FC27/P0 owners.
+if selected == "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea":
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "62a3bdbad43931dd19494fc24cb57bf5389211b8"
+    for relative, expected in {
+        "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h":
+            "8c93a3d6aef8a45f85cb9c2344e3427daff4d131",
+        "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/service_creator.h":
+            "de582d12ef1025735a741817ac4e365f59789809",
+        "encore-active/eden-core/src/core/hle/service/bcat/delivery_cache_storage_service.cpp":
+            "9f98f2da3f865da69399467133436e64e4e4d67b",
+        "encore-active/eden-core/src/core/hle/service/bcat/service_creator.cpp":
+            "1635bc091413a2f118b166216f91410b6338686d",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
+            "576a9d697da398aa6f42901b1764aa7574155411",
+        "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+            "9c35b43bc4f61d67395897fb63fce57419bc3331",
+        "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h":
+            "a22b96c04f6f06aef36c36857dcf124521ca2cb7",
+    }.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        assert actual == expected, ("12cd57b successor drift", relative, actual)
+    for relative, expected in {
+        "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp":
+            "44b0edc24e847d4cbcd47de0ed86241787bda38a",
+        "encore-active/eden-core/src/common/multi_level_page_table.cpp":
+            "87eed0b2319c719d27332c8e24f97a73e496f108",
+        "encore-active/eden-core/src/video_core/memory_manager.cpp":
+            "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86",
+        "tests/fc27_xmad_pointer_fold_host.py":
+            "2456b50bfecf8e25b2f725cff59f823abf3f4e3d",
+        "tests/fc27_dynamic_texture_static_sampler_host.py":
+            "dbf70f23a25cc97d2425f968fb536a92ceaec84e",
+        "tests/ns1_r23_35_attribute_handle.py":
+            "5ee069608e164e0f97a5c38f8c9345823250bbb9",
+    }.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        assert actual == expected, ("12cd57b inherited owner drift", relative, actual)
+    assert subprocess.check_output(
+        ["git", "hash-object", str(ROOT / "src/memory_pages.cpp")], text=True
+    ).strip() == "e90dd13badd48257c25db6317cc523f97b92e1e6"
+    REVIEWED_PINS.add(selected)
 # Successor from R457: exactly four reviewed files changed (NVDRV
 # shutdown owner, VI2 event owner and their existing source contracts).
 # Seal the complete vendor tree and changed blobs BEFORE extending the
@@ -169,6 +221,10 @@ if selected in {"7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "6d9fc80860ea4324b68
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
 shipping_vendor_pin = gitlink_vendor_pin
+if actual_vendor_pin == "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea":
+    # The exact successor tree/blobs are sealed above. Reuse the 29b91308
+    # historical receipt graph for every owner that is byte-identical.
+    selected = "29b91308ba1fc69978cd2cc39222fe7dc59b668c"
 
 # Warning-cleanup successor of 82634fc0: authenticate the full vendor tree
 # and every changed/shipping-relevant object before replaying predecessor
@@ -1487,6 +1543,21 @@ if actual_vendor_pin in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e12
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
 
 def reviewed_blob(relative, expected):
+    # The 12cd57b successor changes these three runtime GPU owners in addition
+    # to BCAT. They were sealed against the exact vendor tree above; expose
+    # their current identities while older receipt chains replay unchanged
+    # owners from the qualified 29b91308 profile.
+    if actual_vendor_pin == "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea":
+        semaphore_successor = {
+            "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
+                "576a9d697da398aa6f42901b1764aa7574155411",
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+                "9c35b43bc4f61d67395897fb63fce57419bc3331",
+            "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h":
+                "a22b96c04f6f06aef36c36857dcf124521ca2cb7",
+        }
+        if relative in semaphore_successor:
+            return semaphore_successor[relative]
     # Exact NVDRV A:9 rollback successor: no other selected owner changed.
     if gitlink_vendor_pin in {"82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555"}:
         fixed_vm = {

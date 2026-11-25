@@ -1258,12 +1258,19 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # positive with a native nullptr. Reverse CPP+header exactly.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
         ns_latest = (ACTIVE / ns_rel).read_bytes()
-        assert len(ns_latest) == 69513 and sha(ns_latest) == '1c0af884c3144a0b8bf9ef798c5fe918706e4abe5e7b32557b5b4a72800aaa84'
+        assert len(ns_latest) == 69568 and sha(ns_latest) == '4e56c70f94896da6ddbd885bb178091b367c8de5b76b0bca0ca624ee6d4d0ee0'
         assert spec['entries'][ns_rel]['active'] == sha(ns_latest)
+        ns_view_pointer = '{3, D<&IApplicationManagerInterface::GetApplicationViewDeprecated>, "GetApplicationViewDeprecated"},'
+        ns_view_pointer_old = '{3, nullptr, "GetApplicationViewDeprecated"},'
+        ns_text = ns_latest.decode('utf-8')
+        assert ns_text.count(ns_view_pointer) == 1
+        ns_text = ns_text.replace(ns_view_pointer, ns_view_pointer_old, 1)
+        ns_latest_cmd92 = ns_text.encode('utf-8')
+        assert len(ns_latest_cmd92) == 69513 and sha(ns_latest_cmd92) == '1c0af884c3144a0b8bf9ef798c5fe918706e4abe5e7b32557b5b4a72800aaa84'
         ns_method = "Result IApplicationManagerInterface::GetRunningApplicationProgramId(\n    Out<u64> out_program_id) {\n    auto* const window_system = system.GetAppletManager().GetWindowSystem();\n    R_UNLESS(window_system != nullptr, AM::ResultApplicationRecordNotFound);\n    const auto applet = window_system->GetMainApplet();\n    R_UNLESS(applet != nullptr, AM::ResultApplicationRecordNotFound);\n\n    *out_program_id = applet->program_id;\n    R_SUCCEED();\n}\n\n"
         ns_pointer = '{92, D<&IApplicationManagerInterface::GetRunningApplicationProgramId>, "GetRunningApplicationProgramId"},'
         ns_pointer_old = '{92, nullptr, "GetRunningApplicationProgramId"},'
-        ns_text = ns_latest.decode('utf-8')
+        ns_text = ns_latest_cmd92.decode('utf-8')
         assert ns_text.count(ns_method) == 1 and ns_text.count(ns_pointer) == 1
         ns_text = ns_text.replace(ns_method, '', 1).replace(ns_pointer, ns_pointer_old, 1)
         ns_owner_prior = ns_text.encode('utf-8')
@@ -1279,7 +1286,8 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         assert ns_header_prior == (stage / ns_header_rel).read_bytes(), 'NS native header source mismatch'
         observed[ns_header_rel] = spec['entries'][ns_header_rel]
         print('NS1_NS_RUNNING_PROGRAMID_EXACT_REVERSE_PASS',
-              'real_applet_identity=1', 'fake_cpp_implementation_receipt_fixed=1')
+              'real_applet_identity=1', 'fake_cpp_implementation_receipt_fixed=1',
+              'application_view_deprecated_bound=1')
 
         # NS1 rights-environment system services lack a PS5 entitlement
         # manager. Fail closed using the existing NS error handler. Reverse

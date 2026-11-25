@@ -1192,9 +1192,67 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # online, firmware-debug and remote migration requests. Retain the
         # previously reviewed 45 real local handlers and reverse this layer
         # first so the historical ACC replay remains strict.
-        acc_current = (ACTIVE / acc_rel).read_bytes()
-        assert len(acc_current) == 95439 and sha(acc_current) == '71c34670cc93158e954ac7a04b3b52cbe60306aaf5c6948ce50ca2ee663d2595'
+        acc_newest = (ACTIVE / acc_rel).read_bytes()
+        assert len(acc_newest) == 102756 and sha(acc_newest) == '933ea9c58805cb783518ae3b49a420885d15e8c874a0496efc59792e99c9e9f9'
+        assert spec['entries'][acc_rel]['active'] == sha(acc_newest)
+        assert spec['entries'][acc_rel]['bytes'] == len(acc_newest)
         import re
+
+        remaining_acc_owners = {
+            'INotifier':1, 'IManagerForApplication':2, 'ACC_SU':18, 'ACC_U0':6,
+            'ACC_U1':22, 'ACC_E':23, 'ACC_E_U1':7, 'ACC_E_U2':12,
+        }
+        newest_lines = acc_newest.decode('utf-8').splitlines(keepends=True)
+        remaining_owner = ''
+        remaining_counts = dict.fromkeys(remaining_acc_owners, 0)
+        for i, line in enumerate(newest_lines):
+            class_match = re.match(r'^class ([A-Za-z0-9_]+) final', line)
+            if class_match:
+                remaining_owner = class_match.group(1)
+            if line.startswith('void LoopProcess'):
+                remaining_owner = ''
+            if remaining_owner not in remaining_acc_owners:
+                continue
+            pointer = '&' + remaining_owner + '::RejectUnsupportedRemainingAccountCommand'
+            if pointer in line:
+                assert line.count(pointer) == 1
+                newest_lines[i] = line.replace(pointer, 'nullptr', 1)
+                remaining_counts[remaining_owner] += 1
+        assert remaining_counts == remaining_acc_owners
+
+        remaining_method = (
+            '\nprivate:\n'
+            '    void RejectUnsupportedRemainingAccountCommand(HLERequestContext& ctx) {\n'
+            '        // Local profile/user commands already implemented above remain untouched.\n'
+            '        // Remaining entries require Nintendo Account, notification, PIN policy,\n'
+            '        // debug, thumbnail or firmware services not modeled by Encore.\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(IPC::ResultNotSupported);\n'
+            '    }\n'
+        )
+        acc_reconstructed = ''.join(newest_lines)
+        assert acc_reconstructed.count(remaining_method) == 8
+        acc_reconstructed = acc_reconstructed.replace(remaining_method, '')
+
+        dummy_pointer = '&ISessionObject::AcceptDummy'
+        assert acc_reconstructed.count(dummy_pointer) == 1
+        acc_reconstructed = acc_reconstructed.replace(dummy_pointer, 'nullptr', 1)
+        dummy_method = (
+            '\nprivate:\n'
+            '    void AcceptDummy(HLERequestContext& ctx) {\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(ResultSuccess);\n'
+            '    }\n'
+        )
+        assert acc_reconstructed.count(dummy_method) == 1
+        acc_reconstructed = acc_reconstructed.replace(dummy_method, '', 1)
+        acc_current = acc_reconstructed.encode('utf-8')
+        assert len(acc_current) == 95439 and sha(acc_current) == '71c34670cc93158e954ac7a04b3b52cbe60306aaf5c6948ce50ca2ee663d2595'
+        assert len(re.findall(rb'\{\s*\d+\s*,\s*nullptr\s*,', acc_newest)) == 0
+        print('NS1_ACC_REMAINING_EXACT_REVERSE_PASS',
+              'physical_closed=92', 'fail_closed=91', 'dummy_success=1',
+              'local_profile_handlers_preserved=1')
+
         offline_commands = {"ACC_E":[99,103,105,106,151,152,170,210,211,212,213,214,215,230,251,290,291,292,293,299,350,351,352,353,900,901,902,910,997,998,999,10105],"ACC_E_U1":[99,103,105,106,151,152,170,997,998,999],"ACC_E_U2":[99,103,105,106,151,152,170,997,998,999]}
         offline_lines = acc_current.decode('utf-8').splitlines(keepends=True)
         offline_owner = ''
@@ -1236,8 +1294,8 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         assert acc_rel in observed and acc_rel in spec['entries']
         assert len(acc_before) == 91522 and sha(acc_before) == 'fd20d50067f508f246e7857f9d92cb634a8bc07584ae02a4c191502cf6c181c6'
         assert len(acc_after) == 92665 and sha(acc_after) == 'ea76666ba632cf71542eb38b9a9468a608ef2de769b5d152dd9f9c8501ee07a5'
-        assert spec['entries'][acc_rel]['active'] == sha(acc_current)
-        assert spec['entries'][acc_rel]['bytes'] == len(acc_current)
+        assert spec['entries'][acc_rel]['active'] == sha(acc_newest)
+        assert spec['entries'][acc_rel]['bytes'] == len(acc_newest)
         import re
         acc_bindings = {"ACC_E":{"0":"GetUserCount","1":"GetUserExistence","2":"ListAllUsers","3":"ListOpenUsers","4":"GetLastOpenedUser","5":"GetProfile","50":"IsUserRegistrationRequestPermitted","51":"TrySelectUserWithoutInteractionDeprecated","52":"TrySelectUserWithoutInteraction","102":"GetBaasAccountManagerForSystemService","110":"StoreSaveDataThumbnailSystem","111":"ClearSaveDataThumbnail","112":"LoadSaveDataThumbnail","113":"GetSaveDataThumbnailExistence","140":"ListQualifiedUsers"},"ACC_E_U1":{"0":"GetUserCount","1":"GetUserExistence","2":"ListAllUsers","3":"ListOpenUsers","4":"GetLastOpenedUser","5":"GetProfile","50":"IsUserRegistrationRequestPermitted","51":"TrySelectUserWithoutInteractionDeprecated","102":"GetBaasAccountManagerForSystemService","110":"StoreSaveDataThumbnailSystem","111":"ClearSaveDataThumbnail","112":"LoadSaveDataThumbnail","113":"GetSaveDataThumbnailExistence","140":"ListQualifiedUsers"},"ACC_E_U2":{"0":"GetUserCount","1":"GetUserExistence","2":"ListAllUsers","3":"ListOpenUsers","4":"GetLastOpenedUser","5":"GetProfile","50":"IsUserRegistrationRequestPermitted","51":"TrySelectUserWithoutInteractionDeprecated","52":"TrySelectUserWithoutInteraction","102":"GetBaasAccountManagerForSystemService","110":"StoreSaveDataThumbnailSystem","111":"ClearSaveDataThumbnail","112":"LoadSaveDataThumbnail","113":"GetSaveDataThumbnailExistence","140":"ListQualifiedUsers","205":"GetProfileEditor"}}
         lines = acc_after.decode('utf-8').splitlines(keepends=True)
@@ -2726,6 +2784,41 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         print('NS1_LDN_MONITOR_NCM_MEMORY_SOURCE_PASS',
               'physical_closed=18', 'ldn_monitor=17', 'ncm_memory=1',
               'ldn_core_backend_untouched=1', 'ncm_path_resolvers_untouched=1')
+
+        # AOC: retain process-based local DLC Count/List/BaseId/Prepare paths and
+        # close only application-id/debug/host/cache extensions without a backend.
+        aoc_contracts = {
+            'src/core/hle/service/aoc/addon_content_manager.cpp':
+                (9681, '3993f73ae8a466ea0a5c3d2be55c85dfaec86d0ea6f70a9ed54bce61dde25818',
+                 'b09d37fd974e17f55f6425836d2e7f981755ed005e617d1ebda1f0cbf45edfe9'),
+            'src/core/hle/service/aoc/addon_content_manager.h':
+                (1812, '77450091cbe4d57b827b2c7f7d10f1d118b58fbb2bcf14c5cec2025286cb32b8',
+                 '0bfabeb189026b2ebc9b4c0ad12cff9e919c46b7b67ae2ebeef895cfb8df3b52'),
+        }
+        aoc_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel,(after_bytes,after_hash,upstream_hash) in aoc_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('AOC active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('AOC manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert aoc_cmake.count(rel.removeprefix('src/core/'))==1, ('AOC CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        aoc_cpp=(ACTIVE/'src/core/hle/service/aoc/addon_content_manager.cpp').read_text()
+        assert aoc_cpp.count('&IAddOnContentManager::RejectUnsupportedAocExtension')==11
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', aoc_cpp))==0
+        for local_handler in (
+            'D<&IAddOnContentManager::CountAddOnContent>',
+            'D<&IAddOnContentManager::ListAddOnContent>',
+            'D<&IAddOnContentManager::GetAddOnContentBaseId>',
+            'D<&IAddOnContentManager::PrepareAddOnContent>',
+        ):
+            assert aoc_cpp.count(local_handler)>=1, local_handler
+        print('NS1_ACC_AOC_SUB1000_SOURCE_PASS',
+              'physical_closed=103', 'acc=92', 'aoc=11',
+              'acc_fail_closed=91', 'real_local_dlc_preserved=1')
 
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))

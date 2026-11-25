@@ -3593,3 +3593,19 @@ Manifestes SHA-256 et sélection CMake sont verrouillés ; le moteur vérifie le
 **Inventaire physique attendu : 1 198 → 1 172 NULL / 6 448 slots.** Validation CI du couple final requise avant de considérer 1 172 comme confirmé.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — GLUE + SET : palier 1 131 attendu
+
+Base **CI confirmée** : vendor `107de63757c661e3084fcd7acc4c3c1fabca536e`, **1 172 NULL / 6 447 slots**.
+
+Vendor successeur : `c499a3118340dc899091f9c98a2d03da584fceda` (arbre `fbe0b68dd71f404db49d090add4f8d89dd0b9d03`).
+
+**41 NULL physiques** supplémentaires sont retirés :
+- GLUE **26** : ARP 7 commandes sans backend complémentaire fail-closed ; ECTX 7, dont `ectx:w::CreateContextRegistrar` raccordé au vrai `IContextRegistrar` existant et 6 opérations de stockage/lecture non modélisées fail-closed ; NOTIF 12 extensions inbox/presentation modernes fail-closed, tout en préservant le CRUD AlarmSetting et les paramètres d'application déjà stockés.
+- SET **15** : `Get/SetForceMonauralOutputFlag` sont deux handlers fonctionnels HOS17+ avec état invité ; les 13 commandes modernes restantes sans ABI/backend local qualifié renvoient explicitement `ResultNotSupported`.
+
+Le contrat moteur exige zéro `nullptr` dans ARP/ECTX/NOTIF/SET, les nombres exacts de bindings, les hashes actifs/upstream et la sélection CMake. Les fonctions existantes de notification et settings ne sont pas remplacées.
+
+**Inventaire physique attendu : 1 172 → 1 131 NULL.** Validation CI du couple requise avant confirmation.
+
+Build PS5 et test console : non exécutés.

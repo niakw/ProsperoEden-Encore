@@ -45,7 +45,10 @@ assert 'python3 "$source_dir/tools/fetch-sources.py"\n' not in builder
 assert 'python3 "$source_dir/tools/fetch-sources.py" --verify-psbc' in builder
 for required in ("git','-C',str(checkout),'apply','--index'",
                  "patch['patched_tree']", "tarfile.open(target)",
-                 "Wrong vendored Mesa source version after extraction"):
+                 "mesa_complete=", "shutil.rmtree(directory)",
+                 "sdk_complete=", "shutil.rmtree(sdk)",
+                 "Wrong vendored Mesa source version after extraction",
+                 "Wrong vendored zlib 1.3.2 after repair"):
     assert required in stager, required
 for forbidden in ('git clone --quiet', 'git -C "$template" fetch', 'setup-native-dependencies.sh'):
     assert forbidden not in builder, f"standard OpenGL builder retained network/bootstrap fallback: {forbidden}"

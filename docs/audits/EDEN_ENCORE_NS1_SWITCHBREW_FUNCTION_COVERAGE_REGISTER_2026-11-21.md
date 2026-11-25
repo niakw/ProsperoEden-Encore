@@ -3712,3 +3712,15 @@ Contrats moteur : SHA-256 upstream/active, sélection CMake, bindings exacts, ab
 **Inventaire physique attendu : 833 → 817 NULL / 6 447 slots.** Validation CI encore requise avant de considérer 817 comme confirmé.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — SM CopyFromCurrentDomain fonctionnel : palier 816 attendu
+
+Vendor `d461fda9a65f10e409ec50eb6b92396990bbac9c` (arbre `3b4f899dc57739e68b74d9bbb08db6e3081f8dda`).
+
+Le dernier `nullptr` physique de la famille SM, `IpcController::CopyFromCurrentDomain` cmd1, est remplacé par une implémentation réelle : validation du domaine et de l'ObjectId, récupération du `DomainHandler` existant puis création d'une nouvelle session via `HLERequestContext::AddMoveInterface`. Les ObjectId invalides échouent sans créer de session. La sémantique suit le gestionnaire HIPC amont : le même objet de domaine est exposé via un nouveau handle de session.
+
+Contrats moteur : SHA-256 upstream/active, sélection CMake, binding cmd1 exact, présence des contrôles ObjectId/DomainHandler/AddMoveInterface et absence de `nullptr` dans le propriétaire.
+
+**Inventaire physique attendu : 817 → 816 NULL / 6 447 slots.** Ce slot est fonctionnel, pas fail-closed. Validation CI du couple final encore requise.
+
+Build PS5 et validation console : non exécutés.

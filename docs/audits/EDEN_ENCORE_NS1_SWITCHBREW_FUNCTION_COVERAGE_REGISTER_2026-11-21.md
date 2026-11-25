@@ -3552,3 +3552,13 @@ Les cmd1/2/3/6, retirées après HOS6.2, et les six slots 30/31/100/110/118/119 
 **Inventaire physique attendu : 1 297 → 1 284 `nullptr`** après le lot idle:sys. Sur ces 13 slots, **3 sont des bindings fonctionnels** et 10 sont fail-closed. Le pool historique reste **689 / 4 853** jusqu'au rapprochement exact des commandes legacy/V0.
 
 Build PS5 et test console : non exécutés.
+
+### 2026-11-25 — PSM cmd16/18 : événements batterie réels
+
+Vendor `4a68cca38b2622d2250931b74ac524a7fe580d2d` (arbre `14d126aff067eace98f8fb9c8823109ed10b491a`). Les commandes `GetBatteryChargeInfoEvent` et `GetBatteryChargeCalibratedEvent` passent de `nullptr` à deux Event handles Horizon stables.
+
+`BatteryChargeInfoEvent` est signalé uniquement lorsque les politiques déjà émulées modifient réellement un champ de `BatteryChargeInfoFields` : activation/désactivation de la charge, alimentation contrôleur et charge rapide. `BatteryChargeCalibratedEvent` reste valide mais non signalé, faute de producteur matériel de calibration Switch. Les deux événements sont créés/fermés par le ServiceContext PSM ; aucun événement de batterie PS5 n'est fabriqué.
+
+Le replay moteur vérifie les SHA-256 source/active, le CMake, les deux bindings, les deux créations/fermetures et six sites de signal charge-info. **Inventaire physique attendu : 1 284 → 1 282 `nullptr`.** Les deux slots sont des handlers fonctionnels.
+
+Build PS5 et validation console : non exécutés.

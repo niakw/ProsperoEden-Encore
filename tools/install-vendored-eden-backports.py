@@ -3051,6 +3051,60 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'physical_closed=28', 'notify_local_noop=1', 'fail_closed=27',
               'content_management_untouched=1', 'application_manager_untouched=1')
 
+        # Socket extensions/configuration only. Keep the real BSD and NSD
+        # resolution data paths unchanged; SFDNSRES stays outside this batch.
+        socket_extension_contracts = {
+            'src/core/hle/service/sockets/bsd.cpp':
+                (41664, '858b000653de1fd3a45b057bb754926aad604b3058561a03130c6daeb0f2a320',
+                 '004e86b418c9124a815d1811a730a0421bc741fb880bbc4488b100646a8c5f9a'),
+            'src/core/hle/service/sockets/bsd.h':
+                (6846, '6e0ba16404e9b909c9e9eca55537f5fd9c1ee9ca11bac8819306d929a88b703a',
+                 'b391fb3745d9d041e8c8041a08035ea67f407d371d47b682aa256197f672bf89'),
+            'src/core/hle/service/sockets/sockets.cpp':
+                (4947, 'fd417dea994905c9ead67613cfeb2ecedb795c7a8503c63fe9fecccea080596f',
+                 'c998e93145a5103d85c7fea515a38e0a7770996f090bf2bdfa4f8d2e97337752'),
+            'src/core/hle/service/sockets/nsd.cpp':
+                (6209, 'e55efe96620d6b6cce9f98b02ed3ca5239e755a4db0edc329455989c2da6b73e',
+                 '706b5751eda10aa9219a720222e1ca21bda043fe38dea478b98ac643d8b880cf'),
+        }
+        sockets_cmake=(ACTIVE/'src/core/CMakeLists.txt').read_text()
+        for rel,(after_bytes,after_hash,upstream_hash) in socket_extension_contracts.items():
+            current=(ACTIVE/rel).read_bytes()
+            assert len(current)==after_bytes and sha(current)==after_hash, ('socket extension active drift',rel)
+            assert spec['entries'][rel] == {
+                'active':after_hash, 'bytes':after_bytes, 'upstream':upstream_hash
+            }, ('socket extension manifest drift',rel)
+            if rel.endswith('.cpp'):
+                assert sockets_cmake.count(rel.removeprefix('src/core/'))==1, ('socket extension CMake drift',rel)
+            observed[rel]=spec['entries'][rel]
+
+        bsd=(ACTIVE/'src/core/hle/service/sockets/bsd.cpp').read_text()
+        sockets_root=(ACTIVE/'src/core/hle/service/sockets/sockets.cpp').read_text()
+        nsd=(ACTIVE/'src/core/hle/service/sockets/nsd.cpp').read_text()
+        assert bsd.count('&BSD_USA::RejectUnsupportedBsdExtension')==20
+        assert bsd.count('&BSDCFG::HostNetworkNoop')==16
+        assert bsd.count('&BSD_NU::RejectUnsupportedUserServiceFactory')==1
+        for real_bsd_handler in (
+            '&BSD_USA::Socket', '&BSD_USA::Select', '&BSD_USA::Poll',
+            '&BSD_USA::Recv', '&BSD_USA::RecvFrom', '&BSD_USA::Send',
+            '&BSD_USA::SendTo', '&BSD_USA::Accept', '&BSD_USA::Bind',
+            '&BSD_USA::Connect', '&BSD_USA::GetSockOpt', '&BSD_USA::SetSockOpt',
+            '&BSD_USA::Shutdown', '&BSD_USA::Close',
+        ):
+            assert bsd.count(real_bsd_handler)>=1, real_bsd_handler
+        assert sockets_root.count('&ETHC_C::RejectUnavailableEthernetControl')==7
+        assert sockets_root.count('&ETHC_I::RejectUnavailableEthernetControl')==5
+        assert sockets_root.count('&ISfDriverServiceCreator::RejectUnavailableEthernetControl')==1
+        assert nsd.count('&NSD::RejectUnavailableNintendoSetting')==15
+        assert nsd.count('&NSD::Resolve')>=2
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', bsd))==0
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', sockets_root))==0
+        assert len(re.findall(r'\{\s*\d+\s*,\s*nullptr\s*,', nsd))==0
+        print('NS1_SOCKET_EXTENSIONS_734_SOURCE_PASS',
+              'physical_closed=54', 'bsd=37', 'ethernet=13', 'nsd=4',
+              'bsd_data_path_preserved=1', 'nsd_resolve_preserved=1',
+              'sfdnsres_untouched=1')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

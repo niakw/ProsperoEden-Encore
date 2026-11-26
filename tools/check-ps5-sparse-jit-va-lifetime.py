@@ -47,7 +47,39 @@ assert "void* rw = ReserveCpuVirtualRange(size, LargePage);" in ps5
 assert "void* rx = ReserveCpuVirtualRange(size, LargePage);" in ps5
 assert "void* address = ReserveCpuVirtualRange(span, SparseSlot);" in ps5
 assert "return ReserveCpuVirtualRange(size, LargePage);" in ps5
-assert ps5.count("sceKernelReserveVirtualRange(&") == 1  # exactly the shared helper call
+# 8405def4 added a separate guest DRAM reservation above the 39-bit guest
+# address space. The CPU/JIT/RADV window must NOT be widened to admit it.
+# Preserve exact syscall ownership: one CPU helper and one guest helper.
+guest_reserve = ps5.split("void* ReserveGuestMemoryRange(", 1)[1].split(
+    "bool CommitMemoryRange(", 1)[0]
+cpu_call = "sceKernelReserveVirtualRange(&address, bytes, 0, alignment)"
+guest_call = "sceKernelReserveVirtualRange(&address, size, 0, LargePage)"
+assert reserve_qualified.count(cpu_call) == 1
+assert guest_reserve.count(guest_call) == 1
+assert ps5.count("sceKernelReserveVirtualRange(&") == 2
+guest_contract = (
+    "if (size == 0 || size % LargePage != 0) return nullptr;",
+    "GuestAddressSpaceEnd = 0x8000000000ull",
+    "void* address = hint;",
+    guest_call,
+    "if (rc == 0)",
+    "address != nullptr && address != MAP_FAILED",
+    "start >= GuestAddressSpaceEnd",
+    "size <= std::numeric_limits<std::uintptr_t>::max() - start",
+    "return address;",
+    "munmap(address, size) != 0",
+    "std::abort();",
+    "else if (address != hint)",
+    "return ReserveMemoryRange(size);",
+)
+positions = [guest_reserve.index(token) for token in guest_contract]
+assert positions == sorted(positions)
+assert guest_reserve.count("std::abort();") == 2
+assert "cpu_mapping_range(" not in guest_reserve
+assert "start <= 0x4000000000ull - size" in ps5
+guest_owner = (root / "src/ns2_sparse_guest.cpp").read_text()
+assert guest_owner.count("Common::ReserveGuestMemoryRange(capacity)") == 1
+assert "Common::ReserveMemoryRange(capacity)" not in guest_owner
 
 # A positive-only cached kernel total reduces syscall overhead on each JIT
 # 2 MiB physical commit. It is a fixed extent, NOT a substitute for the

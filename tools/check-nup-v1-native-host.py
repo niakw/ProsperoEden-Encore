@@ -104,7 +104,8 @@ def main():
                        "exefs/main.npdm": b"switch2-npdm",
                        "romfs/state.bin": b"native-state"}},
             {"title_id": 0x0100123400001000, "version": 2, "kind": 2,
-             "files": {"romfs/bonus.bin": b"edition-addon"}},
+             "files": {"romfs/bonus.bin": b"edition-addon",
+                       "romfs/System/AoCUpgradeVersion.txt": b"7"}},
         ]))
         completed = subprocess.run(
             [str(binary), str(addon), str(standalone),

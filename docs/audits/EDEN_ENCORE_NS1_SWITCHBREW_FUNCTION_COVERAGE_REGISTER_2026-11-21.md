@@ -4199,3 +4199,20 @@ Base : **136 lignes ouvertes**.
 Cette politique est cohérente et observable côté invité ; l'absence d'une UI physique PS5 n'est pas un backend manquant.
 
 **1 ligne PARTIEL quitte le pool. Nouveau compteur global : 135 lignes ouvertes.**
+
+
+### 2026-11-26 — media playback + idle policy applet : palier global 131
+
+Base : **135 lignes ouvertes**.
+
+Vendor **`16e161492b4929e2123627ad2b458a53cbbed409`** aligne le propriétaire final `SelfController` sur l'état Applet déjà utilisé par `ApplicationFunctions` :
+- `SetMediaPlaybackState` écrit désormais réellement `m_applet->media_playback_state` sous verrou, comme `SetMediaPlaybackStateForApplication` ;
+- `SetIdleTimeDetectionExtension` et `GetIdleTimeDetectionExtension` stockent/restituent déjà l'extension dans l'Applet ; leurs anciens logs `STUBBED` sont supprimés.
+
+Encore ne déclenche pas l'auto-sleep/dimming de l'hôte PS5 depuis l'état Switch invité ; c'est la même politique explicitement documentée par `SetAutoSleepDisabled`. Dans ce modèle, la persistance/lecture cohérente de l'état invité remplit le contrat de ces setters/getter.
+
+**4 lignes PARTIEL quittent le pool** : les deux surfaces media-playback et le couple set/get idle-extension.
+
+**Nouveau compteur global : 131 lignes ouvertes.**
+
+Arithmétique : **135 - 4 = 131**. Gitlink repinné sur `16e161492b4929e2123627ad2b458a53cbbed409`. Aucun build PS5 ni validation console revendiqués.

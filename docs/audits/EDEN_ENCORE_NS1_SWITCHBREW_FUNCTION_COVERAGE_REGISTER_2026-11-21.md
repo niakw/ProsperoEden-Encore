@@ -5140,3 +5140,22 @@ Le CMake shipping sélectionne `hle/service/spl/spl_module.cpp` et le manifeste 
 
 Aucun patch C++ supplémentaire, changement de gitlink, build PS5 ou validation console dans cette étape.
 
+### 2026-11-26 — Rectification de l'unicité des décomptes : 11 affichées → 38 réellement ouvertes au minimum
+
+**Contrôle de cohérence append-only du registre, sans requalifier de nouvelles commandes.** Le palier affiché **11** réutilisait des fermetures déjà soustraites au pool. On ne peut pas poursuivre `11 → 0` sans réintégrer ces doublons de comptabilité. Les numéros ci-dessous renvoient aux paliers de ce registre (et non à des défauts C++ nouveaux).
+
+| Décrément répété | Première soustraction | Deuxième soustraction erronée | Lignes à réintégrer |
+|---|---|---|---:|
+| 18 ABI-DIFF historiques : AM `GetDebugStorageChannel`, SPSM `GetCurrentState`, NS `LaunchMicroApplication` / root `Attach` / `LaunchApplicationForDevelop`, audrec:a 0/1, NEWS 30500, BTDRV 34, CAPS session 2001/2002, NPNS 1/2, NVDRV 7/8, NVMEMP `GetPid`, time:al 0, SPL 31 | `341 → 323` : 18 lignes explicitement sorties | `72 → 68`, `68 → 64` (2 de ces 4), `64 → 61`, `61 → 56` (4 de ces 5), `56 → 53` (2 de ces 3), `53 → 51`, `51 → 50` | **18** |
+| Friend V1 `GetUserPresenceView` / `LoadUserSetting` (cmd20600/20800) | `175 → 173` | `68 → 64` (2 lignes sur 4) | **2** |
+| NOTIF `GetNotificationPresentationSetting` / ancien nom `GetPresentationSetting` (cmd1510) | `125 → 124` | `56 → 53` (1 ligne sur 3) | **1** |
+| NS ancien `BoostSystemMemoryResourceLimit` sur l'interface root cmd1 | `323 → 250` (1 de `250` via palier `323 → 250`) | `61 → 56` (1 ligne sur 5) | **1** |
+| LBL `SwitchBacklightOn/Off` (cmd6/7) et TS `GetTemperature/GetTemperatureMilliC` (cmd1/3) | `161 → 155` (4 des 6 lignes) | `104 → 100` | **4** |
+| AM `IOverlayFunctions::SetHealthWarningShowingState` (cmd30) | `136 → 135` | `100 → 99` | **1** |
+| **Total des doubles soustractions démontrées** | | | **27** |
+
+**Compteur corrigé : 11 + 27 = 38 lignes encore ouvertes au minimum, sur les 4 853 références historiques.** Cela correspond à une revue de **4 815/4 853 = 99,22 %** au plus ; aucun de ces 27 ajouts n'est un nouveau bug runtime découvert, seulement une correction d'arithmétique. La correction explicite `104 → 114` avait déjà annulé le double décompte de dix commandes PSM : **ne pas rajouter ces dix**.
+
+**Attention à la qualité du compteur :** ce 38 est un **plancher documenté**, pas un recensement reconstruit ligne par ligne après vérification de tous les paliers. L'annexe catalogue reste un snapshot historique de 4 844 lignes physiquement matérialisées avec neuf références d'écart au dénominateur de 4 853. Une clôture exacte à zéro exige un ensemble d'identités `service/interface + ID + fenêtre HOS` dédupliqué, puis un état source/owner final pour les lignes encore ouvertes. Ne pas confondre fin de revue, rejets explicites, support fonctionnel et validation PS5.
+
+Couple vérifié avant correction : moteur NS1 `9aaf1391ba0e2a6817e3882ed617f9670cc10abc` → vendor/gitlink `54ae75e25bc46962add60ea4a3d3e61475b9f0a9`. Les deux gates moteur NS1 observées vertes concernent `533254e98b7636d8c526dec30ceb279eb23c39ba`, parent du dernier commit documentaire ; aucun build natif PS5 ni test console supplémentaire. **Cette entrée corrige uniquement le registre ; aucun patch C++ ni nouveau gitlink.**

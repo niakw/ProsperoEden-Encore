@@ -52,7 +52,8 @@ assert 'IsSafeExtractedDirectory(ancestor)' in services
 # The shared CDN artwork encoder was migrated to bounded WebP output.
 # Verify the current encode + atomic publish path, not the obsolete TGA name.
 fetch = services.split("bool FetchCaseFace(", 1)[1].split("unsigned EnsureRetailCase(", 1)[0]
-assert 'WriteJpegWebP(' in fetch and 'require_square ? 512 : 0' in fetch
+assert 'WriteJpegWebP(' in fetch and '(require_square || logo) ? 512 : 0' in fetch
+assert 'body, staged, !require_square && !logo, &decode_failed,' in fetch
 assert 'if (decode_failed)' in fetch
 assert fetch.index('const bool encoded = WriteJpegWebP(') < fetch.index('std::rename(staged.c_str(), destination.c_str())')
 assert 'if (encoded && std::rename(staged.c_str(), destination.c_str()) == 0)' in fetch

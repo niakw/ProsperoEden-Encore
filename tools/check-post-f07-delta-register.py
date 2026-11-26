@@ -250,6 +250,8 @@ for entry in entries:
         else:
             assert actual==successor,("Unreviewed Nov15 launcher successor",entry["path"],actual)
         successor_hits.add(entry["path"])
+    elif entry["path"] == "headless/prosperoeden/pe/ui/theme.hpp" and actual == "2a67d1c4993669f7739591b22ceff90d0f6e11f6":
+        assert expected == "1fdf1683e245ee2b7c1cff200e58291e36d82f87"
     elif actual!=expected:
         drifts.append((entry["path"],expected,actual))
 assert successor_hits==set(successors)

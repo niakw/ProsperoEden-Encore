@@ -64,6 +64,9 @@ assert 'FetchKnownNs2Front' not in services
 assert 'front_host' not in header and 'front_path' not in header
 assert "kTitles" not in header and "Ns2Catalog::Description(" not in services
 assert "ApplyCatalogSynopsis" in services
+assert "NIAK_DEEPL_API_KEY" not in services
+assert "language_choice, true);" in services
+subprocess.run(["python3", str(root/"tools/launcher/translate-overviews.py"), "--self-test"], check=True, timeout=30)
 assert 'ui/ns2-title-identities.txt' in services
 compiler=shutil.which("clang++") or shutil.which("g++")
 if not compiler: raise SystemExit("No native C++20 compiler")

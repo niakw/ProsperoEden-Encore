@@ -1220,26 +1220,95 @@ BoxIndex FindGlobalCaseMedia(bool ns2, const std::string& name,
     return result;
 }
 
-// Catalogue overview is a last-resort English/provider-language synopsis,
-// not a claimed translation. Keep localized Nlib text ahead of it.
+// Cache-only lookup. The private host-side DeepL worker consumes requests
+// for selected titles; the console never stores a key or contacts DeepL.
+nlohmann::json ReadSynopsisCache(const std::string& path) {
+    std::error_code ec;
+    const auto size = std::filesystem::file_size(path, ec);
+    if (ec || !size || size > 8192 || !Eden::StorageRegular(path)) return {};
+    try {
+        std::ifstream input(path, std::ios::binary);
+        return input ? nlohmann::json::parse(input) : nlohmann::json{};
+    } catch (...) { return {}; }
+}
+
+std::string ShortGameSynopsis(std::string_view source) {
+    // Bound by UTF-8 character boundaries, not raw bytes. Three sentences
+    // at most, without manufacturing words or changing the original data.
+    std::size_t length = 0, chars = 0, sentences = 0, word = 0;
+    while (length < source.size() && chars < 360) {
+        const unsigned char ch = static_cast<unsigned char>(source[length]);
+        const std::size_t width = ch < 0x80 ? 1 : ch < 0xe0 ? 2 : ch < 0xf0 ? 3 : 4;
+        if (width > source.size() - length) break;
+        if (ch == ' ') word = length;
+        length += width;
+        ++chars;
+        if ((ch == '.' || ch == '!' || ch == '?') &&
+            (length == source.size() || source[length] == ' ') && ++sentences == 3)
+            break;
+    }
+    if (chars == 360 && length < source.size() && word > length / 2)
+        length = word;
+    return std::string(source.substr(0, length));
+}
+
 void ApplyCatalogSynopsis(NlibEnrichment& result, std::uint64_t title_id,
                           bool second_generation, const std::string& name,
-                          const std::string& alternate_name, int language_choice) {
+                          const std::string& alternate_name, int language_choice,
+                          bool request_translation = false) {
+    // Nlib's actual localized description has priority. Its intro is a
+    // tagline and must not masquerade as the Home synopsis.
     if (!result.description.empty() && !Eden::Ns2Catalog::CommercialDescription(result.description))
         return;
+    result.description.clear();
     const auto& catalog = RetailCaseCatalog();
-    const auto selected = FindCaseEntry(catalog.items, second_generation, name, alternate_name);
-    if (selected != catalog.items.end()) {
-        const auto found = catalog.synopses.find(selected->first);
-        if (found != catalog.synopses.end() &&
-            !Eden::Ns2Catalog::CommercialDescription(found->second))
-            result.description = found->second;
+    const auto find_overview = [&](bool ns2) {
+        const auto selected = FindCaseEntry(catalog.items, ns2, name, alternate_name);
+        return selected == catalog.items.end() ? catalog.synopses.end() :
+            catalog.synopses.find(selected->first);
+    };
+    auto found = find_overview(second_generation);
+    // A shared standard-edition synopsis is valid across console editions.
+    if (found == catalog.synopses.end() && second_generation)
+        found = find_overview(false);
+    if (found == catalog.synopses.end() ||
+        !ValidSidecarText(found->second) ||
+        Eden::Ns2Catalog::CommercialDescription(found->second)) return;
+
+    const std::string& original = found->second;
+    result.description = ShortGameSynopsis(original);
+    const std::string locale = Eden::kLanguageKeys[std::clamp(
+        language_choice, 0, static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
+    if (locale.starts_with("en") || !title_id) return;
+    char id[17]{};
+    std::snprintf(id, sizeof(id), "%016llX", static_cast<unsigned long long>(title_id));
+    const std::string path = Eden::CoversDir() + "/synopsis-" + id +
+        (second_generation ? "-ns2-" : "-ns1-") + locale;
+    const auto matches = [&](const nlohmann::json& cache) {
+        return cache.is_object() && cache.contains("source") &&
+            cache["source"].is_string() && cache["source"] == original &&
+            cache.contains("key") && cache["key"] == found->first &&
+            cache.contains("locale") && cache["locale"] == locale;
+    };
+    const auto cached = ReadSynopsisCache(path + ".json");
+    if (matches(cached) && cached.contains("translation") && cached["translation"].is_string()) {
+        const auto translated = cached["translation"].get<std::string>();
+        if (ValidSidecarText(translated) && !Eden::Ns2Catalog::CommercialDescription(translated)) {
+            result.description = ShortGameSynopsis(translated);
+            return;
+        }
     }
-    // Preserve original provider text if localized data is unavailable.
-    // Never manufacture or compile a per-title fallback.
-    (void)title_id;
-    (void)language_choice;
-    if (Eden::Ns2Catalog::CommercialDescription(result.intro)) result.intro.clear();
+    if (!request_translation) return;
+    // Only selected-title workers queue a request; a catalogue scan never
+    // translates the whole library. A stale translation stays on disk but
+    // cannot be displayed for a different source or locale.
+    static std::mutex request_mutex;
+    std::lock_guard guard(request_mutex);
+    const std::string request = path + ".request.json";
+    if (!matches(ReadSynopsisCache(request))) {
+        const nlohmann::json payload{{"source", original}, {"key", found->first}, {"locale", locale}};
+        (void)AtomicWriteText(request, payload.dump());
+    }
 }
 
 // Other-platform candidates are indexed only for exact, unambiguous titles.
@@ -2985,7 +3054,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);
     ApplyCatalogSynopsis(enrichment, game.title_id, second_generation,
                          enrichment.name.empty() ? scanned_name : enrichment.name,
-                         scanned_name, language_choice);
+                         scanned_name, language_choice, true);
     game.artwork_changed |= enrichment.artwork_changed;
     if (!enrichment.icon.empty() &&
         (game.cover.empty() || game.cover == CachedGamesDbSquare(game.title_id, second_generation))) {

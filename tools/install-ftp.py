@@ -14,6 +14,8 @@ import argparse
 import ftplib
 import hashlib
 import pathlib
+import os
+import runpy
 import sys
 
 REMOTE = '/data/homebrew/PPSA99008'
@@ -99,6 +101,15 @@ def main(argv):
                 sys.exit(f'Could not verify language catalog {relative}: {error}')
             if digest.hexdigest() != hashlib.sha256(local.read_bytes()).hexdigest():
                 sys.exit(f'{relative} differs on the console after the copy')
+
+        # Reuse the owner's existing opt-in private DeepL configuration.
+        # Only queued, source-matched synopsis requests are synchronized.
+        if os.environ.get("NIAK_DEEPL_API_KEY", "").strip():
+            translator = runpy.run_path(str(pathlib.Path(__file__).parent / "launcher/translate-overviews.py"))
+            index = app / "ui/box-art-index.tsv"
+            if index.is_file():
+                count = translator["sync"](client, index.read_text(encoding="utf-8"))
+                print(f"Synchronized {count} requested game descriptions.")
 
         try:
             client.sendcmd('SELF')  # raw transfers of executables, where supported

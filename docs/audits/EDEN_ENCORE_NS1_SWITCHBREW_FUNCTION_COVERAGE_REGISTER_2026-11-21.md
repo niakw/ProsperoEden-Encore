@@ -5036,4 +5036,17 @@ Encore consomme déjà exactement les ABI HOS/SwIPC, conserve les politiques sou
 **10 lignes PARTIEL quittent le pool : nouveau compteur global = 21 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+### 2026-11-26 — NIFM WoWL delayed wake requalifié : 21 → 20
+
+Base précédente : **21 lignes ouvertes**.
+
+Le PARTIEL historique `IGeneralService` cmd43 `SetWowlDelayedWakeTime(s32)` est requalifié :
+- libnx / SDK reconstruit confirment une unique entrée `s32`, sans sortie ;
+- Encore consomme et conserve déjà exactement cette valeur dans l'état du service ;
+- des runtimes recomp indépendants traitent cmd43 comme une commande `OK` sans effet hôte additionnel ;
+- piloter le wake-on-wireless physique de la PS5 n'est pas un observable invité requis par ce setter HLE.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 20 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
 

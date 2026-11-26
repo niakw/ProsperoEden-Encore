@@ -131,6 +131,20 @@ for entry in entries:
     actual=subprocess.check_output(
         ["git","hash-object",str(path)],cwd=ROOT,text=True
     ).strip()
+    # The Nov26 case-spine change adds exactly one UI worker field.
+    # Reverse on an audit copy and prove the reviewed Nov25 predecessor.
+    if (entry["path"] == "headless/prosperoeden/pe/ui/services.hpp"
+            and actual == "bceca5c51f0755533f2915bdb7720aff89a3a302"):
+        spine_field = "    std::string box_spine{}; // worker-resolved path for exact texture invalidation\n"
+        current = path.read_text()
+        assert current.count(spine_field) == 1
+        former = current.replace(spine_field, "", 1).encode()
+        actual = subprocess.run(
+            ["git", "hash-object", "--stdin"], input=former,
+            stdout=subprocess.PIPE, check=True).stdout.decode().strip()
+        assert actual == "534adb20bded1d44bc057bacc36dce2d93be770d", (
+            "Reviewed Nov26 spine predecessor drift", actual)
+        print("ENCORE_SPINE_PROVENANCE_EXACT_REVERSE_PASS", flush=True)
     if entry["path"] in launcher_consolidation:
         current_blob, predecessor_blob = launcher_consolidation[entry["path"]]
         if actual == current_blob or actual == launcher_loading_successors.get(entry["path"]):

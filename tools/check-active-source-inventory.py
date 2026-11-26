@@ -1001,8 +1001,22 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
             ).hexdigest()
             assert actual == "c797eb9e3f4432b6ba19fe8a17a7289b23b75864"
             print("ENCORE_NS1_NS2_TEXTURECACHE10_EXACT_REVERSE_PASS")
-        assert actual == ("c797eb9e3f4432b6ba19fe8a17a7289b23b75864" if fc27_p1_vendor else
-                          "c7cb95ecaf388b925fc29582499bbd4b54a77f75" if r437_vendor_pin in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"} else "859a9e46fb63a97fee82c8ea6b1566317264f98f" if r437_vendor_pin == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else "0d99f9a861c645562519f71d62f4f49bfedd8101"), ("Selected F07 TextureCache drift", actual)
+        # Exact selected Nov26 NS2 successor, already independently
+        # reviewed by vendor/tests/ns1_r23_18_tir_host.py. Keep the old
+        # historical comparison below unchanged for all earlier vendors.
+        if shipping_vendor == "806252e96253489c18d11551bf2dcfd668502719":
+            assert actual == "c0312be09d81afb0064479179db794d2648560b9", (
+                "Unreviewed selected NS2 TextureCache", actual)
+            selected_ns2 = (active / "ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+            assert "constexpr size_t gc_scan_limit = 8192;" in selected_ns2
+            assert "if (!VideoCore::Surface::IsViewCompatible(" in selected_ns2
+            assert "Charge each eligible attempt, including failed readbacks" in selected_ns2
+            ns2_receipt = (root / "vendor/tests/ns1_r23_18_tir_host.py").read_text()
+            assert 'sha == "c0312be09d81afb0064479179db794d2648560b9"' in ns2_receipt
+            print("ENCORE_NS2_TEXTURECACHE_SELECTED_SUCCESSOR_PASS exact_blob=1 guards=1", flush=True)
+        else:
+            assert actual == ("c797eb9e3f4432b6ba19fe8a17a7289b23b75864" if fc27_p1_vendor else
+                              "c7cb95ecaf388b925fc29582499bbd4b54a77f75" if r437_vendor_pin in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"} else "859a9e46fb63a97fee82c8ea6b1566317264f98f" if r437_vendor_pin == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else "0d99f9a861c645562519f71d62f4f49bfedd8101"), ("Selected F07 TextureCache drift", actual)
     assert fc27_deferred_present == set()
     r437_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 

@@ -93,7 +93,35 @@ ContentSet::ContentSet(std::shared_ptr<Mount> mount,
             // family. Retain that family only after the exact embedded NPDM
             // was authenticated; never grant unrelated callers DLC access.
             const auto embedded = FindEmbeddedSwitch2Program(*mount_);
-            if (!embedded || embedded->program_id != *caller_program_id) return;
+            if (!embedded || embedded->program_id != *caller_program_id) {
+                // A regular NS1 base + NS2 Edition update can also select
+                // an exact 04-platform program (ValidateProgramIdentity).
+                // Keep its NS1 AoC family only after verifying the selected
+                // executable against the declared base and caller.
+                constexpr std::uint64_t PlatformMask = 0xFF00000000000000ULL;
+                constexpr std::uint64_t LowTitleMask = ~PlatformMask;
+                bool matching_base = false;
+                for (const auto& package : packages) {
+                    if (package.kind == 0 &&
+                        (package.title_id & PlatformMask) == 0x0100000000000000ULL &&
+                        (*caller_program_id & PlatformMask) == 0x0400000000000000ULL &&
+                        (*caller_program_id & LowTitleMask) ==
+                            ((package.title_id + 1) & LowTitleMask)) {
+                        matching_base = true;
+                        break;
+                    }
+                }
+                if (!matching_base) return;
+                const auto exefs = ExeFS();
+                const auto npdm = exefs ? exefs->GetFile("main.npdm") : FileSys::VirtualFile{};
+                constexpr std::size_t MaxNpdmBytes = 4U * 1024U * 1024U;
+                if (!npdm || npdm->GetSize() == 0 || npdm->GetSize() > MaxNpdmBytes)
+                    return;
+                FileSys::ProgramMetadata metadata;
+                if (metadata.Load(npdm) != Loader::ResultStatus::Success ||
+                    !metadata.IsSwitch2() || metadata.GetTitleID() != *caller_program_id)
+                    return;
+            }
         } else {
             active_base = requested;
         }

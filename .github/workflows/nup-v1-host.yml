@@ -22,6 +22,9 @@ on:
       - tools/check-nup-v1-host.py
       - tools/check-nup-v1-vfs-host.py
       - tools/check-nup-v1-native-host.py
+      - tools/nup-v1-native-host.cpp
+      - tools/nup-native-host-stub/**
+      - tools/nup-v1-content-fixture.py
       - tools/check-nup-v1-native-abi.py
       - tools/check-nup-v1-real-romfs-host.py
       - tools/check-nup-v1-runtime-cmake.py

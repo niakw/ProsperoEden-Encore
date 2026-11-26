@@ -842,6 +842,18 @@ void ApplyNlibMetadata(const nlohmann::json& json, NlibEnrichment* result) {
     if (players > 0 && players <= 16) result->max_players = players;
 }
 
+void SelectNlibSynopsis(std::uint64_t title_id, int language_choice, NlibEnrichment& result) {
+    const std::string_view locale = Eden::kLanguageKeys[std::clamp(
+        language_choice, 0, static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
+    const auto text = Eden::Ns2Catalog::SelectDescription(title_id, locale.starts_with("fr"),
+                                                           result.description, result.intro);
+    // Copy before assigning: the selected view may alias either string.
+    const std::string synopsis{text};
+    result.description = synopsis;
+    if (result.intro.empty() || Eden::Ns2Catalog::CommercialDescription(result.intro))
+        result.intro = synopsis;
+}
+
 bool CacheNlibJpeg(const std::string& endpoint, const std::string& path,
                    std::size_t minimum_bytes = 1024,
                    const std::atomic<bool>* cancel = nullptr) {
@@ -1586,6 +1598,19 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
                 candidates.insert(candidates.end(), fallback.begin(), fallback.end());
             }
         }
+        // The generated alt row may be absent when an edition suffix differs.
+        // Resolve the exact standard-edition title in the NS1 index as a
+        // second source of genuine rear paper, never front or spine.
+        if (side == 1 && second_generation) {
+            const auto original = FindCaseEntry(native_index, false,
+                StandardCaseKey(CaseKey(name)), StandardCaseKey(CaseKey(alternate_name)));
+            if (original != native_index.end()) {
+                const auto rear = LocaleCaseCandidates(original->second[1], language_choice, side);
+                for (const auto& file : rear)
+                    if (std::find(candidates.begin(), candidates.end(), file) == candidates.end())
+                        candidates.push_back(file);
+            }
+        }
         if (candidates.empty()) continue;
         const char* const names[] = {
             "front", "back", "spine", "scene-1", "scene-2", "scene-3", "scene-4", "scene-5", "scene-6"};
@@ -1644,6 +1669,7 @@ NlibEnrichment CachedNlibEnrichment(std::uint64_t title_id, int language_choice)
     nlohmann::json metadata;
     if (LoadNlibMetadata(title_id, NlibLanguageCode(language_choice), &metadata))
         ApplyNlibMetadata(metadata, &result);
+    SelectNlibSynopsis(title_id, language_choice, result);
     if (result.hero.empty() && !result.screenshots.empty())
         result.hero = result.screenshots.front();
     return result;
@@ -1766,6 +1792,7 @@ NlibEnrichment EnsureNlibEnrichment(std::uint64_t title_id, int language_choice,
                     metadata["_encore_artwork_checked_at"] = last_artwork_check;
                     (void)AtomicWriteText(NlibMetadataPath(title_id, language), metadata.dump());
                     ApplyNlibMetadata(metadata, &result);
+                    SelectNlibSynopsis(title_id, language_choice, result);
                     has_icon = metadata.contains("icon") && metadata["icon"].is_string();
                     has_banner = metadata.contains("banner") && metadata["banner"].is_string();
                     if (metadata.contains("screens") && metadata["screens"].is_object())
@@ -2733,6 +2760,7 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 NlibEnrichment list_metadata;
                 if (LoadNlibMetadata(game.title_id, NlibLanguageCode(language_choice), &metadata))
                     ApplyNlibMetadata(metadata, &list_metadata);
+                SelectNlibSynopsis(game.title_id, language_choice, list_metadata);
                 if (!list_metadata.name.empty()) game.name = std::move(list_metadata.name);
                 if (!list_metadata.intro.empty()) game.intro = std::move(list_metadata.intro);
                 if (!list_metadata.description.empty())

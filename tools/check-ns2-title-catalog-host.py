@@ -71,12 +71,20 @@ source=r"""
 #include "ns2_title_catalog.h"
 int main() {
     using Eden::Ns2Catalog::Find;
-    static_assert(Eden::Ns2Catalog::kTitles.size() == 18);
+    static_assert(Eden::Ns2Catalog::kTitles.size() == 19);
     const auto* mkw = Find(0x0400C3F00006E000ULL);
     const auto* dk = Find(0x040074A01BF12000ULL);
     assert(mkw && mkw->name == "Mario Kart World");
     assert(dk && dk->name == "Donkey Kong Bananza");
     assert(!Find(0x0100C49025D3E000ULL));
+    assert(Find(0x0400A3A01EE4C000ULL));
+    using Eden::Ns2Catalog::SelectDescription;
+    assert(!SelectDescription(0x0400A3A01EE4C000ULL, true, "", "").empty());
+    assert(SelectDescription(0x0100F43008C44000ULL, true, "Si vous achetez la version numérique", "") ==
+           Eden::Ns2Catalog::Description(0x0100F43008C44000ULL, true));
+    assert(SelectDescription(0x0100F43008C44000ULL, true, "Si vous achetez la version numérique", "Un vrai résumé") == "Un vrai résumé");
+    assert(SelectDescription(0x0100F43008C44000ULL, true, "Un vrai résumé", "") == "Un vrai résumé");
+    assert(!Find(0x0100F43008C44000ULL)); // Shared NS1 identity remains NS1.
     for (const auto& item : Eden::Ns2Catalog::kTitles) {
         assert(!item.name.empty() && (item.id >> 56) == 4);
         assert(item.id != 0 && !item.name.empty());
@@ -94,7 +102,7 @@ with tempfile.TemporaryDirectory(prefix="encore-ns2-catalog-") as tmp:
                     "-I",str(root/"headless"),str(cpp),"-o",str(exe)],
                    check=True,timeout=30)
     subprocess.run([str(exe)],check=True,timeout=10)
-print("ENCORE_NS2_TITLE_CATALOG_HOST_PASS IDs=18 safety=1 launch_integration=1")
+print("ENCORE_NS2_TITLE_CATALOG_HOST_PASS IDs=19 safety=1 launch_integration=1")
 
 # Portrait retail scans remain physical-case media, never square tile art.
 assert 'switch_game_tile(c,!g.cover.empty()?g.cover:g.box_front' not in (root/'headless/prosperoeden/pe/ui/switch_theme.cpp').read_text()

@@ -4690,3 +4690,20 @@ Vendor `e823d1cae61b893688e66809c8d2dbe682ebda53` raccorde donc cmd1003/2000/200
 **3 lignes AMBIGU quittent le pool : nouveau compteur global = 72 lignes ouvertes.**
 
 Gitlink vendor repinné sur `e823d1cae61b893688e66809c8d2dbe682ebda53`. Aucun build PS5 ni validation console.
+
+
+### 2026-11-26 — ABI historiques BTDRV/NPNS/SPL hors contrat HOS23 : palier global 68
+
+Base : **72 lignes ouvertes**.
+
+Quatre ABI-DIFF historiques sont requalifiés **HORS-VERSION / ancien rattachement**, après comparaison directe aux tables HOS23 et aux owners Encore actifs :
+- BTDRV cmd34 : ancien libellé `ExtSetRadio`; HOS23 expose `EnableRadio`, et l'owner actif Encore expose exactement `EnableRadio` au même ID ;
+- NPNS ancien cmd1 `ListenTo` : HOS23 cmd1 = `ListenAll` ;
+- NPNS ancien cmd2 `ListenToMyApplicationId` : HOS23 cmd2 = `ListenTo`, tandis que `ListenToMyApplicationId` est cmd26 ; Encore expose la même table 1/2/26 ;
+- SPL ancien cmd31 agrégé `UnwrapElicenseKey` : HOS23 `IGeneralInterface` cmd31 = `GetPackage2Hash`; l'interface ES dérivée emploie cmd31 pour `PrepareEsArchiveKey`. L'ancienne ligne agrégée n'est donc pas un contrat HOS23 valide.
+
+Aucune de ces quatre lignes ne représente un défaut runtime actuel de la cible HOS23.
+
+**4 lignes ABI-DIFF quittent le pool : nouveau compteur global = 68 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console.

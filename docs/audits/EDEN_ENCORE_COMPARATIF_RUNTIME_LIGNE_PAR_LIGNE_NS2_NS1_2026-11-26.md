@@ -19313,3 +19313,27 @@ Comparaison des fenêtres : **24 fenêtres <25 FPS** → moyenne `cache_wait_ms=
 Sources propriétaires croisées : [Khronos Vulkan — Profiling](https://docs.vulkan.org/guide/latest/profiling.html) (bulles CPU/GPU, waits) et [CPU/GPU sync](https://docs.vulkan.org/samples/latest/samples/performance/wait_idle/README.html) (éviter waits globaux, fences par tâche) ; [AMD GPUOpen — Vulkan Barriers](https://gpuopen.com/learn/vulkan-barriers-explained/) (dépendances assez précises pour ne pas drainer inutilement la GPU) ; [NVIDIA — Vulkan Do's and Don'ts](https://developer.nvidia.com/blog/vulkan-dos-donts/) (préparer le travail sans attendre chaque soumission, principe transposable, pas de réglage matériel NVIDIA sur PS5). Le cache shader déjà admis dans les logs (`compute_records=148`, `graphics_records=696`, ~10,35 Mio) et le pipeline builder déjà placé en FIFO/RR ne justifient **pas** une nouvelle précompilation arbitraire.
 
 **Décision :** prioriser un raccourcissement des sections critiques des caches *dans les sources effectivement sélectionnées*, en conservant ordre de publication mémoire, cohérence des textures/HUD et protections CPU-write. Un microbench ou une CI verte ne prouve aucun gain de gameplay. Ne pas déclencher de build PS5 avant correction fonctionnelle et autorisation.
+
+---
+
+## 2026-11-26 — P0 MKW : erreur VI 2114-0010 après préparation des images
+
+🟢 **26/11/2026 — contrôle croisé de la trace PS5, du décodage Result, des trois propriétaires HLE et du comparatif NS2.** Pastille limitée à la provenance/lecture **source et logs**, **pas** à un correctif validé PS5.
+
+**Preuve console exacte :** `crash-20261126-170642-stderr.log`, dernière campagne **moteur 68122b0bf143dd0a73562796f48cfdee179f9576** (binaire antérieur au gitlink actuel). MKW `0400C3F00006E000` :
+- VI2 `212 → 251 → 31 → 261 → 32` ; GSV `434`, GPU Worker `101/211` réponses zéro, puis `1510` à répétition ;
+- trois groupes `GSV 435 → 111 → 423 → 429 → 315` ; immédiatement ensuite ligne **`EDEN_APP_TERMINATE_RESULT title=0400C3F00006E000 raw=0x00001472 module=114 description=10`** ;
+- dernier HLE échantillonné `IApplicationFunctions cmd22` = `SetTerminateResult` ; `guest_frame_handoff=0`, `gpu_submit_sample=0` à 10 et 30 secondes. **Le titre a effectivement signalé un échec VI avant toute soumission GPU invitée observée.** Les `loading_presents` appartiennent au lanceur et ne sont pas des frames invitées.
+
+`0x1472 = (10 << 9) | 114`, soit **2114-0010**, module **114 = VI** : [SwitchBrew, Error codes](https://www.switchbrew.org/wiki/Error_codes). Le sens précis de la **description 10** n'est pas documenté dans les résultats publics contrôlés (1, 6, 7 seulement) : **ne pas l'inventer**.
+
+**Propriétaires comparés** :
+- Encore vendor actuel `encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp` blob `634f7a6fc5d27e13b39360c2d28ec961c4f36236`, `encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h` blob `2bacc8ebdc1c09cd96a7c83d26f57035619f622c`. `IApplicationFunctions::SetTerminateResult` actif `encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp`, blob `9bfaa26664361994902d5b7f73d6a41ff0eadb07`.
+- Lichii `src/core/hle/service/nx2_gsv.h` blob `7321dfd01092ac717db0b1a289119ce17db1ae9d` ; `src/core/hle/service/nx2_image_layout.h` blob `4160aeb42306ee058c6100e018ae220c220e5361`.
+- EglantinePS5 `Eglantine/src/core/hle/service/nx2_gsv.h` blob `15c425ab929059119915a4e615bba55fb8f05ca6`.
+- **VI2 31/32/261** : Lichii/Eglantine créent un événement de slot, le doublent avec le handle copié et l'abonnent au vsync 60 Hz ; Encore crée aussi un événement stable et un timer, avec décodeur strict `DecodeVi2NativeEventSlot`. La présence des commandes dans le log ne prouve toutefois pas le succès de chacune.
+- **GSV 423/429/315** : Lichii/Eglantine se limitent à des registres d'images/mémoire plus permissifs ; Encore exige un backing NVMap réel, les permissions GMMU, des références parent/enfant, un groupement d'images valide et vérifie les réponses. Leur succès upstream **ne permet pas** de remplacer par des succès fictifs.
+
+**Candidat causal P0, non résolu** : identifier laquelle des réponses VI2 ou GSV entre `31/32/261` et `435/423/429/315` déclenche la conversion en `VI:10`. Les anciennes traces indiquent uniquement les appels et le résultat final, **pas les paramètres ni résultats individuels des quatre HLE**. Le dernier patch `vendor 240550925b0ef097c24c3035c063bdceadd872de` rend `435/429` compatibles avec le format FP16 et `count=0` ; **aucune campagne console n'a vérifié s'il fait disparaître 2114-0010**. Ne pas attribuer ce résultat au GPU shader/compute, ni desserrer sans preuve les invariants NVMap/alias mémoire.
+
+**Statut : P0 ouvert.** Contrôle source et décodage résultat : 🟢 2026-11-26 ; CI vendor de la correction GSV : verte ; build PS5 : **non lancé** ; gameplay MKW : **non validé**.

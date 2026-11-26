@@ -4806,3 +4806,17 @@ Cette correction élimine deux chemins host-side `UNIMPLEMENTED` sans inventer d
 **2 lignes PARTIEL quittent le pool : nouveau compteur global = 48 lignes ouvertes.**
 
 Gitlink vendor repinné sur `f439f76906f1267a172fc72df82f4b1dbb1ea52d`. Aucun build PS5 ni validation console.
+
+### 2026-11-26 — SVC GetInfo HOS14/HOS23 : correction du runtime actif, compteur global 48 inchangé
+
+Sur la branche NS1, le dispatch `GetInfo` réellement compilé est l'overlay vendor `encore-active/eden-backports/src/core/hle/kernel/svc/svc_info.cpp` ; son enum `svc_types.h` est également sélectionné par le manifeste de backports. Ces fichiers sont repinnés par le moteur et leurs deux empreintes SHA-256/tailles dans `encore-active/eden-backports/manifest.json` ont été mises à jour transactionnellement.
+
+**Corrections C++ runtime :**
+- HOS23 `InfoType::AddressSpaceSize = 36` ajouté au dispatch. Retour de la taille réelle d'espace d'adressage de la page table du **processus référencé par le handle** (contrat libnx/svcGetInfo), pas une constante inventée.
+- `InfoType::AliasRegionExtraSize` utilisait auparavant `GetCurrentProcessPointer()` malgré un handle de processus validé : lecture corrigée sur le `KProcess` du handle.
+- HOS14+ `InfoType::IsSvcPermitted = 26` lit désormais les capacités NPDM du `KProcess` via `GetSvcPermissions()` pour l'unique SVC interrogeable `SynchronizePreemptionState (0x36)`, au lieu de `ResultInvalidEnumValue` systématique.
+- `DebuggerAttached` contrôle désormais le handle nul et le sous-identifiant 0 avant de répondre que le debugger est absent. Aucun objet debugger ni accès étendu n'est simulé.
+
+**Provenance :** vendor `7592ffcbf76077d6ad4083e988354827aeeb7ecc` puis `7ef6cacf8a6f415fb0bdea8f712be0773250c03b`, moteur/gitlink final `f4dc1bd7d70da4d18cae85ffeaa2dff0f86da7fe`. Les règles HOS14/23 sont recoupées avec SwitchBrew/libnx ; aucune modification des autres SVC, du CPU/JIT ou GPU. Le correctif ne prétend pas fournir les régions shadow-stack 37/38 ni les autres propriétés encore synthétiques.
+
+**Compteur global de revue : 48, inchangé.** La ligne `svcGetInfo` (0x29) reste PARTIEL tant que l'ensemble des cas qui lui appartiennent n'est pas qualifié. Aucun build PS5 ni test console réalisé. Contrôle de cohérence par diff des C++ actifs, emplacement CMake/manifeste et empreintes ; CI/native à qualifier séparément.

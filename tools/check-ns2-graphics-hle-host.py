@@ -299,14 +299,14 @@ def main()->int:
     # Each known optional GSV command is registered in the selected C++ owner.
     # These are not implementations: no fabricated success/handles for unsupported features.
     known_optional_gsv = (
-        187, 211, 212, 213, 214, 215, 493, 603, 612, 613, 614, 615,
+        187, 211, 212, 213, 214, 215, 493, 612, 613, 614, 615,
         616, 620, 621, 622, 623, 624, 626, 627, 628, 629, 630, 632,
         633, 634, 636, 637, 638, 639, 640, 641, 650, 651, 652, 653,
         654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665,
         666, 667, 904, 921, 922, 1003, 1004, 1011, 1012, 1021,
         1022, 1203, 1301, 1302, 1325, 1326,
     )
-    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 64
+    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 63
     assert '{126, &IGraphicsSupervisor::QuerySessionMode, "GetSessionFlag"}' in text
     assert 'm_bootstrap.QuerySessionMode(packet, mode)' in text
     for command in (1501, 1502):
@@ -315,6 +315,19 @@ def main()->int:
     for command in known_optional_gsv:
         assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') in text, (
             f'optional GSV command {command} missing explicit fail-closed dispatch')
+    # GSV 603 is no longer a generic stub: SDK 21 releases a real 602 MOVE
+    # child context, while malformed and double-destroy calls fail closed.
+    assert '{603, &IGraphicsSupervisor::DestroyCameraContext, "DestroyCameraContext"}' in text
+    camera_open = text.split('void IGraphicsSupervisor::OpenCameraSession(HLERequestContext& ctx) {', 1)[1].split(
+        'void IGraphicsSupervisor::DestroyCameraContext(HLERequestContext& ctx) {', 1)[0]
+    camera_close = text.split('void IGraphicsSupervisor::DestroyCameraContext(HLERequestContext& ctx) {', 1)[1].split(
+        'void IGraphicsSupervisor::OpenChatSession(HLERequestContext& ctx) {', 1)[0]
+    assert camera_open.index('ctx.AddMoveObject(client);') < camera_open.index('++m_camera_contexts;')
+    for proof in ('packet[0] == 16 + 603 && packet[1] == 0',
+                  'if (m_camera_contexts != 0)', '--m_camera_contexts;',
+                  'Kernel::ResultInvalidState'):
+        assert proof in camera_close, proof
+    assert 'rb.Push(result.raw);' in camera_close
     assert '{1411, &IGraphicsSupervisor::QueryNvDrvTransferMemoryUsage' in text
     usage = text.split('void IGraphicsSupervisor::QueryNvDrvTransferMemoryUsage(',1)[1].split('\n}',1)[0]
     assert 'm_nvsrv_session.lock()' in usage

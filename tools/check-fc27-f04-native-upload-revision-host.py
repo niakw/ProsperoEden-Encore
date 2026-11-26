@@ -25,6 +25,14 @@ start = "template <class P>\nvoid TextureCache<P>::RefreshContents("
 end = "\ntemplate <class P>\nImageViewId TextureCache<P>::CreateImageView("
 assert src.count(start) == src.count(end) == 1
 method = src[src.index(start):src.index(end,src.index(start))]
+selected = (ROOT/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+upload_start = "void TextureCache<P>::UploadImageContents("
+upload_end = "\ntemplate <class P>"
+def extract_upload(body):
+    begin = body.index(upload_start)
+    return body[begin:body.index(upload_end, begin)]
+assert extract_upload(selected) == extract_upload(src), "native upload bounds owner divergence"
+assert "MapSizeBytes(image)," in extract_upload(selected)
 assert "UploadImageContents(image, staging);" in method
 assert "runtime.InsertUploadMemoryBarrier();" in method
 assert "gpu_memory->ReadBlock" in method
@@ -129,10 +137,12 @@ namespace VideoCommon { enum class CacheType {NoTextureCache}; }
 struct Memory {
     std::array<u8,256> bytes{};
     unsigned read_calls=0;
+    std::size_t last_read_size=0;
     void ReadBlock(GPUVAddr at,void* dst,std::size_t length,VideoCommon::CacheType) {
         assert(at<=bytes.size() && length<=bytes.size()-at);
         std::memcpy(dst,bytes.data()+at,length);
         ++read_calls;
+        last_read_size=length;
     }
 };
 namespace Tegra::Memory {
@@ -155,10 +165,11 @@ struct Runtime {
     bool reject_staging{};
     bool short_staging{};
     bool null_staging{};
+    bool rounded_staging{};
     Staging UploadStagingBuffer(std::size_t n) {
         ++allocations;
         if(reject_staging)throw std::bad_alloc{};
-        Staging s{short_staging?n-1:n};
+        Staging s{short_staging?n-1:rounded_staging?n+16:n};
         s.buffer=!null_staging;
         last_stage=s.data;
         return s;
@@ -168,8 +179,7 @@ struct Runtime {
     template<class Copies> void AccelerateImageUpload(Image& image,Staging& staging,
                                                       const Copies& copies,int,int) {
         assert(copies.size()==1);
-        std::copy(staging.mapped_span.begin(),staging.mapped_span.end(),
-                  image.device_bytes.begin());
+        std::copy_n(staging.mapped_span.begin(),image.device_bytes.size(),image.device_bytes.begin());
         ++accelerated;
         ++image.uploads;
     }
@@ -287,8 +297,12 @@ int main(){
     Changed(image);
     image.flags.bits|=static_cast<unsigned>(ImageFlagBits::AcceleratedUpload);
     cache.runtime.expected=Data(m,image.gpu_addr);
+    cache.runtime.rounded_staging=true;
     cache.RefreshContents(image,0);
+    cache.runtime.rounded_staging=false;
     assert(cache.runtime.accelerated==1 && m.read_calls==1);
+    assert(m.last_read_size==image.guest_size_bytes);
+    assert(cache.runtime.last_stage->size()==image.guest_size_bytes+16);
     assert(image.uploads==4 && cache.runtime.barriers==4);
     // Deferred async image has no immediate barrier or staging reuse.
     image.flags.bits&=~static_cast<unsigned>(ImageFlagBits::AcceleratedUpload);

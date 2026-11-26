@@ -76,7 +76,7 @@ if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca1
                 ("76eb30a7e58f17852069a05e2c12cd3c6521967f" if shipping_vendor in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"} else "ca642b98443901eee4f88b02850237f3eda623c8"),
             "tests/ns2_gpu_identity_mapping_source.py":
                 ("787b18b8c9b2841874ceaea911947e533b59e198"
-                 if shipping_vendor == "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"
+                 if shipping_vendor in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}
                  else "dfe5b9d594d3e5f161872a18e227afe6f02a436d"
                  if shipping_vendor == "e5ad6cebf5572d7045de9e48f4308cc2621eede1"
                  else "8340a1f3403bb57debbabcd193170034a30282a1"),

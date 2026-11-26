@@ -3206,6 +3206,17 @@ for path, (current_blob, predecessor_blob) in launcher_consolidation_predecessor
     # Current launcher adds only independently reviewed owner successors.
     # Reconstruct their Nov25 predecessors on audit COPIES and compare every
     # resulting Git blob before using the immutable consolidation receipts.
+    if path == "headless/prosperoeden/eden_services.h" and actual == "04369c885cf4d6a6c0df7bc81734a2670965595e":
+        # One reviewed cache-only launcher entry point, not a new F07 owner.
+        source = (ROOT/path).read_text()
+        delta = "    pe::ui::Game cached_game_media(pe::ui::Game game) override;\n"
+        assert source.count(delta) == 1
+        previous = source.replace(delta, "", 1).encode()
+        original = hashlib.sha1(
+            b"blob " + str(len(previous)).encode() + b"\0" + previous
+        ).hexdigest()
+        assert original == "8c6248417cb3ec25b327661e410960a3e2a738de", ("Cached media predecessor drift", original)
+        actual = original
     if path == "headless/prosperoeden/pe/ui/services.hpp" and actual == "bceca5c51f0755533f2915bdb7720aff89a3a302":
         source = (ROOT/path).read_text()
         spine = "    std::string box_spine{}; // worker-resolved path for exact texture invalidation\n"

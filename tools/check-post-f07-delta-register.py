@@ -175,6 +175,20 @@ for entry in entries:
         assert actual == "0536ef9acf649865cb8c9d1220ef89f329d3960d", (
             "Nov26 Home banner predecessor drift", actual)
         print("ENCORE_HOME_BANNER_EXACT_REVERSE_PASS", flush=True)
+    # Exact Nov26 launcher contract: one new cache-only media entry point.
+    # Reverse on the audit COPY and require the original Nov23 owner blob.
+    if entry["path"] == "headless/prosperoeden/eden_services.h" and actual == "04369c885cf4d6a6c0df7bc81734a2670965595e":
+        now = path.read_text(encoding="utf-8")
+        delta = "    pe::ui::Game cached_game_media(pe::ui::Game game) override;\n"
+        assert now.count(delta) == 1
+        previous = now.replace(delta, "", 1).encode("utf-8")
+        recovered = subprocess.run(
+            ["git", "hash-object", "--stdin"], input=previous,
+            stdout=subprocess.PIPE, check=True
+        ).stdout.decode().strip()
+        assert recovered == "8c6248417cb3ec25b327661e410960a3e2a738de", ("Unreviewed cached media header", recovered)
+        actual = recovered
+        print("LAUNCHER_NOV26_CACHED_MEDIA_HEADER_EXACT_REVERSE_PASS")
     if entry["path"] in launcher_consolidation:
         current_blob, predecessor_blob = launcher_consolidation[entry["path"]]
         if actual == current_blob or actual == launcher_loading_successors.get(entry["path"]):

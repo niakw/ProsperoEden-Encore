@@ -5439,15 +5439,15 @@ Le palier **11 / 4 853** était explicitement un plancher comptable après corre
 3. `IFileSystem::Commit` ;
 4. `IMultiCommitManager::Add` et `Commit`.
 
-Ces neuf références sont restaurées dans le catalogue physique. Leur qualification actuelle est : une ligne `ns:am` HORS-VERSION HOS23, quatre NOOP sémantiques explicites, trois implémentations FSP déjà réelles et le couple MultiCommit désormais borné. La seule PARTIEL de cet écart était `IMultiCommitManager::Commit`.
+Ces neuf références sont restaurées dans le catalogue physique. Leur qualification actuelle est : une ligne `ns:am` HORS-VERSION HOS23, quatre NOOP sémantiques explicites, deux implémentations FSP déjà réelles et le couple MultiCommit désormais borné. La seule PARTIEL de cet écart était `IMultiCommitManager::Commit`.
 
 **3. Dernier correctif runtime.** Vendor `bccaa7d11fe8f46d0a48a08bafd8b9e92b08657f` ferme l'atomicité MultiCommit inexistante : un premier filesystem peut être enregistré et committé ; un second participant est refusé avant toute mutation qui prétendrait offrir un rollback/commit atomique Horizon non disponible. Le CMake sélectionne directement `sources/eden/src/core/hle/service/filesystem/fsp/fs_i_multi_commit_manager.cpp`.
 
-Après restauration des neuf lignes, le catalogue physique revient à **117 SVC + 4 786 lignes IPC − 23 META − 27 DUP = 4 853 références déduplicables**.
+Après restauration des neuf lignes, le **périmètre historique** revient à **117 SVC + (4 786 lignes IPC − 23 META − 27 DUP) = 117 + 4 736 = 4 853 références déduplicables**. Le Markdown suit aussi 7 SVC live complémentaires (`0x37`, `0x39`, `0x3A`, `0x46`, `0x47`, `0x90`, `0x91`) absentes du snapshot miroir initial et donc hors de ce dénominateur.
 
 ## **RESTANT GLOBAL — REGISTRE HISTORIQUE DE REVUE : 0 / 4 853**
 
 Ce zéro signifie uniquement : **aucune identité du pool historique NULL/STUB/PARTIEL/ABI-DIFF/AMBIGU n'est encore laissée sans qualification statique**. Il ne signifie pas que les 4 853 contrats sont tous fonctionnellement implémentés, ni que HOS23 est couvert exhaustivement, ni que chaque jeu NS1 est compatible. Certaines lignes sont volontairement HORS-VERSION, NOOP sémantiques, sous-modes bornés ou rejets fail-closed. La validation PS5 reste indépendante.
 
-Aucun build natif PS5 ni résultat console n'est revendiqué par cette clôture. Le couple moteur/vendor final doit encore être repinné et ses gates CI vérifiées.
+Aucun build natif PS5 ni résultat console n'est revendiqué par cette clôture. Le couple runtime a été repinné par moteur `c5adbefb9c4d69d9655ed190cb1fda7c6ebc7e28` → vendor `bccaa7d11fe8f46d0a48a08bafd8b9e92b08657f`. Les gates de ce pin sont vertes : X8D24 `45868713603` et provenance vendor `45868713609`.
 

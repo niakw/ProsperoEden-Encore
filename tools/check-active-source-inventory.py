@@ -33,6 +33,11 @@ if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"
     assert subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"], text=True).strip() == "5b4e01583d0687ba41e7a428668ee84c8b58c91e"
     assert subprocess.check_output(["git", "hash-object", str(root/"vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp")], text=True).strip() == "f32b7be9445f1888298fd7162c8126b8c0421f02"
 
+# 26/11/2026: one new VI2 owner; authenticate the full vendor tree and C++ blob.
+if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip() == "75f4ae7500238428a4162aaf2b148b796f3bd06d":
+    assert subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"], text=True).strip() == "ecb2d8ceae04cb9cc0c65b04b59aa3f7609ed6e7"
+    assert subprocess.check_output(["git", "hash-object", str(root/"vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp")], text=True).strip() == "d4ab004483080904ecabffd255027bcc84e2ae86"
+
 # November 23 stabilization is a reviewed exact successor, not a new
 # historical F07 baseline. Preserve prior classifications for unchanged owners.
 shipping_vendor = subprocess.check_output(
@@ -864,7 +869,7 @@ static_assert(NUM_GRAPHICS_UNIFORM_BUFFERS <= 32, "fast bitmask must fit u32");"
 if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
     for relative, blob in {
         "eden-core/overrides/core/device_memory_manager.inc":
-            ("8acbdfe9ac970d24fecd334ca7b943f6bcd958f4" if shipping_vendor in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1"} else "daf493ce6e863397ec44bfae467c4f7533570477"),
+            ("8acbdfe9ac970d24fecd334ca7b943f6bcd958f4" if shipping_vendor in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "75f4ae7500238428a4162aaf2b148b796f3bd06d"} else "daf493ce6e863397ec44bfae467c4f7533570477"),
         "eden-vulkan/vulkan_rasterizer.cpp":
             ("71d097b9a83028dfad9370792c905bb3bfccfd5a" if fc27_p1_vendor else
              "f23ad861761d53b59b8c83ae6003c089ae688060"
@@ -1024,7 +1029,7 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
         # Exact selected Nov26 NS2 successor, already independently
         # reviewed by vendor/tests/ns1_r23_18_tir_host.py. Keep the old
         # historical comparison below unchanged for all earlier vendors.
-        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1"}:
+        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "75f4ae7500238428a4162aaf2b148b796f3bd06d"}:
             assert actual == "c0312be09d81afb0064479179db794d2648560b9", (
                 "Unreviewed selected NS2 TextureCache", actual)
             selected_ns2 = (active / "ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
@@ -1771,7 +1776,7 @@ else:
     assert post_f07_gpu_table_present == post_f07_gpu_table_owners
     page_table_bytes = (active / "eden-core/src/common/multi_level_page_table.cpp").read_bytes()
     assert hashlib.sha1(b"blob " + str(len(page_table_bytes)).encode() + bytes([0]) + page_table_bytes).hexdigest() == (
-        "87eed0b2319c719d27332c8e24f97a73e496f108" if shipping_vendor in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c", "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1"} else "6dd69f4b09aebc0eb7250975d35b34393e9f5516" if shipping_vendor in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e"} else "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f" if shipping_vendor == "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee" else "c55a55498fe300458800b646bfc295db11283b4a")
+        "87eed0b2319c719d27332c8e24f97a73e496f108" if shipping_vendor in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c", "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "75f4ae7500238428a4162aaf2b148b796f3bd06d"} else "6dd69f4b09aebc0eb7250975d35b34393e9f5516" if shipping_vendor in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e"} else "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f" if shipping_vendor == "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee" else "c55a55498fe300458800b646bfc295db11283b4a")
     assert 'list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")' in nov13_cmake
     assert 'list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")' in nov13_cmake
 print("ENCORE_POST_F07_GPU_PAGE_TABLE_OWNER_PASS", f"owners={len(post_f07_gpu_table_present)}")
@@ -1965,7 +1970,7 @@ pair_present = pair_new_owners & set(physical_all)
 # Reuse F07's one fourteen-blob selected GPU receipt without importing
 # and executing that audit. Older vendor pins retain historical replay.
 selected_nov26_gpu_pair = {}
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1"}:
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "75f4ae7500238428a4162aaf2b148b796f3bd06d"}:
     import ast
     f07_ast = ast.parse(
         (root / "tools/check-eden-optimization-coverage.py").read_text())
@@ -2036,7 +2041,7 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
     for path, blob in pair_receipt["files"].items():
         source_path = active / path
         raw = source_path.read_bytes()
-        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1"}:
+        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "75f4ae7500238428a4162aaf2b148b796f3bd06d"}:
             # Authenticate the complete selected C++ blob; older vendor
             # pins still replay the historical F07 inverse deltas below.
             actual = hashlib.sha1(
@@ -2299,7 +2304,7 @@ if gpu_table_vendor_pin in {"bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87
 # F07 17-owner exact source table. Reuse that one immutable record on an
 # audit copy instead of comparing new handlers to obsolete early-HLE blobs.
 selected_nov26_hle_receipt = {}
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1"}:
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "75f4ae7500238428a4162aaf2b148b796f3bd06d"}:
     import ast
     f07_hle_ast = ast.parse(
         (root / "tools/check-eden-optimization-coverage.py").read_text())
@@ -2336,7 +2341,7 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
     for path, blob in ns2_early_hle_receipts.items():
         raw = (active / path).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1"}:
+        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "75f4ae7500238428a4162aaf2b148b796f3bd06d"}:
             assert actual == selected_nov26_hle_receipt[path], (
                 "Nov26 selected NS2 HLE drift", path, actual)
             continue
@@ -2793,14 +2798,14 @@ else:
     post_f07_bcat_buffer_hotpath_present = set()
 # Use the same four exact successor SHAs already consumed by F07.
 # No change to the historical 32-entry base receipt.
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1"}:
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "75f4ae7500238428a4162aaf2b148b796f3bd06d"}:
     assert set(selected_nov26_post_f07_overrides).issubset(
         current_vendor_post_f07_owner_blobs)
     current_vendor_post_f07_owner_blobs.update(
         selected_nov26_post_f07_overrides)
 
 current_vendor_post_f07_present = set(current_vendor_post_f07_owner_blobs) & set(physical_all)
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1"} or actual_vendor in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "75f4ae7500238428a4162aaf2b148b796f3bd06d"} or actual_vendor in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
                      "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
     assert current_vendor_post_f07_present == set(current_vendor_post_f07_owner_blobs)
     for relative, expected_blob in current_vendor_post_f07_owner_blobs.items():
@@ -2869,7 +2874,7 @@ assert {p for p in physical if p.startswith("eden-header-hygiene/")} == warning_
 # rather than treating an arbitrary new count as historical coverage.
 catalog_paths = set(re.findall(r"^\| `([^`]+)` \|", section, re.MULTILINE))
 assert len(catalog_paths) == 337, ("Historical F07 catalog drift",len(catalog_paths))
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1"}:
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "75f4ae7500238428a4162aaf2b148b796f3bd06d"}:
     # The old 337-source snapshot must remain exact. Separate only the
     # ten newer owners still present after the existing specialized ledgers.
     post_snapshot = set(physical) - catalog_paths
@@ -3307,7 +3312,7 @@ post_f07_gpu_wait_receipts = {
 }
 # Selected R08 and forced-fence owners are already sealed in F07.
 # Share that exact two-file successor dictionary rather than copy SHA pins.
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1"}:
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "75f4ae7500238428a4162aaf2b148b796f3bd06d"}:
     import ast
     f07_ast = ast.parse((root/"tools/check-eden-optimization-coverage.py").read_text())
     wait_updates = [

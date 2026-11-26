@@ -4110,3 +4110,18 @@ Ces commandes interrogent l'identité/configuration **du matériel Switch émul�
 **Nouveau compteur global : 146 lignes ouvertes.**
 
 Arithmétique : **149 - 3 = 146**. Aucun patch runtime dans cette requalification ; aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — SSL CreateContext + NIM async fail-closed : palier global 144
+
+Base : **146 lignes ouvertes**.
+
+Vendor **`5f4203040ee5febbc61dc99ed3433e6fb6929474`** traite deux anciens PARTIEL :
+- SSL cmd0 `CreateContext` : le handler consomme l'ABI, la version SSL et renvoie un vrai `ISslContext` raccordé au backend de connexion/PKI ; l'ancien label `STUBBED` était trompeur et est retiré ;
+- NIM `IShopServiceAsync::Request` : suppression de la fausse réponse réseau `"{}"` réussie. En l'absence de backend Nintendo Shop, la requête retourne désormais `IPC::ResultNotSupported` immédiatement.
+
+**2 lignes PARTIEL quittent le pool.**
+
+**Nouveau compteur global : 144 lignes ouvertes.**
+
+Arithmétique : **146 - 2 = 144**. Gitlink repinné sur `5f4203040ee5febbc61dc99ed3433e6fb6929474`. Aucun build PS5 ni validation console revendiqués.

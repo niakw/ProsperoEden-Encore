@@ -19,7 +19,14 @@ assert "const Rect hero{0.0f, 0.0f, 1920.0f, 1080.0f}" in home
 assert "list.hgradient_rect(hero, 0.0f" in home
 assert "list.gradient_rect({0.0f, 325.0f, 1920.0f, 755.0f}" in home
 assert 'tr("Max. players: {0}")' in home
-assert "const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f)" in home
+# The banner is polled independently; a valid screenshot stays visible while
+# its banner is missing or still being refreshed asynchronously.
+assert "const Cover banner_picture = prefs_.show_game_background &&" in home
+assert "? c.textures.cover(hero_banner, 1920.0f) : Cover{};" in home
+assert "banner_picture.texture != 0 ? hero_banner :" in home
+assert "case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};" in home
+assert "const Cover hero_picture = hero_artwork == hero_banner" in home
+assert "? banner_picture : c.textures.cover(hero_artwork, 1920.0f);" in home
 assert "list.image(hero_picture.texture, hero, uv" in home
 assert "list.gradient_rect(hero, 0.0f" not in home
 assert "const Rect quick_sheet{" in home  # overlay only, not permanent

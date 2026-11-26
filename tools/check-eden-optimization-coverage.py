@@ -1751,7 +1751,7 @@ post_f07_loading_artwork_receipts = {
     # was b08c16fa6650e89dbbd6b8f1b73d26f66a1f441e.
     "headless/loading_artwork_gl.hpp": "7bf2c800ef6524f7d582a08c27ef4fbf63d25d7e",
     "headless/loading_case.hpp": "8b54dfb19ee20c3aba930927382be3adec8c24da",
-    "headless/loading_case_shader_source.hpp": "7f506ee0bfd2a1e4b1b29f06cb740b39f63cb2a9",
+    "headless/loading_case_shader_source.hpp": "ddf1695883a05d06448d2e3e7f29b952bd0e41e9",
     "headless/prosperoeden/case_index_disk.hpp": "e6618140b3aeda0ff1fcb085d8f43ff98d6080ff",
 }
 post_f07_loading_artwork_owners = set(post_f07_loading_artwork_receipts)

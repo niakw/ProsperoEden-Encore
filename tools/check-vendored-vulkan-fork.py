@@ -3119,6 +3119,17 @@ int main() { for (int i = 0; i < 5; ++i) run(i); }
         guard = "        // A newer incompatible alias must not create an invalid Vulkan view,\n        // nor silently promote an older compatible image. Preserve the raw\n        // framebuffer fallback when the freshest candidate cannot be viewed.\n        if (!VideoCore::Surface::IsViewCompatible(\n                slot_images[freshest_id].info.format, view_format,\n                runtime.HasBrokenTextureViewFormats(), runtime.HasNativeBgr())) {\n            return {};\n        }\n"
         assert shadow_tex.count(guard) == 1
         shadow_tex = shadow_tex.replace(guard, '', 1)
+        # The current generated and shipping C++ both carry this exact
+        # fail-closed framebuffer view guard. Rewind it from BOTH temporary
+        # historical comparison copies, never from production sources.
+        generated_shadow_tex = normalized_generated[shadow_tex_name].read_text()
+        assert generated_shadow_tex.count(guard) == 1, (
+            'Generated framebuffer format guard moved or disappeared')
+        generated_shadow_tex = generated_shadow_tex.replace(guard, '', 1)
+        generated_guard_path = temp/'normalized-generated-ps5-viewguard'/shadow_tex_name
+        generated_guard_path.parent.mkdir(parents=True, exist_ok=True)
+        generated_guard_path.write_text(generated_shadow_tex)
+        normalized_generated[shadow_tex_name] = generated_guard_path
         assert git_blob_sha(shadow_tex) == 'd3252c6ee7726d4536cdb3e27d3c1105837f5e56'
     assert git_blob_sha(shadow_tex) == 'd3252c6ee7726d4536cdb3e27d3c1105837f5e56', (
         'Unreviewed PS5 0078 shadow TextureCache owner')

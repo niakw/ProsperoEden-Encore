@@ -1389,6 +1389,33 @@ int main(){
             images.Destroy(*second_image) && images.Records().empty(),
             "GSV 430 rejects stale images and retires independent references");
 
+    // 429 count=3 must publish base+i and actual per-image offsets.
+    // This is not three aliases of the same first image.
+    NativeImageLedger multi_images;
+    const auto multi_requirements = CalculateNativeImageRequirements(preferences, 3);
+    require(multi_requirements && multi_requirements->size == 98304,
+            "GSV 429 calculates full three-image backing");
+    require(!multi_images.Create(16, 98303, *multi_requirements, preferences, 8, 3) &&
+            !multi_images.Create(16, 98304, *multi_requirements, preferences, 0xffffffffU, 3) &&
+            !multi_images.Create(16, 98304, *multi_requirements, preferences, 8, 0) &&
+            multi_images.Count() == 0,
+            "GSV 429 refuses invalid pool without partial handles");
+    const auto multi = multi_images.Create(16, 98304, *multi_requirements, preferences, 8, 3);
+    require(multi && *multi == 8 && multi_images.Count() == 3 &&
+            multi_images.Get(8)->offset == 0 &&
+            multi_images.Get(9)->offset == 32768 &&
+            multi_images.Get(10)->offset == 65536 &&
+            multi_images.Get(10)->size == 32768 &&
+            !multi_images.Get(11) &&
+            multi_images.ConfigureWindowPool(8, 3, true) &&
+            multi_images.Get(10)->window_pool &&
+            multi_images.ConfigureWindowPool(8, 0, false) &&
+            multi_images.Destroy(8) && multi_images.Destroy(9) &&
+            multi_images.Destroy(10) && multi_images.Count() == 0,
+            "GSV 429/315/314/430 admit and retire consecutive independently backed image views");
+    const auto next_image = multi_images.Create(16, 98304, *multi_requirements, preferences, 0, 3);
+    require(next_image && *next_image == 11, "GSV 429 never reuses retired image IDs");
+
     // Native video pools (911) are distinct from 429 native image handles.
     // Both kinds must reject foreign backing before any GPU VA allocation.
     std::array<u32,16> video{};

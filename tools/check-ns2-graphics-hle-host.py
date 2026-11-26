@@ -494,6 +494,11 @@ def main()->int:
     image_create = text.split('void IGraphicsSupervisor::CreateNativeImage(', 1)[1].split(
         'void IGraphicsSupervisor::ConfigureNativeWindowImagePool(', 1)[0]
     assert 'catch (const std::bad_alloc&)' in image_create
+    assert 'const u32 count = packet[18];' in image_create
+    assert 'm_next_image_id += count;' in image_create
+    assert 'duplicated < count' in image_create and 'while (duplicated != 0)' in image_create
+    assert 'packet[3] == 1' not in image_create
+    assert 'image->offset > handle->orig_size' in vi2_lease
     assert image_create.index('m_native_images.Create(') < image_create.index(
         'catch (const std::bad_alloc&)') < image_create.index(
         'result = Kernel::ResultOutOfResource;',

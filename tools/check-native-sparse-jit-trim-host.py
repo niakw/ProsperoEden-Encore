@@ -20,6 +20,11 @@ assert "target_include_directories(common PRIVATE \"\u0024{EDEN_PORT_DIR}\")" in
 assert "#ifdef PS5_NATIVE" in jit and "EDEN_SPARSE_JIT_DEV" not in jit
 assert "setSize(begin);" in jit
 assert jit.index("setSize(begin);") < jit.index("::Common::TrimSparseJitCode(const_cast<u8*>(getCode()), begin)")
+# Constructor PreludeComplete has no discarded guest block: no destructive
+# guard remap before any guest execution, including the second title.
+assert "discarded_guest_code = getSize() > begin;" in jit
+assert jit.index("discarded_guest_code = getSize() > begin;") < jit.index("setSize(begin);")
+assert "if (discarded_guest_code &&" in jit
 assert "sparse_jit_generation.fetch_add(1, std::memory_order_acq_rel);" in native
 start="bool TrimSparseJitCode(void* executable, std::size_t live_code_end) noexcept {"
 end="\n\n// The virtual reservation and every remaining physical chunk have one owner."

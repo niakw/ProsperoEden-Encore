@@ -133,13 +133,13 @@ elif cache_blob in {
     "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
     "505ee80a37d5991b7925019282e71926c1648e02",
     "c6bab56cbd4e58458d010e423d74df9f933a8f8d",  # vendor #189: reviewed pinned RangeSet native ABI adaptation
-    "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b", "6aa9754506ee82b4d25a4e36d4f3be646a62456b", "7f07e392ea0cc828d862da29d32ada1ebc3966aa", "4ce33d21debc33c9625129cbd545bf9b1c084272", "fce19742529b21bca0f92f3f67c4e420dcd493c7", "24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86",  # NS1 FC27: page-wide ownership sampled before CPU write; GPU siblings retained; all-channel binding scrub
+    "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b", "6aa9754506ee82b4d25a4e36d4f3be646a62456b", "7f07e392ea0cc828d862da29d32ada1ebc3966aa", "4ce33d21debc33c9625129cbd545bf9b1c084272", "fce19742529b21bca0f92f3f67c4e420dcd493c7", "24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86", "4577de4f63bc0393a1e14e89534d6f8aedf50d67",  # NS1 FC27: page-wide ownership sampled before CPU write; GPU siblings retained; all-channel binding scrub
 }:
     write_marker = "WriteDownloadedMemory(cpu_written, copy_device_addr, copy_mapped_memory, copy.size);"
     assert "void BufferCache<P>::WriteDownloadedMemory" in buffer_cache
     assert "device_memory.WriteBlockUnsafe(start, data + (start - device_addr), end - start);" in buffer_cache
     if cache_blob in {"09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
-                       "505ee80a37d5991b7925019282e71926c1648e02", "c6bab56cbd4e58458d010e423d74df9f933a8f8d", "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b", "6aa9754506ee82b4d25a4e36d4f3be646a62456b", "7f07e392ea0cc828d862da29d32ada1ebc3966aa", "4ce33d21debc33c9625129cbd545bf9b1c084272", "fce19742529b21bca0f92f3f67c4e420dcd493c7", "24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86"}:
+                       "505ee80a37d5991b7925019282e71926c1648e02", "c6bab56cbd4e58458d010e423d74df9f933a8f8d", "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b", "6aa9754506ee82b4d25a4e36d4f3be646a62456b", "7f07e392ea0cc828d862da29d32ada1ebc3966aa", "4ce33d21debc33c9625129cbd545bf9b1c084272", "fce19742529b21bca0f92f3f67c4e420dcd493c7", "24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86", "4577de4f63bc0393a1e14e89534d6f8aedf50d67":
         assert "Upstream Lichii/Eglantine b13c4c1" in buffer_cache
         assert "keep_page_gpu_data" in buffer_cache
     if cache_blob == "505ee80a37d5991b7925019282e71926c1648e02":
@@ -163,7 +163,7 @@ elif cache_blob in {
         assert "gpu_modified_ranges.ForEachInRange(addr, size," in region
 else:
     raise AssertionError(("Unreviewed live-fetch BufferCache owner", cache_blob))
-if cache_blob in {"24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86"}:
+if cache_blob in {"24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86", "4577de4f63bc0393a1e14e89534d6f8aedf50d67":
     # Vendor 637edccb batches asynchronous fence downloads only. The live
     # GPFIFO SafeRead path still uses synchronous copy / Finish / publication.
     assert "std::array<BufferCopy, 8> copies{};" in buffer_cache
@@ -180,8 +180,13 @@ print("P2_7_NATIVE_GPU_COMMAND_FETCH_OWNER_PASS real_dma=2"
       " upstream_submitted_snapshot=inapplicable"
       " gpu_write_readback=SOURCE_CHAIN_PRESENT hardware_completion=P5")
 
-if cache_blob == "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86":
+if cache_blob in {"0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86", "4577de4f63bc0393a1e14e89534d6f8aedf50d67"}:
     readback = buffer_cache.split("void BufferCache<P>::DownloadMemory(",1)[1].split("\n}",1)[0]
     assert "size > address_limit - device_addr" in readback
     assert "DownloadBufferMemory(buffer, start, end - start);" in readback
     assert "DownloadBufferMemory(buffer, device_addr, size);" not in readback
+
+if cache_blob == "4577de4f63bc0393a1e14e89534d6f8aedf50d67":
+    gc = buffer_cache.split("void BufferCache<P>::RunGarbageCollector()",1)[1].split("\n}",1)[0]
+    assert "constexpr u64 staging_budget = 16ULL * 1024 * 1024;" in gc
+    assert gc.index("runtime.Finish();") < gc.index("WriteDownloadedMemory(cpu_written") < gc.index("memory_tracker.ForEachDownloadRangeAndClear(")

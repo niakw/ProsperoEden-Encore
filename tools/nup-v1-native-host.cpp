@@ -5,6 +5,7 @@
 #include "nup_v1_native_content.h"
 #include "nup_v1_native_aoc.h"
 #include "nup_v1_native_loader.h"
+#include "common/settings.h"
 #include "core/loader/loader.h"
 #include "core/file_sys/romfs.h"
 #include "core/file_sys/control_metadata.h"
@@ -250,6 +251,26 @@ int main(int argc, char** argv) {
         Eden::NupV1::Native::AddOnIndex foreign_service{
             paired_mount, 0x0400123400002001ULL};
         assert(!foreign_service.BaseId(0x0400123400002001ULL));
+        // Exercise the real outer loader policy, not only ContentSet.
+        auto open_paired = [&] {
+            return Eden::NupV1::Native::NupAppLoader::Open(
+                std::make_shared<MemoryFile>(Load(argv[21])), &error);
+        };
+        auto upgraded_loader = open_paired();
+        assert(upgraded_loader && error.empty());
+        FileSys::VirtualFile upgraded_romfs;
+        assert(upgraded_loader->ReadRomFS(upgraded_romfs) ==
+               Loader::ResultStatus::Success);
+        assert(Read(upgraded_romfs).find("bonus.bin=edition-addon\n") !=
+               std::string::npos);
+        Settings::values.disabled_addons[0x0100123400000000ULL] = {"DLC"};
+        auto disabled_loader = open_paired();
+        assert(disabled_loader && error.empty());
+        FileSys::VirtualFile disabled_romfs;
+        assert(disabled_loader->ReadRomFS(disabled_romfs) ==
+               Loader::ResultStatus::Success);
+        assert(Read(disabled_romfs).find("bonus.bin=") == std::string::npos);
+        Settings::values.disabled_addons.clear();
     }
 
     auto effective = mount->Effective(ContentView::RomFS);

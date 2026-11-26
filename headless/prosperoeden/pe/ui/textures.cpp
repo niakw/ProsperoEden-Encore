@@ -11,6 +11,7 @@
 #include <chrono>
 #include <future>
 #include <string_view>
+#include <sys/stat.h>
 #include <utility>
 
 namespace pe::ui
@@ -37,7 +38,8 @@ bool IsProfileAvatarImage(std::string_view path)
 bool IsRetailBoxImage(std::string_view path)
 {
     return path.find("/box-front-") != std::string_view::npos ||
-           path.find("/box-back-") != std::string_view::npos;
+           path.find("/box-back-") != std::string_view::npos ||
+           path.find("/box-spine-") != std::string_view::npos;
 }
 
 } // namespace
@@ -227,6 +229,20 @@ void Textures::release()
     queue_.clear();
 }
 
+Textures::FileRevision Textures::file_revision(const std::string& path)
+{
+    // Only real cached files, never packaged/virtual resource names.
+    struct stat info{};
+    if (path.empty() || path.front() != '/' ||
+        stat(path.c_str(), &info) != 0 || !S_ISREG(info.st_mode))
+        return {};
+    return {static_cast<std::uint64_t>(info.st_dev),
+            static_cast<std::uint64_t>(info.st_ino),
+            static_cast<std::uint64_t>(info.st_size),
+            static_cast<std::int64_t>(info.st_mtime),
+            static_cast<std::int64_t>(info.st_ctime), true};
+}
+
 Cover Textures::cover(const std::string &path, float size, bool urgent)
 {
     if (path.empty())
@@ -270,7 +286,7 @@ Cover Textures::cover(const std::string &path, float size, bool urgent)
     }
     it->second.used = frame_;
     // Calculate age only for visible/queried covers, not every cached entry.
-    float age = it->second.loaded
+    float age = (it->second.loaded || it->second.texture != 0)
         ? static_cast<float>(uptime_seconds_ - it->second.loaded_at_seconds)
         : 0.0f;
     // Nlib downloads arrive by atomic rename. Poll a missing *visible* cover
@@ -291,6 +307,16 @@ Cover Textures::cover(const std::string &path, float size, bool urgent)
             queue_.push_front(key);
         else
             queue_.push_back(key);
+    }
+    // Visible successful files also need revalidation. Queue only a cheap
+    // revision probe on the existing two workers; keep the old GL image
+    // drawable until a changed file has decoded and uploaded successfully.
+    // No filesystem I/O or texture deletion on this draw path.
+    if (it->second.loaded && it->second.texture != 0 &&
+        it->second.revision.valid &&
+        uptime_seconds_ - it->second.checked_at_seconds >= 5.0) {
+        it->second.loaded = false;
+        queue_.push_back(key);
     }
     // Preserve a previously confirmed missing state while its next decode
     // is queued. Otherwise a failed official scan briefly hides its composed
@@ -397,36 +423,49 @@ void Textures::pump(float dt, int budget)
                 it->second.generation == result.generation) {
                 Entry &entry = it->second;
                 entry.loaded = true;
-                entry.loaded_at_seconds = uptime_seconds_;
-                const bool profile_avatar = IsProfileAvatarImage(entry.path);
-                const bool retail_case =
-                    entry.path.find("/box-front-") != std::string::npos ||
-                    entry.path.find("/box-back-") != std::string::npos ||
-                    entry.path.find("/box-spine-") != std::string::npos;
-                if (!result.ok || result.image.empty()) {
-                    entry.failed_loads = std::min(entry.failed_loads + 1u, 4u);
-                    if (retail_case)
-                        sys::log("EDEN_CASE_TEXTURE status=decode-failed path=%s attempt=%u",
-                                 entry.path.c_str(), entry.failed_loads);
-                    if (profile_avatar)
-                        sys::log("EDEN_PROFILE_AVATAR_TEXTURE status=decode_failed attempt=%u",
-                                 entry.failed_loads);
-                } else {
+                entry.checked_at_seconds = uptime_seconds_;
+                if (result.unchanged) {
                     entry.failed_loads = 0;
-                    entry.aspect = static_cast<float>(result.image.width) /
-                                   static_cast<float>(result.image.height);
-                    entry.texture = create(result.image);
+                } else {
                     if (entry.texture == 0)
+                        entry.loaded_at_seconds = uptime_seconds_;
+                    const bool profile_avatar = IsProfileAvatarImage(entry.path);
+                    const bool retail_case =
+                        entry.path.find("/box-front-") != std::string::npos ||
+                        entry.path.find("/box-back-") != std::string::npos ||
+                        entry.path.find("/box-spine-") != std::string::npos;
+                    if (!result.ok || result.image.empty()) {
                         entry.failed_loads = std::min(entry.failed_loads + 1u, 4u);
-                    if (retail_case)
-                        sys::log("EDEN_CASE_TEXTURE status=%s path=%s width=%d height=%d texture=%u",
-                                 entry.texture ? "ready" : "upload-failed",
-                                 entry.path.c_str(), result.image.width,
-                                 result.image.height, entry.texture);
-                    if (profile_avatar)
-                        sys::log("EDEN_PROFILE_AVATAR_TEXTURE status=%s width=%d height=%d",
-                                 entry.texture ? "ready" : "upload_failed",
-                                 result.image.width, result.image.height);
+                        if (retail_case)
+                            sys::log("EDEN_CASE_TEXTURE status=decode-failed path=%s attempt=%u",
+                                     entry.path.c_str(), entry.failed_loads);
+                        if (profile_avatar)
+                            sys::log("EDEN_PROFILE_AVATAR_TEXTURE status=decode_failed attempt=%u",
+                                     entry.failed_loads);
+                    } else {
+                        const auto replacement = create(result.image);
+                        if (replacement != 0) {
+                            if (entry.texture != 0)
+                                pending_deletes_.push_back(entry.texture);
+                            entry.texture = replacement;
+                            entry.aspect = static_cast<float>(result.image.width) /
+                                           static_cast<float>(result.image.height);
+                            entry.revision = result.revision;
+                            entry.loaded_at_seconds = uptime_seconds_;
+                            entry.failed_loads = 0;
+                        } else {
+                            entry.failed_loads = std::min(entry.failed_loads + 1u, 4u);
+                        }
+                        if (retail_case)
+                            sys::log("EDEN_CASE_TEXTURE status=%s path=%s width=%d height=%d texture=%u",
+                                     entry.texture ? "ready" : "upload-failed",
+                                     entry.path.c_str(), result.image.width,
+                                     result.image.height, entry.texture);
+                        if (profile_avatar)
+                            sys::log("EDEN_PROFILE_AVATAR_TEXTURE status=%s width=%d height=%d",
+                                     entry.texture ? "ready" : "upload_failed",
+                                     result.image.width, result.image.height);
+                    }
                 }
             }
         } catch (const std::exception& error) {
@@ -453,14 +492,25 @@ void Textures::pump(float dt, int budget)
             const std::string path = it->second.path;
             const int target_pixels = it->second.target_pixels;
             const auto generation = it->second.generation;
+            const auto revision = it->second.revision;
             try {
                 decode = std::async(std::launch::async,
-                    [this, key = std::move(key), path, target_pixels, generation]() mutable {
+                    [this, key = std::move(key), path, target_pixels, generation, revision]() mutable {
                         DecodedCover decoded;
                         decoded.key = std::move(key);
                         decoded.generation = generation;
                         try {
+                            const auto before = file_revision(path);
+                            if (revision.valid && before == revision) {
+                                decoded.unchanged = true;
+                                return decoded;
+                            }
                             decoded.ok = services_.load_display_image(path, &decoded.image, target_pixels);
+                            decoded.revision = file_revision(path);
+                            // A concurrent rename during the decode cannot
+                            // publish the old pixels under the new revision.
+                            if (before != decoded.revision)
+                                decoded.ok = false;
                             if (decoded.ok) {
                                 // Keep the largest dimension near the actual
                                 // rendering footprint. This scaling is CPU-side
@@ -483,7 +533,9 @@ void Textures::pump(float dt, int budget)
             } catch (const std::exception& error) {
                 sys::log("cover queue failed: %s", error.what());
                 it->second.loaded = true;
-                it->second.loaded_at_seconds = uptime_seconds_;
+                it->second.checked_at_seconds = uptime_seconds_;
+                if (it->second.texture == 0)
+                    it->second.loaded_at_seconds = uptime_seconds_;
                 it->second.failed_loads = std::min(it->second.failed_loads + 1u, 4u);
             }
             break;

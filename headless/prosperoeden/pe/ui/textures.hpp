@@ -102,12 +102,22 @@ class Textures
     }
 
   private:
+    // An atomic rename changes the inode even for same-sized images.
+    struct FileRevision {
+        std::uint64_t device = 0, inode = 0, size = 0;
+        std::int64_t modified = 0, changed = 0;
+        bool valid = false;
+        bool operator==(const FileRevision&) const = default;
+    };
+    static FileRevision file_revision(const std::string& path);
     struct Entry
     {
         std::uint32_t texture = 0;
         // Per-cover timestamp; no per-frame cache-wide age mutation.
         double loaded_at_seconds = 0.0;
         bool loaded = false; // false: queued or decoding
+        double checked_at_seconds = 0.0;
+        FileRevision revision;
         std::uint64_t generation = 0;
         unsigned failed_loads = 0; // bounded retry backoff when async Nlib media arrive
         bool priority_queued = false; // promote visible Home icons only once
@@ -122,6 +132,8 @@ class Textures
         std::uint64_t generation = 0;
         gfx::Image image;
         bool ok = false;
+        bool unchanged = false;
+        FileRevision revision;
     };
     std::array<std::future<DecodedCover>, 2> decode_{}; // bounded parallel front/rear decoding
     std::uint32_t create(const gfx::Image &image);

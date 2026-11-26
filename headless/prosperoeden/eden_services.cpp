@@ -2845,6 +2845,8 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
                                              const std::atomic<bool>* cancel) {
     if (game.title_id == 0 ||
         (cancel && cancel->load(std::memory_order_acquire))) return game;
+    game.artwork_changed = false;
+    game.case_artwork_changed = 0;
     const int language_choice = Eden::LoadPreferences().language;
     const std::string scanned_name = game.name;
     const bool second_generation = UseNs2CaseIndex(game);
@@ -2879,6 +2881,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         const auto cached_case = box_art(game.title_id, second_generation);
         game.box_front = cached_case.front;
         game.box_back = cached_case.back;
+        game.box_spine = cached_case.spine;
         if (game.case_artwork_changed & 0x1F8u) {
             AppendCaseScenes(game.screenshots, game.title_id, second_generation);
             game.artwork_changed = true;
@@ -2942,6 +2945,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         const auto box = box_art(game.title_id, second_generation);
         if (!box.front.empty()) game.box_front = box.front;
         if (!box.back.empty()) game.box_back = box.back;
+        if (!box.spine.empty()) game.box_spine = box.spine;
         // A late local/NX2 retail-cover fetch may complete after the first
         // Nlib/cache snapshot. Always expose its real front to the game tile.
         // Never promote a portrait retail front into the square tile slot.

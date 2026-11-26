@@ -113,8 +113,10 @@ assert 'home_diagnostics_.free_bytes' not in home  # no invented PS5 total capac
 assert 'home_diagnostics_.storage_root' in home
 
 assert 'const std::string hero_artwork =\n' in home
-assert 'case_media::BackgroundAllowed(hero_banner) && !c.textures.known_missing(hero_banner)' in home
-assert '? hero_banner\n            : case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};' in home
+assert 'case_media::BackgroundAllowed(hero_banner)' in home
+assert 'c.textures.cover(hero_banner, 1920.0f)' in home
+assert 'banner_picture.texture != 0 ? hero_banner :' in home
+assert 'case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};' in home
 assert 'hero_recent->hero' in home
 # The selected service gives NLIB banner and screenshots precedence over GamesDB.
 for marker in (
@@ -129,7 +131,7 @@ for marker in (
     assert marker in services, marker
 # Hero content is game media only: banner -> screenshot -> opaque neutral fallback.
 hero_draw = home[home.index('// ---- full-bleed cinematic game hero'):home.index('// Effective values:')]
-assert 'const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f)' in hero_draw
+assert 'banner_picture : c.textures.cover(hero_artwork, 1920.0f)' in hero_draw
 assert 'list.image(hero_picture.texture, hero, uv' in hero_draw
 assert 'if (hero_picture.texture != 0)' in hero_draw
 assert 'hero_recent->cover' not in hero_draw and 'home_.last_cover' not in hero_draw

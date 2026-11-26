@@ -741,6 +741,15 @@ assert "4b815db4-d2d1-4587-89c7-f82524750914.jpg" in (
 assert "source_replacement_guard" not in native
 assert "textures_.invalidate(enriched.box_front);" in library
 assert "textures_.invalidate(enriched.box_back);" in library
+assert library.count("textures_.invalidate(enriched.box_spine);") == 2
+assert "if (shape == 14) v_uv = vec2(1.0 - corner.x, corner.y);" in shader
+assert "vec2 p = vec2((1.0 - v_st.x) * 44.0, v_st.y * 730.0);" in shader
+# Left/right orientation flips but top and bottom are preserved.
+for x in (0.0, 0.25, 0.5, 0.75, 1.0):
+    for y in (0.0, 0.5, 1.0):
+        u, v = 1.0 - x, y
+        assert (1.0 - u, v) == (x, y)
+
 assert '"https://images.launchbox-app.com/9524e5f7-ccc8-4ce6-a581-03f82c51825e.jpg"' in (
     root / "tools/launcher/preview-botw-media.py").read_text()
 assert 'EUROPE_FRONT_PINS["79189"]' in indexer or '"79189": (' in indexer

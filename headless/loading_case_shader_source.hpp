@@ -108,7 +108,8 @@ void main()
             float depth = a_params.z + corner.x * a_params.y;
             x = edge_x * cs - depth * sn;
             z = -edge_x * sn - depth * cs;
-            if (shape == 14) v_uv = vec2(corner.x, corner.y);
+            // The projected side reverses screen X; mirror the ink only.
+            if (shape == 14) v_uv = vec2(1.0 - corner.x, corner.y);
         } else if (shape == 12) {
             float depth = corner.y * a_params.z;
             x = local.x * cs - depth * sn;
@@ -306,7 +307,7 @@ void main()
         // User's red empty-spine reference rendered as clean vector features
         // directly on our physical side plane. No low-resolution texture or
         // fake game title is ever stretched to cover the height.
-        vec2 p = vec2(v_st.x * 44.0, v_st.y * 730.0);
+        vec2 p = vec2((1.0 - v_st.x) * 44.0, v_st.y * 730.0);
         vec3 red = v_top.rgb * (0.85 + 0.15 * (1.0 - v_st.x));
         float left_outer = 1.0 - smoothstep(-0.9, 0.9,
             round_box(p - vec2(14.5, 34.0), vec2(8.0, 20.0), 7.7));

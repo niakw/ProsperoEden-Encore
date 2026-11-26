@@ -155,8 +155,7 @@ assert "hero_recent->hero" in home_source, "recent-game Nlib hero is not consume
 # The reviewed case-media policy refuses physical covers and failed banners.
 normalized_home = " ".join(home_source.split())
 assert (
-    "const std::string hero_artwork = case_media::BackgroundAllowed(hero_banner) "
-    "&& !c.textures.known_missing(hero_banner) ? hero_banner : "
+    "const std::string hero_artwork = banner_picture.texture != 0 ? hero_banner : "
     "case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};"
     in normalized_home
 ), "Home hero fallback must prefer a usable Nlib banner, then a valid screenshot"
@@ -167,7 +166,7 @@ assert all(marker in home_source for marker in (
     "kHomeQuickPanel", "kHomeQuickFirst", "kHomeStorage", "kHomeControllers", "kHomeFullSettings",
 )), "final Home navigation/utility contract missing"
 assert "const Rect hero{0.0f, 0.0f, 1920.0f, 1080.0f}" in home_source, "reference hero is not full bleed"
-assert "const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f)" in home_source, "Nlib hero is not full bleed"
+assert "c.textures.cover(hero_banner, 1920.0f)" in home_source and "banner_picture : c.textures.cover(hero_artwork, 1920.0f)" in home_source, "Nlib hero is not full bleed"
 assert "utility_card(3" in home_source, "reference four utilities missing"
 assert "Cross launches" not in library_source, "text-only controller hint returned"
 print(f"Staged Encore artifact PASS ({len(actual)} files, current launcher/runtime markers present)")

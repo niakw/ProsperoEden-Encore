@@ -104,6 +104,7 @@ struct Game
     // No title-specific source or performance override is attached to Game.
     // Icon-only request: the previous cached path failed actual GPU decoding.
     bool artwork_rejected = false;
+    std::string box_spine{}; // worker-resolved path for exact texture invalidation
 };
 
 struct Recent

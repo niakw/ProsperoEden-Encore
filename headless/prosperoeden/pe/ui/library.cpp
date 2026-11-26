@@ -750,6 +750,8 @@ void Launcher::finish_home_media()
             textures_.invalidate(enriched.box_front);
         if (enriched.case_artwork_changed & 2u)
             textures_.invalidate(enriched.box_back);
+        if (enriched.case_artwork_changed & 4u)
+            textures_.invalidate(enriched.box_spine);
         if (enriched.title_id == home_.last_title_id && enriched.file == home_.last_file) {
             if (!enriched.cover.empty()) home_.last_cover = enriched.cover;
             if (!enriched.hero.empty()) home_.last_hero = enriched.hero;
@@ -877,6 +879,8 @@ void Launcher::finish_selected_media()
             textures_.invalidate(enriched.box_front);
         if (enriched.case_artwork_changed & 2u)
             textures_.invalidate(enriched.box_back);
+        if (enriched.case_artwork_changed & 4u)
+            textures_.invalidate(enriched.box_spine);
         // An obsolete worker may have atomically replaced an image: the
         // invalidations above remain necessary, but its old Game snapshot
         // must not overwrite newer data from Home or a refreshed scan.

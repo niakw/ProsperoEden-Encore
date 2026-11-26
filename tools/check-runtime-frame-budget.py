@@ -47,12 +47,13 @@ assert "inspected < kMaxCoverQueueLookupsPerFrame" in pump
 assert "std::async(std::launch::async," in pump
 assert "decoded.ok = services_.load_display_image(path, &decoded.image, target_pixels);" in pump
 assert pump.index("std::async(std::launch::async,") < pump.index("decoded.ok = services_.load_display_image(path, &decoded.image, target_pixels);")
-assert "entry.texture = create(result.image);" in pump
+assert "const auto replacement = create(result.image);" in pump
 completion = pump.split("for (std::size_t slot = 0; slot < decode_.size(); ++slot)", 1)[1].split("if (budget > 0)", 1)[0]
 assert "auto& decode = decode_[(frame_ + slot) % decode_.size()];" in completion
-assert completion.count("entry.texture = create(result.image);") == 1
+assert completion.count("const auto replacement = create(result.image);") == 1
 assert completion.count("break;") == 1
-assert completion.index("entry.texture = create(result.image);") < completion.index("break;")
+assert completion.index("const auto replacement = create(result.image);") < completion.index("pending_deletes_.push_back(entry.texture);") < completion.index("entry.texture = replacement;")
+assert completion.index("const auto replacement = create(result.image);") < completion.index("break;")
 assert completion.index("catch (...)") < completion.index("break;")
 assert "deleted_this_frame < kMaxTextureReclaimsPerFrame" in pump
 assert "failed_loads = std::min(entry.failed_loads + 1u, 4u)" in textures

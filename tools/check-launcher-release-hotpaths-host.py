@@ -102,7 +102,8 @@ cpp=r"""
 struct Cover {std::uint32_t texture=0;float age=0;bool missing=false;float aspect=1;};
 class Textures {
  public:
- struct Entry {std::uint32_t texture=0;double loaded_at_seconds=0;
+ struct FileRevision {bool valid=false;};
+ struct Entry {std::uint32_t texture=0;double loaded_at_seconds=0,checked_at_seconds=0;FileRevision revision{};
   bool loaded=false;bool priority_queued=false;std::uint64_t generation=0;unsigned failed_loads=0;
   std::uint64_t used=0;std::string path;int target_pixels=64;float aspect=1;};
  std::unordered_map<std::string,Entry> covers_;
@@ -204,6 +205,12 @@ int main(){
  retry.loaded=true;retry.failed_loads=3;retry.loaded_at_seconds=t.uptime_seconds_;
  t.tick(2.9f);assert(t.cover("box-1",300).missing && retry.loaded);
  t.tick(.15f);assert(t.cover("box-1",300).missing && !retry.loaded);
+ auto& refresh=t.covers_.at("box-0#512");
+ refresh.revision.valid=true;refresh.checked_at_seconds=t.uptime_seconds_;
+ t.tick(4.9f);assert(t.cover("box-0",300).texture==812 && refresh.loaded);
+ t.tick(.2f);assert(t.cover("box-0",300).texture==812 && !refresh.loaded);
+ const auto count=t.queue_.size();
+ assert(t.cover("box-0",300).texture==812 && t.queue_.size()==count);
  std::vector<std::string> old{"A","C","E","G"},now{"A","B","E","Z"},known;
  std::set_intersection(old.begin(),old.end(),now.begin(),now.end(),std::back_inserter(known));
  assert((known==std::vector<std::string>{"A","E"}));
@@ -242,6 +249,7 @@ completion_cpp = r"""
 #include <chrono>
 #include <cstdint>
 #include <future>
+#include <deque>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -250,17 +258,21 @@ struct Image {
     bool blank=false;
     bool empty() const { return blank; }
 };
+struct FileRevision {bool valid=false;};
 struct DecodedCover {
     std::string key;
     std::uint64_t generation=1;
     Image image{};
     bool ok=true;
+    bool unchanged=false;
+    FileRevision revision{};
 };
 struct Entry {
     std::string path;
     std::uint64_t generation=1;
     bool loaded=false;
-    double loaded_at_seconds=0;
+    double loaded_at_seconds=0,checked_at_seconds=0;
+    FileRevision revision{};
     unsigned failed_loads=0;
     float aspect=1;
     std::uint32_t texture=0;
@@ -272,6 +284,7 @@ struct Owner {
     std::unordered_map<std::string,Entry> covers_;
     std::uint64_t frame_=0;
     double uptime_seconds_=0;
+    std::deque<std::uint32_t> pending_deletes_;
     unsigned uploads=0;
     bool fail_upload=false;
     std::uint32_t create(const Image&) { ++uploads; return fail_upload?0:uploads; }
@@ -307,18 +320,26 @@ int main() {
     o.ready(0,DecodedCover{"a",1,Image{},false});
     o.pump_completion();
     assert(o.uploads==3 && o.covers_.at("a").failed_loads==1);
+    const auto last_good=o.covers_.at("a").texture;
     o.fail_upload=true;
     o.ready(0,DecodedCover{"a"});
     o.pump_completion();
-    assert(o.uploads==4 && o.covers_.at("a").texture==0 && o.covers_.at("a").failed_loads==1);
+    assert(o.uploads==4 && o.covers_.at("a").texture==last_good && o.covers_.at("a").failed_loads==2);
+    o.fail_upload=false;
+    o.ready(0,DecodedCover{"a",1,Image{},true,true});
+    o.pump_completion();
+    assert(o.uploads==4 && o.covers_.at("a").texture==last_good);
+    o.ready(0,DecodedCover{"a"});
+    o.pump_completion();
+    assert(o.uploads==5 && o.covers_.at("a").texture!=last_good && o.pending_deletes_.back()==last_good);
     std::promise<DecodedCover> waiting;
     o.decode_[1]=waiting.get_future();
     o.ready(0,DecodedCover{"b"});
     o.pump_completion();
-    assert(o.uploads==5 && o.decode_[1].valid());
+    assert(o.uploads==6 && o.decode_[1].valid());
     waiting.set_value(DecodedCover{"b"});
     o.pump_completion();
-    assert(o.uploads==6 && !o.decode_[1].valid());
+    assert(o.uploads==7 && !o.decode_[1].valid());
 }
 """
 with tempfile.TemporaryDirectory(prefix="encore-ui-upload-limit-") as td:

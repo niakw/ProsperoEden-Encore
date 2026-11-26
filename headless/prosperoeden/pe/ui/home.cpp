@@ -600,10 +600,13 @@ void Launcher::draw_home(Canvas &c)
     const std::string &hero_title = hero_recent != nullptr ? hero_recent->title : home_.last_title;
     const std::string &hero_banner = hero_recent != nullptr ? hero_recent->hero : home_.last_hero;
     const std::string &hero_screenshot = hero_recent != nullptr ? hero_recent->screenshot : home_.last_screenshot;
+    // Keep retrying the banner while the screenshot fallback is visible.
+    const Cover banner_picture = prefs_.show_game_background &&
+            case_media::BackgroundAllowed(hero_banner)
+        ? c.textures.cover(hero_banner, 1920.0f) : Cover{};
     const std::string hero_artwork =
-        case_media::BackgroundAllowed(hero_banner) && !c.textures.known_missing(hero_banner)
-            ? hero_banner
-            : case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};
+        banner_picture.texture != 0 ? hero_banner :
+        case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};
     const std::string &hero_addons = hero_recent != nullptr ? hero_recent->addons : home_.last_addons;
     const std::string &hero_language = hero_recent != nullptr ? hero_recent->language : home_.last_language;
     const std::string &hero_description =
@@ -645,7 +648,8 @@ void Launcher::draw_home(Canvas &c)
     // placeholder covering the entire TV. The normal texture cache retries
     // asynchronously when Nlib finishes its atomic file write.
     if (prefs_.show_game_background && !hero_artwork.empty()) {
-        const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f);
+        const Cover hero_picture = hero_artwork == hero_banner
+            ? banner_picture : c.textures.cover(hero_artwork, 1920.0f);
         if (hero_picture.texture != 0) {
             const float source = std::max(0.01f, hero_picture.aspect);
             constexpr float target = 1920.0f / 1080.0f;

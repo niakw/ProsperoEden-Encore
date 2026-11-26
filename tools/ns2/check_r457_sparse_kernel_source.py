@@ -384,17 +384,26 @@ if selected == "240550925b0ef097c24c3035c063bdceadd872de":
 # 26 Nov: seven reviewed successors to 24055092 touch GSV/VI2, RO, NGC,
 # audio and their witnesses; no R457 sparse/kernel/GPU publisher source changed.
 # Authenticate the exact full tree, then replay the unchanged sparse receipts.
-if selected in {"5bb102629fa51c9198208e6139e27d57b05cb900", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab"}:
+if selected in {"5bb102629fa51c9198208e6139e27d57b05cb900", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97"}:
     assert subprocess.check_output(
         ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"],
         text=True
     ).strip() == {
         "5bb102629fa51c9198208e6139e27d57b05cb900": "32882b6e20d6b239a5889a1c8e6929a3db62ac16",
         "52b6582953b9b6c986f3fb9ebeea4b707cd50aab": "d56f1f3efcbe283d018b411289f36bd398905408",
+        "b62f36238ca154a0e6ada2be9c65ffb0b5981d97": "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a",
     }[selected]
+    if selected == "b62f36238ca154a0e6ada2be9c65ffb0b5981d97":
+        # Runtime class-0 unbind changed only Puller + its exact source witness.
+        for rel, digest in {
+            "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "abd6757c20b4b7629f0d6e179999c2d6091a2825",
+            "tests/ns2_gpu_identity_mapping_source.py": "23be79dbe84fc2f51a2db1fa741f6fd3c7e28daf",
+        }.items():
+            assert subprocess.check_output(["git", "hash-object", str(root/"vendor"/rel)],
+                                           text=True).strip() == digest, ("Native unbind R457 drift", rel)
     reviewed_vendors.add(selected)
 assert pinned==selected and pinned in reviewed_vendors,(pinned,selected)
-if selected in {"5bb102629fa51c9198208e6139e27d57b05cb900", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab"}:
+if selected in {"5bb102629fa51c9198208e6139e27d57b05cb900", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97"}:
     selected = "3abd88bc1a3c334f53f345998b72e9cf8ae87abf"
 if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de"}:
     selected = "3abd88bc1a3c334f53f345998b72e9cf8ae87abf"
@@ -426,7 +435,7 @@ for path,expected in (
     # This vendor successor changes only native fence/manifest/FC27 witness;
     # its sparse DeviceMemory owner is byte-identical to the checked 95467b3a
     # predecessor, confirmed again by exact Git blob before accepting.
-    if pinned in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de", "5bb102629fa51c9198208e6139e27d57b05cb900", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab"} and (
+    if pinned in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de", "5bb102629fa51c9198208e6139e27d57b05cb900", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97"} and (
         path == "vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc"
     ):
         expected = "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4"

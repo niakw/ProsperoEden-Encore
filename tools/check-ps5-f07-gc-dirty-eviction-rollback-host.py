@@ -160,16 +160,16 @@ selected=(ROOT/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/t
 start=selected.index("void TextureCache<P>::RunGarbageCollector() {")
 end=selected.index("\ntemplate <class P>",start)
 active=selected[start:end]
-first_active="        if (must_download) {"
+first_active="#ifdef PS5_NATIVE\n        if (must_download && !UseGcPrefetch(image_id, image)) {"
 assert active.count(first_active)==active.count(last)==1
-active_block=active[active.index(first_active):active.index(last)]
+active_block=active[active.index(first_active):active.index(last)].replace("UseGcPrefetch(", "UsePrefetched(")
 assert "if (frame_tick < ticks_to_destroy) return;" in active
 assert "total_used_memory -= (std::min)(total_used_memory, scaled_bytes);" in selected
 assert "total_used_memory -= (std::min)(total_used_memory, reclaimed_bytes);" in selected
 assert active_block.index("if (FullDownloadCopies(image.info).empty())") < active_block.index("runtime.DownloadStagingBuffer")
 assert active_block.index("!map.buffer ||") < active_block.index("image.DownloadMemory(map,")
 assert cpp.count(block)==1
-active_cpp=cpp.replace(block,active_block,1).replace("        const ImageId image_id=1;\n","",1)
+active_cpp=cpp.replace(block,active_block,1).replace("        const ImageId image_id=1;","        [[maybe_unused]] const ImageId image_id=1;",1)
 prefetch_case="""    Cache prefetched;
     prefetched.prefetched=true;
     assert(prefetched.Cleanup() && prefetched.deletions==1);
@@ -189,3 +189,23 @@ with tempfile.TemporaryDirectory(prefix="eden-active-dirty-gc-") as folder:
             subprocess.run(cmd,check=True,timeout=40)
             subprocess.run([str(exe)],check=True,timeout=15)
 print("F07_SELECTED_GC_DIRTY_EVICTION_ROLLBACK_PASS native_desktop_O0_O2")
+
+# The actual native GC prefetch must preserve the visit/pressure policy and
+# publish readbacks only after retirement. The legacy shadow is checked above.
+for marker in (
+    "constexpr size_t gc_batch_count = 40;",
+    "constexpr size_t gc_batch_bytes = 32_MiB;",
+    "if (candidates.size() < 2) return;",
+    "image.cpu_addr < other.cpu_addr_end",
+    "const size_t rounded = std::bit_ceil(bytes);",
+    "map.mapped_span.size_bytes() > gc_batch_bytes - mapped_bytes",
+    "if (!gc_retired)",
+    "if (must_download && !UseGcPrefetch(image_id, image))",
+):
+    assert marker in active, marker
+prefetch=active[active.index("const auto PrefetchGc"):active.index("const auto UseGcPrefetch")]
+assert prefetch.index("gc_maps.emplace_back(id, map);") < prefetch.index("image.DownloadMemory(gc_maps.back().second, copies);")
+assert prefetch.index("runtime.Finish();") < prefetch.index("gc_retired = true;")
+consume=active[active.index("const auto UseGcPrefetch"):active.index("const auto Cleanup")]
+assert consume.index("SwizzleImage(") < consume.index("runtime.FreeDeferredStagingBuffer(it->second);")
+print("F07_SELECTED_GC_PREFETCH_ORDER_AND_CAP_PASS")

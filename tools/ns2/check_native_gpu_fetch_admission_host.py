@@ -148,7 +148,19 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     assert [p.relative_to(nvdec_stage).as_posix() for p in nvdec_stage.rglob('*') if p.is_file()] == [
         'video_core/host1x/ffmpeg.h'
     ]
-    includes=[native_tiling,nvdec_stage,shader,abi,ROOT/'headless',
+    # The actual native core target stages this maintained ioctl ABI header
+    # ahead of pinned Eden. Without that copy, nvhost_gpu.cpp is compiled
+    # against the obsolete template signature (no InputCapacity argument).
+    ioctl_owner=ROOT/'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
+    assert ioctl_owner.is_file()
+    assert 'configure_file("${EDEN_MAINTAINED_IOCTL}"' in cmake
+    assert 'target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")' in cmake
+    assert 'template <size_t InputCapacity = 0' in ioctl_owner.read_text()
+    ioctl_stage=Path(td)/'native-ioctl'
+    ioctl_target=ioctl_stage/'core/hle/service/nvdrv/devices/ioctl_serialization.h'
+    ioctl_target.parent.mkdir(parents=True,exist_ok=True)
+    shutil.copyfile(ioctl_owner,ioctl_target)
+    includes=[native_tiling,nvdec_stage,ioctl_stage,shader,abi,ROOT/'headless',
               *[ROOT/'vendor/encore-active/ns2-runtime'/n for n in (
                   'kernel_wait64','gpu_access_svc','gpu_dispatch','nvdrv_gpu',
                   'nvdrv_as','gpu_session','graphics_supervisor','self_controller',

@@ -45,6 +45,10 @@ program = r'''
 #include <cstdint>
 #include <vector>
 #include <sys/mman.h>
+#include <sys/resource.h>
+#ifdef __linux__
+#include <sys/prctl.h>
+#endif
 #include <sys/wait.h>
 #include <unistd.h>
 #define ASSERT assert
@@ -98,6 +102,16 @@ void fault(unsigned char* p, bool write) {
 }
 int main(int argc, char** argv) {
     assert(argc == 2);
+    // Fault probes are expected to SIGSEGV. Disable crash core files in
+    // this host-only child and all forked probes; a CI runner may otherwise
+    // spend its entire deadline dumping core instead of reaping the child.
+    const struct rlimit no_core{0, 0};
+    assert(setrlimit(RLIMIT_CORE, &no_core) == 0);
+#ifdef __linux__
+    // RLIMIT_CORE is ignored for piped core_pattern handlers on Linux.
+    // Suppress dump delivery without suppressing the expected SIGSEGV signal.
+    assert(prctl(PR_SET_DUMPABLE, 0) == 0);
+#endif
     protection_page = std::strtoul(argv[1], nullptr, 10);
     const size_t page = protection_page, capacity = 32*page;
     auto* raw = static_cast<unsigned char*>(mmap(nullptr, capacity+page, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0));
@@ -171,5 +185,8 @@ with tempfile.TemporaryDirectory(prefix='eden-protection-') as directory:
     binary = directory / 'check'
     subprocess.run(['g++', '-std=c++20', '-O2', str(cpp), '-o', str(binary)], check=True)
     for page in (4096, 16384):
-        subprocess.run([str(binary), str(page)], check=True, timeout=10, cwd=directory)
+        # Separate 4K/16K processes preserve the static sysconf page model.
+        # Keep a hard bound, but allow shared CI runner scheduling variability;
+        # this never ignores a failing permission/fault assertion.
+        subprocess.run([str(binary), str(page)], check=True, timeout=25, cwd=directory)
 print('Generated JIT page permissions: 4K/16K pages, bounded transitions, constants, cross-page patches, resets, W^X and failure handling PASS')

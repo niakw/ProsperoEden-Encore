@@ -152,7 +152,16 @@ selected_gpu_name = 'gpu_gl_native_dev.cpp' if development else 'gpu_gl_native.c
 assert OLD_OPENGL in reviewed_g21[selected_gpu_name]
 core = (cache / 'native-local/headless/core.cpp').read_text()
 shutdown_core = core.split('    void ShutdownMainProcess() {', 1)[1].split('    bool IsShuttingDown()', 1)[0]
-assert shutdown_core.index('gpu_core->NotifyShutdown()') < shutdown_core.index('services.reset()') < shutdown_core.index('gpu_core.reset()')
+# The selected shared NS1/NS2 core now joins and destroys its GPU worker
+# after guest CPU suspension but BEFORE CloseServices releases the NVDRV
+# channel/GMMU backing. The previous services-before-GPU assertion would
+# restore the shutdown use-after-free that this ordering prevents.
+assert (shutdown_core.index('gpu_core->NotifyShutdown()')
+        < shutdown_core.index('kernel.SuspendEmulation(true);')
+        < shutdown_core.index('gpu_core.reset();')
+        < shutdown_core.index('kernel.CloseServices();')
+        < shutdown_core.index('services.reset();')
+        < shutdown_core.index('host1x_core.reset();'))
 if sys.platform == 'darwin':
     # The behavioral harness below validates the Linux pthread stack with
     # pthread_getattr_np. All generated native GPU shutdown/stop/join ordering

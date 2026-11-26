@@ -330,11 +330,59 @@ def apply_reviewed_native_gpfifo_replay(source):
     assert owner.count('throw std::runtime_error("Native GPFIFO method on unbound subchannel")') == 2
     return owner
 
+
+# The selected NS1/NS2 normal DMA owner now bounds KeplerCompute and
+# KeplerMemory method indices before either sink insertion or dispatch. Keep
+# this reviewed P0 safety delta in the byte-for-byte source oracle rather than
+# reverting it or accepting arbitrary changes to the real C++ owner.
+KEPLER_BOUNDS = """// Kepler registers are smaller than the GPU method field. Reject malformed
+// writes BEFORE enqueueing them into EngineInterface::method_sink, whose
+// ConsumeSinkImpl would otherwise index regs.reg_array out of bounds.
+[[nodiscard]] constexpr bool IsKeplerRegisterMethodValid(Engines::EngineTypes engine, u32 method) {
+    switch (engine) {
+    case Engines::EngineTypes::KeplerCompute:
+        return method < Engines::KeplerCompute::Regs::NUM_REGS;
+    case Engines::EngineTypes::KeplerMemory:
+        return method < Engines::KeplerMemory::Regs::NUM_REGS;
+    default:
+        return true;
+    }
+}
+
+"""
+KEPLER_SINGLE = """        if (!IsKeplerRegisterMethodValid(subchannel_type[dma_state.subchannel], dma_state.method)) {
+            LOG_ERROR(HW_GPU, "Invalid Kepler GPU method {:#x} on subchannel {}",
+                      dma_state.method, dma_state.subchannel);
+            return;
+        }
+"""
+KEPLER_MULTI = """        if (!IsKeplerRegisterMethodValid(subchannel_type[dma_state.subchannel], dma_state.method)) {
+            LOG_ERROR(HW_GPU, "Invalid Kepler multi-method {:#x} on subchannel {}",
+                      dma_state.method, dma_state.subchannel);
+            return;
+        }
+"""
+
+def apply_reviewed_kepler_bounds(source):
+    source = once(source, '#include "video_core/engines/maxwell_3d.h"\n',
+                  '#include "video_core/engines/kepler_compute.h"\n'
+                  '#include "video_core/engines/kepler_memory.h"\n'
+                  '#include "video_core/engines/maxwell_3d.h"\n')
+    source = once(source, "constexpr u32 ComputeInline = 0x6D;\n\n",
+                  "constexpr u32 ComputeInline = 0x6D;\n\n" + KEPLER_BOUNDS)
+    assert source.count(P27_UNBOUND) == 2
+    source = once(source, P27_UNBOUND + "        if (!subchannel->execution_mask",
+                  P27_UNBOUND + KEPLER_SINGLE + "        if (!subchannel->execution_mask")
+    source = once(source, P27_UNBOUND + "        subchannel->ConsumeSink(system);",
+                  P27_UNBOUND + KEPLER_MULTI + "        subchannel->ConsumeSink(system);")
+    assert source.count("if (!IsKeplerRegisterMethodValid(") == 2
+    return source
+
 for kind, name in (("dma", "dma_pusher"), ("puller", "engines/puller")):
     for dev in (False, True):
         path = name + ("_dev" if dev else "") + ".cpp"
         base = expected(kind, dev)
-        expected_owner = (apply_reviewed_native_gpfifo_replay(expected_dma_unified(base)) if not dev else expected_dma_unified(base)) if kind == "dma" else base
+        expected_owner = (apply_reviewed_kepler_bounds(apply_reviewed_native_gpfifo_replay(expected_dma_unified(base))) if not dev else expected_dma_unified(base)) if kind == "dma" else base
         assert (ACTIVE / path).read_text() == expected_owner, path
 assert "foreach(unit dma_pusher engines/puller)" not in CMAKE
 assert 'write_derived("${PORT_BUILD_DIR}/${unit_name}.cpp" "${command_source}")' not in CMAKE

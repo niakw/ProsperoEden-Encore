@@ -50,7 +50,27 @@ nvdrv = (vendor / (
     "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/"
     "devices/nvhost_gpu.cpp"
 )).read_text()
-assert nvdrv.count("Tegra::CommandList entries(params.num_entries);") == 2
+# The two ioctl owners now allocate only after validating entry counts and
+# catch host OOM before guest reads or GPU fence publication. Verify both
+# live methods rather than demanding their superseded throwing constructor.
+base1 = nvdrv.split("NvResult nvhost_gpu::SubmitGPFIFOBase1(", 1)[1].split(
+    "NvResult nvhost_gpu::SubmitGPFIFOBase2(", 1)[0]
+base2 = nvdrv.split("NvResult nvhost_gpu::SubmitGPFIFOBase2(", 1)[1].split(
+    "NvResult nvhost_gpu::GetWaitbase(", 1)[0]
+assert nvdrv.count("Tegra::CommandList entries;") == 2
+for submission in (base1, base2):
+    assert submission.count("Tegra::CommandList entries;") == 1
+    assert submission.count("entries.command_lists.resize(params.num_entries, boost::container::default_init);") == 1
+    assert submission.count("catch (const std::bad_alloc&)") == 1
+    assert "return NvResult::InsufficientMemory;" in submission
+    assert submission.index("entries.command_lists.resize(") < submission.index("SubmitGPFIFOImpl(")
+    assert "if (params.num_entries != 0)" in submission
+    assert "params.num_entries > commands.size()" in submission
+    assert "return SubmitGPFIFOImpl(params, std::move(entries), fd);" in submission
+assert "params.num_entries > MaxKickoffEntries" in base1
+assert "NativeGpfifoGuestHeadersReadable(" in base1
+assert "session->process->GetMemory().IsValidVirtualAddressRange(" in base1
+assert "this->GetSessionMemory(fd).ReadBlock(" in base1
 assert nvdrv.count("entries.command_lists.data()") >= 3
 assert "gpu.PushGPUEntries(bind_id, std::move(entries));" in nvdrv
 for helper in (
@@ -98,21 +118,32 @@ elif cache_blob in {
     "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
     "505ee80a37d5991b7925019282e71926c1648e02",
     "c6bab56cbd4e58458d010e423d74df9f933a8f8d",  # vendor #189: reviewed pinned RangeSet native ABI adaptation
+    "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b",  # NS1 FC27: page-wide ownership sampled before CPU write; GPU siblings retained
 }:
     write_marker = "WriteDownloadedMemory(cpu_written, copy_device_addr, copy_mapped_memory, copy.size);"
     assert "void BufferCache<P>::WriteDownloadedMemory" in buffer_cache
     assert "device_memory.WriteBlockUnsafe(start, data + (start - device_addr), end - start);" in buffer_cache
     if cache_blob in {"09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
-                       "505ee80a37d5991b7925019282e71926c1648e02", "c6bab56cbd4e58458d010e423d74df9f933a8f8d"}:
+                       "505ee80a37d5991b7925019282e71926c1648e02", "c6bab56cbd4e58458d010e423d74df9f933a8f8d", "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b"}:
         assert "Upstream Lichii/Eglantine b13c4c1" in buffer_cache
         assert "keep_page_gpu_data" in buffer_cache
     if cache_blob == "505ee80a37d5991b7925019282e71926c1648e02":
         assert "Lichii 44bf47d" in buffer_cache
         assert "!gpu_modified_ranges.Intersects(page_begin, page_end - page_begin)" in buffer_cache
-    if cache_blob == "c6bab56cbd4e58458d010e423d74df9f933a8f8d":
+    if cache_blob in {"c6bab56cbd4e58458d010e423d74df9f933a8f8d", "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b"}:
         assert "Lichii 44bf47d" in buffer_cache
-        assert "!IsRegionGpuModified(page_begin, page_end - page_begin)" in buffer_cache
         assert "gpu_modified_ranges.Intersects(" not in buffer_cache
+        if cache_blob == "c6bab56cbd4e58458d010e423d74df9f933a8f8d":
+            assert "!IsRegionGpuModified(page_begin, page_end - page_begin)" in buffer_cache
+        if cache_blob == "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b":
+            # Source commit e81e4017 samples the page before subtracting the CPU
+            # span; it must still download GPU-owned sibling bytes afterward.
+            assert "const bool page_has_gpu_writes = keep_page_gpu_data &&" in buffer_cache
+            assert "const bool overlaps_cpu_write = IsRegionGpuModified(device_addr, size);" in buffer_cache
+            assert "if (page_has_gpu_writes &&" in buffer_cache
+            assert "(!overlaps_cpu_write || IsRegionGpuModified(page_begin, page_end - page_begin))" in buffer_cache
+            assert buffer_cache.index("gpu_modified_ranges.Subtract(device_addr, size);") < buffer_cache.index(
+                "if (page_has_gpu_writes &&")
         region = buffer_cache.split("bool BufferCache<P>::IsRegionGpuModified(DAddr addr, size_t size)", 1)[1].split("\n}",1)[0]
         assert "gpu_modified_ranges.ForEachInRange(addr, size," in region
 else:

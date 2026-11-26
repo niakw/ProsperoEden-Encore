@@ -5,10 +5,18 @@ A host-only source/ABI smoke test; deliberately does not compile PS5-native
 rendering, link the console app, or authorize the runtime release flags.
 """
 from pathlib import Path
-import os, subprocess, shutil, sys
+import os, subprocess, shutil, sys, tempfile
 r=Path(__file__).resolve().parents[2];deps=r/'vendor/sources/eden-cpm';sdk15=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk');sdk26=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk');env=os.environ.copy();env['SDKROOT']=str(sdk15)
 inc=['vendor/encore-active/eden-core/overrides/native-tiling','vendor/encore-active/ns2-runtime/kernel_wait64','vendor/encore-active/ns2-runtime/gpu_access_svc','vendor/encore-active/ns2-runtime/gpu_dispatch','vendor/encore-active/ns2-runtime/nvdrv_gpu','vendor/encore-active/ns2-runtime/nvdrv_as','vendor/encore-active/ns2-runtime/gpu_session','vendor/encore-active/ns2-runtime/graphics_supervisor','vendor/encore-active/ns2-runtime/video_decoder','vendor/encore-active/ns2-runtime/self_controller','vendor/encore-active/ns2-runtime/hle','vendor/encore-active/ns2-runtime/nvdrv','vendor/encore-active/ns2-runtime/ampere','vendor/encore-active/ns2-helpers/include','vendor/sources/eden/src','vendor/sources/fmt/include','vendor/sources/eden/src/dynarmic/src']
-inc=[r/i for i in inc]+list((deps/'boost/boost-1.90.0/libs').glob('*/include'))
+# Match the one maintained IOCTL header staged into the native CMake include
+# overlay. The pinned Eden header lacks the InputCapacity template signature.
+ioctl=r/'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
+assert ioctl.is_file() and 'template <size_t InputCapacity = 0' in ioctl.read_text()
+ioctl_temp=tempfile.TemporaryDirectory(prefix='encore-ioctl-')
+ioctl_dest=Path(ioctl_temp.name)/'core/hle/service/nvdrv/devices/ioctl_serialization.h'
+ioctl_dest.parent.mkdir(parents=True,exist_ok=True)
+shutil.copyfile(ioctl,ioctl_dest)
+inc=[Path(ioctl_temp.name),*[r/i for i in inc],*list((deps/'boost/boost-1.90.0/libs').glob('*/include'))]
 # The PS5 native NVDRV/AM owners instantiate a large C++20 template graph.
 # Ubuntu's Clang 18 frontend has repeatedly crashed while parsing it, even
 # when compiled serially. Keep the full six-owner syntax proof on Linux
@@ -29,6 +37,7 @@ assert flags[0] and all((r/i).exists() for i in [
     'vendor/encore-active/ns2-runtime/graphics_supervisor',
     'vendor/encore-active/ns2-runtime/video_decoder']), 'Expected pinned NS2 source owners missing'
 cmake=(r/'headless/CMakeLists.txt').read_text()
+assert 'configure_file("${EDEN_MAINTAINED_IOCTL}"' in cmake
 # This syntax gate must select the same MemoryManager public header as the
 # shipping PS5 graph. The NS2 NVDRV owner calls the syncpoint shim API
 # unconditionally, while pinned Eden does not expose that combined shim/tiling ABI.

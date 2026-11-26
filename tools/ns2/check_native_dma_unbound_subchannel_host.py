@@ -7,6 +7,7 @@ This is source-executed host validation, NOT proof of GPU execution on PS5.
 """
 from pathlib import Path
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -41,6 +42,9 @@ struct NativeGpuChannelRegistry {
     bool IsNative(const void*) const { return native; }
 };
 }
+// The shipping normal DMA owner additionally validates Kepler registers.
+// Keep that real call in the extracted TU and model only its success path.
+inline bool IsKeplerRegisterMethodValid(u32, u32) { return true; }
 class DmaPusher;
 namespace Engines {
 struct Puller {
@@ -73,6 +77,7 @@ public:
     Core::System system{};
     Engines::Puller puller{};
     std::array<Engine*,8> subchannels{};
+    std::array<u32,8> subchannel_type{};
     u32 channel_state{};
     void CallMethod(u32 argument);
     void CallMultiMethod(const u32* start, u32 num_methods);
@@ -134,7 +139,7 @@ def source_methods(name: str) -> str:
     methods = source.split(START, 1)[1].split(END, 1)[0]
     methods = START + methods
     assert methods.count('if (!subchannel) {') == 2, name
-    assert methods.count('LOG_ERROR(HW_GPU,') == 2, name
+    assert methods.count('LOG_ERROR(HW_GPU, "GPFIFO method {:#x} on unbound subchannel {}"') == 2, name
     assert methods.count('throw std::runtime_error("Native GPFIFO method on unbound subchannel")') == 2, name
     assert methods.count('subchannel->ConsumeSink(system);') == 2, name
     return methods
@@ -144,7 +149,16 @@ def main() -> None:
     # Both the normal and DEV owners must implement the same dispatch safety.
     normal = source_methods('dma_pusher.cpp')
     dev = source_methods('dma_pusher_dev.cpp')
-    assert normal == dev, 'Normal and DEV DMA method owners diverged'
+    # Only the unbound-subchannel branches have an identical safety contract:
+    # the shipping normal owner also rejects invalid Kepler register methods.
+    # Compare the exact fail-closed branches, not unrelated bound dispatch.
+    def guards(methods: str) -> tuple[str, str]:
+        portions = methods.split('if (!subchannel) {')
+        assert len(portions) == 3
+        return tuple(port.split('            return;\n        }', 1)[0] for port in portions[1:])
+    assert guards(normal) == guards(dev), 'Normal and DEV unbound DMA guards diverged'
+    assert normal.count('IsKeplerRegisterMethodValid(') == 2
+    assert 'IsKeplerRegisterMethodValid(' not in dev
     compilers = [p for p in (shutil.which('clang++'), shutil.which('g++')) if p]
     assert compilers, 'host C++20 compiler missing'
     env = os.environ.copy()
@@ -153,26 +167,27 @@ def main() -> None:
         env['SDKROOT'] = str(sdk)
     with tempfile.TemporaryDirectory(prefix='encore-native-unbound-') as temp:
         test_src = Path(temp) / 'test.cpp'
-        test_src.write_text(cpp.replace('__REAL_METHODS__', normal))
-        for compiler in dict.fromkeys(compilers):
-            for opt in (0, 2):
-                for ps5 in (False, True):
-                    exe = Path(temp) / f'test-{Path(compiler).name}-{opt}-{int(ps5)}'
-                    cmd = [compiler, '-std=c++20', f'-O{opt}', '-Wall', '-Wextra',
-                           '-Werror', '-fsanitize=undefined', '-fno-sanitize-recover=all']
-                    if ps5:
-                        cmd.append('-DPS5_NATIVE=1')
-                    cmd.extend((str(test_src), '-o', str(exe)))
-                    build = subprocess.run(cmd, capture_output=True, text=True,
-                                           env=env, timeout=45)
-                    assert build.returncode == 0, build.stderr[-2800:]
-                    run = subprocess.run([str(exe)], capture_output=True,
-                                         text=True, env=env, timeout=15)
-                    assert run.returncode == 0, run.stderr[-2800:]
-                    assert 'P2_7_DMA_UNBOUND_GUEST_METHOD_GUARD_PASS' in run.stdout
-                    print('P2_7_DMA_UNBOUND_GUARD_HOST_PASS', Path(compiler).name,
-                          'O'+str(opt), 'PS5_NATIVE' if ps5 else 'NS1',
-                          'real_methods=2 variants=2', flush=True)
+        for owner_name, methods in (('normal', normal), ('dev', dev)):
+            test_src.write_text(cpp.replace('__REAL_METHODS__', methods))
+            for compiler in dict.fromkeys(compilers):
+                for opt in (0, 2):
+                    for ps5 in (False, True):
+                        exe = Path(temp) / f'test-{owner_name}-{Path(compiler).name}-{opt}-{int(ps5)}'
+                        cmd = [compiler, '-std=c++20', f'-O{opt}', '-Wall', '-Wextra',
+                               '-Werror', '-fsanitize=undefined', '-fno-sanitize-recover=all']
+                        if ps5:
+                            cmd.append('-DPS5_NATIVE=1')
+                        cmd.extend((str(test_src), '-o', str(exe)))
+                        build = subprocess.run(cmd, capture_output=True, text=True,
+                                               env=env, timeout=45)
+                        assert build.returncode == 0, build.stderr[-2800:]
+                        run = subprocess.run([str(exe)], capture_output=True,
+                                             text=True, env=env, timeout=15)
+                        assert run.returncode == 0, run.stderr[-2800:]
+                        assert 'P2_7_DMA_UNBOUND_GUEST_METHOD_GUARD_PASS' in run.stdout
+                        print('P2_7_DMA_UNBOUND_GUARD_HOST_PASS', owner_name, Path(compiler).name,
+                              'O'+str(opt), 'PS5_NATIVE' if ps5 else 'NS1',
+                              'real_methods=2 variants=2', flush=True)
 
 
 if __name__ == '__main__':

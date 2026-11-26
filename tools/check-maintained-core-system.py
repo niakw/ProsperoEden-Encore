@@ -82,6 +82,34 @@ def reverse_1932(text: str) -> str:
     return text
 
 
+GPU_TEARDOWN_AFTER = """        // GPU::Impl owns the Vulkan worker, scheduler, channel states and
+        // renderer; native NVDRV address spaces own the GMMU/NvMap backing
+        // those channel states reference. Once guest CPU cores are suspended,
+        // join and destroy the GPU BEFORE CloseServices can release the
+        // channel's address space. The old order could let the GPU worker or
+        // renderer touch already-unpinned guest memory during exit/relaunch.
+        // Keep Host1x and the NVDRV containers alive throughout GPU teardown.
+        gpu_core.reset();
+        ::Eden::ReportStep("shutdown", "Completed gpu_core.reset()");
+        kernel.CloseServices();"""
+GPU_TEARDOWN_BEFORE = """        kernel.CloseServices();"""
+GPU_TEARDOWN_LATE_AFTER = """        app_loader.reset();
+        audio_core.reset();
+        host1x_core.reset();"""
+GPU_TEARDOWN_LATE_BEFORE = """        app_loader.reset();
+        audio_core.reset();
+        gpu_core.reset();
+        ::Eden::ReportStep("shutdown", "Completed gpu_core.reset()");
+        host1x_core.reset();"""
+
+
+def reverse_gpu_teardown(text: str) -> str:
+    assert text.count(GPU_TEARDOWN_AFTER) == 1
+    assert text.count(GPU_TEARDOWN_LATE_AFTER) == 1
+    text = text.replace(GPU_TEARDOWN_AFTER, GPU_TEARDOWN_BEFORE, 1)
+    return text.replace(GPU_TEARDOWN_LATE_AFTER, GPU_TEARDOWN_LATE_BEFORE, 1)
+
+
 def reverse_1952(text: str, native: bool) -> str:
     assert text.count(EARLY_1952) == 1
     text = text.replace(EARLY_1952, OLD_FLAG, 1)
@@ -166,8 +194,11 @@ for native in (False, True):
 
 # The release PS5 graph replaces core_native with the NS2-capable derivative.
 ns2 = (root / "vendor/encore-active/ns2-runtime/process/core/core.cpp").read_text()
-assert git_blob(ns2) == "13146ad60fb374f188eae1940ebaa0eff034bb56"
-ns2_before_1932 = reverse_1932(ns2)
+assert git_blob(ns2) == "a30c7bbe1bf719b196f1f0805e83b1276ee74472", (
+    "reviewed GPU teardown source drift")
+ns2_before_gpu_teardown = reverse_gpu_teardown(ns2)
+assert git_blob(ns2_before_gpu_teardown) == "13146ad60fb374f188eae1940ebaa0eff034bb56"
+ns2_before_1932 = reverse_1932(ns2_before_gpu_teardown)
 assert git_blob(ns2_before_1932) == "7e3159eb648e92cca3543cfd01bcfd26a0caa135"
 assert git_blob(reverse_1952(ns2_before_1932, True)) == "ac37dcd3d33373d6f5189dc4963f3dfbce898391"
 ns2_shutdown = ns2.split("    void ShutdownMainProcess() {", 1)[1].split(

@@ -1992,15 +1992,22 @@ elif pair_present == pair_new_owners:
         "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "74587c78870735bb23d2430415f3742b9e7cca68",
         "eden-core/src/video_core/engines/maxwell_3d.cpp": "fe7c4fa421ccabf9fff4b1bc277fb8ab5fe46677",
     }
-    if shipping_pair_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
+    if shipping_pair_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1"}:
         current_tree = subprocess.check_output(
             ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD^{tree}"],
             cwd=ROOT, text=True
         ).strip()
-        assert current_tree == ("3b10204a86ef1e189052c2d068e195b4ac997539" if shipping_pair_pin == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else
-                                "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a" if shipping_pair_pin == "b62f36238ca154a0e6ada2be9c65ffb0b5981d97" else
-                                "d56f1f3efcbe283d018b411289f36bd398905408" if shipping_pair_pin == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab" else
-                                "e40237d089b0a45f77d68ae281821c1a85ce9ca8")
+        expected_pair_tree = {
+            "240550925b0ef097c24c3035c063bdceadd872de": "e40237d089b0a45f77d68ae281821c1a85ce9ca8",
+            "52b6582953b9b6c986f3fb9ebeea4b707cd50aab": "d56f1f3efcbe283d018b411289f36bd398905408",
+            "b62f36238ca154a0e6ada2be9c65ffb0b5981d97": "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a",
+            "0506a211d82c880a49053c2ecb1b3129523dcbb0": "3b10204a86ef1e189052c2d068e195b4ac997539",
+            "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8": "6cabcba90de3515962623cd53d44667e0c6df04a",
+            "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce",
+        }[shipping_pair_pin]
+        assert current_tree == expected_pair_tree
+        # Shutdown successors modify Puller/DmaPusher only; neither belongs
+        # to this immutable fourteen-owner FC27/NS2 pair.
         selected_nov26_pair.update({
             "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "0d22781acbc4e0f32424beb6b0f494b6aa2b034f",
             "eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
@@ -2014,7 +2021,7 @@ elif pair_present == pair_new_owners:
         source_path = ROOT / "vendor/encore-active" / relative
         actual = subprocess.check_output(["git", "hash-object", str(source_path)],
                                          cwd=ROOT, text=True).strip()
-        if shipping_pair_pin in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
+        if shipping_pair_pin in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1"}:
             assert actual == selected_nov26_pair[relative], (
                 "Unreviewed Nov26 selected GPU source", relative, actual)
             continue

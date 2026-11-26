@@ -87,6 +87,9 @@ jobs:
           # Catch cache-step contract drift before apt and native dependencies.
           python3 -B tools/check-ci-cache.py
           python3 -B tools/check-post-f07-delta-register.py
+          # Require both exact source-owner inventories before provisioning the SDK.
+          python3 -B tools/check-active-source-inventory.py
+          python3 -B tools/check-eden-optimization-coverage.py
           # The production JIT no longer has the retired ON/OFF CMake options.
           # Fail here instead of after native configure and 23 syntax TUs.
           python3 -B tools/check-performance.py --source-only
@@ -363,6 +366,8 @@ jobs:
           python3 -B tools/check-ps5-launcher-r385.py
           python3 -B tools/check-home-media.py
           python3 -B tools/check-launch-case-artwork.py
+          python3 -B tools/check-ns2-title-catalog-host.py
+          python3 -B tools/check-release-case-index-dedup-host.py
           python3 -B tools/check-bounded-logs.py
           python3 -B tools/check-log-budget.py
           python3 -B tools/check-log-pipe-unit.py

@@ -2354,9 +2354,15 @@ post_f07_bcat_buffer_hotpath_owners = set()
 if actual_buffer_hotpath_vendor == "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9":
     for relative, expected in bcat_hotpath_blobs.items():
         path = "vendor/encore-active/" + relative
-        assert path in all_owners, path
+        # The native hotpath headers were authenticated and removed at the
+        # start of this audit. Only the BCAT owners still need classification.
+        assert path in tracked, path
         assert subprocess.check_output(["git", "hash-object", path], cwd=ROOT, text=True).strip() == expected, path
-        post_f07_bcat_buffer_hotpath_owners.add(path)
+        if relative.startswith("eden-core/overrides/buffer-hotpath/"):
+            assert actual_buffer_hotpath_pin and path not in all_owners, path
+        else:
+            assert path in all_owners, path
+            post_f07_bcat_buffer_hotpath_owners.add(path)
 
 # DNSP/DXCI native NCA overrides are newly CMake-selected, not historical
 # F07 owners. Authenticate the two exact C++ blobs and their active CMake

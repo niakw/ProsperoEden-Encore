@@ -5062,4 +5062,19 @@ Le SDK reconstruit `nn::oe` confirme pour cmd320 l'appel d'initialisation avec e
 **2 lignes PARTIEL quittent le pool : nouveau compteur global = 18 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+### 2026-11-26 — NS TouchApplication fail-closed : 18 → 16
+
+Base précédente : **18 lignes ouvertes**.
+
+Vendor **`72b9e58dc0829b07892c4964ec153247ce736f92`** ferme les deux lignes historiques `TouchApplication` suivies sur les surfaces NS :
+- l'ancien handler vérifiait seulement que l'ApplicationId existait dans `ContentProviderUnion`, puis retournait `ResultSuccess` ;
+- Encore ne persiste toujours aucune date/métadonnée NS de « touch », donc ce succès simulait une mutation qui n'avait pas lieu ;
+- cmd904 est désormais routé vers `RejectUnavailablePlatformCommand` et renvoie `ResultNotSupported` au lieu d'un faux succès ;
+- les requêtes de lecture d'ApplicationRecord et de contenu installé restent inchangées.
+
+Le manifeste shipping est synchronisé pour `application_manager_interface.cpp` (SHA-256 `1ab6da5f067a12446cb56aff8b46303e8cbd77dc4845a6e8e198d88f16cc373a`, 111 932 octets).
+
+**2 lignes PARTIEL quittent le pool : nouveau compteur global = 16 lignes ouvertes.**
+
+Aucun build PS5 ni validation console revendiqué.
 

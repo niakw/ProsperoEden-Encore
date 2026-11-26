@@ -4271,3 +4271,18 @@ Relecture ciblée du propriétaire actif `encore-active/eden-backports/src/core/
 **3 lignes PARTIEL quittent le pool par requalification prouvée. Nouveau compteur global : 121 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette requalification.
+
+
+### 2026-11-26 — NCM Program path fallback installé : palier global 119
+
+Base : **121 lignes ouvertes**.
+
+Vendor `d2fcc456722f2f5a1a6e1d5c9a2f103a0e712ed2`, provenance `25111bacd0aa9e7746e6e6534fcd4865b189f251`, complète les deux vrais PARTIEL restants du Location Resolver :
+- `ResolveProgramPath` conserve la priorité des redirections puis utilise `RegisteredCache::GetRegisteredContentPath(program_id, Program)` pour renvoyer le chemin NCM invité `registered/...nca` du storage sélectionné ;
+- `ResolveProgramPathForDebug` conserve debug-redirection puis redirection normale, avant le même fallback installé avec `ResultDebugProgramNotFound` en absence de contenu.
+
+Ce comportement suit Atmosphère `ContentLocationResolverImpl` : redirection prioritaire, puis Program content du ContentStorage. Aucun chemin hôte PS5/VFS n'est exposé.
+
+**2 lignes PARTIEL quittent le pool. Nouveau compteur global : 119 lignes ouvertes.**
+
+Gitlink repinné sur `25111bacd0aa9e7746e6e6534fcd4865b189f251`. Aucun build PS5 ni validation console revendiqués.

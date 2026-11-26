@@ -4125,3 +4125,12 @@ Vendor **`5f4203040ee5febbc61dc99ed3433e6fb6929474`** traite deux anciens PARTIE
 **Nouveau compteur global : 144 lignes ouvertes.**
 
 Arithmétique : **146 - 2 = 144**. Gitlink repinné sur `5f4203040ee5febbc61dc99ed3433e6fb6929474`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — SPL GetConfig : réponse d'erreur unique, compteur inchangé
+
+Vendor **`574c1e18e4fc5951022e6d00ba4be76e3ef8f673`** corrige le chemin actif `Module::Interface::GetConfig` : lorsqu'un `ConfigItem` nécessite le secure monitor et retourne une erreur, le handler termine désormais immédiatement après la réponse d'erreur. Il ne construit plus une seconde réponse CMIF dans le même appel.
+
+Le service SPL reste PARTIEL : plusieurs ConfigItem légitimes dépendent encore d'un secure monitor non disponible. **Compteur global inchangé : 144 lignes ouvertes.**
+
+Gitlink repinné sur `574c1e18e4fc5951022e6d00ba4be76e3ef8f673`. Aucun build PS5 ni validation console revendiqués.

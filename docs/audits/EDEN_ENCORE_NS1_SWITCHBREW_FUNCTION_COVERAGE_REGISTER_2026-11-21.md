@@ -4166,3 +4166,14 @@ La PS5 physique n'est ni mise en veille ni soumise à HDCP par ces commandes : e
 **4 lignes PARTIEL quittent le pool. Nouveau compteur global : 138 lignes ouvertes.**
 
 Arithmétique : **142 - 4 = 138**. Gitlink repinné sur `6a0b05125438a8509d5baddf87e8cb638aac80b1`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — capture applet cmd28 : palier global 137
+
+Base : **138 lignes ouvertes**.
+
+`IDisplayController::TakeScreenShotOfOwnLayerEx` est requalifié dans le propriétaire actif `eden-backports` : le handler cmd28 utilise le même chemin de capture réel que cmd8 et écrit effectivement le slot demandé via `DisplayLayerManager::WriteAppletCaptureBufferToSlot`, en respectant la permission capture. Le bit immediate/deferred n'introduit pas de résultat différent sur le backend PS5 synchrone.
+
+**1 ligne PARTIEL quitte le pool. Nouveau compteur global : 137 lignes ouvertes.**
+
+Aucun patch runtime, build PS5 ou validation console dans cette requalification.

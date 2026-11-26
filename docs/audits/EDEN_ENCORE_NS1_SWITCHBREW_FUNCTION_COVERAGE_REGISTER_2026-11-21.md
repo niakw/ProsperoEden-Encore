@@ -4053,3 +4053,22 @@ L'absence volontaire de contrôle de l'alimentation physique PS5 **n'est pas une
 **Nouveau compteur global : 161 lignes ouvertes.**
 
 Arithmétique : **171 - 10 = 161**. Aucun patch C++ dans cette requalification ; aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — requalification capteurs/backlight virtualisés : palier global 155
+
+Base : **161 lignes ouvertes**.
+
+Six PARTIEL historiques étaient encore classés comme incomplets uniquement parce qu'ils ne pilotent pas le matériel PS5 :
+- PSM cmd12 `GetBatteryVoltageState` : état virtuel stable `Normal(3)` ;
+- PSM cmd15 `GetBatteryAgePercentage` : batterie virtuelle saine à 100 % ;
+- TS cmd1 / cmd3 : températures Switch virtuelles stables, volontairement indépendantes des thermiques PS5 ;
+- LBL cmd6 / cmd7 : état backlight invité réellement modifié, conservé et relu par `GetBacklightSwitchStatus`.
+
+Pour ces interfaces matérielles virtualisées, l'absence d'effet physique sur la PS5/TV est volontaire et correcte : l'invité observe un périphérique Switch virtuel cohérent.
+
+**6 lignes PARTIEL quittent le pool.**
+
+**Nouveau compteur global : 155 lignes ouvertes.**
+
+Arithmétique : **161 - 6 = 155**. Aucun patch runtime dans cette requalification ; aucun build PS5 ni validation console revendiqués.

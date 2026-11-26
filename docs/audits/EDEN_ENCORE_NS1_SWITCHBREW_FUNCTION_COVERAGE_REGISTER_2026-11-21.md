@@ -5562,3 +5562,11 @@ Le zéro historique n'est PAS une preuve de qualification runtime exhaustive. Le
 ### 2026-11-26 — Rattrapage main → NS1 : oracles GSV / strict-fence
 
 🟢 **26/11/2026 — Trois-voies avec priorité main.** Sur `check-active-source-inventory.py`, `check-eden-optimization-coverage.py` et `tools/ns2/test_graphics_hle.cpp`, les deltas sont reconstruits depuis l'ancêtre commun `452fd7fe`. Tous les chevauchements prennent `main` `7cd38100`; un seul ajout NS1 réellement disjoint est conservé dans l'inventaire actif (empreinte historique `8aa077c5…`). Le reçu C797/C7C0 strict-fence et la fixture GSV count=0/RGBA16F de main sont présents. Vendor repinné sur `63af52a4`, dont le témoin GPU identity est lui aussi celui de main. Aucun runtime C++ moteur modifié, aucun merge vers main.
+
+### 2026-11-26 — Rattrapage main → NS1 : résolution des chevauchements runtime vendor
+
+🟢 **26/11/2026 — Priorité `main` appliquée aux conflits directs.** Vendor NS1 `dd84b96bd3bf5354c6118afaa5ba2f58eb190e5f` reprend byte-for-byte les blobs du snapshot main `240550925b0ef097c24c3035c063bdceadd872de` pour AOC, BSD, SSL, NS2 `ApplicationFunctions`, HID et `SelfController` (cpp/h). Les anciens durcissements/implémentations NS1 situés sur les mêmes lignes sont donc retirés conformément à la règle de synchronisation : c'est NS1 qui s'adapte à main.
+
+🟢 **26/11/2026 — Adaptations NS1 non conflictuelles conservées.** `window_system.cpp` a été vérifié comme superset strict du fichier main : toutes les 537 lignes main sont présentes dans le même ordre, avec seulement le filtrage NS1 du message Capture en supplément ; il conserve aussi le correctif main `m_exit_sent`. Le manifeste backports n'a aucun conflit de valeur : 254 entrées sont NS1-only et l'unique entrée changée par les deux côtés est identique. Il reste donc intact.
+
+**Statut :** aucune fusion vers main, aucun merge parent, aucun build PS5 manuel. Le gitlink moteur est repinné sur ce vendor adapté ; les conflits moteur (CMake/oracles/doc) restent à reprendre.

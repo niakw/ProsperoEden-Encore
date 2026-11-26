@@ -178,7 +178,12 @@ assert 'CachedNlibEnrichment(' not in games_owner
 assert 'game.hero = nlib.hero;' not in games_owner
 assert 'AppendCaseScenes(game.screenshots, game.title_id);' not in games_owner
 assert 'const pe::ui::BoxArt cached_case = box_art(game.title_id);' not in games_owner
-assert 'LanguageFor(path, game.title_id, language_choice)' not in games_owner
+# The selected local ExeFS NACP language probe is bounded; no packaged
+# title may trigger an unbounded metadata scan in the first-paint loop.
+local_language = games_owner.split('if (deconstructed) {\n                    const auto local_language = LanguageFor(path, game.title_id, language_choice);', 1)
+assert len(local_language) == 2
+assert 'game.language = local_language.label;' in local_language[1].split('}', 1)[0]
+assert games_owner.count('LanguageFor(path, game.title_id, language_choice)') == 1
 assert 'AddOnSummary(game.title_id)' not in games_owner
 enrich_owner = library.split(
     "pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,\n"

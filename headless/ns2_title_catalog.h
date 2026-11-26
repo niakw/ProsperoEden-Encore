@@ -30,12 +30,16 @@ inline Catalog Read(std::istream& input) {
         bool valid = true;
         for (std::size_t i = 0; i < fields.size(); ++i) {
             const auto tab = remaining.find('\t');
-            if ((i < fields.size() - 1) != (tab != std::string_view::npos)) {
+            // Publisher/date/genre are optional trailing fields. Accept
+            // a row ending at the last populated field without requiring
+            // literal trailing tabs. Still reject a sixth field.
+            if (i == fields.size() - 1 && tab != std::string_view::npos) {
                 valid = false;
                 break;
             }
             fields[i] = remaining.substr(0, tab);
-            if (tab != std::string_view::npos) remaining.remove_prefix(tab + 1);
+            if (tab == std::string_view::npos) break;
+            remaining.remove_prefix(tab + 1);
         }
         if (!valid || fields[0].size() != 16 || fields[1].empty()) continue;
         std::uint64_t id{};

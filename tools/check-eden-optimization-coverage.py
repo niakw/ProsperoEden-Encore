@@ -1594,7 +1594,7 @@ else:
     # Normalize only THIS historical table fingerprint after authenticating
     # the entire shipping vendor tree and its unchanged source, not the whole
     # F07 GPU runtime profile.
-    if table_pin in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"}:
+    if table_pin in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}:
         actual_tree = subprocess.check_output(
             ["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD^{tree}"], text=True
         ).strip()
@@ -1607,17 +1607,18 @@ else:
             "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8": "6cabcba90de3515962623cd53d44667e0c6df04a",
             "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce",
             "8d3eaa4874ab0fa65a022913148acada1ea9c2fe": "c98167e4b9ff0b42acac977cae57b26255b50040",
+            "57be62ed6bcc872a850676f92f55de92ace7a290": "3cf3eed31484ffc23cd18229b983e07500cecce6",
         }[table_pin]
         assert actual_tree == expected_tree
         assert subprocess.check_output(
             ["git","hash-object","vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"],
             cwd=ROOT, text=True
         ).strip() == "87eed0b2319c719d27332c8e24f97a73e496f108"
-        if table_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"}:
+        if table_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}:
             for relative, expected in {
                 "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "2bacc8ebdc1c09cd96a7c83d26f57035619f622c",
-                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": ("4b7ca333e3f1dfaf2c5d61963dedc82179ec3146" if table_pin in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"} else "634f7a6fc5d27e13b39360c2d28ec961c4f36236"),
-                "tests/ns2_gpu_identity_mapping_source.py": ("787b18b8c9b2841874ceaea911947e533b59e198" if table_pin == "8d3eaa4874ab0fa65a022913148acada1ea9c2fe" else "dfe5b9d594d3e5f161872a18e227afe6f02a436d" if table_pin == "e5ad6cebf5572d7045de9e48f4308cc2621eede1" else "8340a1f3403bb57debbabcd193170034a30282a1" if table_pin == "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8" else "23be79dbe84fc2f51a2db1fa741f6fd3c7e28daf" if table_pin in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"} else "63339d64588f34597f081102d8f1a77ed861971e")
+                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": ("4b7ca333e3f1dfaf2c5d61963dedc82179ec3146" if table_pin in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"} else "634f7a6fc5d27e13b39360c2d28ec961c4f36236"),
+                "tests/ns2_gpu_identity_mapping_source.py": ("787b18b8c9b2841874ceaea911947e533b59e198" if table_pin in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"} else "dfe5b9d594d3e5f161872a18e227afe6f02a436d" if table_pin == "e5ad6cebf5572d7045de9e48f4308cc2621eede1" else "8340a1f3403bb57debbabcd193170034a30282a1" if table_pin == "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8" else "23be79dbe84fc2f51a2db1fa741f6fd3c7e28daf" if table_pin in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"} else "63339d64588f34597f081102d8f1a77ed861971e")
         }.items():
                 raw = (ROOT / "vendor" / relative).read_bytes()
                 blob = hashlib.sha1(
@@ -1628,17 +1629,24 @@ else:
             assert subprocess.check_output(["git", "hash-object",
                 "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp"],
                 cwd=ROOT, text=True).strip() == "abd6757c20b4b7629f0d6e179999c2d6091a2825"
-        if table_pin in {"19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"}:
+        if table_pin in {"19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}:
             for relative, expected in {
                 "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
-                "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": ("4e4a1f23d89a7ace963a9249afa47a592cb4eb6e" if table_pin == "8d3eaa4874ab0fa65a022913148acada1ea9c2fe" else "4cb9f79deeb56ab7397c6209939c94dffbb7575b"),
-                "vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp": ("76eb30a7e58f17852069a05e2c12cd3c6521967f" if table_pin == "8d3eaa4874ab0fa65a022913148acada1ea9c2fe" else "ca642b98443901eee4f88b02850237f3eda623c8"),
+                "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": ("4e4a1f23d89a7ace963a9249afa47a592cb4eb6e" if table_pin in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"} else "4cb9f79deeb56ab7397c6209939c94dffbb7575b"),
+                "vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp": ("76eb30a7e58f17852069a05e2c12cd3c6521967f" if table_pin in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"} else "ca642b98443901eee4f88b02850237f3eda623c8"),
             }.items():
                 assert subprocess.check_output(["git", "hash-object", relative],
                     cwd=ROOT, text=True).strip() == expected, ("NS2 shutdown GPU owner drift", relative)
-        if table_pin in {"0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"}:
+        if table_pin in {"0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}:
             assert subprocess.check_output(["git", "hash-object",
                 "vendor/encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h"], cwd=ROOT, text=True).strip() == "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee"
+        if table_pin == "57be62ed6bcc872a850676f92f55de92ace7a290":
+            for relative, expected in {
+                "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "30e7c389851a5a0f2b6369c35a313f93a0fc6826",
+                "vendor/encore-active/eden-core/overrides/usage-tracker/video_core/buffer_cache/usage_tracker.h": "60ff6c212708684b2444e4ce6a969a1c27994e39",
+                "vendor/tests/ps5_buffer_usage_granularity_host.py": "72cd74292b8459a99d053be6d791e5187f1c3e71",
+            }.items():
+                assert subprocess.check_output(["git","hash-object",relative], cwd=ROOT, text=True).strip() == expected
         table_pin = "95467b3a42f208667ef8e06e6794f8a23dc2340d"
     expected_table = ("87eed0b2319c719d27332c8e24f97a73e496f108" if table_pin in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c", "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"} else "6dd69f4b09aebc0eb7250975d35b34393e9f5516" if table_pin in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e"} else
                       "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f" if table_pin == "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee" else
@@ -1994,7 +2002,7 @@ elif pair_present == pair_new_owners:
         "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "74587c78870735bb23d2430415f3742b9e7cca68",
         "eden-core/src/video_core/engines/maxwell_3d.cpp": "fe7c4fa421ccabf9fff4b1bc277fb8ab5fe46677",
     }
-    if shipping_pair_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"}:
+    if shipping_pair_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}:
         current_tree = subprocess.check_output(
             ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD^{tree}"],
             cwd=ROOT, text=True
@@ -2007,6 +2015,7 @@ elif pair_present == pair_new_owners:
             "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8": "6cabcba90de3515962623cd53d44667e0c6df04a",
             "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce",
             "8d3eaa4874ab0fa65a022913148acada1ea9c2fe": "c98167e4b9ff0b42acac977cae57b26255b50040",
+            "57be62ed6bcc872a850676f92f55de92ace7a290": "3cf3eed31484ffc23cd18229b983e07500cecce6",
         }[shipping_pair_pin]
         assert current_tree == expected_pair_tree
         # Shutdown successors modify Puller/DmaPusher only; neither belongs
@@ -2016,6 +2025,8 @@ elif pair_present == pair_new_owners:
             "eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
             "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "5cbd0d0f3482c5811b5b700fee55faf8a89b9f61",
         })
+        if shipping_pair_pin == "57be62ed6bcc872a850676f92f55de92ace7a290":
+            selected_nov26_pair["eden-core/src/video_core/buffer_cache/buffer_cache.h"] = "30e7c389851a5a0f2b6369c35a313f93a0fc6826"
     assert set(selected_nov26_pair) == set(pair_receipt["files"])
     # Exact predecessor GPU owner blobs unchanged across the eight newer
     # GSV/RO/audio-only commits (24055092..52b65829). Current tree is sealed
@@ -2024,7 +2035,7 @@ elif pair_present == pair_new_owners:
         source_path = ROOT / "vendor/encore-active" / relative
         actual = subprocess.check_output(["git", "hash-object", str(source_path)],
                                          cwd=ROOT, text=True).strip()
-        if shipping_pair_pin in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"}:
+        if shipping_pair_pin in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}:
             assert actual == selected_nov26_pair[relative], (
                 "Unreviewed Nov26 selected GPU source", relative, actual)
             continue
@@ -2105,7 +2116,7 @@ selected_nov26_hle = subprocess.check_output(
                   "80468e0dc9b88745a03a2968075d3dbc27102d3c",
                   "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8",
                   "e5ad6cebf5572d7045de9e48f4308cc2621eede1",
-                  "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"}
+                  "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}
 ns2_early_hle_receipts = {
     "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp":
         "df3edaf42d0596c69eaa6fea18b33fc02c6bff3c",
@@ -4230,7 +4241,8 @@ ns2_production_blobs = {
         ("96663d23335fe7448712a15416003a975a3f8023" if selected_texture_vendor in {"6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"} else "9dad056a223b90f27470c6a5b55977217238993a" if selected_texture_vendor in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"} else "3757b123153c66584ec0dde8bd01334ec41ec9e2" if selected_texture_vendor in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
          else "91463583eec9cfcbd180a56662cda072553787e0"),
     "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": (
-        "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972" if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"}
+        "30e7c389851a5a0f2b6369c35a313f93a0fc6826" if subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"], text=True).strip() == "57be62ed6bcc872a850676f92f55de92ace7a290"
+        else "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972" if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"}
         else "c4ed79a1fe6aec09da8040b7af3901f6184f910b" if gpu_table_vendor_pin == pair_receipt["selected_vendor"]
         else "469eddd0ea9e0a3498446bf08ab473caac3b76f9"),
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h": "08b0ad3a99c1509eb23bd6317fdbd9c4b3251b52",

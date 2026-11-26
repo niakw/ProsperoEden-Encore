@@ -115,6 +115,18 @@ if(PS5_NATIVE)
     configure_file("${EDEN_MAINTAINED_BUFFER_BASE}"
         "${PORT_BUILD_DIR}/buffer-pages/video_core/buffer_cache/buffer_cache_base.h" COPYONLY)
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/buffer-pages" "${EDEN_PORT_DIR}")
+    # Shared native RangeSet and WordManager definitions for every consumer.
+    set(EDEN_MAINTAINED_BUFFER_HOTPATH
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/buffer-hotpath")
+    foreach(relative IN ITEMS common/range_sets.h common/range_sets.inc
+            video_core/buffer_cache/word_manager.h)
+        if(NOT EXISTS "${EDEN_MAINTAINED_BUFFER_HOTPATH}/${relative}")
+            message(FATAL_ERROR "Missing native BufferCache hotpath header: ${relative}")
+        endif()
+    endforeach()
+    target_include_directories(common BEFORE PUBLIC "${EDEN_MAINTAINED_BUFFER_HOTPATH}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_MAINTAINED_BUFFER_HOTPATH}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_MAINTAINED_BUFFER_HOTPATH}")
 endif()
 # Eglantine #462: PS5 Vulkan BufferCache::CanReorderUpload must see
 # every 64-byte bucket touched by a guest upload, even for sub-64-byte spans.
@@ -245,6 +257,15 @@ endif()
 list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")
 list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")
 set_property(TARGET common PROPERTY SOURCES "${eden_page_table_sources}")
+# The maintained multi-level GPU page table has a PS5-specific sparse
+# allocator and recoverable bad_alloc path. CMake's PS5_NATIVE option is not
+# a compile definition on the upstream common target: without this source-
+# scoped definition the PS5 build takes the generic mmap/ASSERT(base) path
+# and may publish a null GPU PTE table after reservation failure.
+if(PS5_NATIVE)
+    set_property(SOURCE "${EDEN_MAINTAINED_GPU_PAGE_TABLE}"
+        TARGET_DIRECTORY common APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
+endif()
 # Maintained HLE source selection lives with its code, not in this launcher.
 option(EDEN_BLOCKING_GUEST_CONTEXT_LOCKS
     "Use the paired upstream guest scheduler lock fixes" ON)
@@ -325,6 +346,28 @@ if(PS5_NATIVE)
     target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")
     target_include_directories(video_core PRIVATE "${EDEN_PORT_DIR}")
 endif()
+
+# C++26 removes the deprecated codecvt conversion machinery used by the
+# pinned Eden string utility. Select Eden upstream's maintained manual UTF
+# conversions as a complete source owner for the PS5 build; do not suppress
+# the deprecation diagnostics or mutate the pinned source cache.
+if(PS5_NATIVE)
+    set(EDEN_NATIVE_STRING_UTIL
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/string_util.cpp")
+    if(NOT EXISTS "${EDEN_NATIVE_STRING_UTIL}")
+        message(FATAL_ERROR "Maintained native string_util.cpp is missing")
+    endif()
+    get_target_property(eden_native_common_sources common SOURCES)
+    list(FIND eden_native_common_sources "string_util.cpp" eden_native_string_util_index)
+    if(eden_native_string_util_index EQUAL -1)
+        message(FATAL_ERROR "Pinned string_util.cpp source owner changed")
+    endif()
+    list(REMOVE_ITEM eden_native_common_sources "string_util.cpp")
+    list(APPEND eden_native_common_sources "${EDEN_NATIVE_STRING_UTIL}")
+    set_property(TARGET common PROPERTY SOURCES "${eden_native_common_sources}")
+    message(STATUS "PS5 native: codecvt-free maintained Eden UTF conversion owner selected")
+endif()
+
 # Use the already-qualified no-arena allocation contract in the full core.
 get_target_property(common_sources common SOURCES)
 list(REMOVE_ITEM common_sources host_memory.cpp sparse_large_vector.cpp)
@@ -352,9 +395,10 @@ if(PS5_NATIVE)
         COMPILE_OPTIONS "-Wno-implicit-fallthrough;-Wno-missing-declarations;-Wno-missing-field-initializers")
 endif()
 
-# Isolated R457 NS2 12 GiB virtual / bounded 2 MiB physical resident owner.
-# Real native syscalls and guest PTE precommit; NOT included by default.
-# Do not turn this on in production until GPU coherency and PS5 boot pass.
+# R457 PS5 demand-zero owner shared by NS1/NS2 guest layouts
+# (4/6/8/10/12 GiB), with bounded 2 MiB physical residency.
+# The historical EDEN_NS2_SPARSE_BACKING option name is retained for source
+# compatibility; PS5 dual-NPDM production enables the generation-neutral owner.
 set(EDEN_NS2_SPARSE_BACKING OFF)
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_NS2_SPARSE_BACKING ON)
@@ -839,6 +883,24 @@ foreach(eden_aoc_relative IN ITEMS
     list(APPEND core_sources "${eden_aoc_maintained}")
 endforeach()
 list(APPEND core_sources "${EDEN_PORT_DIR}/ncz.cpp")
+# DNSP/DXCI reuse the same NSP/XCI/NCA source graph. The decrypted
+# headers and plaintext sections differ; never add a second loader.
+foreach(eden_plaintext_content_relative IN ITEMS
+        "file_sys/content_archive.cpp"
+        "file_sys/fssystem/fssystem_nca_reader.cpp")
+    set(eden_plaintext_content_owner
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/${eden_plaintext_content_relative}")
+    if(NOT EXISTS "${eden_plaintext_content_owner}")
+        message(FATAL_ERROR "Missing maintained plaintext NCA source: ${eden_plaintext_content_owner}")
+    endif()
+    list(FIND core_sources "${eden_plaintext_content_relative}"
+        eden_plaintext_content_pinned)
+    if(eden_plaintext_content_pinned LESS 0)
+        message(FATAL_ERROR "Pinned NCA source moved: ${eden_plaintext_content_relative}")
+    endif()
+    list(REMOVE_ITEM core_sources "${eden_plaintext_content_relative}")
+    list(APPEND core_sources "${eden_plaintext_content_owner}")
+endforeach()
 # Both the adapter and the two NCZ-aware full source owners use this header.
 target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")
 # The decompressor is the same pinned zstd library as the existing native NSO
@@ -1267,6 +1329,23 @@ get_target_property(core_sources core SOURCES)
 list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
+
+# Native NS2 GPU worker and maintained NVMap implementation must compile against
+# the SAME handle lifetime ABI. The pinned include cache lacks native_retired
+# and FreeHandleIfUnpinned; install the reviewed vendor header before other
+# Eden include roots rather than modifying the immutable upstream SDK cache.
+if(PS5_NATIVE)
+    set(EDEN_NATIVE_NVMAP_HEADER
+        "${PORT_ROOT}/vendor/sources/eden/src/core/hle/service/nvdrv/core/nvmap.h")
+    if(NOT EXISTS "${EDEN_NATIVE_NVMAP_HEADER}")
+        message(FATAL_ERROR "NS2 native NVMap lifetime header missing")
+    endif()
+    set(EDEN_NATIVE_NVMAP_INCLUDE "${PORT_BUILD_DIR}/ns2-nvmap/include")
+    configure_file("${EDEN_NATIVE_NVMAP_HEADER}"
+        "${EDEN_NATIVE_NVMAP_INCLUDE}/core/hle/service/nvdrv/core/nvmap.h" COPYONLY)
+    target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_NVMAP_INCLUDE}")
+    message(STATUS "NS2: selected NVMap lifetime header matches maintained native implementation")
+endif()
 
 # R23 #80 — vendor workaround IR and VkPipelineCache need the SAME
 # HasBrokenPattern ABI. Compile the maintained shader TU exactly once and
@@ -2437,6 +2516,8 @@ if(EDEN_PS5_OPENGL)
         list(REMOVE_ITEM video_sources macro.cpp)
         list(APPEND video_sources "${EDEN_MAINTAINED_MACRO}")
     endif()
+endif() # EDEN_PS5_OPENGL renderer-specific owners
+# R345 GPU worker ownership is platform-specific, not renderer-specific.
     # R345: PS5 compiles our versioned, complete GPU worker and queue sources.
     # No source-code string rewrites execute during native configuration.
     if(PS5_NATIVE)
@@ -2464,6 +2545,14 @@ if(EDEN_PS5_OPENGL)
         "${PORT_BUILD_DIR}/include/video_core/gpu_thread.h" COPYONLY)
     endif()
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
+if(PS5_NATIVE)
+    list(FIND video_sources "${PORT_BUILD_DIR}/gpu_thread.cpp" eden_native_worker_selected)
+    list(FIND video_sources "gpu_thread.cpp" eden_pinned_worker_selected)
+    if(eden_native_worker_selected LESS 0 OR NOT eden_pinned_worker_selected LESS 0)
+        message(FATAL_ERROR "Native GPU worker must be selected exactly from maintained source")
+    endif()
+endif()
+if(EDEN_PS5_OPENGL)
     # G20: select maintained normal/DEV guest GPU command processor units.
     # The DMA input already contains the shipping #4473/#4477 backport.
     set(EDEN_MAINTAINED_GUEST_GPU_ROOT
@@ -4136,6 +4225,24 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         "hle/service/nvdrv/nvdrv_interface.cpp")
     list(APPEND eden_ns2_nvdrv_session_sources
         "${EDEN_NS2_NVDRV_SESSION_SOURCE}")
+    # The unified Module owner is tracked in the exact selected vendor tree.
+    # A restored upstream scratch archive may retain its old empty destructor.
+    # Select the complete matching source/header directly, like NVDRV above.
+    set(EDEN_NATIVE_NVDRV_MODULE_SOURCE "${EDEN_NS2_NVDRV_SESSION_ROOT}/nvdrv.cpp")
+    set(EDEN_NATIVE_NVDRV_MODULE_HEADER "${EDEN_NS2_NVDRV_SESSION_ROOT}/nvdrv.h")
+    if(NOT EXISTS "${EDEN_NATIVE_NVDRV_MODULE_SOURCE}" OR
+       NOT EXISTS "${EDEN_NATIVE_NVDRV_MODULE_HEADER}")
+        message(FATAL_ERROR "Missing native NVDRV Module lifetime owner")
+    endif()
+    list(FIND eden_ns2_nvdrv_session_sources
+        "hle/service/nvdrv/nvdrv.cpp" eden_native_nvdrv_module_index)
+    if(eden_native_nvdrv_module_index EQUAL -1)
+        message(FATAL_ERROR "Pinned NVDRV Module owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns2_nvdrv_session_sources "hle/service/nvdrv/nvdrv.cpp")
+    list(APPEND eden_ns2_nvdrv_session_sources "${EDEN_NATIVE_NVDRV_MODULE_SOURCE}")
+    configure_file("${EDEN_NATIVE_NVDRV_MODULE_HEADER}"
+        "${EDEN_NS2_NVDRV_SESSION_INCLUDE}/core/hle/service/nvdrv/nvdrv.h" COPYONLY)
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_nvdrv_session_sources}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_SESSION_INCLUDE}")
     # configure_file() already registers its input header for CMake reruns;
@@ -4743,6 +4850,26 @@ if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
     # and dereference reserved, uncommitted 12 GiB guest VA.
     set_property(SOURCE "${EDEN_R457_SPARSE_KERNEL_SRC}"
         TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
+    # Return private 2 MiB guest backing only after the guest page heap has
+    # merged a complete free buddy block. Compile exactly one page-heap owner.
+    set(EDEN_R457_SPARSE_PAGE_HEAP_SRC
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_page_heap.cpp")
+    if(NOT EXISTS "${EDEN_R457_SPARSE_PAGE_HEAP_SRC}")
+        message(FATAL_ERROR "R457 sparse page-heap free-return owner missing")
+    endif()
+    list(FIND eden_r457_sparse_kernel_units
+         "hle/kernel/k_page_heap.cpp" eden_r457_sparse_page_heap_original)
+    if(eden_r457_sparse_page_heap_original EQUAL -1)
+        message(FATAL_ERROR "R457 sparse page heap must replace exactly the active TU")
+    endif()
+    list(REMOVE_ITEM eden_r457_sparse_kernel_units
+         "hle/kernel/k_page_heap.cpp")
+    list(APPEND eden_r457_sparse_kernel_units
+         "${EDEN_R457_SPARSE_PAGE_HEAP_SRC}")
+    set_property(TARGET core PROPERTY SOURCES
+        "${eden_r457_sparse_kernel_units}")
+    set_property(SOURCE "${EDEN_R457_SPARSE_PAGE_HEAP_SRC}"
+        TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
     # MKW native crash at eboot+0x55a9af: KPort slab freelist attempts
     # to write to reserved-but-uncommitted virtual DRAM before guest PTEs.
     # Use the reviewed NS2-only kernel-slab precommit source, not the
@@ -4765,6 +4892,273 @@ if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
         "${eden_r457_sparse_kernel_units}")
     set_property(SOURCE "${EDEN_R457_SPARSE_SLAB_SRC}"
         TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
+endif()
+
+# PS5 shared NS1/NS2 GPU/NVDRV ABI: the source archive used by Ninja can be
+# older than the maintained vendor headers. The shared ABI definitions and
+# the header-only NS2 TSG device must resolve from the same pinned owner tree.
+# Copy tracked complete headers into the existing common include overlay,
+# which already precedes the cached Eden source tree in both native targets.
+# Never patch the pinned tree, split ChannelState layouts or duplicate TUs.
+if(PS5_NATIVE)
+    set(EDEN_NATIVE_GPU_ABI_ROOT "${PORT_ROOT}/vendor/sources/eden/src")
+    foreach(eden_native_gpu_header IN ITEMS
+            video_core/control/channel_state.h
+            core/hle/service/nvdrv/core/container.h
+            core/hle/service/nvdrv/devices/nvdevice.h
+            core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.h
+            core/hle/service/nvdrv/devices/nx2_stub_device.h)
+        if(NOT EXISTS "${EDEN_NATIVE_GPU_ABI_ROOT}/${eden_native_gpu_header}")
+            message(FATAL_ERROR "Missing common native GPU ABI: ${eden_native_gpu_header}")
+        endif()
+        configure_file(
+            "${EDEN_NATIVE_GPU_ABI_ROOT}/${eden_native_gpu_header}"
+            "${PORT_BUILD_DIR}/include/${eden_native_gpu_header}" COPYONLY)
+    endforeach()
+    # Both core and video_core already select PORT_BUILD_DIR/include BEFORE
+    # their cached source roots. Keep the same header identity everywhere.
+    target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
+    target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
+endif()
+
+# The native rasterizer is the reviewed layered-clear implementation and calls
+# Vulkan::Framebuffer::Layers(). Its companion header lives in the NS2 ASTC
+# maintained overlay; the otherwise-selected Eden Vulkan header lacks it.
+# Retain the complete shared header without changing texture cache semantics.
+if(PS5_NATIVE AND EDEN_PS5_VULKAN)
+    set(EDEN_NATIVE_LAYERED_FRAMEBUFFER_HEADER
+        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h")
+    if(NOT EXISTS "${EDEN_NATIVE_LAYERED_FRAMEBUFFER_HEADER}")
+        message(FATAL_ERROR "Missing native layered Vulkan Framebuffer ABI")
+    endif()
+    file(STRINGS "${EDEN_NATIVE_LAYERED_FRAMEBUFFER_HEADER}"
+        eden_native_framebuffer_layers
+        REGEX "u32 Layers\\(\\) const noexcept" LIMIT_COUNT 1)
+    if(NOT eden_native_framebuffer_layers)
+        message(FATAL_ERROR "Native layered Vulkan Framebuffer accessor changed")
+    endif()
+    configure_file("${EDEN_NATIVE_LAYERED_FRAMEBUFFER_HEADER}"
+        "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_texture_cache.h" COPYONLY)
+    target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
+endif()
+
+# NS2 AM structural parity with the reviewed Lichii service tables.
+# Select exactly one maintained C++ owner per service (never append a second
+# translation unit) and its matching ApplicationAccessor ABI header.
+# The upstream Eden source tree remains immutable. This is the ONE existing
+# native PS5 core build, not an experimental alternative runtime.
+if(PS5_NATIVE)
+    set(EDEN_NS2_AM_STRUCTURE_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am_structure")
+    get_target_property(eden_ns2_am_structure_sources core SOURCES)
+    foreach(eden_ns2_am_name IN ITEMS
+            application_accessor
+            audio_controller
+            common_state_getter
+            display_controller
+            library_applet_accessor
+            library_applet_creator
+            window_controller)
+        set(eden_ns2_am_replacement
+            "${EDEN_NS2_AM_STRUCTURE_ROOT}/core/hle/service/am/service/${eden_ns2_am_name}.cpp")
+        if(NOT EXISTS "${eden_ns2_am_replacement}")
+            message(FATAL_ERROR "Missing reviewed NS2 AM source ${eden_ns2_am_name}")
+        endif()
+        set(eden_ns2_am_owners "")
+        foreach(eden_ns2_am_unit IN LISTS eden_ns2_am_structure_sources)
+            if(eden_ns2_am_unit MATCHES
+                    "(^|/)hle/service/am/service/${eden_ns2_am_name}\\.cpp$")
+                list(APPEND eden_ns2_am_owners "${eden_ns2_am_unit}")
+            endif()
+        endforeach()
+        list(LENGTH eden_ns2_am_owners eden_ns2_am_count)
+        if(NOT eden_ns2_am_count EQUAL 1)
+            message(FATAL_ERROR
+                "NS2 AM source owner ${eden_ns2_am_name} count=${eden_ns2_am_count}")
+        endif()
+        list(REMOVE_ITEM eden_ns2_am_structure_sources ${eden_ns2_am_owners})
+        list(APPEND eden_ns2_am_structure_sources "${eden_ns2_am_replacement}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_am_structure_sources}")
+    set(eden_ns2_am_header
+        "${EDEN_NS2_AM_STRUCTURE_ROOT}/core/hle/service/am/service/application_accessor.h")
+    if(NOT EXISTS "${eden_ns2_am_header}")
+        message(FATAL_ERROR "NS2 AM ApplicationAccessor ABI header missing")
+    endif()
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_AM_STRUCTURE_ROOT}")
+endif()
+
+
+# Lichii NX2 service tables outside AM: select real shared PS5 C++ units.
+# NS1 handlers stay functional; typed placeholders are guarded by the
+# reviewed NS2 caller predicate in ServiceFrameworkBase::StubAllowed.
+if(PS5_NATIVE AND EDEN_SHARED_NS2_AM)
+    set(EDEN_NS2_SERVICE_PARITY_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
+    get_target_property(eden_ns2_service_parity_sources core SOURCES)
+    foreach(eden_ns2_service_relative IN ITEMS
+            "caps/caps_u.cpp"
+            "caps/caps_su.cpp"
+            "set/settings_server.cpp"
+            "mii/mii.cpp"
+            "lm/lm.cpp"
+            "audio/audio_device.cpp"
+            "audio/audio_renderer_manager.cpp"
+            "nifm/nifm.cpp"
+            "acc/acc.cpp")
+        set(eden_ns2_service_rel "hle/service/${eden_ns2_service_relative}")
+        set(eden_ns2_service_full
+            "${EDEN_NS2_SERVICE_PARITY_ROOT}/core/${eden_ns2_service_rel}")
+        if(NOT EXISTS "${eden_ns2_service_full}")
+            message(FATAL_ERROR "Missing NS2 service owner ${eden_ns2_service_relative}")
+        endif()
+        set(eden_ns2_service_owner "")
+        foreach(eden_ns2_service_unit IN LISTS eden_ns2_service_parity_sources)
+            if(eden_ns2_service_unit MATCHES
+                    "(^|/)${eden_ns2_service_rel}$")
+                list(APPEND eden_ns2_service_owner "${eden_ns2_service_unit}")
+            endif()
+        endforeach()
+        list(LENGTH eden_ns2_service_owner eden_ns2_service_count)
+        if(NOT eden_ns2_service_count EQUAL 1)
+            message(FATAL_ERROR
+                "NS2 service ${eden_ns2_service_relative} has ${eden_ns2_service_count} selected owners")
+        endif()
+        list(REMOVE_ITEM eden_ns2_service_parity_sources ${eden_ns2_service_owner})
+        list(APPEND eden_ns2_service_parity_sources "${eden_ns2_service_full}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_service_parity_sources}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_SERVICE_PARITY_ROOT}")
+endif()
+
+# Native BCAT: same functional service for NS1 and NS2. Keep upstream
+# vendor/sources/eden immutable, select exactly the two maintained C++ units.
+# A missing delivery-cache root yields a valid empty IPC cache object, not a
+# nullable VFS object. Directory enumeration reflects real BCAT contents.
+if(PS5_NATIVE)
+    set(EDEN_NATIVE_BCAT_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/bcat")
+    get_target_property(eden_native_bcat_sources core SOURCES)
+    foreach(eden_bcat_name IN ITEMS service_creator delivery_cache_storage_service)
+        set(eden_bcat_original "hle/service/bcat/${eden_bcat_name}.cpp")
+        set(eden_bcat_active "${EDEN_NATIVE_BCAT_ROOT}/${eden_bcat_name}.cpp")
+        if(NOT EXISTS "${eden_bcat_active}")
+            message(FATAL_ERROR "Maintained native BCAT source missing: ${eden_bcat_active}")
+        endif()
+        list(FIND eden_native_bcat_sources "${eden_bcat_original}" eden_bcat_index)
+        if(eden_bcat_index LESS 0)
+            message(FATAL_ERROR "Native BCAT original source selection changed: ${eden_bcat_original}")
+        endif()
+        list(REMOVE_ITEM eden_native_bcat_sources "${eden_bcat_original}")
+        list(APPEND eden_native_bcat_sources "${eden_bcat_active}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_native_bcat_sources}")
+    # Keep the service creator's ProgressServiceBackend object and the
+    # private friend-access ABI consistent for every BCAT compilation unit.
+    # The two maintained headers only add the legacy progress IPC member
+    # and its friendship; the original vendor SDK remains immutable.
+    set(EDEN_NATIVE_BCAT_HEADER_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/bcat")
+    foreach(eden_bcat_header IN ITEMS
+            "core/hle/service/bcat/service_creator.h"
+            "core/hle/service/bcat/backend/backend.h")
+        if(NOT EXISTS "${EDEN_NATIVE_BCAT_HEADER_ROOT}/${eden_bcat_header}")
+            message(FATAL_ERROR "Native BCAT progress ABI header absent: ${eden_bcat_header}")
+        endif()
+    endforeach()
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NATIVE_BCAT_HEADER_ROOT}")
+endif()
+
+# NX is an ordinary production NS1/NS2 game container, with Lichii's
+# verified NxFormat reader, real snapshot loader and read-only VFS.
+# The one native core selects a matching loader FileType ABI; no second
+# loader graph, firmware profile or external download.
+if(PS5_NATIVE)
+    set(EDEN_NS2_NX_ARCHIVE_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/nx")
+    foreach(eden_nx_required IN ITEMS
+            "core/loader/nx.cpp"
+            "core/loader/nx.h"
+            "core/loader/loader.h"
+            "core/file_sys/nx_content.cpp"
+            "core/file_sys/decrypted_nca.h"
+            "nxformat/nx_reader.hpp"
+            "nxformat/nx_session.hpp"
+            "nxformat/LICENSE")
+        if(NOT EXISTS "${EDEN_NS2_NX_ARCHIVE_ROOT}/${eden_nx_required}")
+            message(FATAL_ERROR "Missing real NX runtime source ${eden_nx_required}")
+        endif()
+    endforeach()
+    if(NOT DEFINED EDEN_R23_STORAGE_HEADERS OR
+       NOT EXISTS "${EDEN_R23_STORAGE_HEADERS}/core/hle/service/service.h")
+        message(FATAL_ERROR "NX needs selected shared PS5 core ABI header root")
+    endif()
+    configure_file(
+        "${EDEN_NS2_NX_ARCHIVE_ROOT}/core/loader/loader.h"
+        "${EDEN_R23_STORAGE_HEADERS}/core/loader/loader.h" COPYONLY)
+    target_include_directories(core BEFORE PUBLIC "${EDEN_R23_STORAGE_HEADERS}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NX_ARCHIVE_ROOT}")
+    target_include_directories(core SYSTEM BEFORE PRIVATE
+        "${EDEN_NS2_NX_ARCHIVE_ROOT}/nxformat")
+    target_sources(core PRIVATE
+        "${EDEN_NS2_NX_ARCHIVE_ROOT}/core/loader/nx.cpp"
+        "${EDEN_NS2_NX_ARCHIVE_ROOT}/core/file_sys/nx_content.cpp")
+    if(NOT TARGET libzstd_static)
+        message(FATAL_ERROR "Native NX archive requires pinned shared zstd")
+    endif()
+    target_link_libraries(core PRIVATE libzstd_static)
+endif()
+
+# Final shipping owner check: run AFTER every encore-active replacement.
+# The launcher uses GL even when the guest uses RADV; G21 is a shared owner.
+# Checking an earlier video_sources list cannot detect a later shadow/re-add.
+if(PS5_NATIVE)
+    function(eden_require_native_owner target expected owner_pattern)
+        get_target_property(owners "${target}" SOURCES)
+        list(FILTER owners INCLUDE REGEX "${owner_pattern}")
+        list(LENGTH owners owner_count)
+        if(NOT owner_count EQUAL 1 OR NOT "${owners}" STREQUAL "${expected}")
+            message(FATAL_ERROR
+                "Native ${target} owner mismatch: expected ${expected}; found ${owners}")
+        endif()
+    endfunction()
+    set(eden_native_video_root "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core")
+    set(eden_native_dispatch_root "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_dispatch/video_core")
+    eden_require_native_owner(video_core "${eden_native_video_root}/gpu_gl_native.cpp"
+        "(^|/)(gpu|gpu_gl_native|gpu_gl_native_dev|gpu_gl_host|gpu_gl_host_dev|gpu_vulkan)[.]cpp$")
+    eden_require_native_owner(video_core "${PORT_BUILD_DIR}/gpu_thread.cpp"
+        "(^|/)gpu_thread(_quiet|_dev)?[.]cpp$")
+    eden_require_native_owner(video_core "${eden_native_dispatch_root}/control/scheduler.cpp"
+        "(^|/)control/scheduler[.]cpp$")
+    eden_require_native_owner(video_core "${eden_native_dispatch_root}/engines/puller.cpp"
+        "(^|/)engines/puller[.]cpp$")
+    eden_require_native_owner(video_core "${eden_native_video_root}/dma_pusher.cpp"
+        "(^|/)dma_pusher[.]cpp$")
+    foreach(unit IN ITEMS vulkan_rasterizer vk_graphics_pipeline_cost
+            vk_compute_pipeline_cost vk_pipeline_cache_cost vk_texture_cache_cost
+            vk_compute_pass_cost vulkan_swapchain)
+        # These maintained fork files are not superseded by headless owners.
+        # A previous cache or a late overlay must not hide their current bytes.
+        file(SHA256 "${EDEN_ACTIVE_VULKAN}/${unit}.cpp" source_sha)
+        file(SHA256 "${PORT_BUILD_DIR}/${unit}.cpp" selected_sha)
+        if(NOT source_sha STREQUAL selected_sha)
+            message(FATAL_ERROR "Stale native Vulkan fork unit: ${unit}")
+        endif()
+        if(unit MATCHES "^vk_(.*)_cost$")
+            set(upstream_name "vk_${CMAKE_MATCH_1}")
+        elseif(unit STREQUAL "vulkan_rasterizer")
+            set(upstream_name "vk_rasterizer")
+        else()
+            set(upstream_name "vk_swapchain")
+        endif()
+        eden_require_native_owner(video_core "${PORT_BUILD_DIR}/${unit}.cpp"
+            "(^|/)(${unit}|${upstream_name})[.]cpp$")
+    endforeach()
+    foreach(unit IN ITEMS service_creator delivery_cache_storage_service)
+        eden_require_native_owner(core "${EDEN_NATIVE_BCAT_ROOT}/${unit}.cpp"
+            "(^|/)bcat/${unit}[.]cpp$")
+    endforeach()
+    message(STATUS "Encore final native GPU/BCAT source owners verified")
 endif()
 
 # PS5 shared NS1/NS2 GPU/NVDRV ABI: the source archive used by Ninja can be

@@ -46,6 +46,7 @@ private:
     void SetApplicationAlbumUserData(HLERequestContext& ctx);
     Result RejectDebugOnlyCommand();
     void GetGraphicsSupervisor(HLERequestContext& ctx);
+    void StubReplyZeroedNx2(HLERequestContext& ctx);
     Result Exit();
     Result LockExit();
     Result UnlockExit();

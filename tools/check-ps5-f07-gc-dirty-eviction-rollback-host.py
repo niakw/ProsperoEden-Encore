@@ -154,3 +154,38 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-dirty-gc-") as folder:
             ran=subprocess.run([str(exe)],capture_output=True,text=True,timeout=15)
             assert ran.returncode==0,(native,opt,ran.stderr[-5000:])
 print("F07_GC_DIRTY_EVICTION_ROLLBACK_PASS native_short=1 null=1 oom=1 no_delete=1 valid_finish=1 prefetched=1 desktop_original=1 O0=1 O2=1")
+
+# Exercise the actual CMake-selected PS5 cache, not only its shadow owner.
+selected=(ROOT/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+start=selected.index("void TextureCache<P>::RunGarbageCollector() {")
+end=selected.index("\ntemplate <class P>",start)
+active=selected[start:end]
+first_active="        if (must_download) {"
+assert active.count(first_active)==active.count(last)==1
+active_block=active[active.index(first_active):active.index(last)]
+assert "if (frame_tick < ticks_to_destroy) return;" in active
+assert "total_used_memory -= (std::min)(total_used_memory, scaled_bytes);" in selected
+assert "total_used_memory -= (std::min)(total_used_memory, reclaimed_bytes);" in selected
+assert active_block.index("if (FullDownloadCopies(image.info).empty())") < active_block.index("runtime.DownloadStagingBuffer")
+assert active_block.index("!map.buffer ||") < active_block.index("image.DownloadMemory(map,")
+assert cpp.count(block)==1
+active_cpp=cpp.replace(block,active_block,1).replace("        const ImageId image_id=1;\n","",1)
+prefetch_case="""    Cache prefetched;
+    prefetched.prefetched=true;
+    assert(prefetched.Cleanup() && prefetched.deletions==1);
+    assert(prefetched.runtime.allocs==0 && prefetched.runtime.finishes==0);
+"""
+assert active_cpp.count(prefetch_case)==1
+active_cpp=active_cpp.replace(prefetch_case,"",1).replace(".skipped==1",".skipped==0")
+with tempfile.TemporaryDirectory(prefix="eden-active-dirty-gc-") as folder:
+    path=Path(folder)/"gc.cpp"
+    path.write_text(active_cpp)
+    for opt in ("-O0","-O2"):
+        for native in (False,True):
+            exe=Path(folder)/("gc"+opt[1:]+("-ps5" if native else "-desktop"))
+            cmd=[compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                 "-fsanitize=undefined","-fno-sanitize-recover=all",
+                 *(['-DPS5_NATIVE=1'] if native else []),str(path),"-o",str(exe)]
+            subprocess.run(cmd,check=True,timeout=40)
+            subprocess.run([str(exe)],check=True,timeout=15)
+print("F07_SELECTED_GC_DIRTY_EVICTION_ROLLBACK_PASS native_desktop_O0_O2")

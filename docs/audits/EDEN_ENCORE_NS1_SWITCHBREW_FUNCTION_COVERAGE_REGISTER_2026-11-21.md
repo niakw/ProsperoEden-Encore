@@ -4396,3 +4396,19 @@ Vendor `0809e3c8c1e5d2df1505541fb1b7116df312a0d0` ferme ensuite réellement `aud
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 108 lignes ouvertes.**
 
 Gitlink vendor attendu : `0809e3c8c1e5d2df1505541fb1b7116df312a0d0`. Aucun build PS5 ni validation console revendiqués. La correction de propriétaire est un correctif de sélection runtime ; le décrément 109 → 108 correspond uniquement à `SetInputTargetForceEnabled`.
+
+
+### 2026-11-26 — NFP BreakTag variantes non qualifiées fail-closed : palier global 107
+
+Base : **108 lignes ouvertes**.
+
+Vendor `ace1fe766114a97ff78b4401c65120fe1c4d3863` ferme le dernier PARTIEL `nfp:dbg` cmd203 `BreakTag` sans modifier le chemin Amiibo fonctionnel :
+- `BreakType::Normal` continue à passer par l'implémentation existante `Interface::BreakTag → DeviceManager::BreakTag → NfcDevice::FlushWithBreak`, qui écrit réellement le tag/backup quand l'état et les clés le permettent ;
+- les deux autres valeurs de `BreakType`, toujours sans sémantique qualifiée dans les références publiques et non prises en charge par le backend, sont interceptées dans l'owner shipping `eden-backports/src/core/hle/service/nfp/nfp.cpp` et retournent désormais `IPC::ResultNotSupported`;
+- elles ne sont donc plus maquillées en `ResultWrongDeviceState`, qui confondait une fonctionnalité non implémentée avec l'état du périphérique.
+
+Aucun nouveau backend NFC, aucune écriture synthétique et aucun changement du chemin `Normal`.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 107 lignes ouvertes.**
+
+Gitlink vendor attendu : `ace1fe766114a97ff78b4401c65120fe1c4d3863`. Aucun build PS5 ni validation console revendiqués.

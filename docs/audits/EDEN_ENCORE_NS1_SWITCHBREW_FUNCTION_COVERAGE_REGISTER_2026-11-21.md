@@ -4517,3 +4517,18 @@ Les trois contrats historiques PARTIEL `RegisterAlarmSetting`, `UpdateAlarmSetti
 **6 lignes PARTIEL quittent le pool : nouveau compteur global = 93 lignes ouvertes.**
 
 Gitlink vendor attendu : `e189aaf08aff79a15aa6272e57ce3bdcd9b7af9c`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — NIFM legacy scan/access-point hors HOS23 : palier global 91
+
+Base : **93 lignes ouvertes**.
+
+Deux lignes historiques NIFM avaient conservé leur statut PARTIEL malgré une fenêtre firmware fermée :
+- cmd11 `GetScanDataOld` : **HOS 1.0.0–3.0.2** ;
+- cmd13 `GetCurrentAccessPointOld` : **HOS 1.0.0–3.0.2**.
+
+La cible NS1 actuelle est HOS23 ; ces anciens layouts `AccessPointDataOld` 0x34 ne font donc pas partie du contrat runtime cible. Elles n'étaient pas comprises dans la précédente requalification firmware qui avait traité d'autres familles legacy.
+
+**2 lignes PARTIEL → HORS-VERSION : nouveau compteur global = 91 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console.

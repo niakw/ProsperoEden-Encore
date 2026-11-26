@@ -4092,3 +4092,21 @@ Audctl cmd7 `SetDefaultTarget` est également requalifié : cible + fade-in/fade
 Arithmétique : **155 - 6 = 149**. Depuis le recalcul 631 : **482 lignes sorties du pool**.
 
 Gitlink repinné sur `e254d8d1b14eaf95de2ad3da9cefa215d99bfc5b`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — requalification SET virtualisé : palier global 146
+
+Base : **149 lignes ouvertes**.
+
+Trois PARTIEL `set:sys` sont requalifiés :
+- cmd79 `GetProductModel` retourne le modèle virtuel **1 = Erista**, valeur valide confirmée par les définitions libnx ;
+- cmd174 `GetHomeMenuScheme` retourne une palette HOME virtuelle stable et ABI-complete ;
+- cmd185 `GetHomeMenuSchemeModel` retourne le modèle cohérent avec cette palette virtuelle.
+
+Ces commandes interrogent l'identité/configuration **du matériel Switch émulé** ; elles ne doivent pas refléter le modèle physique PS5. Une valeur virtuelle stable et valide remplit donc le contrat HLE.
+
+**3 lignes PARTIEL quittent le pool.**
+
+**Nouveau compteur global : 146 lignes ouvertes.**
+
+Arithmétique : **149 - 3 = 146**. Aucun patch runtime dans cette requalification ; aucun build PS5 ni validation console revendiqués.

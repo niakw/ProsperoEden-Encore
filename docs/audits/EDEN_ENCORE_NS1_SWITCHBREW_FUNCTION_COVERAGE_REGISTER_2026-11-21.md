@@ -4134,3 +4134,18 @@ Vendor **`574c1e18e4fc5951022e6d00ba4be76e3ef8f673`** corrige le chemin actif `M
 Le service SPL reste PARTIEL : plusieurs ConfigItem légitimes dépendent encore d'un secure monitor non disponible. **Compteur global inchangé : 144 lignes ouvertes.**
 
 Gitlink repinné sur `574c1e18e4fc5951022e6d00ba4be76e3ef8f673`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — BGTC politique de veille virtualisée : palier global 142
+
+Base : **144 lignes ouvertes**.
+
+Les deux PARTIEL `bgtc:t` cmds 102/103 sont requalifiés dans l'owner actif `encore-active/eden-backports/src/core/hle/service/glue/bgtc.cpp` :
+- `WillDisconnectNetworkWhenEnteringSleep = false` ;
+- `WillStayHalfAwakeInsteadSleep = false`.
+
+Encore ne place pas l'invité en half-awake/suspend et `IsInHalfAwake=false` / `IsInFullAwake=true` exposent la même politique. Le fait de ne pas piloter la veille ou le réseau **physiques** de la PS5 est volontaire : BGTC décrit l'état du système Switch virtualisé.
+
+**2 lignes PARTIEL quittent le pool. Nouveau compteur global : 142 lignes ouvertes.**
+
+Arithmétique : **144 - 2 = 142**. Aucun patch runtime ni build PS5 dans cette requalification.

@@ -160,9 +160,12 @@ selected=(ROOT/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/t
 start=selected.index("void TextureCache<P>::RunGarbageCollector() {")
 end=selected.index("\ntemplate <class P>",start)
 active=selected[start:end]
-first_active="#ifdef PS5_NATIVE\n        if (must_download && !UseGcPrefetch(image_id, image)) {"
+first_active="#ifdef PS5_NATIVE\n        // Charge each eligible attempt"
 assert active.count(first_active)==active.count(last)==1
-active_block=active[active.index(first_active):active.index(last)].replace("UseGcPrefetch(", "UsePrefetched(")
+active_block=active[active.index(first_active):active.index(last)]
+# The fixture tests readback/eviction safety, not the enclosing attempt counter.
+active_block="#ifdef PS5_NATIVE\n"+active_block[active_block.index("        if (must_download && !UseGcPrefetch(image_id, image)) {"):]
+active_block=active_block.replace("UseGcPrefetch(", "UsePrefetched(")
 assert "if (frame_tick < ticks_to_destroy) return;" in active
 assert "total_used_memory -= (std::min)(total_used_memory, scaled_bytes);" in selected
 assert "total_used_memory -= (std::min)(total_used_memory, reclaimed_bytes);" in selected

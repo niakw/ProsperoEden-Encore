@@ -54,3 +54,48 @@ for stop in (10, 20, 40):
         if skipped < 8192:
             assert deleted == stop
 print("R442: prefetch/GC scan budget parity source + behavioral model PASS")
+
+# The native NS1/NS2 CMake overlay has its own GC implementation.
+selected = (root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+begin = selected.index("void TextureCache<P>::RunGarbageCollector()")
+end = selected.index("\ntemplate <class P>", begin)
+active_gc = selected[begin:end]
+prefetch = active_gc[active_gc.index("const auto PrefetchGc"):active_gc.index("const auto UseGcPrefetch")]
+cleanup = active_gc[active_gc.index("const auto Cleanup"):active_gc.index("const auto CollectEligible")]
+assert "constexpr size_t gc_scan_limit = 8192;" in active_gc
+assert "scanned >= gc_scan_limit" in prefetch
+assert "gc_scanned >= gc_scan_limit" in cleanup
+assert prefetch.index("++scanned;") < prefetch.index("ImageFlagBits::IsDecoding") < prefetch.index("--remaining;")
+assert cleanup.index("++gc_scanned;") < cleanup.index("ImageFlagBits::IsDecoding")
+assert cleanup.index("(!high_priority_mode && must_download)") < cleanup.index("--num_iterations;", cleanup.index("(!high_priority_mode && must_download)"))
+assert "gc_scanned = 0;\n        PrefetchGc();" in active_gc
+assert "num_iterations = aggressive_mode ? 40 : (high_priority_mode ? 20 : 10);" in active_gc
+# Both real and speculative traversals spend the scan budget on every visit.
+# Only eligible attempts consume the separate eviction budget, even if
+# staging later rejects them. This conservative prefix stops at a clean or
+# unsupported candidate rather than reading across an ordinary eviction.
+def active_scan(items, budget, prefetch=False, high=True, aggressive=False):
+    scanned = attempts = removed = 0
+    candidates = []
+    for i, (decoding, costly, dirty, invalid) in enumerate(items):
+        if attempts == budget or scanned >= 8192:
+            break
+        scanned += 1
+        if decoding or (costly and not aggressive) or (dirty and not high):
+            continue
+        if prefetch and (not dirty or invalid):
+            break
+        attempts += 1
+        if not invalid:
+            removed += 1
+            candidates.append(i)
+    return scanned, attempts, removed, candidates
+protected = [(True, False, False, False)] * 120 + [(False, True, False, False)] * 60
+clean = [(False, False, False, False)] * 24
+dirty = [(False, False, True, False)] * 40
+assert active_scan(protected + clean, 10, high=False)[:3] == (190, 10, 10)
+assert active_scan(protected + dirty, 20, prefetch=True) == active_scan(protected + dirty, 20)
+assert active_scan([(True, False, False, False)] * 8192 + clean, 40)[:3] == (8192, 0, 0)
+assert active_scan([(False, False, True, True)] * 100, 40)[:3] == (40, 40, 0)
+assert active_scan(protected + clean + dirty, 20, prefetch=True)[3] == []
+print("SELECTED_GC_SCAN_BUDGET_PASS")

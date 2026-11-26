@@ -28,6 +28,7 @@ assert 'std::runtime_error("Native GPFIFO: missing channel owner")' in push
 assert push.index("gpu_lock(gpu_submit_guard)") < push.index("gpu.BindChannel(")
 assert resume.index("gpu_lock(gpu_submit_guard)") < resume.index("gpu.BindChannel(")
 assert resume.index("gpu_lock(gpu_submit_guard)") < resume.index("pending_lock(pending_guard)")
+assert resume.index("gpu.BindChannel(state->bind_id)") < resume.index("pusher.ResumeNativeAcquire()")
 
 fixture=r"""
 #include <algorithm>
@@ -58,12 +59,13 @@ struct Pusher {
     TestSystem system{};
     bool pending{}, ready{};
     unsigned pushes{}, dispatches{}, retries{};
-    std::function<void()> after_dispatch{};
+    std::function<void()> after_dispatch{}, before_retry{};
     void Push(CommandList&&) { ++pushes; }
     void DispatchCalls() { ++dispatches; if (after_dispatch) after_dispatch(); }
     bool HasPendingNativeAcquire() const { return pending; }
     bool ResumeNativeAcquire() {
         ++retries;
+        if (before_retry) before_retry();
         if (!pending) return true;
         if (!ready) return false;
         pending=false;
@@ -160,6 +162,8 @@ int main() {
     auto& bw=b->payload->dma_pusher;
     aw.pending=true; aw.ready=false;
     bw.pending=true; bw.ready=false;
+    aw.before_retry=[&] { assert(gpu.current==22); };
+    bw.before_retry=[&] { assert(gpu.current==23); };
     scheduler.DeclareChannel(a);
     scheduler.DeclareChannel(b);
     scheduler.Push(gpu,22,CommandList{});

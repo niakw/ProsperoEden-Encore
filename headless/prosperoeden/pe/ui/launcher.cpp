@@ -548,7 +548,22 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
         if (launch_screenshots_.empty() && !home_.last_screenshot.empty())
             launch_screenshots_.push_back(home_.last_screenshot);
     }
-    if (!case_media::BackgroundAllowed(launch_hero_) || textures_.known_missing(launch_hero_)) {
+    // Read files already published by the active media worker rather than
+    // freezing the older Home/Library snapshot into the loading screen.
+    launch_case_game_.title_id = title_id;
+    launch_case_game_.file = file;
+    launch_case_game_.cover = cover;
+    launch_case_game_.hero = launch_hero_;
+    launch_case_game_.screenshots = launch_screenshots_;
+    launch_case_game_ = services_.cached_game_media(std::move(launch_case_game_));
+    launch_cover_ = launch_case_game_.cover;
+    launch_hero_ = launch_case_game_.hero;
+    launch_screenshots_ = launch_case_game_.screenshots;
+    // A negative cached texture must not veto an image newly present on disk.
+    if (textures_.known_missing(launch_hero_)) textures_.invalidate(launch_hero_);
+    textures_.revalidate(launch_hero_);
+    textures_.revalidate(launch_cover_);
+    if (!case_media::BackgroundAllowed(launch_hero_)) {
         launch_hero_.clear();
         if (const auto* fallback = case_media::BackgroundScreenshot(launch_screenshots_))
             launch_hero_ = *fallback;
@@ -557,7 +572,7 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     // snapshot. Use their actual cached metadata, never an invented scan.
     launch_case_game_.name = title;
     launch_case_game_.file = file; // Home-only NUP launches still need edition identity.
-    launch_case_game_.cover = cover;
+    launch_case_game_.cover = launch_cover_;
     launch_case_game_.hero = launch_hero_;
     launch_case_game_.screenshots = launch_screenshots_;
     launch_case_game_.description = launch_description_;
@@ -592,6 +607,8 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     launch_box_front_ = case_art.front;
     launch_box_back_ = case_art.back;
     launch_box_spine_ = case_art.spine;
+    for (const auto* path : {&launch_box_front_, &launch_box_back_, &launch_box_spine_})
+        textures_.revalidate(*path);
     launch_title_id_ = title_id;
     launch_case_placeholder_mask_ = 0;
     launch_case_ready_mask_ = 0;

@@ -2845,6 +2845,31 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
     return game;
 }
 
+pe::ui::Game EdenServices::cached_game_media(pe::ui::Game game) {
+    if (!game.title_id) return game;
+    const bool second_generation = UseNs2CaseIndex(game);
+    // Atomic cache files are authoritative before the network worker ends.
+    // Only bounded header checks: no remote request or image decoding.
+    auto icon = CachedNlibIcon(game.title_id);
+    const auto square = CachedGamesDbSquare(game.title_id, second_generation);
+    const auto icon_path = NlibIconPath(game.title_id);
+    const bool provider_cover = game.cover.empty() || game.cover == square ||
+        game.cover == CaseFacePath(game.title_id, "square", second_generation) ||
+        game.cover == icon_path || game.cover == icon_path.substr(0, icon_path.size() - 5) + ".tga";
+    if (provider_cover) {
+        if (!icon.empty()) game.cover = std::move(icon);
+        else if (!square.empty()) game.cover = square;
+    }
+    auto shots = CachedNlibScreens(game.title_id);
+    auto hero = CachedNlibHero(game.title_id);
+    if (hero.empty() && !shots.empty()) hero = shots.front();
+    if (hero.empty()) hero = CachedGamesDbHero(game.title_id, second_generation);
+    if (!hero.empty()) game.hero = std::move(hero);
+    AppendCaseScenes(shots, game.title_id, second_generation);
+    if (!shots.empty()) game.screenshots = std::move(shots);
+    return game;
+}
+
 pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game) {
     return enrich_game_media(std::move(game), nullptr);
 }

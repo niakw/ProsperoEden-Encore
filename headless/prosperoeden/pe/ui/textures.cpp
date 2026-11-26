@@ -360,6 +360,19 @@ bool Textures::known_missing(const std::string &path) const
     return failed;
 }
 
+void Textures::revalidate(const std::string &path)
+{
+    if (path.empty()) return;
+    for (int size = 64; size <= 2048; size *= 2) {
+        const auto key = path + '#' + std::to_string(size);
+        const auto it = covers_.find(key);
+        if (it == covers_.end() || !it->second.loaded) continue;
+        it->second.loaded = false;
+        it->second.priority_queued = true;
+        queue_.push_front(key);
+    }
+}
+
 void Textures::invalidate(const std::string &path)
 {
     if (path.empty()) return;

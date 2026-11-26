@@ -4246,3 +4246,14 @@ Ces commandes ne renvoient plus `ResultSuccess` avec des sorties non initialisé
 **5 lignes raccordées/STUB quittent le pool. Nouveau compteur global : 125 lignes ouvertes.**
 
 Gitlink repinné sur `cbfb2a24f2f243ce9bb7953b1cc54e6b53823db0`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — NOTIF presentation fail-closed : palier global 124
+
+Base : **125 lignes ouvertes**.
+
+Vendor `fec1cb94f73e0c5c0cd40280a1e33341c9a58db6`, provenance `de1be3646aadd33caf2fdb3cc70dbe0db2b9e8d0`, corrige `notif:s` cmd1510 `GetNotificationPresentationSetting`. Le setter cmd1500 était déjà explicitement unsupported et aucun propriétaire Encore/Lichii/Eglantine/nxemu n'a de stockage de présentation réel ; le getter ne renvoie donc plus un succès avec une structure zéro inventée, mais `IPC::ResultNotSupported`.
+
+**1 ligne PARTIEL/ABI-DIFF quitte le pool. Nouveau compteur global : 124 lignes ouvertes.**
+
+Gitlink repinné sur `de1be3646aadd33caf2fdb3cc70dbe0db2b9e8d0`. Aucun build PS5 ni validation console revendiqués.

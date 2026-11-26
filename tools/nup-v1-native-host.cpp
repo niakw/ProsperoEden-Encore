@@ -191,6 +191,13 @@ int main(int argc, char** argv) {
     Eden::NupV1::Native::ContentSet foreign_edition{
         edition_mount, 0x0400123400002001ULL};
     assert(foreign_edition.AddOns().empty());
+    Eden::NupV1::Native::AddOnIndex embedded_service{
+        edition_mount, 0x0400123400000001ULL};
+    assert(embedded_service.BaseId(0x0400123400000001ULL) ==
+           0x0100123400001000ULL);
+    assert(embedded_service.Count(0x0400123400000001ULL) == 1);
+    assert(Read(embedded_service.OpenRomFS(0x0400123400000001ULL, 0)) ==
+           "bonus.bin=edition-addon\n");
     const auto native_package_root = edition_mount->PackageRoot(0);
     const auto native_program = native_package_root->GetSubdirectory("program1");
     const auto native_romfs = native_program->GetSubdirectory("romfs");
@@ -221,6 +228,18 @@ int main(int argc, char** argv) {
         Eden::NupV1::Native::ContentSet wrong_index{
             paired_mount, 0x0400123400000002ULL};
         assert(wrong_index.AddOns().empty());
+        Eden::NupV1::Native::AddOnIndex paired_service{
+            paired_mount, 0x0400123400000001ULL};
+        assert(paired_service.BaseId(0x0400123400000001ULL) ==
+               0x0100123400001000ULL);
+        assert(paired_service.Count(0x0400123400000001ULL) == 1);
+        assert(Read(paired_service.OpenRomFS(0x0400123400000001ULL, 0)) ==
+               "bonus.bin=edition-addon\n");
+        assert(!paired_service.OpenRomFS(0x0400123400002001ULL, 0));
+        assert(!paired_service.OpenRomFS(0x0100123400000000ULL, 0));
+        Eden::NupV1::Native::AddOnIndex foreign_service{
+            paired_mount, 0x0400123400002001ULL};
+        assert(!foreign_service.BaseId(0x0400123400002001ULL));
     }
 
     auto effective = mount->Effective(ContentView::RomFS);

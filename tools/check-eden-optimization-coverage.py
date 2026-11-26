@@ -3217,6 +3217,17 @@ for path, (current_blob, predecessor_blob) in launcher_consolidation_predecessor
         ).hexdigest()
         assert original == "8c6248417cb3ec25b327661e410960a3e2a738de", ("Cached media predecessor drift", original)
         actual = original
+    # 26/11/2026: restore exact two-step UI owner lineage on an audit copy.
+    if path == "headless/prosperoeden/pe/ui/services.hpp" and actual == "d6ce55979cc84389b0f2f52e4a30d9efd35ac47a":
+        current = (ROOT/path).read_text()
+        media_delta = "    virtual Game cached_game_media(Game game) { return game; }\n"
+        spine_delta = "    std::string box_spine{}; // worker-resolved path for exact texture invalidation\n"
+        assert current.count(media_delta) == 1 and current.count(spine_delta) == 1
+        previous = current.replace(media_delta, "", 1).replace(spine_delta, "", 1).encode()
+        actual = hashlib.sha1(
+            b"blob " + str(len(previous)).encode() + b"\0" + previous).hexdigest()
+        assert actual == "534adb20bded1d44bc057bacc36dce2d93be770d", (
+            "Unreviewed Nov26 launcher services successor", actual)
     if path == "headless/prosperoeden/pe/ui/services.hpp" and actual == "bceca5c51f0755533f2915bdb7720aff89a3a302":
         source = (ROOT/path).read_text()
         spine = "    std::string box_spine{}; // worker-resolved path for exact texture invalidation\n"
@@ -3251,13 +3262,12 @@ for path, (current_blob, predecessor_blob) in launcher_consolidation_predecessor
             b"blob " + str(len(previous)).encode() + b"\0" + previous).hexdigest()
         assert original == "0536ef9acf649865cb8c9d1220ef89f329d3960d", ("Banner predecessor drift", original)
         actual = original
-    # 26/11/2026: the current launcher successor is the exact reviewed
-    # native-loading/media commit, not an arbitrary widened owner receipt.
+    # 26/11/2026: reviewed exact launcher blob from a20fd8f4; keep the
+    # receipt independent of shallow checkout object availability.
     if path == "headless/prosperoeden/pe/ui/launcher.cpp" and actual == "6cfb3097dfccb6a6c55837ae59ce5b49227f70b0":
-        verified = subprocess.check_output(
-            ["git", "rev-parse", "a20fd8f40cd6f2868ada7fdb34dc70436fd755a7:headless/prosperoeden/pe/ui/launcher.cpp"],
-            cwd=ROOT, text=True).strip()
-        assert verified == actual, ("Unreviewed Nov26 launcher media successor", actual)
+        current = (ROOT/path).read_text()
+        assert current.count("launch_case_game_ = services_.cached_game_media(std::move(launch_case_game_));") == 1
+        assert current.count("textures_.revalidate(*path);") == 1
     if actual == current_blob or actual in launcher_loading_successors.get(path, set()):
         drift_index[path]["actual"] = predecessor_blob
         launcher_consolidation_active_paths.add(path)

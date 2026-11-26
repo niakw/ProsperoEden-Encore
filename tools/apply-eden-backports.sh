@@ -258,6 +258,20 @@ apply_one "$root/headless/backports/eden-4473-4477.patch" "$eden/.encore-backpor
 apply_one "$root/headless/backports/eden-nvnflinger-dequeue-wakeup.patch" "$eden/.encore-backport-nvnflinger-wakeup.sha256" validate_nvnflinger_wakeup
 apply_one "$root/headless/backports/eden-4436-spinlock-mutex.patch" "$eden/.encore-backport-4436.sha256" validate_spinlock_mutex
 apply_one "$root/headless/backports/eden-fw23-services.patch" "$eden/.encore-backport-fw23.sha256" validate_fw23
+# HOS23 NGC's legacy StreamPlay registration conflicts with shared audio.
+# Guard only the native shared owner, retaining NS1-only NGC behavior.
+validate_native_stpl_owner() {
+python3 - "$eden" <<'PYSTPL'
+from pathlib import Path
+import sys
+ngc=(Path(sys.argv[1])/"src/core/hle/service/ngc/ngc.cpp").read_text()
+assert "#if !defined(EDEN_NATIVE_SHARED_NS2_STPL_OWNER)" in ngc
+assert ngc.count('RegisterNamedService("stpl:u"') == 1
+assert ngc.count('RegisterNamedService("stpl:sys"') == 1
+print("ENCORE_NATIVE_STPL_EXCLUSIVE_SOURCE_PASS")
+PYSTPL
+}
+apply_one "$root/headless/backports/eden-ns1-ns2-stpl-owner.patch" "$eden/.encore-backport-ns2-stpl-unique-owner.sha256" validate_native_stpl_owner
 apply_one "$root/headless/backports/eden-runtime-hid.patch" "$eden/.encore-backport-runtime-hid.sha256" validate_runtime_hid
 # FC27 real-hardware log evidence: account open-context panics, unhandled BSD Ioctl,
 # and 0x100-vs-0x10 IPv4 IPC writes. Ship only on the exact pinned Eden tree.

@@ -4627,3 +4627,19 @@ La limitation historique sur les index multiples est donc obsolète. Les autres 
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 82 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console.
+
+
+### 2026-11-26 — CAPS liste deprecated ARUID requalifiée : palier global 81
+
+Base : **82 lignes ouvertes**.
+
+Le PARTIEL historique `caps:u` cmd140 `GetAlbumFileList1AafeAruidDeprecated` est requalifié :
+- il ne possède pas de paramètre UID utilisateur à filtrer ;
+- l'owner actif appelle le même `AlbumManager::GetAlbumFileList` réel avec type, plage de dates et ARUID que cmd142 déjà qualifié ;
+- il convertit ensuite chaque `ApplicationAlbumEntry` vers `ApplicationAlbumFileEntry` (entrée, datetime et champ réservé) pour l'ABI deprecated.
+
+Le motif historique « mêmes limites que cmd142 » est donc obsolète depuis la qualification de cmd142. Les cmd141/143 restent PARTIEL : leur `user_id` est encore explicitement ignoré.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 81 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console.

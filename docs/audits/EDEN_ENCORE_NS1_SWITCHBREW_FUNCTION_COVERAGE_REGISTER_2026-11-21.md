@@ -3902,3 +3902,27 @@ Composition opérationnelle : **147 NULL/correspondances historiques non résolu
 Arithmétique : **341 - 18 = 323**. Depuis le recalcul 631 : **308 lignes sorties du pool** par requalification ou correction ciblée.
 
 Statut validation : correctifs C++ intégrés et gitlink mis à jour ; **pas de build natif PS5 ni validation console revendiqués dans cette passe**. Les cinq cas encore partiels restent volontairement ouverts.
+
+
+### 2026-11-26 — repin HOS23 ACC/HID/NIM/NS/VI et palier global 250
+
+Base : **323 lignes ouvertes** au moteur `93b1f8dddfaa40e3f492b5caf6e975c94ef676c8` / gitlink vendor `6f91d4c31ebbf2d6583a9dee41cbec3f26cfe2c1`.
+
+Cinq commits vendor consécutifs ont été relus avant repin, sans écraser les chemins fonctionnels existants :
+- `6b8beb126b3123bc62cf3250fe166c57ede02f11` : derniers `nullptr` HOS23 de NS ApplicationManager traités ; `BoostSystemMemoryResourceLimit` devient un no-op explicite de ressource système, les commandes sans backend plateforme échouent proprement ;
+- `f67cd526c76ce7111ad9126a941f075ffa06b714` : couverture des commandes réseau Account manquantes, toutes fail-closed faute de Nintendo Account backend ;
+- `e26f13821c91c8ac1ec307e3a96cb97d7351ed11` : complétion HOS23 de la table HID system, avec publication ARUID réelle pour cmd500 et rejets matériels explicites pour le reste ;
+- `adf29a064a09fb0a04ca636bcfa64e3201d03ea0` : commandes HOS23 NIM manquantes ajoutées en rejet Nintendo-online explicite ;
+- `b3e6e3f8c5583a3e4c16e9241b5e392e70b5df02` : 75 `nullptr` physiques de VI ManagerDisplay remplacés par un rejet invité explicite, sans toucher aux handlers déjà fonctionnels.
+
+Rapprochement du **pool global**, sans soustraire aveuglément les slots physiques :
+- **64** anciennes lignes NULL du catalogue correspondent exactement, par fichier/ID/nom, aux slots VI ManagerDisplay maintenant explicitement traités ;
+- **8** anciennes lignes NULL correspondent exactement aux transitions NS ApplicationManager (`DeleteApplicationRecord`, `DeprecatedLaunchApplication`, `GetContentMetaStorage`, `GetApplicationRecordProperty`, `ListApplicationRecordInstalledContentMeta`, `CreateApplicationResource`, `GetApplicationResource`, `GetApplicationIdOfPreomia`) ;
+- **1** ligne non-NULL encore ouverte, `BoostSystemMemoryResourceLimit`, quitte le pool : son ID HOS23 courant est maintenant traité explicitement ;
+- les commandes ajoutées ACC/HID/NIM qui n'avaient pas de ligne matérialisée dans le catalogue historique améliorent la couverture HOS23 mais **ne sont pas comptées comme réduction artificielle** du pool.
+
+**Nouveau compteur global : 250 lignes ouvertes.**
+
+Arithmétique : **323 - 64 - 8 - 1 = 250**. Depuis le recalcul 631 : **381 lignes sorties du pool** par requalification ou correction ciblée.
+
+Le gitlink moteur est repinné sur le vendor **`b3e6e3f8c5583a3e4c16e9241b5e392e70b5df02`**. Aucun build natif PS5 ni validation console n'est revendiqué dans cette étape.

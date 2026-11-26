@@ -5419,3 +5419,35 @@ Reçu du `window_controller.cpp` shipping : SHA-256 `984f7be1e9cf8eb4d7230a7a1f6
 Les six identités PARTIEL sont distinctes dans le catalogue historique et aucune n'avait été soustraite dans un palier ultérieur. **6 lignes quittent donc le pool : nouveau plancher = 11 / 4 853.**
 
 Ce `11` reste un **plancher comptable après la rectification des doubles soustractions**, et non une liste déjà reconstruite de onze bugs. Aucun build natif PS5 ni validation console n'est revendiqué à ce stade ; CI et compilation du nouveau pin restent à qualifier.
+
+### 2026-11-26 — Réconciliation finale des identités : 11 minimum → 0 identité ouverte dans le registre historique
+
+Le palier **11 / 4 853** était explicitement un plancher comptable après correction des doubles soustractions, pas une liste de onze bugs. La clôture finale reconstruit les identités au lieu de continuer à soustraire à l'aveugle.
+
+**1. Reliquat physique PARTIEL.** Le catalogue courant a été recroisé avec toutes les fermetures depuis le recalcul conservateur. Seize lignes historiques restaient textuellement PARTIEL alors que plusieurs avaient déjà évolué sous des lots plus larges. Elles sont maintenant toutes qualifiées :
+- ACC cmd112 `LoadSaveDataThumbnail` : absence de fichier retourne le résultat Account description 22, vendor `b0e807bb4c9bb1398676e3a745a5854e18eeeb88`.
+- AM `GetCurrentLibraryApplet`, `ReportVisibleErrorWithErrorContext`, cmd12, `BeginBlockingHomeButton` et `GetPseudoDeviceId` : contrat courant recroisé ; aucune limitation restante n'impose un faux succès non borné.
+- Quest cmds11/13/14/15 : lancement réel conservé pour la politique neutre et attributs kiosk/volume non matérialisés rejetés explicitement, vendor `b0e807bb4c9bb1398676e3a745a5854e18eeeb88`.
+- CAPS cmds110/120 : image/thumbnail/dimensions/attribut réels ; `ApplicationData.data_size=0` décrit l'absence de données application persistées par le backend Album.
+- FSP cmds7/30 : sous-modes matérialisés réellement servis ; sous-modes non supportés rejetés explicitement.
+- NVDRV cmd6 `GetStatus` : ABI/init-state réelles et compteurs mémoire neutres cohérents avec le modèle HLE sans allocations dans la TransferMemory, recroisé Strato/Skyline.
+- PDM cmd5 : playtime, launch count et dernier timestamp persistés réels ; champs sans journal global laissés neutres sans données fabriquées.
+
+**2. Écart physique 4 844 ↔ 4 853 résolu par identité.** Le workflow source `#45021056931` avait asserté **4 736 IPC distinctes** au snapshot `f3c1024`. La comparaison exacte avec `1183bb5` retrouve neuf lignes supprimées ensuite, et aucune ligne ajoutée en compensation :
+1. trois variantes de `NeedsUpdateVulnerability` ;
+2. FSP `OpenSaveDataTransferProhibiter`, `RegisterProgramIndexMapInfo`, `GetProgramIndexForAccessLog` ;
+3. `IFileSystem::Commit` ;
+4. `IMultiCommitManager::Add` et `Commit`.
+
+Ces neuf références sont restaurées dans le catalogue physique. Leur qualification actuelle est : une ligne `ns:am` HORS-VERSION HOS23, quatre NOOP sémantiques explicites, trois implémentations FSP déjà réelles et le couple MultiCommit désormais borné. La seule PARTIEL de cet écart était `IMultiCommitManager::Commit`.
+
+**3. Dernier correctif runtime.** Vendor `bccaa7d11fe8f46d0a48a08bafd8b9e92b08657f` ferme l'atomicité MultiCommit inexistante : un premier filesystem peut être enregistré et committé ; un second participant est refusé avant toute mutation qui prétendrait offrir un rollback/commit atomique Horizon non disponible. Le CMake sélectionne directement `sources/eden/src/core/hle/service/filesystem/fsp/fs_i_multi_commit_manager.cpp`.
+
+Après restauration des neuf lignes, le catalogue physique revient à **117 SVC + 4 786 lignes IPC − 23 META − 27 DUP = 4 853 références déduplicables**.
+
+## **RESTANT GLOBAL — REGISTRE HISTORIQUE DE REVUE : 0 / 4 853**
+
+Ce zéro signifie uniquement : **aucune identité du pool historique NULL/STUB/PARTIEL/ABI-DIFF/AMBIGU n'est encore laissée sans qualification statique**. Il ne signifie pas que les 4 853 contrats sont tous fonctionnellement implémentés, ni que HOS23 est couvert exhaustivement, ni que chaque jeu NS1 est compatible. Certaines lignes sont volontairement HORS-VERSION, NOOP sémantiques, sous-modes bornés ou rejets fail-closed. La validation PS5 reste indépendante.
+
+Aucun build natif PS5 ni résultat console n'est revendiqué par cette clôture. Le couple moteur/vendor final doit encore être repinné et ses gates CI vérifiées.
+

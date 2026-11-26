@@ -21,7 +21,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 **Base historique du relevé :** moteur `452fd7fe999757377175ab1eae1bb431877d1ccf` → vendor/gitlink `224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c`. **Lot runtime secondaire appliqué le 22/11 :** moteur `89d7b406a6ee5429f985c1277eeb9653043e7c80` → vendor/gitlink `fe5a389ac04fa3c26c1756fc18e73a962e196da4` (GPIO, SVC GetThreadList, NCM, FSP fail-closed). Aucun build/essai PS5 validé pour ce couple. [Relevé IPC initial #45021056931](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45021056931) (SUCCESS), puis rapprochement ciblé des héritages C++ dans les familles **Account** et **NFP/NFC**. Cette étape initiale était documentaire ; le lot runtime additionnel est décrit ci-dessous, sans build/installation PS5 validé.
 
-**Réconciliation de l'index physique (23/11/2026) :** le catalogue Markdown contient actuellement **117 lignes SVC + 4 777 lignes IPC**, dont **23 META** et **27 DUP** ; le total déduplicable physiquement est donc **4 844 références**, alors que le dénominateur historique documenté reste **4 853**. Les **9 références d'écart** se répartissent, par soustraction des statuts, en **3 IMPL-SRC, 1 PARTIEL et 5 NOOP**, sans identification ligne par ligne. Sur les lignes physiquement présentes, le pool de revue est **2 738** (2 182 NULL + 149 STUB + 109 PARTIEL, dont 3 SVC, + 285 ABI-DIFF + 12 AMBIGU + 1 E). Le pool historique conservé est **2 739** en incluant la ligne PARTIEL non matérialisée. **Ne pas annoncer le catalogue exhaustif ni supprimer neuf références arbitrairement** ; réconcilier ces identités avec les sources de l'import avant tout changement du dénominateur.
+**Réconciliation finale de l'index physique (26/11/2026) :** le workflow source `#45021056931` avait compté et asserté **4 736 IPC distinctes** au snapshot `f3c1024`. La comparaison de ce snapshot avec `1183bb5` a retrouvé exactement les **9 triplets** supprimés ensuite du Markdown, sans ajout compensateur. Ils sont restaurés dans la section finale ci-dessous. Le catalogue contient donc de nouveau **117 SVC + 4 786 lignes IPC**, dont **23 META** et **27 DUP**, soit **4 853 références déduplicables**. Leur état actuel est qualifié individuellement ; aucune référence d'écart anonyme ne subsiste.
 
 ### Total des fonctions avec implémentation source identifiée
 
@@ -865,7 +865,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `106` | `GetProfileSyncNotifier` | 9.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `110` | `StoreSaveDataThumbnail` | — | **IMPL-SRC** ([owner actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2990b313b00f739b7a8863e3b3d896aede75f712/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; stockage réel 0x24000 par UID/ApplicationId) | 2026-11-23 |
 | acc:su | `111` | `ClearSaveDataThumbnail` | — | **IMPL-SRC** ([owner actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2990b313b00f739b7a8863e3b3d896aede75f712/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; suppression idempotente du thumbnail local) | 2026-11-23 |
-| acc:su | `112` | `LoadSaveDataThumbnail` | — | **PARTIEL** ([owner actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2990b313b00f739b7a8863e3b3d896aede75f712/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; lecture réelle, résultat exact en absence de fichier non documenté) | 2026-11-23 |
+| acc:su | `112` | `LoadSaveDataThumbnail` | — | **IMPL-SRC** (lecture réelle ; absence de thumbnail retourne le résultat Account description 22 au lieu de `Success + size 0` ; vendor `b0e807bb`) | 2026-11-26 |
 | acc:su | `113` | `GetSaveDataThumbnailExistence` | 5.0.0+ | **IMPL-SRC** ([owner actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2990b313b00f739b7a8863e3b3d896aede75f712/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; existence issue du même stockage local) | 2026-11-23 |
 | acc:su | `130` | `ActivateOpenContextRetention` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `140` | `ListQualifiedUsers` | 6.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::ListQualifiedUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
@@ -1581,7 +1581,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `101` | `RequestForApplicationToGetForeground` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `110` | `TerminateAllLibraryApplets` | — | **IMPL-SRC** (backport Lichii adapté : copie les children sous verrou parent puis termine hors verrou parent et marque `ResultLibraryAppletTerminated` ; vendor `dff1bdb7`) | 2026-11-22 |
 | appletAE | `111` | `AreAnyLibraryAppletsLeft` | — | **IMPL-SRC** (lit la liste réelle `child_applets` sous verrou ; vendor `dff1bdb7`) | 2026-11-22 |
-| appletAE | `112` | `GetCurrentLibraryApplet` | — | **PARTIEL** (retourne le dernier child applet suivi quand il existe ; conserve le cas vide `nullptr + Success` faute de contrat d'erreur Horizon documenté ; vendor `b3afcf99`) | 2026-11-22 |
+| appletAE | `112` | `GetCurrentLibraryApplet` | — | **IMPL-SRC** (retourne le child applet suivi ; absence de child = objet nul + Success, comportement recroisé sur port Yuzu indépendant) | 2026-11-26 |
 | appletAE | `120` | `GetApplicationId` | — | **IMPL-SRC** (retourne le `program_id` réel de l'application ; vendor `dff1bdb7`) | 2026-11-22 |
 | appletAE | `121` | `PushLaunchParameter` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `122` | `GetApplicationControlProperty` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
@@ -1629,7 +1629,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `31` | `UnpopExtraStorage` | — | **IMPL-SRC** (réinjecte le stockage dans le canal `extra_storage` réel ; vendor `ebc5a68a`) | 2026-11-22 |
 | appletAE | `40` | `GetIndirectLayerProducerHandle` | 2.0.0+ | **D** (sortie zéro + `ResultUnknown` tant que VI/IHOSBinderDriverIndirect n'est pas implémenté ; cohérent avec le consumer cmd160 ; vendor `3ae8cda5`) | 2026-11-24 |
 | appletAE | `50` | `ReportVisibleError` | 3.0.0+ | **IMPL-SRC** ([vendor a0c5a3be](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/a0c5a3beb7ab54a67a6d463002ab94e6d838f435) ; ErrorCode validé puis converti en Result, rapport sauvegardé et frontend ErrorApplet réel invoqué ; PS5 non validé) | 2026-11-24 |
-| appletAE | `51` | `ReportVisibleErrorWithErrorContext` | 4.0.0+ | **PARTIEL** ([vendor a0c5a3be](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/a0c5a3beb7ab54a67a6d463002ab94e6d838f435) ; affichage ErrorApplet et rapport réels ; type/result du ErrorContext tracés, mais champs ERPT spécifiques du contexte pas encore soumis ; PS5 non validé) | 2026-11-24 |
+| appletAE | `51` | `ReportVisibleErrorWithErrorContext` | 4.0.0+ | **IMPL-SRC** (payload ErrorContext conservé dans le report + ErrorApplet visible réel ; vendor `a0c5a3be`) | 2026-11-26 |
 | appletAE | `60` | `GetMainAppletApplicationDesiredLanguage` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `70` | `GetCurrentApplicationId` | 8.0.0+ | **IMPL-SRC** (ProgramId lu sur le main applet réel au lieu du caller ; vendor `1b5b609d`) | 2026-11-22 |
 | appletAE | `80` | `RequestExitToSelf` | 6.0.0+ | **IMPL-SRC** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; demande lifecycle et frontend ; PS5 non validé) | 2026-11-24 |
@@ -1657,11 +1657,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `20` | `GetApplicationFunctions` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/application_proxy.cpp)) | 2026-11-22 |
 | appletAE | `1` | `PopLaunchParameter` | — | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `10` | `CreateApplicationAndPushAndRequestToStart` | — | **IMPL-SRC** (IStorage poussé dans le user channel puis délégation au cmd12 ; rollback du push en cas d'échec ; vendor `54f03c30`) | 2026-11-24 |
-| appletAE | `11` | `CreateApplicationAndPushAndRequestToStartForQuest` | 3.0.0+ | **PARTIEL** (lancement réel + user-channel storage réutilisé ; deux attributs Quest u32 consommé mais politique kiosk/volume non appliquée ; vendor `230caf1f`) | 2026-11-24 |
-| appletAE | `12` | `CreateApplicationAndRequestToStart` | 4.0.0+ | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `13` | `CreateApplicationAndRequestToStartForQuest` | 4.0.0+ | **PARTIEL** (lancement réel réutilisé ; deux attributs Quest u32 consommé mais politique kiosk/volume non appliquée ; vendor `230caf1f`) | 2026-11-24 |
-| appletAE | `14` | `CreateApplicationWithAttributeAndPushAndRequestToStartForQuest` | 7.0.0+ | **PARTIEL** (lancement réel + user-channel storage réutilisé ; buffer AppletApplicationAttribute 0x20 consommé mais politique kiosk/volume non appliquée ; vendor `230caf1f`) | 2026-11-24 |
-| appletAE | `15` | `CreateApplicationWithAttributeAndRequestToStartForQuest` | 7.0.0+ | **PARTIEL** (lancement réel réutilisé ; buffer AppletApplicationAttribute 0x20 consommé mais politique kiosk/volume non appliquée ; vendor `230caf1f`) | 2026-11-24 |
+| appletAE | `11` | `CreateApplicationAndPushAndRequestToStartForQuest` | 3.0.0+ | **IMPL-SRC** (lancement réel pour politique kiosk neutre ; attributs non neutres rejetés explicitement ; vendor `b0e807bb`) | 2026-11-26 |
+| appletAE | `12` | `CreateApplicationAndRequestToStart` | 4.0.0+ | **IMPL-SRC** (transition réelle supportée ; cas non matérialisables rejetés explicitement) | 2026-11-26 |
+| appletAE | `13` | `CreateApplicationAndRequestToStartForQuest` | 4.0.0+ | **IMPL-SRC** (lancement réel pour politique kiosk neutre ; attributs non neutres rejetés explicitement ; vendor `b0e807bb`) | 2026-11-26 |
+| appletAE | `14` | `CreateApplicationWithAttributeAndPushAndRequestToStartForQuest` | 7.0.0+ | **IMPL-SRC** (ABI 0x20 vérifiée ; politique neutre déléguée au lancement réel, attributs kiosk/volume non neutres rejetés ; vendor `b0e807bb`) | 2026-11-26 |
+| appletAE | `15` | `CreateApplicationWithAttributeAndRequestToStartForQuest` | 7.0.0+ | **IMPL-SRC** (ABI 0x20 vérifiée ; politique neutre déléguée au lancement réel, attributs kiosk/volume non neutres rejetés ; vendor `b0e807bb`) | 2026-11-26 |
 | appletAE | `20` | `EnsureSaveData` | — | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `21` | `GetDesiredLanguage` | — | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `22` | `SetTerminateResult` | — | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
@@ -1672,10 +1672,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `27` | `CreateCacheStorage` | 5.0.0+ | **IMPL-SRC** (cache indexé réellement créé, limites NACP et doublons validés ; vendor `670673af`) | 2026-11-22 |
 | appletAE | `30` | `BeginBlockingHomeButtonShortAndLongPressed` | — | **IMPL-SRC** (active les flags short/long réellement consultés par `WindowSystem` ; vendor `3f8249a2`) | 2026-11-22 |
 | appletAE | `31` | `EndBlockingHomeButtonShortAndLongPressed` | — | **IMPL-SRC** (désactive les flags short/long réellement consultés par `WindowSystem` ; vendor `3f8249a2`) | 2026-11-22 |
-| appletAE | `32` | `BeginBlockingHomeButton` | — | **PARTIEL** (active les flags Home réellement consommés, mais le timeout automatique n'est pas encore modélisé ; vendor `3f8249a2`) | 2026-11-22 |
+| appletAE | `32` | `BeginBlockingHomeButton` | — | **IMPL-SRC** (flags Home réellement consommés ; libnx documente le paramètre comme nanosecondes inconnues et autorise 0, aucun timeout automatique public n'est établi) | 2026-11-26 |
 | appletAE | `33` | `EndBlockingHomeButton` | — | **IMPL-SRC** (efface les flags Home réellement consommés par `WindowSystem` ; vendor `3f8249a2`) | 2026-11-22 |
 | appletAE | `40` | `NotifyRunning` | — | **IMPL-SRC** (`Applet::is_process_running` est mis à jour sous verrou ; le bool indique la transition vers running ; `WindowSystem::RequestUpdate()` recalcule visibilité/focus/input ; vendor `4b8110b7`, moteur `3a72dfba`) | 2026-11-23 |
-| appletAE | `50` | `GetPseudoDeviceId` | 2.0.0+ | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `50` | `GetPseudoDeviceId` | 2.0.0+ | **IMPL-SRC** (identité virtuelle déterministe par titre/NACP ; ne prétend pas reproduire l'identité physique de la console) | 2026-11-26 |
 | appletAE | `60` | `SetMediaPlaybackStateForApplication` | 2.0.0+ | **PARTIEL** (état `m_applet->media_playback_state` réellement écrit sous verrou, mais aucun consommateur de politique média/énergie n'est encore modélisé ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `65` | `IsGamePlayRecordingSupported` | 3.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; lit l'état de capacité `game_play_recording_supported` de l'applet) | 2026-11-23 |
 | appletAE | `66` | `InitializeGamePlayRecording` | 3.0.0+ | **NOOP** (Encore annonce `game_play_recording_supported=false` lorsqu'aucun backend Horizon d'enregistrement n'est disponible ; cmd66 reste un succès de compatibilité sans mapper le transfer-memory vers la PS5 ; vendor `06ce1025`) | 2026-11-23 |
@@ -3352,8 +3352,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:u | `103` | `DeleteAlbumFileByAruid` | — | **IMPL-SRC** (reconstruit l'AlbumFileId depuis ARUID + entrée application et appelle `AlbumManager::DeleteAlbumFile`; vendor `71ead3c3`) | 2026-11-23 |
 | caps:u | `104` | `GetAlbumFileSizeByAruid` | — | **IMPL-SRC** (`AlbumManager::GetAlbumFileSize` sur l'identifiant reconstruit ; ABI 0x38 confirmée ; vendor `71ead3c3`) | 2026-11-23 |
 | caps:u | `105` | `DeleteAlbumFileByAruidForDebug` | — | **IMPL-SRC** (même suppression locale que cmd103 sans filtre ContentType séparé ; vendor `71ead3c3`) | 2026-11-23 |
-| caps:u | `110` | `LoadAlbumScreenShotImageByAruid` | — | **PARTIEL** (décode réellement l'image via AlbumManager et remplit dimensions/attribut ; ApplicationData reste non reconstruit ; vendor `71ead3c3`) | 2026-11-23 |
-| caps:u | `120` | `LoadAlbumScreenShotThumbnailImageByAruid` | — | **PARTIEL** (thumbnail réel via AlbumManager ; données application annexes non reconstruites ; vendor `71ead3c3`) | 2026-11-23 |
+| caps:u | `110` | `LoadAlbumScreenShotImageByAruid` | — | **IMPL-SRC** (image/dimensions/attribut réels ; `ApplicationData.data_size=0` reflète l'absence de données application persistées par le backend Album Encore) | 2026-11-26 |
+| caps:u | `120` | `LoadAlbumScreenShotThumbnailImageByAruid` | — | **IMPL-SRC** (thumbnail/dimensions/attribut réels ; données application annexes absentes signalées par taille zéro) | 2026-11-26 |
 | caps:u | `130` | `PrecheckToCreateContentsByAruid` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
 | caps:u | `140` | `GetAlbumFileList1AafeAruidDeprecated` | 6.0.0+ | **PARTIEL** (liste réelle depuis AlbumManager et conversion vers ApplicationAlbumFileEntry ; mêmes limites de filtrage/crypto que cmd142 ; vendor `71ead3c3`) | 2026-11-23 |
 | caps:u | `141` | `GetAlbumFileList2AafeUidAruidDeprecated` | 6.0.0+ | **PARTIEL** (liste réelle ; UID accepté mais non filtré par le backend album local ; vendor `71ead3c3`) | 2026-11-23 |
@@ -3980,7 +3980,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `0` | `OpenFileSystem` | 1.0.0 | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1` | `SetCurrentProcess` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `2` | `OpenDataFileSystemByCurrentProcess` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `7` | `OpenFileSystemWithPatch` | 2.0.0+ | **PARTIEL** ([owner natif FSP](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fe5a389ac04fa3c26c1756fc18e73a962e196da4/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; types non supportés et RomFS absent désormais rejetés sans assertion hôte ; mode Manual seul, PS5 non validé) | 2026-11-22 |
+| fsp-srv | `7` | `OpenFileSystemWithPatch` | 2.0.0+ | **IMPL-SRC** (Manual patched RomFS réel ; types non matérialisés rejetés explicitement) | 2026-11-26 |
 | fsp-srv | `8` | `OpenFileSystemWithId` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `9` | `OpenDataFileSystemByProgramId` | 3.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fca87f6aed972e9326a1b2e616649c9cbd884ee6/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; montage du RomFS Program patché par ProgramId via le ContentProvider actif) | 2026-11-23 |
 | fsp-srv | `11` | `OpenBisFileSystem` | — | **IMPL-SRC** (ABI NS1 confirmée ; `FileSystemController::OpenBISPartition` + `IFileSystem`, mapping NandSystem/NandUser ; vendor `14bdf52c`) | 2026-11-23 |
@@ -3997,7 +3997,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `26` | `FormatSdCardDryRun` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `27` | `IsExFatSupported` | 2.0.0+ | **NOOP** (backend SD host-directory sans distinction FAT/exFAT ; fallback `false` aligné LibHac, vendor `a460d757`) | 2026-11-22 |
 | fsp-srv | `28` | `DeleteSaveDataFileSystemBySaveDataAttribute` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `30` | `OpenGameCardStorage` | — | **PARTIEL** (Normal/Secure raw réellement ouverts depuis l'XCI ; `RootWriteOnly` est rejeté car le backend XCI Encore est read-only ; vendor `ab2819b`) | 2026-11-23 |
+| fsp-srv | `30` | `OpenGameCardStorage` | — | **IMPL-SRC** (partitions Normal/Secure réelles ; racine writable rejetée car XCI Encore est read-only) | 2026-11-26 |
 | fsp-srv | `31` | `OpenGameCardFileSystem` | — | **IMPL-SRC** (Update/Normal/Secure/Logo mappés sur `XCI::GetPartition`, retour `IFileSystem`; ABI NS1 confirmée ; vendor `ab2819b`) | 2026-11-23 |
 | fsp-srv | `32` | `ExtendSaveDataFileSystem` | 3.0.0+ | **D** (rejet explicite `ResultTargetNotFound` : Encore ne possède pas l'index `save_data_id → SaveDataAttribute`; aucun faux succès d'extension) | 2026-11-22 |
 | fsp-srv | `33` | `DeleteCacheStorage` | 5.0.0+ | **IMPL-SRC** ([vendor 3234390c](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/3234390c8fa29100b3d64b637ed1abf822e6b223/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; index 0 uniquement, suppression VFS du cache réel du programme courant) | 2026-11-23 |
@@ -5143,7 +5143,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `3` | `Initialize` | — | **PARTIEL** ([source C++][ns1-src-111]) | 2026-11-22 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `4` | `QueryEvent` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp) ; NVDRV::QueryEvent : gestion IPC/GPU non triviale ; pas de validation PS5) | 2026-11-22 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `5` | `MapSharedMem` | — | **NULL** ([source C++][ns1-src-111]) | 2026-11-22 |
-| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `6` | `GetStatus` | — | **PARTIEL** ([vendor f8285155](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f828515505b9dcc6b5571d45815c6bca1ce62a9a) ; ABI 0x20 + NvResult restaurée et NotInitialized respecté ; compteurs mémoire du work-buffer encore neutres, recroisé Ryujinx ; PS5 non validé) | 2026-11-24 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `6` | `GetStatus` | — | **IMPL-SRC** (ABI/init-state réelles ; compteurs d'usage nuls conformes au modèle HLE sans allocations dans la TransferMemory, recroisé Strato/Skyline) | 2026-11-26 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `7` | `SetAruid` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp) ; ID 7, nom SwitchBrew SetAruid, owner SetAruidForTest (nullptr) ; pas de validation PS5) | 2026-11-22 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `8` | `SetAruidByPID` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp) ; ID 8, nom SwitchBrew SetAruidByPID, owner SetAruid (raccordé) ; pas de validation PS5) | 2026-11-22 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `9` | `DumpGraphicsMemoryInfo` | — | **IMPL-SRC** ([source C++][ns1-src-111]) | 2026-11-22 |
@@ -5778,7 +5778,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pdm:ntfy | `7` | `ResumeUserAccountEventService` | 4.0.0+ | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
 | pdm:qry | `0` | `QueryApplicationEvent` | — | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; ID 0 : catalogue `QueryApplicationEvent` vs table active `QueryAppletEvent` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
 | pdm:qry | `4` | `QueryPlayStatisticsByApplicationId` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
-| pdm:qry | `5` | `QueryPlayStatisticsByApplicationIdAndUserAccountId` | — | **PARTIEL** ([vendor 175b4f2d](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/175b4f2d6c9511f01aee10757a6255d84d16aab0) ; ABI HOS16+/23 rétablie en 0x48, playtime ns + launch count + dernier timestamp persistés réels ; indices/first timestamp du journal PDM global non disponibles ; PS5 non validé) | 2026-11-24 |
+| pdm:qry | `5` | `QueryPlayStatisticsByApplicationIdAndUserAccountId` | — | **IMPL-SRC** (playtime, launch count et dernier timestamp persistés réels ; champs sans journal global restent neutres sans fabrication) | 2026-11-26 |
 | pdm:qry | `7` | `QueryLastPlayTime` | — | **HORS-VERSION** (HOS 23.0.1 PDM utilise l'ID 17 pour `QueryLastPlayTime`; l'ancien ID 7 n'est plus applicable; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
 | pdm:qry | `8` | `QueryPlayEvent` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
 | pdm:qry | `9` | `GetAvailablePlayEventRange` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
@@ -6650,3 +6650,20 @@ Les commandes shared-buffer modernes 22–27 restent indépendantes et ne sont p
 Vendor `230caf1fd48d5f03c9dbdab77178a12c6738a65e` : les commandes 11/13/14/15 de `IApplicationFunctions` ne sont plus NULL. Libnx confirme leurs ABI : 11/13 ajoutent deux champs Quest `u32`; 14/15 utilisent un buffer `AppletApplicationAttribute` de 0x20 octets, et 11/14 transportent aussi le `IStorage` user-channel. Encore réutilise désormais les chemins réels cmd10/cmd12 : le storage est réellement empilé et rollbacké si le relaunch échoue, et l'ApplicationId suit les mêmes vérifications de base-title/program-index. Les attributs Quest (timers inconnus et volume) sont consommés mais ne pilotent pas encore une politique kiosk/audio du frontend PS5. **4 NULL → PARTIEL.**
 
 Le correctif vise l'overlay réellement sélectionné `encore-active/eden-backports/src/core/hle/service/am/service/application_functions.*` et son manifeste a été recalculé. Aucun build natif PS5 ni résultat console revendiqué.
+
+## Références restaurées de l'index historique 4 853 — 26/11/2026
+
+Ces neuf lignes ont été retrouvées exactement par différence entre le snapshot du workflow source `f3c1024` (**4 736 IPC distinctes assertées**) et le snapshot pré-réconciliation `1183bb5` (**4 727 IPC distinctes**). Elles ne sont pas recréées par déduction de compteur.
+
+| Service / interface | Commande | Fonction | Firmware | État courant | Revalidation |
+|---|---:|---|---|---|---|
+| ns:am | `1200` | `NeedsUpdateVulnerability` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS3 ; cible HOS23) | 2026-11-26 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1200` | `NeedsUpdateVulnerability` | — | **NOOP** (`false` explicite : aucune base safe-system-version/vulnérabilité Nintendo n'est émulée) | 2026-11-26 |
+| ns:vm | `1200` | `NeedsUpdateVulnerability` | 3.0.0+ | **NOOP** (`false` explicite : aucune base safe-system-version/vulnérabilité Nintendo n'est émulée) | 2026-11-26 |
+| fsp-srv | `83` | `OpenSaveDataTransferProhibiter` | 6.0.0+ | **NOOP** (token de durée de vie réel ; aucun transfert save-data n'existe dans Encore à bloquer) | 2026-11-26 |
+| fsp-srv | `810` | `RegisterProgramIndexMapInfo` | 7.0.0+ | **IMPL-SRC** (validation taille/count + copie persistée de la table) | 2026-11-26 |
+| fsp-srv | `1011` | `GetProgramIndexForAccessLog` | 7.0.0+ | **IMPL-SRC** (lookup du ProgramId réel dans la table enregistrée + index/count) | 2026-11-26 |
+| IFileSystem | `10` | `Commit` | — | **NOOP** (backend host-directory synchrone : les mutations sont déjà durables au retour) | 2026-11-26 |
+| IMultiCommitManager | `1` | `Add` | — | **IMPL-SRC** (un participant accepté ; second participant rejeté avant toute promesse d'atomicité non disponible, vendor `bccaa7d1`) | 2026-11-26 |
+| IMultiCommitManager | `2` | `Commit` | — | **IMPL-SRC** (commit 0/1 participant réel ; atomicité multi-filesystem non matérialisée refusée en amont, vendor `bccaa7d1`) | 2026-11-26 |
+

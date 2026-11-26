@@ -18155,3 +18155,1037 @@ Source : [hardware_composer.cpp:178-196](https://github.com/heydemoura/Eglantine
 Le document permet maintenant de localiser un écart sur chaque frontière sans conclure que « VI2 fonctionne » uniquement parce que la commande 229 renvoie succès. La validation finale reste une frame PS5 réellement présentée.
 
 **Couverture ajoutée :** 8 fonctions, 16 comparaisons, 1893 lignes-source parcourues ; 878 alignées, 108 propres Encore, 29 propres upstream. Aucun fix.
+
+## Annexe XI — sémaphores GPU : Puller / DmaPusher et reprise native
+
+Cette annexe vise directement le symptôme Pokopia « GPFIFO soumis puis attente de syncpoint ». Elle distingue le chemin sémaphore historique partagé et les extensions natives Encore. Aucun changement de synchronisation n'est appliqué.
+
+### P0-SY01 · Puller::ProcessSemaphoreTriggerMethod
+
+Traitement du sémaphore via méthode puller. Comparer opérations, adresse, payload et ordre du rasterizer. Cette voie Maxwell commune ne doit pas être confondue avec le nouvel opcode natif Ampere spécifique à Encore.
+
+Encore : [puller.cpp:355-391](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp#L355-L391) — 37 lignes.
+
+<details>
+<summary>Lichii — 430-587 : 33 alignées, 4 propres Encore, 125 propres upstream</summary>
+
+Source : [puller.cpp:430-587](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/engines/puller.cpp#L430-L587).
+
+```diff
+   355   430 | void Puller::ProcessSemaphoreTriggerMethod(DmaPusher& dma_pusher) {
+   356   431 |     const auto semaphoreOperationMask = 0xF;
+   357   432 |     const auto op = GpuSemaphoreOperation(regs.semaphore_trigger & semaphoreOperationMask);
++        433 |     // EDEN_NX2_SEM_WATCH=<gpu address>: log every release/acquire on the 16 bytes there.
++        434 |     static const GPUVAddr watch = [] {
++        435 |         const char* value = std::getenv("EDEN_NX2_SEM_WATCH");
++        436 |         return value ? GPUVAddr{std::strtoull(value, nullptr, 16)} : GPUVAddr{};
++        437 |     }();
++        438 |     if (watch != 0 && (regs.semaphore_address.SemaphoreAddress() & ~GPUVAddr{0xf}) == watch) {
++        439 |         LOG_INFO(HW_GPU, "Semaphore watch: channel {} as {} device {:#x} op {} {:#x} value {:#x} (now {:#x})",
++        440 |                  dma_pusher.channel_state.bind_id, dma_pusher.memory_manager.GetID(),
++        441 |                  dma_pusher.memory_manager.GpuToCpuAddress(regs.semaphore_address.SemaphoreAddress()).value_or(0),
++        442 |                  static_cast<u32>(op),
++        443 |                  regs.semaphore_address.SemaphoreAddress(), regs.semaphore_sequence,
++        444 |                  dma_pusher.memory_manager.Read<u32>(regs.semaphore_address.SemaphoreAddress()));
++        445 |     }
+   358   446 |     if (op == GpuSemaphoreOperation::WriteLong) {
+   359   447 |         const GPUVAddr sequence_address{regs.semaphore_address.SemaphoreAddress()};
+   360   448 |         const u32 payload = regs.semaphore_sequence;
+-  361       |         dma_pusher.rasterizer->Query(sequence_address, VideoCommon::QueryType::Payload, VideoCommon::QueryPropertiesFlags::HasTimeout, payload, 0);
++        449 |         // RELEASE_SIZE (bit 24) set means a 4-byte release without the timestamp; writing 16
++        450 |         // bytes there clobbers the words next to it (Switch 2 packs semaphores tightly).
++        451 |         const auto properties = g_nx2_ampere && (regs.semaphore_trigger & (1U << 24)) != 0
++        452 |                                     ? VideoCommon::QueryPropertiesFlags::IsAFence
++        453 |                                     : VideoCommon::QueryPropertiesFlags::HasTimeout;
++        454 |         const GPUVAddr mirror = g_nx2_ampere ? Nx2SemaphoreMirror(sequence_address) : 0;
++        455 |         if (mirror != 0) {
++        456 |             LOG_DEBUG(HW_GPU, "Switch 2 semaphore {:#x}={:#x} mirrored to {:#x}", sequence_address, payload, mirror);
++        457 |         }
++        458 |         OnBack([rasterizer = dma_pusher.rasterizer, sequence_address, mirror, properties, payload] {
++        459 |             rasterizer->Query(sequence_address, VideoCommon::QueryType::Payload, properties, payload, 0);
++        460 |             if (mirror != 0) {
++        461 |                 rasterizer->Query(mirror, VideoCommon::QueryType::Payload,
++        462 |                                   properties | VideoCommon::QueryPropertiesFlags::Nx2Mirror, payload, 0);
++        463 |             }
++        464 |         }, VideoCommon::GpuSplit::Writes::Noted);
++        465 |         const bool four_words = properties == VideoCommon::QueryPropertiesFlags::HasTimeout;
++        466 |         const auto landing = VideoCommon::GpuSplit::ReportLanding(
++        467 |             properties == VideoCommon::QueryPropertiesFlags::IsAFence);
++        468 |         NoteRelease(dma_pusher, sequence_address, payload, four_words, landing);
++        469 |         if (auto& split = VideoCommon::GpuSplit::Get(); mirror != 0 && split.Active()) {
++        470 |             const u64 size = four_words ? 16 : 4;
++        471 |             split.NoteWrite(dma_pusher.memory_manager, mirror, size);
++        472 |             // It lands in guest memory as the release does, unless mirrored releases into the
++        473 |             // word go to Nx2MirrorShadow (which only grows): unvalued, it keeps QMD reductions
++        474 |             // there from taking memory for their base until it landed.
++        475 |             if (const auto device = dma_pusher.memory_manager.GpuToCpuAddress(mirror);
++        476 |                 device && !Nx2MirrorShadow::Get().Diverts(*device)) {
++        477 |                 split.NoteUnknownWrites(*device, size, landing);
++        478 |             }
++        479 |         }
++        480 |     } else if (g_nx2_ampere) {
++        481 |         // Switch 2 waits on semaphores the CPU (or another channel) releases, e.g. once it has
++        482 |         // written the commands this channel runs next: suspend the channel until the value is
++        483 |         // met instead of reading ahead (approach from changes.patch).
++        484 |         // Without the split the draws before it already ran: this ends their uniform keeps. On the
++        485 |         // split's back they may run after it, so the paths below note it again once the acquire is
++        486 |         // met, or send the fences (a deferred call) before it waits.
++        487 |         VideoCommon::Nx2FastDraw::NoteSync();
++        488 |         PendingAcquire acquire{
++        489 |             .address = regs.semaphore_address.SemaphoreAddress(),
++        490 |             .value = regs.semaphore_sequence,
++        491 |             .operation = static_cast<u32>(op),
++        492 |             .since = std::chrono::steady_clock::now(),
++        493 |             .last_fences = std::chrono::steady_clock::now(),
++        494 |             .last_drain = std::chrono::steady_clock::now(),
++        495 |             .reported = false,
++        496 |         };
++        497 |         if (op != GpuSemaphoreOperation::AcquireEqual && op != GpuSemaphoreOperation::AcquireGequal &&
++        498 |             op != GpuSemaphoreOperation::AcquireMask) {
++        499 |             LOG_ERROR(HW_GPU, "Invalid semaphore operation {}", static_cast<u32>(op));
++        500 |             return;
++        501 |         }
++        502 |         VideoCommon::Nx2Profile::Add(VideoCommon::Nx2Profile::Counter::AcquireChecks, 1);
++        503 |         auto& stats = VideoCommon::g_acquire_stats;
++        504 |         u64 release = 0;
++        505 |         const AcquireCheck without_drain = CheckWithoutDrain(dma_pusher, acquire, release);
++        506 |         if (without_drain == AcquireCheck::Met || without_drain == AcquireCheck::MetByQueued) {
++        507 |             if (without_drain == AcquireCheck::MetByQueued) {
++        508 |                 // What the front reads after the acquire waits for the work sent before the
++        509 |                 // release (GpuSplit::NoteSync).
++        510 |                 VideoCommon::GpuSplit::Get().NoteSync(release);
++        511 |                 VideoCommon::Count(stats.by_queued);
++        512 |             }
++        513 |             VideoCommon::Count(stats.passed);
++        514 |             VerifyWithoutDrain(dma_pusher, acquire, without_drain);
++        515 |             // Found met: the CPU may have rewritten what the next draws read before it released.
++        516 |             VideoCommon::Nx2FastDraw::NoteSync();
++        517 |             return;
++        518 |         }
++        519 |         const bool not_met = without_drain == AcquireCheck::NotMet;
++        520 |         if (not_met) {
++        521 |             VideoCommon::Count(stats.trigger_not_met);
++        522 |         }
++        523 |         VideoCommon::Count(stats.drained);
++        524 |         DrainBack();
++        525 |         if (acquire.Matches(ReadSemaphoreWord(dma_pusher, acquire.address))) {
++        526 |             VideoCommon::Nx2FastDraw::NoteSync();
++        527 |             return;
++        528 |         }
++        529 |         if (not_met) {
++        530 |             VideoCommon::Count(stats.trigger_not_met_twice);
++        531 |         }
++        532 |         // Registered before the fences run, so a release among them that meets the value counts
++        533 |         // even if a later one overwrites it. The word in memory is watched for the guest CPU's
++        534 |         // stores (Nx2SemaphoreWaiters::WordStored).
++        535 |         auto& waiters = Nx2SemaphoreWaiters::Get();
++        536 |         u32* word = reinterpret_cast<u32*>(dma_pusher.memory_manager.GetPointer(acquire.address));
++        537 |         if (reinterpret_cast<uintptr_t>(word) % alignof(u32) != 0) {
++        538 |             word = nullptr;
++        539 |         }
++        540 |         if (const auto device = dma_pusher.memory_manager.GpuToCpuAddress(acquire.address);
++        541 |             device && !waiters.Add(this, *device, acquire.value, acquire.operation, word)) {
++        542 |             if (static std::atomic<u32> full{}; full.fetch_add(1) < 8) {
++        543 |                 LOG_ERROR(HW_GPU, "Channel {} waits on semaphore {:#x} unlatched: {} channels wait",
++        544 |                           dma_pusher.channel_state.bind_id, acquire.address,
++        545 |                           Nx2SemaphoreWaiters::MaxWaiters);
++        546 |             }
++        547 |         }
++        548 |         ReleaseFences(dma_pusher);
++        549 |         if (!waiters.Latched(this) && !acquire.Matches(ReadSemaphoreWord(dma_pusher, acquire.address))) {
++        550 |             pending_acquire = acquire;
++        551 |             dma_pusher.suspensions.fetch_add(1, std::memory_order_release);
++        552 |             VideoCommon::Nx2Profile::Add(VideoCommon::Nx2Profile::Counter::AcquireWaits, 1);
+   362   553 |     } else {
++        554 |             waiters.Remove(this);
++        555 |         }
++        556 |     } else {
++        557 |         DrainBack();
++        558 |         VideoCommon::Nx2FastDraw::NoteSync();
+   363   559 |         do {
+   364   560 |             const u32 word = dma_pusher.memory_manager.Read<u32>(regs.semaphore_address.SemaphoreAddress());
+   365   561 |             regs.acquire_source = true;
+   366   562 |             regs.acquire_value = regs.semaphore_sequence;
+   367   563 |             if (op == GpuSemaphoreOperation::AcquireEqual) {
+   368   564 |                 regs.acquire_active = true;
+   369   565 |                 regs.acquire_mode = false;
+   370   566 |                 if (word != regs.acquire_value) {
+-  371       |                     dma_pusher.rasterizer->ReleaseFences();
++        567 |                     ReleaseFences(dma_pusher);
+   372   568 |                     continue;
+   373   569 |                 }
+   374   570 |             } else if (op == GpuSemaphoreOperation::AcquireGequal) {
+   375   571 |                 regs.acquire_active = true;
+   376   572 |                 regs.acquire_mode = true;
+   377   573 |                 if (word < regs.acquire_value) {
+-  378       |                     dma_pusher.rasterizer->ReleaseFences();
++        574 |                     ReleaseFences(dma_pusher);
+   379   575 |                     continue;
+   380   576 |                 }
+   381   577 |             } else if (op == GpuSemaphoreOperation::AcquireMask) {
+   382   578 |                 if (word && regs.semaphore_sequence == 0) {
+-  383       |                     dma_pusher.rasterizer->ReleaseFences();
++        579 |                     ReleaseFences(dma_pusher);
+   384   580 |                     continue;
+   385   581 |                 }
+   386   582 |             } else {
+   387   583 |                 LOG_ERROR(HW_GPU, "Invalid semaphore operation");
+   388   584 |             }
+   389   585 |         } while (false);
+   390   586 |     }
+   391   587 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 403-553 : 33 alignées, 4 propres Encore, 118 propres upstream</summary>
+
+Source : [puller.cpp:403-553](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/engines/puller.cpp#L403-L553).
+
+```diff
+   355   403 | void Puller::ProcessSemaphoreTriggerMethod(DmaPusher& dma_pusher) {
+   356   404 |     const auto semaphoreOperationMask = 0xF;
+   357   405 |     const auto op = GpuSemaphoreOperation(regs.semaphore_trigger & semaphoreOperationMask);
++        406 |     // EDEN_NX2_SEM_WATCH=<gpu address>: log every release/acquire on the 16 bytes there.
++        407 |     static const GPUVAddr watch = [] {
++        408 |         const char* value = std::getenv("EDEN_NX2_SEM_WATCH");
++        409 |         return value ? GPUVAddr{std::strtoull(value, nullptr, 16)} : GPUVAddr{};
++        410 |     }();
++        411 |     if (watch != 0 && (regs.semaphore_address.SemaphoreAddress() & ~GPUVAddr{0xf}) == watch) {
++        412 |         LOG_INFO(HW_GPU, "Semaphore watch: channel {} as {} device {:#x} op {} {:#x} value {:#x} (now {:#x})",
++        413 |                  dma_pusher.channel_state.bind_id, dma_pusher.memory_manager.GetID(),
++        414 |                  dma_pusher.memory_manager.GpuToCpuAddress(regs.semaphore_address.SemaphoreAddress()).value_or(0),
++        415 |                  static_cast<u32>(op),
++        416 |                  regs.semaphore_address.SemaphoreAddress(), regs.semaphore_sequence,
++        417 |                  dma_pusher.memory_manager.Read<u32>(regs.semaphore_address.SemaphoreAddress()));
++        418 |     }
+   358   419 |     if (op == GpuSemaphoreOperation::WriteLong) {
+   359   420 |         const GPUVAddr sequence_address{regs.semaphore_address.SemaphoreAddress()};
+   360   421 |         const u32 payload = regs.semaphore_sequence;
+-  361       |         dma_pusher.rasterizer->Query(sequence_address, VideoCommon::QueryType::Payload, VideoCommon::QueryPropertiesFlags::HasTimeout, payload, 0);
++        422 |         // RELEASE_SIZE (bit 24) set means a 4-byte release without the timestamp; writing 16
++        423 |         // bytes there clobbers the words next to it (Switch 2 packs semaphores tightly).
++        424 |         const auto properties = g_nx2_ampere && (regs.semaphore_trigger & (1U << 24)) != 0
++        425 |                                     ? VideoCommon::QueryPropertiesFlags::IsAFence
++        426 |                                     : VideoCommon::QueryPropertiesFlags::HasTimeout;
++        427 |         const GPUVAddr mirror = g_nx2_ampere ? Nx2SemaphoreMirror(sequence_address) : 0;
++        428 |         if (mirror != 0) {
++        429 |             LOG_DEBUG(HW_GPU, "Switch 2 semaphore {:#x}={:#x} mirrored to {:#x}", sequence_address, payload, mirror);
++        430 |         }
++        431 |         OnBack([rasterizer = dma_pusher.rasterizer, sequence_address, mirror, properties, payload] {
++        432 |             rasterizer->Query(sequence_address, VideoCommon::QueryType::Payload, properties, payload, 0);
++        433 |             if (mirror != 0) {
++        434 |                 rasterizer->Query(mirror, VideoCommon::QueryType::Payload,
++        435 |                                   properties | VideoCommon::QueryPropertiesFlags::Nx2Mirror, payload, 0);
++        436 |             }
++        437 |         }, VideoCommon::GpuSplit::Writes::Noted);
++        438 |         NoteRelease(dma_pusher, sequence_address, payload,
++        439 |                     properties == VideoCommon::QueryPropertiesFlags::HasTimeout,
++        440 |                     VideoCommon::GpuSplit::ReportLanding(
++        441 |                         properties == VideoCommon::QueryPropertiesFlags::IsAFence));
++        442 |         if (mirror != 0 && VideoCommon::GpuSplit::Get().Active()) {
++        443 |             VideoCommon::GpuSplit::Get().NoteWrite(
++        444 |                 dma_pusher.memory_manager, mirror,
++        445 |                 properties == VideoCommon::QueryPropertiesFlags::HasTimeout ? 16 : 4);
++        446 |         }
++        447 |     } else if (g_nx2_ampere) {
++        448 |         // Switch 2 waits on semaphores the CPU (or another channel) releases, e.g. once it has
++        449 |         // written the commands this channel runs next: suspend the channel until the value is
++        450 |         // met instead of reading ahead (approach from changes.patch).
++        451 |         // Without the split the draws before it already ran: this ends their uniform keeps. On the
++        452 |         // split's back they may run after it, so the paths below note it again once the acquire is
++        453 |         // met, or send the fences (a deferred call) before it waits.
++        454 |         VideoCommon::Nx2FastDraw::NoteSync();
++        455 |         PendingAcquire acquire{
++        456 |             .address = regs.semaphore_address.SemaphoreAddress(),
++        457 |             .value = regs.semaphore_sequence,
++        458 |             .operation = static_cast<u32>(op),
++        459 |             .since = std::chrono::steady_clock::now(),
++        460 |             .last_fences = std::chrono::steady_clock::now(),
++        461 |             .last_drain = std::chrono::steady_clock::now(),
++        462 |             .reported = false,
++        463 |         };
++        464 |         if (op != GpuSemaphoreOperation::AcquireEqual && op != GpuSemaphoreOperation::AcquireGequal &&
++        465 |             op != GpuSemaphoreOperation::AcquireMask) {
++        466 |             LOG_ERROR(HW_GPU, "Invalid semaphore operation {}", static_cast<u32>(op));
++        467 |             return;
++        468 |         }
++        469 |         VideoCommon::Nx2Profile::Add(VideoCommon::Nx2Profile::Counter::AcquireChecks, 1);
++        470 |         auto& stats = VideoCommon::g_acquire_stats;
++        471 |         const AcquireCheck without_drain = CheckWithoutDrain(dma_pusher, acquire);
++        472 |         if (without_drain == AcquireCheck::Met || without_drain == AcquireCheck::MetByQueued) {
++        473 |             if (without_drain == AcquireCheck::MetByQueued) {
++        474 |                 // What the front reads after the acquire waits for the work sent before the
++        475 |                 // release (GpuSplit::NoteSync).
++        476 |                 VideoCommon::GpuSplit::Get().NoteSync();
++        477 |                 VideoCommon::Count(stats.by_queued);
++        478 |             }
++        479 |             VideoCommon::Count(stats.passed);
++        480 |             VerifyWithoutDrain(dma_pusher, acquire, without_drain);
++        481 |             // Found met: the CPU may have rewritten what the next draws read before it released.
++        482 |             VideoCommon::Nx2FastDraw::NoteSync();
++        483 |             return;
++        484 |         }
++        485 |         const bool not_met = without_drain == AcquireCheck::NotMet;
++        486 |         if (not_met) {
++        487 |             VideoCommon::Count(stats.trigger_not_met);
++        488 |         }
++        489 |         VideoCommon::Count(stats.drained);
++        490 |         DrainBack();
++        491 |         if (acquire.Matches(ReadSemaphoreWord(dma_pusher, acquire.address))) {
++        492 |             VideoCommon::Nx2FastDraw::NoteSync();
++        493 |             return;
++        494 |         }
++        495 |         if (not_met) {
++        496 |             VideoCommon::Count(stats.trigger_not_met_twice);
++        497 |         }
++        498 |         // Registered before the fences run, so a release among them that meets the value counts
++        499 |         // even if a later one overwrites it. The word in memory is watched for the guest CPU's
++        500 |         // stores (Nx2SemaphoreWaiters::WordStored).
++        501 |         auto& waiters = Nx2SemaphoreWaiters::Get();
++        502 |         u32* word = reinterpret_cast<u32*>(dma_pusher.memory_manager.GetPointer(acquire.address));
++        503 |         if (reinterpret_cast<uintptr_t>(word) % alignof(u32) != 0) {
++        504 |             word = nullptr;
++        505 |         }
++        506 |         if (const auto device = dma_pusher.memory_manager.GpuToCpuAddress(acquire.address);
++        507 |             device && !waiters.Add(this, *device, acquire.value, acquire.operation, word)) {
++        508 |             if (static std::atomic<u32> full{}; full.fetch_add(1) < 8) {
++        509 |                 LOG_ERROR(HW_GPU, "Channel {} waits on semaphore {:#x} unlatched: {} channels wait",
++        510 |                           dma_pusher.channel_state.bind_id, acquire.address,
++        511 |                           Nx2SemaphoreWaiters::MaxWaiters);
++        512 |             }
++        513 |         }
++        514 |         ReleaseFences(dma_pusher);
++        515 |         if (!waiters.Latched(this) && !acquire.Matches(ReadSemaphoreWord(dma_pusher, acquire.address))) {
++        516 |             pending_acquire = acquire;
++        517 |             dma_pusher.suspensions.fetch_add(1, std::memory_order_release);
++        518 |             VideoCommon::Nx2Profile::Add(VideoCommon::Nx2Profile::Counter::AcquireWaits, 1);
+   362   519 |     } else {
++        520 |             waiters.Remove(this);
++        521 |         }
++        522 |     } else {
++        523 |         DrainBack();
++        524 |         VideoCommon::Nx2FastDraw::NoteSync();
+   363   525 |         do {
+   364   526 |             const u32 word = dma_pusher.memory_manager.Read<u32>(regs.semaphore_address.SemaphoreAddress());
+   365   527 |             regs.acquire_source = true;
+   366   528 |             regs.acquire_value = regs.semaphore_sequence;
+   367   529 |             if (op == GpuSemaphoreOperation::AcquireEqual) {
+   368   530 |                 regs.acquire_active = true;
+   369   531 |                 regs.acquire_mode = false;
+   370   532 |                 if (word != regs.acquire_value) {
+-  371       |                     dma_pusher.rasterizer->ReleaseFences();
++        533 |                     ReleaseFences(dma_pusher);
+   372   534 |                     continue;
+   373   535 |                 }
+   374   536 |             } else if (op == GpuSemaphoreOperation::AcquireGequal) {
+   375   537 |                 regs.acquire_active = true;
+   376   538 |                 regs.acquire_mode = true;
+   377   539 |                 if (word < regs.acquire_value) {
+-  378       |                     dma_pusher.rasterizer->ReleaseFences();
++        540 |                     ReleaseFences(dma_pusher);
+   379   541 |                     continue;
+   380   542 |                 }
+   381   543 |             } else if (op == GpuSemaphoreOperation::AcquireMask) {
+   382   544 |                 if (word && regs.semaphore_sequence == 0) {
+-  383       |                     dma_pusher.rasterizer->ReleaseFences();
++        545 |                     ReleaseFences(dma_pusher);
+   384   546 |                     continue;
+   385   547 |                 }
+   386   548 |             } else {
+   387   549 |                 LOG_ERROR(HW_GPU, "Invalid semaphore operation");
+   388   550 |             }
+   389   551 |         } while (false);
+   390   552 |     }
+   391   553 | }
+```
+
+</details>
+
+### P0-SY02 · Puller::ProcessSemaphoreRelease
+
+Publication d'un sémaphore. Pour Pokopia, une release CPU/GPU et la progression du producteur GSV doivent rester ordonnées : une valeur visible trop tôt est aussi incorrecte qu'une valeur jamais visible.
+
+Encore : [puller.cpp:393-397](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp#L393-L397) — 5 lignes.
+
+<details>
+<summary>Lichii — 589-598 : 4 alignées, 1 propres Encore, 6 propres upstream</summary>
+
+Source : [puller.cpp:589-598](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/engines/puller.cpp#L589-L598).
+
+```diff
+   393   589 | void Puller::ProcessSemaphoreRelease(DmaPusher& dma_pusher) {
+   394   590 |     const GPUVAddr sequence_address{regs.semaphore_address.SemaphoreAddress()};
+   395   591 |     const u32 payload = regs.semaphore_release;
+-  396       |     dma_pusher.rasterizer->Query(sequence_address, VideoCommon::QueryType::Payload, VideoCommon::QueryPropertiesFlags::IsAFence, payload, 0);
++        592 |     OnBack([rasterizer = dma_pusher.rasterizer, sequence_address, payload] {
++        593 |         rasterizer->Query(sequence_address, VideoCommon::QueryType::Payload,
++        594 |                           VideoCommon::QueryPropertiesFlags::IsAFence, payload, 0);
++        595 |     }, VideoCommon::GpuSplit::Writes::Noted);
++        596 |     NoteRelease(dma_pusher, sequence_address, payload, false,
++        597 |                 VideoCommon::GpuSplit::Landing::Fenced);
+   397   598 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 555-564 : 4 alignées, 1 propres Encore, 6 propres upstream</summary>
+
+Source : [puller.cpp:555-564](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/engines/puller.cpp#L555-L564).
+
+```diff
+   393   555 | void Puller::ProcessSemaphoreRelease(DmaPusher& dma_pusher) {
+   394   556 |     const GPUVAddr sequence_address{regs.semaphore_address.SemaphoreAddress()};
+   395   557 |     const u32 payload = regs.semaphore_release;
+-  396       |     dma_pusher.rasterizer->Query(sequence_address, VideoCommon::QueryType::Payload, VideoCommon::QueryPropertiesFlags::IsAFence, payload, 0);
++        558 |     OnBack([rasterizer = dma_pusher.rasterizer, sequence_address, payload] {
++        559 |         rasterizer->Query(sequence_address, VideoCommon::QueryType::Payload,
++        560 |                           VideoCommon::QueryPropertiesFlags::IsAFence, payload, 0);
++        561 |     }, VideoCommon::GpuSplit::Writes::Noted);
++        562 |     NoteRelease(dma_pusher, sequence_address, payload, false,
++        563 |                 VideoCommon::GpuSplit::Landing::Fenced);
+   397   564 | }
+```
+
+</details>
+
+### P0-SY03 · Puller::ProcessSemaphoreAcquire
+
+Acquire historique commun. Le diff permet de séparer la sémantique Maxwell existante des extensions natives Encore ; ne pas attribuer le freeze au mécanisme natif si le paquet passe par cette voie.
+
+Encore : [puller.cpp:613-636](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp#L613-L636) — 24 lignes.
+
+<details>
+<summary>Lichii — 600-615 : 11 alignées, 13 propres Encore, 5 propres upstream</summary>
+
+Source : [puller.cpp:600-615](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/engines/puller.cpp#L600-L615).
+
+```diff
+   613   600 | void Puller::ProcessSemaphoreAcquire(DmaPusher& dma_pusher) {
++        601 |     DrainBack();
++        602 |     // The CPU may rewrite what the next draws read once it sees the release this waits for.
++        603 |     VideoCommon::Nx2FastDraw::Break(VideoCommon::Nx2FastDraw::Reason::Fence);
+   614   604 |     u32 word = dma_pusher.memory_manager.Read<u32>(regs.semaphore_address.SemaphoreAddress());
+   615   605 |     const auto value = regs.semaphore_acquire;
+-  616       | #ifdef PS5_NATIVE
+-  617       |     // On a failed graphics worker, a stale GPU semaphore can never progress.
+-  618       |     // Sample failure once per 64 unsuccessful polls, starting with the first.
+-  619       |     unsigned acquire_polls = 0;
+-  620       | #endif
+-  621       |     while (word != value && !dma_pusher.system.IsShuttingDown()) {
+-  622       | #ifdef PS5_NATIVE
+-  623       |         if ((acquire_polls++ & 63u) == 0u) {
+-  624       |             if (auto failure = ::Eden::PeekGpuFailure())
+-  625       |                 std::rethrow_exception(failure);
+-  626       |         }
+-  627       | #endif
++        606 |     while (word != value) {
+   628   607 |         regs.acquire_active = true;
+   629   608 |         regs.acquire_value = value;
+-  630       |         dma_pusher.rasterizer->ReleaseFences();
++        609 |         ReleaseFences(dma_pusher);
+   631   610 |         word = dma_pusher.memory_manager.Read<u32>(regs.semaphore_address.SemaphoreAddress());
+   632   611 |         // TODO(kemathe73) figure out how to do the acquire_timeout
+   633   612 |         regs.acquire_mode = false;
+   634   613 |         regs.acquire_source = false;
+   635   614 |     }
+   636   615 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 566-817 : 12 alignées, 12 propres Encore, 240 propres upstream</summary>
+
+Source : [puller.cpp:566-817](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/engines/puller.cpp#L566-L817).
+
+```diff
+   613   566 | void Puller::ProcessSemaphoreAcquire(DmaPusher& dma_pusher) {
++        567 |     DrainBack();
++        568 |     // The CPU may rewrite what the next draws read once it sees the release this waits for.
++        569 |     VideoCommon::Nx2FastDraw::Break(VideoCommon::Nx2FastDraw::Reason::Fence);
+   614   570 |     u32 word = dma_pusher.memory_manager.Read<u32>(regs.semaphore_address.SemaphoreAddress());
+   615   571 |     const auto value = regs.semaphore_acquire;
+-  616       | #ifdef PS5_NATIVE
+-  617       |     // On a failed graphics worker, a stale GPU semaphore can never progress.
+-  618       |     // Sample failure once per 64 unsuccessful polls, starting with the first.
+-  619       |     unsigned acquire_polls = 0;
+-  620       | #endif
++        572 | #if !defined(__PROSPERO__) // not PS5
++        573 |     while (word != value) {
++        574 | #else // PS5
+   621   575 |     while (word != value && !dma_pusher.system.IsShuttingDown()) {
+-  622       | #ifdef PS5_NATIVE
+-  623       |         if ((acquire_polls++ & 63u) == 0u) {
+-  624       |             if (auto failure = ::Eden::PeekGpuFailure())
+-  625       |                 std::rethrow_exception(failure);
+-  626       |         }
+-  627       | #endif
++        576 | #endif // PS5
+   628   577 |         regs.acquire_active = true;
+   629   578 |         regs.acquire_value = value;
+-  630       |         dma_pusher.rasterizer->ReleaseFences();
++        579 |         ReleaseFences(dma_pusher);
+   631   580 |         word = dma_pusher.memory_manager.Read<u32>(regs.semaphore_address.SemaphoreAddress());
+   632   581 |         // TODO(kemathe73) figure out how to do the acquire_timeout
+   633   582 |         regs.acquire_mode = false;
+   634   583 |         regs.acquire_source = false;
+   635   584 |     }
+   636   585 | }
++        586 | 
++        587 | // Ampere SEM_EXECUTE (method 0x1B): operation in bits 2:0 on the semaphore at
++        588 | // SEM_ADDR_HI:SEM_ADDR_LO (methods 0x18/0x17) with payload SEM_PAYLOAD_LO (0x19).
++        589 | void Puller::ProcessSemaphoreExecute(DmaPusher& dma_pusher, u32 argument) {
++        590 |     const GPUVAddr address = (GPUVAddr{regs.reg_array[0x18] & 0x1FFFFFF} << 32) |
++        591 |                              (regs.reg_array[0x17] & ~3U);
++        592 |     const u32 payload = regs.reg_array[0x19];
++        593 |     const u32 operation = argument & 7;
++        594 |     if (operation == 1) { // RELEASE
++        595 |         OnBack([rasterizer = dma_pusher.rasterizer, address, payload] {
++        596 |             rasterizer->Query(address, VideoCommon::QueryType::Payload,
++        597 |                               VideoCommon::QueryPropertiesFlags::IsAFence, payload, 0);
++        598 |         }, VideoCommon::GpuSplit::Writes::Noted);
++        599 |         NoteRelease(dma_pusher, address, payload, false, VideoCommon::GpuSplit::Landing::Fenced);
++        600 |         return;
++        601 |     }
++        602 |     // Acquires: check once after flushing pending fences; never block the GPU thread on them.
++        603 |     DrainBack();
++        604 |     VideoCommon::Nx2FastDraw::Break(VideoCommon::Nx2FastDraw::Reason::Fence);
++        605 |     ReleaseFences(dma_pusher);
++        606 |     u32 word = dma_pusher.memory_manager.Read<u32>(address);
++        607 |     if (const auto device = dma_pusher.memory_manager.GpuToCpuAddress(address)) {
++        608 |         word = Nx2MirrorShadow::Get().Read(*device, word).value_or(word);
++        609 |     }
++        610 |     const bool ready = operation == 0   ? word == payload
++        611 |                        : operation == 2 ? word >= payload
++        612 |                        : operation == 3 ? static_cast<s32>(word - payload) >= 0
++        613 |                        : operation == 4 ? (word & payload) != 0
++        614 |                        : operation == 5 ? (word & payload) == 0
++        615 |                                         : true;
++        616 |     if (!ready) {
++        617 |         static std::atomic<u32> reported{};
++        618 |         if (reported.fetch_add(1) < 8) {
++        619 |             LOG_WARNING(HW_GPU, "SEM_EXECUTE op {} at {:#x}: {:#x} vs {:#x} not met, continuing",
++        620 |                         operation, address, word, payload);
++        621 |         }
++        622 |     }
++        623 | }
++        624 | 
++        625 | /// Calls a GPU puller method.
++        626 | void Puller::CallPullerMethod(DmaPusher& dma_pusher, const MethodCall& method_call) {
++        627 |     static const bool nx2_trace = std::getenv("EDEN_NX2_PULLER_TRACE") != nullptr;
++        628 |     if (nx2_trace) {
++        629 |         LOG_INFO(HW_GPU, "nx2 puller sub={} method={:#x} arg={:#x}", method_call.subchannel,
++        630 |                  method_call.method, method_call.argument);
++        631 |     }
++        632 |     regs.reg_array[method_call.method] = method_call.argument;
++        633 |     const auto method = static_cast<BufferMethods>(method_call.method);
++        634 | 
++        635 |     switch (method) {
++        636 |     case BufferMethods::BindObject: {
++        637 |         ProcessBindMethod(dma_pusher, method_call);
++        638 |         break;
++        639 |     }
++        640 |     case BufferMethods::Nop:
++        641 |     case BufferMethods::SemaphoreAddressHigh:
++        642 |     case BufferMethods::SemaphoreAddressLow:
++        643 |     case BufferMethods::SemaphoreSequencePayload:
++        644 |     case BufferMethods::SyncpointPayload:
++        645 |     case BufferMethods::WrcacheFlush:
++        646 |         break;
++        647 |     case BufferMethods::RefCnt:
++        648 |         OnBack([rasterizer = dma_pusher.rasterizer] { rasterizer->SignalReference(); }, FenceWrites);
++        649 |         break;
++        650 |     case BufferMethods::SyncpointOperation:
++        651 |         ProcessFenceActionMethod(dma_pusher);
++        652 |         break;
++        653 |     case BufferMethods::WaitForIdle:
++        654 |         OnBack([rasterizer = dma_pusher.rasterizer] { rasterizer->WaitForIdle(); },
++        655 |                VideoCommon::GpuSplit::Writes::Caches);
++        656 |         VideoCommon::GpuSplit::Get().NoteSync();
++        657 |         break;
++        658 |     case BufferMethods::SemaphoreOperation: {
++        659 |         ProcessSemaphoreTriggerMethod(dma_pusher);
++        660 |         break;
++        661 |     }
++        662 |     case BufferMethods::NonStallInterrupt: {
++        663 |         LOG_ERROR(HW_GPU, "Special puller engine method NonStallInterrupt not implemented");
++        664 |         break;
++        665 |     }
++        666 |     case BufferMethods::MemOpA: {
++        667 |         LOG_TRACE(HW_GPU, "Memory Operation A");
++        668 |         break;
++        669 |     }
++        670 |     case BufferMethods::MemOpB: {
++        671 |         // Implement this better.
++        672 |         OnBack([rasterizer = dma_pusher.rasterizer] { rasterizer->InvalidateGPUCache(); },
++        673 |                VideoCommon::GpuSplit::Writes::Caches);
++        674 |         break;
++        675 |     }
++        676 |     case BufferMethods::MemOpC:
++        677 |     case BufferMethods::MemOpD: {
++        678 |         LOG_TRACE(HW_GPU, "Memory Operation C,D");
++        679 |         break;
++        680 |     }
++        681 |     case BufferMethods::SemaphoreAcquire: {
++        682 |         // On Ampere host classes 0x17..0x1A are SEM_ADDR_LO/HI and SEM_PAYLOAD_LO/HI.
++        683 |         if (!g_nx2_ampere) {
++        684 |             ProcessSemaphoreAcquire(dma_pusher);
++        685 |         }
++        686 |         break;
++        687 |     }
++        688 |     case BufferMethods::SemaphoreRelease: {
++        689 |         if (g_nx2_ampere) {
++        690 |             ProcessSemaphoreExecute(dma_pusher, method_call.argument);
++        691 |         } else {
++        692 |             ProcessSemaphoreRelease(dma_pusher);
++        693 |         }
++        694 |         break;
++        695 |     }
++        696 |     case BufferMethods::Yield: {
++        697 |         // TODO(Kmather73): Research and implement this method.
++        698 |         LOG_ERROR(HW_GPU, "Special puller engine method Yield not implemented");
++        699 |         break;
++        700 |     }
++        701 |     default:
++        702 |         LOG_ERROR(HW_GPU, "Special puller engine method {:X} not implemented", method);
++        703 |         if (static bool dumped = false; g_nx2_ampere && !dumped) {
++        704 |             dumped = true;
++        705 |             dma_pusher.DumpCurrentEntry("unknown host method");
++        706 |         }
++        707 |         break;
++        708 |     }
++        709 | }
++        710 | 
++        711 | /// Calls a GPU engine method.
++        712 | static bool Nx2MethodTrace() {
++        713 |     static const bool trace = std::getenv("EDEN_NX2_METHOD_TRACE") != nullptr;
++        714 |     return trace;
++        715 | }
++        716 | 
++        717 | void Puller::CallEngineMethod(DmaPusher& dma_pusher, const MethodCall& method_call) {
++        718 |     const EngineID engine = bound_engines[method_call.subchannel];
++        719 |     if (Nx2MethodTrace()) {
++        720 |         LOG_INFO(HW_GPU, "nx2 method sub={} engine={:04X} method={:#x} arg={:#x}",
++        721 |                  method_call.subchannel, static_cast<u32>(engine), method_call.method,
++        722 |                  method_call.argument);
++        723 |     }
++        724 |     switch (engine) {
++        725 |     case EngineID::FERMI_TWOD_A:
++        726 |         dma_pusher.channel_state.payload->fermi_2d.CallMethod(dma_pusher.system, method_call.method, method_call.argument, method_call.IsLastCall());
++        727 |         break;
++        728 |     case EngineID::MAXWELL_B:
++        729 |         dma_pusher.channel_state.payload->maxwell_3d.CallMethod(dma_pusher.system, method_call.method, method_call.argument, method_call.IsLastCall());
++        730 |         break;
++        731 |     case EngineID::KEPLER_COMPUTE_B:
++        732 |         dma_pusher.channel_state.payload->kepler_compute.CallMethod(dma_pusher.system, method_call.method, method_call.argument, method_call.IsLastCall());
++        733 |         break;
++        734 |     case EngineID::MAXWELL_DMA_COPY_A:
++        735 |         dma_pusher.channel_state.payload->maxwell_dma.CallMethod(dma_pusher.system, method_call.method, method_call.argument, method_call.IsLastCall());
++        736 |         break;
++        737 |     case EngineID::KEPLER_INLINE_TO_MEMORY_B:
++        738 |         dma_pusher.channel_state.payload->kepler_memory.CallMethod(dma_pusher.system, method_call.method, method_call.argument, method_call.IsLastCall());
++        739 |         break;
++        740 |     case EngineID::NV01_TIMER:
++        741 |         dma_pusher.channel_state.payload->nv01_timer.CallMethod(dma_pusher.system, method_call.method, method_call.argument, method_call.IsLastCall());
++        742 |         break;
++        743 |     default:
++        744 |         UNIMPLEMENTED_MSG("Unimplemented engine");
++        745 |         break;
++        746 |     }
++        747 | }
++        748 | 
++        749 | /// Calls a GPU engine multivalue method.
++        750 | void Puller::CallEngineMultiMethod(DmaPusher& dma_pusher, u32 method, u32 subchannel, const u32* base_start, u32 amount, u32 methods_pending) {
++        751 |     const EngineID engine = bound_engines[subchannel];
++        752 |     if (Nx2MethodTrace()) {
++        753 |         LOG_INFO(HW_GPU, "nx2 multimethod sub={} engine={:04X} method={:#x} amount={} first={:#x}",
++        754 |                  subchannel, static_cast<u32>(engine), method, amount, base_start[0]);
++        755 |     }
++        756 |     switch (engine) {
++        757 |     case EngineID::FERMI_TWOD_A:
++        758 |         dma_pusher.channel_state.payload->fermi_2d.CallMultiMethod(dma_pusher.system, method, base_start, amount, methods_pending);
++        759 |         break;
++        760 |     case EngineID::MAXWELL_B:
++        761 |         dma_pusher.channel_state.payload->maxwell_3d.CallMultiMethod(dma_pusher.system, method, base_start, amount, methods_pending);
++        762 |         break;
++        763 |     case EngineID::KEPLER_COMPUTE_B:
++        764 |         dma_pusher.channel_state.payload->kepler_compute.CallMultiMethod(dma_pusher.system, method, base_start, amount, methods_pending);
++        765 |         break;
++        766 |     case EngineID::MAXWELL_DMA_COPY_A:
++        767 |         dma_pusher.channel_state.payload->maxwell_dma.CallMultiMethod(dma_pusher.system, method, base_start, amount, methods_pending);
++        768 |         break;
++        769 |     case EngineID::KEPLER_INLINE_TO_MEMORY_B:
++        770 |         dma_pusher.channel_state.payload->kepler_memory.CallMultiMethod(dma_pusher.system, method, base_start, amount, methods_pending);
++        771 |         break;
++        772 |     case EngineID::NV01_TIMER:
++        773 |         dma_pusher.channel_state.payload->nv01_timer.CallMultiMethod(dma_pusher.system, method, base_start, amount, methods_pending);
++        774 |         break;
++        775 |     default:
++        776 |         UNIMPLEMENTED_MSG("Unimplemented engine");
++        777 |         break;
++        778 |     }
++        779 | }
++        780 | 
++        781 | /// Calls a GPU method.
++        782 | void Puller::CallMethod(DmaPusher& dma_pusher, const MethodCall& method_call) {
++        783 |     LOG_TRACE(HW_GPU, "Processing method {:08X} on subchannel {}", method_call.method, method_call.subchannel);
++        784 |     ASSERT(method_call.subchannel < bound_engines.size());
++        785 | 
++        786 |     if (ExecuteMethodOnEngine(dma_pusher, method_call.method)) {
++        787 |         CallEngineMethod(dma_pusher, method_call);
++        788 |     } else {
++        789 |         CallPullerMethod(dma_pusher, method_call);
++        790 |     }
++        791 | }
++        792 | 
++        793 | /// Calls a GPU multivalue method.
++        794 | void Puller::CallMultiMethod(DmaPusher& dma_pusher, u32 method, u32 subchannel, const u32* base_start, u32 amount, u32 methods_pending) {
++        795 |     LOG_TRACE(HW_GPU, "Processing method {:08X} on subchannel {}", method, subchannel);
++        796 |     ASSERT(subchannel < bound_engines.size());
++        797 |     if (ExecuteMethodOnEngine(dma_pusher, method)) {
++        798 |         CallEngineMultiMethod(dma_pusher, method, subchannel, base_start, amount, methods_pending);
++        799 |     } else {
++        800 |         for (u32 i = 0; i < amount; i++) {
++        801 |             CallPullerMethod(dma_pusher, MethodCall{
++        802 |                 method,
++        803 |                 base_start[i],
++        804 |                 subchannel,
++        805 |                 methods_pending - i,
++        806 |             });
++        807 |         }
++        808 |     }
++        809 | }
++        810 | 
++        811 | /// Determines where the method should be executed.
++        812 | [[nodiscard]] bool Puller::ExecuteMethodOnEngine(DmaPusher& dma_pusher, u32 method) {
++        813 |     const auto buffer_method = BufferMethods(method);
++        814 |     return buffer_method >= BufferMethods::NonPullerMethods;
++        815 | }
++        816 | 
++        817 | } // namespace Tegra::Engines
+```
+
+</details>
+
+### P0-SY04 · DmaPusher::DispatchCalls
+
+Boucle qui parse et exécute les listes. Encore peut suspendre/reprendre une acquire native ; les forks contiennent beaucoup plus de logique de capture/debug/NS2 dans ce même TU. Le critère est la conservation exacte de command_resume_offset et l'appel final OnCommandListEnd uniquement au bon moment.
+
+Encore : [dma_pusher.cpp:91-108](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/video_core/dma_pusher.cpp#L91-L108) — 18 lignes.
+
+<details>
+<summary>Lichii — 359-381 : 10 alignées, 8 propres Encore, 13 propres upstream</summary>
+
+Source : [dma_pusher.cpp:359-381](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/dma_pusher.cpp#L359-L381).
+
+```diff
+    91   359 | void DmaPusher::DispatchCalls() {
+-   92       | #ifdef PS5_NATIVE
+-   93       |     if (!Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance().IsNative(
+-   94       |             &channel_state)) {
+-   95       |         dma_pushbuffer_subindex = 0; // Preserve exact NS1 submission behavior.
+-   96       |     }
+-   97       | #else
+-   98       |     dma_pushbuffer_subindex = 0;
+-   99       | #endif
++        360 |     // The sub-index is kept: a channel suspended on a semaphore resumes inside its command list.
+   100   361 |     dma_state.is_last_call = true;
+   101   362 |     while (system.IsPoweredOn()) {
+   102   363 |         if (!Step()) {
+   103   364 |             break;
+   104   365 |         }
+   105   366 |     }
++        367 |     if (auto& split = VideoCommon::GpuSplit::Get(); split.Active()) {
++        368 |         // Submits, and releases the fences done (downloads where the GPU wrote).
++        369 |         split.Defer(
++        370 |             [gpu = &system.GPU()] {
++        371 |                 gpu->FlushCommands();
++        372 |                 gpu->OnCommandListEnd();
++        373 |             },
++        374 |             0, VideoCommon::GpuSplit::Writes::Caches);
++        375 |         split.Publish();
++        376 |         return;
++        377 |     }
++        378 |     VideoCommon::Nx2FastDraw::BreakUnsplit(VideoCommon::Nx2FastDraw::Reason::Call);
+   106   379 |     system.GPU().FlushCommands();
+   107   380 |     system.GPU().OnCommandListEnd();
+   108   381 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 359-391 : 11 alignées, 7 propres Encore, 22 propres upstream</summary>
+
+Source : [dma_pusher.cpp:359-391](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/dma_pusher.cpp#L359-L391).
+
+```diff
+    91   359 | void DmaPusher::DispatchCalls() {
+-   92       | #ifdef PS5_NATIVE
+-   93       |     if (!Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance().IsNative(
+-   94       |             &channel_state)) {
+-   95       |         dma_pushbuffer_subindex = 0; // Preserve exact NS1 submission behavior.
++        360 | #if !defined(__PROSPERO__) // not PS5
++        361 | #else // PS5
++        362 |     if (::Eden::Performance::gpu_dirty_pending.load(std::memory_order_relaxed)) {
++        363 |         if (auto& split = VideoCommon::GpuSplit::Get(); split.Active()) {
++        364 |             split.Defer([memory = &memory_manager] { memory->FlushCaching(); });
++        365 |         } else {
++        366 |             memory_manager.FlushCaching();
+    96   367 |     }
+-   97       | #else
+-   98       |     dma_pushbuffer_subindex = 0;
+-   99       | #endif
++        368 |     }
++        369 | #endif // PS5
++        370 |     // The sub-index is kept: a channel suspended on a semaphore resumes inside its command list.
+   100   371 |     dma_state.is_last_call = true;
+   101   372 |     while (system.IsPoweredOn()) {
+   102   373 |         if (!Step()) {
+   103   374 |             break;
+   104   375 |         }
+   105   376 |     }
++        377 |     if (auto& split = VideoCommon::GpuSplit::Get(); split.Active()) {
++        378 |         // Submits, and releases the fences done (downloads where the GPU wrote).
++        379 |         split.Defer(
++        380 |             [gpu = &system.GPU()] {
++        381 |                 gpu->FlushCommands();
++        382 |                 gpu->OnCommandListEnd();
++        383 |             },
++        384 |             0, VideoCommon::GpuSplit::Writes::Caches);
++        385 |         split.Publish();
++        386 |         return;
++        387 |     }
++        388 |     VideoCommon::Nx2FastDraw::BreakUnsplit(VideoCommon::Nx2FastDraw::Reason::Call);
+   106   389 |     system.GPU().FlushCommands();
+   107   390 |     system.GPU().OnCommandListEnd();
+   108   391 | }
+```
+
+</details>
+
+### Encore-only · Puller::ResumeNativeAcquire
+
+Aucun symbole homonyme n'a été trouvé dans les TUs Lichii/Eglantine examinés. Il s'agit donc d'une extension architecturale Encore, pas d'un diff 1:1.
+
+[puller.cpp:447-483](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp#L447-L483)
+
+```cpp
+  447 | bool Puller::ResumeNativeAcquire(DmaPusher& dma_pusher) {
+  448 |     if (!pending_native_acquire) {
+  449 |         return true;
+  450 |     }
+  451 |     const auto& pending = *pending_native_acquire;
+  452 | #ifdef PS5_NATIVE
+  453 |     auto& registry = Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance();
+  454 |     const auto ticket = registry.CaptureTicket(&dma_pusher.channel_state);
+  455 |     if (!ticket || !pending.process ||
+  456 |         ticket->process != pending.process ||
+  457 |         ticket->generation != pending.process_generation ||
+  458 |         ticket->channel_generation != pending.channel_generation ||
+  459 |         !registry.IsCurrent(&dma_pusher.channel_state, *ticket)) {
+  460 |         dma_pusher.FailNativeSubmission("Ampere SEM_EXECUTE: parked acquire channel epoch retired");
+  461 |     }
+  462 | #endif
+  463 |     const auto cpu_before = dma_pusher.memory_manager.GpuToCpuAddress(
+  464 |         pending.address, sizeof(u32));
+  465 |     if (!cpu_before || *cpu_before != pending.cpu_address) {
+  466 |         dma_pusher.FailNativeSubmission("Ampere SEM_EXECUTE: parked acquire backing remapped");
+  467 |     }
+  468 |     dma_pusher.rasterizer->ReleaseFences();
+  469 |     const auto observed = ReadCoherentNativeSemaphore(dma_pusher, pending.address);
+  470 |     if (observed.cpu_address != pending.cpu_address) {
+  471 |         dma_pusher.FailNativeSubmission("Ampere SEM_EXECUTE: parked acquire backing changed");
+  472 |     }
+  473 |     const auto ready = NativeSemaphore::AcquireReady(
+  474 |         pending.operation, observed.value, pending.value);
+  475 |     if (!ready) {
+  476 |         dma_pusher.FailNativeSubmission("Ampere SEM_EXECUTE: invalid parked operation");
+  477 |     }
+  478 |     if (!*ready) {
+  479 |         return false;
+  480 |     }
+  481 |     pending_native_acquire.reset();
+  482 |     return true;
+  483 | }
+```
+
+### Encore-only · Puller::ProcessNativeSemaphoreExecute
+
+Aucun symbole homonyme n'a été trouvé dans les TUs Lichii/Eglantine examinés. Il s'agit donc d'une extension architecturale Encore, pas d'un diff 1:1.
+
+[puller.cpp:488-611](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp#L488-L611)
+
+```cpp
+  488 | void Puller::ProcessNativeSemaphoreExecute(DmaPusher& dma_pusher, u32 control) {
+  489 |     const GPUVAddr address = NativeSemaphore::Address(
+  490 |         regs.reg_array[0x18], regs.reg_array[0x17]);
+  491 |     const u32 value = regs.reg_array[0x19];
+  492 |     const u32 operation = control & 7U;
+  493 |     // A valid 49-bit number is not necessarily a mapped GMMU word. Do not
+  494 |     // queue a RELEASE or acknowledge a pending ACQUIRE against a freed VA.
+  495 |     // GPU-only pages are allowed: this checks GMMU residency, not a CPU alias.
+  496 |     if (!NativeSemaphore::IsAddressAdmissible(address) ||
+  497 |         !dma_pusher.memory_manager.IsFullyMappedRange(address, sizeof(u32))) {
+  498 |         dma_pusher.FailNativeSubmission("Ampere SEM_EXECUTE: invalid/unmapped GPU address");
+  499 |     }
+  500 |     if (operation == 1) { // RELEASE: schedule a genuine GPU fence write.
+  501 |         // QueryCacheBase::CounterReport needs a CPU backing address to
+  502 |         // enqueue the deferred Vulkan fence write. A resident GMMU span
+  503 |         // alone is insufficient: without an alias that owner silently
+  504 |         // drops the report. Fail the native channel instead of pretending
+  505 |         // a guest semaphore RELEASE was submitted.
+  506 |         if (!dma_pusher.memory_manager.GpuToCpuAddress(address, sizeof(u32))) {
+  507 |             dma_pusher.FailNativeSubmission("Ampere SEM_EXECUTE: release has no CPU backing");
+  508 |         }
+  509 | #ifdef PS5_NATIVE
+  510 |         // QueryCacheBase retains a raw CPU pointer until fence retirement.
+  511 |         // That pointer can belong to a NEW process after an NVMap/GMMU
+  512 |         // rebinding. Native Ampere releases must instead authenticate both
+  513 |         // the captured channel epoch and the original CPU backing AFTER
+  514 |         // Vulkan retirement, as the maintained QMD3 completion owner does.
+  515 |         auto& registry = Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance();
+  516 |         const auto ticket = registry.CaptureTicket(&dma_pusher.channel_state);
+  517 |         const auto* const backing = dma_pusher.memory_manager.GetPointer(address);
+  518 |         if (!ticket || !ticket->process || !ticket->generation ||
+  519 |             !ticket->channel_generation || !backing) {
+  520 |             dma_pusher.FailNativeSubmission("Ampere SEM_EXECUTE: release owner unavailable");
+  521 |         }
+  522 |         const auto* const channel = &dma_pusher.channel_state;
+  523 |         auto* const memory = &dma_pusher.memory_manager;
+  524 |         const auto process_ticket = ProcessTicket(*ticket);
+  525 |         const auto mirror =
+  526 |             Service::Nvidia::Devices::NativeGpuProcessRegistry::Instance()
+  527 |                 .SemaphoreMirrorAddress(process_ticket, address);
+  528 |         const auto* const mirror_backing =
+  529 |             mirror ? dma_pusher.memory_manager.GetPointer(*mirror) : nullptr;
+  530 |         if (mirror &&
+  531 |             (!dma_pusher.memory_manager.IsFullyMappedRange(
+  532 |                  *mirror, sizeof(u32)) ||
+  533 |              !mirror_backing)) {
+  534 |             dma_pusher.FailNativeSubmission(
+  535 |                 "Ampere SEM_EXECUTE: semaphore mirror backing unavailable");
+  536 |         }
+  537 |         dma_pusher.rasterizer->SignalFence(
+  538 |             [channel, memory, ticket = *ticket, process_ticket, address,
+  539 |              value, backing, mirror, mirror_backing] {
+  540 |                 try {
+  541 |                     auto& current =
+  542 |                         Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance();
+  543 |                     // Retired channels are not permitted to publish a
+  544 |                     // completion into the replacement process's guest RAM.
+  545 |                     if (!current.IsCurrent(channel, ticket)) return;
+  546 |                     if (!memory->IsFullyMappedRange(address, sizeof(u32)) ||
+  547 |                         memory->GetPointer(address) != backing ||
+  548 |                         (mirror &&
+  549 |                          (!memory->IsFullyMappedRange(*mirror, sizeof(u32)) ||
+  550 |                           memory->GetPointer(*mirror) != mirror_backing))) {
+  551 |                         throw std::runtime_error(
+  552 |                             "Ampere SEM_EXECUTE: release backing changed after GPU submit");
+  553 |                     }
+  554 |                     if (!PublishNativeSemaphoreWord(
+  555 |                             *memory, process_ticket, address, mirror, false,
+  556 |                             [value](u32) { return value; })) {
+  557 |                         throw std::runtime_error(
+  558 |                             "Ampere SEM_EXECUTE: semaphore mirror publication failed");
+  559 |                     }
+  560 |                 } catch (...) {
+  561 |                     auto failure = std::current_exception();
+  562 |                     Eden::RecordGpuFailure(failure);
+  563 |                     Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()
+  564 |                         .ReportFault(channel);
+  565 |                 }
+  566 |             });
+  567 | #else
+  568 |         // Desktop/NS1 legacy QueryCache semantics remain unchanged.
+  569 |         dma_pusher.rasterizer->Query(
+  570 |             address, VideoCommon::QueryType::Payload,
+  571 |             VideoCommon::QueryPropertiesFlags::IsAFence, value, 0);
+  572 | #endif
+  573 |         return;
+  574 |     }
+  575 |     // Invalid native controls must not flush unrelated GPU work before
+  576 |     // rejection. Only 0 and 2..5 are acquire comparisons (1 is release).
+  577 |     // Reject 6/7 before ReleaseFences or any coherent guest read.
+  578 |     if (operation > 5U) {
+  579 |         dma_pusher.FailNativeSubmission("Ampere SEM_EXECUTE: unknown acquire operation");
+  580 |     }
+  581 |     // A pending acquire requires suspending the GPFIFO channel. The
+  582 |     // existing Maxwell busy loop must NEVER run on Ampere's 0x1a method,
+  583 |     // which is instead SEM_PAYLOAD_HI. An unresolved compare must not
+  584 |     // advance subsequent guest commands as if a release had occurred.
+  585 |     dma_pusher.rasterizer->ReleaseFences();
+  586 |     const auto observed = ReadCoherentNativeSemaphore(dma_pusher, address);
+  587 |     const auto ready = NativeSemaphore::AcquireReady(
+  588 |         operation, observed.value, value);
+  589 |     if (!ready) {
+  590 |         dma_pusher.FailNativeSubmission("Ampere SEM_EXECUTE: unknown acquire operation");
+  591 |     }
+  592 |     if (!*ready) {
+  593 |         // Do not advance past an unfulfilled GPU wait. DMA retains the
+  594 |         // current command cursor and the scheduler can run other channels.
+  595 | #ifdef PS5_NATIVE
+  596 |         const auto ticket =
+  597 |             Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()
+  598 |                 .CaptureTicket(&dma_pusher.channel_state);
+  599 |         if (!ticket || !ticket->process || !ticket->generation ||
+  600 |             !ticket->channel_generation) {
+  601 |             dma_pusher.FailNativeSubmission("Ampere SEM_EXECUTE: pending acquire has no channel epoch");
+  602 |         }
+  603 |         pending_native_acquire = PendingNativeAcquire{
+  604 |             address, value, operation, observed.cpu_address,
+  605 |             ticket->process, ticket->generation, ticket->channel_generation};
+  606 | #else
+  607 |         pending_native_acquire = PendingNativeAcquire{
+  608 |             address, value, operation, observed.cpu_address};
+  609 | #endif
+  610 |     }
+  611 | }
+```
+
+### Encore-only · DmaPusher::ResumeNativeAcquire
+
+Aucun symbole homonyme n'a été trouvé dans les TUs Lichii/Eglantine examinés. Il s'agit donc d'une extension architecturale Encore, pas d'un diff 1:1.
+
+[dma_pusher.cpp:60-88](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/video_core/dma_pusher.cpp#L60-L88)
+
+```cpp
+   60 | bool DmaPusher::ResumeNativeAcquire() {
+   61 |     if (!puller.ResumeNativeAcquire(*this)) return false;
+   62 |     if (dma_pushbuffer.empty()) return true;
+   63 |     auto& pending = dma_pushbuffer.front().native_syncpoint_wait;
+   64 |     if (!pending) return true;
+   65 | 
+   66 |     // Only the authenticated channel's admitted wait can park this list.
+   67 |     // Recheck the source reservation around the live counter read: an ID
+   68 |     // recycled by another channel must not satisfy an old dependency.
+   69 |     if (!Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance().IsNative(
+   70 |             &channel_state) || !pending->lease ||
+   71 |         !pending->lease->load(std::memory_order_acquire)) {
+   72 |         FailNativeSubmission("Native GPFIFO syncpoint wait owner retired");
+   73 |     }
+   74 | 
+   75 |     // The guest counter can advance when commands are merely enqueued.
+   76 |     // Only the Host1x HOST counter is incremented after real fence
+   77 |     // retirement. Poll nonblocking, so other channels can submit work.
+   78 |     rasterizer->ReleaseFences(false);
+   79 |     const auto completed = system.Host1x().GetSyncpointManager().GetHostSyncpointValue(
+   80 |         pending->id);
+   81 |     if (!pending->lease->load(std::memory_order_acquire)) {
+   82 |         FailNativeSubmission("Native GPFIFO syncpoint wait source recycled");
+   83 |     }
+   84 |     if (((completed - pending->threshold) & 0x80000000U) != 0)
+   85 |         return false;
+   86 |     pending.reset();
+   87 |     return true;
+   88 | }
+```
+
+### Décision documentaire
+
+Le document sépare désormais trois niveaux : **acquire/release Maxwell commun**, **opcode natif Encore**, **publication GSV/syncpoint**. Une future correction devra identifier lequel des trois niveaux cesse réellement de progresser dans le log PS5 ; aucune des extensions Encore-only n'est supprimée ou modifiée ici.
+
+**Couverture ajoutée :** 4 fonctions homologues, 8 comparaisons, 821 lignes-source parcourues, plus 3 propriétaires Encore-only documentés avec lignes exactes. Aucun fix.

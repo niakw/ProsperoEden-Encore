@@ -152,16 +152,16 @@ for rel, family, tables, commands, nulls, origin, chosen in by_owner:
 # firmware claims. They catch a late CMake replacement silently regressing to
 # an older service owner.
 expected_final = {
-    "hle/service/aoc/addon_content_manager.cpp": (1, 22, 0),
-    "hle/service/am/service/application_functions.cpp": (1, 74, 0),
+    "hle/service/aoc/addon_content_manager.cpp": (1, 22, 4),
+    "hle/service/am/service/application_functions.cpp": (1, 74, 1),
     "hle/service/am/service/application_proxy.cpp": (1, 15, 0),
     "hle/service/am/service/application_proxy_service.cpp": (1, 3, 0),
     "hle/service/am/service/self_controller.cpp": (1, 66, 0),
-    "hle/service/hid/hid_server.cpp": (1, 234, 0),
+    "hle/service/hid/hid_server.cpp": (1, 234, 33),
     "hle/service/friend/friend.cpp": (6, 164, 0),
     "hle/service/ns/platform_service_manager.cpp": (2, 22, 0),
-    "hle/service/ssl/ssl.cpp": (5, 75, 0),
-    "hle/service/sockets/bsd.cpp": (3, 63, 0),
+    "hle/service/ssl/ssl.cpp": (4, 76, 14),
+    "hle/service/sockets/bsd.cpp": (3, 69, 6),
     "hle/service/sockets/sfdnsres.cpp": (2, 19, 0),
     "hle/service/audio/audio.cpp": (10, 44, 0),
     "hle/service/audio/audio_controller.cpp": (1, 60, 0),

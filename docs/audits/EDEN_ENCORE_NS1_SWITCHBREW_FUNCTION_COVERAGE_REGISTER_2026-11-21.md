@@ -5576,3 +5576,11 @@ Le zéro historique n'est PAS une preuve de qualification runtime exhaustive. Le
 🟢 **26/11/2026 — 20 fichiers repris byte-for-byte depuis main `9db3675fe59d38fe837b7c9861157deda435a7a1`.** Les propriétaires runtime vérifiés par ces checks sont déjà synchronisés avec main côté vendor ; leurs anciens oracles NS1 n'ont donc plus à reconstruire des états intermédiaires. Sont repris notamment les reçus DMA, Core shutdown, Guest GPU sync, native source syntax, F07 prewarm, cache diagnostics, G21 shutdown et les checks NS2 GPU/sparse, ainsi que les trackers/documentation déjà modifiés par main.
 
 **Non touchés dans ce lot :** `headless/CMakeLists.txt` et `r23_self_controller_240_ps5.h` sont des supersets vérifiés de main ; les gros oracles dépendants du gitlink (`check-active-source-inventory`, `check-eden-optimization-coverage`, `check-fc27-ssbo-engine-selection`, `check-final-vendor-fc27-p0-source`, `check-vendored-vulkan-fork`, `check-vendor-consolidation-debt`) et les installateurs d'overlays restent à adapter explicitement au vendor NS1 `dd84b96b`.
+
+### 2026-11-26 — Rattrapage main → NS1 : réalignement de l'inventaire IPC final
+
+🟢 **26/11/2026 — Contrats physiques recalculés sur les propriétaires réellement sélectionnés.** Après application de la priorité `main` aux conflits runtime, les blobs AOC `443982a3`, ApplicationFunctions `9bfaa266`, HID `27182c31`, SSL `aaf82f28` et BSD `ed93f589` sont toujours byte-for-byte ceux du `vendor/main` actuel. L'inventaire final est donc réaligné sur leurs tables physiques : AOC `(1,22,4)`, ApplicationFunctions `(1,74,1)`, HID `(1,234,33)`, SSL `(4,76,14)`, BSD `(3,69,6)`.
+
+🟢 **26/11/2026 — AudioController contrôlé sur le vrai owner.** Le propriétaire final n'est pas `encore-active/eden-core/.../audio_controller.cpp` mais l'overlay matérialisé `encore-active/eden-backports/src/core/hle/service/audio/audio_controller.cpp`, présent dans le manifeste. Son contrat reste `(1,60,0)`; aucune régression n'est admise artificiellement.
+
+Ces tuples décrivent uniquement les tables `FunctionInfo` réellement compilées. Les `nullptr` repris de main restent des fonctionnalités non implémentées ; ce changement de gate ne les transforme pas en conformité fonctionnelle. Aucun runtime modifié dans ce commit.

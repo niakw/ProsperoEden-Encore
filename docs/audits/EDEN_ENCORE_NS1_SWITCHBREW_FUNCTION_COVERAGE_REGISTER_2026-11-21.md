@@ -5005,4 +5005,19 @@ L'ancienne qualification « agrégation partielle System/User/Temporary » décr
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 32 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+### 2026-11-26 — NS ResolveApplicationContentPath requalifié : 32 → 31
+
+Base précédente : **32 lignes ouvertes**.
+
+Le PARTIEL historique `IApplicationManagerInterface` cmd23 `ResolveApplicationContentPath` est requalifié après recroisement de l'helper Atmosphère et du propriétaire shipping actuel :
+- Atmosphère traite HBL/manual HTML comme exemptions puis délègue le cas normal au NS natif et retourne son résultat ; la commande ne produit aucune donnée supplémentaire ;
+- Encore remplace le resolver NS natif par son `ContentProviderUnion`, vérifie le `ContentRecordType`, privilégie l'update puis le titre de base et exige un chemin `RegisteredCache` réellement présent avant succès ;
+- le slot `FrontendManual` pour `HtmlDocument` est accepté explicitement, ce qui couvre le cas manual local ;
+- en l'absence de contenu résolvable, Encore renvoie `ResultApplicationRecordNotFound` au lieu d'un succès fictif.
+
+L'ancien motif « seul le service Nintendo peut prouver le resolve » ne s'applique plus au modèle HLE : pour un contenu installé localement, le resolver de contenu Encore est la source de vérité équivalente au NS natif.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 31 lignes ouvertes.**
+
+Aucun nouveau patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
 

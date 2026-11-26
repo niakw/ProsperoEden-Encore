@@ -4837,3 +4837,18 @@ Adaptation Encore :
 Le manifeste `eden-backports` est synchronisé (`fsp_srv.cpp` SHA-256 `f54b6d0fbd0f80067682daa5c3383c6fcf585cff2b74b9ee313ef96ad5af4175`, 77 404 octets), et le CMake actif sélectionne bien cette unité. Le patch moteur `headless/backports/eden-fw23-services.patch` ne contient pas les lots FSP accumulés depuis cette ancienne base et n'est donc pas modifié artificiellement ; le runtime shipping est l'overlay vendor épinglé.
 
 **Compteur global : 48, inchangé.** Les cmds 57/58/59/66 restent PARTIEL dans le pool pour une raison distincte : Encore n'a pas encore l'indexer Horizon attribuant des `save_data_id` non nuls/stables aux saves Account/Device, de sorte que la résolution par ID n'est pas complète. Cmd69/70/71 bénéficient du correctif runtime mais n'ajoutent pas de ligne à soustraire au pool actuel. Aucun build PS5 ni test console revendiqué à ce stade.
+
+### 2026-11-26 — SaveDataId Horizon persistant + filtre ID corrigé : 48 → 44
+
+Base précédente : **48 lignes ouvertes**.
+
+Le reliquat FSP cmd57/cmd58/cmd59/cmd66 était maintenu PARTIEL parce que les saves Account/Device/Cache étaient encore exposées avec `SaveDataId=0` et parce que la recherche par ID ne disposait pas d'un indexer Horizon persistant. Le vendor NS1 **`13a627a254d7b1c51f55fd1b8ff98a5d41ef17f7`** ferme ce motif fonctionnel après recroisement avec LibHac :
+- les saves non statiques reçoivent un ID monotone persistant à partir de 1 ; le compteur est partagé par la racine `EdenPath::SaveDir` réellement configurée ;
+- les saves système à ID statique conservent cet ID comme `SaveDataId` public ;
+- les anciennes saves sans sidecar sont migrées au premier scan, sans réutiliser un ID déjà publié ;
+- le filtre HOS utilise bien `SaveDataInfo.SaveDataId` (premier champ de l'ABI 0x60), et non `StaticSaveDataId` ;
+- cmd57/58 relisent désormais l'ExtraData 0x200 persistant ; cmd59 met à jour `flags` conformément au masque legacy ; cmd66 applique le masque byte-for-byte puis persiste l'état.
+
+Le même candidat corrige la provenance du vendor : `sources/eden` SPL/audrec est revenu au miroir exact `eden-emulator/mirror@5f142c7926d0c7fcbbd0ce30794d72f638a43b2a`, la sémantique audrec NS1 reste dans `encore-active/eden-backports`, et les hashes des overlays HID/NIM/NS/VI/OMM revus sont synchronisés. Les unités SPL, audrec et FSP sont bien sélectionnées par le CMake actif.
+
+**Compteur global de revue : 44 lignes ouvertes.** Ce décrément qualifie les quatre lignes cmd57/58/59/66 sur preuve statique/runtime active ; il ne constitue pas une validation PS5. CI hôte, build natif et console restent des niveaux de preuve séparés.

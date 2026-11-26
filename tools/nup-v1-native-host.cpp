@@ -220,6 +220,16 @@ int main(int argc, char** argv) {
             paired_mount, 0x0400123400000001ULL};
         assert(paired.HasExecutableMain());
         assert(Read(paired.ExeFS()->GetFile("main.npdm")) == "switch2-npdm");
+        assert(Read(paired.CreateRomFS(false)).find("bonus.bin=") == std::string::npos);
+        assert(Read(paired.CreateRomFS(true)).find("bonus.bin=edition-addon\n") !=
+               std::string::npos);
+        assert(Read(paired.CreateRomFS(true)).find("state.bin=native-state\n") !=
+               std::string::npos);
+        // Unscoped metadata and legacy callers do not get an Edition overlay.
+        Eden::NupV1::Native::ContentSet unscoped_paired{paired_mount};
+        assert(Read(unscoped_paired.CreateRomFS(true)).find("bonus.bin=") ==
+               std::string::npos);
+
         assert(paired.AddOns().size() == 1);
         assert(Read(paired.CreateAddOnRomFS(2)) == "bonus.bin=edition-addon\n");
         Eden::NupV1::Native::ContentSet foreign_paired{

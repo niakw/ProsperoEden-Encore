@@ -140,6 +140,79 @@ int main() {
 '''.replace('__LEASE__',lease_source).replace('__CREATE__',create_source)
 # Avoid constructing the Image while the test's allocation failure is armed.
 cpp=cpp.replace('const auto image=std::make_shared<Image>();','const Image value{};\n        const Image* image=&value;')
+# Exercise the exact production pre-AttachBuffer allocation block. Inject both
+# allocation failures before a mock GraphicBuffer acquires an NVMap owner.
+present_start='                                // Both host allocations must finish'
+present_end='                                    s32 idx{};result=Kernel::ResultOutOfResource;'
+assert source.count(present_start)==1 and source.count(present_end)==1
+start=source.index(present_start)
+end=source.index(present_end,start)
+present_source=source[start:end]
+assert present_source.index('storage=std::make_shared') < present_source.index('storage->emplace')
+assert present_source.index('catch (const std::bad_alloc&)') < present_source.index('storage->emplace')
+present_fixture=r'''
+using s32=std::int32_t;
+namespace android {
+enum class PixelFormat {Rgba8888};
+struct NvGraphicBuffer {
+    s32 width{},height{},stride{};
+    PixelFormat format{},external_format{};
+    u32 buffer_id{},offset{};
+};
+struct PresentMap {int owners{}, constructed{};};
+struct GraphicBuffer {
+    PresentMap& map;
+    explicit GraphicBuffer(PresentMap& m, const std::shared_ptr<NvGraphicBuffer>& native) : map(m) {
+        assert(native->width==1280 && native->height==720 && native->buffer_id==12);
+        ++map.owners; ++map.constructed;
+    }
+    ~GraphicBuffer() {--map.owners;}
+};
+}
+struct PresentContainer {
+    android::PresentMap map;
+    android::PresentMap& GetNvMapFile() {return map;}
+};
+struct PresentResult {
+    int value{};
+    bool IsSuccess() const {return value==ResultSuccess;}
+    PresentResult& operator=(int v) {value=v;return *this;}
+};
+static std::shared_ptr<android::GraphicBuffer> PresentAllocation(
+        PresentContainer& nv, PresentResult& result, int& attaches) {
+    struct {u32 buffer_id{12},offset{0};} image;
+    const auto* img=&image;
+    const u32 width=1280,height=720;
+    std::array<u32,16> pref{};
+    pref[5]=80;
+__PRESENT__
+        ++attaches;
+        return buffer;
+    }
+    return {};
+}
+static void TestPresentAllocation() {
+    PresentContainer nv;
+    int attaches{};
+    for (int failure : {1,2}) {
+        PresentResult result;
+        fail_allocation=failure;
+        assert(!PresentAllocation(nv,result,attaches));
+        assert(result.value==Kernel::ResultOutOfResource);
+        assert(nv.map.owners==0 && nv.map.constructed==0 && attaches==0);
+    }
+    PresentResult result;
+    {
+        auto buffer=PresentAllocation(nv,result,attaches);
+        assert(buffer && result.IsSuccess() && attaches==1 && nv.map.owners==1);
+        auto retained=buffer;
+        buffer.reset();
+        assert(nv.map.owners==1);
+    }
+    assert(nv.map.owners==0 && nv.map.constructed==1);
+}
+'''.replace('__PRESENT__',present_source)
+cpp=cpp.replace('int main() {',present_fixture+'\nint main() {\n    TestPresentAllocation();',1)
 # The source uses the header's automatic std::bad_alloc branch unchanged.
 env=dict(os.environ)
 sdk=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')

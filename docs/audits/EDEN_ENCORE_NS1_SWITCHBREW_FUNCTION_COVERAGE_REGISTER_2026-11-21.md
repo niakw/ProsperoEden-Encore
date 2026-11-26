@@ -4177,3 +4177,14 @@ Base : **138 lignes ouvertes**.
 **1 ligne PARTIEL quitte le pool. Nouveau compteur global : 137 lignes ouvertes.**
 
 Aucun patch runtime, build PS5 ou validation console dans cette requalification.
+
+
+### 2026-11-26 — GlobalState StartSleepSequence : palier global 136
+
+Base : **137 lignes ouvertes**.
+
+Le propriétaire actif `IGlobalStateController` expose déjà cmd2 `StartSleepSequence(bool)` avec un comportement explicite : la transition de politique invité est acceptée et ne suspend jamais l'hôte PS5. Les cmds legacy `RequestToEnterSleep` / `EnterSleep` restent explicitement rejetées au lieu de simuler un sommeil réussi.
+
+Pour Encore, la PS5 hôte ne doit pas être mise en veille par un titre Switch ; le no-op réussi de cmd2 est donc une politique HLE volontaire, pas un backend manquant.
+
+**1 ligne PARTIEL quitte le pool. Nouveau compteur global : 136 lignes ouvertes.**

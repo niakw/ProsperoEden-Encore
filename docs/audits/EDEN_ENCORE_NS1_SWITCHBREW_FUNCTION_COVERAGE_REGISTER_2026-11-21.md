@@ -4659,3 +4659,18 @@ Les dumps HOS23 confirment cmd3000 (liste de `DisplayMode`) et cmd3200 (structur
 **3 lignes quittent le pool : nouveau compteur global = 78 lignes ouvertes.**
 
 Gitlink vendor repinné sur `d7b956dab1027876f62cfa7d9af6912ab4f4990c`. Aucun build PS5 ni validation console.
+
+
+### 2026-11-26 — ACC IManagerForSystemService désambiguïsé : palier global 75
+
+Base : **78 lignes ouvertes**.
+
+Les trois AMBIGU historiques `acc:su` cmd0/1/2 sont désormais rattachés sans ambiguïté :
+- les dumps HOS23 montrent que `GetBaasAccountManagerForSystemService` retourne explicitement `nn::account::baas::IManagerForSystemService`, dont les commandes 0/1/2 sont `CheckAvailability`, `GetAccountId` et `EnsureIdTokenCacheAsync` ;
+- Encore retourne un identifiant de compte local stable pour cmd1 à partir du UUID du profil ;
+- cmd2 est fail-closed via le rejet Nintendo Account existant, faute de backend réseau correspondant ;
+- vendor `5bdf4cef1f47b00beda4e6597fd3d2222de0a305` raccorde également cmd0 `CheckAvailability` à ce rejet explicite au lieu du précédent `R_SUCCEED()` STUB qui simulait une disponibilité inexistante.
+
+**3 lignes AMBIGU quittent le pool : nouveau compteur global = 75 lignes ouvertes.**
+
+Gitlink vendor repinné sur `5bdf4cef1f47b00beda4e6597fd3d2222de0a305`. Aucun build PS5 ni validation console.

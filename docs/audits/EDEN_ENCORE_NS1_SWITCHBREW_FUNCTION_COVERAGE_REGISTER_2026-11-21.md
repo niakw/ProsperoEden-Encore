@@ -5197,3 +5197,15 @@ La limitation qui justifiait le statut PARTIEL du snapshot n'est donc plus visib
 **1 ligne quitte le pool.**
 
 **Nouveau plancher du compteur de revue : 35 / 4 853 lignes ouvertes au minimum.** Ce chiffre reste un plancher après la rectification des doubles décomptes ; il ne signifie ni 35 bugs prouvés ni compatibilité NS1 complète. Aucun build natif PS5 ou test console supplémentaire n'est revendiqué.
+
+### 2026-11-26 — HID GetUniquePadsFromNpad requalifié : 35 → 34 minimum
+
+Base précédente : **35 lignes ouvertes au minimum**.
+
+Le PARTIEL historique `hid:sys` cmd321 `GetUniquePadsFromNpad` est requalifié sur le propriétaire shipping `encore-active/eden-backports/src/core/hle/service/hid/hid_system_server.cpp` :
+- libnx HOS3+ confirme l'entrée `HidNpadIdType`, le buffer de `HidsysUniquePadId` et un count IPC `s64` ;
+- Encore mappe P1–P8 sur les UniquePad IDs 1–8 et Handheld sur 9, identités stables cohérentes avec cmd703 `GetUniquePadIds` déjà qualifié ;
+- l'ID n'est publié que si le contrôleur émulé correspondant est réellement connecté et possède un style NPad valide ;
+- la copie est bornée par la capacité réelle du buffer et la réponse expose le nombre d'entrées effectivement écrites.
+
+L'ancien statut PARTIEL du snapshot précédait cette matérialisation des IDs UniquePad. **1 ligne quitte le pool : nouveau plancher = 34 / 4 853.** Aucun patch C++, nouveau gitlink, build natif PS5 ou validation console dans cette requalification.

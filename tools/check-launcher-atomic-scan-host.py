@@ -58,7 +58,7 @@ assert "count > 0 ? &games_[static_cast<std::size_t>(library_.selected)]" not in
 
 assert "game.addons = enriched.addons;" in media_finish
 # Production's worker handoff carries an independently invalidated Spine path.
-services_hpp = (root / "headless/prosperoeden/pe/ui/services.hpp").read_text()
+services_hpp = (ROOT / "headless/prosperoeden/pe/ui/services.hpp").read_text()
 assert "std::string box_spine{};" in services_hpp
 assert "textures_.invalidate(enriched.box_spine);" in media_finish
 assert "textures_.invalidate(enriched.box_spine);" in home_finish

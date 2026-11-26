@@ -4722,3 +4722,18 @@ Quatre lignes historiques quittent le pool :
 **4 lignes quittent le pool : nouveau compteur global = 64 lignes ouvertes.**
 
 Aucun nouveau patch C++ dans cette étape, aucun changement de gitlink, build PS5 ou validation console.
+
+
+### 2026-11-26 — SPSM HOS23 + ABI NS historiques : palier global 61
+
+Base : **64 lignes ouvertes**.
+
+Trois lignes historiques quittent le pool, et la table SPSM HOS23 est complétée :
+- SPSM cmd0 `GetCurrentState` : l'owner shipping courant expose déjà le nom HOS23 exact et retourne le `u32 0` (état virtuel Awake) avec succès ; l'ancien ABI-DIFF `GetState` est obsolète ;
+- les dumps HOS23 montrent aussi que SPSM reste présent (contrairement à l'ancien classement « hors-version après HOS13 »). Vendor `7ce2ff553b8ee272612b66b10537716f3d2f1330` ajoute les commandes HOS17/18+ 12–16 (`EmulatePowerButtonPressedBriefly`, `EmulatePowerButtonPressedFor7Sec`, `SetAlwaysRebootFlag`, `SetWakeReasonOverride`, `SetWakeupAlarm`) au rejet matériel explicite existant. Les commandes 1–10 déjà raccordées restent fail-closed lorsque leur effet contrôlerait la PS5 ;
+- NS ApplicationManager cmd2513 : HOS23 nomme désormais `LaunchMicroApplication`; Encore expose ce nom et rejette explicitement le backend platform non disponible. L'ancien `LaunchPreomia` est un libellé historique ;
+- `IDevelopInterface` HOS23 ne contient plus de cmd8 : l'ancienne ligne `LaunchApplicationForDevelop` est hors contrat HOS23.
+
+**3 lignes quittent le pool : nouveau compteur global = 61 lignes ouvertes.**
+
+Gitlink vendor repinné sur `7ce2ff553b8ee272612b66b10537716f3d2f1330`. Aucun build PS5 ni validation console.

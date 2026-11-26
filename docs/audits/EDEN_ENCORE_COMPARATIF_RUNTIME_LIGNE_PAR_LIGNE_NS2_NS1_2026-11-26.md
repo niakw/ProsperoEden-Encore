@@ -2,6 +2,8 @@
 
 **Photographie du 26 novembre 2026.** Demandé après l'échec console du build 68122b0b / 806252e9. Ni certificat de compatibilité, ni nouveau relevé des commandes NULL. Priorité : première soumission réelle, première image, fermeture, HUD/pause.
 
+**Légende des contrôles incrémentaux :** 🟢 **Contrôlé le 26/11/2026** signifie que le code / contrat nommé a été vérifié à cette date. Cela ne signifie ni CI verte, ni boot du jeu, ni première image sur PS5. **Ouvert** conserve son sens même si la source a été contrôlée. Les extraits historiques et leurs SHAs restent des photographies datées.
+
 ## Révisions
 
 | Dépôt | Branche / licence | SHA examiné |
@@ -212,6 +214,8 @@ Source : [nx2_gsv.h:3958–3972](https://github.com/heydemoura/EglantinePS5/blob
 
 ### P0-02 · GSV 314/315 — alias de fenêtre
 
+🟢 **Contrôlé le 26/11/2026 — analyse du contrat C++ actif** ; validation console PS5 toujours requise.
+
 Encore exige le groupe complet et refuse les handles absents ; les forks mémorisent l'état du premier objet puis renvoient succès. Ne pas copier ce faux succès. Tester le groupe complet issu de 429, le retrait 314 et la présentation VI2.
 
 Encore : [graphics_supervisor.cpp:3527–3543](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp#L3527-L3543) (17 lignes).
@@ -287,6 +291,8 @@ Source : [nx2_gsv.h:4250–4259](https://github.com/heydemoura/EglantinePS5/blob
 </details>
 
 ### P0-03 · GSV 430 — durée de vie des images
+
+🟢 **Contrôlé le 26/11/2026 — analyse du contrat C++ actif** ; validation console PS5 toujours requise.
 
 Comparer destruction individuelle, mapping GPU, références et retirement. Encore interdit la destruction d'une image toujours en alias de fenêtre : conservation justifiée tant que le contrat invité 314/430 est respecté.
 
@@ -388,6 +394,8 @@ Source : [nx2_gsv.h:4227–4247](https://github.com/heydemoura/EglantinePS5/blob
 
 ### P0-04 · syncpt 103 — lecture du compteur
 
+🟢 **Contrôlé le 26/11/2026 — analyse du contrat C++ actif** ; validation console PS5 toujours requise.
+
 Encore lit le compteur natif 64 bits après retirement GPU ; Lichii/Eglantine lisent GetGuestSyncpointValue (progression au parseur). Libounce confirme UINT64_MAX pour producteur invalide. Ne pas signaler avant les écritures GPU : vérifier le producteur et la publication.
 
 Encore : [graphics_supervisor.cpp:298–312](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp#L298-L312) (15 lignes).
@@ -455,6 +463,8 @@ Source : [nx2_gsv.h:220–227](https://github.com/heydemoura/EglantinePS5/blob/7
 </details>
 
 ### P0-05 · syncpt 201 — armement
+
+🟢 **Contrôlé le 26/11/2026 — analyse du contrat C++ actif** ; validation console PS5 toujours requise.
 
 Comparer largeur du seuil, retrait de l'ancien callback et signalement. Le mode 64 bits d'Encore préserve les seuils que le cast u32 upstream perd ; la boucle Pokopia exige de vérifier la livraison du signal après le fence.
 
@@ -622,6 +632,8 @@ Source : [nx2_gsv.h:255–296](https://github.com/heydemoura/EglantinePS5/blob/7
 
 ### P0-06 · syncpt 202 — annulation
 
+🟢 **Contrôlé le 26/11/2026 — analyse du contrat C++ actif** ; validation console PS5 toujours requise.
+
 Les trois chemins signalent l'événement lors de l'annulation même sans attente active pour les slots admissibles. La divergence n'est pas l'absence générale de signal 202. Examiner les slots et les compteurs demandés.
 
 Encore : [graphics_supervisor.cpp:382–398](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp#L382-L398) (17 lignes).
@@ -709,6 +721,8 @@ Source : [nx2_gsv.h:298–316](https://github.com/heydemoura/EglantinePS5/blob/7
 </details>
 
 ### P0-07 · NVDRV — GPFIFO admission et completion
+
+🟢 **Contrôlé le 26/11/2026 — analyse du contrat C++ actif** ; validation console PS5 toujours requise.
 
 Lichii capture les mots de pushbuffer au submit avec gestion des mappings en attente. Encore lit les mots live avec validation GMMU et cohérence. Écart avéré, pas preuve de la panne actuelle. Un snapshot aveugle casserait les listes produites par le GPU. Le count natif 0x100 utilise un WFI conditionnel côté Encore, Lichii utilise BuildIncrementCountCommandList. Vérifier retirement et cohérence du marqueur sans anticiper les fences.
 
@@ -1993,7 +2007,7 @@ Source : [buffer_cache.h:418–440](https://github.com/heydemoura/EglantinePS5/b
 | P0-01 | 429 n'allouait qu'un ID pour un pool | corrigé source bfb93d21 | 429(count>1) + 315 + image |
 | P0-08 | reprise du canal avec mauvais contexte | corrigé source 465d7e9c | Pokopia avance après deux listes |
 | P0-JIT | ClearCache au prelude rendait des pages inutilement | corrigé source bfb93d21 | Z-A après MKW et à froid |
-| P0-07 | snapshot pushbuffer upstream vs lecture cohérente live | ouvert | démontrer réécriture ou production GPU, préserver mappings |
+| P0-07 | snapshot pushbuffer upstream vs lecture cohérente live | 🟢 source contrôlée le 26/11/2026 ; **résultat console ouvert** | démontrer production/réécriture GPU et cohérence réelle, préserver mappings |
 | P0-04/05 | progression syncpoint et retirement | ouvert | completion réelle, marqueur visible, événement atteint |
 | P0-02/03 | teardown images/canaux/syncpt | ouvert | DK/Pokopia ferment sans watchdog |
 | P1-01/02 | contentions et lecture GPU par CPU | ouvert | même scène/cache, p50/p95/p99, pauses >100 ms, HUD/pause |
@@ -5687,6 +5701,8 @@ Source : [svc_physical_memory.cpp:98–145](https://github.com/heydemoura/Eglant
 Cette annexe suit deux frontières qui ne doivent pas être mélangées : **chargement du programme** puis **présentation de l'image**. Un jeu peut franchir le loader et rester bloqué dans GSV/VI2 ; inversement un crash avant GPFIFO peut être loader/kernel/JIT. Aucun code runtime n'est modifié par cette comparaison.
 
 ### P0-V01 · VI2 PresentClientBuffer
+
+🟢 **Contrôlé le 26/11/2026 — analyse du contrat C++ actif** ; validation console PS5 toujours requise.
 
 Homologue comportemental, noms différents. C'est le chemin le plus proche de la première frame : décodage du paquet VI2, image GSV, GraphicBuffer/NVMap, QueueBuffer, fence et pacing. Les différences de pacing host ne doivent pas masquer un échec antérieur de résolution d'image ou de QueueBuffer.
 
@@ -17001,6 +17017,8 @@ Source : [buffer_queue_producer.cpp:46-69](https://github.com/heydemoura/Eglanti
 
 ### P0-V06 · BufferQueueProducer::DequeueBuffer
 
+**Contrôle partiel du 26/11/2026 :** seul le contrat associé à `AttachBuffer` (`NoError` et `ReleaseAllBuffers`) est vérifié sur cette frontière ; `DequeueBuffer` et ses attentes restent à qualifier avant toute pastille verte pour la section entière.
+
 Allocation/sélection d'un slot producteur et fence de réutilisation. Les différences de wait et d'état du slot peuvent affecter première frame, pacing et fermeture.
 
 Encore : [buffer_queue_producer.cpp:316-418](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L316-L418) — 103 lignes.
@@ -19261,3 +19279,11 @@ Le document est désormais un **index différentiel**, pas une liste de patches.
 Une différence de ligne n'est pas un bug démontré. Une identité de ligne n'est pas une validation console. Une implémentation qui fonctionne dans Lichii, Eglantine ou nxnative n'est pas automatiquement sûre sur PS5 13.60.
 
 **État de cette phase documentaire : aucun correctif runtime, aucune modification de gate, aucun build PS5.**
+
+### Mise à jour de contrôle postérieure — 26/11/2026
+
+- 🟢 **Contrôlé le 26/11/2026 — couple source :** moteur `9aa79c48f43351b87c06c1cc08684132a609840d` → gitlink vendor `9de08e4f4bbb903e25f330dde7b8185e19e078a1`. Les extraits comparatifs ci-dessus restent rattachés aux SHAs historiques de la table « Révisions ».
+- 🟢 **Contrôlé le 26/11/2026 — VI2 229 :** correctif runtime vendor [`9de08e4f`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/9de08e4f4bbb903e25f330dde7b8185e19e078a1) : publication du producteur seulement après `Connect`/`SetBufferCount`/`OpenLayer`/visibilité réussis, plus acceptation du succès `ReleaseAllBuffers` de `AttachBuffer`. Aucun test console de ces corrections ; ne pas réinterpréter les anciens diffs comme reflétant ce nouveau code.
+- 🟢 **Contrôlé le 26/11/2026 — chaîne native GPFIFO :** `SubmitGPFIFOBase1` copie les descripteurs (`CommandListHeader`, 8 octets), puis `GPU::PushGPUEntries` transmet la liste au thread GPU. `Scheduler::Push` la transmet à `DmaPusher`, dont `Step` relit les mots GPU à l'exécution via `SafeRead` et attend les fences entre listes natives. La branche native **ne réalise pas un snapshot systématique des mots GPU au submit**. Reste à prouver sur PS5 la visibilité des écritures GPU avant lecture, la durée de vie des mappings et la progression du producteur Pokopia ; ne pas qualifier P0-07 de résolu.
+- **Qualification CI encore ouverte le 26/11 :** Fast Gate, qualification mémoire R457, graphe FC27/P0 et contrôle d'empreintes source échouent au moins partiellement ; trois chemins refusent le SHA vendor pourtant aligné car hors liste de révisions examinées. `device_memory_manager.inc` a le même blob `8acbdfe9` dans les vendors `465d7e9c` et `9de08e4f` : l'écart d'empreinte du Fast Gate est antérieur au correctif VI2. Aucune gate affaiblie. Aucun build PS5 ni validation console de ce lot.
+

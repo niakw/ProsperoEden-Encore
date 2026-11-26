@@ -4881,4 +4881,21 @@ L'ancien motif « le setter ne pilote pas la sélection réseau » n'est donc pl
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 42 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+### 2026-11-26 — HIDBus générique fail-closed : 42 → 41
+
+Base précédente : **42 lignes ouvertes**.
+
+Le reliquat PARTIEL « HIDBus générique » est fermé sur le propriétaire shipping `encore-active/eden-backports/src/core/hle/service/hid/hidbus.cpp` par le vendor **`4e4de0ccf87133c7c38dcca00860f94b86623913`** :
+- auparavant, toute initialisation non Ring-Con créait `HidbusStubbed`, déclarait la session initialisée et retournait succès alors que le device exposait l'ID fictif `0xFF`, que `SetCommand` échouait et que `GetReply` renvoyait zéro octet ;
+- le fallback générique ne fabrique désormais plus de périphérique : l'état partagé reste non connecté et `Initialize` renvoie explicitement `IPC::ResultNotSupported` ;
+- le vrai backend Ring-Con reste intact, mais son admission est resserrée aux seuls `LeftJoyRail` / `RightJoyRail`, conformément à libnx `ringconCreate`; un `InternalBus` ne peut plus devenir Ring-Con uniquement parce qu'il a reçu l'index 0 ;
+- aucun support Starlink n'est revendiqué : l'include existe dans Eden mais aucun `MakeDevice<Starlink>` n'est présent dans le service shipping. L'absence de backend reste donc fail-closed plutôt qu'émulée par un stub.
+
+Le manifeste vendor est synchronisé : `hidbus.cpp` SHA-256 `3ef0a0a6b450b4c9607dc281b1fab357dec7dd1fd869e30dce4c10f16d172557`, 18 170 octets. Le CMake shipping sélectionne cette unité et l'overlay existant évite toute modification du miroir Eden épinglé.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 41 lignes ouvertes.**
+
+Le défaut séparé Palma `WritePalmaWaveEntry` reste ouvert : le propriétaire Eden brut contient encore un `ASSERT_MSG` sur une taille de TransferMemory contrôlée par le guest, mais il n'existe pas encore d'owner backport matérialisé pour ce fichier ; aucune modification du miroir épinglé n'est faite ici.
+
+Aucun build PS5 ni validation console revendiqué.
 

@@ -136,7 +136,7 @@ for entry in entries:
     if (entry["path"] == "headless/prosperoeden/pe/ui/services.hpp"
             and actual == "d6ce55979cc84389b0f2f52e4a30d9efd35ac47a"):
         content = path.read_text()
-        media_delta = "    virtual Game cached_game_media(Game game) { return game; }\n"
+        media_delta = ("    // Bounded local header probes: refresh a launch snapshot even while\\n"\n                       "    // background network enrichment has not finished publishing it.\\n"\n                       "    virtual Game cached_game_media(Game game) { return game; }\\n")
         spine_delta = "    std::string box_spine{}; // worker-resolved path for exact texture invalidation\n"
         assert content.count(media_delta) == 1 and content.count(spine_delta) == 1
         previous = content.replace(media_delta, "", 1).replace(spine_delta, "", 1).encode()

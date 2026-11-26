@@ -3220,7 +3220,7 @@ for path, (current_blob, predecessor_blob) in launcher_consolidation_predecessor
     # 26/11/2026: restore exact two-step UI owner lineage on an audit copy.
     if path == "headless/prosperoeden/pe/ui/services.hpp" and actual == "d6ce55979cc84389b0f2f52e4a30d9efd35ac47a":
         current = (ROOT/path).read_text()
-        media_delta = "    virtual Game cached_game_media(Game game) { return game; }\n"
+        media_delta = ("    // Bounded local header probes: refresh a launch snapshot even while\\n"\n                       "    // background network enrichment has not finished publishing it.\\n"\n                       "    virtual Game cached_game_media(Game game) { return game; }\\n")
         spine_delta = "    std::string box_spine{}; // worker-resolved path for exact texture invalidation\n"
         assert current.count(media_delta) == 1 and current.count(spine_delta) == 1
         previous = current.replace(media_delta, "", 1).replace(spine_delta, "", 1).encode()

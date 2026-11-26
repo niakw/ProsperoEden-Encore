@@ -152,7 +152,7 @@ Encore conserve cette logique mais ajoute deux protections visibles :
 1. la commande Control reçoit un **`std::stop_token`** et peut donc interrompre proprement une attente pendant la fermeture ;
 2. une méthode au-delà de `ThiRegisters::NUM_REGS` est refusée avant l'écriture de registre.
 
-**Verdict : HARDENING ENCORE.**  
+**Verdict : HARDENING ENCORE.**
 Aucun manque fonctionnel Lichii/Eglantine n'est identifié ici. Le stop token est au contraire cohérent avec l'objectif de ne pas laisser un worker Host1x bloqué pendant le teardown.
 
 ## 3.3 `Control::ProcessMethod`
@@ -283,7 +283,7 @@ Encore sépare explicitement certains contrats Ampere :
 
 Lichii/Eglantine aliasent C7C0 vers KeplerCompute puis utilisent le chemin legacy.
 
-**Verdict : DIVERGENCE CONFIRMÉE.**  
+**Verdict : DIVERGENCE CONFIRMÉE.**
 Un diff méthode par méthode devient causal seulement si le log donne la dernière méthode C7C0 exécutée avant le gel.
 
 ## 4.5 C7B5 : DMA
@@ -573,7 +573,7 @@ Cette référence :
 
 🟢 **2026-11-26 — R-05 contrôlé.**
 
-**Candidat P0 très fort si le prochain log contient 991/911/912.**  
+**Candidat P0 très fort si le prochain log contient 991/911/912.**
 Le premier contrôle doit alors enregistrer les 16 mots de préférence, width/height/code/count et comparer la réponse calculée au comportement attendu du client.
 
 ---
@@ -739,7 +739,7 @@ Encore fournit une vraie interface `IPerformanceFunctions` avec au moins :
 
 Lichii/Eglantine renvoient leur interface générique.
 
-**DIVERGENCE CONFIRMÉE, mais Encore est ici plus spécifique.**  
+**DIVERGENCE CONFIRMÉE, mais Encore est ici plus spécifique.**
 Ne pas la supprimer pour « ressembler » à l'upstream sans une requête incompatible observée.
 
 ### Cmd 60 / interface cmd 10

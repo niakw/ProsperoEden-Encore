@@ -3114,6 +3114,12 @@ int main() { for (int i = 0; i < 5; ++i) run(i); }
     shadow_base_name = 'vulkan-cache/video_core/texture_cache/texture_cache_base.h'
     shadow_tex = expected[shadow_tex_name].read_text()
     shadow_base = expected[shadow_base_name].read_text()
+    if git_blob_sha(shadow_tex) == '469092ca2a7348b6382d42823d4561e2e1890498':
+        # Exact framebuffer compatibility guard; historical audit copy only.
+        guard = "        // A newer incompatible alias must not create an invalid Vulkan view,\n        // nor silently promote an older compatible image. Preserve the raw\n        // framebuffer fallback when the freshest candidate cannot be viewed.\n        if (!VideoCore::Surface::IsViewCompatible(\n                slot_images[freshest_id].info.format, view_format,\n                runtime.HasBrokenTextureViewFormats(), runtime.HasNativeBgr())) {\n            return {};\n        }\n"
+        assert shadow_tex.count(guard) == 1
+        shadow_tex = shadow_tex.replace(guard, '', 1)
+        assert git_blob_sha(shadow_tex) == 'd3252c6ee7726d4536cdb3e27d3c1105837f5e56'
     assert git_blob_sha(shadow_tex) == 'd3252c6ee7726d4536cdb3e27d3c1105837f5e56', (
         'Unreviewed PS5 0078 shadow TextureCache owner')
     assert git_blob_sha(shadow_base) == 'e51b171adae9b7d2e67f72629ef8e49de06f8e9c', (

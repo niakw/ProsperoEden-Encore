@@ -4960,4 +4960,19 @@ Cette requalification **ne déclare pas JournalIntegrity émulé** : l'absence d
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 36 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+### 2026-11-26 — CAPS listes UID fail-closed : 36 → 34
+
+Base précédente : **36 lignes ouvertes**.
+
+Vendor **`5a85d6e7d6b3163687e7bfb8ed85dd2b71de4d08`** ferme les deux PARTIEL `caps:u` cmd141 `GetAlbumFileList2AafeUidAruidDeprecated` et cmd143 `GetAlbumFileList4AaeUidAruid` :
+- auparavant, Encore ignorait explicitement `user_id` et retournait la même liste que les variantes sans UID ;
+- le backend album ne conserve aucune association capture→compte permettant un filtrage fidèle ;
+- les deux variantes UID sont désormais routées vers `RejectUnavailableAlbumVariant` et renvoient `ResultNotSupported` plutôt que d'exposer une liste non filtrée sous un contrat UID ;
+- cmd140/cmd142, sans UID, restent inchangés et conservent le vrai listing album.
+
+Le manifeste shipping est synchronisé pour `caps_u.cpp` (SHA-256 `05e4a3b157192f373e712bbe1e94614767bbf4cb50cf3589273e8e31546d48d8`, 10 679 octets).
+
+**2 lignes PARTIEL quittent le pool : nouveau compteur global = 34 lignes ouvertes.**
+
+Aucun build PS5 ni validation console revendiqué.
 

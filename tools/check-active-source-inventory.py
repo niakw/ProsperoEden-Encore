@@ -42,10 +42,12 @@ if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"
 # historical F07 baseline. Preserve prior classifications for unchanged owners.
 shipping_vendor = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
-if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "85eed6cf298c30c8e79d826c5a66788586bc041a"}:
-    expected_vi2_tree = ("69b093785fa296aa12f6366c89e6131aaec63f7b"
-                         if shipping_vendor == "85eed6cf298c30c8e79d826c5a66788586bc041a"
-                         else "d56f1f3efcbe283d018b411289f36bd398905408")
+if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "85eed6cf298c30c8e79d826c5a66788586bc041a", "69882965841d52186e76bbdf5d27e275628f6ebc"}:
+    expected_vi2_tree = {
+        "52b6582953b9b6c986f3fb9ebeea4b707cd50aab": "d56f1f3efcbe283d018b411289f36bd398905408",
+        "85eed6cf298c30c8e79d826c5a66788586bc041a": "69b093785fa296aa12f6366c89e6131aaec63f7b",
+        "69882965841d52186e76bbdf5d27e275628f6ebc": "6dda7600c9ce04684388d2c3e41042d1f7cd3f20",
+    }[shipping_vendor]
     assert subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"],
                                    text=True).strip() == expected_vi2_tree
     for relative, digest in {
@@ -2025,7 +2027,8 @@ if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f3
         actual_vi2_vendor = subprocess.check_output(
             ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
         expected_gpu_pair_tree = (
-            "69b093785fa296aa12f6366c89e6131aaec63f7b" if actual_vi2_vendor == "85eed6cf298c30c8e79d826c5a66788586bc041a"
+            "6dda7600c9ce04684388d2c3e41042d1f7cd3f20" if actual_vi2_vendor == "69882965841d52186e76bbdf5d27e275628f6ebc"
+            else "69b093785fa296aa12f6366c89e6131aaec63f7b" if actual_vi2_vendor == "85eed6cf298c30c8e79d826c5a66788586bc041a"
             else "d56f1f3efcbe283d018b411289f36bd398905408" if actual_vi2_vendor == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab"
             else "e40237d089b0a45f77d68ae281821c1a85ce9ca8")
         assert subprocess.check_output(
@@ -2394,7 +2397,7 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
     for path, blob in ns2_early_hle_receipts.items():
         raw = (active / path).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"}:
             assert actual == selected_nov26_hle_receipt[path], (
                 "Nov26 selected NS2 HLE drift", path, actual)
             continue
@@ -2851,14 +2854,14 @@ else:
     post_f07_bcat_buffer_hotpath_present = set()
 # Use the same four exact successor SHAs already consumed by F07.
 # No change to the historical 32-entry base receipt.
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"}:
     assert set(selected_nov26_post_f07_overrides).issubset(
         current_vendor_post_f07_owner_blobs)
     current_vendor_post_f07_owner_blobs.update(
         selected_nov26_post_f07_overrides)
 
 current_vendor_post_f07_present = set(current_vendor_post_f07_owner_blobs) & set(physical_all)
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} or actual_vendor in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"} or actual_vendor in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
                      "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
     assert current_vendor_post_f07_present == set(current_vendor_post_f07_owner_blobs)
     for relative, expected_blob in current_vendor_post_f07_owner_blobs.items():
@@ -2927,7 +2930,7 @@ assert {p for p in physical if p.startswith("eden-header-hygiene/")} == warning_
 # rather than treating an arbitrary new count as historical coverage.
 catalog_paths = set(re.findall(r"^\| `([^`]+)` \|", section, re.MULTILINE))
 assert len(catalog_paths) == 337, ("Historical F07 catalog drift",len(catalog_paths))
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"}:
     # The old 337-source snapshot must remain exact. Separate only the
     # ten newer owners still present after the existing specialized ledgers.
     post_snapshot = set(physical) - catalog_paths
@@ -3038,7 +3041,26 @@ assert shipping == shipping_cpp | build_recipes, (
 )
 # Keep the expected count tied to the reviewed manifest revision: every
 # additional shipping patch requires an explicit inventory review.
-assert len(shipping) == (84 if post_f07_diagnostics_net_present else 83) and len(manifest["shipping_receipts"]) == 50
+# 26 Nov: RO/NRR and STPL owner receipts were added without adding source/build entries.
+shipping_receipt_count = 50
+actual_manifest_vendor = subprocess.check_output(
+    ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip()
+if actual_manifest_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "69882965841d52186e76bbdf5d27e275628f6ebc"}:
+    expected_manifest_blob = (
+        "2e190a6d5d1d41125179d83695dff9faccee3db6" if actual_manifest_vendor == "69882965841d52186e76bbdf5d27e275628f6ebc"
+        else "da4e380ecb78a12fdbb3bb12ac29d88f3a6eb0df")
+    assert subprocess.check_output([
+        "git", "hash-object", str(active / "eden-backports/manifest.json")
+    ], text=True).strip() == expected_manifest_blob
+    assert {name: manifest["shipping_receipts"].get(name) for name in (
+        ".encore-backport-ns2-ro-nrr-v1.sha256",
+        ".encore-backport-ns2-stpl-unique-owner.sha256",
+    )} == {
+        ".encore-backport-ns2-ro-nrr-v1.sha256": "f8d58d806123828821f9f4c59c25d6303b2814d0a242944a4b4382d4c930621f",
+        ".encore-backport-ns2-stpl-unique-owner.sha256": "91b8859e1c270308664ce2a1b9f3fb3ca1b0c149575747e1cbde8869354a401a",
+    }
+    shipping_receipt_count = 52
+assert len(shipping) == (84 if post_f07_diagnostics_net_present else 83) and len(manifest["shipping_receipts"]) == shipping_receipt_count
 assert all(re.fullmatch(r"[0-9a-f]{64}", digest)
            for digest in manifest["shipping_receipts"].values()), (
     "invalid shipping patch SHA256 receipt",
@@ -3365,7 +3387,7 @@ post_f07_gpu_wait_receipts = {
 }
 # Selected R08 and forced-fence owners are already sealed in F07.
 # Share that exact two-file successor dictionary rather than copy SHA pins.
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"}:
     import ast
     f07_ast = ast.parse((root/"tools/check-eden-optimization-coverage.py").read_text())
     wait_updates = [

@@ -4737,3 +4737,20 @@ Trois lignes historiques quittent le pool, et la table SPSM HOS23 est complété
 **3 lignes quittent le pool : nouveau compteur global = 61 lignes ouvertes.**
 
 Gitlink vendor repinné sur `7ce2ff553b8ee272612b66b10537716f3d2f1330`. Aucun build PS5 ni validation console.
+
+### 2026-11-26 — ABI historiques AM/NS/NVDRV requalifiées : palier global 56
+
+Base : **61 lignes ouvertes**.
+
+Cinq ABI-DIFF historiques quittent le pool après recroisement avec les tables HOS23 et les propriétaires actifs :
+- `ISelfController` : l'ancienne ligne `GetDebugStorageChannel` au cmd2 est mal rattachée. HOS22.5/HOS23 exposent cette commande au **cmd1000**, avec retour `IStorageChannel`; Encore expose également cmd1000. La ligne cmd2 ne décrit donc pas un contrat HOS23 ;
+- racine `IServiceGetterInterface` des services `ns:am2/ns:ec/ns:rid/ns:rt/ns:web` : l'ancienne ligne cmd0 `Attach` est hors table courante. Les getters HOS actuels sont dans la plage 7988–7999 ;
+- l'ancienne ligne root NS cmd1 `BoostSystemMemoryResourceLimit` est elle aussi mal rattachée : ce n'est pas le cmd1 de `IServiceGetterInterface`. Le nom existe par ailleurs sur des interfaces dédiées (notamment PM shell cmd7 et NS ApplicationManager dans sa propre table), qui restent suivies par leurs vrais propriétaires ; aucune fonctionnalité n'est déclarée complète par cette suppression ;
+- NVDRV cmd7 : HOS23 nomme `SetAruidWithoutCheck`, pas l'ancien `SetAruid`/forme de test ; l'owner actuel expose ce cmd7 ;
+- NVDRV cmd8 : HOS23 nomme `SetAruid` avec PID, pas l'ancien `SetAruidByPID`; l'owner actuel expose ce cmd8.
+
+Ces cinq lignes sont supprimées uniquement comme **anciens contrats de catalogue incorrects/obsolètes**. Les implémentations réelles des propriétaires correspondants restent qualifiées séparément lorsqu'elles sont partielles ou fail-closed.
+
+**5 lignes ABI-DIFF quittent le pool : nouveau compteur global = 56 lignes ouvertes.**
+
+Aucun patch C++ runtime, changement de gitlink, build PS5 ou validation console dans cette étape.

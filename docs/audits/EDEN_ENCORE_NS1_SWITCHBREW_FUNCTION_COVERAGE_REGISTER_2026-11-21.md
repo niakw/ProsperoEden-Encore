@@ -4216,3 +4216,20 @@ Encore ne déclenche pas l'auto-sleep/dimming de l'hôte PS5 depuis l'état Swit
 **Nouveau compteur global : 131 lignes ouvertes.**
 
 Arithmétique : **135 - 4 = 131**. Gitlink repinné sur `16e161492b4929e2123627ad2b458a53cbbed409`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — PSM cmd17 ABI HOS17+ corrigée : palier global 130
+
+Base : **131 lignes ouvertes** au moteur `692726b2bdb6780999d892ff0848905a3af23bc3` / vendor `16e161492b4929e2123627ad2b458a53cbbed409`.
+
+Vendor `7d2bde9f953bfc0baf7c430b294de53e0e12b675`, puis provenance `8a8416ddb781022acae2f30449dfe1e60c8414f0`, corrige `psm` cmd17 `GetBatteryChargeInfoFields` :
+- layout HOS 17+ 0x54 aligné sur libnx : restauration du champ 0x2c miroir de `charger_input_voltage_limit` et padding final 0x10 ;
+- correction de `charger_input_current_limit`, auparavant jamais initialisé, et suppression de la double écriture de `charger_input_voltage_limit` ;
+- valeurs virtuelles cohérentes : 100000 = 100 %, 4200 mV batterie, 5000 mV / 3000 mA chargeur quand l'hôte expose une charge, 25000 milli-C ; état charging/fast-charge/controller-supply reste dérivé des politiques invitées déjà persistées ;
+- le `ResponseBuilder` couvre désormais les 0x54 octets de sortie au lieu du compteur court historique.
+
+Références de contrat : libnx `PsmBatteryChargeInfoFields` HOS17+ (commit `b156b4774fb2df7b93402169509266da7547fc4c`) et comparaison ciblée nxemu `f2b45f5fb0a32830bc0ac53ec4052e2da8f7f9a7`. Aucune donnée électrique de la PS5 n'est présentée comme une batterie Switch réelle : il s'agit d'un périphérique invité virtualisé stable.
+
+**1 ligne PARTIEL quitte le pool. Nouveau compteur global : 130 lignes ouvertes.**
+
+Gitlink repinné sur `8a8416ddb781022acae2f30449dfe1e60c8414f0`. Aucun build PS5 ni validation console revendiqués.

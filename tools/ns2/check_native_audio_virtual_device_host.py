@@ -174,7 +174,7 @@ struct ResponseBuilder {
 #include <cstddef>
 #include "core/hle/service/ipc_helpers.h"
 #define LOG_WARNING(...) ((void)0)
-#define LOG_INFO(...) ((void)0)
+#define LOG_INFO(category, message, value) ((void)(value))
 namespace Service {
 template<class T> class ServiceFramework {
 protected:

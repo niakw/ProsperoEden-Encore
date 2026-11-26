@@ -4975,4 +4975,19 @@ Le manifeste shipping est synchronisé pour `caps_u.cpp` (SHA-256 `05e4a3b157192
 **2 lignes PARTIEL quittent le pool : nouveau compteur global = 34 lignes ouvertes.**
 
 Aucun build PS5 ni validation console revendiqué.
+### 2026-11-26 — FSP cache-only reader requalifié : 34 → 33
+
+Base précédente : **34 lignes ouvertes**.
+
+Le PARTIEL historique `fsp-srv` cmd62 `OpenSaveDataInfoReaderOnlyCacheStorage` est requalifié contre le backend actuel et LibHac :
+- LibHac résout d'abord le backing du cache courant en `User` ou `SdUser`, puis ouvre un reader filtré sur `SaveDataType::Cache`, le programme courant et le rang primaire ; tous les index restent énumérables ;
+- Encore construit déjà un `ISaveDataInfoReader` cache-only avec le `program_id` courant et `FindCacheStorageSaves` filtre le type Cache, le programme et parse tous les index `_<hhhh>` ;
+- le modèle Encore fusionne explicitement `SdUser` sur le backing `User` dans `SaveDataFactory`, donc l'absence d'un choix User/SdUser séparé dans cmd62 n'omet pas un second backing physique dans ce runtime ;
+- les `SaveDataId` persistants et l'énumération cache multi-index sont déjà corrigés dans les lots FSP récents.
+
+Le motif du 22/11 (« filtre partiel du cache courant ») n'est donc plus valable pour le runtime shipping actuel.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 33 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
 

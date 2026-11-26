@@ -158,7 +158,7 @@ diff --git a/src/core/hle/service/am/display_layer_manager.cpp b/src/core/hle/se
 index 494e8a1..cd9e26e 100644
 --- a/src/core/hle/service/am/display_layer_manager.cpp
 +++ b/src/core/hle/service/am/display_layer_manager.cpp
-@@ -73,16 +73,20 @@ Result DisplayLayerManager::CreateManagedDisplayLayer(u64* out_layer_id) {
+@@ -73,16 +73,22 @@ Result DisplayLayerManager::CreateManagedDisplayLayer(u64* out_layer_id) {
      R_TRY(m_manager_display_service->CreateManagedLayer(
          out_layer_id, 0, display_id, Service::AppletResourceUserId{m_process->GetProcessId()}));
  
@@ -179,11 +179,13 @@ index 494e8a1..cd9e26e 100644
      }
 -    (void)m_display_service->GetContainer()->SetLayerZIndex(*out_layer_id, true);
 +
-+    m_display_service->GetContainer()->SetLayerZIndex(*out_layer_id, true);
++    if (m_applet_id == AppletId::Application) {
++        (void)m_manager_display_service->SetLayerZIndex(Foreground, *out_layer_id);
++    }
      m_managed_display_layers.emplace(*out_layer_id);
  
      R_SUCCEED();
-@@ -122,14 +126,16 @@ Result DisplayLayerManager::IsSystemBufferSharingEnabled() {
+@@ -122,14 +128,15 @@ Result DisplayLayerManager::IsSystemBufferSharingEnabled() {
  
      // Ensure the overlay layer is visible
      m_manager_display_service->SetLayerVisibility(m_visible, m_system_shared_layer_id);
@@ -199,7 +201,6 @@ index 494e8a1..cd9e26e 100644
          (void)m_display_service->GetContainer()->SetLayerIsOverlay(m_system_shared_layer_id, true);
      }
      m_manager_display_service->SetLayerZIndex(initial_z, m_system_shared_layer_id);
-+    m_display_service->GetContainer()->SetLayerZIndex(m_system_shared_layer_id, true);
 +    m_managed_display_layers.emplace(m_system_shared_layer_id);
      R_SUCCEED();
  }

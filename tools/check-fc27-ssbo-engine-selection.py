@@ -255,6 +255,17 @@ if selected == "240550925b0ef097c24c3035c063bdceadd872de":
         }.items():
         assert blob(V / relative) == digest, ("GSV image-only SSBO successor drift",relative)
     expected.add(selected)
+if selected == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab":
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"],
+                                   text=True).strip() == "d56f1f3efcbe283d018b411289f36bd398905408"
+    for relative, digest in {
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146",
+        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
+        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
+    }.items():
+        assert blob(V / relative) == digest, ("VI2 successor SSBO source drift",relative)
+    expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"

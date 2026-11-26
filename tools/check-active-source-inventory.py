@@ -42,6 +42,18 @@ if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"
 # historical F07 baseline. Preserve prior classifications for unchanged owners.
 shipping_vendor = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+if shipping_vendor == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab":
+    assert subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"],
+                                   text=True).strip() == "d56f1f3efcbe283d018b411289f36bd398905408"
+    for relative, digest in {
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146",
+        "encore-active/eden-core/overrides/core/device_memory_manager.inc": "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4",
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
+    }.items():
+        assert subprocess.check_output(["git", "hash-object", str(root/"vendor"/relative)],
+                                       text=True).strip() == digest, ("VI2 inventory drift",relative)
+    # Only replay FC27/native-GPU receipts against the unchanged owner graph.
+    shipping_vendor = "240550925b0ef097c24c3035c063bdceadd872de"
 stabilization_trees = {
     "9632ac089f8b2d89a6856a42e8fb55206cdba1fa": "51c9a38eba78d69893c48db6f3e48a169ea879e3",
     "b5c6f089a6aecd321d08a40238f3cd502f505b26": "668fb8effa6963be062d780e3bd145a5233d6b7e",
@@ -2010,7 +2022,9 @@ if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f3
         # keep the other eleven and all full-blob assertions unchanged.
         assert subprocess.check_output(
             ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
-            text=True).strip() == "e40237d089b0a45f77d68ae281821c1a85ce9ca8"
+            text=True).strip() == ("d56f1f3efcbe283d018b411289f36bd398905408" if subprocess.check_output(
+                ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
+            ).strip() == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab" else "e40237d089b0a45f77d68ae281821c1a85ce9ca8")
         selected_nov26_gpu_pair.update({
             "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "0d22781acbc4e0f32424beb6b0f494b6aa2b034f",
             "eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",

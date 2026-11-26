@@ -15547,3 +15547,579 @@ Source : [lower_to_maxwell.h:3754–3769](https://github.com/heydemoura/Eglantin
 - Pour FC27 NS1, ce lowering Ampere n'est pas le chemin principal ; il reste documenté ici parce que le même backend Vulkan et plusieurs propriétaires de cache sont partagés.
 
 **Couverture ajoutée :** 8 blocs d'opcodes, 16 comparaisons directes, 908 lignes-source parcourues ; 202 alignées, 298 propres Encore, 206 propres upstream, 0 bloc(s) non extrait(s).
+
+## Annexe VII — références externes non homologues : libounce / OunceVK / nxnative
+
+Cette annexe complète les diffs Encore↔Lichii↔Eglantine avec des contrats externes. Elle ne force pas de diff 1:1 lorsqu'il n'existe pas : libounce décrit l'ABI invité, OunceVK décrit un transport/driver Vulkan expérimental, nxnative est un port ARM64/Metal. Chaque extrait conserve ses numéros de ligne et son SHA.
+
+### VII-A · libounce — cycle de vie des images GSV
+
+<details>
+<summary>Result gsvGetImageSize(const GsvImageLayout* layout, u64* out_size) { — lignes 210-220</summary>
+
+[nx/source/switch2/services/gsv.c:210-220](https://github.com/ouncebrew/libounce/blob/03af07a739a9a3b48704500cffcd6155692cc194/nx/source/switch2/services/gsv.c#L210-L220)
+
+```c
+  210 | Result gsvGetImageSize(const GsvImageLayout* layout, u64* out_size) {
+  211 |     const struct {
+  212 |         GsvImageLayout layout;
+  213 |         u32 count;
+  214 |     } NX_PACKED in = { *layout, 1 };
+  215 |     u64 size = 0;
+  216 | 
+  217 |     Result rc = tipcDispatchInOut(&g_gsvSrv, 435, in, size);
+  218 |     if (R_SUCCEEDED(rc) && out_size) *out_size = size;
+  219 |     return rc;
+  220 | }
+```
+
+</details>
+
+<details>
+<summary>Result gsvReserveImageMemory(u8 type, u64 size, u32* out_memory_id) { — lignes 224-234</summary>
+
+[nx/source/switch2/services/gsv.c:224-234](https://github.com/ouncebrew/libounce/blob/03af07a739a9a3b48704500cffcd6155692cc194/nx/source/switch2/services/gsv.c#L224-L234)
+
+```c
+  224 | Result gsvReserveImageMemory(u8 type, u64 size, u32* out_memory_id) {
+  225 |     const struct {
+  226 |         u32 type;
+  227 |         u64 size;
+  228 |     } NX_PACKED in = { type, size };
+  229 |     u32 memory_id = 0;
+  230 | 
+  231 |     Result rc = tipcDispatchInOut(&g_gsvSrv, 111, in, memory_id);
+  232 |     if (R_SUCCEEDED(rc) && out_memory_id) *out_memory_id = memory_id;
+  233 |     return rc;
+  234 | }
+```
+
+</details>
+
+<details>
+<summary>Result gsvRegisterImageMemory(u32 memory_id, u64 cpu_address, u64 size, u32 gpu_memory_handle, u64 offset) { — lignes 236-253</summary>
+
+[nx/source/switch2/services/gsv.c:236-253](https://github.com/ouncebrew/libounce/blob/03af07a739a9a3b48704500cffcd6155692cc194/nx/source/switch2/services/gsv.c#L236-L253)
+
+```c
+  236 | Result gsvRegisterImageMemory(u32 memory_id, u64 cpu_address, u64 size, u32 gpu_memory_handle, u64 offset) {
+  237 |     const struct {
+  238 |         u32 memory_id;
+  239 |         u64 cpu_address;
+  240 |         u64 size;
+  241 |         u32 gpu_memory_handle;
+  242 |         u64 offset;
+  243 |         u8 reserved[16];
+  244 |     } NX_PACKED in = {
+  245 |         .memory_id = memory_id,
+  246 |         .cpu_address = cpu_address,
+  247 |         .size = size,
+  248 |         .gpu_memory_handle = gpu_memory_handle,
+  249 |         .offset = offset,
+  250 |     };
+  251 | 
+  252 |     return tipcDispatchIn(&g_gsvSrv, 423, in);
+  253 | }
+```
+
+</details>
+
+<details>
+<summary>Result gsvCreateImage(const GsvImageLayout* layout, u32 memory_id, u32* out_image_id) { — lignes 257-268</summary>
+
+[nx/source/switch2/services/gsv.c:257-268](https://github.com/ouncebrew/libounce/blob/03af07a739a9a3b48704500cffcd6155692cc194/nx/source/switch2/services/gsv.c#L257-L268)
+
+```c
+  257 | Result gsvCreateImage(const GsvImageLayout* layout, u32 memory_id, u32* out_image_id) {
+  258 |     const struct {
+  259 |         GsvImageLayout layout;
+  260 |         u32 count;
+  261 |         u32 memory_id;
+  262 |     } NX_PACKED in = { *layout, 1, memory_id };
+  263 |     u32 image_id = 0;
+  264 | 
+  265 |     Result rc = tipcDispatchInOut(&g_gsvSrv, 429, in, image_id);
+  266 |     if (R_SUCCEEDED(rc) && out_image_id) *out_image_id = image_id;
+  267 |     return rc;
+  268 | }
+```
+
+</details>
+
+<details>
+<summary>Result gsvCreateDisplayAlias(u32 image_id, u32 count) { — lignes 270-277</summary>
+
+[nx/source/switch2/services/gsv.c:270-277](https://github.com/ouncebrew/libounce/blob/03af07a739a9a3b48704500cffcd6155692cc194/nx/source/switch2/services/gsv.c#L270-L277)
+
+```c
+  270 | Result gsvCreateDisplayAlias(u32 image_id, u32 count) {
+  271 |     const struct {
+  272 |         u32 image_id;
+  273 |         u32 count;
+  274 |     } in = { image_id, count };
+  275 | 
+  276 |     return tipcDispatchIn(&g_gsvSrv, 315, in);
+  277 | }
+```
+
+</details>
+
+<details>
+<summary>Result gsvDestroyDisplayAlias(u32 image_id) { — lignes 281-283</summary>
+
+[nx/source/switch2/services/gsv.c:281-283](https://github.com/ouncebrew/libounce/blob/03af07a739a9a3b48704500cffcd6155692cc194/nx/source/switch2/services/gsv.c#L281-L283)
+
+```c
+  281 | Result gsvDestroyDisplayAlias(u32 image_id) {
+  282 |     return tipcDispatchIn(&g_gsvSrv, 314, image_id);
+  283 | }
+```
+
+</details>
+
+<details>
+<summary>Result gsvDestroyImage(u32 image_id) { — lignes 285-287</summary>
+
+[nx/source/switch2/services/gsv.c:285-287](https://github.com/ouncebrew/libounce/blob/03af07a739a9a3b48704500cffcd6155692cc194/nx/source/switch2/services/gsv.c#L285-L287)
+
+```c
+  285 | Result gsvDestroyImage(u32 image_id) {
+  286 |     return tipcDispatchIn(&g_gsvSrv, 430, image_id);
+  287 | }
+```
+
+</details>
+
+<details>
+<summary>Result gsvReleaseImageMemory(u32 memory_id) { — lignes 289-291</summary>
+
+[nx/source/switch2/services/gsv.c:289-291](https://github.com/ouncebrew/libounce/blob/03af07a739a9a3b48704500cffcd6155692cc194/nx/source/switch2/services/gsv.c#L289-L291)
+
+```c
+  289 | Result gsvReleaseImageMemory(u32 memory_id) {
+  290 |     return tipcDispatchIn(&g_gsvSrv, 112, memory_id);
+  291 | }
+```
+
+</details>
+
+**Contrat observé dans libounce :** 435 calcule la taille ; 111 réserve un memory ID ; 423 lie backing CPU/GPU ; 429 crée l'image ; 315 crée l'alias display ; 314 le détruit ; 430 détruit l'image ; 112 libère la mémoire. La fonction générique gsvCreateImage envoie explicitement count=1 ; elle ne démontre donc pas à elle seule le comportement d'un pool multi-image. Cette nuance est conservée dans le document.
+
+| ABI libounce | Propriétaire Encore documenté | Classe de preuve |
+|---|---|---|
+| 429 CreateImage | Annexe I / GSV 429 | ABI invité ; ne prouve pas la sémantique multi-image |
+| 315 CreateDisplayAlias | Annexe I / GSV 314/315 | ABI invité + ordre création alias |
+| 314 DestroyDisplayAlias | Annexe I / GSV 314/315 | ABI invité |
+| 430 DestroyImage | Annexe I / GSV 430 | ABI invité / durée de vie |
+| 423 RegisterImageMemory | GSV backing/NVMap | ABI de liaison mémoire |
+
+### VII-B · libounce — sync native
+
+<details>
+<summary>Result gsvSyncReadCounter(GsvSync* s, u32 producer_id, u64* out_value, u8* out_mode) { — lignes 589-601</summary>
+
+[nx/source/switch2/services/gsv.c:589-601](https://github.com/ouncebrew/libounce/blob/03af07a739a9a3b48704500cffcd6155692cc194/nx/source/switch2/services/gsv.c#L589-L601)
+
+```c
+  589 | Result gsvSyncReadCounter(GsvSync* s, u32 producer_id, u64* out_value, u8* out_mode) {
+  590 |     const u32 in = ~producer_id;
+  591 |     struct {
+  592 |         u64 value;
+  593 |         u8 mode;
+  594 |         u8 pad[3];
+  595 |     } NX_PACKED out = {};
+  596 | 
+  597 |     Result rc = tipcDispatchInOut(&s->s, 103, in, out);
+  598 |     if (R_SUCCEEDED(rc) && out_value) *out_value = out.value;
+  599 |     if (R_SUCCEEDED(rc) && out_mode) *out_mode = out.mode;
+  600 |     return rc;
+  601 | }
+```
+
+</details>
+
+<details>
+<summary>Result gsvSyncArmEvent(GsvSync* s, u32 slot, u32 producer_id, u64 target, u8 mode) { — lignes 615-624</summary>
+
+[nx/source/switch2/services/gsv.c:615-624](https://github.com/ouncebrew/libounce/blob/03af07a739a9a3b48704500cffcd6155692cc194/nx/source/switch2/services/gsv.c#L615-L624)
+
+```c
+  615 | Result gsvSyncArmEvent(GsvSync* s, u32 slot, u32 producer_id, u64 target, u8 mode) {
+  616 |     const struct {
+  617 |         u32 slot;
+  618 |         u32 inverted_producer_id;
+  619 |         u64 target;
+  620 |         u32 mode;
+  621 |     } NX_PACKED in = { slot, ~producer_id, target, mode };
+  622 | 
+  623 |     return tipcDispatchIn(&s->s, 201, in);
+  624 | }
+```
+
+</details>
+
+<details>
+<summary>Result gsvSyncDisarmEvent(GsvSync* s, u32 slot) { — lignes 626-628</summary>
+
+[nx/source/switch2/services/gsv.c:626-628](https://github.com/ouncebrew/libounce/blob/03af07a739a9a3b48704500cffcd6155692cc194/nx/source/switch2/services/gsv.c#L626-L628)
+
+```c
+  626 | Result gsvSyncDisarmEvent(GsvSync* s, u32 slot) {
+  627 |     return tipcDispatchIn(&s->s, 202, slot);
+  628 | }
+```
+
+</details>
+
+<details>
+<summary>Result gsvSyncCheckNative(GsvSync* s, const GsvNativeSync* sync, bool* out_reached) { — lignes 636-662</summary>
+
+[nx/source/switch2/services/gsv.c:636-662](https://github.com/ouncebrew/libounce/blob/03af07a739a9a3b48704500cffcd6155692cc194/nx/source/switch2/services/gsv.c#L636-L662)
+
+```c
+  636 | Result gsvSyncCheckNative(GsvSync* s, const GsvNativeSync* sync, bool* out_reached) {
+  637 |     u32 token;
+  638 |     u64 target;
+  639 |     memcpy(&token, sync->data, sizeof(token));
+  640 |     memcpy(&target, sync->data + 8, sizeof(target));
+  641 |     const u8 comparison = sync->data[4];
+  642 | 
+  643 |     if (!token && !comparison && !target) {
+  644 |         *out_reached = true;
+  645 |         return 0;
+  646 |     }
+  647 |     if (comparison > 1)
+  648 |         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+  649 | 
+  650 |     u64 counter = 0;
+  651 |     Result rc = gsvSyncReadCounter(s, ~token, &counter, NULL);
+  652 |     if (R_FAILED(rc))
+  653 |         return rc;
+  654 | 
+  655 |     if (counter == UINT64_MAX)
+  656 |         *out_reached = true;
+  657 |     else if (comparison == 1)
+  658 |         *out_reached = counter >= target;
+  659 |     else
+  660 |         *out_reached = (s32)((u32)counter - (u32)target) >= 0;
+  661 |     return 0;
+  662 | }
+```
+
+</details>
+
+Points de contrat : producteur inversé pour 103/201, cible u64, comparaison native 0/1, compteur UINT64_MAX traité comme producteur invalide donc atteint, et comparaison 0 calculée sur la différence signée des 32 bits bas. Ce sont des preuves ABI/SDK ; elles ne disent pas quand Encore est autorisé à publier une completion GPU.
+
+### VII-C · OunceVK — profil GPU et valeurs observées
+
+<details>
+<summary>Décodage des caractéristiques natives — 46-108</summary>
+
+[src/nouveau/vulkan/nvkmd/nvgpu/nvkmd_nvgpu_native_profile.c:46-108](https://github.com/ouncebrew/OunceVK/blob/97d70925dcd8ccab07f308e9dfd0ee5812e4a01c/src/nouveau/vulkan/nvkmd/nvgpu/nvkmd_nvgpu_native_profile.c#L46-L108)
+
+```c
+   46 | nvkmd_nvgpu_native_characteristics_decode(
+   47 |    struct nvkmd_nvgpu_native_query_results results,
+   48 |    const void *arg, size_t arg_size, const void *q, size_t q_size,
+   49 |    struct nvkmd_nvgpu_native_characteristics *out)
+   50 | {
+   51 |    if (out == NULL)
+   52 |       return NVKMD_NVGPU_NATIVE_INVALID_ARGUMENT;
+   53 | 
+   54 |    /* Decode into a temporary value. Thus all input is read before out is
+   55 |     * written, even when the buffers overlap. Every failure clears the
+   56 |     * previous output observation.
+   57 |     */
+   58 |    struct nvkmd_nvgpu_native_characteristics decoded;
+   59 |    memset(&decoded, 0, sizeof(decoded));
+   60 |    enum nvkmd_nvgpu_native_decode_status status;
+   61 |    if (results.transport != 0) {
+   62 |       status = NVKMD_NVGPU_NATIVE_TRANSPORT_ERROR;
+   63 |    } else if (results.service != 0) {
+   64 |       status = NVKMD_NVGPU_NATIVE_SERVICE_ERROR;
+   65 |    } else if (results.driver != 0) {
+   66 |       status = NVKMD_NVGPU_NATIVE_DRIVER_ERROR;
+   67 |    } else if (arg == NULL || q == NULL) {
+   68 |       status = NVKMD_NVGPU_NATIVE_INVALID_ARGUMENT;
+   69 |    } else if (arg_size != NVKMD_NVGPU_NATIVE_CHARACTERISTICS_ARG_SIZE ||
+   70 |               q_size != NVKMD_NVGPU_NATIVE_CHARACTERISTICS_SIZE) {
+   71 |       status = NVKMD_NVGPU_NATIVE_INVALID_SIZE;
+   72 |    } else if (read_le64(arg) != NVKMD_NVGPU_NATIVE_CHARACTERISTICS_SIZE) {
+   73 |       status = NVKMD_NVGPU_NATIVE_INVALID_SIZE;
+   74 |    } else {
+   75 |       const uint8_t *p = q;
+   76 |       memcpy(decoded.raw, p, sizeof(decoded.raw));
+   77 |       decoded.arch = read_le32(p + 0x00);
+   78 |       decoded.impl = read_le32(p + 0x04);
+   79 |       decoded.revision = read_le32(p + 0x08);
+   80 |       decoded.gpc_count = read_le32(p + 0x0c);
+   81 |       decoded.gpu_l2_size_B = read_le64(p + 0x10);
+   82 |       decoded.memory_raw = read_le64(p + 0x18);
+   83 |       decoded.tpc_per_gpc = read_le32(p + 0x20);
+   84 |       decoded.q24_raw = read_le32(p + 0x24);
+   85 |       decoded.big_page_size_raw = read_le32(p + 0x28);
+   86 |       decoded.compression_page_size_raw = read_le32(p + 0x2c);
+   87 |       decoded.pde_coverage_raw = read_le32(p + 0x30);
+   88 |       decoded.big_page_mask_raw = read_le32(p + 0x34);
+   89 |       decoded.gpc_mask = read_le32(p + 0x38);
+   90 |       decoded.native_version_a = read_le32(p + 0x3c);
+   91 |       decoded.native_version_b = read_le32(p + 0x40);
+   92 |       decoded.warp_count_raw = read_le32(p + 0x44);
+   93 |       decoded.gpu_va_bits = p[0x48];
+   94 |       decoded.flags = read_le64(p + 0x50);
+   95 |       decoded.class_2d = read_le32(p + 0x58);
+   96 |       decoded.class_3d = read_le32(p + 0x5c);
+   97 |       decoded.class_compute = read_le32(p + 0x60);
+   98 |       decoded.class_gpfifo = read_le32(p + 0x64);
+   99 |       decoded.class_inline = read_le32(p + 0x68);
+  100 |       decoded.class_copy = read_le32(p + 0x6c);
+  101 |       for (unsigned i = 0; i < 8; i++)
+  102 |          decoded.versions[i] = read_le_i16(p + 0x70 + 2 * i);
+  103 |       decoded.gpc_count_copy = read_le32(p + 0x98);
+  104 |       status = NVKMD_NVGPU_NATIVE_DECODED;
+  105 |    }
+  106 |    memcpy(out, &decoded, sizeof(decoded));
+  107 |    return status;
+  108 | }
+```
+
+</details>
+
+<details>
+<summary>Filtrage du profil — 138-184</summary>
+
+[src/nouveau/vulkan/nvkmd/nvgpu/nvkmd_nvgpu_native_profile.c:138-184](https://github.com/ouncebrew/OunceVK/blob/97d70925dcd8ccab07f308e9dfd0ee5812e4a01c/src/nouveau/vulkan/nvkmd/nvgpu/nvkmd_nvgpu_native_profile.c#L138-L184)
+
+```c
+  138 | nvkmd_nvgpu_native_profile_screen(
+  139 |    const struct nvkmd_nvgpu_native_characteristics *chars)
+  140 | {
+  141 |    if (chars == NULL)
+  142 |       return NVKMD_NVGPU_NATIVE_PROFILE_INVALID;
+  143 | 
+  144 |    /* Compare each field separately. ORing or masking unknown inputs can
+  145 |     * produce a false 17e. */
+  146 |    if (chars->arch != NATIVE_SELECTED_Q00_ARCH ||
+  147 |        chars->impl != NATIVE_SELECTED_Q04_IMPL)
+  148 |       return NVKMD_NVGPU_NATIVE_PROFILE_UNSUPPORTED;
+  149 | 
+  150 |    uint32_t enabled_gpcs = 0;
+  151 |    for (uint32_t mask = chars->gpc_mask; mask != 0; mask &= mask - 1)
+  152 |       enabled_gpcs++;
+  153 | 
+  154 |    if (chars->revision >= NATIVE_REVISION_EXCLUSIVE_LIMIT ||
+  155 |        chars->gpc_count == 0 ||
+  156 |        chars->gpc_count != chars->gpc_count_copy ||
+  157 |        chars->gpc_count != enabled_gpcs || chars->tpc_per_gpc == 0)
+  158 |       return NVKMD_NVGPU_NATIVE_PROFILE_INVALID;
+  159 | 
+  160 |    /* Narrow recognition of saved scalar/class inputs, not a universal 17e
+  161 |     * profile. Conditional class suppression and other revisions need their
+  162 |     * own validation. Do not normalize C76F to C56F.
+  163 |     */
+  164 |    if (chars->revision != NATIVE_SELECTED_Q08_REVISION ||
+  165 |        chars->gpc_count != NATIVE_SELECTED_Q0C_GPC_COUNT ||
+  166 |        chars->gpc_mask != NATIVE_SELECTED_Q38_GPC_MASK ||
+  167 |        chars->tpc_per_gpc != NATIVE_SELECTED_Q20_TPC_PER_GPC ||
+  168 |        chars->native_version_a != NATIVE_SELECTED_Q3C_MODEL ||
+  169 |        chars->native_version_b != NATIVE_SELECTED_Q40_VERSION_B ||
+  170 |        chars->warp_count_raw != NATIVE_SELECTED_Q44_WARP_RAW ||
+  171 |        chars->gpu_va_bits != NATIVE_SELECTED_Q48_GPU_VA_BITS ||
+  172 |        chars->class_2d != NATIVE_SELECTED_Q58_CLASS_2D ||
+  173 |        chars->class_3d != NATIVE_SELECTED_Q5C_CLASS_3D ||
+  174 |        chars->class_compute != NATIVE_C7C0_COMPUTE_CLASS ||
+  175 |        chars->class_gpfifo != NATIVE_SELECTED_Q64_CLASS_GPFIFO ||
+  176 |        chars->class_inline != NATIVE_SELECTED_Q68_CLASS_INLINE ||
+  177 |        chars->class_copy != NATIVE_SELECTED_Q6C_CLASS_COPY)
+  178 |       return NVKMD_NVGPU_NATIVE_PROFILE_UNSUPPORTED;
+  179 | 
+  180 |    /* Even the observed values have no confirmed native NAK, cache, memory or
+  181 |     * engine contract. Never fall back to the GM20B or Mesa defaults.
+  182 |     */
+  183 |    return NVKMD_NVGPU_NATIVE_PROFILE_UNRESOLVED;
+  184 | }
+```
+
+</details>
+
+OunceVK lit notamment big_page_size_raw, compression_page_size_raw, pde_coverage_raw, big_page_mask_raw, les classes C797/C7C0/C7B5/C76F et gpu_va_bits=40. Son propre commentaire classe ces valeurs comme issues d'une console et non comme limites universelles, puis termine le profil reconnu en UNRESOLVED. Un backport de constantes brutes n'est donc pas une qualification GPU.
+
+### VII-D · OunceVK — soumission GPFIFO native
+
+<details>
+<summary>nvkmd_nvgpu_native_submit_once_endpoint — 49-98</summary>
+
+[src/nouveau/vulkan/nvkmd/nvgpu/nvkmd_nvgpu_native_submit.c:49-98](https://github.com/ouncebrew/OunceVK/blob/97d70925dcd8ccab07f308e9dfd0ee5812e4a01c/src/nouveau/vulkan/nvkmd/nvgpu/nvkmd_nvgpu_native_submit.c#L49-L98)
+
+```c
+   49 | nvkmd_nvgpu_native_submit_once_endpoint(
+   50 |    struct nvkmd_nvgpu_native_submit *submit,
+   51 |    const struct nvkmd_nvgpu_gpu_endpoint *endpoint,
+   52 |    const struct nvkmd_nvgpu_native_batch_entry *entries,
+   53 |    uint32_t entry_count,
+   54 |    uint32_t span_flags,
+   55 |    uint32_t submit_flags)
+   56 | {
+   57 |    if (!submit || !endpoint || !entries || !entry_count ||
+   58 |        entry_count > NVKMD_NVGPU_NATIVE_BATCH_MAX_ENTRIES)
+   59 |       return NVKMD_NVGPU_SUBMIT_ARGUMENT;
+   60 |    if (submit->self || submit->attempted ||
+   61 |        !nvkmd_nvgpu_gpu_endpoint_valid(endpoint))
+   62 |       return NVKMD_NVGPU_SUBMIT_STATE;
+   63 | 
+   64 |    submit->self = submit;
+   65 |    submit->attempted = true;
+   66 |    submit->generation = endpoint->generation;
+   67 |    for (uint32_t i = 0; i < entry_count; i++) {
+   68 |       if (!encode_entry(submit->entry + 8 * i, &entries[i], span_flags))
+   69 |          return NVKMD_NVGPU_SUBMIT_ENTRY;
+   70 |    }
+   71 | 
+   72 |    /* Control: +8 entry count, +12 flags. The service returns the producer
+   73 |     * ID at +16 and its target at +20. */
+   74 |    memset(submit->control, 0, sizeof(submit->control));
+   75 |    write_le32(submit->control + 8, entry_count);
+   76 |    write_le32(submit->control + 12, submit_flags);
+   77 | 
+   78 |    __asm__ volatile("dsb sy" ::: "memory");
+   79 |    submit->send_started = true;
+   80 |    submit->result = nvIoctl2(endpoint->gpu_fd, SUBMIT_IOCTL, submit->control,
+   81 |                              submit->entry, (size_t)entry_count * 8);
+   82 |    if (R_FAILED(submit->result))
+   83 |       return NVKMD_NVGPU_SUBMIT_REPLY;
+   84 | 
+   85 |    const uint32_t returned_count = read_le32(submit->control + 8);
+   86 |    const uint32_t returned_flags = read_le32(submit->control + 12);
+   87 |    const uint32_t returned_id = read_le32(submit->control + 16);
+   88 |    /* The producer target is a wrapping low-32 counter. Zero is a valid
+   89 |     * target right after UINT32_MAX. Completion checks progress against its
+   90 |     * pre-submit baseline. */
+   91 |    if (returned_count != entry_count || returned_flags != submit_flags ||
+   92 |        returned_id != endpoint->producer_id)
+   93 |       return NVKMD_NVGPU_SUBMIT_RESULT;
+   94 |    submit->returned_id = returned_id;
+   95 |    submit->returned_target = read_le32(submit->control + 20);
+   96 |    submit->accepted = true;
+   97 |    return NVKMD_NVGPU_SUBMIT_OK;
+   98 | }
+```
+
+</details>
+
+Pour comparaison, propriétaire Encore déjà étudié : [encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp:977-1241](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp#L977-L1241). OunceVK encode une entrée avec VA alignée sur 4 octets, VA < 2^40, word_count non nul <= 0x1fffff, utilise Ioctl2 0xc018481b, puis exige le même count/flags et le producer ID attendu. La target retournée est explicitement un compteur 32-bit wrap. Cela consolide la forme du transport, pas la manière dont Encore doit lire/snapshotter les pushbuffers ni quand le fence est terminé.
+
+### VII-E · nxnative — queue NVN/Metal
+
+<details>
+<summary>nvn_queue_submit — 358-377</summary>
+
+[dm/gfx/nvn/nvn_queue.inc:358-377](https://github.com/seedds/nxnative/blob/35fea5c2ee781689ff224e614a8da71867a571bf/dm/gfx/nvn/nvn_queue.inc#L358-L377)
+
+```c
+  358 | void nvn_queue_submit(queue_t *q,int count,const uint64_t *handles) {
+  359 |     pthread_once(&nq_once,nq_start); nq_job *j=calloc(1,sizeof *j); if(!j) die("queue job allocation failed"); j->receipt=nq_new();
+  360 |     j->objects.klen=16; j->frame=dm_nvn_frame_count(); j->submitted=guest_ns();
+  361 |     // No scheduler lock while copying descriptors or resolving shader libraries.
+  362 |     dm_host_mutex_lock(&g_sub_mu); void *pool=objc_autoreleasePoolPush(); dm_host_work++; mtl_prepare(); dm_host_work--; nq_cost cost=nq_cost_begin();
+  363 |     int stream=mtl_sub_stream_on();
+  364 |     if(stream) {
+  365 |         j->open=1;
+  366 |         pthread_mutex_lock(&nq_mu); nq_enqueue(nq_get(q),j); pthread_mutex_unlock(&nq_mu);
+  367 |         pthread_mutex_unlock(&g_sub_mu);
+  368 |     }
+  369 |     for(int i=0;i<count;i++) nq_flatten(j,(const uint8_t *)(uintptr_t)handles[i]); nq_end(j);
+  370 |     nq_cost_end(cost); objc_autoreleasePoolPop(pool);
+  371 |     nvn_cap_queue(q->serial,j->waits);
+  372 |     pthread_mutex_lock(&nq_mu); nq_publish_staged(j);
+  373 |     if(stream) { j->open=0; pthread_cond_broadcast(&nq_cv); }
+  374 |     else nq_enqueue(nq_get(q),j);
+  375 |     pthread_mutex_unlock(&nq_mu);
+  376 |     if(!stream) pthread_mutex_unlock(&g_sub_mu);
+  377 | }
+```
+
+</details>
+
+[dm/gfx/nvn/nvn_queue.h:1-27](https://github.com/seedds/nxnative/blob/35fea5c2ee781689ff224e614a8da71867a571bf/dm/gfx/nvn/nvn_queue.h#L1-L27)
+
+```c
+    1 | // Guest queue completion is distinct from a physical Metal submission fence.
+    2 | #pragma once
+    3 | #include "nvn_obj.h"
+    4 | void nvn_queue_submit(queue_t *q, int n, const uint64_t *handles);
+    5 | uint64_t nvn_queue_present(queue_t *q,const tex_t *t,double period,const int crop[4]);
+    6 | void nvn_queue_present_ref(uint64_t ticket);
+    7 | void nvn_queue_present_wait(uint64_t ticket);
+    8 | int nvn_queue_present_wait_timeout(uint64_t ticket, uint64_t timeout_ns);
+    9 | int nvn_queue_present_ready(uint64_t ticket);
+   10 | int nvn_queue_present_gpu_ready(uint64_t ticket, int wait_tex);
+   11 | int nvn_queue_present_gpu_wait_timeout(uint64_t ticket, uint64_t timeout_ns, int wait_tex);
+   12 | void nvn_queue_present_release(uint64_t ticket);
+   13 | // Unit tests: while held (on=1), replay takes no queued work, so a test can change state between a submit or QueuePresent and its replay; work already replaying finishes
+   14 | void nvn_queue_test_hold(int on);
+   15 | void nvn_queue_fence(queue_t *q, sync_t *s);
+   16 | void nvn_queue_wait_sync(queue_t *q, const sync_t *s);
+   17 | void nvn_queue_finish(queue_t *q);
+   18 | void nvn_queue_forget(queue_t *q);
+   19 | void nvn_sync_release(sync_t *s);
+   20 | void nvn_sync_set_acq(sync_t *s, uint64_t handle);
+   21 | void nvn_sync_set_acq_fence(sync_t *s, uint64_t fence);
+   22 | uint64_t nvn_sync_ref_acq(const sync_t *s);
+   23 | int nvn_sync_wait(const sync_t *s, uint64_t timeout);
+   24 | void nvn_event_publish(volatile uint32_t *word, unsigned mode, uint32_t value);
+   25 | void nvn_event_publish_gpu(volatile uint32_t *word, unsigned mode, uint32_t value, uint64_t fence);
+   26 | void nvn_queue_gpu_progress(void);
+   27 | 
+```
+
+La première ligne du header distingue explicitement la completion de queue invitée d'un fence physique Metal. Cela va dans le même sens conceptuel que la séparation nécessaire chez Encore entre commande acceptée, travail GPU soumis et producteur/syncpoint atteint. L'implémentation n'est pas transposable : nxnative rejoue NVN vers Metal et n'émule pas notre GPFIFO Ampere sur Vulkan PS5.
+
+### VII-F · nxnative — politique SetHeapSize
+
+[dm/host/hle_svc.c:1073-1099](https://github.com/seedds/nxnative/blob/35fea5c2ee781689ff224e614a8da71867a571bf/dm/host/hle_svc.c#L1073-L1099)
+
+```c
+ 1073 |     case 0x01: {  // SetHeapSize(out_addr*, size)  → x1 = heap base
+ 1074 |         size_t size = regs[1];
+ 1075 |         // Larger than the heap region: ResultOutOfMemory (0xD001), as Horizon's KPageTable::SetHeapSize returns. nn::os::SetMemoryHeapSize turns only that, 103 and LimitReached into
+ 1076 |         // os::ResultOutOfMemory and aborts on anything else; Donkey Kong Country: Tropical Freeze finds its heap size by a binary search between 3 and 6 GB, which needs the error back
+ 1077 |         if (size > g_heap_cap) { LOG("SetHeapSize OOM: req %#zx > cap %#zx", size, g_heap_cap); regs[0] = 0xD001; return 0; }
+ 1078 |         pthread_mutex_lock(&g_map_lock);
+ 1079 |         size_t previous = g_heap_cur;
+ 1080 |         if (size < previous && (map_source_busy((uintptr_t)g_heap + size, previous - size) || device_shared((uintptr_t)g_heap + size, previous - size, "SetHeapSize shrinking over"))) {
+ 1081 |             pthread_mutex_unlock(&g_map_lock); regs[0] = 0xD401; return 0;
+ 1082 |         }
+ 1083 |         uint64_t used = used_beside_heap();
+ 1084 |         if (used > APP_POOL || size > APP_POOL - used) {   // ResultLimitReached: more than the total less the used memory GetInfo reports; games retry in 2 MB decrements
+ 1085 |             // Logged once (Mario's retries would repeat it)
+ 1086 |             static int once; if (!once++) LOG("[mem] SetHeapSize %#zx > app pool %#llx less used memory %#llx", size, (unsigned long long)APP_POOL, (unsigned long long)used);
+ 1087 |             pthread_mutex_unlock(&g_map_lock); regs[0] = 0x10801; return 0;
+ 1088 |         }
+ 1089 |         int rc = 0;
+ 1090 |         if (size > g_heap_cur) rc = mprotect(g_heap + g_heap_cur, size - g_heap_cur, PROT_READ | PROT_WRITE);
+ 1091 |         else if (size < g_heap_cur) (void)guest_release((uintptr_t)g_heap + size, (uintptr_t)g_heap + g_heap_cur, 0);
+ 1092 |         if (rc) die("SetHeapSize mprotect failed: req=%#zx errno=%d", size, errno);
+ 1093 |         // With the guest in files a heap given back kept its old bytes (guest_release): one that grows back over them reads 0 there, as the fresh mapping reads without the files
+ 1094 |         if (size > g_heap_cur && g_heap_seen > g_heap_cur && g_gf_n) guest_zero(g_heap + g_heap_cur, (size < g_heap_seen ? size : g_heap_seen) - g_heap_cur);
+ 1095 |         if (size > g_heap_seen) g_heap_seen = size;
+ 1096 |         if (g_flag.svc) LOG("SetHeapSize %#zx -> base %p mprotect=%d errno=%d", size, g_heap, rc, errno);
+ 1097 |         else if (size > g_heap_cur) LOG("[mem] heap %.2f GB (heap region %.2f GB)", size / 1073741824.0, g_heap_cap / 1073741824.0);
+ 1098 |         g_heap_cur = size;
+ 1099 |         pthread_mutex_unlock(&g_map_lock);
+```
+
+Cette politique sert seulement de référence comportementale : limite de région heap, accounting du pool, refus de shrink sur mapping occupé/device-shared et protection mémoire hôte. Elle n'est pas un modèle d'allocation PS5 ; réservations Apple, entitlements et backend natif diffèrent.
+
+### VII-G · hiérarchie de confiance pour les prochains écarts
+
+| Référence | Ce qu'elle peut prouver | Ce qu'elle ne prouve pas |
+|---|---|---|
+| libounce | forme ABI, commande, champs, ordre côté client | implémentation GPU, fence Vulkan, lifetime PS5 |
+| OunceVK | encodage transport nvgpu, caractéristiques observées, contraintes de submit | compatibilité GPU PS5 complète, shader ISA universel |
+| Lichii/Eglantine | implémentation émulateur fonctionnelle dans leurs environnements | équivalence ABI/OS/driver PS5, absence de race chez Encore |
+| nxnative | besoins de jeux réels, comportement HLE/natif, profils mémoire/shaders Apple | chemin x86 JIT, GMMU Ampere émulée, Vulkan/RADV PS5 |
+| Encore logs PS5 | comportement réel de notre build/firmware | cause sans corrélation code/ordre/état |
+
+Aucun de ces apports ne change un statut ouvert en résolu. Ils servent à réduire l'espace des hypothèses avant un futur correctif runtime.
+
+**Couverture ajoutée :** 329 lignes externes reproduites avec provenance, plus le lien vers le propriétaire Encore correspondant. Aucun fichier hors Markdown n'est modifié.

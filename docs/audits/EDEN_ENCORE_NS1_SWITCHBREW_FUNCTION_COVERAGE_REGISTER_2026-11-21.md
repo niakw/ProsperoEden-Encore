@@ -4581,3 +4581,17 @@ Les deux PARTIEL historiques `IHomeMenuFunctions` cmd30 `GetHomeButtonWriterLock
 **2 lignes PARTIEL quittent le pool : nouveau compteur global = 87 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console. Le comportement interne exact d'Horizon n'est pas revendiqué ; seule la conformité observable de l'interface est requalifiée.
+
+
+### 2026-11-26 — Home-button double-click state qualifié : palier global 85
+
+Base : **87 lignes ouvertes**.
+
+Les deux PARTIEL historiques `IAppletCommonFunctions` cmd50 `SetHomeButtonDoubleClickEnabled` et cmd51 `GetHomeButtonDoubleClickEnabled` sont requalifiés :
+- HOS23 et libnx confirment un setter bool sans sortie et un getter bool ;
+- l'owner actif Encore conserve le booléen dans `Applet::home_button_double_click_enabled` sous `applet->lock` et le getter relit exactement le même état ;
+- aucun effet hôte PS5 ni backend Nintendo externe n'est requis par le contrat IPC observable de ces deux commandes.
+
+**2 lignes PARTIEL quittent le pool : nouveau compteur global = 85 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console.

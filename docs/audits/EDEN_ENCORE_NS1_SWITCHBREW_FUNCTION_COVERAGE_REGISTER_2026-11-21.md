@@ -5259,3 +5259,21 @@ La séparation par sender est conservée même si plusieurs producteurs utilisen
 Les owners OVLN sont matérialisés via le manifeste `eden-backports` ; aucun nouveau chemin CMake n'est ajouté. Le workflow X8D24 du pin `841c9204` (`45853900284`) est **vert**. La gate de provenance `45853900350` était encore en cours au moment de cette entrée, sans échec observé. Aucun build natif PS5 ni test console.
 
 **1 ligne PARTIEL quitte le pool de revue : nouveau plancher = 31 / 4 853.** Cela signifie « appel désormais traité explicitement avec livraison réelle et sous-mode Block rejeté », pas « OVLN entièrement équivalent à Horizon ».
+
+### 2026-11-26 — Overlay screenshot global appliqué au MainApplet : 31 → 30 minimum
+
+Base précédente : **31 lignes ouvertes au minimum**.
+
+Le PARTIEL historique `appletAE` cmd6 `IOverlayFunctions::SetScreenShotPermissionGlobally` est corrigé sur le propriétaire shipping `encore-active/eden-backports/src/core/hle/service/am/service/overlay_functions.cpp`.
+
+**Cause démontrée :**
+- le catalogue historique classait cmd6 PARTIEL parce que la permission était enregistrée uniquement sur l'objet applet attaché à `IOverlayFunctions`, donc l'overlay lui-même ; la portée globale demandée par le contrat n'était pas démontrée ;
+- libnx confirme cmd6 HOS3+ sur `AppletType_OverlayApplet`, entrée `bool`, sans sortie, sous le nom explicite `SetScreenShotPermissionGlobally`;
+- le chemin application maintient sa propre `Applet::screenshot_permission`, notamment relue par les fonctions screenshot de l'application. Modifier seulement l'overlay ne pouvait donc pas représenter une politique globale de capture.
+
+**Correctif runtime :**
+- vendor `1704a9de076c95a9cffbd33a7ae13713a3ce5664` résout le `MainApplet` via le `WindowSystem` et applique la permission à cet applet principal ; fallback vers `m_applet` seulement si aucun MainApplet n'est disponible ;
+- le reçu manifeste de `overlay_functions.cpp` devient `93c6938ef14e9a1048eba86a860d87a34ad4a90b9a13c99f8172f61b507b9bcb`, **13 753 octets** ;
+- moteur/gitlink `a693752f7993134bc61c8fdc21ea3c71a5405ada` épingle exactement ce vendor.
+
+**1 ligne PARTIEL quitte le pool : nouveau plancher = 30 / 4 853.** Les workflows du pin `a693752f` (`45855518449` X8D24 et `45855518451` provenance) sont démarrés au moment de cette entrée ; aucun résultat vert n'est revendiqué ici tant qu'ils ne sont pas terminés. Aucun build natif PS5 ni test console.

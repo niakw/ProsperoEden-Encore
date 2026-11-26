@@ -276,7 +276,11 @@ jobs:
       - name: Audit generic graphics, JIT, runtime and filtered game networking
         if: ${{ matrix.suite == 'audit' }}
         run: |
-          set -euxo pipefail
+          # Run independent host checks to completion and retain every failure.
+          # No failure is waived; the aggregate remains mandatory and fail-closed.
+          set -uxo pipefail
+          audit_failed=0
+          trap 'rc=$?; echo "::error::Audit failed (exit $rc): $BASH_COMMAND"; audit_failed=1' ERR
           python3 -B tools/check-ci-neutral-labels.py
           python3 -B tools/check-upstream-coverage-inventory.py
           python3 -B tools/update-upstream-comparison.py --self-test
@@ -758,6 +762,7 @@ jobs:
           python3 -B tools/check-nlib-media-safety.py
           python3 -B tools/check-ci-cache.py
           python3 -B tools/check-package-flexible-memory.py
+          exit "$audit_failed"
 
       - name: Verify native memory arena ownership (host sanitizers only)
         if: ${{ matrix.suite == 'memory' }}

@@ -65,6 +65,10 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 État courant de la table (24/11, `main`) : 142 commandes recensées ; C=56, P=0, M=69, U=17. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
 
+
+
+**Delta source du 26/11/2026 (sans recalcul général des 316 commandes)** : GSV **603**, anciennement classé M, est maintenant **C au niveau source/hôte** après les commits vendor `74673e41` et `acdd7607`, intégrés au pin `8ae1a860`. Les compteurs publiés pour les photographies des 23–24/11 demeurent historiques, pas une mesure actuelle de compatibilité des jeux. Aucune qualification native/console de cette commande.
+
 | Cmd | Interface | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore actif | Écart / raison |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Gsv | BootWithTransferMemory | C | HANDLER INDIQUÉ | InitializeWithTransferMemory | handler actif; boot transfert réel, console non qualifiée |
@@ -119,7 +123,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 **Réconciliation Ounce 21/11** : le SDK reconstruit par fefw appelle `CreateNativeMemoryWithGpukMemHandle` via `Invoke(0x1B7)`, soit TIPC **423** après retrait de `0x10`, et appelle l'enregistrement d'address-space via raw `0x1C2`, soit **434**. Pour **498**, il appelle raw `0x202` sans entrée et lit trois `u64`. Ces observations priment pour le runtime actif sur une simple attribution de nom non documentée; elles ne constituent pas une validation console PS5.
 | 601 | Camera | CreateCameraContext | C | HANDLER INDIQUÉ | InitializeFeatureContext | SDK/Lichii : 601() admission caméra, aucun payload/objet retour ; validation TIPC exacte et succès sans état fictif |
 | 602 | Camera | InitializeCameraContext | C | HANDLER INDIQUÉ | OpenCameraSession | SDK/Lichii : 602(u64 version=1), vraie CameraSession MOVE ; forme IPC, ownership et rollback OOM vérifiés |
-| 603 | Camera | DestroyCameraContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 603 | Camera | DestroyCameraContext | C | HANDLER INDIQUÉ | DestroyCameraContext | 🟢 **Contrôlé le 26/11/2026** — vendor `acdd7607` / pin `8ae1a860` : la requête TIPC 603 est validée, le compteur de contextes est décrémenté uniquement si une vraie session MOVE 602 a été publiée ; double finalisation et IPC mal formé échouent explicitement. Test hôte source vendor vert ; **pas de validation PS5**. |
 | 612 | Camera | DestroyOutputBufferPool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 613 | Camera | CreateAliasOutputBufferPool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 614 | Camera | DestroyAliasOutputBufferPool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |

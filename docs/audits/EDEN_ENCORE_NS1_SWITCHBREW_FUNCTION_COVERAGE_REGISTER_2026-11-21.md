@@ -5584,3 +5584,9 @@ Le zéro historique n'est PAS une preuve de qualification runtime exhaustive. Le
 🟢 **26/11/2026 — AudioController contrôlé sur le vrai owner.** Le propriétaire final n'est pas `encore-active/eden-core/.../audio_controller.cpp` mais l'overlay matérialisé `encore-active/eden-backports/src/core/hle/service/audio/audio_controller.cpp`, présent dans le manifeste. Son contrat reste `(1,60,0)`; aucune régression n'est admise artificiellement.
 
 Ces tuples décrivent uniquement les tables `FunctionInfo` réellement compilées. Les `nullptr` repris de main restent des fonctionnalités non implémentées ; ce changement de gate ne les transforme pas en conformité fonctionnelle. Aucun runtime modifié dans ce commit.
+
+### 2026-11-26 — Rattrapage main → NS1 : caméra SDK21, RO/NRR v1 et GPU TimeSpan
+
+🟢 **26/11/2026 — Successeurs main courants repris.** Les cinq commits moteur `3c6afba1`, `1e853492`, `41cc3eab`, `7a073be5`, `995991fb` sont repris par leurs blobs finaux main pour le patch NRR v1, l'applicateur backports, le check GSV et les deux registres existants. Le gitlink est adapté vers le vendor NS1 `2091ebdc34b3b4744366beb358ab28098e388976`, qui contient GSV/caméra/TimeSpan byte-for-byte main et le hunk NRR v1 appliqué proprement au superset RO NS1.
+
+**Validation revendiquée :** source/contrat uniquement à cette étape. Aucun build PS5 manuel, aucune validation console, aucune fusion vers main.

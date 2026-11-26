@@ -1234,3 +1234,25 @@ print("F03/F04 absent texture channel view slot guard PASS")
 PYMISSINGTIC
 }
 apply_one "$root/headless/backports/eden-ps5-texture-missing-channel-slot-guard.patch" "$eden/.encore-backport-ps5-texture-missing-channel-slot-guard.sha256" validate_ps5_texture_missing_channel_slot_guard
+
+# NS2 NRR version 1: the hash metadata lives at +0x4c0, not the legacy
+# +0x340. The RO backport is still generated from the immutable Eden pin.
+# Apply this small delta AFTER FW23 without replacing historical receipts.
+validate_ns2_ro_nrr_v1() {
+python3 - "$eden" <<'PYNRRV1'
+from pathlib import Path
+import sys
+source=(Path(sys.argv[1])/"src/core/hle/service/ro/ro.cpp").read_text()
+for guard in ('prefix[5] == 1 ? 0x4c0 : 0x340',
+              'sizeof(NrrHeader) + (prefix[5] == 1 ? 0x180 : 0)',
+              'hash_count <= (nrr_size - hash_offset) / sizeof(Sha256Hash)',
+              'constexpr u64 MaxNrrHashes = 0x10000',
+              'catch (const std::bad_alloc&)',
+              'context->SetNrrInfoInUse(nrr_info, true);'):
+    assert guard in source,guard
+assert source.index('if (!hashes.empty())') < source.index(
+    'context->SetNrrInfoInUse(nrr_info, true);',source.index('// NRR version 1'))
+print('NS2 NRR v1 runtime RO source guard PASS')
+PYNRRV1
+}
+apply_one "$root/headless/backports/eden-ns2-ro-nrr-v1.patch" "$eden/.encore-backport-ns2-ro-nrr-v1.sha256" validate_ns2_ro_nrr_v1

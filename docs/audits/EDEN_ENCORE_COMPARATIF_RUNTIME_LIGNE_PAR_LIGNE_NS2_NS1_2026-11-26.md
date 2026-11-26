@@ -5681,3 +5681,1192 @@ Source : [svc_physical_memory.cpp:98–145](https://github.com/heydemoura/Eglant
 - **KPageTable/SVC** : les gros blocs communs ne prouvent pas la parité de résidence physique. Les différences PS5 doivent être croisées avec les budgets, les erreurs OOM et les rollbacks déjà qualifiés.
 
 **Couverture ajoutée :** 12 fonctions, 24 comparaisons directes, 3851 lignes-source parcourues (répétitions incluses) ; 1094 lignes alignées, 1570 propres Encore, 93 propres upstream. Aucun statut console n'est modifié par cette annexe.
+
+## Annexe IV — VI2 / présentation et loader NS2
+
+Cette annexe suit deux frontières qui ne doivent pas être mélangées : **chargement du programme** puis **présentation de l'image**. Un jeu peut franchir le loader et rester bloqué dans GSV/VI2 ; inversement un crash avant GPFIFO peut être loader/kernel/JIT. Aucun code runtime n'est modifié par cette comparaison.
+
+### P0-V01 · VI2 PresentClientBuffer
+
+Homologue comportemental, noms différents. C'est le chemin le plus proche de la première frame : décodage du paquet VI2, image GSV, GraphicBuffer/NVMap, QueueBuffer, fence et pacing. Les différences de pacing host ne doivent pas masquer un échec antérieur de résolution d'image ou de QueueBuffer.
+
+Encore : [graphics_supervisor.cpp:1229–1348](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp#L1229-L1348) — 120 lignes.
+
+<details>
+<summary>Lichii — 2083–2270 : 16 alignées, 104 propres Encore, 172 propres upstream</summary>
+
+Source : [nx2_gsv.h:2083–2270](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nx2_gsv.h#L2083-L2270).
+
+```diff
+- 1229       |     void Present(HLERequestContext& ctx) {
+- 1230       |         const auto* p=ctx.CommandBuffer();Result result=Kernel::ResultInvalidCombination;
+- 1231       |         u64 mask{};
+- 1232       |         if(p[0]==0xf5&&p[1]==24){
+- 1233       |             Release();
+- 1234       |             Client* c=Find(W(p,2));result=Kernel::ResultNotFound;
+- 1235       |             if(c){
+- 1236       |                 const u32 slot=GraphicsSupervisorProtocol::DecodeBufferSlot(p[4]);
+- 1237       |                 result=Kernel::ResultInvalidState;
+- 1238       |                 if(slot<15&&c->display&&c->layer&&!c->queued[slot]){
+- 1239       |                     const auto img=m_owner->GetPresentImage(p[5]);
+- 1240       |                     result=Kernel::ResultNotFound;
+- 1241       |                     if(img){
+- 1242       |                         const auto& pref=img->layout;
+- 1243       |                         const u32 width=(pref[2]&0xffffU)+1;
+- 1244       |                         const u32 height=(pref[2]>>16)+1;
+- 1245       |                         const u32 outw=(p[7]&0xffffU)+1;
+- 1246       |                         const u32 outh=(p[7]>>16)+1;
+- 1247       |                         result=Kernel::ResultNotImplemented;
+- 1248       |                         if(p[6]==0&&p[8]==3&&pref[4]==7&&
+- 1249       |                             pref[6]==1&&outw<=width&&outh<=height){
+- 1250       |                             const u32 fence=~p[22];
+- 1251       |                             auto& nv=img->module->GetContainer();
+- 1252       |                             result=Kernel::ResultInvalidCombination;
+- 1253       |                             if(p[23]==0&&p[25]==0&&
+- 1254       |                                 (fence==~u32{0}||
+- 1255       |                                  nv.GetSyncpointManager().IsSyncpointAllocated(fence))){
+- 1256       |                                 if(!c->producer){
+- 1257       |                                     result=m_vi->GetContainer()->GetLayerProducerHandle(
+- 1258       |                                         &c->producer,*c->layer);
+- 1259       |                                     if(result.IsSuccess()){
+- 1260       |                                         android::QueueBufferOutput output{};
+- 1261       |                                         if(c->producer->Connect({},
+- 1262       |                                             android::NativeWindowApi::Egl,false,&output)!=
+- 1263       |                                             android::Status::NoError||
+- 1264       |                                            c->producer->SetBufferCount(16)!=
+- 1265       |                                             android::Status::NoError)
+- 1266       |                                             result=Kernel::ResultInvalidState;
++       2083 |     void PresentClientBuffer(HLERequestContext& ctx) {
++       2084 |         const auto* w = ctx.CommandBuffer();
++       2085 |         ++m_presents;
++       2086 |         if (Kernel::Nx2ThreadStats::g_enabled) {
++       2087 |             Kernel::Nx2ThreadStats::OnPresent(&ctx.GetThread());
+  1267  2088 |                                     }
+- 1268       |                                     if(result.IsSuccess()){
+- 1269       |                                         s32 binder{};
+- 1270       |                                         result=m_vi->GetContainer()->OpenLayer(
+- 1271       |                                             &binder,*c->layer,m_aruid);
+- 1272       |                                         if(result.IsSuccess())result=m_vi->GetContainer()
+- 1273       |                                             ->SetLayerVisibility(*c->layer,true);
++       2089 |         if (Common::DkbFrameTrace::Enabled()) {
++       2090 |             m_vsync->trace_present.store(m_presents, std::memory_order_relaxed);
+  1274  2091 |                                     }
+- 1275       |                                 }else result=ResultSuccess;
+- 1276       |                                 // Release polling must be ready BEFORE
+- 1277       |                                 // QueueBuffer publishes its producer slot.
+- 1278       |                                 // If CreateEvent/Schedule throws afterwards,
+- 1279       |                                 // a frame is live with no retirement path and
+- 1280       |                                 // the TIPC caller never sees its accepted queue.
+- 1281       |                                 if(result.IsSuccess() && !m_poll){
+- 1282       |                                     try {
+- 1283       |                                         auto weak=std::weak_ptr<IVi2Session>(
+- 1284       |                                             std::static_pointer_cast<IVi2Session>(
+- 1285       |                                                 shared_from_this()));
+- 1286       |                                         auto timer=Core::Timing::CreateEvent(
+- 1287       |                                             "NativeVi2Release",
+- 1288       |                                             [weak](s64,std::chrono::nanoseconds)
+- 1289       |                                                 ->std::optional<std::chrono::nanoseconds>{
+- 1290       |                                                 if(auto self=weak.lock()){
+- 1291       |                                                     const auto guard=self->LockService();
+- 1292       |                                                     self->Release();
++       2092 |         Core::RecordGuestPresent();
++       2093 |         if (m_presents <= 4 || (m_presents % 600) == 0) {
++       2094 |             LOG_INFO(Service, "nx2:vi2 229 present #{} token={:#x} slot={} image={}", m_presents,
++       2095 |                      u64{w[2]} | (u64{w[3]} << 32), w[4], w[5]);
+  1293  2096 |                                                 }
+- 1294       |                                                 return std::nullopt;
+- 1295       |                                             });
+- 1296       |                                         system.CoreTiming().ScheduleLoopingEvent(
+- 1297       |                                             std::chrono::milliseconds{1},
+- 1298       |                                             std::chrono::milliseconds{1},timer);
+- 1299       |                                         m_poll=std::move(timer);
+- 1300       |                                     } catch (const std::bad_alloc&) {
+- 1301       |                                         result=Kernel::ResultOutOfResource;
++       2097 |         // Wait for this frame's fence, so the game doesn't write the next frame's data (constant
++       2098 |         // buffers holding texture handles, vertex data, Pokopia's glyph atlas) while the GPU
++       2099 |         // thread still reads this frame's. But title 1's GPU waits on semaphores its CPU releases
++       2100 |         // only after this present returns: while a channel stays suspended on one, wait for the
++       2101 |         // previous frame's fence instead and let the game prepare frame N+1 meanwhile (waiting
++       2102 |         // for this frame there cost 8-56 ms of every 34-105 ms frame, or never finished).
++       2103 |         // EDEN_NX2_FRAMES_AHEAD=1 always waits for the previous frame, =0 always for this one.
++       2104 |         static const int frames_ahead_setting = [] {
++       2105 |             const char* value = std::getenv("EDEN_NX2_FRAMES_AHEAD");
++       2106 |             return value == nullptr ? -1 : value[0] == '1' ? 1 : 0;
++       2107 |         }();
++       2108 |         // Donkey Kong Bananza's channels wait on each other every frame, so it always ran a frame
++       2109 |         // ahead, where it rewrote memory the GPU thread hadn't read yet (misread commands, then
++       2110 |         // a freeze or crash; rubberbanding while moving). Title 1 runs ahead without either.
++       2111 |         constexpr u64 DonkeyKongBananzaProgramId = 0x040074A01BF12000ULL;
++       2112 |         // Ocarina waited ~12 ms a frame on its previous frame's fence here (#161).
++       2113 |         constexpr u64 OcarinaOfTimeProgramId = 0x0400486024DEC000ULL;
++       2114 |         int frames_ahead = frames_ahead_setting;
++       2115 |         const u64 app_program_id = system.GetApplicationProcessProgramID();
++       2116 |         if (frames_ahead == -1 && app_program_id == DonkeyKongBananzaProgramId) {
++       2117 |             frames_ahead = 0;
++       2118 |         } else if (frames_ahead == -1 && app_program_id == OcarinaOfTimeProgramId) {
++       2119 |             frames_ahead = 1;
+  1302  2120 |                                     }
++       2121 |         constexpr u64 DuskbloodsNetworkTestProgramId = 0x0400D1D02399A000ULL;
++       2122 |         const bool duskbloods_auto_ahead =
++       2123 |             frames_ahead_setting == -1 && app_program_id == DuskbloodsNetworkTestProgramId;
++       2124 |         if (duskbloods_auto_ahead) {
++       2125 |             frames_ahead = 1;
+  1303  2126 |                                 }
+- 1304       |                                 if(result.IsSuccess()){
+- 1305       |                                     auto native=std::make_shared<android::NvGraphicBuffer>();
+- 1306       |                                     native->width=static_cast<s32>(width);
+- 1307       |                                     native->height=static_cast<s32>(height);
+- 1308       |                                     native->stride=static_cast<s32>(pref[5]*16);
+- 1309       |                                     native->format=android::PixelFormat::Rgba8888;
+- 1310       |                                     native->external_format=native->format;
+- 1311       |                                     native->buffer_id=img->buffer_id;native->offset=img->offset;
+- 1312       |                                     auto buffer=std::make_shared<android::GraphicBuffer>(
+- 1313       |                                         nv.GetNvMapFile(),native);
+- 1314       |                                     s32 idx{};result=Kernel::ResultOutOfResource;
+- 1315       |                                     if(c->producer->AttachBuffer(&idx,buffer)==android::Status::NoError){
+- 1316       |                                         android::QueueBufferInput input{};
+- 1317       |                                         android::QueueBufferOutput output{};
+- 1318       |                                         input.crop={0,0,static_cast<s32>(outw),
+- 1319       |                                             static_cast<s32>(outh)};
+- 1320       |                                         input.swap_interval=static_cast<s32>(GraphicsSupervisorProtocol::DecodePresentSwapInterval(p[12]));
+- 1321       |                                         input.fence=android::Fence::NoFence();
+- 1322       |                                         if(fence!=~u32{0}){
+- 1323       |                                             input.fence.num_fences=1;
+- 1324       |                                             input.fence.fences[0]={static_cast<s32>(fence),p[24]};
++       2127 |         const auto entered = std::chrono::steady_clock::now();
++       2128 |         static const bool fence_trace = [] {
++       2129 |             const char* value = std::getenv("EDEN_NX2_PRESENT_FENCE_TRACE");
++       2130 |             return value != nullptr && value[0] == '1';
++       2131 |         }();
++       2132 |         std::shared_ptr<TracedPresent> traced;
++       2133 |         if (fence_trace) {
++       2134 |             traced = TracePresentFence(~w[22], w[24], entered);
+  1325  2135 |                                         }
+- 1326       |                                         if(c->producer->QueueBuffer(idx,input,&output)==
+- 1327       |                                             android::Status::NoError){
+- 1328       |                                             c->queued[slot]=idx;c->images[slot]=p[5];
+- 1329       |                                             c->recorders[slot]=static_cast<u8>(p[18] & 0xf);
+- 1330       |                                             c->queued_modules[slot]=img->module;
+- 1331       |                                             c->retained[slot]=buffer;
+- 1332       |                                             c->available&=~(u64{1}<<slot);result=ResultSuccess;
+- 1333       |                                         }else{
+- 1334       |                                             c->producer->CancelBuffer(idx,input.fence);
+- 1335       |                                             result=Kernel::ResultInvalidState;
++       2136 |         const bool auto_reached = frames_ahead == -1 && WaitForFrame(~w[22], w[24], true);
++       2137 |         if (frames_ahead == 1 || (frames_ahead == -1 && !auto_reached)) {
++       2138 |             LOG_DEBUG(Service, "nx2:vi2 present #{} fence ({}, {:#x}), waiting for ({}, {:#x}); now {:#x}",
++       2139 |                       m_presents, ~w[22], w[24], m_previous_fence_id, m_previous_fence_value,
++       2140 |                       ~w[22] < 192 ? system.Host1x().GetSyncpointManager().GetGuestSyncpointValue(~w[22]) : 0U);
++       2141 |             // With EDEN_NX2_FRAMES_AHEAD=1, only run a frame ahead while the GPU keeps up. With
++       2142 |             // the previous frame still on the GPU here, the GPU is the limit and running ahead
++       2143 |             // gains nothing; and Splatoon Raiders, which reuses its command memory as if the GPU
++       2144 |             // were at most a frame behind, rewrote command lists Eden had not read yet (misread
++       2145 |             // commands, then crashes, with a slow GPU). Wait for this frame too then. Not when a
++       2146 |             // suspended channel brought us here: this frame can't finish before the present
++       2147 |             // returns.
++       2148 |             const bool gpu_behind = frames_ahead == 1 && m_previous_fence_id < 192 &&
++       2149 |                                     !system.Host1x().GetSyncpointManager().IsReadyGuest(
++       2150 |                                         m_previous_fence_id, m_previous_fence_value);
++       2151 |             WaitForFrame(m_previous_fence_id, m_previous_fence_value);
++       2152 |             if (gpu_behind) {
++       2153 |                 WaitForFrame(~w[22], w[24], duskbloods_auto_ahead);
+  1336  2154 |                                         }
++       2155 |         } else if (frames_ahead == 0) {
++       2156 |             WaitForFrame(~w[22], w[24]);
+  1337  2157 |                                     }
++       2158 |         m_previous_fence_id = ~w[22];
++       2159 |         m_previous_fence_value = w[24];
++       2160 |         const auto waited = std::chrono::steady_clock::now();
++       2161 |         const auto pacing = PresentInterval(w[12], ctx.GetThread().GetOwnerProcess());
++       2162 |         // With this frame's fence reached, return before its deadline and release the buffer
++       2163 |         // through a fence instead. Not on a wait that can return with the frame unfinished, and
++       2164 |         // not with timestamp recorders, which record after the pacing as before. Single-core
++       2165 |         // keeps the blocking path and its tick-based speed limiter.
++       2166 |         const bool queueable =
++       2167 |             system.IsMulticore() && frames_ahead == 0 && (w[18] & 0xf) == 0 &&
++       2168 |             (~w[22] >= 192 ||
++       2169 |              system.Host1x().GetSyncpointManager().IsReadyGuest(~w[22], w[24]));
++       2170 |         std::optional<Nx2PresentReleases::Release> release;
++       2171 |         std::chrono::steady_clock::time_point hold_until{};
++       2172 |         if (queueable) {
++       2173 |             release = QueueRelease(pacing, hold_until);
+  1338  2174 |                                 }
++       2175 |         if (!Composite(w[5], ~w[22], w[24], w[7], w[8],
++       2176 |                        release ? release->on_composited : std::function<void()>{}) &&
++       2177 |             release) {
++       2178 |             // Nothing will read the image.
++       2179 |             release->on_composited();
+  1339  2180 |                             }
++       2181 |         const auto composited = std::chrono::steady_clock::now();
++       2182 |         if (!release) {
++       2183 |             PaceToVblank(pacing);
++       2184 |         } else if (composited < hold_until) {
++       2185 |             SleepFor(std::chrono::duration_cast<std::chrono::nanoseconds>(hold_until - composited));
+  1340  2186 |                         }
++       2187 |         const auto paced = std::chrono::steady_clock::now();
++       2188 |         if (const u32 recorder = w[18] & 0xf; recorder != 0) {
++       2189 |             m_recorded_ticks[recorder - 1] = system.CoreTiming().GetClockTicks();
+  1341  2190 |                     }
++       2191 |         if (const auto* const process = system.ApplicationProcess(); process != nullptr) {
++       2192 |             UpdateFrameInterval(*process, entered);
+  1342  2193 |                 }
+- 1343       |                 mask=c->available;
++       2194 |         if (traced) {
++       2195 |             FinishPresentFence(*traced, frames_ahead == -1 && !auto_reached, paced);
+  1344  2196 |             }
++       2197 |         if (Common::DkbFrameTrace::Enabled()) {
++       2198 |             const auto ms = [](auto duration) {
++       2199 |                 return std::chrono::duration<double, std::milli>(duration).count();
++       2200 |             };
++       2201 |             if (m_frame_trace.rate.Ready(paced)) {
++       2202 |                 LOG_INFO(Service,
++       2203 |                          "DKB frame present={} word12={:#x} requested_interval={} "
++       2204 |                          "requested_hz={} effective_interval={} effective_hz={} forced_interval={} "
++       2205 |                          "speed_limit={} speed_percent={} switches={} last_switch={:#x}->{:#x} "
++       2206 |                          "cpu_frame_wall_ms={:.3f} cpu_present_wall_ms={:.3f} fence_wall_ms={:.3f} "
++       2207 |                          "composite_wall_ms={:.3f} target_ms={:.3f} sleep_requested_ms={:.3f} "
++       2208 |                          "sleep_actual_wall_ms={:.3f} pace_wall_ms={:.3f} deadline_reset={}",
++       2209 |                          m_presents, w[12], w[12] >> 16, w[12] & 0xffff,
++       2210 |                          m_frame_trace.interval, m_frame_trace.refresh, m_frame_trace.forced,
++       2211 |                          Settings::values.use_speed_limit.GetValue(), Settings::SpeedLimit(),
++       2212 |                          m_frame_trace.switches, m_frame_trace.switch_from,
++       2213 |                          m_frame_trace.switch_to,
++       2214 |                          m_frame_trace.last_present == std::chrono::steady_clock::time_point{}
++       2215 |                              ? -1.0 : ms(entered - m_frame_trace.last_present),
++       2216 |                          ms(paced - entered), ms(waited - entered), ms(composited - waited),
++       2217 |                          m_frame_trace.target_ms, m_frame_trace.sleep_requested_ms,
++       2218 |                          m_frame_trace.sleep_actual_ms, ms(paced - composited),
++       2219 |                          m_frame_trace.deadline_reset);
++       2220 |                 m_frame_trace.switches = 0;
+  1345  2221 |         }
+- 1346       |         IPC::ResponseBuilder rb{ctx,8};rb.Push(result.raw);rb.Push(mask);
+- 1347       |         for(u32 i=0;i<4;++i)rb.Push<u32>(0);
++       2222 |             m_frame_trace.last_present = entered;
+  1348  2223 |     }
++       2224 |         // Where each frame's time goes on the present thread, averaged per 600 presents: the
++       2225 |         // game is blocked here while Eden's GPU thread catches up (fence) and composites.
++       2226 |         {
++       2227 |             using us = std::chrono::microseconds;
++       2228 |             // long long like the stats: microseconds::rep is long on Linux (std::max needs one type).
++       2229 |             const auto to_us = [](auto d) -> long long {
++       2230 |                 return std::chrono::duration_cast<us>(d).count();
++       2231 |             };
++       2232 |             m_stats.fence_us += to_us(waited - entered);
++       2233 |             m_stats.composite_us += to_us(composited - waited);
++       2234 |             m_stats.pace_us += to_us(paced - composited);
++       2235 |             m_stats.max_fence_us = (std::max<long long>)(m_stats.max_fence_us, static_cast<long long>(to_us(waited - entered)));
++       2236 |             // Counted at the reply: the game gets its buffers back with this frame unfinished.
++       2237 |             if (const u32 fence_id = ~w[22]; fence_id < 192 &&
++       2238 |                 !system.Host1x().GetSyncpointManager().IsReadyGuest(fence_id, w[24])) {
++       2239 |                 ++m_stats.ran_ahead;
++       2240 |             }
++       2241 |             if (m_stats.last_present != std::chrono::steady_clock::time_point{}) {
++       2242 |                 const long long frame = to_us(entered - m_stats.last_present);
++       2243 |                 m_stats.frame_us += frame;
++       2244 |                 m_stats.max_frame_us = (std::max)(m_stats.max_frame_us, frame);
++       2245 |                 m_stats.hitches += frame > 100'000 ? 1 : 0;
++       2246 |                 // Vblanks the game asked for (its steps where it times by them, as Mario Kart
++       2247 |                 // World's dynamic mode does): against the frame time, its speed vs real time.
++       2248 |                 m_stats.vblanks += std::clamp<u32>(w[12] >> 16, 1, 4);
++       2249 |             }
++       2250 |             m_stats.last_present = entered;
++       2251 |             if (++m_stats.presents == 600) {
++       2252 |                 LOG_INFO(Service,
++       2253 |                          "nx2:vi2 last 600 presents: frame {} us (max {}, {} over 100 ms), "
++       2254 |                          "blocked on the GPU fence {} us (max {}), composite {} us, vblank "
++       2255 |                          "pacing {} us, {} ran a frame ahead, {} vblanks asked ({}% of real "
++       2256 |                          "time at 60 Hz)",
++       2257 |                          m_stats.frame_us / 599, m_stats.max_frame_us, m_stats.hitches,
++       2258 |                          m_stats.fence_us / 600, m_stats.max_fence_us, m_stats.composite_us / 600,
++       2259 |                          m_stats.pace_us / 600, m_stats.ran_ahead, m_stats.vblanks,
++       2260 |                          m_stats.frame_us > 0 ? m_stats.vblanks * 1'000'000 / 60 * 100 /
++       2261 |                                                     m_stats.frame_us
++       2262 |                                               : 0);
++       2263 |                 m_stats = {.last_present = entered};
++       2264 |             }
++       2265 |         }
++       2266 |         constexpr u64 AvailableSlots = 0x7fff;
++       2267 |         TipcReplyWords(ctx, {static_cast<u32>(AvailableSlots),
++       2268 |                              static_cast<u32>(AvailableSlots >> 32),
++       2269 |                              release ? ~release->id : 0U, 0, release ? release->value : 0U, 0});
++       2270 |     }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 1822–1961 : 14 alignées, 106 propres Encore, 126 propres upstream</summary>
+
+Source : [nx2_gsv.h:1822–1961](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nx2_gsv.h#L1822-L1961).
+
+```diff
+- 1229       |     void Present(HLERequestContext& ctx) {
+- 1230       |         const auto* p=ctx.CommandBuffer();Result result=Kernel::ResultInvalidCombination;
+- 1231       |         u64 mask{};
+- 1232       |         if(p[0]==0xf5&&p[1]==24){
+- 1233       |             Release();
+- 1234       |             Client* c=Find(W(p,2));result=Kernel::ResultNotFound;
+- 1235       |             if(c){
+- 1236       |                 const u32 slot=GraphicsSupervisorProtocol::DecodeBufferSlot(p[4]);
+- 1237       |                 result=Kernel::ResultInvalidState;
+- 1238       |                 if(slot<15&&c->display&&c->layer&&!c->queued[slot]){
+- 1239       |                     const auto img=m_owner->GetPresentImage(p[5]);
+- 1240       |                     result=Kernel::ResultNotFound;
+- 1241       |                     if(img){
+- 1242       |                         const auto& pref=img->layout;
+- 1243       |                         const u32 width=(pref[2]&0xffffU)+1;
+- 1244       |                         const u32 height=(pref[2]>>16)+1;
+- 1245       |                         const u32 outw=(p[7]&0xffffU)+1;
+- 1246       |                         const u32 outh=(p[7]>>16)+1;
+- 1247       |                         result=Kernel::ResultNotImplemented;
+- 1248       |                         if(p[6]==0&&p[8]==3&&pref[4]==7&&
+- 1249       |                             pref[6]==1&&outw<=width&&outh<=height){
+- 1250       |                             const u32 fence=~p[22];
+- 1251       |                             auto& nv=img->module->GetContainer();
+- 1252       |                             result=Kernel::ResultInvalidCombination;
+- 1253       |                             if(p[23]==0&&p[25]==0&&
+- 1254       |                                 (fence==~u32{0}||
+- 1255       |                                  nv.GetSyncpointManager().IsSyncpointAllocated(fence))){
+- 1256       |                                 if(!c->producer){
+- 1257       |                                     result=m_vi->GetContainer()->GetLayerProducerHandle(
+- 1258       |                                         &c->producer,*c->layer);
+- 1259       |                                     if(result.IsSuccess()){
+- 1260       |                                         android::QueueBufferOutput output{};
+- 1261       |                                         if(c->producer->Connect({},
+- 1262       |                                             android::NativeWindowApi::Egl,false,&output)!=
+- 1263       |                                             android::Status::NoError||
+- 1264       |                                            c->producer->SetBufferCount(16)!=
+- 1265       |                                             android::Status::NoError)
+- 1266       |                                             result=Kernel::ResultInvalidState;
+- 1267       |                                     }
+- 1268       |                                     if(result.IsSuccess()){
+- 1269       |                                         s32 binder{};
+- 1270       |                                         result=m_vi->GetContainer()->OpenLayer(
+- 1271       |                                             &binder,*c->layer,m_aruid);
+- 1272       |                                         if(result.IsSuccess())result=m_vi->GetContainer()
+- 1273       |                                             ->SetLayerVisibility(*c->layer,true);
+- 1274       |                                     }
+- 1275       |                                 }else result=ResultSuccess;
+- 1276       |                                 // Release polling must be ready BEFORE
+- 1277       |                                 // QueueBuffer publishes its producer slot.
+- 1278       |                                 // If CreateEvent/Schedule throws afterwards,
+- 1279       |                                 // a frame is live with no retirement path and
+- 1280       |                                 // the TIPC caller never sees its accepted queue.
+- 1281       |                                 if(result.IsSuccess() && !m_poll){
+- 1282       |                                     try {
+- 1283       |                                         auto weak=std::weak_ptr<IVi2Session>(
+- 1284       |                                             std::static_pointer_cast<IVi2Session>(
+- 1285       |                                                 shared_from_this()));
+- 1286       |                                         auto timer=Core::Timing::CreateEvent(
+- 1287       |                                             "NativeVi2Release",
+- 1288       |                                             [weak](s64,std::chrono::nanoseconds)
+- 1289       |                                                 ->std::optional<std::chrono::nanoseconds>{
+- 1290       |                                                 if(auto self=weak.lock()){
+- 1291       |                                                     const auto guard=self->LockService();
+- 1292       |                                                     self->Release();
++       1822 |     void PresentClientBuffer(HLERequestContext& ctx) {
++       1823 |         const auto* w = ctx.CommandBuffer();
++       1824 |         ++m_presents;
++       1825 |         if (Kernel::Nx2ThreadStats::g_enabled) {
++       1826 |             Kernel::Nx2ThreadStats::OnPresent(&ctx.GetThread());
+  1293  1827 |                                                 }
+- 1294       |                                                 return std::nullopt;
+- 1295       |                                             });
+- 1296       |                                         system.CoreTiming().ScheduleLoopingEvent(
+- 1297       |                                             std::chrono::milliseconds{1},
+- 1298       |                                             std::chrono::milliseconds{1},timer);
+- 1299       |                                         m_poll=std::move(timer);
+- 1300       |                                     } catch (const std::bad_alloc&) {
+- 1301       |                                         result=Kernel::ResultOutOfResource;
++       1828 |         if (Common::DkbFrameTrace::Enabled()) {
++       1829 |             m_vsync->trace_present.store(m_presents, std::memory_order_relaxed);
+  1302  1830 |                                     }
++       1831 |         const u64 present = Core::g_nx2_present_count.fetch_add(1, std::memory_order_relaxed) + 1;
++       1832 |         if (Core::g_nx2_present_time_services.load(std::memory_order_relaxed) != 0) {
++       1833 |             const u64 present_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
++       1834 |                                        std::chrono::steady_clock::now().time_since_epoch())
++       1835 |                                        .count();
++       1836 |             Core::g_nx2_present_times_ns[present % Core::g_nx2_present_times_ns.size()].store(
++       1837 |                 present_ns, std::memory_order_relaxed);
+  1303  1838 |                                 }
+- 1304       |                                 if(result.IsSuccess()){
+- 1305       |                                     auto native=std::make_shared<android::NvGraphicBuffer>();
+- 1306       |                                     native->width=static_cast<s32>(width);
+- 1307       |                                     native->height=static_cast<s32>(height);
+- 1308       |                                     native->stride=static_cast<s32>(pref[5]*16);
+- 1309       |                                     native->format=android::PixelFormat::Rgba8888;
+- 1310       |                                     native->external_format=native->format;
+- 1311       |                                     native->buffer_id=img->buffer_id;native->offset=img->offset;
+- 1312       |                                     auto buffer=std::make_shared<android::GraphicBuffer>(
+- 1313       |                                         nv.GetNvMapFile(),native);
+- 1314       |                                     s32 idx{};result=Kernel::ResultOutOfResource;
+- 1315       |                                     if(c->producer->AttachBuffer(&idx,buffer)==android::Status::NoError){
+- 1316       |                                         android::QueueBufferInput input{};
+- 1317       |                                         android::QueueBufferOutput output{};
+- 1318       |                                         input.crop={0,0,static_cast<s32>(outw),
+- 1319       |                                             static_cast<s32>(outh)};
+- 1320       |                                         input.swap_interval=static_cast<s32>(GraphicsSupervisorProtocol::DecodePresentSwapInterval(p[12]));
+- 1321       |                                         input.fence=android::Fence::NoFence();
+- 1322       |                                         if(fence!=~u32{0}){
+- 1323       |                                             input.fence.num_fences=1;
+- 1324       |                                             input.fence.fences[0]={static_cast<s32>(fence),p[24]};
++       1839 |         if (m_presents <= 4 || (m_presents % 600) == 0) {
++       1840 |             LOG_INFO(Service, "nx2:vi2 229 present #{} token={:#x} slot={} image={}", m_presents,
++       1841 |                      u64{w[2]} | (u64{w[3]} << 32), w[4], w[5]);
+  1325  1842 |                                         }
+- 1326       |                                         if(c->producer->QueueBuffer(idx,input,&output)==
+- 1327       |                                             android::Status::NoError){
+- 1328       |                                             c->queued[slot]=idx;c->images[slot]=p[5];
+- 1329       |                                             c->recorders[slot]=static_cast<u8>(p[18] & 0xf);
+- 1330       |                                             c->queued_modules[slot]=img->module;
+- 1331       |                                             c->retained[slot]=buffer;
+- 1332       |                                             c->available&=~(u64{1}<<slot);result=ResultSuccess;
+- 1333       |                                         }else{
+- 1334       |                                             c->producer->CancelBuffer(idx,input.fence);
+- 1335       |                                             result=Kernel::ResultInvalidState;
++       1843 |         // Wait for this frame's fence, so the game doesn't write the next frame's data (constant
++       1844 |         // buffers holding texture handles, vertex data, Pokopia's glyph atlas) while the GPU
++       1845 |         // thread still reads this frame's. But title 1's GPU waits on semaphores its CPU releases
++       1846 |         // only after this present returns: while a channel stays suspended on one, wait for the
++       1847 |         // previous frame's fence instead and let the game prepare frame N+1 meanwhile (waiting
++       1848 |         // for this frame there cost 8-56 ms of every 34-105 ms frame, or never finished).
++       1849 |         // EDEN_NX2_FRAMES_AHEAD=1 always waits for the previous frame, =0 always for this one.
++       1850 |         static const int frames_ahead_setting = [] {
++       1851 |             const char* value = std::getenv("EDEN_NX2_FRAMES_AHEAD");
++       1852 |             return value == nullptr ? -1 : value[0] == '1' ? 1 : 0;
++       1853 |         }();
++       1854 |         // Donkey Kong Bananza's channels wait on each other every frame, so it always ran a frame
++       1855 |         // ahead, where it rewrote memory the GPU thread hadn't read yet (misread commands, then
++       1856 |         // a freeze or crash; rubberbanding while moving). Title 1 runs ahead without either.
++       1857 |         constexpr u64 DonkeyKongBananzaProgramId = 0x040074A01BF12000ULL;
++       1858 |         // Ocarina waited ~12 ms a frame on its previous frame's fence here (#161).
++       1859 |         constexpr u64 OcarinaOfTimeProgramId = 0x0400486024DEC000ULL;
++       1860 |         int frames_ahead = frames_ahead_setting;
++       1861 |         const u64 app_program_id = system.GetApplicationProcessProgramID();
++       1862 |         if (frames_ahead == -1 && app_program_id == DonkeyKongBananzaProgramId) {
++       1863 |             frames_ahead = 0;
++       1864 |         } else if (frames_ahead == -1 && app_program_id == OcarinaOfTimeProgramId) {
++       1865 |             frames_ahead = 1;
+  1336  1866 |                                         }
++       1867 |         const auto entered = std::chrono::steady_clock::now();
++       1868 |         if (frames_ahead == 1 || (frames_ahead == -1 && !WaitForFrame(~w[22], w[24], true))) {
++       1869 |             LOG_DEBUG(Service, "nx2:vi2 present #{} fence ({}, {:#x}), waiting for ({}, {:#x}); now {:#x}",
++       1870 |                       m_presents, ~w[22], w[24], m_previous_fence_id, m_previous_fence_value,
++       1871 |                       ~w[22] < 192 ? system.Host1x().GetSyncpointManager().GetGuestSyncpointValue(~w[22]) : 0U);
++       1872 |             // With EDEN_NX2_FRAMES_AHEAD=1, only run a frame ahead while the GPU keeps up. With
++       1873 |             // the previous frame still on the GPU here, the GPU is the limit and running ahead
++       1874 |             // gains nothing; and Splatoon Raiders, which reuses its command memory as if the GPU
++       1875 |             // were at most a frame behind, rewrote command lists Eden had not read yet (misread
++       1876 |             // commands, then crashes, with a slow GPU). Wait for this frame too then. Not when a
++       1877 |             // suspended channel brought us here: this frame can't finish before the present
++       1878 |             // returns.
++       1879 |             const bool gpu_behind = frames_ahead == 1 && m_previous_fence_id < 192 &&
++       1880 |                                     !system.Host1x().GetSyncpointManager().IsReadyGuest(
++       1881 |                                         m_previous_fence_id, m_previous_fence_value);
++       1882 |             WaitForFrame(m_previous_fence_id, m_previous_fence_value);
++       1883 |             if (gpu_behind) {
++       1884 |                 WaitForFrame(~w[22], w[24]);
+  1337  1885 |                                     }
++       1886 |         } else if (frames_ahead == 0) {
++       1887 |             WaitForFrame(~w[22], w[24]);
+  1338  1888 |                                 }
++       1889 |         m_previous_fence_id = ~w[22];
++       1890 |         m_previous_fence_value = w[24];
++       1891 |         const auto waited = std::chrono::steady_clock::now();
++       1892 |         Composite(w[5], ~w[22], w[24], w[7]);
++       1893 |         const auto composited = std::chrono::steady_clock::now();
++       1894 |         PaceToVblank(w[12], ctx.GetThread().GetOwnerProcess());
++       1895 |         const auto paced = std::chrono::steady_clock::now();
++       1896 |         if (Common::DkbFrameTrace::Enabled()) {
++       1897 |             const auto ms = [](auto duration) {
++       1898 |                 return std::chrono::duration<double, std::milli>(duration).count();
++       1899 |             };
++       1900 |             if (m_frame_trace.rate.Ready(paced)) {
++       1901 |                 LOG_INFO(Service,
++       1902 |                          "DKB frame present={} word12={:#x} requested_interval={} "
++       1903 |                          "requested_hz={} effective_interval={} effective_hz={} forced_interval={} "
++       1904 |                          "speed_limit={} speed_percent={} switches={} last_switch={:#x}->{:#x} "
++       1905 |                          "cpu_frame_wall_ms={:.3f} cpu_present_wall_ms={:.3f} fence_wall_ms={:.3f} "
++       1906 |                          "composite_wall_ms={:.3f} target_ms={:.3f} sleep_requested_ms={:.3f} "
++       1907 |                          "sleep_actual_wall_ms={:.3f} pace_wall_ms={:.3f} deadline_reset={}",
++       1908 |                          m_presents, w[12], w[12] >> 16, w[12] & 0xffff,
++       1909 |                          m_frame_trace.interval, m_frame_trace.refresh, m_frame_trace.forced,
++       1910 |                          Settings::values.use_speed_limit.GetValue(), Settings::SpeedLimit(),
++       1911 |                          m_frame_trace.switches, m_frame_trace.switch_from,
++       1912 |                          m_frame_trace.switch_to,
++       1913 |                          m_frame_trace.last_present == std::chrono::steady_clock::time_point{}
++       1914 |                              ? -1.0 : ms(entered - m_frame_trace.last_present),
++       1915 |                          ms(paced - entered), ms(waited - entered), ms(composited - waited),
++       1916 |                          m_frame_trace.target_ms, m_frame_trace.sleep_requested_ms,
++       1917 |                          m_frame_trace.sleep_actual_ms, ms(paced - composited),
++       1918 |                          m_frame_trace.deadline_reset);
++       1919 |                 m_frame_trace.switches = 0;
+  1339  1920 |                             }
++       1921 |             m_frame_trace.last_present = entered;
+  1340  1922 |                         }
++       1923 |         // Where each frame's time goes on the present thread, averaged per 600 presents: the
++       1924 |         // game is blocked here while Eden's GPU thread catches up (fence) and composites.
++       1925 |         {
++       1926 |             using us = std::chrono::microseconds;
++       1927 |             // long long like the stats: microseconds::rep is long on Linux (std::max needs one type).
++       1928 |             const auto to_us = [](auto d) -> long long {
++       1929 |                 return std::chrono::duration_cast<us>(d).count();
++       1930 |             };
++       1931 |             m_stats.fence_us += to_us(waited - entered);
++       1932 |             m_stats.composite_us += to_us(composited - waited);
++       1933 |             m_stats.pace_us += to_us(paced - composited);
++       1934 |             m_stats.max_fence_us = (std::max<long long>)(m_stats.max_fence_us, static_cast<long long>(to_us(waited - entered)));
++       1935 |             // Counted at the reply: the game gets its buffers back with this frame unfinished.
++       1936 |             if (const u32 fence_id = ~w[22]; fence_id < 192 &&
++       1937 |                 !system.Host1x().GetSyncpointManager().IsReadyGuest(fence_id, w[24])) {
++       1938 |                 ++m_stats.ran_ahead;
+  1341  1939 |                     }
++       1940 |             if (m_stats.last_present != std::chrono::steady_clock::time_point{}) {
++       1941 |                 const long long frame = to_us(entered - m_stats.last_present);
++       1942 |                 m_stats.frame_us += frame;
++       1943 |                 m_stats.max_frame_us = (std::max)(m_stats.max_frame_us, frame);
++       1944 |                 m_stats.hitches += frame > 100'000 ? 1 : 0;
+  1342  1945 |                 }
+- 1343       |                 mask=c->available;
++       1946 |             m_stats.last_present = entered;
++       1947 |             if (++m_stats.presents == 600) {
++       1948 |                 LOG_INFO(Service,
++       1949 |                          "nx2:vi2 last 600 presents: frame {} us (max {}, {} over 100 ms), "
++       1950 |                          "blocked on the GPU fence {} us (max {}), composite {} us, vblank "
++       1951 |                          "pacing {} us, {} ran a frame ahead",
++       1952 |                          m_stats.frame_us / 599, m_stats.max_frame_us, m_stats.hitches,
++       1953 |                          m_stats.fence_us / 600, m_stats.max_fence_us, m_stats.composite_us / 600,
++       1954 |                          m_stats.pace_us / 600, m_stats.ran_ahead);
++       1955 |                 m_stats = {.last_present = entered};
+  1344  1956 |             }
+  1345  1957 |         }
+- 1346       |         IPC::ResponseBuilder rb{ctx,8};rb.Push(result.raw);rb.Push(mask);
+- 1347       |         for(u32 i=0;i<4;++i)rb.Push<u32>(0);
++       1958 |         constexpr u64 AvailableSlots = 0x7fff;
++       1959 |         TipcReplyWords(ctx, {static_cast<u32>(AvailableSlots),
++       1960 |                              static_cast<u32>(AvailableSlots >> 32), 0, 0, 0, 0});
+  1348  1961 |     }
+```
+
+</details>
+
+### P0-V02 · VI2 QueryDisplayRefreshRate
+
+Comparer forme exacte de réponse et politique 60/120 Hz. Un mauvais payload peut faire échouer l'initialisation VI2 avant la présentation ; ce n'est pas une optimisation de cadence.
+
+Encore : [graphics_supervisor.cpp:770–777](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp#L770-L777) — 8 lignes.
+
+<details>
+<summary>Lichii — 3071–3073 : 1 alignées, 7 propres Encore, 2 propres upstream</summary>
+
+Source : [nx2_gsv.h:3071–3073](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nx2_gsv.h#L3071-L3073).
+
+```diff
+-  770       |     void QueryRefreshRate(HLERequestContext& ctx) {
+-  771       |         const Result result = ValidateDisplayStatus(ctx, 103);
+-  772       |         IPC::ResponseBuilder rb{ctx, 4};
+-  773       |         rb.Push(result.raw);
+-  774       |         rb.Push<u32>(result.IsSuccess()
+-  775       |                           ? GraphicsSupervisorProtocol::Vi2NominalRefreshRateHz : 0);
+-  776       |         rb.Push<u32>(0); // SDK's refresh-rate capability boolean.
++       3071 |     void QueryDisplayRefreshRate(HLERequestContext& ctx) {
++       3072 |         TipcReplyWords(ctx, {60, 0});
+   777  3073 |     }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 2374–2376 : 1 alignées, 7 propres Encore, 2 propres upstream</summary>
+
+Source : [nx2_gsv.h:2374–2376](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nx2_gsv.h#L2374-L2376).
+
+```diff
+-  770       |     void QueryRefreshRate(HLERequestContext& ctx) {
+-  771       |         const Result result = ValidateDisplayStatus(ctx, 103);
+-  772       |         IPC::ResponseBuilder rb{ctx, 4};
+-  773       |         rb.Push(result.raw);
+-  774       |         rb.Push<u32>(result.IsSuccess()
+-  775       |                           ? GraphicsSupervisorProtocol::Vi2NominalRefreshRateHz : 0);
+-  776       |         rb.Push<u32>(0); // SDK's refresh-rate capability boolean.
++       2374 |     void QueryDisplayRefreshRate(HLERequestContext& ctx) {
++       2375 |         TipcReplyWords(ctx, {60, 0});
+   777  2376 |     }
+```
+
+</details>
+
+### P0-V03 · VI2 QueryDisplayHdrStatus
+
+Comparer format HDR/SDR, luminance et codes de résultat. Encore vise un contrat statique PS5 ; Lichii interroge davantage le moniteur hôte. Seule la forme attendue par l'invité est pertinente au démarrage.
+
+Encore : [graphics_supervisor.cpp:778–786](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp#L778-L786) — 9 lignes.
+
+<details>
+<summary>Lichii — 3146–3149 : 1 alignées, 8 propres Encore, 3 propres upstream</summary>
+
+Source : [nx2_gsv.h:3146–3149](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nx2_gsv.h#L3146-L3149).
+
+```diff
+-  778       |     void QueryHdrStatus(HLERequestContext& ctx) {
+-  779       |         const Result result = ValidateDisplayStatus(ctx, 104);
+-  780       |         IPC::ResponseBuilder rb{ctx, 5};
+-  781       |         rb.Push(result.raw);
+-  782       |         rb.Push<u64>(result.IsSuccess()
+-  783       |                           ? GraphicsSupervisorProtocol::Vi2SdrOutputFormat : 0);
+-  784       |         rb.Push<u32>(result.IsSuccess()
+-  785       |                           ? GraphicsSupervisorProtocol::Vi2SdrPeakNits : 0);
++       3146 |     void QueryDisplayHdrStatus(HLERequestContext& ctx) {
++       3147 |         const auto status = m_hdr_notifications.RecordStatus(QueryHostHdrOutput());
++       3148 |         TipcReplyWords(ctx, {status.enabled ? 2U : 1U, 0, status.peak_luminance});
+   786  3149 |     }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 2392–2394 : 1 alignées, 8 propres Encore, 2 propres upstream</summary>
+
+Source : [nx2_gsv.h:2392–2394](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nx2_gsv.h#L2392-L2394).
+
+```diff
+-  778       |     void QueryHdrStatus(HLERequestContext& ctx) {
+-  779       |         const Result result = ValidateDisplayStatus(ctx, 104);
+-  780       |         IPC::ResponseBuilder rb{ctx, 5};
+-  781       |         rb.Push(result.raw);
+-  782       |         rb.Push<u64>(result.IsSuccess()
+-  783       |                           ? GraphicsSupervisorProtocol::Vi2SdrOutputFormat : 0);
+-  784       |         rb.Push<u32>(result.IsSuccess()
+-  785       |                           ? GraphicsSupervisorProtocol::Vi2SdrPeakNits : 0);
++       2392 |     void QueryDisplayHdrStatus(HLERequestContext& ctx) {
++       2393 |         TipcReplyWords(ctx, {1, 0, 400});
+   786  2394 |     }
+```
+
+</details>
+
+### P0-V04 · VI2 QueryDisplayHdrPaperWhite
+
+Même objectif : vérifier l'ABI et les valeurs admissibles, pas reproduire les mécanismes desktop de détection HDR.
+
+Encore : [graphics_supervisor.cpp:787–793](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp#L787-L793) — 7 lignes.
+
+<details>
+<summary>Lichii — 3140–3142 : 1 alignées, 6 propres Encore, 2 propres upstream</summary>
+
+Source : [nx2_gsv.h:3140–3142](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nx2_gsv.h#L3140-L3142).
+
+```diff
+-  787       |     void QueryPaperWhite(HLERequestContext& ctx) {
+-  788       |         const Result result = ValidateDisplayStatus(ctx, 105);
+-  789       |         IPC::ResponseBuilder rb{ctx, 3};
+-  790       |         rb.Push(result.raw);
+-  791       |         rb.Push<u32>(result.IsSuccess()
+-  792       |                           ? GraphicsSupervisorProtocol::Vi2SdrPaperWhiteNits : 0);
++       3140 |     void QueryDisplayHdrPaperWhite(HLERequestContext& ctx) {
++       3141 |         TipcReplyWords(ctx, {m_hdr_notifications.RecordPaperWhite(QueryHostHdrOutput())});
+   793  3142 |     }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 2380–2382 : 1 alignées, 6 propres Encore, 2 propres upstream</summary>
+
+Source : [nx2_gsv.h:2380–2382](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nx2_gsv.h#L2380-L2382).
+
+```diff
+-  787       |     void QueryPaperWhite(HLERequestContext& ctx) {
+-  788       |         const Result result = ValidateDisplayStatus(ctx, 105);
+-  789       |         IPC::ResponseBuilder rb{ctx, 3};
+-  790       |         rb.Push(result.raw);
+-  791       |         rb.Push<u32>(result.IsSuccess()
+-  792       |                           ? GraphicsSupervisorProtocol::Vi2SdrPaperWhiteNits : 0);
++       2380 |     void QueryDisplayHdrPaperWhite(HLERequestContext& ctx) {
++       2381 |         TipcReplyWords(ctx, {203});
+   793  2382 |     }
+```
+
+</details>
+
+### P0-L01 · Loader NX OpenNative
+
+Ouverture du contenu natif NS2 et choix de program index. À vérifier pour NUP/ExeFS : session, control, RomFS et modules doivent provenir du même programme.
+
+Encore : [nx.cpp:613–642](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nx/core/loader/nx.cpp#L613-L642) — 30 lignes.
+
+<details>
+<summary>Lichii — 635–664 : 30 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [nx.cpp:635–664](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/loader/nx.cpp#L635-L664).
+
+```diff
+   613   635 |     void OpenNative(u32 pi, std::size_t program_index) {
+   614   636 |         const auto base = BaseOf(selected);
+   615   637 |         if (base == Absent) {
+   616   638 |             status = ResultStatus::ErrorNSPMissingProgramNCA;
+   617   639 |             return;
+   618   640 |         }
+   619   641 |         program_id = Archive().programs()[pi].id;
+   620   642 |         auto package = SnapshotPackage(base);
+   621   643 |         if (package == nullptr) {
+   622   644 |             return;
+   623   645 |         }
+   624   646 |         // RomFS updates also need the base NCA in the content provider.
+   625   647 |         native_extras.push_back(package);
+   626   648 |         native = std::make_unique<AppLoader_NSP>(std::move(package),
+   627   649 |                                                  system->GetFileSystemController(),
+   628   650 |                                                  system->GetContentProvider(), program_id,
+   629   651 |                                                  program_index);
+   630   652 |         const auto& owner = Archive().applications()[app];
+   631   653 |         for (u32 si = owner.first_snapshot; si < owner.first_snapshot + owner.snapshot_count;
+   632   654 |              ++si) {
+   633   655 |             const auto type = Archive().snapshots()[si].type;
+   634   656 |             if ((type == Update || type == AddOn) && !Archive().snapshots()[si].addon_title_id()) {
+   635   657 |                 if (auto extra = SnapshotPackage(si)) {
+   636   658 |                     native_extras.push_back(std::move(extra));
+   637   659 |                 }
+   638   660 |             }
+   639   661 |         }
+   640   662 |         LoadNacp(selected);
+   641   663 |         status = ResultStatus::Success;
+   642   664 |     }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 632–659 : 28 alignées, 2 propres Encore, 0 propres upstream</summary>
+
+Source : [nx.cpp:632–659](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/loader/nx.cpp#L632-L659).
+
+```diff
+   613   632 |     void OpenNative(u32 pi, std::size_t program_index) {
+   614   633 |         const auto base = BaseOf(selected);
+   615   634 |         if (base == Absent) {
+   616   635 |             status = ResultStatus::ErrorNSPMissingProgramNCA;
+   617   636 |             return;
+   618   637 |         }
+   619   638 |         program_id = Archive().programs()[pi].id;
+   620   639 |         auto package = SnapshotPackage(base);
+   621   640 |         if (package == nullptr) {
+   622   641 |             return;
+   623   642 |         }
+-  624       |         // RomFS updates also need the base NCA in the content provider.
+-  625       |         native_extras.push_back(package);
+   626   643 |         native = std::make_unique<AppLoader_NSP>(std::move(package),
+   627   644 |                                                  system->GetFileSystemController(),
+   628   645 |                                                  system->GetContentProvider(), program_id,
+   629   646 |                                                  program_index);
+   630   647 |         const auto& owner = Archive().applications()[app];
+   631   648 |         for (u32 si = owner.first_snapshot; si < owner.first_snapshot + owner.snapshot_count;
+   632   649 |              ++si) {
+   633   650 |             const auto type = Archive().snapshots()[si].type;
+   634   651 |             if ((type == Update || type == AddOn) && !Archive().snapshots()[si].addon_title_id()) {
+   635   652 |                 if (auto extra = SnapshotPackage(si)) {
+   636   653 |                     native_extras.push_back(std::move(extra));
+   637   654 |                 }
+   638   655 |             }
+   639   656 |         }
+   640   657 |         LoadNacp(selected);
+   641   658 |         status = ResultStatus::Success;
+   642   659 |     }
+```
+
+</details>
+
+### P0-L02 · Loader NX Open
+
+Comparer détection du conteneur, application id demandé, programme sélectionné, NACP et RomFS. Un succès partiel de parsing ne garantit pas que le code lancé correspond au bon programme.
+
+Encore : [nx.cpp:644–713](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nx/core/loader/nx.cpp#L644-L713) — 70 lignes.
+
+<details>
+<summary>Lichii — 666–735 : 69 alignées, 1 propres Encore, 1 propres upstream</summary>
+
+Source : [nx.cpp:666–735](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/loader/nx.cpp#L666-L735).
+
+```diff
+   644   666 |     void Open(FileSys::VirtualFile nx_file, u64 requested, std::size_t program_index) {
+-  645       |         auto opened = FileSys::OpenNxSession(nx_file);
++        667 |         auto opened = FileSys::OpenNxSession(nx_file, HostPath(nx_file));
+   646   668 |         if (!opened) {
+   647   669 |             LOG_ERROR(Loader, "Cannot open NX archive {}: {}", nx_file->GetName(),
+   648   670 |                       opened.error.message);
+   649   671 |             return;
+   650   672 |         }
+   651   673 |         session = std::move(*opened.value);
+   652   674 |         const auto& a = Archive();
+   653   675 |         for (u32 i = 0; i < a.applications().size(); ++i) {
+   654   676 |             const auto& owner = a.applications()[i];
+   655   677 |             if (owner.platform != 1 && owner.platform != 2) {
+   656   678 |                 continue;
+   657   679 |             }
+   658   680 |             bool matches = requested == 0 || owner.id == requested;
+   659   681 |             for (u32 p = owner.first_program;
+   660   682 |                  p != Absent && p < owner.first_program + owner.program_count; ++p) {
+   661   683 |                 matches |= a.programs()[p].id == requested;
+   662   684 |             }
+   663   685 |             if (matches && app == Absent) {
+   664   686 |                 app = i;
+   665   687 |             }
+   666   688 |         }
+   667   689 |         if (app == Absent) {
+   668   690 |             status = ResultStatus::ErrorNSPMissingProgramNCA;
+   669   691 |             return;
+   670   692 |         }
+   671   693 |         const auto& owner = a.applications()[app];
+   672   694 |         u32 pi = Absent;
+   673   695 |         for (u32 p = owner.first_program;
+   674   696 |              p != Absent && p < owner.first_program + owner.program_count; ++p) {
+   675   697 |             program_ids.push_back(a.programs()[p].id);
+   676   698 |             const bool wanted = requested != 0 && requested != owner.id
+   677   699 |                                     ? a.programs()[p].id == requested
+   678   700 |                                     : a.programs()[p].kind == 0;
+   679   701 |             if (wanted && pi == Absent) {
+   680   702 |                 pi = p;
+   681   703 |             }
+   682   704 |         }
+   683   705 |         if (pi == Absent) {
+   684   706 |             status = ResultStatus::ErrorNSPMissingProgramNCA;
+   685   707 |             return;
+   686   708 |         }
+   687   709 |         // A program with its own snapshots is selected here; a native snapshot holding every
+   688   710 |         // program leaves the index to the NSP.
+   689   711 |         if (program_index != 0) {
+   690   712 |             const u64 target = a.programs()[pi].id + program_index;
+   691   713 |             for (u32 p = owner.first_program;
+   692   714 |                  p != Absent && p < owner.first_program + owner.program_count; ++p) {
+   693   715 |                 if (a.programs()[p].id == target && Latest(p) != Absent) {
+   694   716 |                     pi = p;
+   695   717 |                     program_index = 0;
+   696   718 |                 }
+   697   719 |             }
+   698   720 |         }
+   699   721 |         selected = Latest(pi);
+   700   722 |         if (selected == Absent) {
+   701   723 |             status = ResultStatus::ErrorNSPMissingProgramNCA;
+   702   724 |             return;
+   703   725 |         }
+   704   726 |         if (IsTree(selected)) {
+   705   727 |             if (program_index != 0) {
+   706   728 |                 status = ResultStatus::ErrorNSPMissingProgramNCA;
+   707   729 |                 return;
+   708   730 |             }
+   709   731 |             OpenTree(pi);
+   710   732 |         } else {
+   711   733 |             OpenNative(pi, program_index);
+   712   734 |         }
+   713   735 |     }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 661–730 : 69 alignées, 1 propres Encore, 1 propres upstream</summary>
+
+Source : [nx.cpp:661–730](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/loader/nx.cpp#L661-L730).
+
+```diff
+   644   661 |     void Open(FileSys::VirtualFile nx_file, u64 requested, std::size_t program_index) {
+-  645       |         auto opened = FileSys::OpenNxSession(nx_file);
++        662 |         auto opened = FileSys::OpenNxSession(nx_file, HostPath(nx_file));
+   646   663 |         if (!opened) {
+   647   664 |             LOG_ERROR(Loader, "Cannot open NX archive {}: {}", nx_file->GetName(),
+   648   665 |                       opened.error.message);
+   649   666 |             return;
+   650   667 |         }
+   651   668 |         session = std::move(*opened.value);
+   652   669 |         const auto& a = Archive();
+   653   670 |         for (u32 i = 0; i < a.applications().size(); ++i) {
+   654   671 |             const auto& owner = a.applications()[i];
+   655   672 |             if (owner.platform != 1 && owner.platform != 2) {
+   656   673 |                 continue;
+   657   674 |             }
+   658   675 |             bool matches = requested == 0 || owner.id == requested;
+   659   676 |             for (u32 p = owner.first_program;
+   660   677 |                  p != Absent && p < owner.first_program + owner.program_count; ++p) {
+   661   678 |                 matches |= a.programs()[p].id == requested;
+   662   679 |             }
+   663   680 |             if (matches && app == Absent) {
+   664   681 |                 app = i;
+   665   682 |             }
+   666   683 |         }
+   667   684 |         if (app == Absent) {
+   668   685 |             status = ResultStatus::ErrorNSPMissingProgramNCA;
+   669   686 |             return;
+   670   687 |         }
+   671   688 |         const auto& owner = a.applications()[app];
+   672   689 |         u32 pi = Absent;
+   673   690 |         for (u32 p = owner.first_program;
+   674   691 |              p != Absent && p < owner.first_program + owner.program_count; ++p) {
+   675   692 |             program_ids.push_back(a.programs()[p].id);
+   676   693 |             const bool wanted = requested != 0 && requested != owner.id
+   677   694 |                                     ? a.programs()[p].id == requested
+   678   695 |                                     : a.programs()[p].kind == 0;
+   679   696 |             if (wanted && pi == Absent) {
+   680   697 |                 pi = p;
+   681   698 |             }
+   682   699 |         }
+   683   700 |         if (pi == Absent) {
+   684   701 |             status = ResultStatus::ErrorNSPMissingProgramNCA;
+   685   702 |             return;
+   686   703 |         }
+   687   704 |         // A program with its own snapshots is selected here; a native snapshot holding every
+   688   705 |         // program leaves the index to the NSP.
+   689   706 |         if (program_index != 0) {
+   690   707 |             const u64 target = a.programs()[pi].id + program_index;
+   691   708 |             for (u32 p = owner.first_program;
+   692   709 |                  p != Absent && p < owner.first_program + owner.program_count; ++p) {
+   693   710 |                 if (a.programs()[p].id == target && Latest(p) != Absent) {
+   694   711 |                     pi = p;
+   695   712 |                     program_index = 0;
+   696   713 |                 }
+   697   714 |             }
+   698   715 |         }
+   699   716 |         selected = Latest(pi);
+   700   717 |         if (selected == Absent) {
+   701   718 |             status = ResultStatus::ErrorNSPMissingProgramNCA;
+   702   719 |             return;
+   703   720 |         }
+   704   721 |         if (IsTree(selected)) {
+   705   722 |             if (program_index != 0) {
+   706   723 |                 status = ResultStatus::ErrorNSPMissingProgramNCA;
+   707   724 |                 return;
+   708   725 |             }
+   709   726 |             OpenTree(pi);
+   710   727 |         } else {
+   711   728 |             OpenNative(pi, program_index);
+   712   729 |         }
+   713   730 |     }
+```
+
+</details>
+
+### P0-L03 · AppLoader_NX::Load
+
+Point d'entrée final vers le KProcess. Comparer ordre des modules, registration du contenu, RomFSFactory et erreurs propagées. C'est un endroit où une divergence peut expliquer un crash avant GPU, mais pas un freeze après deux GPFIFO.
+
+Encore : [nx.cpp:837–860](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nx/core/loader/nx.cpp#L837-L860) — 24 lignes.
+
+<details>
+<summary>Lichii — 854–877 : 24 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [nx.cpp:854–877](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/loader/nx.cpp#L854-L877).
+
+```diff
+   837   854 | AppLoader::LoadResult AppLoader_NX::Load(Kernel::KProcess& process, Core::System& system) {
+   838   855 |     if (is_loaded) {
+   839   856 |         return {ResultStatus::ErrorAlreadyLoaded, {}};
+   840   857 |     }
+   841   858 |     if (impl->status != ResultStatus::Success) {
+   842   859 |         return {impl->status, {}};
+   843   860 |     }
+   844   861 |     RegisterFrontendContent(system);
+   845   862 |     if (!impl->tree) {
+   846   863 |         const auto result = impl->native->Load(process, system);
+   847   864 |         is_loaded = result.first == ResultStatus::Success;
+   848   865 |         return result;
+   849   866 |     }
+   850   867 |     const auto result = impl->tree_executable->Load(process, system);
+   851   868 |     if (result.first != ResultStatus::Success) {
+   852   869 |         return result;
+   853   870 |     }
+   854   871 |     system.GetFileSystemController().RegisterProcess(
+   855   872 |         process.GetProcessId(), impl->program_id,
+   856   873 |         std::make_shared<FileSys::RomFSFactory>(*this, system.GetContentProvider(),
+   857   874 |                                                 system.GetFileSystemController()));
+   858   875 |     is_loaded = true;
+   859   876 |     return result;
+   860   877 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 819–847 : 23 alignées, 1 propres Encore, 6 propres upstream</summary>
+
+Source : [nx.cpp:819–847](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/loader/nx.cpp#L819-L847).
+
+```diff
+   837   819 | AppLoader::LoadResult AppLoader_NX::Load(Kernel::KProcess& process, Core::System& system) {
+   838   820 |     if (is_loaded) {
+   839   821 |         return {ResultStatus::ErrorAlreadyLoaded, {}};
+   840   822 |     }
+   841   823 |     if (impl->status != ResultStatus::Success) {
+   842   824 |         return {impl->status, {}};
+   843   825 |     }
+-  844       |     RegisterFrontendContent(system);
++        826 |     // The frontend owns this provider; the game list fills it the same way.
++        827 |     if (const auto* slot = system.GetContentProviderUnion().GetSlotProvider(
++        828 |             FileSys::ContentProviderUnionSlot::FrontendManual)) {
++        829 |         RegisterContent(*const_cast<FileSys::ManualContentProvider*>(
++        830 |             static_cast<const FileSys::ManualContentProvider*>(slot)));
++        831 |     }
+   845   832 |     if (!impl->tree) {
+   846   833 |         const auto result = impl->native->Load(process, system);
+   847   834 |         is_loaded = result.first == ResultStatus::Success;
+   848   835 |         return result;
+   849   836 |     }
+   850   837 |     const auto result = impl->tree_executable->Load(process, system);
+   851   838 |     if (result.first != ResultStatus::Success) {
+   852   839 |         return result;
+   853   840 |     }
+   854   841 |     system.GetFileSystemController().RegisterProcess(
+   855   842 |         process.GetProcessId(), impl->program_id,
+   856   843 |         std::make_shared<FileSys::RomFSFactory>(*this, system.GetContentProvider(),
+   857   844 |                                                 system.GetFileSystemController()));
+   858   845 |     is_loaded = true;
+   859   846 |     return result;
+   860   847 | }
+```
+
+</details>
+
+### P0-L04 · AppLoader_NX::ReadRomFS
+
+Comparer base/update et programme courant. Important pour Pokopia NUP et MKW update : un RomFS valide mais d'un mauvais index peut charger loin avant de diverger.
+
+Encore : [nx.cpp:878–892](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nx/core/loader/nx.cpp#L878-L892) — 15 lignes.
+
+<details>
+<summary>Lichii — 895–909 : 15 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [nx.cpp:895–909](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/loader/nx.cpp#L895-L909).
+
+```diff
+   878   895 | ResultStatus AppLoader_NX::ReadRomFS(FileSys::VirtualFile& out_file) {
+   879   896 |     if (impl->status != ResultStatus::Success) {
+   880   897 |         return impl->status;
+   881   898 |     }
+   882   899 |     if (!impl->tree) {
+   883   900 |         return impl->native->ReadRomFS(out_file);
+   884   901 |     }
+   885   902 |     std::call_once(impl->tree_romfs_once, [this] {
+   886   903 |         if (impl->tree_romfs_dir != nullptr) {
+   887   904 |             impl->tree_romfs = FileSys::CreateRomFS(impl->tree_romfs_dir);
+   888   905 |         }
+   889   906 |     });
+   890   907 |     out_file = impl->tree_romfs;
+   891   908 |     return out_file != nullptr ? ResultStatus::Success : ResultStatus::ErrorNoRomFS;
+   892   909 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 865–879 : 15 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [nx.cpp:865–879](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/loader/nx.cpp#L865-L879).
+
+```diff
+   878   865 | ResultStatus AppLoader_NX::ReadRomFS(FileSys::VirtualFile& out_file) {
+   879   866 |     if (impl->status != ResultStatus::Success) {
+   880   867 |         return impl->status;
+   881   868 |     }
+   882   869 |     if (!impl->tree) {
+   883   870 |         return impl->native->ReadRomFS(out_file);
+   884   871 |     }
+   885   872 |     std::call_once(impl->tree_romfs_once, [this] {
+   886   873 |         if (impl->tree_romfs_dir != nullptr) {
+   887   874 |             impl->tree_romfs = FileSys::CreateRomFS(impl->tree_romfs_dir);
+   888   875 |         }
+   889   876 |     });
+   890   877 |     out_file = impl->tree_romfs;
+   891   878 |     return out_file != nullptr ? ResultStatus::Success : ResultStatus::ErrorNoRomFS;
+   892   879 | }
+```
+
+</details>
+
+### P0-L05 · AppLoader_NX::ReadPatchedRomFS
+
+La fonction peut être absente d'un fork ; l'absence est consignée au lieu d'inventer une parité. Encore/Lichii distinguent le RomFS patché du brut.
+
+Encore : [nx.cpp:894–919](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nx/core/loader/nx.cpp#L894-L919) — 26 lignes.
+
+<details>
+<summary>Lichii — 911–936 : 26 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [nx.cpp:911–936](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/loader/nx.cpp#L911-L936).
+
+```diff
+   894   911 | ResultStatus AppLoader_NX::ReadPatchedRomFS(FileSys::VirtualFile& out_file) {
+   895   912 |     if (impl->status != ResultStatus::Success || impl->tree) {
+   896   913 |         return ReadRomFS(out_file);
+   897   914 |     }
+   898   915 |     const auto package = impl->SnapshotPackage(impl->BaseOf(impl->selected));
+   899   916 |     if (package == nullptr) {
+   900   917 |         return ResultStatus::ErrorNSPMissingProgramNCA;
+   901   918 |     }
+   902   919 |     const FileSys::NSP nsp{package, impl->program_id};
+   903   920 |     const auto base_nca = nsp.GetNCA(impl->program_id, FileSys::ContentRecordType::Program);
+   904   921 |     if (base_nca == nullptr || base_nca->GetRomFS() == nullptr) {
+   905   922 |         return ResultStatus::ErrorNoRomFS;
+   906   923 |     }
+   907   924 |     // The updates of the archive are found through the frontend provider, as when it runs.
+   908   925 |     auto& system = *impl->system;
+   909   926 |     if (const auto* slot = system.GetContentProviderUnion().GetSlotProvider(
+   910   927 |             FileSys::ContentProviderUnionSlot::FrontendManual)) {
+   911   928 |         RegisterContent(*const_cast<FileSys::ManualContentProvider*>(
+   912   929 |             static_cast<const FileSys::ManualContentProvider*>(slot)));
+   913   930 |     }
+   914   931 |     const FileSys::PatchManager pm{impl->program_id, system.GetFileSystemController(),
+   915   932 |                                    system.GetContentProvider()};
+   916   933 |     out_file = pm.PatchRomFS(base_nca.get(), base_nca->GetRomFS(),
+   917   934 |                              FileSys::ContentRecordType::Program, nullptr, false);
+   918   935 |     return out_file != nullptr ? ResultStatus::Success : ResultStatus::ErrorNoRomFS;
+   919   936 | }
+```
+
+</details>
+
+EglantinePS5 : fonction absente ou non extraite au SHA examiné ; aucune parité supposée.
+
+### P0-L06 · AppLoader_NX::ReadNSOModules
+
+Comparer la liste et l'ordre des NSO réellement exposés. nxnative documente explicitement que l'absence d'un module attendu peut arrêter le boot ; ici on vérifie uniquement le loader Encore/forks.
+
+Encore : [nx.cpp:1029–1035](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nx/core/loader/nx.cpp#L1029-L1035) — 7 lignes.
+
+<details>
+<summary>Lichii — 1046–1052 : 7 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [nx.cpp:1046–1052](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/loader/nx.cpp#L1046-L1052).
+
+```diff
+  1029  1046 | ResultStatus AppLoader_NX::ReadNSOModules(Modules& modules) {
+  1030  1047 |     if (impl->status != ResultStatus::Success) {
+  1031  1048 |         return impl->status;
+  1032  1049 |     }
+  1033  1050 |     return impl->tree ? impl->tree_executable->ReadNSOModules(modules)
+  1034  1051 |                       : impl->native->ReadNSOModules(modules);
+  1035  1052 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 974–980 : 7 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [nx.cpp:974–980](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/loader/nx.cpp#L974-L980).
+
+```diff
+  1029   974 | ResultStatus AppLoader_NX::ReadNSOModules(Modules& modules) {
+  1030   975 |     if (impl->status != ResultStatus::Success) {
+  1031   976 |         return impl->status;
+  1032   977 |     }
+  1033   978 |     return impl->tree ? impl->tree_executable->ReadNSOModules(modules)
+  1034   979 |                       : impl->native->ReadNSOModules(modules);
+  1035   980 | }
+```
+
+</details>
+
+### Lecture de cette annexe
+
+- **VI2 229** est volontairement comparé comme homologue comportemental : Encore l'appelle `Present`, les forks `PresentClientBuffer`. La divergence de code est massive parce qu'Encore passe par le vrai nvnflinger/NVMap tandis que les forks portent aussi pacing/trace desktop. Le critère PS5 reste : image propriétaire valide → QueueBuffer accepté → fence/release → frame visible.
+- **Loader NX** est beaucoup plus proche entre Encore et Lichii/Eglantine. Les petites différences doivent donc être examinées avec plus de poids que les gros écarts purement hôte de VI2.
+- L'absence d'une fonction dans un fork n'est pas assimilée à un bug Encore.
+
+**Couverture ajoutée :** 10 fonctions, 19 comparaisons, 1274 lignes-source parcourues (répétitions incluses), 1 homologue(s) absent(s)/non extrait(s). Aucun résultat console ni statut « résolu » n'est changé.

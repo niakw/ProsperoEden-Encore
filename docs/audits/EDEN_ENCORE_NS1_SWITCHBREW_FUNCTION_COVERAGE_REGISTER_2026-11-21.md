@@ -4497,3 +4497,23 @@ La limitation historique « signal disparition seulement » est donc cohérente 
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 99 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette requalification.
+
+
+### 2026-11-26 — NOTIF alarmes/paramètres partagés : palier global 93
+
+Base : **99 lignes ouvertes**.
+
+Le propriétaire shipping NOTIF avait déjà dépassé l'état du snapshot historique : `NotificationServiceImpl` stocke réellement, pour chaque `AlarmSettingId`, le buffer application (taille exacte ≤ 0x400), le remplace lors d'un update, le restitue dans `LoadApplicationParameter` et le supprime avec l'alarme.
+
+Le défaut restant était structurel : `notif:a` et `notif:s` construisaient chacun leur propre `NotificationServiceImpl`, donc une alarme enregistrée via une façade n'existait pas pour l'autre.
+
+Vendor `e189aaf08aff79a15aa6272e57ce3bdcd9b7af9c` :
+- construit un seul `NotificationServiceImpl` dans `glue.cpp` ;
+- injecte le même `shared_ptr` dans `INotificationServicesForApplication` et `INotificationServices` ;
+- conserve les méthodes Register/Update/Load/Delete existantes et leur stockage réel ; aucun faux backend persistant disque n'est ajouté.
+
+Les trois contrats historiques PARTIEL `RegisterAlarmSetting`, `UpdateAlarmSetting` et `LoadApplicationParameter` sont donc cohérents sur **les deux façades** `notif:a` / `notif:s`.
+
+**6 lignes PARTIEL quittent le pool : nouveau compteur global = 93 lignes ouvertes.**
+
+Gitlink vendor attendu : `e189aaf08aff79a15aa6272e57ce3bdcd9b7af9c`. Aucun build PS5 ni validation console revendiqués.

@@ -368,6 +368,59 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
             observed[diagnostics_h]=spec['entries'][diagnostics_h]
             print('DIAGNOSTICS_NET_EXACT_POST_BACKPORT_REPLAY_PASS',
                   'successors=2', 'https_post=bounded', 'pinned_sources=immutable')
+        # NS2 strict Ampere completion is a reviewed post-backport successor
+        # of the shipping fence manager. Prove the exact maintained block can
+        # be removed byte-for-byte to recover the frozen patch replay.
+        strict_fence_rel='src/video_core/fence_manager.h'
+        if spec['entries'][strict_fence_rel]['active']=='71e095bcfbd1666a7c46b8ffab8ad4357b895bdef1eb8c1fb69992cd8836c6b3':
+            generated=(stage/strict_fence_rel).read_bytes()
+            current=(ACTIVE/strict_fence_rel).read_bytes()
+            assert len(generated)==9151 and sha(generated)=='012cc72932c34fcc82090791d5a4c8c8d64c34966e69948bb4cf6c7b23349c97'
+            assert len(current)==10589 and sha(current)==spec['entries'][strict_fence_rel]['active']
+            strict_native_sync=b'''#ifdef PS5_NATIVE
+    // NS2/Ounce completion joins the producer counter with a semaphore marker
+    // written by the guest GPU. Never let the native counter retire through
+    // SignalFence's Immediate/Fast callback or through a stubbed cache fence:
+    // both can run before the recorded Vulkan marker reaches guest memory.
+    // Maxwell keeps SignalSyncPoint above, including its historical fence
+    // behavior and performance policy.
+    void SignalNativeSyncPoint(u32 value) {
+        if constexpr (!can_async_check) {
+            TryReleasePendingFences<false>();
+        }
+        CommitAsyncFlushes();
+
+        // Allocate the backend fence before publishing the guest/max-like edge.
+        // The native host/GSV edge below is attached only to this real fence.
+        TFence new_fence = CreateFence(false);
+        std::function<void()> retire(
+            [this, value] { syncpoint_manager.IncrementHost(value); });
+
+        if constexpr (can_async_check) {
+            guard.lock();
+        }
+        uncommitted_operations.emplace_back(std::move(retire));
+        syncpoint_manager.IncrementGuest(value);
+        pending_operations.emplace_back(std::move(uncommitted_operations));
+        QueueFence(new_fence);
+        fences.push(std::move(new_fence));
+        if constexpr (can_async_check) {
+            guard.unlock();
+            cv.notify_all();
+        }
+        rasterizer.InvalidateGPUCache();
+    }
+#endif
+
+'''
+            assert current.count(strict_native_sync)==1
+            assert current.replace(strict_native_sync,b'',1)==generated
+            assert spec['entries'][strict_fence_rel]['bytes']==10589
+            observed[strict_fence_rel]=spec['entries'][strict_fence_rel]
+            print('NS2_STRICT_FENCE_EXACT_POST_BACKPORT_REPLAY_PASS',
+                  'successors=1', 'native_completion=real_fence',
+                  'historical_receipts=untouched')
+
         # NS1 Nintendo-online successors are maintained as exact overlays rather than
         # mutating the pinned Eden tree. Reverse the reviewed dispatcher-only delta
         # byte-for-byte before admitting these files into the replay result.

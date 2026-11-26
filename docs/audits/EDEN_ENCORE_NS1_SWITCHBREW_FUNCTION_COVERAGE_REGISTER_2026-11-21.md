@@ -4034,3 +4034,22 @@ Cela qualifie les deux lignes historiques encore ouvertes autour de `GetApplicat
 Arithmétique : **173 - 2 = 171**. Depuis le recalcul 631 : **460 lignes sorties du pool**.
 
 Gitlink repinné sur `2d389c95320c072349231755b9b4c3feb00042bb`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — requalification PSM invité : palier global 161
+
+Base : **171 lignes ouvertes**.
+
+Les PARTIEL historiques PSM **2–6, 8–11 et 14** ont été relus dans le propriétaire actif `encore-active/eden-backports/src/core/hle/service/ptm/psm.cpp`. Ils ne dépendent plus d'un effet physique PS5 pour remplir leur contrat invité :
+- enable/disable/is-enabled de charge conservent l'état et signalent l'événement de charge ;
+- acquire/release controller power supply conservent l'état invité ;
+- enough-power emulation et fast-charge sont persistants et observables ;
+- `IsEnoughPowerSupplied` dérive une réponse cohérente de l'état virtualisé et du power-status hôte.
+
+L'absence volontaire de contrôle de l'alimentation physique PS5 **n'est pas une lacune HLE** : l'invité doit voir une politique de batterie/charge virtualisée, pas piloter l'hôte.
+
+**10 lignes PARTIEL quittent le pool.** `GetBatteryChargeInfoFields` (cmd17) reste ouvert : plusieurs champs électriques sont encore des valeurs virtuelles neutres et doivent rester explicitement qualifiés comme tels.
+
+**Nouveau compteur global : 161 lignes ouvertes.**
+
+Arithmétique : **171 - 10 = 161**. Aucun patch C++ dans cette requalification ; aucun build PS5 ni validation console revendiqués.

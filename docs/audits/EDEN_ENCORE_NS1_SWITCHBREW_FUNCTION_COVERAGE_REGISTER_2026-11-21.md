@@ -4072,3 +4072,23 @@ Pour ces interfaces matérielles virtualisées, l'absence d'effet physique sur l
 **Nouveau compteur global : 155 lignes ouvertes.**
 
 Arithmétique : **161 - 6 = 155**. Aucun patch runtime dans cette requalification ; aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — ACC / applet proxies / audctl : palier global 149
+
+Base : **155 lignes ouvertes**.
+
+Vendor **`e254d8d1b14eaf95de2ad3da9cefa215d99bfc5b`** qualifie les chemins Account/Applet :
+- ACC cmd50 `IsUserRegistrationRequestPermitted` retourne réellement `ProfileManager::CanSystemRegisterUser()` ; l'ancien label `STUBBED` était trompeur et est supprimé ;
+- `OpenLibraryAppletProxy`, `OpenOverlayAppletProxy` et `OpenSystemApplicationProxy` créent déjà leurs proxies réels pour un PID enregistré ; leur branche PID non encore enregistré utilise désormais le résultat AM 201 de retry, comme `OpenApplicationProxy`, au lieu d'un `UNIMPLEMENTED + ResultUnknown` ;
+- `OpenApplicationProxy` lui-même est déjà complet dans l'owner actif NS2-runtime sélectionné par le CMake PS5 : résolution PID, proxy réel et contrat retry AM 201.
+
+Audctl cmd7 `SetDefaultTarget` est également requalifié : cible + fade-in/fade-out sont conservés et `GetDefaultTarget` relit la cible. Aucune action matérielle hôte n'est requise par ce contrat.
+
+**6 lignes PARTIEL quittent le pool.**
+
+**Nouveau compteur global : 149 lignes ouvertes.**
+
+Arithmétique : **155 - 6 = 149**. Depuis le recalcul 631 : **482 lignes sorties du pool**.
+
+Gitlink repinné sur `e254d8d1b14eaf95de2ad3da9cefa215d99bfc5b`. Aucun build PS5 ni validation console revendiqués.

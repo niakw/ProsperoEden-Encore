@@ -3958,8 +3958,22 @@ scene_path = "headless/prosperoeden/pe/ui/case_media_selection.hpp"
 assert scene_path in drift_index and scene_path not in post_index
 scene_drift = drift_index.pop(scene_path)
 assert scene_drift["expected"] == "f4897989b5736bf48401cf5e2201a8af9a59ef03"
-assert scene_drift["actual"] == "9df9797a09979b74cb81c266570a8c8c24c96d41"
+assert scene_drift["actual"] in {"9df9797a09979b74cb81c266570a8c8c24c96d41", "d34bff74bbbb8f79f279e663093f6cfa3f9e0263"}
 scene_current = (ROOT / scene_path).read_text()
+if scene_drift["actual"] == "d34bff74bbbb8f79f279e663093f6cfa3f9e0263":
+    # Reverse only the independently reviewed rear-banner and background-filter changes.
+    current_hunk = "}\n\n\n// Dedicated scene-1 is GamesDB Fanart index 0. All other indexed case\n// scenes are paper/preview media, not the Home or launch background.\ninline bool BackgroundAllowed(std::string_view path) noexcept {\n    if (path.empty()) return false;\n    const auto marker = path.find(\"/box-scene-\");\n    return marker == std::string_view::npos ||\n        path.substr(marker).starts_with(\"/box-scene-1-\");\n}\ninline const std::string* BackgroundScreenshot(const std::vector<std::string>& shots) noexcept {\n    for (const auto& shot : shots)\n        if (BackgroundAllowed(shot) && shot.find(\"/box-scene-\") == std::string::npos)\n            return &shot;\n    for (const auto& shot : shots)\n        if (BackgroundAllowed(shot)) return &shot;\n    return nullptr;\n}\n\n// The front uses an edge-to-edge source: hero, first usable screenshot,\n// finally the icon. All cases preserve the source's aspect via cover UVs.\ninline const std::string* FrontPaper(\n"
+    prior_hunk = "}\n\n\n// The front uses an edge-to-edge source: hero, first usable screenshot,\n// finally the icon. All cases preserve the source's aspect via cover UVs.\ninline const std::string* FrontPaper(\n"
+    assert scene_current.count(current_hunk) == 1
+    scene_current = scene_current.replace(current_hunk, prior_hunk, 1)
+    replay_raw = scene_current.encode("utf-8")
+    assert hashlib.sha1(b"blob " + str(len(replay_raw)).encode() + bytes([0]) + replay_raw).hexdigest() == "6c533fde34593624b1756e82a5cb599a8e6317bc"
+    current_hunk = "            const auto role_at = marker + sizeof(\"/box-scene-\") - 1;\n            if (role_at >= image.size()) continue;\n            const auto role = image[role_at];\n            if (role < '1' || role > '6' ||\n                image == cover || is_front(image))\n                continue;\n            // Scenes 1-3 own dedicated panels. Do not attempt to decode\n            // a second file when its canonical category is already filled.\n            // Extra independent LaunchBox gameplay shots (4-5) remain\n            // eligible to fill an otherwise missing rear slot.\n            if (role == '6') {\n                if (image.compare(marker, sizeof(\"/box-scene-6-\") - 1, \"/box-scene-6-\") == 0 &&\n                    usable(image))\n                    selected[0] = &image;\n                continue;\n            }\n            if (role <= '3') {\n                const auto category = static_cast<std::size_t>(role - '1');\n                if (!selected[category] &&\n"
+    prior_hunk = "            const auto role_at = marker + sizeof(\"/box-scene-\") - 1;\n            if (role_at >= image.size()) continue;\n            const auto role = image[role_at];\n            if (role < '1' || role > '5' ||\n                image == cover || is_front(image))\n                continue;\n            // Scenes 1-3 own dedicated panels. Do not attempt to decode\n            // a second file when its canonical category is already filled.\n            // Extra independent LaunchBox gameplay shots (4-5) remain\n            // eligible to fill an otherwise missing rear slot.\n            if (role <= '3') {\n                const auto category = static_cast<std::size_t>(role - '1');\n                if (!selected[category] &&\n"
+    assert scene_current.count(current_hunk) == 1
+    scene_current = scene_current.replace(current_hunk, prior_hunk, 1)
+    replay_raw = scene_current.encode("utf-8")
+    assert hashlib.sha1(b"blob " + str(len(replay_raw)).encode() + bytes([0]) + replay_raw).hexdigest() == "9df9797a09979b74cb81c266570a8c8c24c96d41"
 scene_added = "            const auto role = image[role_at];\n            if (role < '1' || role > '5' ||\n                image == cover || is_front(image) || !usable(image))\n                continue;\n            // Scenes 1-3 own dedicated panels. Extra independent LaunchBox\n            // gameplay shots (4-5) are real fallback material; the old\n            // selector silently discarded them, leaving a two-shot back.\n            if (role <= '3') {\n                const auto category = static_cast<std::size_t>(role - '1');\n                if (!selected[category] &&\n                    image.compare(marker, kSceneMarkers[category].size(),\n                                  kSceneMarkers[category]) == 0)\n                    selected[category] = &image;\n                continue;\n            }\n            bool seen = false;\n            for (const auto* prior : fallback) {\n                if (prior && *prior == image) seen = true;\n            }\n            if (!seen) {\n                for (auto& slot : fallback) {\n                    if (!slot) { slot = &image; break; }\n                }\n            }\n            continue;\n"
 scene_prior = "            const auto role = image[role_at];\n            if (role < '1' || role > '3') continue;\n            const auto category = static_cast<std::size_t>(role - '1');\n            if (selected[category] ||\n                image.compare(marker, kSceneMarkers[category].size(),\n                              kSceneMarkers[category]) != 0 ||\n                image == cover || is_front(image) || !usable(image))\n                continue;\n            selected[category] = &image;\n            continue;\n"
 # The later bounded-decode optimisation is also reversible. It changes ONLY
@@ -4048,8 +4062,22 @@ direct_current = "72b3283a855b3fb4c62b0ee0b5d310b7756ef297"
 assert direct_path in drift_index and direct_path not in post_index
 direct_drift = drift_index.pop(direct_path)
 assert direct_drift["expected"] == direct_prior
-assert direct_drift["actual"] == direct_current
+assert direct_drift["actual"] in {direct_current, "e90dd13badd48257c25db6317cc523f97b92e1e6"}
 direct_text = (ROOT / direct_path).read_text(encoding="utf-8")
+if direct_drift["actual"] == "e90dd13badd48257c25db6317cc523f97b92e1e6":
+    # Preserve the high-VA and recoverable sparse commit owners in production.
+    current_hunk = "#endif\n}\n\n// Guest DRAM is not a CPU heap, JIT region or RADV allocation. Keep its\n// backing outside the 39-bit guest VA: a host-minus-guest page-table delta\n// of zero is decoded as a null pointer by non-identity-aware consumers.\n// EglantinePS5 proved this failure mode on console. The hint is not fixed;\n// on unsupported VA layouts preserve the previous low-VA fallback.\nvoid* ReserveGuestMemoryRange(std::size_t size) noexcept {\n    if (size == 0 || size % LargePage != 0) return nullptr;\n#ifdef PS5_NATIVE\n    constexpr std::uintptr_t GuestAddressSpaceEnd = 0x8000000000ull;\n    void* const hint = reinterpret_cast<void*>(GuestAddressSpaceEnd);\n    void* address = hint;\n    const auto rc = sceKernelReserveVirtualRange(&address, size, 0, LargePage);\n    if (rc == 0) {\n        const auto start = reinterpret_cast<std::uintptr_t>(address);\n        if (address != nullptr && address != MAP_FAILED &&\n            start >= GuestAddressSpaceEnd &&\n            size <= std::numeric_limits<std::uintptr_t>::max() - start)\n            return address;\n        // The PS5 may ignore placement hints. Never retain a low reservation\n        // on this first attempt; release it before using the known fallback.\n        if (address == nullptr || address == MAP_FAILED ||\n            munmap(address, size) != 0)\n            std::abort();\n    } else if (address != hint) {\n        // Failed reservations must not mutate a live owner pointer.\n        std::abort();\n    }\n#endif\n    return ReserveMemoryRange(size);\n}\n\nbool CommitMemoryRange(void* address, std::size_t size, std::int64_t* physical_out) noexcept {\n    if (physical_out) *physical_out = -1;\n    if (address == nullptr || size == 0 || size % LargePage != 0 ||\n"
+    prior_hunk = "#endif\n}\n\nbool CommitMemoryRange(void* address, std::size_t size, std::int64_t* physical_out) noexcept {\n    if (physical_out) *physical_out = -1;\n    if (address == nullptr || size == 0 || size % LargePage != 0 ||\n"
+    assert direct_text.count(current_hunk) == 1
+    direct_text = direct_text.replace(current_hunk, prior_hunk, 1)
+    replay_raw = direct_text.encode("utf-8")
+    assert hashlib.sha1(b"blob " + str(len(replay_raw)).encode() + bytes([0]) + replay_raw).hexdigest() == "aeb7cc5430aefe11ee502ee5a53c70f3f909208f"
+    current_hunk = "    range->owned[slot].store(true, std::memory_order_release);\n}\n\n// GPU page-table mappings have an NVDRV recovery path for resource pressure.\n// Unlike CommitSparsePage (kept fatal for unrelated sparse owners), this\n// variant leaves the failed slot unpublished and lets the mapping's caller\n// roll back its PTE reservation. Uses the same mutex/lifetime contract.\nbool TryCommitSparsePage(std::uintptr_t page) noexcept {\n    const std::lock_guard lock{sparse_mutex};\n    SparseRange* range = SparseRangeOf(page);\n    if (range == nullptr) return true; // dense fallback is already writable\n    const auto begin = range->begin.load(std::memory_order_relaxed);\n    const std::size_t slot = (page - begin) / SparseSlot;\n    if (range->owned[slot].load(std::memory_order_relaxed)) return true;\n    if (!OwnSlot(begin + slot * SparseSlot, &range->physical[slot])) return false;\n    sparse_committed.fetch_add(SparseSlot, std::memory_order_relaxed);\n    range->owned[slot].store(true, std::memory_order_release);\n    return true;\n}\n\nstd::size_t SparseCommitSpan() noexcept {\n    return SparseSlot;\n}\n"
+    prior_hunk = "    range->owned[slot].store(true, std::memory_order_release);\n}\n\nstd::size_t SparseCommitSpan() noexcept {\n    return SparseSlot;\n}\n"
+    assert direct_text.count(current_hunk) == 1
+    direct_text = direct_text.replace(current_hunk, prior_hunk, 1)
+    replay_raw = direct_text.encode("utf-8")
+    assert hashlib.sha1(b"blob " + str(len(replay_raw)).encode() + bytes([0]) + replay_raw).hexdigest() == "72b3283a855b3fb4c62b0ee0b5d310b7756ef297"
 direct_start = "// Failed direct-memory requests must survive quiet stderr redirection."
 direct_end = "std::atomic<std::int64_t> cached_direct_memory_extent{0};"
 assert direct_text.count(direct_start) == direct_text.count(direct_end) == 1
@@ -4349,6 +4377,23 @@ if fake_services_path in drift_index and fake_services_path not in post_index:
     print("LAUNCHER_FAKE_SERVICES_HOST_SUCCESSOR_PASS",
           "predecessor=8ae91604", "current=78a3409e",
           "runtime_ps5=0")
+
+# The loading cycle now has one shared owner. Reverse only that reviewed change.
+theme_path = "headless/prosperoeden/pe/ui/theme.hpp"
+if drift_index[theme_path]["actual"] == "2a67d1c4993669f7739591b22ceff90d0f6e11f6":
+    theme_replay = (ROOT / theme_path).read_text()
+    current_hunk = "#pragma once\n\n#include \"pe/gfx/draw_list.hpp\"\n#include \"../../../loading_case.hpp\"\n\n#include <algorithm>\n#include <array>\n"
+    prior_hunk = "#pragma once\n\n#include \"pe/gfx/draw_list.hpp\"\n\n#include <algorithm>\n#include <array>\n"
+    assert theme_replay.count(current_hunk) == 1
+    theme_replay = theme_replay.replace(current_hunk, prior_hunk, 1)
+    current_hunk = "constexpr float kCursorSpring = 26.0f;\nconstexpr float kScrollSpring = 16.0f;\nconstexpr float kScreenSeconds = 0.30f;\n// Original reading cycle shared by all three graphics owners.\nconstexpr float kCaseFrontHold=Eden::LoadingCase::kFrontHold;\nconstexpr float kCaseTurnSeconds=Eden::LoadingCase::kTurn;\nconstexpr float kCaseBackHold=Eden::LoadingCase::kBackHold;\nconstexpr float kCaseSettleSeconds=Eden::LoadingCase::kSettle;\nconstexpr float kLaunchSeconds=Eden::LoadingCase::kCycle;\n\n// Color tokens share the existing draw path. Theme changes never affect game shaders.\n// Like Nuvio, the palette is separate from the selected home-screen layout.\n"
+    prior_hunk = "constexpr float kCursorSpring = 26.0f;\nconstexpr float kScrollSpring = 16.0f;\nconstexpr float kScreenSeconds = 0.30f;\n// Allow one visible face change while keeping game admission bounded.\n// Front preview 1.2 s, first turn 1.3 s, BACK remains readable 4.5 s,\n// return turn 1.3 s, final settle/fade 0.5 s. A truthful staged cinematic\n// transition, NOT a proxy for guest/emulation loading percentage.\nconstexpr float kCaseFrontHold = 1.20f;\nconstexpr float kCaseTurnSeconds = 0.72f; // rapid pass through spine; never a pause\nconstexpr float kCaseBackHold = 4.50f;\nconstexpr float kCaseSettleSeconds = 0.50f;\nconstexpr float kLaunchSeconds = kCaseFrontHold + 2.0f * kCaseTurnSeconds +\n                                 kCaseBackHold + kCaseSettleSeconds;\n\n\n// Color tokens share the existing draw path. Theme changes never affect game shaders.\n// Like Nuvio, the palette is separate from the selected home-screen layout.\n"
+    assert theme_replay.count(current_hunk) == 1
+    theme_replay = theme_replay.replace(current_hunk, prior_hunk, 1)
+    replay_raw = theme_replay.encode("utf-8")
+    assert hashlib.sha1(b"blob " + str(len(replay_raw)).encode() + bytes([0]) + replay_raw).hexdigest() == "1fdf1683e245ee2b7c1cff200e58291e36d82f87"
+    assert post_index[theme_path]["post_snapshot_git_blob"] == "1fdf1683e245ee2b7c1cff200e58291e36d82f87"
+    drift_index[theme_path]["actual"] = "1fdf1683e245ee2b7c1cff200e58291e36d82f87"
 
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",

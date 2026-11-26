@@ -4779,3 +4779,16 @@ Les deux ABI-DIFF `audrec:a` cmd0/cmd1 sont traitées sur le propriétaire réel
 **2 lignes quittent le pool : nouveau compteur global = 51 lignes ouvertes.**
 
 Gitlink vendor repinné sur `f27f79c3cbcbbdfd16530ba22bb170a34fe425fa`. Aucun build PS5 ni validation console.
+
+### 2026-11-26 — NEWS cmd30500 HOS23 qualifié : palier global 50
+
+Base : **51 lignes ouvertes**.
+
+L'ABI-DIFF historique `INewsService` cmd30500 est requalifié contre le dump HOS23 :
+- HOS23 rattache bien cmd30500 à `nn::news::detail::ipc::INewsService`, sous le nom opaque `Cmd30500`, avec 8 octets d'entrée, un buffer d'entrée, un handle d'entrée et un objet `IDownloadContext` en sortie ;
+- l'ancien catalogue décrivait ce slot par une phrase spéculative plutôt que par un nom ABI stable ;
+- l'owner actif Encore enregistre déjà cmd30500 comme `Unknown30500` et le route vers `RejectUnavailableNewsBackend`, donc l'appel est traité explicitement sans inventer un backend News.
+
+**1 ligne ABI-DIFF quitte le pool : nouveau compteur global = 50 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.

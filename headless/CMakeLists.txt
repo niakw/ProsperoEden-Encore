@@ -4895,8 +4895,8 @@ if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
 endif()
 
 # PS5 shared NS1/NS2 GPU/NVDRV ABI: the source archive used by Ninja can be
-# older than the maintained vendor headers. These four class definitions are
-# consumed by both the pinned NS1 TUs and the selected NS2 NVDRV/GMMU owners.
+# older than the maintained vendor headers. The shared ABI definitions and
+# the header-only NS2 TSG device must resolve from the same pinned owner tree.
 # Copy tracked complete headers into the existing common include overlay,
 # which already precedes the cached Eden source tree in both native targets.
 # Never patch the pinned tree, split ChannelState layouts or duplicate TUs.
@@ -4906,7 +4906,8 @@ if(PS5_NATIVE)
             video_core/control/channel_state.h
             core/hle/service/nvdrv/core/container.h
             core/hle/service/nvdrv/devices/nvdevice.h
-            core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.h)
+            core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.h
+            core/hle/service/nvdrv/devices/nx2_stub_device.h)
         if(NOT EXISTS "${EDEN_NATIVE_GPU_ABI_ROOT}/${eden_native_gpu_header}")
             message(FATAL_ERROR "Missing common native GPU ABI: ${eden_native_gpu_header}")
         endif()

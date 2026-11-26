@@ -35,6 +35,21 @@ assert 'EDEN_NS2_NATIVE_VULKAN' not in owner
 assert 'EDEN_NS2_GPU_SESSION_SOURCE' in owner
 assert 'EDEN_NS2_NVDRV_GPU_SOURCE' in owner
 assert 'EDEN_NS2_NATIVE_GPU_DISPATCH' not in owner
+# The source archive may predate the header-only TSG device. Verify the real
+# common include overlay independently of the Module TU selector.
+abi_start = '# PS5 shared NS1/NS2 GPU/NVDRV ABI:'
+abi_end = '# The native rasterizer is the reviewed layered-clear implementation'
+assert cmake.count(abi_start) == 1 and cmake.count(abi_end) == 1
+abi_owner = cmake[cmake.index(abi_start):cmake.index(abi_end)]
+stub_relative = 'core/hle/service/nvdrv/devices/nx2_stub_device.h'
+module = root/'vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp'
+stub = root/'vendor/sources/eden/src'/stub_relative
+assert '#include "' + stub_relative + '"' in module.read_text()
+assert stub.is_file() and 'class nx2_stub_device final' in stub.read_text()
+assert abi_owner.count(stub_relative) == 1
+assert 'set(EDEN_NATIVE_GPU_ABI_ROOT "${PORT_ROOT}/vendor/sources/eden/src")' in abi_owner
+assert '"${PORT_BUILD_DIR}/include/${eden_native_gpu_header}" COPYONLY' in abi_owner
+assert 'target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")' in abi_owner
 with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
  base=Path(directory);proj=base/'source';proj.mkdir();(proj/'dummy.cpp').write_text('int dummy=0;\n')
  files=['hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp',
@@ -91,7 +106,15 @@ endforeach()
 set_property(TARGET shader_recompiler PROPERTY SOURCES "${{ns1_shader_sources}}")
 add_library(dynarmic STATIC dummy.cpp)
 add_executable(eden-headless dummy.cpp)
-'''+owner+'''
+'''+owner+abi_owner+'''
+if(NOT EXISTS "${PORT_BUILD_DIR}/include/core/hle/service/nvdrv/devices/nx2_stub_device.h")
+    message(FATAL_ERROR "Native NVDRV TSG device header missing from selected ABI overlay")
+endif()
+file(SHA256 "${PORT_BUILD_DIR}/include/core/hle/service/nvdrv/devices/nx2_stub_device.h" stub_selected_sha)
+file(SHA256 "${PORT_ROOT}/vendor/sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h" stub_vendor_sha)
+if(NOT stub_selected_sha STREQUAL stub_vendor_sha)
+    message(FATAL_ERROR "Native NVDRV TSG header drift")
+endif()
 get_target_property(selected_core core SOURCES)
 list(FIND selected_core "hle/service/nvdrv/nvdrv.cpp" legacy_nvdrv_module)
 if(NOT legacy_nvdrv_module EQUAL -1)

@@ -1067,6 +1067,7 @@ void LoadCaseIndexRow(BoxIndex& items, const std::string& row) {
 
 struct CaseIndexCatalog {
     BoxIndex items;
+    std::unordered_map<std::string, std::string> synopses;
     std::string path;
     std::streamoff global_start{-1};
 };
@@ -1111,6 +1112,17 @@ const CaseIndexCatalog& RetailCaseCatalog() {
             if (row == Eden::CaseIndexDisk::kGlobalMarker) {
                 catalog.global_start = static_cast<std::streamoff>(input.tellg());
                 break;
+            }
+            if (row.starts_with("# synopsis\t")) {
+                const auto separator = row.find('\t', 11);
+                if (separator != std::string::npos && separator > 11 &&
+                    separator - 11 <= 170 && row.size() - separator <= 2001 &&
+                    catalog.synopses.size() < 40000) {
+                    const auto key = row.substr(11, separator - 11);
+                    if (key.starts_with("ns1:") || key.starts_with("ns2:"))
+                        catalog.synopses.emplace(key, row.substr(separator + 1));
+                }
+                continue;
             }
             if (items.size() < 40000) LoadCaseIndexRow(items, row);
         }
@@ -1203,6 +1215,30 @@ BoxIndex FindGlobalCaseMedia(bool ns2, const std::string& name,
         }
     }
     return result;
+}
+
+// Catalogue overview is a last-resort English/provider-language synopsis,
+// not a claimed translation. Keep localized Nlib text ahead of it.
+void ApplyCatalogSynopsis(NlibEnrichment& result, std::uint64_t title_id,
+                          bool second_generation, const std::string& name,
+                          const std::string& alternate_name, int language_choice) {
+    if (!result.description.empty() && !Eden::Ns2Catalog::CommercialDescription(result.description))
+        return;
+    const auto& catalog = RetailCaseCatalog();
+    const auto selected = FindCaseEntry(catalog.items, second_generation, name, alternate_name);
+    if (selected != catalog.items.end()) {
+        const auto found = catalog.synopses.find(selected->first);
+        if (found != catalog.synopses.end() &&
+            !Eden::Ns2Catalog::CommercialDescription(found->second))
+            result.description = found->second;
+    }
+    if (result.description.empty()) {
+        const std::string_view locale = Eden::kLanguageKeys[std::clamp(
+            language_choice, 0, static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
+        result.description = Eden::Ns2Catalog::Description(title_id, locale.starts_with("fr"));
+    }
+    if (result.intro.empty() || Eden::Ns2Catalog::CommercialDescription(result.intro))
+        result.intro = result.description;
 }
 
 // Other-platform candidates are indexed only for exact, unambiguous titles.
@@ -2330,7 +2366,10 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         const bool second_generation = IsNs2MediaIdentity(title_id, home.last_file);
         const GameLanguage language = LanguageFor(last_path, title_id, selected_language);
         home.last_title_id = title_id;
-        const NlibEnrichment nlib = CachedNlibEnrichment(title_id, selected_language);
+        NlibEnrichment nlib = CachedNlibEnrichment(title_id, selected_language);
+        ApplyCatalogSynopsis(nlib, title_id, second_generation,
+                             nlib.name.empty() ? home.last_title : nlib.name,
+                             home.last_title, selected_language);
         if (home.last_cover.empty()) {
             home.last_cover = nlib.icon.empty() ?
                 CachedGamesDbSquare(title_id, second_generation) : nlib.icon;
@@ -2434,7 +2473,10 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
             if (recent.title_id != 0) {
                 const bool second_generation =
                     IsNs2MediaIdentity(recent.title_id, recent.file);
-                const NlibEnrichment nlib = CachedNlibEnrichment(recent.title_id, selected_language);
+                NlibEnrichment nlib = CachedNlibEnrichment(recent.title_id, selected_language);
+                ApplyCatalogSynopsis(nlib, recent.title_id, second_generation,
+                                     nlib.name.empty() ? recent.title : nlib.name,
+                                     recent.title, selected_language);
                 if (!nlib.icon.empty() && recent.tile_icon.empty() ) {
                     recent.cover = nlib.icon;
                     recent.tile_icon = nlib.icon;
@@ -2766,6 +2808,9 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 if (LoadNlibMetadata(game.title_id, NlibLanguageCode(language_choice), &metadata))
                     ApplyNlibMetadata(metadata, &list_metadata);
                 SelectNlibSynopsis(game.title_id, language_choice, list_metadata);
+                ApplyCatalogSynopsis(list_metadata, game.title_id, UseNs2CaseIndex(game),
+                                     list_metadata.name.empty() ? game.name : list_metadata.name,
+                                     game.name, language_choice);
                 if (!list_metadata.name.empty()) game.name = std::move(list_metadata.name);
                 if (!list_metadata.intro.empty()) game.intro = std::move(list_metadata.intro);
                 if (!list_metadata.description.empty())
@@ -2947,6 +2992,9 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     }
     if (cancel && cancel->load(std::memory_order_acquire)) return game;
     NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);
+    ApplyCatalogSynopsis(enrichment, game.title_id, second_generation,
+                         enrichment.name.empty() ? scanned_name : enrichment.name,
+                         scanned_name, language_choice);
     game.artwork_changed |= enrichment.artwork_changed;
     if (!enrichment.icon.empty() &&
         (game.cover.empty() || game.cover == CachedGamesDbSquare(game.title_id, second_generation))) {

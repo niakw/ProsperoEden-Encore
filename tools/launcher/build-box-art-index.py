@@ -122,7 +122,7 @@ def regional_candidates(items, limit=12, per_region=2):
     return ";".join(choices) if choices else "-"
 
 def parse(source):
-    games, aliases, images = {}, {}, {}
+    games, aliases, images, overviews = {}, {}, {}, {}
     iterator = ET.iterparse(source, events=("start", "end"))
     _, root = next(iterator)
     for event, element in iterator:
@@ -135,6 +135,13 @@ def parse(source):
             if gid.isdecimal() and platform:
                 games[gid] = (element.findtext("Name", ""),
                               {"Nintendo Switch": "ns1", "Nintendo Switch 2": "ns2"}.get(platform, platform))
+                if platform in ("Nintendo Switch", "Nintendo Switch 2"):
+                    # The same upstream metadata archive already drives the
+                    # media catalogue. Bound and flatten its overview field.
+                    overview = " ".join(element.findtext("Overview", "").split())
+                    overview = "".join(c for c in overview if ord(c) >= 32 and ord(c) != 127)
+                    if overview:
+                        overviews[gid] = overview[:500]
         elif tag == "GameAlternateName":
             gid = element.findtext("DatabaseID", "")
             if gid.isdecimal():
@@ -153,6 +160,13 @@ def parse(source):
             platform_names.setdefault(key, {}).setdefault(platform, set()).add(gid)
             if platform in ("ns1", "ns2"):
                 names.setdefault(f"{platform}:{key}", set()).add(gid)
+
+    def switch1_candidates(key):
+        if not key.startswith("ns2:") or len(names.get(key, ())) != 1:
+            return set()
+        gid = next(iter(names[key]))
+        return set().union(*(platform_names.get(spelling, {}).get("ns1", set())
+                             for spelling in keys_by_id[gid]))
 
     def matching_alternatives(key):
         platform, title = key.split(":", 1)
@@ -186,6 +200,9 @@ def parse(source):
         if len(matching) == 1:
             eligible.update(matching)
             eligible.update(matching_alternatives(key))
+            # Duplicate catalogue rows must not erase a uniquely available
+            # authentic NS1 rear scan for the same normalized NS2 edition.
+            eligible.update(switch1_candidates(key))
     for title in platform_names:
         eligible.update(global_ids(title))
     source.seek(0)
@@ -247,9 +264,26 @@ def parse(source):
         own = row(key, gid)
         lines.append(key + "\t" + "\t".join(own) + "\n")
         alt = alternate_fields(matching_alternatives(key))
+        # Prefer a unique actual NS1 rear owner before other-platform rear
+        # art, even when another exact NS1 database record has no back.
+        rear_owners = [other for other in switch1_candidates(key)
+                       if images.get(other, {}).get("Box - Back")]
+        if len(rear_owners) == 1:
+            preferred = row("", rear_owners[0])[1]
+            combined = preferred.split(";") + ([] if alt[1] == "-" else alt[1].split(";"))
+            alt[1] = ";".join(list(dict.fromkeys(combined))[:12])
         if any(field != "-" for field in alt):
             lines.append("alt:" + key + "\t" + "\t".join(alt) + "\n")
-    if len(lines) - 1 > 40000:
+        overview = overviews.get(gid, "")
+        if not overview and key.startswith("ns2:"):
+            alternatives = switch1_candidates(key)
+            if len(alternatives) == 1:
+                overview = overviews.get(next(iter(alternatives)), "")
+        if overview:
+            # Optional comment record, backward compatible with v12 image
+            # rows and their fixed eleven media columns.
+            lines.append("# synopsis\t" + key + "\t" + overview + "\n")
+    if sum(not line.startswith("#") for line in lines) > 40000:
         raise ValueError("Nintendo media index exceeds native row limit")
     # Sorted disk-only section. The launcher never allocates the entire
     # multiplatform catalogue or accepts a foreign front/spine as paper.
@@ -398,6 +432,16 @@ def self_test():
     assert foreign[1] == foreign[3] == "-" and "aaaaaaaa" in foreign[2]
     assert "bbbbbbbb" not in global_result and "cccccccc" not in foreign
     assert "global:ambiguous\t" not in result
+    duplicate_xml = """<LaunchBox>
+        <Game><DatabaseID>31</DatabaseID><Platform>Nintendo Switch</Platform><Name>Example Quest</Name></Game>
+        <Game><DatabaseID>32</DatabaseID><Platform>Nintendo Switch</Platform><Name>Example Quest!</Name></Game>
+        <Game><DatabaseID>33</DatabaseID><Platform>Nintendo Switch 2</Platform><Name>Example Quest - Switch 2 Edition</Name><Overview>A genuine game overview.</Overview></Game>
+        <GameImage><DatabaseID>31</DatabaseID><Type>Box - Back</Type><Region>Europe</Region><FileName>aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg</FileName></GameImage>
+    </LaunchBox>"""
+    duplicate = parse(io.BytesIO(duplicate_xml.encode()))
+    assert "ns1:example quest\t" not in duplicate
+    assert "alt:ns2:example quest\t-\teu:aaaaaaaa" in duplicate
+    assert "# synopsis\tns2:example quest\tA genuine game overview." in duplicate
     print("PASS standard title, Switch 2 Edition normalization, aliases and exact multiplatform identity")
 
 def main():

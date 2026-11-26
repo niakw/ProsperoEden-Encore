@@ -17,7 +17,7 @@ struct Entry {
     std::string_view release_date;
     std::string_view genre;
 };
-inline constexpr std::array<Entry, 19> kTitles{{
+inline constexpr std::array<Entry, 18> kTitles{{
     {0x040003901FBC2000ULL, "Survival Kids", "", "", ""},
     {0x0400303021AAC000ULL, "DELTARUNE", "", "", ""},
     {0x040052E01D3DA000ULL, "Nintendo GameCube - Nintendo Classics", "", "", ""},
@@ -30,7 +30,6 @@ inline constexpr std::array<Entry, 19> kTitles{{
     {0x040082902313C000ULL, "Arcade Archives 2 RIDGE RACER", "", "", ""},
     {0x04009570209F8000ULL, "Hogwarts Legacy", "", "", ""},
     {0x0400A4802437E000ULL, "Drag x Drive: Global Jam", "", "", ""},
-    {0x0400A3A01EE4C000ULL, "Pokémon Pokopia", "Nintendo", "2026-03-05", "Simulation"},
     {0x0400BBB020FF0000ULL, "Yakuza 0 Director's Cut", "", "", ""},
     {0x0400C3F00006E000ULL, "Mario Kart World", "Nintendo", "2025-06-05", "Racing · Party"},
     {0x0400CA40208C8000ULL, "Split Fiction", "", "", ""},
@@ -51,15 +50,6 @@ inline constexpr std::string_view Description(std::uint64_t id, bool french) noe
         return french
             ? "Explorez des environnements destructibles avec Donkey Kong dans une aventure de plateformes."
             : "Explore destructible environments with Donkey Kong in a platforming adventure.";
-    case 0x0400A3A01EE4C000ULL:
-        return french
-            ? "Créez un refuge pour les Pokémon, aménagez votre environnement et apprenez de nouvelles capacités dans cette simulation de vie."
-            : "Build a home for Pokémon, shape the environment and learn new abilities in this life simulation.";
-    // Shared base application ID: the synopsis is valid for both editions.
-    case 0x0100F43008C44000ULL:
-        return french
-            ? "Explorez Illumis, rencontrez des Pokémon et participez à des combats en temps réel dans une aventure au cœur de la ville."
-            : "Explore Lumiose City, meet Pokémon and take part in real-time battles in an urban adventure.";
     default:
         return {};
     }
@@ -77,7 +67,11 @@ inline constexpr std::string_view SelectDescription(std::uint64_t id, bool frenc
                                                      std::string_view intro) noexcept {
     if (!description.empty() && !CommercialDescription(description)) return description;
     if (!intro.empty() && !CommercialDescription(intro)) return intro;
-    return Description(id, french);
+    // The caller can now consult the generated catalogue before the legacy
+    // offline identity fallback. No per-title commercial-text exceptions.
+    (void)id;
+    (void)french;
+    return {};
 }
 inline const Entry* Find(std::uint64_t id) noexcept {
     for (const auto& item : kTitles)

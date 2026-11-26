@@ -4898,4 +4898,21 @@ Le manifeste vendor est synchronisé : `hidbus.cpp` SHA-256 `3ef0a0a6b450b4c9607
 Le défaut séparé Palma `WritePalmaWaveEntry` reste ouvert : le propriétaire Eden brut contient encore un `ASSERT_MSG` sur une taille de TransferMemory contrôlée par le guest, mais il n'existe pas encore d'owner backport matérialisé pour ce fichier ; aucune modification du miroir épinglé n'est faite ici.
 
 Aucun build PS5 ni validation console revendiqué.
+### 2026-11-26 — Palma wave fail-closed et TransferMemory sûre : 41 → 40
+
+Base précédente : **41 lignes ouvertes**.
+
+Le reliquat PARTIEL Palma cmd515 `WritePalmaWaveEntry` est fermé par le couple moteur/vendor suivant : vendor **`1d24bc2a63ff47992e3643f005304e63a14e1b11`**, avec matérialisation du propriétaire `encore-active/eden-backports/src/core/hle/service/hid/hid_server.cpp`, et patch production `headless/backports/eden-runtime-hid.patch` étendu sans nouveau chemin expérimental.
+
+Correction runtime :
+- l'ancien `ASSERT_MSG(t_mem->GetSize() == t_mem_size)` contrôlable par le guest est supprimé ;
+- le handle TransferMemory est validé avec `Kernel::ResultInvalidHandle` ;
+- `t_mem_size` doit être non nul, aligné 0x1000 comme documenté par libnx, identique à la taille réelle du handle, et `size <= t_mem_size`, sinon `Kernel::ResultInvalidSize` ;
+- le backend Palma actuel ne consomme aucun octet de l'onde. Après validation ABI, la commande renvoie donc `IPC::ResultNotSupported` au lieu de fabriquer une opération réussie et de signaler une complétion fictive.
+
+Provenance : source Eden conservée immutable (`hid_server.cpp` upstream SHA-256 `7c26646723260af93e43818e629001c86e16ced4c6e738318d73f1cfc27ee631`), owner actif SHA-256 `c9d43505b8ed8b4ccb11d7539575fa0a3c252b4b93dc78bd2f8d15ccbf8581b8`, 77 962 octets. Le reçu `eden-runtime-hid.patch` est repinné sur SHA-256 `7d0486cdb054c6d3598fbecefe1e89c03a22660b082e2ad797f0b3bd32986eb0`.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 40 lignes ouvertes.**
+
+Aucun support physique Palma n'est revendiqué ; seul le faux succès et le crash/assert guest-contrôlable sont éliminés. Aucun build PS5 ni validation console revendiqué.
 

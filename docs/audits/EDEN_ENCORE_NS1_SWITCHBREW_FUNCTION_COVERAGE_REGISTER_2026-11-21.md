@@ -4004,3 +4004,18 @@ Composition opérationnelle : **0 NULL exact + 14 raccordements encore à qualif
 Arithmétique : **184 - 9 = 175**. Depuis le recalcul 631 : **456 lignes sorties du pool**.
 
 Le gitlink moteur est repinné sur **`ab8f5da7f62d0f7de6f9d840ef5d6eb3ac12319e`**. Statut : code intégré, pas de build PS5 ni validation console ; aucune CI automatique n'était encore publiée au moment du repin.
+
+
+### 2026-11-26 — Friend V1/V2 offline : palier global 173
+
+Base : **175 lignes ouvertes**.
+
+Vendor **`5c5ec7af23bd26eee80be789850cee65ace8fd48`** remplace les réponses succès synthétiques de `GetUserPresenceViewV1/V2` et `LoadUserSettingV1/V2` par le rejet `RejectUnavailableNintendoOnline` déjà utilisé par les autres opérations Friend dépendantes du backend Nintendo. Le runtime ne fabrique donc plus de présence `0xe0` vide ni de friend-code `0000-0000-0000`.
+
+Le pool historique contenait encore **2 lignes** correspondantes (V1).
+
+**Nouveau compteur global : 173 lignes ouvertes.**
+
+Arithmétique : **175 - 2 = 173**. Depuis le recalcul 631 : **458 lignes sorties du pool**.
+
+Gitlink repinné sur `5c5ec7af23bd26eee80be789850cee65ace8fd48`. Aucun build PS5 ni validation console revendiqués.

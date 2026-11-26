@@ -4766,3 +4766,16 @@ Trois lignes quittent le pool :
 **3 lignes ABI-DIFF quittent le pool : nouveau compteur global = 53 lignes ouvertes.**
 
 Aucun nouveau patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+
+### 2026-11-26 — audrec:a suspend/resume fail-closed : palier global 51
+
+Base : **53 lignes ouvertes**.
+
+Les deux ABI-DIFF `audrec:a` cmd0/cmd1 sont traitées sur le propriétaire réellement compilé :
+- SwIPC documente `IFinalOutputRecorderManagerForApplet` cmd0 `RequestSuspendFinalOutputRecorders` et cmd1 `RequestResumeFinalOutputRecorders`; à partir de HOS4 les deux commandes conservent leur entrée mais ne retournent plus le handle historique HOS1–3 ;
+- l'owner Eden utilisait les noms courts `RequestSuspend` / `RequestResume` mais laissait encore les deux slots `nullptr` ;
+- vendor `f27f79c3cbcbbdfd16530ba22bb170a34fe425fa` raccorde désormais cmd0/cmd1 à `RejectUnavailableFinalOutputRecorderControl`, qui renvoie `ResultNotSupported` au guest faute de backend final-output-recorder, sans toucher à `audout:u`, `audin:u`, `audren:u` ni au rendu audio normal.
+
+**2 lignes quittent le pool : nouveau compteur global = 51 lignes ouvertes.**
+
+Gitlink vendor repinné sur `f27f79c3cbcbbdfd16530ba22bb170a34fe425fa`. Aucun build PS5 ni validation console.

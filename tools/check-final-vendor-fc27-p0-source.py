@@ -3018,13 +3018,13 @@ if actual_vendor_pin in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d8
     REVIEWED_PINS.add(actual_vendor_pin)
 # 26 Nov NS2 shutdown successor: exact tree plus every changed runtime/witness
 # blob, while FC27/sparse owners are sealed byte-for-byte unchanged.
-if actual_vendor_pin == "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8":
+if actual_vendor_pin in {"19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1"}:
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"],
-                                   text=True).strip() == "6cabcba90de3515962623cd53d44667e0c6df04a"
+                                   text=True).strip() == {"19a7bd41cdc0f942dd2b694818e2d2995eb99cf8": "6cabcba90de3515962623cd53d44667e0c6df04a", "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce"}[actual_vendor_pin]
     for relative, digest in {
         "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
         "encore-active/eden-core/src/video_core/dma_pusher.cpp": "ca642b98443901eee4f88b02850237f3eda623c8",
-        "tests/ns2_gpu_identity_mapping_source.py": "8340a1f3403bb57debbabcd193170034a30282a1",
+        "tests/ns2_gpu_identity_mapping_source.py": ("dfe5b9d594d3e5f161872a18e227afe6f02a436d" if actual_vendor_pin == "e5ad6cebf5572d7045de9e48f4308cc2621eede1" else "8340a1f3403bb57debbabcd193170034a30282a1"),
         "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
         "encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee",

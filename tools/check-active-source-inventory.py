@@ -3032,7 +3032,24 @@ assert shipping == shipping_cpp | build_recipes, (
 )
 # Keep the expected count tied to the reviewed manifest revision: every
 # additional shipping patch requires an explicit inventory review.
-assert len(shipping) == (84 if post_f07_diagnostics_net_present else 83) and len(manifest["shipping_receipts"]) == 50
+# 26 Nov: RO/NRR and STPL owner receipts were added to the exact
+# shipping manifest without adding source/build entries. Keep the older
+# 50-item oracle for historical trees; authenticate both new SHA256 names.
+shipping_receipt_count = 50
+if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"],
+                           text=True).strip() == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab":
+    assert subprocess.check_output([
+        "git", "hash-object", str(active / "eden-backports/manifest.json")
+    ], text=True).strip() == "da4e380ecb78a12fdbb3bb12ac29d88f3a6eb0df"
+    assert {name: manifest["shipping_receipts"].get(name) for name in (
+        ".encore-backport-ns2-ro-nrr-v1.sha256",
+        ".encore-backport-ns2-stpl-unique-owner.sha256",
+    )} == {
+        ".encore-backport-ns2-ro-nrr-v1.sha256": "f8d58d806123828821f9f4c59c25d6303b2814d0a242944a4b4382d4c930621f",
+        ".encore-backport-ns2-stpl-unique-owner.sha256": "91b8859e1c270308664ce2a1b9f3fb3ca1b0c149575747e1cbde8869354a401a",
+    }
+    shipping_receipt_count = 52
+assert len(shipping) == (84 if post_f07_diagnostics_net_present else 83) and len(manifest["shipping_receipts"]) == shipping_receipt_count
 assert all(re.fullmatch(r"[0-9a-f]{64}", digest)
            for digest in manifest["shipping_receipts"].values()), (
     "invalid shipping patch SHA256 receipt",

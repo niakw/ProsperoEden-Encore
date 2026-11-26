@@ -2989,6 +2989,21 @@ if actual_vendor_pin in {"eace7e056485299e7252c506433a1429a4475051", "05bf05a8dc
         assert "const u64 bytes_per_pixel = preference[6] == 5 ? 8 : 4;" in layout
         assert "const u64 requested_images = std::max<u64>(count, 1);" in layout
     REVIEWED_PINS.add(actual_vendor_pin)
+# VI2/presentation successor: exact tree and runtime owners, no FC27 GPU change.
+if actual_vendor_pin in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "85eed6cf298c30c8e79d826c5a66788586bc041a"}:
+    expected_vi2_tree = ("69b093785fa296aa12f6366c89e6131aaec63f7b"
+                         if actual_vendor_pin == "85eed6cf298c30c8e79d826c5a66788586bc041a"
+                         else "d56f1f3efcbe283d018b411289f36bd398905408")
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"],
+                                   text=True).strip() == expected_vi2_tree
+    for relative, digest in {
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146",
+        "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "2bacc8ebdc1c09cd96a7c83d26f57035619f622c",
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
+    }.items():
+        raw = (V / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == digest, ("VI2 successor owner drift",relative)
+    REVIEWED_PINS.add(actual_vendor_pin)
 assert actual_vendor_pin==checked and actual_vendor_pin in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point
 # replay the predecessor's exact historical receipt graph for all unaffected

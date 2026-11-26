@@ -4324,3 +4324,10 @@ Les wrappers libnx confirment qu'il s'agit de commandes PSM sans entrée/sortie 
 **10 lignes PARTIEL quittent le pool. Nouveau compteur global : 104 lignes ouvertes.**
 
 Aucun nouveau patch C++, changement de gitlink, build PS5 ou validation console dans cette requalification.
+
+
+### 2026-11-26 — correction de comptage : PSM déjà requalifié, retour au palier global 114
+
+Le palier précédent **104** est annulé : les dix lignes PSM cmd2/3/4, 5/6, 8/9, 10/11 et 14 avaient **déjà été retirées** au palier `171 → 161` (« requalification PSM invité »). Leur relecture reste valide techniquement, mais ne constitue pas dix fermetures nouvelles.
+
+**Compteur global corrigé : 114 lignes ouvertes.** Aucun changement runtime ni gitlink dans cette correction. Les prochains décréments doivent être vérifiés contre l'historique des paliers afin d'éviter tout double comptage.

@@ -4915,19 +4915,4 @@ Provenance : source Eden conservée immutable (`hid_server.cpp` upstream SHA-256
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 40 lignes ouvertes.**
 
 Aucun support physique Palma n'est revendiqué ; seul le faux succès et le crash/assert guest-contrôlable sont éliminés. Aucun build PS5 ni validation console revendiqué.
-### 2026-11-26 — PSC time:s cmd102 déjà fonctionnel : 40 → 39
-
-Base précédente : **40 lignes ouvertes**.
-
-Le PARTIEL historique `time:s` cmd102 `GetStandardUserSystemClockInitialYear` est requalifié sans nouveau patch :
-- le vendor `60d87a82acdd1c385ba2525eec7bed15642e418b` a déjà remplacé `ResultNotImplemented` par la lecture réelle de `set:sys` (`time/standard_user_clock_initial_year`) ;
-- le C++ courant à `sources/eden/src/core/hle/service/psc/time/static.cpp` contient toujours ce chemin ;
-- le CMake shipping sélectionne explicitement `hle/service/psc/time/static.cpp` ;
-- la façade Glue utilise la même clé et le même type `s32`, donc `time:s` et `time:u/time:a` sont cohérents sur cet observable.
-
-L'ancienne note du registre indiquant que PSC renvoyait encore `ResultNotImplemented` est donc obsolète.
-
-**1 ligne PARTIEL quitte le pool : nouveau compteur global = 39 lignes ouvertes.**
-
-Aucun nouveau patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
 

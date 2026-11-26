@@ -5384,3 +5384,38 @@ Reçu actif NIFM : SHA-256 `f99caacd689383081bcac27386029e05331f1ccac388465c8030
 **1 ligne PARTIEL quitte le pool : nouveau plancher = 17 / 4 853.**
 
 Aucun build natif PS5 ni validation console n'est revendiqué ; la CI du nouveau pin doit être vérifiée séparément.
+
+
+### 2026-11-26 — six PARTIEL AM/appel politiques fail-closed sur owners PS5 sélectionnés : 17 → 11 minimum
+
+Base précédente : **17 lignes ouvertes au minimum**.
+
+Le recroisement du catalogue historique avec le journal de fermeture et, surtout, avec le CMake natif réel isole six PARTIEL uniques qui n'avaient jamais reçu de fermeture ultérieure :
+
+- `ISelfController` cmd50 `SetHandlesRequestToDisplay` ;
+- `IWindowController` cmd21 `SetAppletGpuTimeSlice` ;
+- `IApplicationFunctions` cmd124 `EnableApplicationAllThreadDumpOnCrash` ;
+- `IApplicationFunctions` cmds100/101/102 `InitializeApplicationCopyrightFrameBuffer`, `SetApplicationCopyrightImage`, `SetApplicationCopyrightVisibility`.
+
+La sélection native PS5 est vérifiée dans `headless/CMakeLists.txt` :
+- `IApplicationFunctions` est remplacé par `encore-active/ns2-runtime/am/.../application_functions.cpp` lorsque le profil natif dual-NPDM est actif ;
+- `ISelfController` est remplacé par `encore-active/ns2-runtime/self_controller/.../self_controller.cpp` ;
+- `IWindowController` provient du backport shipping matérialisé par `tools/install-vendored-eden-backports.py` avant CMake.
+
+Vendor **`152a9f1131c4cbea21ce8711dc33ad91de389890`** supprime les faux succès de ces six contrats :
+- request-to-display : rejet explicite tant que le routage de cette politique n'est pas matérialisé ;
+- GPU time-slice : rejet explicite tant qu'aucun scheduler applet GPU invité ne consomme la valeur ;
+- all-thread dump : rejet explicite tant qu'aucun backend de dump de crash invité ne consomme la politique ;
+- copyright framebuffer/image/visibility : rejet explicite tant que l'image copyright n'est pas réellement composée dans la capture/screenshot.
+
+Le même commit corrige en outre une **dérive de propriétaire final** dans le SelfController PS5 partagé, sans nouveau décrément :
+- `GetLibraryAppletLaunchableEvent` ne signale plus l'événement lors de la simple acquisition du handle ;
+- `ApproveToDisplay` repasse par le `WindowSystem` réel ;
+- `CreateManagedDisplaySeparableLayer` retrouve le rejet explicite déjà comptabilisé tant qu'aucune recording-layer réelle n'est matérialisée.
+Ces trois lignes avaient déjà été sorties du pool ; cette réparation restaure uniquement la validité runtime de leurs paliers antérieurs sur le TU réellement compilé.
+
+Reçu du `window_controller.cpp` shipping : SHA-256 `984f7be1e9cf8eb4d7230a7a1f6c6029dc7306126e0d45cd1eda23477d2933ad`, **3 200 octets**.
+
+Les six identités PARTIEL sont distinctes dans le catalogue historique et aucune n'avait été soustraite dans un palier ultérieur. **6 lignes quittent donc le pool : nouveau plancher = 11 / 4 853.**
+
+Ce `11` reste un **plancher comptable après la rectification des doubles soustractions**, et non une liste déjà reconstruite de onze bugs. Aucun build natif PS5 ni validation console n'est revendiqué à ce stade ; CI et compilation du nouveau pin restent à qualifier.

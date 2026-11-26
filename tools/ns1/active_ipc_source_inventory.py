@@ -154,8 +154,8 @@ for rel, family, tables, commands, nulls, origin, chosen in by_owner:
 expected_final = {
     "hle/service/aoc/addon_content_manager.cpp": (1, 22, 0),
     "hle/service/am/service/application_functions.cpp": (1, 69, 0),
-    "hle/service/am/service/application_proxy.cpp": (1, 11, 0),
-    "hle/service/am/service/application_proxy_service.cpp": (1, 2, 0),
+    "hle/service/am/service/application_proxy.cpp": (1, 15, 0),
+    "hle/service/am/service/application_proxy_service.cpp": (1, 3, 0),
     "hle/service/am/service/self_controller.cpp": (1, 51, 0),
     "hle/service/hid/hid_server.cpp": (1, 204, 0),
     "hle/service/friend/friend.cpp": (6, 164, 0),
@@ -166,10 +166,10 @@ expected_final = {
     "hle/service/audio/audio.cpp": (10, 44, 0),
     "hle/service/audio/audio_controller.cpp": (1, 60, 0),
     "hle/service/bcat/delivery_cache_file_service.cpp": (1, 4, 0),
-    "hle/service/am/service/gpu_session.cpp": (1, 12, 0),
+    "hle/service/am/service/gpu_session.cpp": (1, 21, 0),
     "hle/service/am/service/gpu_worker.cpp": (1, 14, 0),
     "hle/service/am/service/graphics_video_decoder_session.cpp": (1, 17, 0),
-    "hle/service/am/service/graphics_supervisor.cpp": (4, 140, 0),
+    "hle/service/am/service/graphics_supervisor.cpp": (5, 185, 0),
 }
 actual = {rel: (tables, commands, nulls)
           for rel, family, tables, commands, nulls, origin, chosen in by_owner}

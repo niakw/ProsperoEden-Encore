@@ -5542,3 +5542,9 @@ Le zéro historique n'est PAS une preuve de qualification runtime exhaustive. Le
 🟢 **26/11/2026 — Contrats sensibles après résolution.** AOC/BSD/SSL utilisent les tables IPC actuelles de main ; ApplicationFunctions utilise la table main et le témoin `SetTerminateResult` main tout en gardant les corps NS1 hors conflit ; HID utilise la table main et les handlers vibration 213/214 de main ; SelfController utilise les mappings main 2100/2200/2300/2400-2402 et son stub de réponse Nx2. Le gitlink moteur est repinné sur le vendor NS1 adapté `0322089faa332160d1707656d35ba02d8f81871a`, jamais sur vendor/main directement.
 
 **Statut :** rattrapage vendor terminé pour ce snapshot, mais pas encore validation PS5. Les chevauchements moteur restent à résoudre contre le main courant. Aucun merge vers main, aucun build PS5 manuel.
+
+### 2026-11-26 — Rattrapage main → NS1 : recalage des sentinelles IPC après sélection des propriétaires main
+
+🟢 **26/11/2026 — Recalcul des 18 sentinelles du graphe IPC final PS5.** Après la reprise des propriétaires `main`, le parseur `tools/ns1/active_ipc_source_inventory.py` a été rejoué conceptuellement sur les mêmes regex `FunctionInfo` / lignes de handlers pour les 18 propriétaires figés. Quatre compteurs évoluent uniquement parce que les propriétaires `main` sélectionnés exposent davantage de commandes : `application_proxy.cpp` passe de `(1,11,0)` à `(1,15,0)`, `application_proxy_service.cpp` de `(1,2,0)` à `(1,3,0)`, `gpu_session.cpp` de `(1,12,0)` à `(1,21,0)`, `graphics_supervisor.cpp` de `(4,140,0)` à `(5,185,0)`. Les 14 autres sentinelles restent inchangées et les quatre nouveaux états ont toujours `0` handler `nullptr`.
+
+**Portée :** mise à jour d'un oracle de source rendu obsolète par le rattrapage `main`, pas une implémentation IPC nouvelle ni une validation console. Gitlink vendor inchangé. Aucune fusion vers `main`, aucun build PS5 manuel.

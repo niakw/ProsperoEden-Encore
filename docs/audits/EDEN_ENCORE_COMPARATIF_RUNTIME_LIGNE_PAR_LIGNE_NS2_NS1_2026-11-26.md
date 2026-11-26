@@ -19189,3 +19189,75 @@ Aucun symbole homonyme n'a été trouvé dans les TUs Lichii/Eglantine examinés
 Le document sépare désormais trois niveaux : **acquire/release Maxwell commun**, **opcode natif Encore**, **publication GSV/syncpoint**. Une future correction devra identifier lequel des trois niveaux cesse réellement de progresser dans le log PS5 ; aucune des extensions Encore-only n'est supprimée ou modifiée ici.
 
 **Couverture ajoutée :** 4 fonctions homologues, 8 comparaisons, 821 lignes-source parcourues, plus 3 propriétaires Encore-only documentés avec lignes exactes. Aucun fix.
+
+## Annexe XII — synthèse de couverture et zones restantes
+
+### Révisions de référence
+
+Les comparaisons de code de ce document restent volontairement figées aux propriétaires runtime qui existaient avant les commits documentaires :
+
+| Élément | Révision de comparaison |
+|---|---|
+| Moteur Encore — sources/runtime/CMake comparés | `cbf54c0c7f464237b39320b1851494cb98568ec4` |
+| Vendor sélectionné et gitlink | `465d7e9c82f364dcde05354d67ec1b5bf5e2682d` |
+| Lichii `nx2` | `0288882f36692a94b56fa85177abdad0ec8be59d` |
+| EglantinePS5 `main` | `75a552ff945521eb31adf34f34ccb73a003809dc` |
+| nxnative `main` | `35fea5c2ee781689ff224e614a8da71867a571bf` |
+| libounce | `03af07a739a9a3b48704500cffcd6155692cc194` |
+| OunceVK | `97d70925dcd8ccab07f308e9dfd0ee5812e4a01c` |
+
+Les commits postérieurs du moteur jusqu'au présent document ne modifient que ce Markdown pour cette phase de comparaison. Ils ne déplacent donc pas la photographie des sources comparées.
+
+### Compteurs du comparatif
+
+| Mesure | Total |
+|---|---:|
+| Fonctions/blocs homologues directement comparés | **75** |
+| Paires Encore ↔ Lichii/Eglantine | **148** |
+| Lignes-source parcourues dans les diffs directs | **20 246** |
+| Lignes externes exactes libounce/OunceVK/nxnative reproduites | **329** |
+| Propriétaires Encore-only supplémentaires détaillés dans l'annexe XI | **3** |
+
+Les 20 246 lignes sont un compteur de **lignes parcourues dans les paires de comparaison** : les lignes Encore peuvent donc être comptées deux fois lorsqu'elles sont confrontées séparément à Lichii puis Eglantine. Ce nombre n'est ni un nombre de lignes uniques ni un pourcentage de couverture du firmware.
+
+### Matrice fonctionnelle couverte
+
+| Domaine | Couverture dans ce document | Dernier critère PS5 |
+|---|---|---|
+| GSV images 429/314/315/430 | ligne à ligne + ABI libounce | image réelle utilisable par VI2 |
+| GSV sync 103/201/202 | ligne à ligne + ABI libounce | producteur atteint après completion réelle |
+| NVDRV GPFIFO | SubmitGPFIFOImpl + transport OunceVK | soumission puis progression réelle |
+| Scheduler / DmaPusher / Puller | Push, replay, sémaphores, DispatchCalls | aucune acquire native définitivement parquée |
+| GMMU / AS-GPU | Allocate/Free/Remap/MapBufferEx/Unmap | mêmes traductions actives que la commande GPU |
+| NVMap | alloc/from-id/free et relation GSV | références équilibrées, backing encore vivant |
+| Kernel mémoire | SetHeapSize, Map/UnmapPhysicalMemory | résidence/rollback sans OOM ni corruption |
+| Loader NS2 | OpenNative/Open/Load/RomFS/NSO | programme/index/modules exacts réellement lancés |
+| VI2 | queries + PresentClientBuffer | QueueBuffer accepté avec image propriétaire |
+| nvnflinger | producer/consumer/composer | framebuffer réellement acquis puis relâché |
+| GPU/Vulkan fences | ReleaseFences/WaitForIdle + scheduler | ordre mémoire sans completion anticipée |
+| Shutdown | NVDRV/GSV/VI2/GPU/KProcess/page-table | sortie sans watchdog ni deadlock |
+| BufferCache | GC/download/readback/obtain | baisse de contention sans stale data |
+| TextureCache | GC/descriptors/download/flush/find/async | HUD/textures fraîches sans stalls excessifs |
+| PipelineCache | load/flush/create + écarts structurels | p95/p99 réduit à scène/cache identiques |
+| Ampere lowering | 8 familles d'opcodes | shader capturé concerné traduit correctement |
+
+### Zones importantes encore non couvertes ligne par ligne
+
+1. **Host1x engines au-delà des syncpoints** : VIC/NVDEC/Host1x DMA exacts lorsque le log d'un titre les désigne.
+2. **Maxwell3D / C797 / C7C0 méthode par méthode** : seulement sur signatures réellement observées ; un diff exhaustif de toutes les méthodes serait très volumineux et peu causal sans trace.
+3. **Texture/image formats et copies 2D** : comparaison plus fine des formats, tiling, swizzle et Fermi2D lorsque la première frame existe mais est incorrecte.
+4. **KProcess/KThread/SVC de scheduling** : au-delà de la finalisation, uniquement si un blocage CPU invité ou une attente kernel apparaît dans les logs.
+5. **Video decode pools 911/991/912** : pertinent si DK/Pokopia/MKW atteint explicitement le décodage vidéo et bloque à cet endroit.
+6. **Audio** : non prioritaire tant que les quatre titres NS2 n'atteignent pas une première frame stable.
+7. **Services HLE secondaires** : SM/LM/NIFM/ACC/AM uniquement par signature exacte de log, pas comme audit général supplémentaire.
+8. **FC27 shader Maxwell détaillé** : à approfondir seulement avec pipeline/shader hash ou une scène A/B montrant un défaut de traduction ou un stall précis.
+
+### Règle d'utilisation
+
+Le document est désormais un **index différentiel**, pas une liste de patches. Pour chaque prochain défaut console, la séquence est :
+
+`symptôme/log exact → propriétaire actif → section comparative → divergence pertinente → preuve upstream/ABI → correctif ciblé`.
+
+Une différence de ligne n'est pas un bug démontré. Une identité de ligne n'est pas une validation console. Une implémentation qui fonctionne dans Lichii, Eglantine ou nxnative n'est pas automatiquement sûre sur PS5 13.60.
+
+**État de cette phase documentaire : aucun correctif runtime, aucune modification de gate, aucun build PS5.**

@@ -5313,3 +5313,18 @@ Reçus actifs :
 - `service_creator.cpp` SHA-256 `b2a5d6cc85c8cbb9ae1d61b21bb748010ac2f2dcdbc4c0b703728895908a2283`, **1 258 octets**, upstream `a3dbe47978055f2d221a90762a6dee4a2fdb5f23fc6910b7b95af06575ec61d9`.
 
 Moteur/gitlink **`3b02078c9d5554f764af0cad0a70f202383b9217`** épingle exactement ce vendor. **6 lignes PARTIEL quittent le pool : nouveau plancher = 24 / 4 853.** Aucun build PS5 ni validation console n'est revendiqué ; les gates du nouveau pin sont à qualifier séparément.
+
+### 2026-11-26 — VI indirect-layer image fail-closed : 24 → 22 minimum
+
+Base précédente : **24 lignes ouvertes au minimum**.
+
+Deux lignes historiques de `IApplicationDisplayService` quittent le pool sur l'owner shipping déjà qualifié par le lot VI courant :
+
+- cmd2450 `GetIndirectLayerImageMap` : ancien **PARTIEL**. Le runtime ne fabrique plus une image indirecte alors qu'aucun backend VI indirect-layer complet n'existe. Il valide dimensions, `WindowSystem`, ARUID appelant, PID, child applet, mode `PartialForegroundIndirectDisplay` et relation caller/child, puis retourne explicitement `ResultNotSupported`.
+- cmd2451 `GetIndirectLayerImageCropMap` : ancien **NULL**. L'ABI est maintenant enregistrée ; les quatre coordonnées de crop sont consommées, puis la commande réutilise exactement le même chemin authentifié/fail-closed que cmd2450.
+
+Les signatures 2450/2451 sont recoupées avec les définitions VI indépendantes : dimensions/handle/ARUID/PID + buffer MapAlias non-secure, et cmd2451 ajoute les quatre `f32` du rectangle. Strato décrit également CropMap comme la variante de Map avec rectangle. Tant que le backend d'image indirecte n'est pas implémenté, **échec explicite après validation** est préféré à un `Success` avec pixels/stride inventés.
+
+Owner actif : `application_display_service.cpp` SHA-256 `1bbc36058ce2fcc289a8983b00964529b1f999a2a410fa92f2e04c0bea281177`, vendor **`201d986ef94f45ca00a7ece318bceee1d312f860`**, moteur/gitlink runtime **`3b02078c9d5554f764af0cad0a70f202383b9217`**. Les gates de ce pin sont vertes : X8D24 **`45859905639`** et provenance **`45859905406`**. Aucun build PS5 ni test console.
+
+**2 lignes quittent le pool : nouveau plancher = 22 / 4 853.**

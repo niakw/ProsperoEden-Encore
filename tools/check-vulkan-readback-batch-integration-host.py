@@ -4,7 +4,7 @@
 Unlike the small_vector-only check, this includes the actual source snippet
 from the byte-matched Encore-maintained readback snippet inside a mocked texture cache and
 checks GPU Finish ordering, image byte integrity, 40-map/32-MiB batching,
-zero-sized images, and oversized standalone transfers. Not a native PS5 run.
+invalid/zero-sized readbacks, and oversized standalone transfers. Not a native PS5 run.
 """
 from pathlib import Path
 import shutil
@@ -23,6 +23,8 @@ start = method.index("    if constexpr (std::is_same_v<Runtime, Vulkan::TextureC
 end = method.index("\n#endif", start)
 snippet = method[start:end]
 assert "DownloadStagingBuffer(bytes, true)" in snippet
+assert "if (bytes == 0 || copies.empty())" in snippet
+assert "!map.buffer || map.mapped_span.size_bytes() < bytes" in snippet
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 assert "boost::container::small_vector<std::pair<ImageId, Map>, readback_batch_limit> pending;" in snippet
 assert "constexpr size_t readback_batch_limit = 40;" in snippet
@@ -70,6 +72,8 @@ struct Monitor {
     int fail_after_record{-1};
     int fail_allocation_at{-1};
     bool fail_finish{false};
+    int null_map_at{-1};
+    int short_map_at{-1};
 };
 namespace Vulkan {
 struct TextureCacheRuntime {
@@ -77,8 +81,9 @@ struct TextureCacheRuntime {
     // Pinned vk_staging_buffer_pool.h defines a trivially-copyable
     // non-owning StagingBufferRef; the runtime's pool owns each allocation.
     struct Map {
-        std::size_t index;
-        std::span<std::uint8_t> mapped_span;
+        std::size_t index{};
+        std::size_t buffer{};
+        std::span<std::uint8_t> mapped_span{};
     };
     static_assert(std::is_trivially_copyable_v<Map>);
     std::vector<std::unique_ptr<std::vector<std::uint8_t>>> backing;
@@ -86,12 +91,14 @@ struct TextureCacheRuntime {
         assert(deferred);
         if (monitor->fail_allocation_at == static_cast<int>(monitor->held.size()))
             throw std::bad_alloc{};
+        if (monitor->null_map_at == static_cast<int>(monitor->held.size())) return {};
+        const bool short_map = monitor->short_map_at == static_cast<int>(monitor->held.size());
         monitor->held.push_back(true);
         monitor->batch_bytes += n;
         monitor->max_batch_bytes = std::max(monitor->max_batch_bytes,
                                             monitor->batch_bytes);
         backing.push_back(std::make_unique<std::vector<std::uint8_t>>(n));
-        return Map{backing.size(), *backing.back()};
+        return Map{backing.size(), backing.size(), std::span<std::uint8_t>(*backing.back()).first(short_map ? n-1 : n)};
     }
     void FreeDeferredStagingBuffer(Map& map) {
         assert(monitor->held.at(map.index-1));
@@ -109,8 +116,9 @@ struct TextureCacheRuntime {
     }
 };
 }
-struct Info { std::size_t id{}; };
+struct Info { std::size_t id{}; bool no_regions{}; };
 std::vector<std::size_t> FullDownloadCopies(Info info) {
+    if (info.no_regions) return {};
     return {info.id};
 }
 std::vector<std::size_t> FixSmallVectorADL(std::vector<std::size_t> copies) {
@@ -230,7 +238,19 @@ int main() {
     Test({20_MiB, 14_MiB, 1}, 2); // 32-MiB staging boundary
     Test({33_MiB, 1}, 2); // large texture is standalone
     Test({32_MiB, 1}, 2); // exact cap, then next submission
-    Test({0, 0, 0}, 1);
+    for (int kind = 0; kind < 4; ++kind) {
+        MockCache invalid({1, kind == 0 ? 0u : 2u, 3});
+        auto m = invalid.runtime.monitor;
+        if (kind == 1) invalid.slot_images[1].info.no_regions = true;
+        if (kind == 2) m->null_map_at = 1;
+        if (kind == 3) m->short_map_at = 1;
+        bool caught = false;
+        try { invalid.Run(); } catch (const std::bad_alloc&) { caught = true; }
+        assert(caught && m->issued == 1 && m->completed == 1);
+        assert(m->finishes == 1 && m->releases == (kind == 3 ? 2u : 1u));
+        assert(std::ranges::none_of(m->held, [](bool v){return v;}));
+        assert(invalid.gpu.write_order.empty());
+    }
     TestExceptionalRetirement(false);
     TestExceptionalRetirement(true);
     TestAllocationFailure();

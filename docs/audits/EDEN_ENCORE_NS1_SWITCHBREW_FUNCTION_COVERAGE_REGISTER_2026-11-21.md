@@ -4447,3 +4447,21 @@ La ligne n'est donc plus seulement « résultat exact sans optimisation cache »
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 105 lignes ouvertes.**
 
 Gitlink vendor attendu : `54e031bb4a27a01b97b11e3b566425260929355d`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — SFDNSRES owner final resynchronisé + cmd14 qualifié : palier global 104
+
+Base : **105 lignes ouvertes**.
+
+La vérification du propriétaire final a trouvé une dérive de sélection : `headless/CMakeLists.txt` compile directement `encore-active/eden-core/src/core/hle/service/sockets/sfdnsres.cpp`, alors que les corrections récentes étaient présentes dans le backport canonique. La gate N21 définit déjà la dérivation exacte `eden-backports/sfdnsres.cpp → eden-core/sfdnsres.cpp` avec seulement les transformations d'audit réseau.
+
+Vendor `83e0306d0b0e8b7903488458227f4b89411668b0` régénère l'owner final selon cette dérivation existante. Cela restaure notamment les handlers resolver récents, `DNS_PRIV`, cancel-handle et les formes HOS23 déjà comptées ; **aucun de ces éléments n'est recompté**.
+
+Pour cmd14 `ResolverSetOptionRequest` :
+- l'owner final consomme désormais l'`option_id` et le buffer opaque ;
+- il renvoie la forme ABI complète `ret=0 + bsd_errno=0` ;
+- le reverse SDK et Ryujinx confirment que les options connues du SDK sont traitées en amont et que le setter module est un no-op réussi pour le reste ; ne pas interpréter ces options dans le resolver hôte n'est donc plus une absence fonctionnelle.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 104 lignes ouvertes.**
+
+Gitlink vendor attendu : `83e0306d0b0e8b7903488458227f4b89411668b0`. Aucun build PS5 ni validation console revendiqués.

@@ -14,7 +14,7 @@ data=json.loads(register.read_text())
 assert data["schema_version"]==1
 assert data["historical_f07_source_snapshots_preserved"] is True
 entries=data["files"]
-assert len(entries)==43  # 42 previous successors + reviewed native ZBIC warning-scope delta
+assert len(entries)==44  # 43 earlier successors + reviewed Nov26 native directory stats
 # The additional vendor entry is a documented source-interface successor,
 # not a relaxation of historical F07 provenance or a console performance claim.
 thread_entry=next(e for e in entries if e["path"]==

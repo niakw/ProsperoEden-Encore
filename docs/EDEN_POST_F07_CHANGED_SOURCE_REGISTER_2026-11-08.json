@@ -101,15 +101,26 @@
       "review_note": "2026-11-15 overlay typography follow-up: adds HudCodepoints for quick-menu text while preserving the legacy compact HudText glyph ABI used by the FPS HUD. Exact reviewed hud.h blob 0ef8bf75efabf61628b44b91011eb461abcbde81; native runtime uses generated/validated HUD SPIR-V and PS5 readability remains unqualified. Historical F07 blob unchanged."
     },
     {
+      "path": "headless/native_directory.h",
+      "historical_reviewed_git_blob": "5b0c96dfc98f7d25b3fb602f4ad68b03e125ec7d",
+      "post_snapshot_git_blob": "b39672e32cfaddf31f95f6710108b97ebc471cca",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "🟢 2026-11-26: Native directory lstat reuse for extracted ExeFS metadata; preserve symlink rejection, fail-closed stat errors, and bounded getdents enumeration. Exact source from commit 018d1681.",
+      "review_kind": "source_contract",
+      "required_source_fragment": "inline std::vector<NativeDirectoryStat> ReadNativeDirectoryStats(",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "🟢 2026-11-26: verified immutable U41 pre-change Git blob 5b0c96df, current source blob b39672e3 and 018d1681 source diff. This is a host/source contract control, not CI/build/PS5 gameplay validation."
+    },
+    {
       "path": "headless/ns2_title_catalog.h",
       "historical_reviewed_git_blob": "a3d339dda21870e7e1b730c56ada9e5a37e01957",
-      "post_snapshot_git_blob": "b34b1d7570cfd32240dfa7f49138bd8e4feb049c",
+      "post_snapshot_git_blob": "2c2f94f040f594c7467a9bc63e2868460e0865f2",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "2026-11-13 NS2 canonical title genres use source tokens for language translation, plus French/English offline overviews of Mario Kart World and Donkey Kong Bananza by exact Title ID; no guest renderer changes.",
+      "source_scope": "🟢 2026-11-26: reviewed data-only NS2 title TSV reader and the exact successor f19640ea: optional publisher/date/genre trailing fields, duplicate-ID rejection, strict five-field maximum. No guest GPU code modified.",
       "review_kind": "source_contract",
-      "required_source_fragment": "inline constexpr std::string_view Description",
+      "required_source_fragment": "inline Catalog Read(std::istream& input)",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: exact post-F07 source delta is one comment-only wording change. Current Git blob reviewed against immutable historical blob; no runtime, performance, or console proof is claimed.\n2026-11-13: Reviewed PR #94 diff: two literal genre fields changed and one bounded pure Title-ID description switch added. Does not establish Nintendo game compatibility or PS5 behavior."
+      "review_note": "2026-11-09: exact post-F07 source delta is one comment-only wording change. Current Git blob reviewed against immutable historical blob; no runtime, performance, or console proof is claimed.\n2026-11-13: historical PR #94 title-description review. 🟢 2026-11-26: compiled title-description fallbacks removed by later launcher commits; current TSV parser Git blob 2c2f94f0 reviewed against f19640ea patch. No CI, native build or console validation implied."
     },
     {
       "path": "headless/prosperoeden/eden_services.cpp",

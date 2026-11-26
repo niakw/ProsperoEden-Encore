@@ -4532,3 +4532,23 @@ La cible NS1 actuelle est HOS23 ; ces anciens layouts `AccessPointDataOld` 0x34 
 **2 lignes PARTIEL → HORS-VERSION : nouveau compteur global = 91 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console.
+
+
+### 2026-11-26 — Time cmd50 permissions HOS23 qualifiées : palier global 90
+
+Base : **91 lignes ouvertes**.
+
+Requalification de `time:u/time:a/time:s` cmd50 `SetStandardSteadyClockInternalOffset` :
+- SwitchBrew confirme que `time:s` reste un `IStaticService` HOS23 et que `time:u/time:a` sont les façades Glue ;
+- `time:u` et `time:a` sont créés avec `can_write_steady_clock=false` ;
+- le `time:s` HOS23 est créé par le service manager avec uniquement `can_write_network_clock=true`, donc lui aussi `can_write_steady_clock=false`;
+- le PSC `StaticService::SetStandardSteadyClockInternalOffset` vérifie cette permission **avant** son fallback `ResultNotImplemented` et renvoie donc `ResultPermissionDenied` sur les trois services concernés ;
+- la façade repair `time:r`, hors de cette ligne historique, possède `can_write_steady_clock=true` et son wrapper Glue applique réellement l'offset via `set:sys`.
+
+Le chemin observé par les services de la ligne est donc déterministe et conforme à leurs permissions ; le code `ResultNotImplemented` n'est pas atteignable pour eux.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 90 lignes ouvertes.**
+
+Cmd102 `GetStandardUserSystemClockInitialYear` reste ouvert : la façade PSC `time:s` renvoie encore `ResultNotImplemented`, contrairement au wrapper Glue qui lit `set:sys`.
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console.

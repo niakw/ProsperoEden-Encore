@@ -2921,6 +2921,36 @@ if actual_vendor_pin in {"ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b920336
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
     assert "EDEN_MAINTAINED_BUFFER_HOTPATH" in (V.parent / "headless/CMakeLists.txt").read_text()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
+# 26 Nov: exact shipping native semaphore-retirement successor, independently
+# authenticated without relaxing the frozen FC27 owner receipts. QMD3/G10
+# host real-owner CI is green; these source hashes are not PS5 validation.
+if actual_vendor_pin == "eace7e056485299e7252c506433a1429a4475051":
+    native_fence_blobs = {
+    "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "23725030557268e6593c9e5f64cb063730b77787",
+    "encore-active/eden-backports/src/video_core/fence_manager.h": "fa30c9a0c0a26c39af5174983fc7b4f63062a991",
+    "encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "5cbd0d0f3482c5811b5b700fee55faf8a89b9f61",
+    "encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "0d22781acbc4e0f32424beb6b0f494b6aa2b034f",
+    "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
+    "tests/ns2_gpu_identity_mapping_source.py": "f6c829ee56bfdf764ce43f3b30389f3588276597",
+    "tools/ns2/check_g10_qmd_release_backing_host.py": "5f51f3f6f02d54c24afdd6eff22b77b95071ef7e",
+    "tools/ns2/check_g10_qmd_release_callback_host.py": "78280ebadb0b330f2374cc8fb2a8bddd36d0c68c"
+}
+    for relative, expected_blob in native_fence_blobs.items():
+        raw = (V / relative).read_bytes()
+        current_blob = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        assert current_blob == expected_blob, ("NS2 strict-fence source drift", relative)
+    strict_fence = (V / "encore-active/eden-backports/src/video_core/fence_manager.h").read_text()
+    native_release = (V / "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp").read_text()
+    strict_body = strict_fence.split(
+        "void SignalNativeFence(std::function<void()>&& complete) {", 1
+    )[1].split("\\n    }", 1)[0]
+    assert "CreateFence(false)" in strict_body
+    assert "QueueFence(new_fence);" in strict_body
+    assert "Settings::IsGPUFenceBehavior" not in strict_body
+    assert native_release.count("QueueNativeSemaphoreRelease(") == 4
+    REVIEWED_PINS.add(actual_vendor_pin)
 assert actual_vendor_pin==checked and actual_vendor_pin in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point
 # replay the predecessor's exact historical receipt graph for all unaffected

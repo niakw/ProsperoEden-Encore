@@ -1942,6 +1942,25 @@ pair_present = pair_new_owners & set(physical_all)
 # Preserve all 14 exact source blobs for the merged FC27 runtime owner
 # graph. The updated BufferCache/TextureCache/Vulkan ABIs are qualified as a
 # complete set here, not inferred from their parent's commit SHA.
+# Reuse F07's one fourteen-blob selected GPU receipt without importing
+# and executing that audit. Older vendor pins retain historical replay.
+selected_nov26_gpu_pair = {}
+if shipping_vendor == "806252e96253489c18d11551bf2dcfd668502719":
+    import ast
+    f07_ast = ast.parse(
+        (root / "tools/check-eden-optimization-coverage.py").read_text())
+    selected_nodes = [
+        node.value for node in ast.walk(f07_ast)
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name)
+                and target.id == "selected_nov26_pair"
+                for target in node.targets)
+    ]
+    assert len(selected_nodes) == 1
+    selected_nov26_gpu_pair = ast.literal_eval(selected_nodes[0])
+    assert set(selected_nov26_gpu_pair) == set(pair_receipt["files"])
+    print("ENCORE_SELECTED_GPU_PAIR_RECEIPT_LOADED owners=14")
+
 merged_fc27_pair_receipts = dict(pair_receipt["files"])
 merged_fc27_pair_receipts.update({
     "eden-core/src/video_core/buffer_cache/buffer_cache.h": "41239f19b9e16741d49e31145c504e0086b1095e",
@@ -1997,6 +2016,14 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
     for path, blob in pair_receipt["files"].items():
         source_path = active / path
         raw = source_path.read_bytes()
+        if shipping_vendor == "806252e96253489c18d11551bf2dcfd668502719":
+            # Authenticate the complete selected C++ blob; older vendor
+            # pins still replay the historical F07 inverse deltas below.
+            actual = hashlib.sha1(
+                b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+            assert actual == selected_nov26_gpu_pair[path], (
+                "Nov26 selected GPU source drift", path, actual)
+            continue
         if fc27_p1_vendor:
             # Compare all fourteen merged native owners against immutable blobs.
             # Known post-merge successors are reversed only on this audit copy,
@@ -2521,6 +2548,16 @@ actual_vendor = subprocess.check_output(
     ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip()
 if stabilization_selected:
     actual_vendor = "9db97fb12db1a390d6b2410f0c18333aa31e37da"
+
+# Exact current-vendor successor blobs. This is the one centrally
+# maintained four-delta receipt shared by inventory and F07.
+selected_nov26_post_f07_overrides = {
+    "eden-core/src/core/hle/service/sm/sm.cpp": "2ef914e3f1b24442e1fa0130d5f8175111e7d316",
+    "ns2-runtime/hle/core/hle/service/lm/lm.cpp": "9136cf19b1176e96fb17609fd401e4592028d1e2",
+    "ns2-runtime/hle/core/hle/service/nifm/nifm.cpp": "8933817310ed1d3988e9ff418390a8b3e7e71a41",
+    "ns2-runtime/nx/core/loader/nx.cpp": "5d999ca68668133ea3f151669ecd6ac6a17ae1c5",
+}
+assert len(selected_nov26_post_f07_overrides) == 4
 
 # Current vendor source additions postdate the immutable 337-path F07
 # catalogue. One exact ledger serves both source inventories.

@@ -256,3 +256,9 @@ with tempfile.TemporaryDirectory(prefix="f07-keyed-shader-stages-") as temp:
                 assert "EDEN_VULKAN_SHADER_MISS" not in run.stdout
             print(f"F07_KEYED_SHADER_STAGES_PASS mode={'PS5' if native else 'desktop'} {opt}")
 print("HOST_ONLY no shader output, Vulkan worker, FPS or console measurements")
+
+# GPU-owner participation keeps the same snapshot and stage-local attribution.
+assert "const size_t parallel_stage_count = envs.size();" in pipeline
+assert "if (parallel_env_index == parallel_stage_count) {" in pipeline
+assert pipeline.index("translate_stage();") < pipeline.index("shader_translation_workers.QueueWork(std::move(translate_stage));")
+assert pipeline.index("shader_translation_workers.QueueWork(std::move(translate_stage));") < pipeline.index("shader_translation_workers.WaitForRequests();", pipeline.index("translate_stage();"))

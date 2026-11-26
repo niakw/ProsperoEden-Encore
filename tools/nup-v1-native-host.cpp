@@ -107,7 +107,7 @@ std::unique_ptr<AppLoader> GetLoader(
 } // namespace Loader
 
 int main(int argc, char** argv) {
-    assert(argc == 21 || argc == 22);
+    assert(argc >= 21 && argc <= 23);
     auto input = std::make_shared<MemoryFile>(Load(argv[1]));
     // File recognition must be based on the superblock, not .nup extension.
     // This cheap probe does not replace the full archive validation.
@@ -211,7 +211,7 @@ int main(int argc, char** argv) {
     assert(Read(shared_assets->GetFile("shared.bin")) == "shared-assets");
     assert(Read(shared_assets->GetFile("native.bin")) == "native-assets");
 
-    if (argc == 22) {
+    if (argc >= 22) {
         // A regular NS1 base + matching NS2 update must expose the same
         // verified NS1 AoC family as a standalone embedded edition.
         auto paired_mount = Eden::NupV1::Native::Mount::Open(
@@ -271,6 +271,37 @@ int main(int argc, char** argv) {
                Loader::ResultStatus::Success);
         assert(Read(disabled_romfs).find("bonus.bin=") == std::string::npos);
         Settings::values.disabled_addons.clear();
+    }
+
+    if (argc == 23) {
+        // A program1-only edition has no ordinary RomFS. A marked upgrade
+        // still supplies shared resources; the native file wins conflicts.
+        auto native_only_mount = Eden::NupV1::Native::Mount::Open(
+            std::make_shared<MemoryFile>(Load(argv[22])), &error);
+        assert(native_only_mount && error.empty());
+        assert(!native_only_mount->Effective(ContentView::RomFS));
+        Eden::NupV1::Native::ContentSet native_only{
+            native_only_mount, 0x0400123400000001ULL};
+        assert(native_only.HasExecutableMain());
+        const auto native_only_disabled = Read(native_only.CreateRomFS(false));
+        assert(native_only_disabled == "state.bin=native-state\n");
+        const auto native_only_enabled = Read(native_only.CreateRomFS(true));
+        assert(native_only_enabled.find("state.bin=native-state\n") != std::string::npos);
+        assert(native_only_enabled.find("bonus.bin=marked-upgrade\n") != std::string::npos);
+        assert(native_only_enabled.find("foreign.bin=") == std::string::npos);
+        assert(native_only_enabled.find("ordinary.bin=") == std::string::npos);
+        // A trusted custom NACP base changes AoC enumeration, not the
+        // separate conventional-family upgrade search.
+        Eden::NupV1::Native::ContentSet custom_base{
+            native_only_mount, 0x0400123400000001ULL, 0x0400123400001000ULL};
+        assert(custom_base.AddOns().empty());
+        assert(Read(custom_base.CreateRomFS(true)) == native_only_enabled);
+        auto loader = Eden::NupV1::Native::NupAppLoader::Open(
+            std::make_shared<MemoryFile>(Load(argv[22])), &error);
+        assert(loader && error.empty());
+        FileSys::VirtualFile romfs;
+        assert(loader->ReadRomFS(romfs) == Loader::ResultStatus::Success);
+        assert(Read(romfs) == native_only_enabled);
     }
 
     auto effective = mount->Effective(ContentView::RomFS);

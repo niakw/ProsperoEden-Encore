@@ -5172,3 +5172,28 @@ Couple vérifié avant correction : moteur NS1 `9aaf1391ba0e2a6817e3882ed617f967
 **Décompte conservateur de revue : 38 → 37 entrées ouvertes au minimum** si l'identité unique cmd2050 PARTIEL initiale est bien isolée, ce qui est le cas dans le catalogue historique. Ce 37 reste un plancher comptable, pas une liste vérifiée exhaustivement de 37 fonctions. Les 27 doubles soustractions corrigées au palier précédent ne signifient pas que ces 27 fonctions traitées sont redevenues incomplètes : elles signifient que les soustractions historiques ont surévalué la progression et qu'il faut reconstruire le reliquat par identités dédupliquées avant de proclamer `0`.
 
 **Validation au moment du repin :** seules preuves statiques CMake, owner, manifeste et gitlink confirmées ; les workflows X8D24 / provenance du commit moteur `936aa344` sont démarrés et leur résultat n'est pas encore établi. Pas de build natif PS5 ni validation sur console.
+
+### 2026-11-26 — FSP ExtendSaveData + deux requalifications HID : 37 → 35 minimum
+
+Base corrigée précédente : **37 lignes ouvertes au minimum**.
+
+**FSP cmd32 `ExtendSaveDataFileSystem` — correctif runtime, compteur inchangé.** Vendor `10420ce9f15ea0334dd36b2f830e3bc37036bbff`, manifeste `41144e14740bb5ce11198aea8b44b347ec23914a`, moteur/gitlink `eb5207296421fd47f71da7b350baaa04c7370e34`.
+- l'ancien handler renvoyait toujours `ResultTargetNotFound` avec le commentaire devenu faux « no save-data-id index » ;
+- le runtime possède désormais un `SaveDataId` persistant et `FindDirectorySaveById` ; cmd32 résout donc le save exact ;
+- tailles négatives et réductions sont rejetées ; pour un directory-save, `available_size` et `journal_size` sont mis à jour dans les `SaveDataExtraData` persistantes, sans redimensionner ni fabriquer un save-image ;
+- ce modèle suit le comportement LibHac `ExtendSaveDataFileSystemCore` pour les saves en répertoire : lecture ExtraData, garde monotone, écriture des nouvelles tailles.
+Le reçu actif `fsp_srv.cpp` est `ccb9f3bdb6d7230d6ee90d4a15e44f1b2a6cf23b050018fc3b406119808643bf`, **78 159 octets**. Les workflows moteur du pin sont verts : X8D24 `45849615253` et provenance `45849615165`. **Pas de décrément** : cmd32 avait déjà quitté le pool historique sous forme de rejet explicite ; il s'agit d'un gain fonctionnel, pas d'une nouvelle ligne examinée.
+
+**HID cmd516 `SetPalmaDataBaseIdentificationVersion` — PARTIEL historique → qualifié.**
+- libnx confirme depuis HOS5 l'ABI `HidPalmaConnectionHandle + s32 version`, sans sortie directe ;
+- l'owner shipping `eden-backports/src/core/hle/service/hid/hid_server.cpp` ne se contente plus du vieux wrapper stub : il délègue au `Palma` réel ;
+- `Palma::SetPalmaDataBaseIdentificationVersion` valide le handle actif, stocke `database_id_version`, publie une opération réussie et signale l'événement ; cmd517 relit ce même état dans le résultat d'opération.
+La limitation qui justifiait le statut PARTIEL du snapshot n'est donc plus visible dans le runtime courant. **1 ligne quitte le pool.**
+
+**HID:sys cmd548 `GetRegisteredDevices` — PARTIEL historique → état invité virtualisé qualifié.**
+- l'owner actif distingue explicitement la base de périphériques Bluetooth Switch persistants des contrôleurs hôte exposés via NPad/UniquePad ;
+- Encore ne possède volontairement aucune base de pairing Nintendo : la liste enregistrée est donc vide et la commande retourne un count zéro déterministe ;
+- cette politique est identique à celle déjà qualifiée pour BTM `GetPairedGamepadCount` : des manettes PS5/USB ne doivent pas être fabriquées comme périphériques Bluetooth Switch enregistrés.
+**1 ligne quitte le pool.**
+
+**Nouveau plancher du compteur de revue : 35 / 4 853 lignes ouvertes au minimum.** Ce chiffre reste un plancher après la rectification des doubles décomptes ; il ne signifie ni 35 bugs prouvés ni compatibilité NS1 complète. Aucun build natif PS5 ou test console supplémentaire n'est revendiqué.

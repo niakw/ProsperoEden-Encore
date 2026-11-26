@@ -3855,3 +3855,27 @@ Le second passage a requalifié les propriétaires CMake/overlays déjà parcour
 **Nouveau compteur global de revue : 451 lignes ouvertes.** Arithmétique : **631 - 164 - 16 = 451**. Composition opérationnelle : **147** anciennes lignes NULL/correspondances non résolues + **114** handlers raccordés à qualifier + **190** lignes non-NULL encore réellement ouvertes après requalification.
 
 Ce palier remplace le compteur 631 pour le suivi. Il reste conservateur : aucune ligne n'est retirée uniquement parce qu'un pointeur n'est plus `nullptr`. Aucun patch C++, changement de gitlink, build natif PS5 ou validation console n'est revendiqué dans cette requalification.
+
+### 2026-11-26 — qualification des handlers raccordés et second passage PARTIEL : palier 341
+
+Base : **451 lignes ouvertes** après requalification des 370 statuts non-NULL historiques.
+
+Les **114 anciens NULL devenus handlers raccordés mais non encore qualifiés** ont été relus par propriétaire actif et corps, sans assimiler automatiquement « non-null » à « implémenté ». **100 quittent maintenant le pool** :
+
+- eTicket (compte/liste Rights ID/title key), FSP Rights ID/path, FS QueryEntry/IStorage, AM launch-request rejeté proprement, Overlay no-op contractuel, content-action resolver, audio manual rendering, CAPS thumbnail ;
+- SPL : 13 commandes consomment leur ABI et renvoient explicitement `ResultSecureMonitorNotImplemented` faute de secure monitor ; elles sont classées D, pas succès crypto ;
+- SSL : 13 anciens NULL de contexte/connexion sont soit implémentés, soit explicitement rejetés par les extensions PKI/connexion non supportées ; les 5 rejets root déjà sortis au passage précédent ne sont pas recomptés ;
+- NFC : lifecycle applet, pass-through session bookkeeping et debug hardware ont désormais un comportement explicite ; PM shell : event/info + resource-limit no-op ; IStorage : Write/Flush/SetSize/OperateRange ;
+- NS ApplicationManager : 21/23 raccordements sont de vrais chemins runtime (records/content, terminate/launch, launch info, applet launch/terminate, control data, game-card consistency, AOC et terminate result). `GetApplicationViewDeprecated` synthétique et `PopApplicationShellEventInfo` neutre restent ouverts ;
+- NIFM 5 : requêtes telemetry/channel/suspend/additional-info fail-closed ; IRS:sys 2 : ARUID actif réellement publié ; PDM notify 6 : no-op local documenté sans faux historique ; ContentManagement 3, SFDNSRES 2 et PDM query 1 sont fonctionnels ;
+- second groupe : Thanks-message no-op, LBL apply/read brightness, document content path, audio manual renderer, OVLN queue count, firmware debug, VI indirect crop fail-closed.
+
+Le second passage PARTIEL retire ensuite **10 lignes** supplémentaires : SixAxis firmware réel, HID FullKey grip color, AM `SetTerminateResult` / `ExecuteProgram`, NS `CalculateApplicationOccupiedSize`, CAPS listes album 102/142, NFC `WriteMifare` user+sys, et NVDRV `Initialize` (session NvCore réelle ; le work-buffer guest est inutile au HLE). Les lignes dont le backend reste visiblement incomplet — Palma wave, HIDBus générique, NFC raw pass-through, NIFM arbitration, PSM hardware, SVC debug, FSP integrity, etc. — restent ouvertes.
+
+**Nouveau compteur global : 341 lignes ouvertes.**
+
+Composition opérationnelle : **147 NULL/correspondances non résolues + 14 raccordements encore à qualifier + 180 non-NULL réellement ouverts = 341**.
+
+Arithmétique depuis le palier précédent : **451 - 100 - 10 = 341**. Depuis le recalcul 631 : **290 lignes fermées par requalification/qualification ciblée**.
+
+Aucun patch C++ runtime, changement de gitlink, build PS5 ou validation console dans cette étape. Les rejets explicites restent classés D/unsupported et ne sont jamais présentés comme une fonctionnalité émulée.

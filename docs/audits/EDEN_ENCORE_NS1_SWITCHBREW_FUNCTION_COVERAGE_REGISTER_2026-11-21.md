@@ -5230,3 +5230,32 @@ Les deux PARTIEL historiques `ILibraryAppletSelfAccessor` cmd101 `ReserveResourc
 Aucun chemin screenshot/capture normal, compositor, GPU ou gameplay n'est modifié. Cette politique suit le même fail-closed déjà retenu pour cmd100 : fonctionnalité movie absente = erreur invitée explicite, jamais réservation factice.
 
 **2 lignes PARTIEL quittent le pool : nouveau plancher = 32 / 4 853.** Ce compteur reste un plancher de revue corrigé, pas un nombre de bugs fonctionnels prouvés. Au moment de cette entrée, le nouveau pin doit encore recevoir ses propres verdicts CI ; aucun build PS5 ni test console n'est revendiqué.
+
+### 2026-11-26 — OVLN sender→receiver raccordé : 32 → 31 minimum
+
+Base précédente : **32 lignes ouvertes au minimum**.
+
+Le PARTIEL historique `ovln:snd` cmd0 `ISender::Send` est corrigé sur le runtime shipping. Son défaut documenté était précis : la queue du sender était locale à l'objet `ISender`, tandis que `ovln:rcv` maintenait une structure indépendante ; un message envoyé ne pouvait donc jamais être reçu, et l'event receiver ne pouvait pas être signalé par le sender.
+
+**Correctif runtime actif :**
+- vendor `0292d965b39595533f7633bea804bf26c5630de9` introduit un `OverlayNotificationBroker` partagé, sans globale statique ;
+- vendor final `7549db56fbfaf04f3782bc7fc2ca4044aac6ddc3` corrige l'accès aux wrappers CMIF `Out<T>` dans le receiver ;
+- moteur/gitlink `841c92049b3f0e263ffaffb2aedee20a3d235792` épingle exactement ce vendor.
+
+Le broker est créé une seule fois dans `PSC::LoopProcess` puis injecté dans `ovln:snd` et `ovln:rcv`. Chaque sender conserve sa propre queue et son compteur `GetUnreceivedMessageCount`, tandis que les receivers s'abonnent par `SourceName`. Un `Send` réussi :
+- respecte la longueur de queue, les insertions Front/Back et les politiques RemoveFront/RemoveBack ;
+- rend le message visible au receiver abonné ;
+- signale son vrai `KEvent`;
+- permet à `Receive/ReceiveWithTick` de retirer le message, ce qui décrémente bien le compteur du sender ;
+- clear l'event lorsqu'aucun message d'une source abonnée ne reste.
+
+La séparation par sender est conservée même si plusieurs producteurs utilisent le même `SourceName`; le receiver arbitre les têtes de queues via un numéro de séquence partagé. Cela correspond au contrat public libnx : `OpenSender(SourceName, QueueAttribute)`, `Send(RawMessage, SendOption)`, `GetUnreceivedMessageCount`, et côté receiver `AddSource/RemoveSource/Receive`.
+
+**Limites explicites, non maquillées en succès :**
+- `OverflowOption::Block` reste fail-closed avec `ResultUnknown` au lieu de bloquer le thread partagé du serveur HLE et risquer un deadlock ; Error reste également fail-closed faute de code OVLN public certifié ;
+- le tick de `ReceiveWithTick` reste zéro, comme dans l'owner historique ; ce correctif vise le pont de livraison, pas la reconstruction de l'horodatage interne Horizon ;
+- les codes d'erreur OVLN exacts ne sont pas publiquement établis. Napple propose module 25/description 2 pour QueueFull mais le marque lui-même non vérifié, donc Encore ne l'importe pas comme vérité.
+
+Les owners OVLN sont matérialisés via le manifeste `eden-backports` ; aucun nouveau chemin CMake n'est ajouté. Le workflow X8D24 du pin `841c9204` (`45853900284`) est **vert**. La gate de provenance `45853900350` était encore en cours au moment de cette entrée, sans échec observé. Aucun build natif PS5 ni test console.
+
+**1 ligne PARTIEL quitte le pool de revue : nouveau plancher = 31 / 4 853.** Cela signifie « appel désormais traité explicitement avec livraison réelle et sous-mode Block rejeté », pas « OVLN entièrement équivalent à Horizon ».

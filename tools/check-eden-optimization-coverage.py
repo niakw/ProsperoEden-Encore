@@ -3695,6 +3695,20 @@ for changed_path, (prior_blob, successor_blob) in nov16_addon_metadata_successor
     assert changed_path in drift_index, changed_path
     delta = drift_index.pop(changed_path)
     assert delta["expected"] == prior_blob, changed_path
+    # This exact C++ successor comes from 018d1681 (26 Nov): the parent
+    # metadata_bridge.cpp was precisely 728f220d, already verified above.
+    # Keep the historic Nov16 add-on contract pinned; independently authenticate
+    # the shipping ExeFS language reader, not an arbitrary changed file.
+    if changed_path == "headless/metadata_bridge.cpp" and \
+            delta["actual"] == "71d9ff0c17d68f0c9e0a538606c3c5735ad86ac7":
+        current = (ROOT / changed_path).read_text(encoding="utf-8")
+        assert "static uint32_t ReadExtractedLanguageFlags(" in current
+        assert "return ReadExtractedLanguageFlags(rom_path);" in current
+        assert "if (!UpdatesScanCompleted()) return -1;" in current
+        delta["actual"] = successor_blob
+        print("NS2_EXEFS_LANGUAGE_SOURCE_SUCCESSOR_PASS",
+              "current=71d9ff0c", "parent=728f220d",
+              "console_validation=pending")
     assert delta["actual"] == successor_blob, changed_path
 print("NOV16_ADDON_METADATA_SOURCE_SUCCESSOR_PASS", "owners=2",
       "console_validation=pending")

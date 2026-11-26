@@ -13,6 +13,245 @@ import hashlib
 
 root = Path(__file__).resolve().parents[1]
 active = root / "vendor/encore-active"
+# The exact two-commit NS2 successor changes only four active owners.
+# Preserve prior FC27 selection only after authenticating its complete tree
+# and the actual working-tree bytes of the changed runtime owners.
+if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip() == "465d7e9c82f364dcde05354d67ec1b5bf5e2682d":
+    assert subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"], text=True).strip() == "5f4fbae3ea1e296e6b0ce842bb414b6bdc70d5c7"
+    for relative, digest in {
+        "encore-active/eden-core/src/dynarmic/backend/x64/block_of_code_native.cpp": "409a136a9ea77cfab1b9f53fe1d1a5132b469a98",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp": "9a34c1c8272a07f2dcecf172b310723ad2125643",
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "40d54f4022b5ae24de33737f8bbf8234a4a58016",
+        "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "84217f9b62f64e9a48305c29cae7f320f5332d19",
+    }.items():
+        assert subprocess.check_output(["git", "hash-object", str(root/"vendor"/relative)], text=True).strip() == digest, relative
+
+# 26/11/2026: vendor 9de08e4f4bbb903e25f330dde7b8185e19e078a1 is a VI2-only
+# successor of 465d7e9c82f364dcde05354d67ec1b5bf5e2682d. Require the COMPLETE tree plus the active
+# VI2 C++ blob before inheriting unrelated FC27/memory source receipts.
+if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip() == "9de08e4f4bbb903e25f330dde7b8185e19e078a1":
+    assert subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"], text=True).strip() == "5b4e01583d0687ba41e7a428668ee84c8b58c91e"
+    assert subprocess.check_output(["git", "hash-object", str(root/"vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp")], text=True).strip() == "f32b7be9445f1888298fd7162c8126b8c0421f02"
+
+# 26/11/2026: one new VI2 owner; authenticate the full vendor tree and C++ blob.
+if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip() == "95467b3a42f208667ef8e06e6794f8a23dc2340d":
+    assert subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"], text=True).strip() == "626ba6d69bdca7c46ca6729556a185cc1ccbb615"
+    assert subprocess.check_output(["git", "hash-object", str(root/"vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp")], text=True).strip() == "e10e0d333c3b0b6615f9c311c85fb3217134fe6a"
+
+# November 23 stabilization is a reviewed exact successor, not a new
+# historical F07 baseline. Preserve prior classifications for unchanged owners.
+shipping_vendor = subprocess.check_output(
+    ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+stabilization_trees = {
+    "9632ac089f8b2d89a6856a42e8fb55206cdba1fa": "51c9a38eba78d69893c48db6f3e48a169ea879e3",
+    "b5c6f089a6aecd321d08a40238f3cd502f505b26": "668fb8effa6963be062d780e3bd145a5233d6b7e",
+    "dc9f5f95b1f784bb358d6480e53de7247d61d777": "1660883553006cfca7e80465ad5521b4c2ca33b1",
+    "a441295022b23834f8531c54d2b0965f84023278": "d53129478299aded8cb8d7432751b43fa74594b9",
+    "7c5d5220dd4df4a531418458ab623ef86c41348c": "9ff41b47bfe30a9cef86a5ab7c584c0094f586bf",
+    "44540549ee9a65eb8078e271f43ccded0e8e984f": "86d6068c438cc36ffd01513fc178d2590fb010cb",
+    "d63d82dfb9c2afbacac4c9dc1491f743fb083d52": "290d8c51e8ab40dd56651d50483abe42e11fa404",
+    "d634b381d85dae30492dd6291fc4e6e96143f363": "a51ee73257c13fce70cbaf5d3e26c62010abf2e9",
+    "692e9819a7a1f1b818bf3739c72d8e5252cae661": "6743fed9174ee7e3451afbbad230dca6c2e4203c",
+    "166e473e120a86a6edcd32a975ffe19b45ffdd42": "3a996079e9de76e0c3d8bd2e595e6c83dadd6ce0",
+    "3522d8578fbcd7b46d2a439d5d718dfb570beb7b": "67917388ba3308bacfa3e8da6fff9d83c4efb713",
+    "042204fde8e5b74aa5048c6213a8af4450d26fe5": "08ff1d3ef45b03cbe3396079bcb91fa5dce4f160",
+    "294442004543aeecc5f3c61cc1b73b2feaff2f92": "50ba35725b57b59cae76a67c7c1d4ba6ad894e2f",
+    "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb": "a21aa2b63cfb9cae4dd9ba386982c3bd57a7ef1f",
+    "7e137d362f9679125726ef4876355a09d788795e": "6861e052a9824450c7eeaa91b53334c153ca9865",
+    "973d45ae0da5d9612d30900e39118d67d039b31a": "1d991da378f711312faf34125f1d4cfe1378bcaa",
+    "6b8fd06606f12be187f73e8809e56a49864794f9": "6ecf485d48b3c29c5e058de99a09c5c495cd537d",
+    "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc": "57a6ef072ad018954d493cb9064b5c722a5af827",
+    "38e19d4be0d99bbba35558af2c0620cd9b46f12e": "a27660a134453d2895e23d5c56ac64e6f12d9960",
+    "4c51642038c4a3cc04c0f8f0b8267b17aafd4045": "77add4864dbadc2c2246c339b215c3d79b40a549",
+    "881f6fb23c818ecfc387d2b134e1cd7328fc5995": "ba3ad593fb37ac3dc62f2c8b6064328c55cabb3b",
+    "d8155325107dbbb1f8ef44f75553595fe4c8ec8c": "a6451d095d44e8b9968635320d3bba34d5722fa5",
+    "101eae5edb76fefc40b039009eb35bbaaae99386": "8e42496a1f01a94cc6b17f57eee6ebdff2698ff6",
+    "3abd88bc1a3c334f53f345998b72e9cf8ae87abf": "b82ce9bb3b543bf85d535bdfdfb6d725fe88be56",
+    "cd5ce4dabef1d32e0441d22dccdee358ebf23287": "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89",
+    "a8f327c972bd2f84f6e6f9432c96c4a948963073": "747569d1bafefc23fb235e1929bda0f5c0d48de3",
+    "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e": "af3fb89c9c6bb96c19bd2e099273019840536267",
+    "752b92033610b294a36254d5747c317aca51c1d5": "7ab98eb5286021a9e070397ef6673f61934cf5e0",
+    "1b5256d72072e05a62fb734bc9ef790fc81c1573": "c54279c46295cc71d27c74af213dcacff0d08810",
+    "628d01bdc4368e9ad661d749515f788ef7c03802": "48f75fca37a128f9425cc3484d22ab994a1a17a8",
+    "191dd458c68de13f0f71659e3b4a9598af7de561": "f98956d2a6ce68c6af51bf5e8b53b7516b02bd2e",
+    "b743e9c7ec9832832711fc0ea34e03a25c973557": "c6eea7dfe0603bfccb44da9b82c95ca1429761fe",
+    "4c8f72f8ba3db320af55cea0f53cac16366c3ea0": "b300d82e0aa31c9ddde01703bdf446579ce4e0c2",
+    "6affc4ad869a3eaab9d1bed1e65de8872d93363b": "34b43b1a3d669be0482aca97a28f988516df615c",
+    "b92d4183cec69e65216162cf61e451eff643caa0": "79254f62ba6a12bcdcda9024953ba10e6b84706a",
+    "84d3b0398ae7db1618899815bc1f98894453fbf6": "2c722077f49013766b80b561ecf446562450faa5",
+    "1949a57c930d3ebd32bdd93093763ae22681a4a4": "0d60046b2708b582c9344108c35e5ca18bc6de40",
+    "2ecccebce83cd169f1820d9c4674698f6353fa48": "72633c97a3ad4f2659ec7f45e9e504ab039f549b",
+    "d40e212b2c8124225ff8d6adc06f459955e42a6a": "a1bc0bb572bdec28995c80be66bd6a6d796fb10f",
+    "b3458252ec923444b3add94ff50a4a76e2bc4570": "daad0337726ebd845b59ff9c86ce11de8173c599",
+    "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d": "9b37d2fa9f4a01b222539218182be12e738ff2fa",
+    "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189": "48aed811a8c087443c182aec68ce848fb4b9c897",
+    "f337bb8c0484fef5b9a2d763b9775566ff797eef": "453b5b1de56f24c6c910bf54949d7970842477cf",
+    "da339b1393d1386bc6af667d243e97860a40d096": "2b56aa5ceb7aeafb0d1e729c47cb10338bf799f4",
+    "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015": "79a4614d3390ac925cb870ea36fbaf2c4bed1f58",
+    "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4": "ba5a2aca13ad0f9f24f42d79b4ce92b18d8fd900",
+    "be9e46213070e5cb57a7dbd8a184ffb480106b4f": "d7a1ccb7d3e7379d166932b32d0624a4536b790d",
+    "096761112103fac069b56a22c77f07492001e26e": "3133bf53a7d2080e946bfa105957bd1dde1984c3",
+    "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6": "f188b7c9f89ab2e11ab049c7fff9fb6e6d4c743a",
+    "df6a83b4ad06a689674e111a793995663a8d4eb3": "0ae03c3481903ac2b1b5faacc8d1daa834a0574e",
+    "db9c5e6725264412218c3cabdb1d284e6dcb8a5f": "9bf33aa551c37b0c88866181f5a6446a524c691b",
+    "d254110d5551a246530a3665995e876e752e7565": "740dd8bbf66056a85eaf1b28c23bc961580b32b5",
+    "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a": "9ad0d1f255dce3e4666e2e5f1f2fdf61c793e89f",
+    "22a5ccda624de9c42f5c772f39844242621c9289": "7a56b74c79bd0108bcc983d1cc4ed1f0c412a558",
+    "dc47b157c607c739b43f67aecbf36448507b9557": "5bd3d6f913c3ad0de482a63497d24db22e243a10",
+    "f4a90f02ad5383998d08b45cca534d1b73b166c1": "8fc8d52290178f06a9f9494ecfd9a1444a3d5159",
+    "47f91da1f0179652eecbff150e09a4ddb6122157": "16a2e58aa284c80c02c9a2b93ce11eae0252a6f1",
+    "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16": "8baf67946db717dd0874fd9b4d36a98bdfa0d40a",
+    "d70e660ad2c48ae0d8a4268d8e051ac0dee8fb23": "aa9558de1ff14de0d4164bb5171148d5ce1271db",
+    "6d4e256d2ce11c531f33c3be3d604cb9a884538b": "20d32728d579b01df5d731a9e86c9442536a1b8b",
+    "720bdb0e81c57462338be480cecae13f2e205110": "0eadff0bbeec17fdb1e03ae91834e8ecd0bb7248",
+    "bde537edf37e1f21e483993ca8582f44ff0f5555": "d7ac5724fd94d7ee2372e5e2b6e3e3fadbd5d9b7",
+    "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd": "c245ee471877e0b0cd77e046bb23b2cf032cf3cd",
+    "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac": "9e3fd85b084aa76a39ab4c2b8a96123550643e17",
+    "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee": "c919c45985060dc3ccee7c958227d2f226422691",
+    "703de6566bb8d1f0f966b0867a42b529e60b6267": "ee3ec14886e89542a9e84a3b442b195cfea53805",
+    "ea4d39d5c9bd17074292b8c6f229c53954f8e21e": "e87b8613fed706ae8f09ee50200c737812ade91c",
+    "824a7342a58ad50d399ac0b215155884ced474ea": "ea890f123433198c30141f9320dd10090d80ecdc",
+    "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed": "b7548392480ec7bb16aafdcbb330a60834270d09",
+    "29b91308ba1fc69978cd2cc39222fe7dc59b668c": "45e1f9d536403dfcb2136ff653bae2e07ba85fd4",
+    "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea": "62a3bdbad43931dd19494fc24cb57bf5389211b8",
+    "68cf19e736158b815629ea74a494c5536706dbc2": "c1a6951364c337e8012a6cfb46f31f305271231e",
+    "b9dae898866d290d5ce1b15838492854680dc6d6": "cbb2c60a9bcc11478c4a420b2d03106a58fdcb20", "7130ede3236e2726f3f1b4718b0618240805e9bc": "c518f70d7e3b1e15495af73ccbd1bf29efb91e27", "203736df06915c10d379a67f52c8614c7010d733": "35c8a1e26f95dd48bdacb4f4a32f1ead48a9beee", "637edccbbf9dc403008192eaf04b14615b0500e2": "c4b3a2e07d89caea7327a00dd8b107f12e12166e", "0fa6924891050f7cea9b196dff0a760ad154993d": "6663837e6e411e6954e9934caec368ef045873ea", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9": "09ed906f5be3ba79636e6f9330fcca5c902825c4", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb": "722d3f6d8dc6d6d28e76e63162e70eefc34a56f9", "ad713526cb573d2051a945badfd3bea71b39565b": "08a445432d32483ed51eaad72055059142b236f4", "a44d4ecb17d9388f7428d7e56d21685054b38d99": "e3c172c6e1dd8c482392e7d3831359e8e59dfa25", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9": "540b44b21d777c5af0465f6694c1aa593f4faab5", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0": "0a3833e1bea8f0823881eeef1247eacdc422b9ed", "a383ab6f52da989c2c5cd756e62165f0763e8e72": "7771963a0d941a488a8e6caf9e594e6721dbc0d3", "002593960561e38ec74de982cde70e98c6070fd4": "3154d29ec8f33c2434c6482e814d03a8b9f4b2cf", "aece4f82a123a7bd1f4046237a82a0faecbee450": "e43ce45702c00d968a5306b898aad47399d1a9f2", "45952eb648e7eb3502b517c06b3032edd3a9035a": "e331d0bf6fdde57991f78d2c02e1c33c01c1736a",
+}
+
+# The FC27 collected-write successor changes only lock acquisition placement.
+# Reconstruct it before replaying the immutable strict-completion receipt.
+# FC27 attribute-handle index batching changes only one maintained rasterizer hunk.
+# Authenticate the exact successor and reverse it on the audit copy before
+# replaying the immutable collected-write/F07 receipts.
+def attribute_index_batch_predecessor(relative, data):
+    current = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+    if relative == "eden-vulkan/vulkan_rasterizer.cpp" and current == "39b2ed67e51937aecad666de4113ce792d32132d":
+        newer, older = "VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);\n    const VideoCore::RasterizerDownloadArea clean_area{\n        .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n        .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n        .preemtive = true,\n    };\n    // A clean/never-held texture page does not prove that a GPU-written\n    // storage buffer is current in guest memory. Query each cache independently:\n    // never-owned pages remain lock-free, and no two cache locks are nested.\n    std::optional<VideoCore::RasterizerDownloadArea> texture_area;\n    if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n        ::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        texture_area = texture_cache.GetFlushArea(addr, size);\n    }\n    if (texture_area && !texture_area->preemtive) {\n        // The existing GPU sync flushes both cache domains.\n        return *texture_area;\n    }\n    auto area = texture_area.value_or(clean_area);\n    // Core::Memory caches the returned interval, not just the original\n    // scalar read. A preemptive texture can extend over other GPU-written\n    // buffers. Check EVERY byte the caller may subsequently read without\n    // re-entering GetFlushArea. Keep the original texture extent when clean.\n    const DAddr buffer_start = area.start_address;\n    const u64 buffer_size = area.end_address - buffer_start;\n    if (!::Eden::BufferPages::NeverRegistered(buffer_start, buffer_size)) {\n        ::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);\n        std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};\n        if (buffer_cache.IsRegionGpuModified(buffer_start, buffer_size)) {\n            // Preserve the real GPU ownership and the existing ordered\n            // FlushRegion on the GPU worker. Do not certify stale siblings.\n            area.preemtive = false;\n        }\n    }\n    return area;\n}\n".encode(), "VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);\n    const VideoCore::RasterizerDownloadArea clean_area{\n        .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n        .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n        .preemtive = true,\n    };\n    // A clean/never-held texture page does not prove that a GPU-written\n    // storage buffer is current in guest memory. Query each cache independently:\n    // never-owned pages remain lock-free, and no two cache locks are nested.\n    std::optional<VideoCore::RasterizerDownloadArea> texture_area;\n    if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n        ::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        texture_area = texture_cache.GetFlushArea(addr, size);\n    }\n    if (texture_area && !texture_area->preemtive) {\n        // The existing GPU sync flushes both cache domains.\n        return *texture_area;\n    }\n    if (!::Eden::BufferPages::NeverRegistered(addr, size)) {\n        ::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);\n        std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};\n        if (buffer_cache.IsRegionGpuModified(\n                clean_area.start_address, clean_area.end_address - clean_area.start_address)) {\n            // GPU::OnCPURead must not return early for buffer-only GPU writes.\n            // Keep any texture-covered extent, including its sibling bytes.\n            return VideoCore::RasterizerDownloadArea{\n                .start_address = texture_area\n                    ? (std::min)(texture_area->start_address, clean_area.start_address)\n                    : clean_area.start_address,\n                .end_address = texture_area\n                    ? (std::max)(texture_area->end_address, clean_area.end_address)\n                    : clean_area.end_address,\n                .preemtive = false,\n            };\n        }\n    }\n    return texture_area.value_or(clean_area);\n}\n".encode()
+        assert data.count(newer) == 1, "Guest readback extent successor drift"
+        data = data.replace(newer, older, 1)
+        current = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+        assert current == "d8c093893b882175c46fb07c87193468da5f0f7a"
+    if relative == "eden-vulkan/vulkan_rasterizer.cpp" and current == "d8c093893b882175c46fb07c87193468da5f0f7a":
+        for newer, older in (("        // Indirect arguments are read, not overwritten. Preserve GPU dirty bytes.\n        const auto post_op = VideoCommon::ObtainBufferOperation::DoNothing;", "        const auto post_op = VideoCommon::ObtainBufferOperation::DiscardWrite;"), ("        buffer->MarkUsage(offset, 12);\n        scheduler.RequestOutsideRenderPassOperationContext();\n        // Lichii #1246: keep the input barrier in the dispatch command.", "        scheduler.RequestOutsideRenderPassOperationContext();\n        // Lichii #1246: keep the input barrier in the dispatch command.")):
+            newer, older = newer.encode(), older.encode()
+            assert data.count(newer) == 1, "Indirect dispatch ownership successor drift"
+            data = data.replace(newer, older, 1)
+        current = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+        assert current == "4a7ba88e47d686e3d277bee9df48f9b0d81a1248"
+    if relative == "eden-vulkan/vulkan_rasterizer.cpp" and current == "4a7ba88e47d686e3d277bee9df48f9b0d81a1248":
+        indirect_new = "        scheduler.RequestOutsideRenderPassOperationContext();\n        // Lichii #1246: keep the input barrier in the dispatch command. Vulkan\n        // ordering is unchanged, but one scheduler/worker command disappears.\n        scheduler.Record([pipeline, indirect_buffer = buffer->Handle(),\n                          indirect_offset = offset](vk::CommandBuffer cmdbuf) {\n            if (::Eden::DevVulkan::compute_barriers) {\n                cmdbuf.PipelineBarrier(vk::PIPELINE_STAGE_GRAPHICS_COMPUTE_TRANSFER,\n                                       VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT |\n                                           VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT,\n                                       0, COMPUTE_INPUT_BARRIER);\n            }\n            if (!pipeline->IsBound()) {\n                return;\n            }".encode()
+        indirect_old = "        scheduler.RequestOutsideRenderPassOperationContext();\n        if (::Eden::DevVulkan::compute_barriers) {\n            scheduler.Record([](vk::CommandBuffer cmdbuf) {\n                cmdbuf.PipelineBarrier(vk::PIPELINE_STAGE_GRAPHICS_COMPUTE_TRANSFER,\n                                       VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT,\n                                       0, COMPUTE_INPUT_BARRIER);\n            });\n        }\n        scheduler.Record([pipeline, indirect_buffer = buffer->Handle(),\n                          indirect_offset = offset](vk::CommandBuffer cmdbuf) {\n            if (!pipeline->IsBound()) {\n                return;\n            }".encode()
+        direct_new = "    static constexpr VkMemoryBarrier READ_BARRIER{\n        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,\n        .pNext = nullptr,\n        .srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,\n        .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,\n    };\n    // Lichii #1246: this barrier was a separate scheduler command although\n    // nothing records Vulkan work between it and the dispatch.\n    scheduler.Record([pipeline, dim](vk::CommandBuffer cmdbuf) {\n        cmdbuf.PipelineBarrier(vk::PIPELINE_STAGE_GRAPHICS_COMPUTE_TRANSFER,\n                               VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, READ_BARRIER);\n        if (!pipeline->IsBound()) {".encode()
+        direct_old = "    static constexpr VkMemoryBarrier READ_BARRIER{\n        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,\n        .pNext = nullptr,\n        .srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,\n        .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,\n    };\n    scheduler.Record([](vk::CommandBuffer cmdbuf) { cmdbuf.PipelineBarrier(vk::PIPELINE_STAGE_GRAPHICS_COMPUTE_TRANSFER, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,\n                               0, READ_BARRIER); });\n    scheduler.Record([pipeline, dim](vk::CommandBuffer cmdbuf) {\n        if (!pipeline->IsBound()) {".encode()
+        assert data.count(indirect_new) == data.count(direct_new) == 1, "Compute barrier folding successor drift"
+        data = data.replace(indirect_new, indirect_old, 1).replace(direct_new, direct_old, 1)
+        current = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+        assert current == "7049700a833c9e6cb239de8b01b5015dd7e3d163", ("Compute barrier folding predecessor drift", current)
+    if relative == "eden-vulkan/vulkan_rasterizer.cpp" and current == "7049700a833c9e6cb239de8b01b5015dd7e3d163":
+        newer = "void RasterizerVulkan::FlushCommands() {\n#ifdef PS5_NATIVE\n    // draw_counter measures graphics batching, not whether Vulkan work exists.\n    // DMA fills/copies and image transfers can record scheduler commands without\n    // any graphics draw. Conversely, a fence/explicit scheduler flush may have\n    // already submitted the current recording. Use the selected native\n    // scheduler's command epoch as the end-of-list authority.\n    draw_counter = 0;\n    if (!scheduler.RecordedSinceSubmit()) {\n        return;\n    }\n#else\n    if (draw_counter == 0) {\n        return;\n    }\n    draw_counter = 0;\n#endif\n    scheduler.Flush();\n}".encode()
+        older = "void RasterizerVulkan::FlushCommands() {\n    if (draw_counter == 0) {\n        return;\n    }\n    draw_counter = 0;\n    scheduler.Flush();\n}".encode()
+        assert data.count(newer) == 1, "DMA-only submit successor drift"
+        data = data.replace(newer, older, 1)
+        current = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+        assert current == "f79943f596b8a95cdcb05ce74a964a2141ae10ac", ("DMA-only submit predecessor drift", current)
+    if relative != "eden-vulkan/vulkan_rasterizer.cpp" or current != "f79943f596b8a95cdcb05ce74a964a2141ae10ac":
+        return data, current
+    newer = "#ifdef PS5_NATIVE\n    // FC27 uses a vertex-attribute texture handle on indexed triangle draws.\n    // OnCPUWrite is serialized by buffer_cache.mutex before guest memcpy, so\n    // this scan must stay under that lock. Reduce only repeated GMMU walks:\n    // prefetch a small, fully-mapped index span and decode sampled indices\n    // from it. Authenticated NS2 channels retain the original per-index path.\n    struct AttributeIndexBatch {\n        std::array<u8, 256> bytes{};\n        u32 first_position{};\n        u32 position_count{};\n        size_t index_width{};\n        bool valid{};\n    } index_batch;\n#endif\n    const auto read_index = [&](u32 position) {\n        const auto& indices = state.index_buffer;\n        const size_t index_width = indices.FormatSizeInBytes();\n        if (index_width == 0 || index_width > sizeof(u32)) return u32{};\n#ifdef PS5_NATIVE\n        if (!gpu_memory->UsesNativeTiling()) {\n            if (index_batch.valid && index_batch.index_width == index_width &&\n                position >= index_batch.first_position &&\n                position - index_batch.first_position < index_batch.position_count) {\n                u32 index{};\n                const size_t byte_offset =\n                    static_cast<size_t>(position - index_batch.first_position) * index_width;\n                std::memcpy(&index, index_batch.bytes.data() + byte_offset, index_width);\n                return index;\n            }\n            if (position < total) {\n                const size_t max_positions = index_batch.bytes.size() / index_width;\n                const u32 position_count =\n                    (std::min)(total - position, static_cast<u32>(max_positions));\n                const GPUVAddr offset = static_cast<GPUVAddr>(position) * index_width;\n                const GPUVAddr start = indices.IndexStart();\n                const GPUVAddr address = start + offset;\n                const size_t read_bytes = static_cast<size_t>(position_count) * index_width;\n                const bool address_ok =\n                    (position == 0 || offset / index_width == position) &&\n                    address >= start && read_bytes != 0 &&\n                    address <= ~GPUVAddr{0} - static_cast<GPUVAddr>(read_bytes);\n                if (position_count > 1 && address_ok &&\n                    gpu_memory->IsFullyMappedRange(address, read_bytes)) {\n                    gpu_memory->ReadBlockUnsafe(address, index_batch.bytes.data(), read_bytes);\n                    index_batch.first_position = position;\n                    index_batch.position_count = position_count;\n                    index_batch.index_width = index_width;\n                    index_batch.valid = true;\n                    u32 index{};\n                    std::memcpy(&index, index_batch.bytes.data(), index_width);\n                    return index;\n                }\n            }\n        }\n#endif\n        const GPUVAddr address = indices.IndexStart() +\n                                 static_cast<GPUVAddr>(position) * index_width;\n        u32 index{};\n        gpu_memory->ReadBlockUnsafe(address, &index, index_width);\n        return index;\n    };\n    const auto read_handle = [&](u32 position) {\n        const u32 vertex =\n            is_indexed ? static_cast<u32>(state.base_index + read_index(position))\n                       : state.vertex_buffer.first + position;".encode()
+    older = "    const auto read_handle = [&](u32 position) {\n        u32 vertex{};\n        if (is_indexed) {\n            const auto& indices = state.index_buffer;\n            const size_t index_width = indices.FormatSizeInBytes();\n            if (index_width == 0 || index_width > sizeof(u32)) return u32{};\n            const GPUVAddr address = indices.IndexStart() +\n                                     static_cast<GPUVAddr>(position) * index_width;\n            u32 index{};\n            gpu_memory->ReadBlockUnsafe(address, &index, index_width);\n            vertex = static_cast<u32>(state.base_index + index);\n        } else {\n            vertex = state.vertex_buffer.first + position;\n        }".encode()
+    assert data.count(newer) == 1, "FC27 attribute-index batch successor drift"
+    data = data.replace(newer, older, 1)
+    actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+    assert actual == "fcd174ed2326f3c205365b192c98f9d2f4d82ec3", ("FC27 attribute-index predecessor drift", actual)
+    return data, actual
+
+def collected_batch_preflight_predecessor(relative, data):
+    current = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+    if relative != "eden-vulkan/vulkan_rasterizer.cpp" or current != "fcd174ed2326f3c205365b192c98f9d2f4d82ec3":
+        return data, current
+    newer = "    // One owner-witness pass for the complete collected batch, as in\n    // InnerInvalidation. Each witness is monotonic and fails closed; once both\n    // cache domains may overlap, no later range can change the lock decision.\n    bool may_claim_buffer = false;\n    bool may_touch_texture = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr == 0 || size == 0) continue;\n        if (!may_claim_buffer && !::Eden::BufferPages::NeverRegistered(addr, size))\n            may_claim_buffer = true;\n        if (!may_touch_texture && !::Eden::ImagePages::NeverHeld(addr, size))\n            may_touch_texture = true;\n        if (may_claim_buffer && may_touch_texture) break;\n    }\n    // GPU-collected write batches acquire each cache domain only once. Claim\n    // still precedes every BufferCache write/readback below.\n".encode()
+    older = "    // Remove the complete CPU-write batch from GPU-owned ranges before any\n    // individual invalidation can download stale bytes over a later write.\n    // No registered buffer page in this CPU-write batch means no buffer can\n    // own GPU bytes to claim. Avoid the buffer mutex entirely in that case.\n    // NeverRegistered is monotonic and fails closed on unknown address spans.\n    bool may_claim_buffer = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr != 0 && size != 0 && !::Eden::BufferPages::NeverRegistered(addr, size)) {\n            may_claim_buffer = true;\n            break;\n        }\n    }\n    // The single-range invalidation callback takes the texture and buffer\n    // mutex once PER range. GPU-collected write batches often contain many\n    // pages; acquire each domain only once, as InnerInvalidation already\n    // does for the same texture -> buffer -> shader ordering. The prior\n    // ClaimCpuWrites still precedes every possible GPU sibling readback.\n    bool may_touch_texture = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr != 0 && size != 0 && !::Eden::ImagePages::NeverHeld(addr, size)) {\n            may_touch_texture = true;\n            break;\n        }\n    }\n".encode()
+    assert data.count(newer) == 1, "FC27 collected preflight successor drift"
+    data = data.replace(newer, older, 1)
+    actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+    assert actual == "e4948333ed15fba8024aeb4ffaa143a2e010f991", ("FC27 collected preflight predecessor drift", actual)
+    return data, actual
+
+def collected_batch_lock_predecessor(relative, data):
+    current = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+    if relative != "eden-vulkan/vulkan_rasterizer.cpp" or current != "e4948333ed15fba8024aeb4ffaa143a2e010f991":
+        return data, current
+    newer = "    if (may_claim_buffer) {\n        // Lichii 5e428570 / f5edeab: claim and apply the complete buffer batch\n        // under ONE acquisition. Texture state was handled above and is independent.\n        // Claim must precede BufferCache::WriteMemory so a sibling GPU download\n        // cannot overwrite a later CPU write from this same collected batch.\n        std::scoped_lock lock{buffer_cache.mutex};\n        buffer_cache.ClaimCpuWrites(ranges);\n        for (const auto& [addr, size] : ranges) {\n".encode()
+    older = "    if (may_claim_buffer) {\n        std::scoped_lock lock{buffer_cache.mutex};\n        for (const auto& [addr, size] : ranges) {\n".encode()
+    marker = "    // The single-range invalidation callback takes the texture and buffer\n".encode()
+    first = "    if (may_claim_buffer) {\n        std::scoped_lock lock{buffer_cache.mutex};\n        buffer_cache.ClaimCpuWrites(ranges);\n    }\n\n".encode()
+    assert data.count(newer) == data.count(marker) == 1, "FC27 collected-batch successor drift"
+    data = data.replace(newer, older, 1).replace(marker, first + marker, 1)
+    actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+    assert actual == "e5baa7f438d8caf11327989087db38ed1ca053a4", ("FC27 collected-batch predecessor drift", actual)
+    return data, actual
+
+# The strict native completion ABI adds only these reviewed blocks. Reconstruct
+# the immutable predecessor on an audit copy, never on the compiled source.
+def strict_completion_predecessor(relative, data):
+    # NS2 C797/C7C0 strict-fence ABI is a reviewed additive Vulkan change.
+    # Authenticate the complete shipping owner before removing ONLY that ABI
+    # method on the historical-source copy, never in compiled runtime.
+    current = hashlib.sha1(
+        b"blob " + str(len(data)).encode() + bytes([0]) + data
+    ).hexdigest()
+    if relative == "eden-vulkan/vulkan_rasterizer.cpp" and current == "ff8ad79ef203456063dbd848eab3ea575628edfc":
+        native_release = (
+            b"bool RasterizerVulkan::SignalNativeFence(std::function<void()>&& func) {\n"
+            b"    fence_manager.SignalNativeFence(std::move(func));\n"
+            b"    return true;\n"
+            b"}\n"
+        )
+        assert data.count(native_release) == 1
+        data = data.replace(native_release, b"", 1)
+        current = hashlib.sha1(
+            b"blob " + str(len(data)).encode() + bytes([0]) + data
+        ).hexdigest()
+        assert current == "39b2ed67e51937aecad666de4113ce792d32132d", (
+            "Native strict-fence source rollback drift", current
+        )
+    data, current = attribute_index_batch_predecessor(relative, data)
+    data, current = collected_batch_preflight_predecessor(relative, data)
+    data, current = collected_batch_lock_predecessor(relative, data)
+    changes = {
+        "eden-vulkan/vulkan_rasterizer.cpp": ("e5baa7f438d8caf11327989087db38ed1ca053a4", "f67815618d25657dcf64a87944b0c0bc5c2d8993", "#ifdef PS5_NATIVE\nbool RasterizerVulkan::SignalNativeSyncPoint(u32 value) {\n    fence_manager.SignalNativeSyncPoint(value);\n    return true;\n}\n#endif\n\n".encode()),
+        "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": ("8bd6f2a4e489aa608fc4420d2ff5847b7c12e165", "6e0bf7ab2a3a2147f9db0c630070db30d9b35d56", "#ifdef PS5_NATIVE\n    bool SignalNativeSyncPoint(u32 value) override;\n#endif\n".encode()),
+        "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": ("74587c78870735bb23d2430415f3742b9e7cca68", "33b1b5475e68c8459f9666b1ae1a6e446221cb63", "#ifdef PS5_NATIVE\n    // Native Ampere completion must retire behind a real renderer fence.\n    // Non-Vulkan backends fail closed rather than publishing an early GSV\n    // counter; the production PS5 Vulkan rasterizer overrides this method.\n    virtual bool SignalNativeSyncPoint(u32) {\n        return false;\n    }\n#endif\n\n".encode()),
+    }
+    if relative not in changes:
+        return data, current
+    successor, predecessor, addition = changes[relative]
+    if current != successor:
+        return data, current
+    assert data.count(addition) == 1, ("Strict completion ABI drift", relative)
+    data = data.replace(addition, b"", 1)
+    actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+    assert actual == predecessor, ("Strict completion predecessor drift", relative, actual)
+    return data, actual
+
+stabilization_selected = shipping_vendor in stabilization_trees
+stabilization_new_headers = set()
+if stabilization_selected:
+    assert subprocess.check_output(
+        ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
+        text=True).strip() == stabilization_trees[shipping_vendor]
+    # Both new headers are shipping Vulkan inputs, not historical F07 files.
+    for relative, expected in {
+        "eden-vulkan/include/video_core/renderer_vulkan/frame_pacer.h": "c3f6f99dd427fb9fd0acb84bb50ba88dc25d9a89",
+        "eden-vulkan/include/video_core/renderer_vulkan/vk_swapchain.h": "c4df1ab813495b8014e0eda5ed4bcd8fb0be855c",
+    }.items():
+        raw = (active / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
+        stabilization_new_headers.add(relative)
+if shipping_vendor in {"ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "d70e660ad2c48ae0d8a4268d8e051ac0dee8fb23", "6d4e256d2ce11c531f33c3be3d604cb9a884538b", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"}:
+    for relative, expected in {"eden-core/overrides/buffer-hotpath/common/range_sets.h":"1c90e08bc3c66731aa717e7b17b3249539848016","eden-core/overrides/buffer-hotpath/common/range_sets.inc":("bd48ff5cb346981f0937cfddbb042f9100697fd2" if shipping_vendor in {"752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "d70e660ad2c48ae0d8a4268d8e051ac0dee8fb23", "6d4e256d2ce11c531f33c3be3d604cb9a884538b", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "742dc02b71ada75425fec7e126093634a22d2102"),"eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h":"0992d01d0b4e262dd4b4a79633affa8b02529795"}.items():
+        raw = (active / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
+        stabilization_new_headers.add(relative)
 document = (root / "docs/EDEN_ACTIVE_SOURCE_CATALOG.md").read_text()
 audit = (root / "docs/EDEN_CORE_AUDIT_DEPENDENCIES.md").read_text()
 begin, end = "<!-- ACTIVE_SOURCE_CATALOG_START -->", "<!-- ACTIVE_SOURCE_CATALOG_END -->"
@@ -651,7 +890,7 @@ static_assert(NUM_GRAPHICS_UNIFORM_BUFFERS <= 32, "fast bitmask must fit u32");"
 if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
     for relative, blob in {
         "eden-core/overrides/core/device_memory_manager.inc":
-            "daf493ce6e863397ec44bfae467c4f7533570477",
+            ("8acbdfe9ac970d24fecd334ca7b943f6bcd958f4" if shipping_vendor in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"} else "daf493ce6e863397ec44bfae467c4f7533570477"),
         "eden-vulkan/vulkan_rasterizer.cpp":
             ("71d097b9a83028dfad9370792c905bb3bfccfd5a" if fc27_p1_vendor else
              "f23ad861761d53b59b8c83ae6003c089ae688060"
@@ -662,6 +901,7 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
     }.items():
         source=(active/relative).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(source)).encode()+bytes([0])+source).hexdigest()
+        source, actual = strict_completion_predecessor(relative, source)
         if (relative == "eden-vulkan/vulkan_rasterizer.cpp" and
             actual in {"0633e3cf41c615f46791d3943ff40ac22399b047", "f67815618d25657dcf64a87944b0c0bc5c2d8993"} and
             blob == "71d097b9a83028dfad9370792c905bb3bfccfd5a"):
@@ -690,6 +930,98 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
     if r437_vendor_pin in {"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
         raw = (active / "ns2-astc/include/video_core/texture_cache/texture_cache.h").read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        if actual == "5fa75d9b6b7b4f9710a6840182dc0de854e62268":
+            # Reverse exactly the new 16-entry TIC memo using the tested
+            # vendor host receipt. Never weaken the historical F07 oracle.
+            import ast
+            import re
+            witness = (root / "vendor" / "tests" / "ns1_r23_18_tir_host.py").read_text()
+            match = re.search(
+                r'(?m)^  current=("(?:\\.|[^"\\])*")\n  prior=("(?:\\.|[^"\\])*")\n  assert source\.count\(current\)==1',
+                witness,
+            )
+            assert match is not None, "selected TIC memo inverse witness missing"
+            current = ast.literal_eval(match.group(1))
+            predecessor = ast.literal_eval(match.group(2))
+            text = raw.decode("utf-8")
+            assert text.count(current) == 1, "selected TIC memo reverse scope drift"
+            raw = text.replace(current, predecessor, 1).encode("utf-8")
+            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert actual == "bbb55dc7b1648fa1e6fd730a1b3515f2969221c7", (
+                "selected TIC memo audited predecessor drift", actual)
+        if actual == "bbb55dc7b1648fa1e6fd730a1b3515f2969221c7":
+            text = raw.decode("utf-8")
+            current = "        // An exception may leave readback copies recorded but not yet\n        // completed. Never make their staging allocations reusable until the\n        // scheduler has retired the commands. No extra wait on success.\n        SCOPE_EXIT {\n            if (std::uncaught_exceptions() > uncaught_before_readback && !pending.empty()) {\n                try {\n                    runtime.Finish();\n                } catch (...) {\n                    // A failed drain cannot prove GPU retirement. Leave the\n                    // allocations deferred rather than risk reusing GPU data.\n                    return;\n                }\n            }\n            release_batch();\n        };"
+            predecessor = "        SCOPE_EXIT { release_batch(); };"
+            assert text.count(current) == 1, "readback exception retire owner drift"
+            raw = text.replace(current, predecessor, 1).encode("utf-8")
+            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert actual == "45659d2fa8ae336d28e7ccbd02b3104d96229378"
+        if actual == "45659d2fa8ae336d28e7ccbd02b3104d96229378":
+            text = raw.decode("utf-8")
+            for current, predecessor in [["void TextureCache<P>::DownloadMemory(DAddr cpu_addr, size_t size) {\n    boost::container::small_vector<ImageId, 16> images;\n#ifdef PS5_NATIVE\n    // DownloadMemory can fail after clearing GPU-dirty state but before guest\n    // pixels are published. Restore every touched image on unwinding, even\n    // when an earlier staged image was already copied successfully.\n    const int uncaught_before_readback = std::uncaught_exceptions();\n    SCOPE_EXIT {\n        if (std::uncaught_exceptions() > uncaught_before_readback) {\n            for (const ImageId id : images) {\n                slot_images[id].flags |= ImageFlagBits::GpuModified;\n            }\n        }\n    };\n#endif\n    ForEachImageInRegion(cpu_addr, size, [this, &images](ImageId image_id, ImageBase& image) {\n        if (!IsDownloadable(image)) {\n            return;\n        }\n#ifdef PS5_NATIVE\n        // The list can allocate: track the image BEFORE clearing its flag.\n        images.push_back(image_id);\n        image.flags &= ~ImageFlagBits::GpuModified;\n#else\n        image.flags &= ~ImageFlagBits::GpuModified;\n        images.push_back(image_id);\n#endif\n    });\n    if (images.empty()) {\n        return;\n    }\n    std::ranges::sort(images, [this](ImageId lhs, ImageId rhs) {\n        return slot_images[lhs].modification_tick < slot_images[rhs].modification_tick;\n    });\n#ifdef PS5_NATIVE\n    if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>) {\n        // Keep independent copies in one submission, then publish guest writes\n        // in modification order. A staging allocation stays busy until its tick.\n        using Map = decltype(runtime.DownloadStagingBuffer(size_t{}));\n        // Up to 40 small independent readbacks can now share one GPU\n        // completion fence. Keep their total staging bytes capped at 32 MiB\n        // and publish guest writes in their original modification order.\n        // Hold deferred staging until guest publication: a scheduler flush\n        // can advance the tick while another image is being recorded.\n        constexpr size_t readback_batch_limit = 40;\n        boost::container::small_vector<std::pair<ImageId, Map>, readback_batch_limit> pending;\n        constexpr size_t batch_limit = 32_MiB;\n        size_t batch_bytes = 0;\n        const auto release_batch = [&] {\n            for (auto& entry : pending) runtime.FreeDeferredStagingBuffer(entry.second);\n            pending.clear();\n            batch_bytes = 0;\n        };\n        SCOPE_EXIT { release_batch(); };\n        const auto finish_batch = [&] {\n            if (pending.empty()) return;\n            runtime.Finish();\n            for (auto& [image_id, map] : pending) {\n                Image& image = slot_images[image_id];\n                const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));\n                SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, map.mapped_span,\n                             swizzle_data_buffer);\n            }\n            release_batch();\n        };\n        for (const ImageId image_id : images) {\n            Image& image = slot_images[image_id];\n            const size_t bytes = image.unswizzled_size_bytes;\n            if (pending.size() == readback_batch_limit || bytes > batch_limit - batch_bytes)\n                finish_batch();\n            auto map = runtime.DownloadStagingBuffer(bytes, true);\n            // The inline capacity is sufficient and Vulkan's map is a POD ref.\n            pending.emplace_back(image_id, std::move(map));\n            const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));\n            image.DownloadMemory(pending.back().second, copies);\n            // Oversized images retain the original one-image allocation/wait.\n            if (bytes >= batch_limit) {\n                finish_batch();\n            } else {\n                batch_bytes += bytes;\n            }\n        }\n        finish_batch();\n        return;\n    }\n\n#endif\n    for (const ImageId image_id : images) {\n        Image& image = slot_images[image_id];\n        auto map = runtime.DownloadStagingBuffer(image.unswizzled_size_bytes);\n        const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));\n        image.DownloadMemory(map, copies);\n        runtime.Finish();\n        SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, map.mapped_span,\n                     swizzle_data_buffer);\n    }\n}\n\n","void TextureCache<P>::DownloadMemory(DAddr cpu_addr, size_t size) {\n    boost::container::small_vector<ImageId, 16> images;\n    ForEachImageInRegion(cpu_addr, size, [this, &images](ImageId image_id, ImageBase& image) {\n        if (!IsDownloadable(image)) {\n            return;\n        }\n        image.flags &= ~ImageFlagBits::GpuModified;\n        images.push_back(image_id);\n    });\n    if (images.empty()) {\n        return;\n    }\n    std::ranges::sort(images, [this](ImageId lhs, ImageId rhs) {\n        return slot_images[lhs].modification_tick < slot_images[rhs].modification_tick;\n    });\n    for (const ImageId image_id : images) {\n        Image& image = slot_images[image_id];\n        auto map = runtime.DownloadStagingBuffer(image.unswizzled_size_bytes);\n        const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));\n        image.DownloadMemory(map, copies);\n        runtime.Finish();\n        SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, map.mapped_span,\n                     swizzle_data_buffer);\n    }\n}\n\n"],["void TextureCache<P>::ForEachImageInRegion(DAddr cpu_addr, size_t size, Func&& func) {\n    using FuncReturn = typename std::invoke_result<Func, ImageId, Image&>::type;\n    constexpr bool BOOL_BREAK = std::is_same_v<FuncReturn, bool>;\n    boost::container::small_vector<ImageId, 32> images;\n    boost::container::small_vector<ImageMapId, 32> maps;\n    // Allocation or callback failure must not permanently hide a cache owner.\n    SCOPE_EXIT {\n        for (const ImageId image_id : images) {\n            slot_images[image_id].flags &= ~ImageFlagBits::Picked;\n        }\n        for (const ImageMapId map_id : maps) {\n            slot_map_views[map_id].picked = false;\n        }\n    };\n    ForEachCPUPage(cpu_addr, size, [this, &images, &maps, cpu_addr, size, func](u64 page) {\n        const auto it = page_table.find(page);\n        if (it == page_table.end()) {\n            if constexpr (BOOL_BREAK) {\n                return false;\n            } else {\n                return;\n            }\n        }\n        for (const ImageMapId map_id : it->second) {\n            ImageMapView& map = slot_map_views[map_id];\n            if (map.picked) {\n                continue;\n            }\n            if (!map.Overlaps(cpu_addr, size)) {\n                continue;\n            }\n            maps.push_back(map_id);\n            map.picked = true;\n            Image& image = slot_images[map.image_id];\n            if (True(image.flags & ImageFlagBits::Picked)) {\n                continue;\n            }\n            images.push_back(map.image_id);\n            image.flags |= ImageFlagBits::Picked;\n            if constexpr (BOOL_BREAK) {\n                if (func(map.image_id, image)) {\n                    return true;\n                }\n            } else {\n                func(map.image_id, image);\n            }\n        }\n        if constexpr (BOOL_BREAK) {\n            return false;\n        }\n    });\n}\n\n","void TextureCache<P>::ForEachImageInRegion(DAddr cpu_addr, size_t size, Func&& func) {\n    using FuncReturn = typename std::invoke_result<Func, ImageId, Image&>::type;\n    constexpr bool BOOL_BREAK = std::is_same_v<FuncReturn, bool>;\n    boost::container::small_vector<ImageId, 32> images;\n    boost::container::small_vector<ImageMapId, 32> maps;\n    ForEachCPUPage(cpu_addr, size, [this, &images, &maps, cpu_addr, size, func](u64 page) {\n        const auto it = page_table.find(page);\n        if (it == page_table.end()) {\n            if constexpr (BOOL_BREAK) {\n                return false;\n            } else {\n                return;\n            }\n        }\n        for (const ImageMapId map_id : it->second) {\n            ImageMapView& map = slot_map_views[map_id];\n            if (map.picked) {\n                continue;\n            }\n            if (!map.Overlaps(cpu_addr, size)) {\n                continue;\n            }\n            map.picked = true;\n            maps.push_back(map_id);\n            Image& image = slot_images[map.image_id];\n            if (True(image.flags & ImageFlagBits::Picked)) {\n                continue;\n            }\n            image.flags |= ImageFlagBits::Picked;\n            images.push_back(map.image_id);\n            if constexpr (BOOL_BREAK) {\n                if (func(map.image_id, image)) {\n                    return true;\n                }\n            } else {\n                func(map.image_id, image);\n            }\n        }\n        if constexpr (BOOL_BREAK) {\n            return false;\n        }\n    });\n    for (const ImageId image_id : images) {\n        slot_images[image_id].flags &= ~ImageFlagBits::Picked;\n    }\n    for (const ImageMapId map_id : maps) {\n        slot_map_views[map_id].picked = false;\n    }\n}\n\n"],["#include <exception>\n",""]]:
+                assert text.count(current) == 1
+                text = text.replace(current, predecessor, 1)
+            raw = text.encode("utf-8")
+            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert actual == "27ea4e0e665d3f94e173c1335cb19211efc03646"
+        if actual == "27ea4e0e665d3f94e173c1335cb19211efc03646":
+            # Reverse the four reviewed HUD/cache hunks only on the audit copy.
+            text = raw.decode("utf-8")
+            for current, predecessor in (
+                ("void TextureCache<P>::RemoveFramebuffers(std::span<const ImageViewId> removed_views) {\n#ifdef PS5_NATIVE\n    // No framebuffer can contain an absent view. Do not flush deferred\n    // clears belonging to other render targets or scan the framebuffer map.\n    if (removed_views.empty()) {\n        return;\n    }\n#endif\n    runtime.FlushDeferredClear();\n    auto it = framebuffers.begin();\n    while (it != framebuffers.end()) {\n        if (it->first.Contains(removed_views)) {\n            auto framebuffer_id = it->second;\n            ASSERT(framebuffer_id);\n            if (framebuffer_id == last_framebuffer_id) {\n                last_framebuffer_id = {};\n                last_framebuffer_serial = 0;\n            }\n            sentenced_framebuffers.Push(std::move(slot_framebuffers[framebuffer_id]));\n            it = framebuffers.erase(it);\n        } else {\n            ++it;\n        }\n    }\n}", "void TextureCache<P>::RemoveFramebuffers(std::span<const ImageViewId> removed_views) {\n    runtime.FlushDeferredClear();\n    auto it = framebuffers.begin();\n    while (it != framebuffers.end()) {\n        if (it->first.Contains(removed_views)) {\n            auto framebuffer_id = it->second;\n            ASSERT(framebuffer_id);\n            if (framebuffer_id == last_framebuffer_id) {\n                last_framebuffer_id = {};\n                last_framebuffer_serial = 0;\n            }\n            sentenced_framebuffers.Push(std::move(slot_framebuffers[framebuffer_id]));\n            it = framebuffers.erase(it);\n        } else {\n            ++it;\n        }\n    }\n}"),
+                ("void TextureCache<P>::RemoveImageViewReferences(std::span<const ImageViewId> removed_views) {\n#ifdef PS5_NATIVE\n    // Images created and retired without any view cannot be in a channel's\n    // descriptor-to-view map. Avoid scanning every channel on that path.\n    if (removed_views.empty()) {\n        return;\n    }\n#endif\n    for (size_t c : active_channel_ids) {\n        auto& channel_info = channel_storage[c];\n        auto it = channel_info.image_views.begin();\n        while (it != channel_info.image_views.end()) {\n            const auto found = std::ranges::find(removed_views, it->second);\n            if (found != removed_views.end()) {\n                it = channel_info.image_views.erase(it);\n            } else {\n                ++it;\n            }\n        }\n    }\n}", "void TextureCache<P>::RemoveImageViewReferences(std::span<const ImageViewId> removed_views) {\n    for (size_t c : active_channel_ids) {\n        auto& channel_info = channel_storage[c];\n        auto it = channel_info.image_views.begin();\n        while (it != channel_info.image_views.end()) {\n            const auto found = std::ranges::find(removed_views, it->second);\n            if (found != removed_views.end()) {\n                it = channel_info.image_views.erase(it);\n            } else {\n                ++it;\n            }\n        }\n    }\n}"),
+                ("        // Publish both valid->NULL and NULL->valid generation transitions.\n        // A failed reconstruction also retires the previously bound view.\n        if (pair->second != NULL_IMAGE_VIEW_ID || remapped_cached_view)\n            ++texture_bindings_serial;", "        // CheckFeedbackLoop caches barrier decisions by this serial. Reviving\n        // an image without rewriting its TIC must invalidate that decision.\n        if (pair->second != NULL_IMAGE_VIEW_ID)\n            ++texture_bindings_serial;"),
+                ("#ifdef PS5_NATIVE\n    // A descriptor table can retain its bytes after a channel map entry\n    // is evicted/rebuilt. Never dereference a missing sampler mapping.\n    const auto it = channel_state->sampler_ids.find(map_index);\n    if (it == channel_state->sampler_ids.end()) {\n        const auto id = FindSampler(descriptor, compute);\n        channel_state->sampler_ids.insert_or_assign(map_index, id);\n        return id;\n    }\n    return it->second;\n#else\n    return channel_state->sampler_ids.find(map_index)->second;\n#endif\n}", "    return channel_state->sampler_ids.find(map_index)->second;\n}"),
+            ):
+                assert text.count(current) == 1, "HUD/cache parity owner drift"
+                text = text.replace(current, predecessor, 1)
+            raw = text.encode("utf-8")
+            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert actual == "5c6d015cf207d63de31b577411972606145d9f2e"
+        if actual == "5c6d015cf207d63de31b577411972606145d9f2e":
+            # Reverse the reviewed failed render-target allocation successor
+            # only in the audit copy, then replay the original source proof.
+            current = """    if (!image_id) {
+        // An allocation failure means no render target. NULL_IMAGE_VIEW_ID is
+        // a valid descriptor-null sentinel and has no render-target VkImageView.
+        return ImageViewId{};
+    }"""
+            predecessor = """    if (!image_id) {
+        return NULL_IMAGE_VIEW_ID;
+    }"""
+            assert raw.decode("utf-8").count(current) == 1
+            raw = raw.decode("utf-8").replace(current, predecessor, 1).encode("utf-8")
+            actual = hashlib.sha1(
+                b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+            ).hexdigest()
+            assert actual == "948960fad4d829ba874746acb6e353a8a2ed19f7"
+            print("ENCORE_TEXTURECACHE_NULL_TARGET_EXACT_REVERSE_PASS")
+        if actual == "948960fad4d829ba874746acb6e353a8a2ed19f7":
+            # Performance-only successor: TRACE compiles these two high-frequency
+            # invalid-descriptor diagnostics out of release builds. Restore DEBUG
+            # in the audit copy before reversing the ten semantic TextureCache hunks.
+            text = raw.decode("utf-8")
+            sampler_trace = '        LOG_TRACE(HW_GPU, "Invalid sampler index={}", index);'
+            image_trace = '        LOG_TRACE(HW_GPU, "Invalid image view index={}", index);'
+            assert text.count(sampler_trace) == 1 and text.count(image_trace) == 1, (
+                "Descriptor hot-path log owner drift"
+            )
+            text = text.replace(
+                sampler_trace,
+                '        LOG_DEBUG(HW_GPU, "Invalid sampler index={}", index);',
+                1,
+            ).replace(
+                image_trace,
+                '        LOG_DEBUG(HW_GPU, "Invalid image view index={}", index);',
+                1,
+            )
+            raw = text.encode("utf-8")
+            actual = hashlib.sha1(
+                b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+            ).hexdigest()
+            assert actual == "5b3db278f70b560a098a2a479d3ee98e78b987f2"
+            print("ENCORE_DESCRIPTOR_HOT_PATH_LOG_EXACT_REVERSE_PASS")
         if actual == "5b3db278f70b560a098a2a479d3ee98e78b987f2":
             # Integrated descriptor/DMA/layered-copy/volume/X8_D24 successor.
             # Reverse its exact ten reviewed source hunks only in this audit copy.
@@ -715,8 +1047,23 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
             ).hexdigest()
             assert actual == "c797eb9e3f4432b6ba19fe8a17a7289b23b75864"
             print("ENCORE_NS1_NS2_TEXTURECACHE10_EXACT_REVERSE_PASS")
-        assert actual == ("c797eb9e3f4432b6ba19fe8a17a7289b23b75864" if fc27_p1_vendor else
-                          "c7cb95ecaf388b925fc29582499bbd4b54a77f75" if r437_vendor_pin in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"} else "859a9e46fb63a97fee82c8ea6b1566317264f98f" if r437_vendor_pin == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else "0d99f9a861c645562519f71d62f4f49bfedd8101"), ("Selected F07 TextureCache drift", actual)
+        # Exact selected Nov26 NS2 successor, already independently
+        # reviewed by vendor/tests/ns1_r23_18_tir_host.py. Keep the old
+        # historical comparison below unchanged for all earlier vendors.
+        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d",
+                               "240550925b0ef097c24c3035c063bdceadd872de"}:
+            assert actual == "c0312be09d81afb0064479179db794d2648560b9", (
+                "Unreviewed selected NS2 TextureCache", actual)
+            selected_ns2 = (active / "ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+            assert "constexpr size_t gc_scan_limit = 8192;" in selected_ns2
+            assert "if (!VideoCore::Surface::IsViewCompatible(" in selected_ns2
+            assert "Charge each eligible attempt, including failed readbacks" in selected_ns2
+            ns2_receipt = (root / "vendor/tests/ns1_r23_18_tir_host.py").read_text()
+            assert 'sha == "c0312be09d81afb0064479179db794d2648560b9"' in ns2_receipt
+            print("ENCORE_NS2_TEXTURECACHE_SELECTED_SUCCESSOR_PASS exact_blob=1 guards=1", flush=True)
+        else:
+            assert actual == ("c797eb9e3f4432b6ba19fe8a17a7289b23b75864" if fc27_p1_vendor else
+                              "c7cb95ecaf388b925fc29582499bbd4b54a77f75" if r437_vendor_pin in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"} else "859a9e46fb63a97fee82c8ea6b1566317264f98f" if r437_vendor_pin == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else "0d99f9a861c645562519f71d62f4f49bfedd8101"), ("Selected F07 TextureCache drift", actual)
     assert fc27_deferred_present == set()
     r437_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 
@@ -1103,6 +1450,23 @@ assert post_f07_c03_radv_meta_owners.isdisjoint(
     ns2_production_added_owners | set(research_paths))
 print("NS1_C03_POST_F07_NATIVE_OWNER_PASS", "meta_units=2 historical_F07=337")
 
+# Warning cleanup adds one complete maintained Eden common source after F07.
+# It is selected only by the native PS5 graph and preserves the immutable
+# pinned source while removing deprecated codecvt usage.
+post_f07_warning_cleanup_owners = {
+    "eden-core/src/common/string_util.cpp",
+}
+assert post_f07_warning_cleanup_owners <= set(physical_all)
+warning_cleanup_raw = (active / "eden-core/src/common/string_util.cpp").read_bytes()
+assert hashlib.sha1(
+    b"blob " + str(len(warning_cleanup_raw)).encode() + bytes([0]) + warning_cleanup_raw
+).hexdigest() == "548328e9ae6f30993166b69d2c4193f6c54643e9"
+warning_cleanup_cmake = (root / "headless/CMakeLists.txt").read_text()
+assert 'set(EDEN_NATIVE_STRING_UTIL' in warning_cleanup_cmake
+assert 'list(REMOVE_ITEM eden_native_common_sources "string_util.cpp")' in warning_cleanup_cmake
+assert 'list(APPEND eden_native_common_sources "${EDEN_NATIVE_STRING_UTIL}")' in warning_cleanup_cmake
+print("ENCORE_POST_F07_UTF_WARNING_OWNER_PASS owners=1 historical_F07=337")
+
 # R23 adds 45 selected source owners after the frozen 337-file F07 ledger.
 # Keep exact paths, require all to exist, and exclude them from historical F07
 # rather than silently re-dating the audited source snapshot.
@@ -1318,6 +1682,100 @@ post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
 # The tracker workflow also explicitly tests historical vendor 1ec7b42.
 # Only that known historical checkout (not a missing production TU) may omit it.
 gpu_table_vendor_pin = checked_guest_cache_lock_vendor(subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip())
+if gpu_table_vendor_pin in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"}:
+    assert subprocess.check_output(
+        ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea": "62a3bdbad43931dd19494fc24cb57bf5389211b8", "68cf19e736158b815629ea74a494c5536706dbc2": "c1a6951364c337e8012a6cfb46f31f305271231e", "b9dae898866d290d5ce1b15838492854680dc6d6": "cbb2c60a9bcc11478c4a420b2d03106a58fdcb20", "7130ede3236e2726f3f1b4718b0618240805e9bc": "c518f70d7e3b1e15495af73ccbd1bf29efb91e27", "203736df06915c10d379a67f52c8614c7010d733": "35c8a1e26f95dd48bdacb4f4a32f1ead48a9beee", "637edccbbf9dc403008192eaf04b14615b0500e2": "c4b3a2e07d89caea7327a00dd8b107f12e12166e", "0fa6924891050f7cea9b196dff0a760ad154993d": "6663837e6e411e6954e9934caec368ef045873ea", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9": "09ed906f5be3ba79636e6f9330fcca5c902825c4", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb": "722d3f6d8dc6d6d28e76e63162e70eefc34a56f9", "ad713526cb573d2051a945badfd3bea71b39565b": "08a445432d32483ed51eaad72055059142b236f4", "a44d4ecb17d9388f7428d7e56d21685054b38d99": "e3c172c6e1dd8c482392e7d3831359e8e59dfa25", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9": "540b44b21d777c5af0465f6694c1aa593f4faab5", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0": "0a3833e1bea8f0823881eeef1247eacdc422b9ed", "a383ab6f52da989c2c5cd756e62165f0763e8e72": "7771963a0d941a488a8e6caf9e594e6721dbc0d3", "002593960561e38ec74de982cde70e98c6070fd4": "3154d29ec8f33c2434c6482e814d03a8b9f4b2cf", "aece4f82a123a7bd1f4046237a82a0faecbee450": "e43ce45702c00d968a5306b898aad47399d1a9f2", "45952eb648e7eb3502b517c06b3032edd3a9035a": "e331d0bf6fdde57991f78d2c02e1c33c01c1736a"}[gpu_table_vendor_pin]
+    if gpu_table_vendor_pin in {"7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"}:
+        assert subprocess.check_output(["git", "hash-object", str(root / "vendor/encore-active/eden-core/src/core/hle/kernel/k_page_table_base.cpp")], text=True).strip() == "a2d6d658ae391e0acd64e68d495c00333e2032ca"
+    if gpu_table_vendor_pin in {"68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"}:
+        raw=(root/"vendor/tests/ns2_gpu_identity_mapping_source.py").read_bytes()
+        actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert actual == ("63291835bc54248fca84422d03ad01b91eb1637a" if gpu_table_vendor_pin in {"002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "e7c379db1f5d938e5c51a497451f20db142d5394" if gpu_table_vendor_pin == "a383ab6f52da989c2c5cd756e62165f0763e8e72" else "4818d6bf9c03e1e64e88af9fa0a91f2f94dd4c39" if gpu_table_vendor_pin in {"93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0"} else "3fa08a66de50756376be6905fee407e122868db3" if gpu_table_vendor_pin == "a44d4ecb17d9388f7428d7e56d21685054b38d99" else "9755354e5a49f50f75f1f04894686f7838f80ea8" if gpu_table_vendor_pin in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "3a9a1679bc2795cf08863370403b2bc4ad89a553"), ("NS2 identity inventory drift",gpu_table_vendor_pin,actual)
+    if gpu_table_vendor_pin in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"}:
+        for relative,expected in {
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h":"6e1d185f086969caef3dded1a4b383c34a4d8657",
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":("ebcb3c4de5e1406f98c1b3959aba90e1a4c3b813" if gpu_table_vendor_pin in {"a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "b1be989fb564a1c9ef269470ca5897af4491c9c2"),
+        }.items():
+            raw=(root/"vendor"/relative).read_bytes()
+            actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+            assert actual==expected,("GPU 214 inventory drift",relative,actual)
+    for relative, expected in {
+        "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h":
+            "8c93a3d6aef8a45f85cb9c2344e3427daff4d131",
+        "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/service_creator.h":
+            "de582d12ef1025735a741817ac4e365f59789809",
+        "encore-active/eden-core/src/core/hle/service/bcat/delivery_cache_storage_service.cpp":
+            "9f98f2da3f865da69399467133436e64e4e4d67b",
+        "encore-active/eden-core/src/core/hle/service/bcat/service_creator.cpp":
+            "1635bc091413a2f118b166216f91410b6338686d",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
+            "576a9d697da398aa6f42901b1764aa7574155411",
+        "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+            ("ebcb3c4de5e1406f98c1b3959aba90e1a4c3b813" if gpu_table_vendor_pin in {"a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "b1be989fb564a1c9ef269470ca5897af4491c9c2" if gpu_table_vendor_pin in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "9c35b43bc4f61d67395897fb63fce57419bc3331"),
+        "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h":
+            "a22b96c04f6f06aef36c36857dcf124521ca2cb7",
+    }.items():
+        raw = (root / "vendor" / relative).read_bytes()
+        actual = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        assert actual == expected, ("NS2 semaphore successor drift", relative, actual)
+    assert subprocess.check_output(
+        ["git", "hash-object", str(root / "vendor" /
+         "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp")],
+        text=True,
+    ).strip() == "44b0edc24e847d4cbcd47de0ed86241787bda38a"
+    assert subprocess.check_output(
+        ["git", "hash-object", str(root / "vendor" /
+         "encore-active/eden-core/src/common/multi_level_page_table.cpp")],
+        text=True,
+    ).strip() == "87eed0b2319c719d27332c8e24f97a73e496f108"
+    assert subprocess.check_output(
+        ["git", "hash-object", str(root / "vendor" /
+         "encore-active/eden-core/src/video_core/memory_manager.cpp")],
+        text=True,
+    ).strip() == ("60446449c26a68b6e2b665148a8045612beb49ef" if shipping_vendor in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86")
+    assert subprocess.check_output(
+        ["git", "hash-object", str(root / "src/memory_pages.cpp")],
+        text=True,
+    ).strip() == "e90dd13badd48257c25db6317cc523f97b92e1e6"
+    # These seven objects are the only successor delta. Every historic active
+    # source classification below therefore reuses the qualified 29b profile.
+    gpu_table_vendor_pin = "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac"
+# The shipping vendor successor modifies only the SM teardown order.
+# Authenticate the entire new tree and its unique changed C++ blob before
+# reusing the predecessor's byte-identical GPU/FC27 source-owner receipts.
+if gpu_table_vendor_pin in {"6d9fc80860ea4324b68b433492ad15e34c35a81d", "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee", "703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e", "824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
+    assert subprocess.check_output(
+        ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
+        text=True,
+    ).strip() == {
+        "6d9fc80860ea4324b68b433492ad15e34c35a81d": "0ee1ae75649352ed8ddc79271202af9afca258b2",
+        "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee": "c919c45985060dc3ccee7c958227d2f226422691",
+        "703de6566bb8d1f0f966b0867a42b529e60b6267": "ee3ec14886e89542a9e84a3b442b195cfea53805",
+        "ea4d39d5c9bd17074292b8c6f229c53954f8e21e": "e87b8613fed706ae8f09ee50200c737812ade91c",
+    "824a7342a58ad50d399ac0b215155884ced474ea": "ea890f123433198c30141f9320dd10090d80ecdc",
+    "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed": "b7548392480ec7bb16aafdcbb330a60834270d09",
+    "29b91308ba1fc69978cd2cc39222fe7dc59b668c": "45e1f9d536403dfcb2136ff653bae2e07ba85fd4",
+    }[gpu_table_vendor_pin]
+    if gpu_table_vendor_pin in {"a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee", "703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e", "824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
+        table = root / "vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"
+        expected = "87eed0b2319c719d27332c8e24f97a73e496f108" if gpu_table_vendor_pin in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"} else "6dd69f4b09aebc0eb7250975d35b34393e9f5516" if gpu_table_vendor_pin in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e"} else "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f"
+        assert subprocess.check_output(["git", "hash-object", str(table)], text=True).strip() == expected
+        if gpu_table_vendor_pin in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e", "824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
+            manager = root / "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp"
+            assert subprocess.check_output(["git", "hash-object", str(manager)], text=True).strip() == ("60446449c26a68b6e2b665148a8045612beb49ef" if shipping_vendor in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86")
+            if gpu_table_vendor_pin in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
+                assert subprocess.check_output(["git", "hash-object", str(root / "src/memory_pages.cpp")], text=True).strip() == "e90dd13badd48257c25db6317cc523f97b92e1e6"
+    assert subprocess.check_output(
+        ["git", "hash-object", str(root / "vendor" /
+         "encore-active/eden-core/src/core/hle/service/sm/sm.cpp")],
+        text=True,
+    ).strip() == "2ef914e3f1b24442e1fa0130d5f8175111e7d316"
+    gpu_table_vendor_pin = "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac"
+if stabilization_selected:
+    gpu_table_vendor_pin = "9db97fb12db1a390d6b2410f0c18333aa31e37da"
 gpu_table_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if gpu_table_vendor_pin in {
     "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else gpu_table_vendor_pin
@@ -1339,7 +1797,8 @@ if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
 else:
     assert post_f07_gpu_table_present == post_f07_gpu_table_owners
     page_table_bytes = (active / "eden-core/src/common/multi_level_page_table.cpp").read_bytes()
-    assert hashlib.sha1(b"blob " + str(len(page_table_bytes)).encode() + bytes([0]) + page_table_bytes).hexdigest() == "c55a55498fe300458800b646bfc295db11283b4a"
+    assert hashlib.sha1(b"blob " + str(len(page_table_bytes)).encode() + bytes([0]) + page_table_bytes).hexdigest() == (
+        "87eed0b2319c719d27332c8e24f97a73e496f108" if shipping_vendor in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c", "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"} else "6dd69f4b09aebc0eb7250975d35b34393e9f5516" if shipping_vendor in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e"} else "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f" if shipping_vendor == "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee" else "c55a55498fe300458800b646bfc295db11283b4a")
     assert 'list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")' in nov13_cmake
     assert 'list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")' in nov13_cmake
 print("ENCORE_POST_F07_GPU_PAGE_TABLE_OWNER_PASS", f"owners={len(post_f07_gpu_table_present)}")
@@ -1530,6 +1989,25 @@ pair_present = pair_new_owners & set(physical_all)
 # Preserve all 14 exact source blobs for the merged FC27 runtime owner
 # graph. The updated BufferCache/TextureCache/Vulkan ABIs are qualified as a
 # complete set here, not inferred from their parent's commit SHA.
+# Reuse F07's one fourteen-blob selected GPU receipt without importing
+# and executing that audit. Older vendor pins retain historical replay.
+selected_nov26_gpu_pair = {}
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+    import ast
+    f07_ast = ast.parse(
+        (root / "tools/check-eden-optimization-coverage.py").read_text())
+    selected_nodes = [
+        node.value for node in ast.walk(f07_ast)
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name)
+                and target.id == "selected_nov26_pair"
+                for target in node.targets)
+    ]
+    assert len(selected_nodes) == 1
+    selected_nov26_gpu_pair = ast.literal_eval(selected_nodes[0])
+    assert set(selected_nov26_gpu_pair) == set(pair_receipt["files"])
+    print("ENCORE_SELECTED_GPU_PAIR_RECEIPT_LOADED owners=14")
+
 merged_fc27_pair_receipts = dict(pair_receipt["files"])
 merged_fc27_pair_receipts.update({
     "eden-core/src/video_core/buffer_cache/buffer_cache.h": "41239f19b9e16741d49e31145c504e0086b1095e",
@@ -1541,6 +2019,10 @@ merged_fc27_pair_receipts.update({
     "eden-vulkan/vulkan_rasterizer.cpp": "71d097b9a83028dfad9370792c905bb3bfccfd5a",
     "ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": "3397cd39a3d35c1255802c4c3862584530f15cfe",
 })
+if gpu_table_vendor_pin in {"bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
+    # Keep the frozen Nov15 receipt immutable; only the selected runtime
+    # successor carries the reviewed Ampere lowering from vendor af32/bfdf.
+    merged_fc27_pair_receipts["ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h"] = "9169e95ec14559aa6466c68b7d1e1cd3f9e69557"
 current_pair_successor_blobs = {
     "eden-core/src/video_core/buffer_cache/buffer_cache.h": "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
     "eden-core/src/video_core/buffer_cache/buffer_cache_base.h": "bd424e728182500b573a4cc4cf07987ddc4cbdc3",
@@ -1550,6 +2032,8 @@ current_pair_successor_blobs = {
     "eden-vulkan/vulkan_rasterizer.cpp": "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35",
     "ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": "3397cd39a3d35c1255802c4c3862584530f15cfe"
 }
+if gpu_table_vendor_pin in {"bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
+    current_pair_successor_blobs["ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h"] = "9169e95ec14559aa6466c68b7d1e1cd3f9e69557"
 latest_pair_successor_blobs = dict(current_pair_successor_blobs)
 latest_pair_successor_blobs["eden-core/src/video_core/buffer_cache/buffer_cache.h"] = (
     "505ee80a37d5991b7925019282e71926c1648e02"
@@ -1579,12 +2063,39 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
     for path, blob in pair_receipt["files"].items():
         source_path = active / path
         raw = source_path.read_bytes()
+        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+            # Authenticate the complete selected C++ blob; older vendor
+            # pins still replay the historical F07 inverse deltas below.
+            actual = hashlib.sha1(
+                b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+            assert actual == selected_nov26_gpu_pair[path], (
+                "Nov26 selected GPU source drift", path, actual)
+            continue
         if fc27_p1_vendor:
             # Compare all fourteen merged native owners against immutable blobs.
             # Known post-merge successors are reversed only on this audit copy,
             # each behind an exact full-source SHA and byte-identical predecessor.
             data = (active / path).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+            data, actual = strict_completion_predecessor(path, data)
+            stabilization_pair_blobs = {
+                "eden-core/overrides/core/gpu_dirty_memory_manager.h": "7769e314fbefeb8393e6d11b115c88bc0a8a0e58",
+                "eden-core/src/video_core/buffer_cache/buffer_cache.h": ("24323ea00c4088d45d5357a6df5382a7447669ab" if shipping_vendor in {"637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "fce19742529b21bca0f92f3f67c4e420dcd493c7" if shipping_vendor in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee", "703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e", "824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c", "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "d70e660ad2c48ae0d8a4268d8e051ac0dee8fb23", "6d4e256d2ce11c531f33c3be3d604cb9a884538b", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "4ce33d21debc33c9625129cbd545bf9b1c084272" if shipping_vendor in {"ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "d70e660ad2c48ae0d8a4268d8e051ac0dee8fb23", "6d4e256d2ce11c531f33c3be3d604cb9a884538b", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac"} else "7f07e392ea0cc828d862da29d32ada1ebc3966aa"),
+                "eden-core/src/video_core/gpu_vulkan.cpp": ("2de0ed20172755c0dac82e7e4031232281c115f5" if shipping_vendor in {"ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "99a33e50f6e3c0df8142ad64a03de04077e08912" if shipping_vendor == "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb" else "f083c985451563dcfe387d1bc61f54bd02ed762e"),
+            }
+            if shipping_vendor in {"93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"}:
+                stabilization_pair_blobs["eden-core/src/video_core/gpu_gl_native.cpp"] = ("9347e606050ac450a1f98e3f5f462ccc982dc808" if shipping_vendor in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "7720e5a347817e67c0a964d3a80644b01b99d733")
+            if stabilization_selected and path in stabilization_pair_blobs:
+                assert actual == stabilization_pair_blobs[path], ("Stabilization pair owner drift", path, actual)
+                continue
+            if path == "eden-core/src/video_core/buffer_cache/buffer_cache.h" and actual == "6aa9754506ee82b4d25a4e36d4f3be646a62456b":
+                successor = "    if (!IsRegionGpuModified(aligned_start, aligned_end - aligned_start)) {\n        // WriteMemory's clean-page branch does exactly this mark. Re-entering\n        // it would scan the same GPU-modified ranges again under the buffer\n        // cache mutex, even though this full-page query already proved that\n        // no GPU-owned sibling bytes need a download.\n        memory_tracker.MarkRegionAsCpuModified(device_addr, size);\n        return;\n    }"
+                predecessor = "    if (!IsRegionGpuModified(aligned_start, aligned_end - aligned_start)) {\n        WriteMemory(device_addr, size);\n        return;\n    }"
+                text = data.decode("utf-8")
+                assert text.count(successor) == 1, "Unexpected clean-page BufferCache change"
+                data = text.replace(successor, predecessor, 1).encode("utf-8")
+                actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+                assert actual == "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b", ("Clean-page inventory predecessor drift", actual)
             if path == "eden-core/src/video_core/buffer_cache/buffer_cache.h" and actual == "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b":
                 lines = data.decode("utf-8").split("\n")
                 reverse = (
@@ -1779,12 +2290,111 @@ if fc27_p1_vendor:
         "ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h": "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
         "ns2-runtime/hle/core/hle/service/am/service/performance_functions.h": "be4ce2bee44ac77e4f8b8bbe9e18cad11ab47b19",
     })
+# Post-F07 Lichii NS2 AM table synchronization: preserve previous owners
+# and qualify only source files that actually changed at this exact gitlink.
+if subprocess.check_output(
+    ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
+).strip() in {"f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf", "f4f5d53596879960b19a3701bbd2272ef1f3c634", "ee20b5a00e4fd96c02b5d12d6f4eaabee8623bf3"}:
+    ns2_early_hle_receipts.update({
+        "ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp":
+            "92de53cfc78a028c7fd8ccd57ec73b0b81ab0912",
+        "ns2-runtime/hle/core/hle/service/am/service/application_proxy.h":
+            "ed88acba848071d6c9e2c0b080c3234925003b50",
+        "ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp":
+            "0d2ed417d23f11a97f91cf18e733fad6515d0756",
+        "ns2-runtime/hle/core/hle/service/nx2_stub_interface.h":
+            "68c087899680b8a3a764d6cd3c362b0e98237ae0",
+    })
+# Exact Lichii AM additional direct source owners are selected once by CMake.
+if subprocess.check_output(
+    ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
+).strip() in {"d22b7066410c627230f9bfa8b3b5be8baff4fcdf", "f4f5d53596879960b19a3701bbd2272ef1f3c634", "ee20b5a00e4fd96c02b5d12d6f4eaabee8623bf3"}:
+    ns2_early_hle_receipts.update({
+        "ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.cpp": "25e75933c344a75f108ff1c7f40845feb405c5fd",
+        "ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.h": "48ec3effbf4af4df285dc98fbd6c5cf7a3ada21a",
+        "ns2-runtime/am_structure/core/hle/service/am/service/audio_controller.cpp": "0b9efbe1cfdb3072828709170bbefa202114d08d",
+        "ns2-runtime/am_structure/core/hle/service/am/service/common_state_getter.cpp": "2c5e5364146b125c038b239056bf06f2aaea5ef3",
+        "ns2-runtime/am_structure/core/hle/service/am/service/display_controller.cpp": "7e7db23708718f6513b784c489edf61d8d555fac",
+        "ns2-runtime/am_structure/core/hle/service/am/service/library_applet_accessor.cpp": "7119c605968dd50372d5d62097bb2f9d017ab6e6",
+        "ns2-runtime/am_structure/core/hle/service/am/service/library_applet_creator.cpp": "1157033948e6a6f015ef14dedda30a40ff750b54",
+        "ns2-runtime/am_structure/core/hle/service/am/service/window_controller.cpp": "6b19368d91035f6372cf8540c4b45caf371c1cd3",
+    })
+if gpu_table_vendor_pin in {"bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
+    ns2_early_hle_receipts[native_applet_proxy_path] = "a07dae606312e673bdbff5110fbf81d4ce307776"
+    ns2_early_hle_receipts["ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h"] = "7aab2ba6235b33b91819ea78a006129183194194"
+# The selected Nov26 AM/HID service graph is already qualified by the
+# F07 17-owner exact source table. Reuse that one immutable record on an
+# audit copy instead of comparing new handlers to obsolete early-HLE blobs.
+selected_nov26_hle_receipt = {}
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+    import ast
+    f07_hle_ast = ast.parse(
+        (root / "tools/check-eden-optimization-coverage.py").read_text())
+    hle_literals = [
+        ast.literal_eval(node.value)
+        for node in ast.walk(f07_hle_ast)
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name)
+                and target.id == "qualified_early_hle"
+                for target in node.targets)
+        and isinstance(node.value, ast.Dict)
+    ]
+    hle_candidates = [entry for entry in hle_literals if len(entry) == 17]
+    assert len(hle_candidates) == 1
+    hle_prefix = "vendor/encore-active/"
+    assert all(path.startswith(hle_prefix) for path in hle_candidates[0])
+    selected_nov26_hle_receipt = {
+        path[len(hle_prefix):]: blob
+        for path, blob in hle_candidates[0].items()
+    }
+    selected_nov26_hle_receipt.update({
+        "ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp":
+            "a07dae606312e673bdbff5110fbf81d4ce307776",
+        "ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h":
+            "7aab2ba6235b33b91819ea78a006129183194194",
+    })
+    assert set(ns2_early_hle_receipts).issubset(selected_nov26_hle_receipt)
+    ns2_early_hle_receipts.update(selected_nov26_hle_receipt)
+    print("ENCORE_SELECTED_NS2_HLE_RECEIPT_LOADED owners=17")
+
 ns2_early_hle_present = set(ns2_early_hle_receipts) & set(physical_all)
 if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"} or gpu_table_vendor_pin in {"d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6"} or fc27_p1_vendor:
     assert ns2_early_hle_present == set(ns2_early_hle_receipts)
     for path, blob in ns2_early_hle_receipts.items():
         raw = (active / path).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+            assert actual == selected_nov26_hle_receipt[path], (
+                "Nov26 selected NS2 HLE drift", path, actual)
+            continue
+        if (path == "ns2-runtime/hle/core/hle/service/hid/hid_server.cpp"
+                and actual == "27182c310b7e26ed4ffa57d3ece919d1c88a12f9"):
+            # Lichii NX2 HID 213/214 and command-table placeholders:
+            # reverse only reviewed hunks in a copy, preserve current runtime.
+            _hid_source = raw.decode("utf-8")
+            _nx2_hid_reverse = (
+                ("#include <fmt/ranges.h>\n#include <mutex>\n#include <cstring>\n#include <cmath>\n#include <algorithm>\n", ""),
+                ("        {73, &IHidServer::StubReplyZeroed, \"SetAccelerometerParameters\"},\n        {74, &IHidServer::StubReplyZeroed, \"GetAccelerometerParameters\"},\n        {75, &IHidServer::StubReplyZeroed, \"ResetAccelerometerParameters\"},\n        {76, &IHidServer::StubReplyZeroed, \"SetAccelerometerPlayMode\"},\n        {77, &IHidServer::StubReplyZeroed, \"GetAccelerometerPlayMode\"},\n        {78, &IHidServer::StubReplyZeroed, \"ResetAccelerometerPlayMode\"},\n", "        {73, nullptr, \"SetAccelerometerParameters\"},\n        {74, nullptr, \"GetAccelerometerParameters\"},\n        {75, nullptr, \"ResetAccelerometerParameters\"},\n        {76, nullptr, \"SetAccelerometerPlayMode\"},\n        {77, nullptr, \"GetAccelerometerPlayMode\"},\n        {78, nullptr, \"ResetAccelerometerPlayMode\"},\n"),
+                ("        {86, &IHidServer::StubReplyZeroed, \"StoreSixAxisSensorCalibrationParameter\"},\n", "        {86, nullptr, \"StoreSixAxisSensorCalibrationParameter\"},\n"),
+                ("        {308, &IHidServer::StubReplyZeroed, \"SetSevenSixAxisSensorFusionStrength\"},\n        {309, &IHidServer::StubReplyZeroed, \"GetSevenSixAxisSensorFusionStrength\"},\n", "        {308, nullptr, \"SetSevenSixAxisSensorFusionStrength\"},\n        {309, nullptr, \"GetSevenSixAxisSensorFusionStrength\"},\n"),
+                ("        {320, &IHidServer::StubReplyZeroed, \"EnableNpadImu\"}, //21.0.0+\n        {321, &IHidServer::StubReplyZeroed, \"DisableNpadImu\"}, //21.0.0+\n", "        {320, nullptr, \"EnableNpadImu\"}, //21.0.0+\n        {321, nullptr, \"DisableNpadImu\"}, //21.0.0+\n"),
+                ("        {401, &IHidServer::StubReplyZeroed, \"EnableUsbFullKeyController\"},\n        {402, &IHidServer::StubReplyZeroed, \"IsUsbFullKeyControllerConnected\"},\n        {403, &IHidServer::StubReplyZeroed, \"HasBattery\"},\n        {404, &IHidServer::StubReplyZeroed, \"HasLeftRightBattery\"},\n        {405, &IHidServer::StubReplyZeroed, \"GetNpadInterfaceType\"},\n        {406, &IHidServer::StubReplyZeroed, \"GetNpadLeftRightInterfaceType\"},\n        {407, &IHidServer::StubReplyZeroed, \"GetNpadOfHighestBatteryLevel\"},\n", "        {401, nullptr, \"EnableUsbFullKeyController\"},\n        {402, nullptr, \"IsUsbFullKeyControllerConnected\"},\n        {403, nullptr, \"HasBattery\"},\n        {404, nullptr, \"HasLeftRightBattery\"},\n        {405, nullptr, \"GetNpadInterfaceType\"},\n        {406, nullptr, \"GetNpadLeftRightInterfaceType\"},\n        {407, nullptr, \"GetNpadOfHighestBatteryLevel\"},\n"),
+                ("        {3000, &IHidServer::StubReplyZeroed, \"GetDebugPadGenericPadMap\"},\n        {3001, &IHidServer::StubReplyZeroed, \"SetDebugPadGenericPadMap\"},\n        {3002, &IHidServer::StubReplyZeroed, \"ResetDebugPadGenericPadMap\"},\n        {3003, &IHidServer::StubReplyZeroed, \"GetDebugPadKeyboardMap\"},\n        {3004, &IHidServer::StubReplyZeroed, \"SetDebugPadKeyboardMap\"},\n        {3005, &IHidServer::StubReplyZeroed, \"ResetDebugPadKeyboardMap\"},\n        {3006, &IHidServer::StubReplyZeroed, \"GetFullKeyGenericPadMap\"},\n        {3007, &IHidServer::StubReplyZeroed, \"SetFullKeyGenericPadMap\"},\n        {3008, &IHidServer::StubReplyZeroed, \"ResetFullKeyGenericPadMap\"},\n        {3009, &IHidServer::StubReplyZeroed, \"GetFullKeyKeyboardMap\"},\n        {3010, &IHidServer::StubReplyZeroed, \"SetFullKeyKeyboardMap\"},\n        {3011, &IHidServer::StubReplyZeroed, \"ResetFullKeyKeyboardMap\"},\n        {3012, &IHidServer::StubReplyZeroed, \"GetDebugPadGenericPadMap\"}, //21.0.0+\n        {3013, &IHidServer::StubReplyZeroed, \"SetDebugPadGenericPadMap\"}, //21.0.0+\n        {3014, &IHidServer::StubReplyZeroed, \"GetDebugPadKeyboardMap\"}, //21.0.0+\n        {3015, &IHidServer::StubReplyZeroed, \"SetDebugPadKeyboardMap\"}, //21.0.0+\n", "        {3000, nullptr, \"GetDebugPadGenericPadMap\"},\n        {3001, nullptr, \"SetDebugPadGenericPadMap\"},\n        {3002, nullptr, \"ResetDebugPadGenericPadMap\"},\n        {3003, nullptr, \"GetDebugPadKeyboardMap\"},\n        {3004, nullptr, \"SetDebugPadKeyboardMap\"},\n        {3005, nullptr, \"ResetDebugPadKeyboardMap\"},\n        {3006, nullptr, \"GetFullKeyGenericPadMap\"},\n        {3007, nullptr, \"SetFullKeyGenericPadMap\"},\n        {3008, nullptr, \"ResetFullKeyGenericPadMap\"},\n        {3009, nullptr, \"GetFullKeyKeyboardMap\"},\n        {3010, nullptr, \"SetFullKeyKeyboardMap\"},\n        {3011, nullptr, \"ResetFullKeyKeyboardMap\"},\n        {3012, nullptr, \"GetDebugPadGenericPadMap\"}, //21.0.0+\n        {3013, nullptr, \"SetDebugPadGenericPadMap\"}, //21.0.0+\n        {3014, nullptr, \"GetDebugPadKeyboardMap\"}, //21.0.0+\n        {3015, nullptr, \"SetDebugPadKeyboardMap\"}, //21.0.0+\n"),
+                ("        {137, &IHidServer::StubReplyZeroed, \"Unknown137\"},\n        {140, &IHidServer::StubReplyZeroed, \"Unknown140\"},\n        {150, &IHidServer::StubReplyZeroed, \"Unknown150\"},\n        {151, &IHidServer::StubReplyZeroed, \"Unknown151\"},\n        {160, &IHidServer::StubReplyZeroed, \"Unknown160\"},\n        {213, C<&IHidServer::SendVibrationValueInMode>, \"SendVibrationValueInMode\"},\n        {214, C<&IHidServer::SendNx2VibrationValues>, \"SendVibrationValuesInMode\"},\n        {311, &IHidServer::StubReplyZeroed, \"Unknown311\"},\n        {312, &IHidServer::StubReplyZeroed, \"Unknown312\"},\n        {322, &IHidServer::StubReplyZeroed, \"Unknown322\"},\n        {323, &IHidServer::StubReplyZeroed, \"Unknown323\"},\n        {324, &IHidServer::StubReplyZeroed, \"Unknown324\"},\n        {550, &IHidServer::StubReplyZeroed, \"Unknown550\"},\n        {1005, &IHidServer::StubReplyZeroed, \"Unknown1005\"},\n        {3114, &IHidServer::StubReplyZeroed, \"Unknown3114\"},\n        {3134, &IHidServer::StubReplyZeroed, \"Unknown3134\"},\n        {3135, &IHidServer::StubReplyZeroed, \"Unknown3135\"},\n        {3136, &IHidServer::StubReplyZeroed, \"Unknown3136\"},\n        {3137, &IHidServer::StubReplyZeroed, \"Unknown3137\"},\n        {3140, &IHidServer::StubReplyZeroed, \"Unknown3140\"},\n        {3141, &IHidServer::StubReplyZeroed, \"Unknown3141\"},\n        {3142, &IHidServer::StubReplyZeroed, \"Unknown3142\"},\n        {3143, &IHidServer::StubReplyZeroed, \"Unknown3143\"},\n        {3144, &IHidServer::StubReplyZeroed, \"Unknown3144\"},\n        {3145, &IHidServer::StubReplyZeroed, \"Unknown3145\"},\n        {3146, &IHidServer::StubReplyZeroed, \"Unknown3146\"},\n        {3147, &IHidServer::StubReplyZeroed, \"Unknown3147\"},\n        {3148, &IHidServer::StubReplyZeroed, \"Unknown3148\"},\n        {3149, &IHidServer::StubReplyZeroed, \"Unknown3149\"},\n        {5000, &IHidServer::StubReplyZeroed, \"Unknown5000\"},\n", ""),
+                ("Result IHidServer::SendNx2VibrationValues(\n    u64 unknown, AppletResourceUserId aruid,\n    InArray<Core::HID::VibrationDeviceHandle, BufferAttr_HipcPointer> vibration_handles,\n    InArray<Core::HID::VibrationValue, BufferAttr_HipcPointer> vibration_values) {\n    LOG_DEBUG(Service_HID, \"called, unknown={}, applet_resource_user_id={}\", unknown, aruid.pid);\n\n    // Unlike 206 this never fails: rumble is best effort and the command is only known from\n    // captures, so an unexpected handle or layout shouldn't return an error a game may treat as\n    // fatal.\n    const auto count = (std::min)(vibration_handles.size(), vibration_values.size());\n    for (std::size_t i = 0; i < count; i++) {\n        const auto result = GetResourceManager()->SendVibrationValue(\n            aruid.pid, vibration_handles[i], vibration_values[i]);\n        if (result.IsError()) {\n            LOG_DEBUG(Service_HID, \"failed to send vibration {}, result={:#x}\", i, result.raw);\n        }\n    }\n\n    R_SUCCEED();\n}\n\nResult IHidServer::SendVibrationValueInMode(std::array<u8, 0x18> raw,\n                                            ClientAppletResourceUserId aruid) {\n    // Two layouts are proposed for the 0x18 bytes before the aruid, both with the value at 0x08:\n    // a mode at 0x00 and the handle at 0x04 (most decoders), or the handle at 0x00 and a u32 mode\n    // at 0x04. A handle's first byte is its npad style, which the modes seen in 214 (0 and 2)\n    // can't pass for, so the first offset holding a valid handle wins. Requests that fit neither\n    // are dropped, as 213 was before.\n    Core::HID::VibrationDeviceHandle handle{};\n    Core::HID::VibrationValue value{};\n    std::memcpy(&value, raw.data() + 0x08, sizeof(value));\n    const bool is_value_valid = std::isfinite(value.low_amplitude) &&\n                                std::isfinite(value.high_amplitude) &&\n                                std::isfinite(value.low_frequency) &&\n                                std::isfinite(value.high_frequency);\n    constexpr std::array<std::size_t, 2> handle_offsets{0x04, 0x00};\n    const bool has_handle = std::ranges::any_of(handle_offsets, [&](std::size_t offset) {\n        std::memcpy(&handle, raw.data() + offset, sizeof(handle));\n        return IsVibrationHandleValid(handle).IsSuccess();\n    });\n\n    static std::once_flag logged;\n    std::call_once(logged, [&raw] {\n        LOG_INFO(Service_HID, \"first request: {:02x}\", fmt::join(raw, \"\"));\n    });\n\n    if (!is_value_valid || !has_handle) {\n        R_SUCCEED();\n    }\n\n    const auto result = GetResourceManager()->SendVibrationValue(aruid.pid, handle, value);\n    if (result.IsError()) {\n        LOG_DEBUG(Service_HID, \"failed to send vibration, result={:#x}\", result.raw);\n    }\n    R_SUCCEED();\n}\n\n", ""),
+            )
+            for _current, _previous in _nx2_hid_reverse:
+                assert _hid_source.count(_current) == 1, (
+                    "NX2 HID runtime hunk drift", _current[:72])
+                _hid_source = _hid_source.replace(_current, _previous, 1)
+            _hid_raw = _hid_source.encode("utf-8")
+            _hid_previous = hashlib.sha1(
+                b"blob " + str(len(_hid_raw)).encode() + b"\0" + _hid_raw
+            ).hexdigest()
+            assert _hid_previous == "b83f519fef3905eabb0bef65cab4d989033b5287", (
+                "NX2 HID predecessor drift", _hid_previous)
+            raw = _hid_raw
+            actual = _hid_previous
         if path == "ns2-runtime/hle/core/hle/service/hid/hid_server.cpp" and actual == "b83f519fef3905eabb0bef65cab4d989033b5287":
             # Switch 2 scene/vibration/Nmouse additions are source-sealed here;
             # the historical early-HLE receipt remains immutable.
@@ -1806,6 +2416,25 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
             ).hexdigest()
             assert actual == "c00ec7de86402abdd6693092f3e57917e80ab7ec", ("NS2 HID predecessor drift", path, actual)
             print("ENCORE_NS2_HID_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+        if (path == "ns2-runtime/hle/core/hle/service/hid/hid_server.h"
+                and actual == "6c93ae9a04b121903f3ae3211b705b91e3675942"):
+            # Current Lichii NX2 HID vibration extension: immutable
+            # predecessor contract, exact source-only reverse.
+            _hid_header = raw.decode("utf-8")
+            for _current, _previous in (
+                ("    // Switch 2 sends vibration every frame with 214: pointer buffers of device handles and values\n    // like 206, but the aruid is raw data after an unknown u64 instead of a sent process id.\n    Result SendNx2VibrationValues(\n        u64 unknown, AppletResourceUserId aruid,\n        InArray<Core::HID::VibrationDeviceHandle, BufferAttr_HipcPointer> vibration_handles,\n        InArray<Core::HID::VibrationValue, BufferAttr_HipcPointer> vibration_values);\n    // 213: one handle and value with a mode, sent per controller every frame by Kirby Air Riders.\n    // Its layout is only known from guesses, so the raw bytes are decoded in the handler.\n    Result SendVibrationValueInMode(std::array<u8, 0x18> raw, ClientAppletResourceUserId aruid);\n", ""),
+            ):
+                assert _hid_header.count(_current) == 1, (
+                    "NX2 HID header hunk drift", _current[:72])
+                _hid_header = _hid_header.replace(_current, _previous, 1)
+            _hid_header_raw = _hid_header.encode("utf-8")
+            _hid_header_previous = hashlib.sha1(
+                b"blob " + str(len(_hid_header_raw)).encode() + b"\0" + _hid_header_raw
+            ).hexdigest()
+            assert _hid_header_previous == "1f3b144324b9014d4e5db64f796019f0e9f4c9a6", (
+                "NX2 HID header predecessor drift", _hid_header_previous)
+            raw = _hid_header_raw
+            actual = _hid_header_previous
         if path == "ns2-runtime/hle/core/hle/service/hid/hid_server.h" and actual == "1f3b144324b9014d4e5db64f796019f0e9f4c9a6":
             # Switch 2 scene/vibration/Nmouse additions are source-sealed here;
             # the historical early-HLE receipt remains immutable.
@@ -1824,6 +2453,60 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
             ).hexdigest()
             assert actual == "cdc83734e27d5478f1981126950dd1f3f7a91227", ("NS2 HID predecessor drift", path, actual)
             print("ENCORE_NS2_HID_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+        if (path == "ns2-runtime/hle/core/hle/service/am/service/application_proxy.h"
+                and actual == "ed88acba848071d6c9e2c0b080c3234925003b50"
+                and blob == "03cf286dd642a3e517c7fa4950850603038c6d6b"):
+            # Lichii NX2 adds a typed getter only; preserve the exact
+            # preceding header ABI by reversing its one new declaration.
+            _h = raw.decode("utf-8")
+            _method = "    void GetNx2Interface(HLERequestContext& ctx);\n"
+            assert _h.count(_method) == 1
+            _old = _h.replace(_method, "", 1).encode("utf-8")
+            actual = hashlib.sha1(
+                b"blob " + str(len(_old)).encode() + b"\0" + _old
+            ).hexdigest()
+            assert actual == blob, ("NX2 applet proxy header drift", actual)
+        if (path == "ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp" and (
+            actual == "92de53cfc78a028c7fd8ccd57ec73b0b81ab0912"
+            and blob == "d6b14213485b56aefbd9736c8f0e6a2a2b4fa38c"
+        )):
+            # Reviewed NX2 extra typed interface getters (50/70/80/90).
+            # Reverse only these exact bytes in the receipt copy.
+            _proxy = raw.decode("utf-8")
+            _proxy_includes = '#include "core/hle/service/nx2_stub_interface.h"\n'
+            assert _proxy.count(_proxy_includes) == 1
+            _proxy = _proxy.replace(_proxy_includes, "", 1)
+            for _cmd in (50, 70, 80, 90):
+                _line = f'        {{{_cmd}, &IApplicationProxy::GetNx2Interface, "Nx2Getter{_cmd}"}},\n'
+                assert _proxy.count(_line) == 1, _cmd
+                _proxy = _proxy.replace(_line, "", 1)
+            _method = ('   \nvoid IApplicationProxy::GetNx2Interface(HLERequestContext& ctx) {\n'
+                       '    ReturnNx2StubInterface(system, ctx, "IApplicationProxy");\n'
+                       '}\n')
+            assert _proxy.count(_method) == 1
+            _proxy = _proxy.replace(_method + "\n", "", 1)
+            _raw = _proxy.encode("utf-8")
+            actual = hashlib.sha1(
+                b"blob " + str(len(_raw)).encode() + b"\0" + _raw
+            ).hexdigest()
+            assert actual == blob, ("NX2 applet proxy reverse drift", actual)
+            print("ENCORE_NS2_APPLET_NX2_INTERFACE_EXACT_REVERSE_PASS")
+        if (path == native_applet_proxy_path and
+            actual == "0d2ed417d23f11a97f91cf18e733fad6515d0756"
+            and blob == "849baf7bfe243734ee49c9e7617462665746d5f1"):
+            # Lichii NX2 added a typed appletOE ID 2000. Reverse this
+            # single declared row on the audit copy to the exact prior
+            # merged appletOE blob; the active C++ keeps the extra handler.
+            selected = raw.decode("utf-8")
+            added = '        {2000, &IApplicationProxyService::StubReplyInterface, "Unknown2000"},\n'
+            assert selected.count(added) == 1
+            previous = selected.replace(added, "", 1).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(previous)).encode() + bytes([0]) + previous
+            ).hexdigest()
+            assert actual == "b1acd90a74bceb03c900a505e217f484f6ecd18f", (
+                "AppletOE ID 2000 predecessor drift", actual)
+            raw = previous
         if (path == native_applet_proxy_path and
             actual == "b1acd90a74bceb03c900a505e217f484f6ecd18f" and
             blob == "849baf7bfe243734ee49c9e7617462665746d5f1"):
@@ -1929,9 +2612,11 @@ merged_ns1_ns2_owner_blobs = {
     "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_multiply.cpp": "315c3c7c821016f23af7d2c6ffc8d7ca3a4ebe09",
     "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp": "e112f14eed85a6ac974a1d81a92d6952dfe57df3",
 }
+if shipping_vendor in {"166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf", "cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "d70e660ad2c48ae0d8a4268d8e051ac0dee8fb23", "6d4e256d2ce11c531f33c3be3d604cb9a884538b", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"}:
+    merged_ns1_ns2_owner_blobs["eden-core/overrides/video_core/host1x/syncpoint_manager.h"] = "a62b9a9e8019c2df085fc9d393fcbd4207cd78d7"
 merged_owner_present = set(merged_ns1_ns2_owner_blobs) & set(physical_all)
 assert not (merged_owner_present & set(research_paths))
-if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+if shipping_vendor in {"93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} or gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
     assert merged_owner_present == set(merged_ns1_ns2_owner_blobs), (
         'Missing integrated source owner', sorted(set(merged_ns1_ns2_owner_blobs) - merged_owner_present))
     for relative, expected_blob in merged_ns1_ns2_owner_blobs.items():
@@ -1939,8 +2624,251 @@ if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
         actual_blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + bytes([0]) + data).hexdigest()
         assert actual_blob == expected_blob, ('Integrated source blob drift', relative, actual_blob)
 
+# Distinct DNSP/DXCI plaintext NCA owners are present only after F07.
+# Seal exact active blobs and the single native CMake selection.
+post_f07_plaintext_nca_present = {
+    "eden-core/src/core/file_sys/content_archive.cpp",
+    "eden-core/src/core/file_sys/fssystem/fssystem_nca_reader.cpp",
+} & set(physical_all)
+actual_vendor = subprocess.check_output(
+    ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip()
+if stabilization_selected:
+    actual_vendor = "9db97fb12db1a390d6b2410f0c18333aa31e37da"
+
+# Exact current-vendor successor blobs. This is the one centrally
+# maintained four-delta receipt shared by inventory and F07.
+selected_nov26_post_f07_overrides = {
+    "eden-core/src/core/hle/service/sm/sm.cpp": "2ef914e3f1b24442e1fa0130d5f8175111e7d316",
+    "ns2-runtime/hle/core/hle/service/lm/lm.cpp": "9136cf19b1176e96fb17609fd401e4592028d1e2",
+    "ns2-runtime/hle/core/hle/service/nifm/nifm.cpp": "8933817310ed1d3988e9ff418390a8b3e7e71a41",
+    "ns2-runtime/nx/core/loader/nx.cpp": "5d999ca68668133ea3f151669ecd6ac6a17ae1c5",
+}
+assert len(selected_nov26_post_f07_overrides) == 4
+
+# Additions since the immutable F07 snapshots. These 43 sources are NOT
+# reclassified as historically reviewed or console-validated. A distinct exact
+# vendor pin plus source-tree byte identity qualifies only their provenance.
+selected_nov26_post_f07_additions = {
+    "eden-backports/src/common/net/net.h",
+    "eden-core/include/video_core/engines/maxwell_dma.h",
+    "eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h",
+    "eden-core/overrides/bcat/core/hle/service/bcat/service_creator.h",
+    "eden-core/overrides/buffer-hotpath/common/range_sets.h",
+    "eden-core/overrides/buffer-hotpath/common/range_sets.inc",
+    "eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h",
+    "eden-core/overrides/core/native_renderer_lifetime.h",
+    "eden-core/overrides/video_core/cdma_pusher.h",
+    "eden-core/overrides/video_core/host1x/control.h",
+    "eden-core/overrides/video_core/host1x/host1x.h",
+    "eden-core/overrides/video_core/host1x/syncpoint_manager.h",
+    "eden-core/src/core/hle/kernel/svc/svc_cache.cpp",
+    "eden-core/src/core/hle/service/bcat/delivery_cache_storage_service.cpp",
+    "eden-core/src/core/hle/service/bcat/service_creator.cpp",
+    "eden-core/src/video_core/cdma_pusher.cpp",
+    "eden-core/src/video_core/host1x/control.cpp",
+    "eden-core/src/video_core/host1x/host1x.cpp",
+    "eden-core/src/video_core/host1x/nvdec.cpp",
+    "eden-core/src/video_core/texture_cache/format_lookup_table.cpp",
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_context_get_set.cpp",
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_memory.cpp",
+    "eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_atomic.cpp",
+    "eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_context_get_set.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_floating_point.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_add.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_fused_multiply_add.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_multiply.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_add.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_fused_multiply_add.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_min_max.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_multiply.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp",
+    "ns2-runtime/hle/core/hle/service/am/service/performance_functions.h",
+}
+assert len(selected_nov26_post_f07_additions) == 43
+
+
+# Current vendor source additions postdate the immutable 337-path F07
+# catalogue. One exact ledger serves both source inventories.
+current_vendor_post_f07_owner_blobs = {
+    "eden-core/src/core/hle/service/services.cpp": "19e8b023fe6467557766c71cd45e0ce2ba6d3cea",
+    "eden-core/src/core/hle/service/services.h": "08593584bdcdc51f8ab96e2487fb26fad03193d1",
+    "eden-core/src/core/hle/service/sm/sm.cpp": "494ee50d2880a491b07c2b981193df1a686c696a",
+    "eden-core/src/core/hle/service/vi/vi.cpp": "42d3bad664e92ebf7be3650446e492306c6ff912",
+    "ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.cpp": "25e75933c344a75f108ff1c7f40845feb405c5fd",
+    "ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.h": "48ec3effbf4af4df285dc98fbd6c5cf7a3ada21a",
+    "ns2-runtime/am_structure/core/hle/service/am/service/audio_controller.cpp": "0b9efbe1cfdb3072828709170bbefa202114d08d",
+    "ns2-runtime/am_structure/core/hle/service/am/service/common_state_getter.cpp": "2c5e5364146b125c038b239056bf06f2aaea5ef3",
+    "ns2-runtime/am_structure/core/hle/service/am/service/display_controller.cpp": "7e7db23708718f6513b784c489edf61d8d555fac",
+    "ns2-runtime/am_structure/core/hle/service/am/service/library_applet_accessor.cpp": "7119c605968dd50372d5d62097bb2f9d017ab6e6",
+    "ns2-runtime/am_structure/core/hle/service/am/service/library_applet_creator.cpp": "1157033948e6a6f015ef14dedda30a40ff750b54",
+    "ns2-runtime/am_structure/core/hle/service/am/service/window_controller.cpp": "6b19368d91035f6372cf8540c4b45caf371c1cd3",
+    "ns2-runtime/hle/core/hle/service/acc/acc.cpp": "bda184c54aa81a037f7ff064554fe9557fff47bb",
+    "ns2-runtime/hle/core/hle/service/acc/acc.h": "829c70a3afe5c7bf495bf10d66a75f7b0baff9be",
+    "ns2-runtime/hle/core/hle/service/audio/audio_device.cpp": "59d2a5e65ba69fb4a8962c360f34b7695c81a214",
+    "ns2-runtime/hle/core/hle/service/audio/audio_device.h": "d0dfca6406e2b427849aac541055916240da0ccc",
+    "ns2-runtime/hle/core/hle/service/audio/audio_renderer_manager.cpp": "5b369d46170d1e92c2daa30ebc47deb6d8af7de7",
+    "ns2-runtime/hle/core/hle/service/caps/caps_su.cpp": "b19e6b7a2775b89595b96c21275f0c777d69a120",
+    "ns2-runtime/hle/core/hle/service/caps/caps_u.cpp": "1590265957c5e37d77edc1116ccc66dd934e534f",
+    "ns2-runtime/hle/core/hle/service/lm/lm.cpp": "83d9b178459c33321a6fe388dae93bb3cb8b6f75",
+    "ns2-runtime/hle/core/hle/service/mii/mii.cpp": "ffdb17fd145f032283ee9eda22a472d7a037cce6",
+    "ns2-runtime/hle/core/hle/service/nifm/nifm.cpp": "342d00bc470e309f1027aeaa7f4abf5239ef9b77",
+    "ns2-runtime/hle/core/hle/service/nx2_stub_interface.h": "68c087899680b8a3a764d6cd3c362b0e98237ae0",
+    "ns2-runtime/hle/core/hle/service/set/settings_server.cpp": "297bd5ac2eadeb7b501b50f2655a43183e84e1df",
+    "ns2-runtime/nx/core/file_sys/decrypted_nca.h": "623f142cfffea3194b9a39842750c3b715e1fdf8",
+    "ns2-runtime/nx/core/file_sys/nx_content.cpp": "c374fab2fa5dbc6174099db309a2f6ebbf9e849c",
+    "ns2-runtime/nx/core/loader/loader.h": "9efa7b4e54790942f5699c63b1286e6023873a65",
+    "ns2-runtime/nx/core/loader/nx.cpp": "8a64df9a95675c1c9655f838efd6328645915d71",
+    "ns2-runtime/nx/core/loader/nx.h": "508939fbd0d6eadafe488a19eb18dde5404919fd",
+    "ns2-runtime/nx/nxformat/nx_reader.hpp": "7deff5cb5a4fbe5f9a04edf359ccd0504568b657",
+    "ns2-runtime/nx/nxformat/nx_session.hpp": "1b12f29c85cb02cea79fa9a08f401c88182c8c6e",
+    "ns2-runtime/sparse-residency/core/hle/kernel/k_page_heap.cpp": "574c88dc2add018094c3e6db9047881709da6659",
+}
+if shipping_vendor in {"bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac"}:
+    current_vendor_post_f07_owner_blobs["ns2-runtime/hle/core/hle/service/nifm/nifm.cpp"] = "8933817310ed1d3988e9ff418390a8b3e7e71a41"
+
+if shipping_vendor in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf", "cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "d70e660ad2c48ae0d8a4268d8e051ac0dee8fb23", "6d4e256d2ce11c531f33c3be3d604cb9a884538b", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac"}:
+    current_vendor_post_f07_owner_blobs["ns2-runtime/nx/core/loader/nx.cpp"] = "5d999ca68668133ea3f151669ecd6ac6a17ae1c5"
+# Post-F07 registry includes old SM while the latest exact successor
+# changes ONLY SM handler retirement in that owner. Preserve exact pin and
+# verify all other reviewed owners byte for byte.
+if actual_vendor in {"bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
+    # Exact bfdf delta over b099: reviewed Ampere lowering + appletOE cmd10 ABI.
+    for relative, digest in {
+        "encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": "9169e95ec14559aa6466c68b7d1e1cd3f9e69557",
+        "encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp": "a07dae606312e673bdbff5110fbf81d4ce307776",
+        "encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h": "7aab2ba6235b33b91819ea78a006129183194194",
+        "tests/ns2_early_hle_services_source.py": "a8885d094315e22f9bf0a3c41c969f31463815cb",
+    }.items():
+        raw = (root/"vendor"/relative).read_bytes()
+        got = hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert got == digest, ("bfdf reviewed successor drift", relative, got)
+if actual_vendor in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
+    current_vendor_post_f07_owner_blobs = {
+        **current_vendor_post_f07_owner_blobs,
+        "eden-core/src/core/hle/service/sm/sm.cpp": ("2ef914e3f1b24442e1fa0130d5f8175111e7d316" if shipping_vendor in {"203736df06915c10d379a67f52c8614c7010d733","637edccbbf9dc403008192eaf04b14615b0500e2","0fa6924891050f7cea9b196dff0a760ad154993d","6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9","4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "34c7c85f1476a3ba819ad20b8a4f8150cca86e16"),
+        # Same exact SM teardown successor; only LM C++ changed for the new pin.
+        "ns2-runtime/hle/core/hle/service/lm/lm.cpp": (
+            "9136cf19b1176e96fb17609fd401e4592028d1e2"
+            if actual_vendor in {"273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"} else
+            "83d9b178459c33321a6fe388dae93bb3cb8b6f75"
+        ),
+    }
+    # These changed C++ owners are not all in the post-F07 path table.
+    for relative, digest in {
+        "eden-core/src/core/hle/service/sm/sm.h": "7069439e66a6f28ffa56229e08906a21222e2801",
+        "ns2-runtime/process/core/core.cpp": ("0f854ca3eab4dd0435d6ac58d401f8359301c168" if shipping_vendor in {"7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac","29b91308ba1fc69978cd2cc39222fe7dc59b668c","12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea","68cf19e736158b815629ea74a494c5536706dbc2","b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "0e0aadb72c8de5bb2c66ce9105b1dd2d381b5f98" if stabilization_selected else "83fc9a903b05ed9fd096c35102db54a966d736c2"),
+        "ns2-runtime/am/core/hle/service/am/service/application_functions.cpp": "9bfaa26664361994902d5b7f73d6a41ff0eadb07",
+    }.items():
+        raw=(active/relative).read_bytes()
+        got=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert got==digest,("Post-F07 latest vendor source drift",relative,got)
+    if actual_vendor in {"273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
+        # Changed source-list owners are not part of frozen 337-path F07 receipt.
+        # Preserve the verified old NS1 overlay and compile-only AM guard delta.
+        for relative,digest in {
+            "encore-active/eden-core/src/core/hle/service/am/window_system.cpp":
+                "bbacbc9b8dde82c29b72a2272776d631f3e95fef",
+            "sources/eden/src/core/hle/service/am/window_system.h":
+                "d29e37adff7b62e790b26c4b5eba0d9ac667ad92",
+        }.items():
+            raw=(root/"vendor"/relative).read_bytes()
+            got=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+            assert got==digest,("NS1/NS2 AM one-shot exact owner drift",relative,got)
+if actual_vendor in {"b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
+    # MME DMA read successor changes only the selected native GPU-dispatch pair.
+    for relative,digest in {
+        "ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": ("576a9d697da398aa6f42901b1764aa7574155411" if shipping_vendor in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"} else "78497f6f85386d75e9a8b75f80798880cc5f8df7" if shipping_vendor in {"ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "d70e660ad2c48ae0d8a4268d8e051ac0dee8fb23", "6d4e256d2ce11c531f33c3be3d604cb9a884538b", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac"} else "02e406d9209de6029bcc526bf800428268b81ed4"),
+        "ns2-runtime/gpu_dispatch/video_core/native_ampere_macro_state.h": "1f60c4cda2a7d5206082434945f40a1cf2bb546c",
+    }.items():
+        raw=(active/relative).read_bytes()
+        got=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert got==digest,("Native MME DMA owner drift",relative,got)
+if shipping_vendor in {"203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"}:
+    current_vendor_post_f07_owner_blobs.update({"eden-core/src/core/hle/service/sm/sm.cpp":"2ef914e3f1b24442e1fa0130d5f8175111e7d316","ns2-runtime/hle/core/hle/service/nifm/nifm.cpp":"8933817310ed1d3988e9ff418390a8b3e7e71a41","ns2-runtime/hle/core/hle/service/lm/lm.cpp":"9136cf19b1176e96fb17609fd401e4592028d1e2","ns2-runtime/nx/core/loader/nx.cpp":"5d999ca68668133ea3f151669ecd6ac6a17ae1c5"})
+# Current native additions are classified separately from the immutable F07 baseline.
+post_f07_bcat_buffer_hotpath_blobs = {
+    "eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h": "8c93a3d6aef8a45f85cb9c2344e3427daff4d131",
+    "eden-core/overrides/bcat/core/hle/service/bcat/service_creator.h": "de582d12ef1025735a741817ac4e365f59789809",
+    "eden-core/overrides/buffer-hotpath/common/range_sets.h": "1c90e08bc3c66731aa717e7b17b3249539848016",
+    "eden-core/overrides/buffer-hotpath/common/range_sets.inc": "bd48ff5cb346981f0937cfddbb042f9100697fd2",
+    "eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h": "0992d01d0b4e262dd4b4a79633affa8b02529795",
+    "eden-core/src/core/hle/service/bcat/delivery_cache_storage_service.cpp": "9f98f2da3f865da69399467133436e64e4e4d67b",
+    "eden-core/src/core/hle/service/bcat/service_creator.cpp": "1635bc091413a2f118b166216f91410b6338686d"
+}
+post_f07_bcat_buffer_hotpath_present = set(post_f07_bcat_buffer_hotpath_blobs) & set(physical_all)
+if shipping_vendor in {"93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"}:
+    assert post_f07_bcat_buffer_hotpath_present == set(post_f07_bcat_buffer_hotpath_blobs)
+    for relative, expected in post_f07_bcat_buffer_hotpath_blobs.items():
+        actual = subprocess.check_output(["git", "hash-object", str(active / relative)], text=True).strip()
+        assert actual == expected, ("BCAT/BufferCache owner drift", relative, actual)
+    cmake_text = (root / "headless/CMakeLists.txt").read_text()
+    for token in ("EDEN_NATIVE_BCAT_ROOT", "EDEN_NATIVE_BCAT_HEADER_ROOT",
+                  "EDEN_MAINTAINED_BUFFER_HOTPATH",
+                  "target_include_directories(common BEFORE PUBLIC",
+                  "target_include_directories(video_core BEFORE PRIVATE"):
+        assert token in cmake_text, token
+else:
+    post_f07_bcat_buffer_hotpath_present = set()
+# Use the same four exact successor SHAs already consumed by F07.
+# No change to the historical 32-entry base receipt.
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+    assert set(selected_nov26_post_f07_overrides).issubset(
+        current_vendor_post_f07_owner_blobs)
+    current_vendor_post_f07_owner_blobs.update(
+        selected_nov26_post_f07_overrides)
+
+current_vendor_post_f07_present = set(current_vendor_post_f07_owner_blobs) & set(physical_all)
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} or actual_vendor in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
+                     "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
+    assert current_vendor_post_f07_present == set(current_vendor_post_f07_owner_blobs)
+    for relative, expected_blob in current_vendor_post_f07_owner_blobs.items():
+        raw = (active / relative).read_bytes()
+        actual_blob = hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert actual_blob == expected_blob, ("Current post-F07 owner drift", relative, actual_blob)
+    cmake_text = (root / "headless/CMakeLists.txt").read_text()
+    for token in ("EDEN_NS2_AM_STRUCTURE_ROOT", "EDEN_NS2_SERVICE_PARITY_ROOT",
+                  "EDEN_NS2_NX_ARCHIVE_ROOT", "EDEN_R457_SPARSE_PAGE_HEAP_SRC"):
+        assert token in cmake_text, ("Current native selector missing", token)
+else:
+    assert not current_vendor_post_f07_present
+if post_f07_plaintext_nca_present:
+    # The decrypted NCA readers are source-identical in the later vendor
+    # gitlink; verify both complete blobs and the active CMake selection.
+    assert post_f07_plaintext_nca_present == {
+        "eden-core/src/core/file_sys/content_archive.cpp",
+        "eden-core/src/core/file_sys/fssystem/fssystem_nca_reader.cpp",
+    }
+    for relative, expected_blob in {
+        "eden-core/src/core/file_sys/content_archive.cpp":
+            "d31f75bf354f3ce5af1ac2f1ac170586503b1877",
+        "eden-core/src/core/file_sys/fssystem/fssystem_nca_reader.cpp":
+            "49841fbbde5bd086f23aba601c80b19176ed8ae4",
+    }.items():
+        raw = (active/relative).read_bytes()
+        actual_blob = hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert actual_blob == expected_blob, ("Decrypted NCA source drift", relative)
+    assert "foreach(eden_plaintext_content_relative IN ITEMS" in (
+        root/"headless/CMakeLists.txt").read_text()
+else:
+    assert not post_f07_plaintext_nca_present
+
+if shipping_vendor in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"}:
+    lifetime_owner = "eden-core/overrides/core/native_renderer_lifetime.h"
+    assert lifetime_owner in physical_all
+    assert subprocess.check_output(["git", "hash-object", str(active / lifetime_owner)], text=True).strip() == "2801e3656e754162522b9049208c607021f3e770"
+    stabilization_new_headers.add(lifetime_owner)
+
 physical = [p for p in physical_all
-            if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | merged_owner_present | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+            if p not in stabilization_new_headers | post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | post_f07_warning_cleanup_owners | merged_owner_present | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
             shared_gpu_scalar_owners | shared_gpu_remap_owners |
@@ -1954,7 +2882,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | post_f07_thread_worker_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | ps5_vfs128_present | ns2_ipc_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | ns2_font_service_present | post_f07_diagnostics_net_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | ps5_vfs128_present | ns2_ipc_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | ns2_font_service_present | post_f07_diagnostics_net_present | post_f07_plaintext_nca_present | current_vendor_post_f07_present | post_f07_bcat_buffer_hotpath_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {
@@ -1968,6 +2896,42 @@ assert {p for p in physical if p.startswith("eden-header-hygiene/")} == warning_
 # rather than treating an arbitrary new count as historical coverage.
 catalog_paths = set(re.findall(r"^\| `([^`]+)` \|", section, re.MULTILINE))
 assert len(catalog_paths) == 337, ("Historical F07 catalog drift",len(catalog_paths))
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+    # The old 337-source snapshot must remain exact. Separate only the
+    # ten newer owners still present after the existing specialized ledgers.
+    post_snapshot = set(physical) - catalog_paths
+    # These TWO maintained frame-pacing headers have separate exact F07
+    # successor receipts; they are not among the 43 newly added vendor paths.
+    pacing_headers = {
+        "eden-vulkan/include/video_core/renderer_vulkan/frame_pacer.h":
+            "c3f6f99dd427fb9fd0acb84bb50ba88dc25d9a89",
+        "eden-vulkan/include/video_core/renderer_vulkan/vk_swapchain.h":
+            "c4df1ab813495b8014e0eda5ed4bcd8fb0be855c",
+    }
+    assert set(pacing_headers).issubset(post_snapshot)
+    for relative, expected_sha in pacing_headers.items():
+        actual_sha = subprocess.check_output(
+            ["git", "hash-object", str(active / relative)], text=True).strip()
+        assert actual_sha == expected_sha, ("Nov26 frame-pacing owner drift", relative, actual_sha)
+    source_pacing = (root / "headless/CMakeLists.txt").read_text()
+    assert "EDEN_MAINTAINED" in source_pacing
+    post_snapshot -= set(pacing_headers)
+    new_owners = post_snapshot & selected_nov26_post_f07_additions
+    assert len(new_owners) == 8 and post_snapshot == new_owners, (
+        "Nov26 unclassified native owners", sorted(post_snapshot - new_owners))
+    assert not catalog_paths - set(physical), "Historical native source missing"
+    for relative in selected_nov26_post_f07_additions:
+        path = active / relative
+        assert path.is_file(), relative
+        pinned = subprocess.check_output([
+            "git", "-C", str(root / "vendor"), "rev-parse",
+            "HEAD:encore-active/" + relative], text=True).strip()
+        actual = subprocess.check_output(
+            ["git", "hash-object", str(path)], text=True).strip()
+        assert actual == pinned, ("Selected source differs from vendor gitlink", relative)
+    physical = [p for p in physical if p not in new_owners | set(pacing_headers)]
+    print("ENCORE_POST_F07_SELECTED_CATALOG_SEPARATION_PASS",
+          "historical=337 additions=43 native_unclassified=8 pacing_headers=2", flush=True)
 assert len(physical) == 337, ("Shipping source catalogue changed",len(physical),
     "unclassified=" + repr(sorted(set(physical) - catalog_paths)),
     "missing=" + repr(sorted(catalog_paths - set(physical))))
@@ -2307,12 +3271,28 @@ print("ENCORE_TYPOGRAPHY_POST_F07_PASS", "owners=2 unicode_quick_menu=1")
 # headers; neither belongs to the immutable F07 baseline.
 post_f07_loading_artwork_receipts = {
     "headless/loading_artwork_transfer.hpp": "2594c4ea8c3d08ec1c04e9c08de717f61ffb7df1",
-    "headless/loading_artwork_gl.hpp": "945753fbd9f95f2a45d8fa16504f0bd98534b678",
+    "headless/loading_artwork_gl.hpp": "7bf2c800ef6524f7d582a08c27ef4fbf63d25d7e",
+    "headless/loading_case.hpp": "8b54dfb19ee20c3aba930927382be3adec8c24da",
+    "headless/loading_case_shader_source.hpp": "7f506ee0bfd2a1e4b1b29f06cb740b39f63cb2a9",
+    "headless/prosperoeden/case_index_disk.hpp": "e6618140b3aeda0ff1fcb085d8f43ff98d6080ff",
 }
 post_f07_loading_artwork_owners = set(post_f07_loading_artwork_receipts)
 for path, blob in post_f07_loading_artwork_receipts.items():
-    assert subprocess.check_output(["git","hash-object",path], cwd=root, text=True).strip() == blob, path
-print("ENCORE_LOADING_ARTWORK_POST_F07_PASS owners=2 historical_headless_catalog_preserved=193")
+    actual = subprocess.check_output(["git","hash-object",path], cwd=root, text=True).strip()
+    # Exact alternate-artwork successor from launcher commit 2b8c715.
+    if path == "headless/loading_artwork_gl.hpp" and actual == "b08c16fa6650e89dbbd6b8f1b73d26f66a1f441e":
+        blob = "b08c16fa6650e89dbbd6b8f1b73d26f66a1f441e"
+    if path == "headless/loading_case_shader_source.hpp" and actual == "ddf1695883a05d06448d2e3e7f29b952bd0e41e9":
+        # Exact selected Spine orientation and vector fallback, independently
+        # sealed by the F07 optimization coverage register.
+        f07_shader_source = (root / "tools/check-eden-optimization-coverage.py").read_text()
+        assert '"headless/loading_case_shader_source.hpp": "ddf1695883a05d06448d2e3e7f29b952bd0e41e9"' in f07_shader_source
+        shader_text = (root / path).read_text()
+        assert "if (shape == 14) v_uv = vec2(1.0 - corner.x, corner.y);" in shader_text
+        assert "else if (shape == 15)" in shader_text
+        blob = "ddf1695883a05d06448d2e3e7f29b952bd0e41e9"
+    assert actual == blob, path
+print("ENCORE_LOADING_ARTWORK_POST_F07_PASS owners=5 historical_headless_catalog_preserved=193")
 
 # Newly selected native PS5 guest-fault sink is post-F07; retain the
 # historical 193-file catalogue unchanged and prove its exact source blob.
@@ -2340,6 +3320,47 @@ assert '::Eden::NS2::LoadingSvcSnapshot::Report(10);' in (root / "headless/graph
 assert '::Eden::NS2::LoadingSvcSnapshot::Report(30);' in (root / "headless/graphics.cpp").read_text()
 print("ENCORE_NS2_LOADING_SVC_POST_F07_PASS owners=1 diagnostics_only=1")
 
+# Selected post-snapshot GPU wait/scheduler/present owners. Do not rewrite
+# the immutable 193-file catalogue or qualify console performance by inventory.
+post_f07_gpu_wait_receipts = {
+    "headless/vulkan_master_semaphore_ps5.cpp": "bf6016b68299fb0f494e725aacca2deae5c6a309",
+    "headless/fence_manager_ps5.h": "43472c89e5bb12b7156e031a3abe85d6aefda451",
+    "headless/vk_fence_manager_ps5.h": "022cfc99c30a54e95095313289bdb7006ed014df",
+    "headless/vulkan_scheduler_ps5.cpp": "bf4720e7a20c853b435adc6b3fe011b54a2ad11d",
+    "headless/vk_scheduler_ps5.h": "b174c9891530eddaf7ebbf3aba39dcfab3009fa8",
+    "headless/vulkan_present_manager_ps5.cpp": "32bee8ceea4d05de1be5a4acc89e594f72805e43",
+    "headless/vk_rasterizer_shutdown_ps5.h": "07e18cab8a8df1c862903d9e99a521797dd7cf3e",
+    "headless/vk_buffer_cache_shutdown_ps5.cpp": "fb55d7b30e95afbe567d41ebcd4b89229d6447b0",
+}
+# Selected R08 and forced-fence owners are already sealed in F07.
+# Share that exact two-file successor dictionary rather than copy SHA pins.
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+    import ast
+    f07_ast = ast.parse((root/"tools/check-eden-optimization-coverage.py").read_text())
+    wait_updates = [
+        ast.literal_eval(node.args[0])
+        for node in ast.walk(f07_ast)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "post_f07_gpu_wait_owners"
+        and node.func.attr == "update"
+        and len(node.args) == 1 and isinstance(node.args[0], ast.Dict)
+    ]
+    assert len(wait_updates) == 1
+    assert set(wait_updates[0]) == {
+        "headless/fence_manager_ps5.h",
+        "headless/vulkan_present_manager_ps5.cpp",
+    }
+    assert set(wait_updates[0]).issubset(post_f07_gpu_wait_receipts)
+    post_f07_gpu_wait_receipts.update(wait_updates[0])
+post_f07_gpu_wait_owners = set(post_f07_gpu_wait_receipts)
+for path, blob in post_f07_gpu_wait_receipts.items():
+    assert subprocess.check_output(["git", "hash-object", path], cwd=root,
+                                   text=True).strip() == blob, path
+    assert Path(path).name in (root/"headless/vulkan.cmake").read_text(), path
+print("ENCORE_NATIVE_GPU_WAIT_RECEIPT_PASS", "owners=8 historical_headless_catalog_preserved=193")
+
 headless_actual = sorted(
     p.relative_to(root).as_posix()
     for p in (root / "headless").rglob("*")
@@ -2347,7 +3368,7 @@ headless_actual = sorted(
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
         post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners | post_f07_ns1_audio_headless_owners | post_f07_r23_final_headless_owners |
-        post_f07_diagnostics_owners | post_f07_typography_owners | post_f07_loading_artwork_owners | post_f07_ns2_fault_owners | post_f07_ns2_loading_svc_owners)
+        post_f07_diagnostics_owners | post_f07_typography_owners | post_f07_loading_artwork_owners | post_f07_ns2_fault_owners | post_f07_ns2_loading_svc_owners | post_f07_gpu_wait_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

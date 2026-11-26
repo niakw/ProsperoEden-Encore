@@ -396,7 +396,18 @@ int main(){
     const auto req=CalculateNativeImageRequirements(preferences,2);
     require(req && req->size==65536 && req->alignment==4096,
             "RGBA image block height/stride and count");
-    require(!CalculateNativeImageRequirements(preferences,0),"reject zero image count");
+    const auto zero_count_image = CalculateNativeImageRequirements(preferences,0);
+    require(zero_count_image && zero_count_image->size==32768 &&
+            zero_count_image->alignment==4096,
+            "GSV 435 zero image count sizes exactly one image");
+    preferences[6]=5; // RGBA16F: two times the bytes per pixel
+    require(!CalculateNativeImageRequirements(preferences,1),
+            "RGBA16F rejects 4Bpp pitch");
+    preferences[5]=16;
+    const auto fp16_image = CalculateNativeImageRequirements(preferences,1);
+    require(fp16_image && fp16_image->size==65536 && fp16_image->alignment==4096,
+            "RGBA16F uses 8Bpp pitch and exact block size");
+    preferences[6]=1;preferences[5]=8;
     preferences[5]=7;
     require(!CalculateNativeImageRequirements(preferences,1),"reject short pitch");
     preferences[5]=8;preferences[8]=1;

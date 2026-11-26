@@ -5558,3 +5558,7 @@ Le zéro historique n'est PAS une preuve de qualification runtime exhaustive. Le
 ### 2026-11-26 — Sentinelles IPC après rattrapage main
 
 🟢 **26/11/2026 — Recalcul sur les propriétaires finaux réellement sélectionnés.** Après priorité `main` sur les tables IPC natives, les contrats physiques deviennent `ApplicationFunctions=(1,74,0)`, `SelfController=(1,66,0)` et `HID=(1,234,0)`. AOC reste `(1,22,0)`, SSL `(5,75,0)`, BSD `(3,63,0)`. Mise à jour limitée à l'inventaire de source NS1 ; aucun C++ runtime modifié.
+
+### 2026-11-26 — Rattrapage main → NS1 : oracles GSV / strict-fence
+
+🟢 **26/11/2026 — Trois-voies avec priorité main.** Sur `check-active-source-inventory.py`, `check-eden-optimization-coverage.py` et `tools/ns2/test_graphics_hle.cpp`, les deltas sont reconstruits depuis l'ancêtre commun `452fd7fe`. Tous les chevauchements prennent `main` `7cd38100`; un seul ajout NS1 réellement disjoint est conservé dans l'inventaire actif (empreinte historique `8aa077c5…`). Le reçu C797/C7C0 strict-fence et la fixture GSV count=0/RGBA16F de main sont présents. Vendor repinné sur `63af52a4`, dont le témoin GPU identity est lui aussi celui de main. Aucun runtime C++ moteur modifié, aucun merge vers main.

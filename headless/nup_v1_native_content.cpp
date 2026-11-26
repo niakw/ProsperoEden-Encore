@@ -16,6 +16,38 @@
 namespace Eden::NupV1::Native {
 namespace {
 
+// Lichii FindUpgradePack also recognizes Switch 2 resource table names.
+// Inspect directory metadata only; never read or decompress file contents.
+// The NUP parser admits at most 2,000,000 file/directory nodes per archive.
+bool HasUpgradePackMarker(const FileSys::VirtualDir& root) {
+    if (!root) return false;
+    const auto system = root->GetSubdirectory("System");
+    if (system && system->GetFile("AoCUpgradeVersion.txt")) return true;
+
+    constexpr std::size_t MaxNodes = 2'000'000;
+    std::vector<FileSys::VirtualDir> pending{root};
+    std::size_t remaining = MaxNodes;
+    while (!pending.empty()) {
+        if (!remaining) return false;
+        --remaining;
+        auto directory = std::move(pending.back());
+        pending.pop_back();
+        for (const auto& file : directory->GetFiles()) {
+            if (!remaining) return false;
+            --remaining;
+            if (file && file->GetName().find(".Nin_Ounce") != std::string::npos)
+                return true;
+        }
+        auto children = directory->GetSubdirectories();
+        if (children.size() > remaining ||
+            pending.size() > remaining - children.size())
+            return false;
+        for (auto& child : children)
+            if (child) pending.push_back(std::move(child));
+    }
+    return false;
+}
+
 struct EmbeddedSwitch2Program {
     FileSys::VirtualDir exefs;
     FileSys::VirtualDir romfs;
@@ -215,26 +247,37 @@ FileSys::VirtualDir ContentSet::ExeFS() const {
 FileSys::VirtualFile ContentSet::CreateRomFS(bool allow_upgrade_pack) const {
     if (!mount_) return {};
     auto directory = mount_->Effective(ContentView::RomFS);
-    // Lichii FindUpgradePack/ReadRomFS: an Edition's marked upgrade
-    // content is part of the application RomFS, not just an independently
-    // mountable DLC. Require the validated NS1 family and explicit marker;
-    // ordinary DLC and native NS2 titles must not alter the main RomFS.
+    const auto embedded = FindEmbeddedSwitch2Program(*mount_);
+    // The upgrade pack is selected from the verified conventional NS1
+    // family, independently of a NACP override for ordinary AoC listing.
+    // A native program1 RomFS is sufficient when no regular tree exists.
     if (allow_upgrade_pack && edition_upgrade_base_ && addon_base_id_ &&
-        directory && *edition_upgrade_base_ <=
-            std::numeric_limits<std::uint64_t>::max() - FileSys::AOC_TITLE_ID_OFFSET &&
-        *addon_base_id_ == *edition_upgrade_base_ + FileSys::AOC_TITLE_ID_OFFSET) {
-        const AddOnDirectory* upgrade = nullptr;
-        for (const auto& addon : addons_) {
-            const auto system_dir = addon.romfs->GetSubdirectory("System");
-            if (!system_dir || !system_dir->GetFile("AoCUpgradeVersion.txt"))
+        (directory || (embedded && embedded->romfs)) &&
+        *edition_upgrade_base_ <=
+            std::numeric_limits<std::uint64_t>::max() - FileSys::AOC_TITLE_ID_OFFSET) {
+        const auto upgrade_base = *edition_upgrade_base_ + FileSys::AOC_TITLE_ID_OFFSET;
+        const auto& packages = mount_->Packages();
+        FileSys::VirtualDir upgrade;
+        std::uint32_t upgrade_version{};
+        for (std::size_t i = 0; i < packages.size(); ++i) {
+            const auto& package = packages[i];
+            if (package.kind != 2 || package.title_id < upgrade_base ||
+                package.title_id - upgrade_base > FileSys::AOC_TITLE_ID_MASK ||
+                (upgrade && package.version <= upgrade_version))
                 continue;
-            if (!upgrade || addon.version > upgrade->version)
-                upgrade = &addon;
+            auto candidate = mount_->PackageView(i, ContentView::RomFS);
+            if (!HasUpgradePackMarker(candidate)) continue;
+            upgrade_version = package.version;
+            upgrade = std::move(candidate);
         }
         if (upgrade) {
-            directory = FileSys::LayeredVfsDirectory::MakeLayeredDirectory(
-                {upgrade->romfs, std::move(directory)}, "romfs");
-            if (!directory) return {};
+            if (directory) {
+                directory = FileSys::LayeredVfsDirectory::MakeLayeredDirectory(
+                    {std::move(upgrade), std::move(directory)}, "romfs");
+                if (!directory) return {};
+            } else {
+                directory = std::move(upgrade);
+            }
         }
     }
     // The native program1 tree overlays, rather than replaces, the regular
@@ -242,11 +285,11 @@ FileSys::VirtualFile ContentSet::CreateRomFS(bool allow_upgrade_pack) const {
     // directories and gives program1 files precedence (Lichii ReadRomFS).
     // CreateRomFS's second parameter is an IPS/stub patch directory, not an
     // ordinary file overlay: merge in VFS BEFORE serializing.
-    if (const auto embedded = FindEmbeddedSwitch2Program(*mount_);
-        embedded && embedded->romfs) {
+    if (embedded && embedded->romfs) {
         if (directory) {
             directory = FileSys::LayeredVfsDirectory::MakeLayeredDirectory(
                 {embedded->romfs, std::move(directory)}, "romfs");
+            if (!directory) return {};
         } else {
             directory = embedded->romfs;
         }

@@ -4867,4 +4867,18 @@ Le motif historique « la révision n'est pas raccordée à tout l'arbitrage ré
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 43 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+### 2026-11-26 — NIFM acceptable network type qualifié : 43 → 42
+
+Base précédente : **43 lignes ouvertes**.
+
+Le PARTIEL `IGeneralService` cmd40 `SetAcceptableNetworkTypeFlag` est requalifié sur son contrat observable :
+- HOS23/SwIPC et le SDK reconstruit exposent uniquement une entrée `u32`, sans définition publique des bits ni effet IPC supplémentaire ;
+- Encore consomme exactement ce `u32`, le publie dans `acceptable_network_type_flag` atomique et retourne `ResultSuccess`; cmd41 relit exactement le même état ;
+- Napple implémente indépendamment la même sémantique (`u32` atomique + getter round-trip), et plusieurs runtimes recomp récents acceptent cmd40 sans appliquer de filtre réseau additionnel démontrable.
+
+L'ancien motif « le setter ne pilote pas la sélection réseau » n'est donc plus retenu comme divergence propre à cmd40 : aucun mapping public des bits ne permet de définir un filtrage plus fidèle, et l'état observable de la commande est déjà représenté. Aucun bit Wi-Fi/Ethernet n'est inventé.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 42 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
 

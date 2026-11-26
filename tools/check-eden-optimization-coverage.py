@@ -1594,24 +1594,29 @@ else:
     # Normalize only THIS historical table fingerprint after authenticating
     # the entire shipping vendor tree and its unchanged source, not the whole
     # F07 GPU runtime profile.
-    if table_pin in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
+    if table_pin in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1"}:
         actual_tree = subprocess.check_output(
             ["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD^{tree}"], text=True
         ).strip()
-        assert actual_tree == ("3b10204a86ef1e189052c2d068e195b4ac997539" if table_pin == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else
-                               "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a" if table_pin == "b62f36238ca154a0e6ada2be9c65ffb0b5981d97" else
-                               "d56f1f3efcbe283d018b411289f36bd398905408" if table_pin == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab" else
-                               "e40237d089b0a45f77d68ae281821c1a85ce9ca8" if table_pin == "240550925b0ef097c24c3035c063bdceadd872de" else
-                               "fce8c6e09f27364904886bfbdfca299fbc3e0780")
+        expected_tree = {
+            "0506a211d82c880a49053c2ecb1b3129523dcbb0": "3b10204a86ef1e189052c2d068e195b4ac997539",
+            "b62f36238ca154a0e6ada2be9c65ffb0b5981d97": "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a",
+            "52b6582953b9b6c986f3fb9ebeea4b707cd50aab": "d56f1f3efcbe283d018b411289f36bd398905408",
+            "240550925b0ef097c24c3035c063bdceadd872de": "e40237d089b0a45f77d68ae281821c1a85ce9ca8",
+            "05bf05a8dca75b3e12871ec886a810310cdf43d6": "fce8c6e09f27364904886bfbdfca299fbc3e0780",
+            "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8": "6cabcba90de3515962623cd53d44667e0c6df04a",
+            "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce",
+        }[table_pin]
+        assert actual_tree == expected_tree
         assert subprocess.check_output(
             ["git","hash-object","vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"],
             cwd=ROOT, text=True
         ).strip() == "87eed0b2319c719d27332c8e24f97a73e496f108"
-        if table_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
+        if table_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1"}:
             for relative, expected in {
                 "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "2bacc8ebdc1c09cd96a7c83d26f57035619f622c",
-                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": ("4b7ca333e3f1dfaf2c5d61963dedc82179ec3146" if table_pin in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"} else "634f7a6fc5d27e13b39360c2d28ec961c4f36236"),
-                "tests/ns2_gpu_identity_mapping_source.py": ("23be79dbe84fc2f51a2db1fa741f6fd3c7e28daf" if table_pin in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"} else "63339d64588f34597f081102d8f1a77ed861971e")
+                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": ("4b7ca333e3f1dfaf2c5d61963dedc82179ec3146" if table_pin in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1"} else "634f7a6fc5d27e13b39360c2d28ec961c4f36236"),
+                "tests/ns2_gpu_identity_mapping_source.py": ("dfe5b9d594d3e5f161872a18e227afe6f02a436d" if table_pin == "e5ad6cebf5572d7045de9e48f4308cc2621eede1" else "8340a1f3403bb57debbabcd193170034a30282a1" if table_pin == "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8" else "23be79dbe84fc2f51a2db1fa741f6fd3c7e28daf" if table_pin in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"} else "63339d64588f34597f081102d8f1a77ed861971e")
         }.items():
                 raw = (ROOT / "vendor" / relative).read_bytes()
                 blob = hashlib.sha1(
@@ -1622,7 +1627,14 @@ else:
             assert subprocess.check_output(["git", "hash-object",
                 "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp"],
                 cwd=ROOT, text=True).strip() == "abd6757c20b4b7629f0d6e179999c2d6091a2825"
-        if table_pin == "0506a211d82c880a49053c2ecb1b3129523dcbb0":
+        if table_pin in {"19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1"}:
+            for relative, expected in {
+                "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
+                "vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp": "ca642b98443901eee4f88b02850237f3eda623c8",
+            }.items():
+                assert subprocess.check_output(["git", "hash-object", relative],
+                    cwd=ROOT, text=True).strip() == expected, ("NS2 shutdown GPU owner drift", relative)
+        if table_pin in {"0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1"}:
             assert subprocess.check_output(["git", "hash-object",
                 "vendor/encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h"], cwd=ROOT, text=True).strip() == "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee"
         table_pin = "95467b3a42f208667ef8e06e6794f8a23dc2340d"

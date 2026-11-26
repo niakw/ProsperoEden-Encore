@@ -3072,7 +3072,7 @@ assert shipping == shipping_cpp | build_recipes, (
 # 50-item oracle for historical trees; authenticate both new SHA256 names.
 shipping_receipt_count = 50
 if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"],
-                           text=True).strip() in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
+                           text=True).strip() in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1"}:
     assert subprocess.check_output([
         "git", "hash-object", str(active / "eden-backports/manifest.json")
     ], text=True).strip() == "da4e380ecb78a12fdbb3bb12ac29d88f3a6eb0df"

@@ -90,6 +90,16 @@ def normalize_g21_shutdown_source(filename: str, source: str) -> tuple[str, bool
     """Accept EXACT old or new Git blob and reconstruct prior byte-for-byte."""
     if filename not in OLD:
         raise AssertionError(("Unrecognized G21 source owner", filename))
+    # R457 renderer lifetime: reverse the exact reviewed delta on the audit copy only.
+    if git_blob(source) == "9347e606050ac450a1f98e3f5f462ccc982dc808":
+        for newer, older in (
+            ("#include \"common/settings.h\"\n#include \"common/settings_enums.h\"\n#include \"core/core.h\"\n#ifdef PS5_NATIVE\n#include \"core/native_renderer_lifetime.h\"\n#endif\n#include \"core/core_timing.h\"\n#include \"core/gpu_dirty_memory_manager.h\"\n#include \"core/frontend/emu_window.h\"\n", "#include \"common/settings.h\"\n#include \"common/settings_enums.h\"\n#include \"core/core.h\"\n#include \"core/core_timing.h\"\n#include \"core/gpu_dirty_memory_manager.h\"\n#include \"core/frontend/emu_window.h\"\n"),
+            ("            renderer->Context().MakeCurrent();\n            glFinish();\n        }\n        // GPU work is joined; service-owned GMMUs can still unmap later.\n#ifdef PS5_NATIVE\n        if (renderer) ::Eden::NativeRendererLifetime::RetireMappingCallbacks();\n#endif\n        renderer.reset();\n    }\n\n", "            renderer->Context().MakeCurrent();\n            glFinish();\n        }\n        renderer.reset();\n    }\n\n"),
+            ("        renderer = std::move(renderer_);\n        system.Host1x().memory_manager.BindInterface(renderer->ReadRasterizer());\n        system.Host1x().gmmu_manager.BindRasterizer(renderer->ReadRasterizer());\n#ifdef PS5_NATIVE\n        ::Eden::NativeRendererLifetime::ActivateMappingCallbacks();\n#endif\n    }\n\n    /// Flush all current written commands into the host GPU for execution.\n", "        renderer = std::move(renderer_);\n        system.Host1x().memory_manager.BindInterface(renderer->ReadRasterizer());\n        system.Host1x().gmmu_manager.BindRasterizer(renderer->ReadRasterizer());\n    }\n\n    /// Flush all current written commands into the host GPU for execution.\n"),
+        ):
+            assert source.count(newer) == 1
+            source = source.replace(newer, older, 1)
+        assert git_blob(source) == "7720e5a347817e67c0a964d3a80644b01b99d733"
     current = git_blob(source)
     if filename == "gpu_gl_native.cpp" and current == "7720e5a347817e67c0a964d3a80644b01b99d733":
         # Reconstruct only the immutable historical audit copy; production uses the new owner.

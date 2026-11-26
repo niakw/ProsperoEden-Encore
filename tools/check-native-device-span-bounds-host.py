@@ -45,6 +45,16 @@ def git_blob(text):
     data = text.encode()
     return hashlib.sha1(b'blob ' + str(len(data)).encode() + bytes([0]) + data).hexdigest()
 
+# R457 renderer lifetime: reverse the exact reviewed delta on the audit copy only.
+if git_blob(native) == "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4":
+    for newer, older in (
+        ("#ifdef PS5_NATIVE\n#include \"core/hle/kernel/board/nintendo/nx/k_system_control.h\"\n#include \"gpu_fault_rate_limit.h\"\n#include \"core/native_renderer_lifetime.h\"\n#endif\n\nnamespace Core {\n", "#ifdef PS5_NATIVE\n#include \"core/hle/kernel/board/nintendo/nx/k_system_control.h\"\n#include \"gpu_fault_rate_limit.h\"\n#endif\n\nnamespace Core {\n"),
+        ("    // renderer callback may itself gather translated GPU addresses.\n    lk.unlock();\n    if (replaced_gpu_mapping && device_inter != nullptr) {\n        const ::Eden::NativeRendererLifetime::MappingCallbackLease lease;\n        if (lease) {\n            device_inter->InvalidateRegion(address, size);\n            ::Eden::GpuFault::remap_cache_evictions.fetch_add(1, std::memory_order_relaxed);\n        }\n    }\n#endif\n}\n", "    // renderer callback may itself gather translated GPU addresses.\n    lk.unlock();\n    if (replaced_gpu_mapping && device_inter != nullptr) {\n        device_inter->InvalidateRegion(address, size);\n        ::Eden::GpuFault::remap_cache_evictions.fetch_add(1, std::memory_order_relaxed);\n    }\n#endif\n}\n"),
+        ("#endif\n    size_t start_page_d = address >> Memory::YUZU_PAGEBITS;\n    size_t num_pages = Common::AlignUp(size, Memory::YUZU_PAGESIZE) >> Memory::YUZU_PAGEBITS;\n    {\n#ifdef PS5_NATIVE\n        const ::Eden::NativeRendererLifetime::MappingCallbackLease lease;\n        if (lease)\n#endif\n        device_inter->InvalidateRegion(address, size);\n    }\n    std::scoped_lock lk(mapping_guard);\n\n    tracked_entries.CommitRegion(start_page_d, start_page_d + num_pages); // should already be committed, but just in case\n", "#endif\n    size_t start_page_d = address >> Memory::YUZU_PAGEBITS;\n    size_t num_pages = Common::AlignUp(size, Memory::YUZU_PAGESIZE) >> Memory::YUZU_PAGEBITS;\n    device_inter->InvalidateRegion(address, size);\n    std::scoped_lock lk(mapping_guard);\n\n    tracked_entries.CommitRegion(start_page_d, start_page_d + num_pages); // should already be committed, but just in case\n"),
+    ):
+        assert native.count(newer) == 1
+        native = native.replace(newer, older, 1)
+    assert git_blob(native) == "daf493ce6e863397ec44bfae467c4f7533570477"
 if git_blob(native) == 'daf493ce6e863397ec44bfae467c4f7533570477':
     # Reviewed FC27 #194 rollback restored the exact pre-deferral device
     # owner. Historical continuity/ASID source checks still run below.

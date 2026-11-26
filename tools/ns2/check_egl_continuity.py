@@ -17,6 +17,16 @@ def once(t, old, new):
     return t.replace(old, new)
 
 t = OWNER.read_text()
+# R457 renderer lifetime: reverse the exact reviewed delta on the audit copy only.
+if blob(t) == "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4":
+    for newer, older in (
+        ("#ifdef PS5_NATIVE\n#include \"core/hle/kernel/board/nintendo/nx/k_system_control.h\"\n#include \"gpu_fault_rate_limit.h\"\n#include \"core/native_renderer_lifetime.h\"\n#endif\n\nnamespace Core {\n", "#ifdef PS5_NATIVE\n#include \"core/hle/kernel/board/nintendo/nx/k_system_control.h\"\n#include \"gpu_fault_rate_limit.h\"\n#endif\n\nnamespace Core {\n"),
+        ("    // renderer callback may itself gather translated GPU addresses.\n    lk.unlock();\n    if (replaced_gpu_mapping && device_inter != nullptr) {\n        const ::Eden::NativeRendererLifetime::MappingCallbackLease lease;\n        if (lease) {\n            device_inter->InvalidateRegion(address, size);\n            ::Eden::GpuFault::remap_cache_evictions.fetch_add(1, std::memory_order_relaxed);\n        }\n    }\n#endif\n}\n", "    // renderer callback may itself gather translated GPU addresses.\n    lk.unlock();\n    if (replaced_gpu_mapping && device_inter != nullptr) {\n        device_inter->InvalidateRegion(address, size);\n        ::Eden::GpuFault::remap_cache_evictions.fetch_add(1, std::memory_order_relaxed);\n    }\n#endif\n}\n"),
+        ("#endif\n    size_t start_page_d = address >> Memory::YUZU_PAGEBITS;\n    size_t num_pages = Common::AlignUp(size, Memory::YUZU_PAGESIZE) >> Memory::YUZU_PAGEBITS;\n    {\n#ifdef PS5_NATIVE\n        const ::Eden::NativeRendererLifetime::MappingCallbackLease lease;\n        if (lease)\n#endif\n        device_inter->InvalidateRegion(address, size);\n    }\n    std::scoped_lock lk(mapping_guard);\n\n    tracked_entries.CommitRegion(start_page_d, start_page_d + num_pages); // should already be committed, but just in case\n", "#endif\n    size_t start_page_d = address >> Memory::YUZU_PAGEBITS;\n    size_t num_pages = Common::AlignUp(size, Memory::YUZU_PAGESIZE) >> Memory::YUZU_PAGEBITS;\n    device_inter->InvalidateRegion(address, size);\n    std::scoped_lock lk(mapping_guard);\n\n    tracked_entries.CommitRegion(start_page_d, start_page_d + num_pages); // should already be committed, but just in case\n"),
+    ):
+        assert t.count(newer) == 1
+        t = t.replace(newer, older, 1)
+    assert blob(t) == "daf493ce6e863397ec44bfae467c4f7533570477"
 # Vendor #194's reviewed native FC27 publication is later than the N50
 # source witness. Reverse exactly its three additions in this AUDIT COPY,
 # then retain the original N50 source baseline checksum unchanged.

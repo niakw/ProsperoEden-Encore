@@ -4257,3 +4257,17 @@ Vendor `fec1cb94f73e0c5c0cd40280a1e33341c9a58db6`, provenance `de1be3646aadd33ca
 **1 ligne PARTIEL/ABI-DIFF quitte le pool. Nouveau compteur global : 124 lignes ouvertes.**
 
 Gitlink repinné sur `de1be3646aadd33caf2fdb3cc70dbe0db2b9e8d0`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — NCM LocationResolver : trois faux PARTIEL retirés, palier global 121
+
+Base : **124 lignes ouvertes**.
+
+Relecture ciblée du propriétaire actif `encore-active/eden-backports/src/core/hle/service/ncm/ncm.cpp` contre Atmosphère `ContentLocationResolverImpl` (`Atmosphere-NX/Atmosphere-libs@75c688910baf76c0f5e62a3a7fe90bc0dc7f70a1`) :
+- `ResolveApplicationControlPath`, `ResolveApplicationHtmlDocumentPath` et `ResolveApplicationLegalInformationPath` sont, comme dans Atmosphère/Horizon, **strictement redirection-only** ; l'absence de fallback vers le contenu installé n'est donc pas une lacune ;
+- `ResolveProgramPath` reste ouvert : Horizon retombe sur le dernier Program content NCM quand aucune redirection n'existe ;
+- `ResolveProgramPathForDebug` reste ouvert car Horizon retombe ensuite sur `ResolveProgramPath`.
+
+**3 lignes PARTIEL quittent le pool par requalification prouvée. Nouveau compteur global : 121 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette requalification.

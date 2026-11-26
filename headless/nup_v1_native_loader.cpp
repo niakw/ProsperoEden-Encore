@@ -2,6 +2,7 @@
 #include "nup_v1_native_loader.h"
 #include "nup_v1_native_aoc.h"
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdio>
@@ -10,6 +11,7 @@
 #include <utility>
 #include <zlib.h>
 
+#include "common/settings.h"
 #include "core/core.h"
 #include "core/file_sys/romfs_factory.h"
 #include "core/hle/kernel/k_process.h"
@@ -308,7 +310,20 @@ Loader::ResultStatus NupAppLoader::ReadRomFS(FileSys::VirtualFile& out_file) {
     const auto status = ValidateProgramIdentity(program_id);
     if (status != Loader::ResultStatus::Success) return status;
     std::scoped_lock guard(romfs_mutex_);
-    if (!effective_romfs_) effective_romfs_ = content_->CreateRomFS();
+    if (!effective_romfs_) {
+        const auto dlc_disabled = [](u64 id) {
+            const auto& disabled = Settings::values.disabled_addons;
+            const auto it = disabled.find(id);
+            return it != disabled.end() &&
+                std::find(it->second.begin(), it->second.end(), "DLC") != it->second.end();
+        };
+        const auto native_base = FileSys::GetBaseTitleID(program_id);
+        const auto legacy_base = (native_base & 0x00FFFFFFFFFFFFFFULL) |
+                                 0x0100000000000000ULL;
+        effective_romfs_ = content_->CreateRomFS(
+            !dlc_disabled(program_id) && !dlc_disabled(native_base) &&
+            !dlc_disabled(legacy_base));
+    }
     if (!effective_romfs_) return Loader::ResultStatus::ErrorNoRomFS;
     out_file = effective_romfs_;
     return Loader::ResultStatus::Success;

@@ -2945,7 +2945,7 @@ if actual_vendor_pin == "eace7e056485299e7252c506433a1429a4475051":
     native_release = (V / "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp").read_text()
     strict_body = strict_fence.split(
         "void SignalNativeFence(std::function<void()>&& complete) {", 1
-    )[1].split("\\n    }", 1)[0]
+    )[1].split("\n    }", 1)[0]
     assert "CreateFence(false)" in strict_body
     assert "QueueFence(new_fence);" in strict_body
     assert "Settings::IsGPUFenceBehavior" not in strict_body

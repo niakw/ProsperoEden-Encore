@@ -21,7 +21,7 @@ method=begin+shader.split(begin,1)[1].split(end,1)[0]
 assert shader.count(begin)==1 and shader.count(end)==1
 assert method.count("++state.total;")==2
 # The common scheduling policy publishes the large-cache quota under its
-# state mutex. Recent-cache mode publishes the final 32 jobs after parsing.
+# state mutex. Recent-cache mode publishes the final 128 jobs after parsing.
 assert method.count("std::scoped_lock count_lock{state.mutex};") == 0
 assert "std::scoped_lock lock{state.mutex};\n            ++state.total;" in method
 assert "std::scoped_lock lock{state.mutex};\n                ++state.total;" in method
@@ -34,9 +34,14 @@ assert "env_before.bytes <= kRecentShaderCacheScanLimit" in method
 assert 'shader_source.count(f07_prewarm_total_old) != 2' in gen
 assert 'shader_source = shader_source.replace(f07_prewarm_total_old, f07_prewarm_total_new)' in gen
 
-assert method.count("if (state.total == kStartupPrewarmPipelines)")==1
+assert method.count("if (state.total == prewarm_pipeline_limit)")==1
 assert method.count("startup_reader.request_stop();")==1
 assert "constexpr size_t kStartupPrewarmPipelines = 32;" in method
+assert "constexpr size_t kRecentPrewarmPipelines = 128;" in method
+assert "const size_t prewarm_pipeline_limit =" in method
+assert "prefer_recent_cache ? kRecentPrewarmPipelines : kStartupPrewarmPipelines" in method
+assert "recent_cache_builds.size() == prewarm_pipeline_limit" in method
+assert "state.total == prewarm_pipeline_limit" in method
 assert "kFc27TitleId" not in method and "kFc27PrewarmPipelines" not in method
 assert "std::stop_source startup_reader;" in method
 assert "prefer_recent_cache ? stop_loading : startup_reader.get_token()" in method

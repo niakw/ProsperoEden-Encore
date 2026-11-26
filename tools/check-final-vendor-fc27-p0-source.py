@@ -113,8 +113,8 @@ selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
 shipping_vendor_pin = gitlink_vendor_pin
-if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3"}:
-    if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3"}:
+if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f"}:
+    if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f"}:
         # A merge commit, but exactly the reviewed 17253dc9 source tree.
         reviewed_tree = subprocess.check_output(
             ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
@@ -125,6 +125,7 @@ if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53
             "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af": "64179fcce4962f9b2b7c738504a6fa0e00b2b292",
             "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c": "3f7f1523cef730ad153bf658fbb3567222d6e956",
             "150a3a79ca103061f73a9a50ca8f463a3b4712f3": "39fb9a3efe65f67115dfcdebe39a55334a702f2d",
+            "fcd62408fdbc33af01a4caebc8fd44c8500b628f": "8447712e2cecf661910fd1a32613f0b844ceaeb0",
         }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
     # Reconstruct only the two corrected source lines before reusing the
     # already-qualified FC27/P0 graph; every other owner remains exact.
@@ -133,11 +134,66 @@ if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53
     from native_msaa_handle_receipt import (
         GUEST_CACHE_LOCK_SUCCESSOR, INTEGRATED_RASTERIZER,
         restore_guest_cache_lock_successor, blob)
+    if selected == "fcd62408fdbc33af01a4caebc8fd44c8500b628f":
+        # Exact one-owner successor: the 64-bit SIZE_MAX comparison was
+        # tautological. Verify both the replacement and the prior complete
+        # shipping DMA blob; preserve all other vendor owners byte-for-byte.
+        dma=(V/"encore-active/eden-core/src/video_core/engines/maxwell_dma.cpp").read_text()
+        assert blob(dma.encode("utf-8"))=="0c186d79194135a5d0b300c3a8a6fb0aa503810b"
+        a='#include <utility>' + chr(10)
+        guard_new='if (!std::in_range<size_t>(byte_count) ||'
+        guard_old='if (byte_count > (std::numeric_limits<size_t>::max)() ||'
+        assert dma.count(a)==1 and dma.count(guard_new)==1
+        previous=dma.replace(a,'',1).replace(guard_new,guard_old,1)
+        assert blob(previous.encode("utf-8"))=="cc9439c3159bdcba091e8040408e462b812d03c0"
     raster=(V/"encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
     assert blob(raster.encode("utf-8"))==GUEST_CACHE_LOCK_SUCCESSOR
     predecessor=restore_guest_cache_lock_successor(raster)
     assert blob(predecessor.encode("utf-8"))==INTEGRATED_RASTERIZER
     REVIEWED_PINS.add(selected)
+    gitlink_vendor_pin = "4354add020afac574198f63d87167f3022bff9c6"
+    shipping_vendor_pin = "4354add020afac574198f63d87167f3022bff9c6"
+
+# The FC27 2026-11-22 exit crash at nvhost_as_gpu::~nvhost_as_gpu
+# required an exact three-file vendor successor. Its root tree is checked so
+# no unrelated NS2 or FC27 source gets silently accepted.
+# FC27 first-use stalls: the qualified small-cache successor changes only
+# the bounded preload admission policy. Reject other vendor changes by the
+# complete Git tree and require the exact maintained runtime source blob.
+PS5_FC27_RECENT_PREWARM_PIN = "dbef23055897b1649f83c20cf7a0516e64f3d5cd"
+if actual_vendor_pin == PS5_FC27_RECENT_PREWARM_PIN:
+    assert selected == PS5_FC27_RECENT_PREWARM_PIN
+    new_tree = subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip()
+    assert new_tree == "9e28e5b83cf9c0f4086a33d6838904353a8fd541", ("FC27 prewarm vendor tree drift", new_tree)
+    source_path = V / "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp"
+    raw = source_path.read_bytes()
+    current_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert current_blob == "79660c5cc4ff046f24e7ffa50ab066a86857698c", current_blob
+    assert raw.count(b"constexpr size_t kRecentPrewarmPipelines = 128;") == 1
+    REVIEWED_PINS.add(PS5_FC27_RECENT_PREWARM_PIN)
+    selected = "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb"
+
+PS5_FC27_NVDRV_EXIT_PIN = "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb"
+PS5_FC27_NVDRV_EXIT_BLOBS = {
+    "encore-active/ns2-runtime/process/core/core.cpp": "0110907a727b5d0ed15286298f851b59b30f1eb6",
+    "tests/shutdown_teardown_lifetime_source.py": "6f3ff15f43b456ea79ba8f1dc275b690c1e11606",
+    "tests/shutdown_general_channel_lifetime_source.py": "4e25852f84f9bc8e73454ef6ac1bac4d9270ac3a",
+}
+if actual_vendor_pin in {PS5_FC27_NVDRV_EXIT_PIN, PS5_FC27_RECENT_PREWARM_PIN}:
+    assert selected == PS5_FC27_NVDRV_EXIT_PIN
+    actual_tree = subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip()
+    assert actual_tree == ("9e28e5b83cf9c0f4086a33d6838904353a8fd541" if actual_vendor_pin == PS5_FC27_RECENT_PREWARM_PIN else "067c72d30a71a79faefd1ad14876e2a46f02755c"), actual_tree
+    for path, expected_blob in PS5_FC27_NVDRV_EXIT_BLOBS.items():
+        raw = (V / path).read_bytes()
+        actual_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual_blob == expected_blob, ("NVDRV exit selected source drift", path, actual_blob)
+    REVIEWED_PINS.add(PS5_FC27_NVDRV_EXIT_PIN)
+    REVIEWED_PINS.add("fcd62408fdbc33af01a4caebc8fd44c8500b628f")
+    # Preserve the exact predecessor's existing qualifications and pin graph;
+    # only the above three maintained owners differ.
+    selected = "fcd62408fdbc33af01a4caebc8fd44c8500b628f"
     gitlink_vendor_pin = "4354add020afac574198f63d87167f3022bff9c6"
     shipping_vendor_pin = "4354add020afac574198f63d87167f3022bff9c6"
 
@@ -1192,6 +1248,8 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if actual_vendor_pin in {PS5_FC27_NVDRV_EXIT_PIN, PS5_FC27_RECENT_PREWARM_PIN} and relative in PS5_FC27_NVDRV_EXIT_BLOBS:
+        return PS5_FC27_NVDRV_EXIT_BLOBS[relative]
     if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
         return NS2_POISONED_TEARDOWN_BLOBS[relative]
     if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:

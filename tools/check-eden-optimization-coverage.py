@@ -1215,9 +1215,9 @@ post_f07_gpu_table_owners = {"vendor/encore-active/eden-core/src/common/multi_le
 post_f07_gpu_table_present = post_f07_gpu_table_owners & all_owners
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
 integrated_cache_lock_qualified = False
-integrated_cache_lock_pins = {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3"}
+integrated_cache_lock_pins = {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd"}
 if gpu_table_vendor_pin in integrated_cache_lock_pins:
-    if gpu_table_vendor_pin in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3"}:
+    if gpu_table_vendor_pin in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd"}:
         # GitHub verified that this merge commit has exactly the reviewed
         # predecessor tree. Reject future changes even under a reused label.
         reviewed_tree = subprocess.check_output(
@@ -1229,6 +1229,9 @@ if gpu_table_vendor_pin in integrated_cache_lock_pins:
             "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af": "64179fcce4962f9b2b7c738504a6fa0e00b2b292",
             "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c": "3f7f1523cef730ad153bf658fbb3567222d6e956",
             "150a3a79ca103061f73a9a50ca8f463a3b4712f3": "39fb9a3efe65f67115dfcdebe39a55334a702f2d",
+            "fcd62408fdbc33af01a4caebc8fd44c8500b628f": "8447712e2cecf661910fd1a32613f0b844ceaeb0",
+            "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb": "067c72d30a71a79faefd1ad14876e2a46f02755c",
+            "dbef23055897b1649f83c20cf7a0516e64f3d5cd": "9e28e5b83cf9c0f4086a33d6838904353a8fd541",
         }[gpu_table_vendor_pin], ("Vendor reviewed source tree drift", gpu_table_vendor_pin, reviewed_tree)
     # This vendor changes exactly the active GuestCacheLock method and
     # its source tests; the historical F07 source table remains frozen.
@@ -3201,6 +3204,46 @@ header_pre_sha = hashlib.sha1(
 assert header_pre_sha == incident_header_original, (
     "P0 session-failure diagnostics predecessor altered", header_pre_sha)
 print("P0_CRASH_ONLY_DIAGNOSTICS_F07_REVERSE_PASS U36=1 historical=unchanged")
+
+# NS2 P0, Nov22: shipping EDEN_DEV_PROFILE=OFF previously made RecordHle
+# a no-op. Pin the four exact engine-only successor blobs for the bounded
+# 10s/30s completed-service witness; historical 518 F07 owners and vendor
+# sources stay immutable. No claim of improved gameplay or GPU submission.
+ns2_boot_hle_receipts = {
+    "headless/performance.h": (
+        "1357052fa927075f006f9fca10e16b3399165664",
+        "6c69d5e8dc4b639ff312ae8b8ac1d6d1a3b5eeb6",
+        "void ReportNs2BootHle(unsigned stage_seconds) noexcept;"),
+    "headless/performance.cpp": (
+        "18ecba614f2c0077bbcc7044d68aa3eb714cb4b4",
+        "9b9c593f3e3629599e1143861a2027d8fcf53096",
+        "EDEN_NS2_LAST_HLE stage=%us"),
+    "headless/graphics.cpp": (
+        "ca3107c8745af36d6faf0196cf9692e628d52540",
+        "b498ee4307ffb0b7f6ae18333177687607a297d7",
+        "::Eden::Performance::ReportNs2BootHle(30);"),
+    "headless/main.cpp": (
+        "de81392f6948fc0257a764bf15daf1c4bf271fdb",
+        "c04f16e3635325b233a8a03c02cb036306cb1c0d",
+        "Eden::Performance::ResetNs2BootHle();"),
+}
+for path, (previous_blob, successor_blob, witness) in ns2_boot_hle_receipts.items():
+    # The F07 518-path historical review did not include every later
+    # headless owner. Pin those engine-only files independently, and update
+    # only the sources that genuinely belong to the frozen post-F07 register.
+    source = ROOT/path
+    assert source.is_file(), ("NS2 HLE source missing", path)
+    assert witness in source.read_text(), ("NS2 HLE witness dropped", path)
+    current_blob = subprocess.check_output(
+        ["git", "hash-object", str(source)], cwd=ROOT, text=True).strip()
+    assert current_blob == successor_blob, ("NS2 HLE successor source drift", path)
+    if path in post_index or path in drift_index:
+        assert path in post_index and path in drift_index, path
+        assert post_index[path]["post_snapshot_git_blob"] == previous_blob, path
+        assert drift_index[path]["actual"] == successor_blob, path
+        post_index[path]["post_snapshot_git_blob"] = successor_blob
+print("NS2_BOOT_HLE_SHIPPING_RECEIPT_PASS owners=4 history=immutable "
+      "console_boot=unvalidated")
 
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",

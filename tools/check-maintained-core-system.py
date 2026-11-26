@@ -103,6 +103,23 @@ GPU_TEARDOWN_LATE_BEFORE = """        app_loader.reset();
         host1x_core.reset();"""
 
 
+# FC27 PS5 shutdown: NVDRV retains KProcess references. Release AS/service
+# owners before ShutdownCores so the kernel's scheduler is still valid.
+# Strip exactly this qualified runtime delta before replaying old source SHAs.
+NVDRV_EXIT_LIFETIME_NEW = "        kernel.CloseServices();\n        ::Eden::ReportStep(\"shutdown\", \"Completed kernel.CloseServices()\");\n        // NVDRV's nvhost_as_gpu destructor can unpin NVMap pages and release\n        // its retained KProcess reference. Release those service owners while\n        // the process and scheduler are still alive; ShutdownCores terminates\n        // the guest processes and must come AFTER this cleanup. The GPU worker\n        // was joined above, so no GPU task can reuse the retired mappings.\n        services.reset();\n        ::Eden::ReportStep(\"shutdown\", \"Completed services.reset()\");\n        service_manager.reset();\n        kernel.ShutdownCores();\n        ::Eden::ReportStep(\"shutdown\", \"Completed kernel.ShutdownCores()\");"
+NVDRV_EXIT_LIFETIME_PREVIOUS = "        kernel.CloseServices();\n        ::Eden::ReportStep(\"shutdown\", \"Completed kernel.CloseServices()\");\n        kernel.ShutdownCores();\n        ::Eden::ReportStep(\"shutdown\", \"Completed kernel.ShutdownCores()\");\n        services.reset();\n        ::Eden::ReportStep(\"shutdown\", \"Completed services.reset()\");\n        service_manager.reset();"
+
+def reverse_nvdrv_exit_lifetime(text: str) -> str:
+    assert text.count(NVDRV_EXIT_LIFETIME_NEW) == 1
+    shutdown = text.split("    void ShutdownMainProcess() {", 1)[1].split(
+        "\n    bool IsShuttingDown()", 1)[0]
+    order = ("gpu_core.reset();", "kernel.CloseServices();", "services.reset();",
+             "service_manager.reset();", "kernel.ShutdownCores();")
+    positions = [shutdown.index(needle) for needle in order]
+    assert positions == sorted(positions), ("NVDRV/KProcess exit order", positions)
+    return text.replace(NVDRV_EXIT_LIFETIME_NEW, NVDRV_EXIT_LIFETIME_PREVIOUS, 1)
+
+
 def reverse_gpu_teardown(text: str) -> str:
     assert text.count(GPU_TEARDOWN_AFTER) == 1
     assert text.count(GPU_TEARDOWN_LATE_AFTER) == 1
@@ -194,9 +211,9 @@ for native in (False, True):
 
 # The release PS5 graph replaces core_native with the NS2-capable derivative.
 ns2 = (root / "vendor/encore-active/ns2-runtime/process/core/core.cpp").read_text()
-assert git_blob(ns2) == "a30c7bbe1bf719b196f1f0805e83b1276ee74472", (
+assert git_blob(ns2) == "0110907a727b5d0ed15286298f851b59b30f1eb6", (
     "reviewed GPU teardown source drift")
-ns2_before_gpu_teardown = reverse_gpu_teardown(ns2)
+ns2_before_gpu_teardown = reverse_gpu_teardown(reverse_nvdrv_exit_lifetime(ns2))
 assert git_blob(ns2_before_gpu_teardown) == "13146ad60fb374f188eae1940ebaa0eff034bb56"
 ns2_before_1932 = reverse_1932(ns2_before_gpu_teardown)
 assert git_blob(ns2_before_1932) == "7e3159eb648e92cca3543cfd01bcfd26a0caa135"

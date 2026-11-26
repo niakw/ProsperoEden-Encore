@@ -31,3 +31,18 @@
 4. **Clôture fonctionnelle NS2** seulement après démarrage/rendu effectifs sur PS5, à commencer par MKW et Bananza ; la réussite du parseur NUP ou la présence de 230 noms ne suffit pas.
 
 Voir aussi : [registre SwitchBrew/Lichii](EDEN_ENCORE_NS2_IMPLEMENTATION_COMPLETENESS_REGISTER_2026-11-21.md), [architecture mémoire invitée](../EDEN_ENCORE_GUEST_MEMORY_NS1_NS2_PS5_ARCHITECTURE.md).
+
+## 26/11 — arbitrage du comparatif ligne à ligne, premier lot VI2
+
+Référence : [comparatif du 26/11](EDEN_ENCORE_COMPARATIF_RUNTIME_LIGNE_PAR_LIGNE_NS2_NS1_2026-11-26.md), photographie moteur `cbf54c0c` / vendor `465d7e9c`. La comparaison GitHub jusqu'à `be6ed31e` révèle également deux commits parallèles non documentaires (`490edb0f`, `f19640ea`) : catalogue launcher et six scripts de qualification. Aucun changement CMake sur cet intervalle.
+
+| Écart | Décision / justification |
+|---|---|
+| P0-V01 — publication du producer VI2 229 | **Corrigé source** : un échec de Connect/SetBufferCount/OpenLayer laissait le pointeur non nul et l'appel suivant sautait l'initialisation. Publier seulement après succès complet ; annuler seulement la connexion/couche ouverte par cet appel. |
+| P0-V01 / P0-V06 — AttachBuffer | **Corrigé source** : le propriétaire actif BufferQueueProducer::AttachBuffer place le slot en Dequeued puis retourne les flags de WaitForFreeSlotThenRelock. ReleaseAllBuffers=2 est un succès dans ce contexte, non une erreur ; l'ancien test ==NoError abandonnait le slot. Ne pas changer les conventions NS1 ni accepter les erreurs négatives. |
+| P0-V01 — pacing Lichii/Eglantine | **Ne pas reprendre tel quel** : Lichii 0288882f, nx2_gsv.h:2083–2270, attend les fences et présente par un compositeur différent ; Encore passe par le BufferQueue réel et ses leases NVMap. Les waits et la politique frames-ahead restent à arbitrer séparément, sans faux signal ni attente circulaire. |
+| P0-02/03 — GSV 314/315/430 | **Conserver** la validation du groupe entier, les références NVMap et le rejet des destructions d'images encore aliasées. libounce 03af07a7 gsv.c:270–287 confirme l'ordre alias/destruction, pas une obligation de succès sur identifiant absent. |
+| P0-04/05/06 — GSV syncpoints | **Conserver** les seuils 64 bits et le retrait des callbacks avant réarmement. Ne pas remplacer le retirement Vulkan réel par le compteur du parseur ; progression du producteur Pokopia toujours ouverte. |
+| P0-07 — snapshot pushbuffer | **Ouvert** : la copie à l'admission peut être incorrecte pour un pushbuffer produit par GPU ; arbitrer par preuve de réécriture/visibilité et ownership. |
+
+Correctif actif vendor [`9de08e4f`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/9de08e4f4bbb903e25f330dde7b8185e19e078a1) : `encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp` (sélection explicite headless/CMakeLists.txt:4165–4197). Contrats locaux vérifiés : `encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp`, `sources/eden/src/core/hle/service/nvnflinger/status.h` et `sources/eden/src/core/hle/service/vi/container.cpp`. Critère : VI2 229 accepte un slot réel après setup valide ; un échec ne laisse pas de producer partiel ; première frame invitée et sortie sans watchdog sur PS5. L'activation de ces défauts dans le dernier log console n'est pas démontrée ; les pannes de boot antérieures à VI2 restent ouvertes. Pas de build natif ni validation console ; CI hôte à qualifier sur le nouveau couple, sans affaiblir les gates.

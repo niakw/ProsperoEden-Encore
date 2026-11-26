@@ -16629,3 +16629,294 @@ Source : [nx2_gsv.h:1799-1812](https://github.com/heydemoura/EglantinePS5/blob/7
 Cet ordre est documentaire : il ne rajoute aucune instrumentation. Les traces existantes doivent être exploitées avant d'en ajouter.
 
 **Couverture ajoutée :** 5 fonctions, 10 comparaisons, 396 lignes-source parcourues ; 0 homologue(s) absent(s)/non extrait(s). Aucun fix runtime.
+
+## Annexe IX — finalisation process/page-table et arrêt du GPU worker
+
+Cette annexe prolonge le teardown jusqu'au processus invité. Elle compare le propriétaire GPU thread **réellement sélectionné** chez Encore (`eden-gpu/gpu_thread_quiet.cpp`) plutôt qu'une copie historique. Aucun ordre de destruction n'est modifié.
+
+### P0-X06 · KPageTableBase::FinalizeProcess
+
+Dernière étape de libération de la table de pages du processus. Ici les blocs communs sont particulièrement utiles : un écart local de fermeture, d'allocator ou de backing doit être visible précisément plutôt que résumé par « kernel différent ».
+
+Encore : [k_page_table_base.cpp:447-461](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/kernel/k_page_table_base.cpp#L447-L461) — 15 lignes.
+
+<details>
+<summary>Lichii — 483-497 : 15 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [k_page_table_base.cpp:483-497](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/kernel/k_page_table_base.cpp#L483-L497).
+
+```diff
+   447   483 | Result KPageTableBase::FinalizeProcess() {
+   448   484 |     // Only process tables should be finalized.
+   449   485 |     ASSERT(!this->IsKernel());
+   450   486 | 
+   451   487 |     // NOTE: Here Nintendo calls an unknown OnFinalize function.
+   452   488 |     // this->OnFinalize();
+   453   489 | 
+   454   490 |     // NOTE: Here Nintendo calls a second unknown OnFinalize function.
+   455   491 |     // this->OnFinalize2();
+   456   492 | 
+   457   493 |     // NOTE: Here Nintendo does a page table walk to discover heap pages to free.
+   458   494 |     // We will use the block manager finalization below to free them.
+   459   495 | 
+   460   496 |     R_SUCCEED();
+   461   497 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 495-509 : 15 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [k_page_table_base.cpp:495-509](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/kernel/k_page_table_base.cpp#L495-L509).
+
+```diff
+   447   495 | Result KPageTableBase::FinalizeProcess() {
+   448   496 |     // Only process tables should be finalized.
+   449   497 |     ASSERT(!this->IsKernel());
+   450   498 | 
+   451   499 |     // NOTE: Here Nintendo calls an unknown OnFinalize function.
+   452   500 |     // this->OnFinalize();
+   453   501 | 
+   454   502 |     // NOTE: Here Nintendo calls a second unknown OnFinalize function.
+   455   503 |     // this->OnFinalize2();
+   456   504 | 
+   457   505 |     // NOTE: Here Nintendo does a page table walk to discover heap pages to free.
+   458   506 |     // We will use the block manager finalization below to free them.
+   459   507 | 
+   460   508 |     R_SUCCEED();
+   461   509 | }
+```
+
+</details>
+
+### P0-X07 · KProcess::Finalize
+
+Finalisation du KProcess au-dessus de la page table. Comparer ordre de fermeture des handles, ressources, threads et page table. Un ordre différent n'est causal que si une dépendance encore vivante attend une ressource déjà finalisée.
+
+Encore : [k_process.cpp:130-187](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp#L130-L187) — 58 lignes.
+
+<details>
+<summary>Lichii — 131-191 : 58 alignées, 0 propres Encore, 3 propres upstream</summary>
+
+Source : [k_process.cpp:131-191](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/kernel/k_process.cpp#L131-L191).
+
+```diff
+   130   131 | void KProcess::Finalize(KernelCore& kernel) {
+   131   132 |     // Delete the process local region.
+   132   133 |     this->DeleteThreadLocalRegion(kernel, m_plr_address);
+   133   134 | 
+   134   135 |     // Get the used memory size.
+   135   136 |     const size_t used_memory_size = this->GetUsedNonSystemUserPhysicalMemorySize(kernel);
+   136   137 | 
+   137   138 |     // Finalize the page table.
+   138   139 |     m_page_table.Finalize();
+   139   140 | 
+   140   141 |     // Finish using our system resource.
+   141   142 |     if (m_system_resource) {
+   142   143 |         if (m_system_resource->IsSecureResource()) {
+   143   144 |             // Finalize optimized memory. If memory wasn't optimized, this is a no-op.
+   144   145 |             kernel.MemoryManager().FinalizeOptimizedMemory(this->GetId(), m_memory_pool);
+   145   146 |         }
+   146   147 | 
+   147   148 |         m_system_resource->Close(kernel);
+   148   149 |         m_system_resource = nullptr;
+   149   150 |     }
+   150   151 | 
+   151   152 |     // Free all shared memory infos.
+   152   153 |     {
+   153   154 |         auto it = m_shared_memory_list.begin();
+   154   155 |         while (it != m_shared_memory_list.end()) {
+   155   156 |             KSharedMemoryInfo* info = std::addressof(*it);
+   156   157 |             KSharedMemory* shmem = info->GetSharedMemory();
+   157   158 | 
+   158   159 |             while (!info->Close()) {
+   159   160 |                 shmem->Close(kernel);
+   160   161 |             }
+   161   162 |             shmem->Close(kernel);
+   162   163 | 
+   163   164 |             it = m_shared_memory_list.erase(it);
+   164   165 |             KSharedMemoryInfo::Free(kernel, info);
+   165   166 |         }
+   166   167 |     }
+   167   168 | 
+   168   169 |     // Our thread local page list must be empty at this point.
+   169   170 |     ASSERT(m_partially_used_tlp_tree.empty());
+   170   171 |     ASSERT(m_fully_used_tlp_tree.empty());
+   171   172 | 
+   172   173 |     // Release memory to the resource limit.
+   173   174 |     if (m_resource_limit != nullptr) {
+   174   175 |         ASSERT(used_memory_size >= m_memory_release_hint);
+   175   176 |         m_resource_limit->Release(kernel, Svc::LimitableResource::PhysicalMemoryMax, used_memory_size, used_memory_size - m_memory_release_hint);
+   176   177 |         m_resource_limit->Close(kernel);
+   177   178 |     }
+   178   179 | 
+   179   180 |     // Clear expensive resources, as the destructor is not called for guest objects.
+   180   181 |     for (auto& interface : m_arm_interfaces) {
+   181   182 |         interface.reset();
+   182   183 |     }
++        184 | #ifdef HAS_HYPERVISOR
++        185 |     m_memory.ReleaseHypervisor();
++        186 | #endif
+   183   187 |     m_exclusive_monitor.reset();
+   184   188 | 
+   185   189 |     // Perform inherited finalization.
+   186   190 |     KSynchronizationObject::Finalize(kernel);
+   187   191 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 134-233 : 58 alignées, 0 propres Encore, 42 propres upstream</summary>
+
+Source : [k_process.cpp:134-233](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/kernel/k_process.cpp#L134-L233).
+
+```diff
+   130   134 | void KProcess::Finalize(KernelCore& kernel) {
++        135 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
++        136 |     auto eden_last = std::chrono::steady_clock::now();
++        137 |     const auto eden_mark = [&eden_last](const char* step) {
++        138 |         const auto now = std::chrono::steady_clock::now();
++        139 |         const double ms = std::chrono::duration<double, std::milli>(now - eden_last).count();
++        140 |         if (ms >= 20.0) std::fprintf(stderr, "EDEN_SHUTDOWN_PROCESS step=%s ms=%.1f\n", step, ms);
++        141 |         eden_last = std::chrono::steady_clock::now();
++        142 |     };
++        143 | #else // PS5
++        144 | #endif // PS5
+   131   145 |     // Delete the process local region.
+   132   146 |     this->DeleteThreadLocalRegion(kernel, m_plr_address);
++        147 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
++        148 |     eden_mark("local_region");
++        149 | #else // PS5
++        150 | #endif // PS5
+   133   151 | 
+   134   152 |     // Get the used memory size.
+   135   153 |     const size_t used_memory_size = this->GetUsedNonSystemUserPhysicalMemorySize(kernel);
+   136   154 | 
+   137   155 |     // Finalize the page table.
++        156 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
++        157 |     eden_mark("used_memory_size");
++        158 | #else // PS5
++        159 | #endif // PS5
+   138   160 |     m_page_table.Finalize();
++        161 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
++        162 |     eden_mark("page_table");
++        163 | #else // PS5
++        164 | #endif // PS5
+   139   165 | 
+   140   166 |     // Finish using our system resource.
+   141   167 |     if (m_system_resource) {
+   142   168 |         if (m_system_resource->IsSecureResource()) {
+   143   169 |             // Finalize optimized memory. If memory wasn't optimized, this is a no-op.
+   144   170 |             kernel.MemoryManager().FinalizeOptimizedMemory(this->GetId(), m_memory_pool);
+   145   171 |         }
+   146   172 | 
+   147   173 |         m_system_resource->Close(kernel);
+   148   174 |         m_system_resource = nullptr;
+   149   175 |     }
+   150   176 | 
++        177 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
++        178 |     eden_mark("system_resource");
++        179 | #else // PS5
++        180 | #endif // PS5
+   151   181 |     // Free all shared memory infos.
+   152   182 |     {
+   153   183 |         auto it = m_shared_memory_list.begin();
+   154   184 |         while (it != m_shared_memory_list.end()) {
+   155   185 |             KSharedMemoryInfo* info = std::addressof(*it);
+   156   186 |             KSharedMemory* shmem = info->GetSharedMemory();
+   157   187 | 
+   158   188 |             while (!info->Close()) {
+   159   189 |                 shmem->Close(kernel);
+   160   190 |             }
+   161   191 |             shmem->Close(kernel);
+   162   192 | 
+   163   193 |             it = m_shared_memory_list.erase(it);
+   164   194 |             KSharedMemoryInfo::Free(kernel, info);
+   165   195 |         }
+   166   196 |     }
+   167   197 | 
++        198 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
++        199 |     eden_mark("shared_memory");
++        200 | #else // PS5
++        201 | #endif // PS5
+   168   202 |     // Our thread local page list must be empty at this point.
+   169   203 |     ASSERT(m_partially_used_tlp_tree.empty());
+   170   204 |     ASSERT(m_fully_used_tlp_tree.empty());
+   171   205 | 
+   172   206 |     // Release memory to the resource limit.
+   173   207 |     if (m_resource_limit != nullptr) {
+   174   208 |         ASSERT(used_memory_size >= m_memory_release_hint);
+   175   209 |         m_resource_limit->Release(kernel, Svc::LimitableResource::PhysicalMemoryMax, used_memory_size, used_memory_size - m_memory_release_hint);
+   176   210 |         m_resource_limit->Close(kernel);
+   177   211 |     }
+   178   212 | 
++        213 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
++        214 |     eden_mark("resource_limit");
++        215 | #else // PS5
++        216 | #endif // PS5
+   179   217 |     // Clear expensive resources, as the destructor is not called for guest objects.
+   180   218 |     for (auto& interface : m_arm_interfaces) {
+   181   219 |         interface.reset();
+   182   220 |     }
++        221 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
++        222 |     eden_mark("arm_interfaces");
++        223 | #else // PS5
++        224 | #endif // PS5
+   183   225 |     m_exclusive_monitor.reset();
++        226 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
++        227 |     eden_mark("exclusive_monitor");
++        228 | #else // PS5
++        229 | #endif // PS5
+   184   230 | 
+   185   231 |     // Perform inherited finalization.
+   186   232 |     KSynchronizationObject::Finalize(kernel);
+   187   233 | }
+```
+
+</details>
+
+### P0-X08 · ThreadManager::Stop
+
+Propriétaire GPU worker réellement sélectionné côté Encore. Lichii n'expose pas nécessairement une méthode Stop homonyme au SHA examiné ; cette absence est notée sans la transformer en défaut. Eglantine possède un Stop explicite.
+
+Encore : [gpu_thread_quiet.cpp:235-248](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-gpu/gpu_thread_quiet.cpp#L235-L248) — 14 lignes.
+
+Lichii : symbole homonyme absent/non extrait ; aucune parité supposée.
+
+<details>
+<summary>EglantinePS5 — 476-482 : 7 alignées, 7 propres Encore, 0 propres upstream</summary>
+
+Source : [gpu_thread.cpp:476-482](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/gpu_thread.cpp#L476-L482).
+
+```diff
+   235   476 | void ThreadManager::Stop() {
+   236   477 |     stop_source.request_stop();
+   237   478 |     if (thread_joinable) {
+   238   479 |         if (pthread_join(thread, nullptr)) std::terminate();
+   239   480 |         thread_joinable = false;
+   240   481 |     }
+-  241       |     // The worker has exited: it is now safe to discard old queued commands.
+-  242       |     // Otherwise a later StartThread can execute stale work in a new GPU context.
+-  243       |     // The producer lock prevents a concurrent PushCommand from racing the drain.
+-  244       |     std::scoped_lock lock{state.write_lock};
+-  245       |     CommandDataContainer abandoned;
+-  246       |     while (state.queue.TryPop(abandoned)) {
+   247   482 |     }
+-  248       | }
+```
+
+</details>
+
+### P0-X09 · ThreadManager::NotifyShutdown
+
+Le propriétaire Encore quiet n'a pas de symbole NotifyShutdown homonyme dans ce TU ; le shutdown passe par son Stop et par GPU Impl::NotifyShutdown déjà documenté. La comparaison marque donc la différence d'architecture au lieu de forcer un alignement fictif.
+
+Encore : symbole homonyme absent/non extrait dans le propriétaire actif ; différence d'architecture documentée, pas bug démontré.
+
+### Point de vigilance
+
+Le watchdog de fermeture ne permet pas, à lui seul, de choisir entre GPU worker, fence, NVDRV, VI2 ou KProcess. Cette annexe ferme la chaîne de propriétaires afin qu'un futur stack/wait existant puisse être relié à la bonne étape sans ajouter d'instrumentation par défaut.
+
+**Couverture ajoutée :** 3 fonctions directement comparables, 5 comparaisons, 358 lignes-source parcourues, 2 symbole(s) homonyme(s) absent(s)/non extrait(s). Aucun fix.

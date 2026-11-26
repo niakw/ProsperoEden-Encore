@@ -115,7 +115,7 @@ launcher_consolidation = {
 launcher_loading_successors = {
     # Merged Nov25 actual case geometry/handoff and square icon priority.
     "headless/prosperoeden/frontend.cpp": "3d00ef28d445c30f0f4cc7f0e18ef4601131c410",
-    "headless/prosperoeden/pe/ui/launcher.cpp": "7e266d1523f2ab7a314c5ba1fbf5133580d09925",
+    "headless/prosperoeden/pe/ui/launcher.cpp": "6cfb3097dfccb6a6c55837ae59ce5b49227f70b0",
     "headless/prosperoeden/pe/ui/launcher.hpp": "edc2e8d40030102911d8ce5f10f0857905a1210a",
     "headless/prosperoeden/pe/ui/home.cpp": "0536ef9acf649865cb8c9d1220ef89f329d3960d",
     "headless/prosperoeden/pe/ui/services.hpp": "534adb20bded1d44bc057bacc36dce2d93be770d",
@@ -189,6 +189,13 @@ for entry in entries:
         assert recovered == "8c6248417cb3ec25b327661e410960a3e2a738de", ("Unreviewed cached media header", recovered)
         actual = recovered
         print("LAUNCHER_NOV26_CACHED_MEDIA_HEADER_EXACT_REVERSE_PASS")
+    # 26/11/2026: the selected launcher art/media successor must equal the
+    # exact committed blob from the reviewed native-loading/media fix.
+    if entry["path"] == "headless/prosperoeden/pe/ui/launcher.cpp" and actual == "6cfb3097dfccb6a6c55837ae59ce5b49227f70b0":
+        verified = subprocess.check_output(
+            ["git", "rev-parse", "a20fd8f40cd6f2868ada7fdb34dc70436fd755a7:headless/prosperoeden/pe/ui/launcher.cpp"],
+            cwd=ROOT, text=True).strip()
+        assert verified == actual, ("Unreviewed Nov26 launcher media successor", actual)
     if entry["path"] in launcher_consolidation:
         current_blob, predecessor_blob = launcher_consolidation[entry["path"]]
         if actual == current_blob or actual == launcher_loading_successors.get(entry["path"]):

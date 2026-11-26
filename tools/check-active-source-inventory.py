@@ -2606,6 +2606,30 @@ if actual_vendor in {"b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f
         assert got==digest,("Native MME DMA owner drift",relative,got)
 if shipping_vendor in {"203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9"}:
     current_vendor_post_f07_owner_blobs.update({"eden-core/src/core/hle/service/sm/sm.cpp":"2ef914e3f1b24442e1fa0130d5f8175111e7d316","ns2-runtime/hle/core/hle/service/nifm/nifm.cpp":"8933817310ed1d3988e9ff418390a8b3e7e71a41","ns2-runtime/hle/core/hle/service/lm/lm.cpp":"9136cf19b1176e96fb17609fd401e4592028d1e2","ns2-runtime/nx/core/loader/nx.cpp":"5d999ca68668133ea3f151669ecd6ac6a17ae1c5"})
+# Current native additions are classified separately from the immutable F07 baseline.
+post_f07_bcat_buffer_hotpath_blobs = {
+    "eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h": "8c93a3d6aef8a45f85cb9c2344e3427daff4d131",
+    "eden-core/overrides/bcat/core/hle/service/bcat/service_creator.h": "de582d12ef1025735a741817ac4e365f59789809",
+    "eden-core/overrides/buffer-hotpath/common/range_sets.h": "1c90e08bc3c66731aa717e7b17b3249539848016",
+    "eden-core/overrides/buffer-hotpath/common/range_sets.inc": "bd48ff5cb346981f0937cfddbb042f9100697fd2",
+    "eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h": "0992d01d0b4e262dd4b4a79633affa8b02529795",
+    "eden-core/src/core/hle/service/bcat/delivery_cache_storage_service.cpp": "9f98f2da3f865da69399467133436e64e4e4d67b",
+    "eden-core/src/core/hle/service/bcat/service_creator.cpp": "1635bc091413a2f118b166216f91410b6338686d"
+}
+post_f07_bcat_buffer_hotpath_present = set(post_f07_bcat_buffer_hotpath_blobs) & set(physical_all)
+if shipping_vendor == "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9":
+    assert post_f07_bcat_buffer_hotpath_present == set(post_f07_bcat_buffer_hotpath_blobs)
+    for relative, expected in post_f07_bcat_buffer_hotpath_blobs.items():
+        actual = subprocess.check_output(["git", "hash-object", str(active / relative)], text=True).strip()
+        assert actual == expected, ("BCAT/BufferCache owner drift", relative, actual)
+    cmake_text = (root / "headless/CMakeLists.txt").read_text()
+    for token in ("EDEN_NATIVE_BCAT_ROOT", "EDEN_NATIVE_BCAT_HEADER_ROOT",
+                  "EDEN_MAINTAINED_BUFFER_HOTPATH",
+                  "target_include_directories(common BEFORE PUBLIC",
+                  "target_include_directories(video_core BEFORE PRIVATE"):
+        assert token in cmake_text, token
+else:
+    post_f07_bcat_buffer_hotpath_present = set()
 current_vendor_post_f07_present = set(current_vendor_post_f07_owner_blobs) & set(physical_all)
 if actual_vendor in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
                      "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
@@ -2656,7 +2680,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | post_f07_thread_worker_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | ps5_vfs128_present | ns2_ipc_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | ns2_font_service_present | post_f07_diagnostics_net_present | post_f07_plaintext_nca_present | current_vendor_post_f07_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | ps5_vfs128_present | ns2_ipc_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | ns2_font_service_present | post_f07_diagnostics_net_present | post_f07_plaintext_nca_present | current_vendor_post_f07_present | post_f07_bcat_buffer_hotpath_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

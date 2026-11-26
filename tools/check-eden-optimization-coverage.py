@@ -2337,6 +2337,24 @@ else:
 print("ENCORE_CURRENT_VENDOR_POST_F07_PASS",
       f"owners={len(current_vendor_post_f07_owners)}")
 
+# Reuse the exact supplemental BCAT/BufferCache owner ledger, not a second list.
+bcat_hotpath_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body if isinstance(node, ast.Assign) and any(
+        isinstance(target, ast.Name) and target.id == "post_f07_bcat_buffer_hotpath_blobs"
+        for target in node.targets)
+]
+assert len(bcat_hotpath_nodes) == 1
+bcat_hotpath_blobs = ast.literal_eval(bcat_hotpath_nodes[0])
+post_f07_bcat_buffer_hotpath_owners = set()
+if actual_buffer_hotpath_vendor == "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9":
+    for relative, expected in bcat_hotpath_blobs.items():
+        path = "vendor/encore-active/" + relative
+        assert path in all_owners, path
+        assert subprocess.check_output(["git", "hash-object", path], cwd=ROOT, text=True).strip() == expected, path
+        post_f07_bcat_buffer_hotpath_owners.add(path)
+
 # DNSP/DXCI native NCA overrides are newly CMake-selected, not historical
 # F07 owners. Authenticate the two exact C++ blobs and their active CMake
 # replacements before excluding ONLY these two paths from the F07 baseline.
@@ -2373,7 +2391,7 @@ post_f07_frame_pacing_owners = {
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/frame_pacer.h",
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_swapchain.h",
 } & all_owners
-if gpu_table_vendor_pin in {
+if actual_buffer_hotpath_vendor == "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9" or gpu_table_vendor_pin in {
     "60fa67b98286bd84bd591987c5690ae9b15bda3f",
     "bf981e9d39d4a908d0d5b6f8407cca814c609bdb",
     "8026fcca228d0feda62ffd9625e16ee0429d621e",
@@ -2425,7 +2443,7 @@ print("ENCORE_NATIVE_GPU_WAIT_OWNER_PASS", "owners=8 historical_F07_unchanged=1"
 post_f07_warning_cleanup_owners = {
     "vendor/encore-active/eden-core/src/common/string_util.cpp",
 } & all_owners
-if gpu_table_vendor_pin in {"720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac"}:
+if actual_buffer_hotpath_vendor == "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9" or gpu_table_vendor_pin in {"720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac"}:
     assert post_f07_warning_cleanup_owners == {
         "vendor/encore-active/eden-core/src/common/string_util.cpp",
     }
@@ -2444,7 +2462,7 @@ else:
 print("ENCORE_POST_F07_UTF_WARNING_OWNER_PASS",
       f"owners={len(post_f07_warning_cleanup_owners)} historical_F07=518")
 
-owners=all_owners-post_f07_warning_cleanup_owners-set(post_f07_gpu_wait_owners)-post_f07_frame_pacing_owners-post_f07_integrated_source_owners-post_f07_legacy_net_header_owners-ps5_ns2_ipc_present-ps5_vfs128_present-post_f07_ns2_loading_svc_owners-fc27_deferred_owners-post_f07_ns2_fault_owner-pair_present-drawtexture_present-ns2_early_hle_present-ns2_font_service_present-post_f07_loading_artwork_owners-post_f07_typography_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-post_f07_thread_worker_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners-post_f07_plaintext_nca_owners-current_vendor_post_f07_owners-post_f07_ns2_late_hle_headers
+owners=all_owners-post_f07_bcat_buffer_hotpath_owners-post_f07_warning_cleanup_owners-set(post_f07_gpu_wait_owners)-post_f07_frame_pacing_owners-post_f07_integrated_source_owners-post_f07_legacy_net_header_owners-ps5_ns2_ipc_present-ps5_vfs128_present-post_f07_ns2_loading_svc_owners-fc27_deferred_owners-post_f07_ns2_fault_owner-pair_present-drawtexture_present-ns2_early_hle_present-ns2_font_service_present-post_f07_loading_artwork_owners-post_f07_typography_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-post_f07_thread_worker_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners-post_f07_plaintext_nca_owners-current_vendor_post_f07_owners-post_f07_ns2_late_hle_headers
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

@@ -5107,3 +5107,55 @@ if(PS5_NATIVE)
     endif()
     target_link_libraries(core PRIVATE libzstd_static)
 endif()
+
+# Final shipping owner check: run AFTER every encore-active replacement.
+# The launcher uses GL even when the guest uses RADV; G21 is a shared owner.
+# Checking an earlier video_sources list cannot detect a later shadow/re-add.
+if(PS5_NATIVE)
+    function(eden_require_native_owner target expected owner_pattern)
+        get_target_property(owners "${target}" SOURCES)
+        list(FILTER owners INCLUDE REGEX "${owner_pattern}")
+        list(LENGTH owners owner_count)
+        if(NOT owner_count EQUAL 1 OR NOT "${owners}" STREQUAL "${expected}")
+            message(FATAL_ERROR
+                "Native ${target} owner mismatch: expected ${expected}; found ${owners}")
+        endif()
+    endfunction()
+    set(eden_native_video_root "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core")
+    set(eden_native_dispatch_root "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_dispatch/video_core")
+    eden_require_native_owner(video_core "${eden_native_video_root}/gpu_gl_native.cpp"
+        "(^|/)(gpu|gpu_gl_native|gpu_gl_native_dev|gpu_gl_host|gpu_gl_host_dev|gpu_vulkan)[.]cpp$")
+    eden_require_native_owner(video_core "${PORT_BUILD_DIR}/gpu_thread.cpp"
+        "(^|/)gpu_thread(_quiet|_dev)?[.]cpp$")
+    eden_require_native_owner(video_core "${eden_native_dispatch_root}/control/scheduler.cpp"
+        "(^|/)control/scheduler[.]cpp$")
+    eden_require_native_owner(video_core "${eden_native_dispatch_root}/engines/puller.cpp"
+        "(^|/)engines/puller[.]cpp$")
+    eden_require_native_owner(video_core "${eden_native_video_root}/dma_pusher.cpp"
+        "(^|/)dma_pusher[.]cpp$")
+    foreach(unit IN ITEMS vulkan_rasterizer vk_graphics_pipeline_cost
+            vk_compute_pipeline_cost vk_pipeline_cache_cost vk_texture_cache_cost
+            vk_compute_pass_cost vulkan_swapchain)
+        # These maintained fork files are not superseded by headless owners.
+        # A previous cache or a late overlay must not hide their current bytes.
+        file(SHA256 "${EDEN_ACTIVE_VULKAN}/${unit}.cpp" source_sha)
+        file(SHA256 "${PORT_BUILD_DIR}/${unit}.cpp" selected_sha)
+        if(NOT source_sha STREQUAL selected_sha)
+            message(FATAL_ERROR "Stale native Vulkan fork unit: ${unit}")
+        endif()
+        if(unit MATCHES "^vk_(.*)_cost$")
+            set(upstream_name "vk_${CMAKE_MATCH_1}")
+        elseif(unit STREQUAL "vulkan_rasterizer")
+            set(upstream_name "vk_rasterizer")
+        else()
+            set(upstream_name "vk_swapchain")
+        endif()
+        eden_require_native_owner(video_core "${PORT_BUILD_DIR}/${unit}.cpp"
+            "(^|/)(${unit}|${upstream_name})[.]cpp$")
+    endforeach()
+    foreach(unit IN ITEMS service_creator delivery_cache_storage_service)
+        eden_require_native_owner(core "${EDEN_NATIVE_BCAT_ROOT}/${unit}.cpp"
+            "(^|/)bcat/${unit}[.]cpp$")
+    endforeach()
+    message(STATUS "Encore final native GPU/BCAT source owners verified")
+endif()

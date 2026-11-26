@@ -113,9 +113,12 @@ launcher_consolidation = {
 # Exact 24/11 loading artwork and generated GamesDB successors over the
 # reviewed Nov23 launcher. No new runtime qualification is implied.
 launcher_loading_successors = {
-    "headless/prosperoeden/frontend.cpp": "96269c1b211a5b58e2a2297e728d3ae52e515f38",
-    "headless/prosperoeden/pe/ui/launcher.cpp": "b0331170dc66cc84593802efbacd1c7db7f81102",
-    "headless/prosperoeden/pe/ui/launcher.hpp": "8d864b35d93aa1afce82cc810175d52ef14c37f2",
+    # Merged Nov25 actual case geometry/handoff and square icon priority.
+    "headless/prosperoeden/frontend.cpp": "3d00ef28d445c30f0f4cc7f0e18ef4601131c410",
+    "headless/prosperoeden/pe/ui/launcher.cpp": "7e266d1523f2ab7a314c5ba1fbf5133580d09925",
+    "headless/prosperoeden/pe/ui/launcher.hpp": "edc2e8d40030102911d8ce5f10f0857905a1210a",
+    "headless/prosperoeden/pe/ui/home.cpp": "0536ef9acf649865cb8c9d1220ef89f329d3960d",
+    "headless/prosperoeden/pe/ui/services.hpp": "534adb20bded1d44bc057bacc36dce2d93be770d",
     "headless/prosperoeden/pe/platform/display_egl.cpp": "05577394b785faf99fe1b2a65fb8f3604fcea08f",
 }
 drifts=[]

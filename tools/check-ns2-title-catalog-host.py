@@ -40,7 +40,11 @@ games_owner = services.split(
 )[1].split("\npe::ui::Game EdenServices::enrich_home_icon(", 1)[0]
 assert 'game.cover = game.box_front' not in games_owner
 assert 'const pe::ui::BoxArt cached_case = box_art(game.title_id);' not in games_owner
-assert 'const std::string cached_icon = CachedNlibIcon(game.title_id);' in games_owner
+# Preserve extracted Control icon before either square-only cache fallback.
+nlib_fallback = 'if (game.cover.empty()) game.cover = CachedNlibIcon(game.title_id);'
+gamesdb_fallback = 'if (game.cover.empty()) game.cover = CachedGamesDbSquare(game.title_id, UseNs2CaseIndex(game));'
+assert nlib_fallback in games_owner and gamesdb_fallback in games_owner
+assert games_owner.index('game.cover = ExtractedLocalCover(') < games_owner.index(nlib_fallback) < games_owner.index(gamesdb_fallback)
 assert 'base/exefs/icon.jpg' in services and 'exefs/icon.png' in services
 assert 'IsSafeExtractedDirectory(parent)' in services
 assert 'icon_' in services and 'std::memcmp(signature,' in services

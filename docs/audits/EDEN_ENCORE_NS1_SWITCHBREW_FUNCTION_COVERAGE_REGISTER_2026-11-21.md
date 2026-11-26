@@ -5105,4 +5105,21 @@ Le manifeste shipping est synchronisé pour `self_controller.cpp` (SHA-256 `91e8
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 13 lignes ouvertes.**
 
 Aucun build PS5 ni validation console revendiqué.
+### 2026-11-26 — svcGetInfo HOS23 complet : 13 → 12
+
+Base précédente : **13 lignes ouvertes**.
+
+Vendor **`deb5e5f7f274a18916e1425cce3ab9c6520ae62f`** ferme la ligne globale PARTIEL `svcGetInfo` (0x29) après qualification des derniers `InfoType` HOS23 manquants :
+- `IoRegionHint` (27, HOS16+) valide `info_sub_id==0` puis retourne `ResultInvalidHandle`, car Encore ne possède aucun objet `KIoRegion`; aucun handle valide de ce type ne peut donc exister ;
+- `TransferMemoryHint` (34, HOS19+) résout un vrai `KTransferMemory` depuis le handle courant et calcule le hint Atmosphère exact à partir de `GetSourceAddress()` et de la taille : masque 2 MiB, 64 KiB ou 4 KiB ;
+- les anciennes entrées opaques 37/38 sont renommées `ShadowStackRegionAddress` / `ShadowStackRegionSize` conformément à HOS23/libnx ; elles suivent désormais le contrat process-handle + subtype 0 ;
+- Encore ne réserve aucune région shadow-stack dans sa page table, donc adresse et taille sont réellement 0. Le précédent succès zéro non validé est remplacé par un comportement qualifié.
+
+Les cas déjà corrigés précédemment (`AddressSpaceSize`, `IsSvcPermitted`, `AliasRegionExtraSize`, handles process/debug, Nx2 29–33) restent inchangés.
+
+Manifeste shipping synchronisé : `svc_info.cpp` SHA-256 `7201405d5afd7d591dd85f0184547f84f591d01a553fe637307805ab20614088`, 18 239 octets ; `svc_types.h` SHA-256 `745309b703a5de18d7f937b8d7dfc496e208e41e5c1387cb811110d5f7c6bfef`, 14 892 octets.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 12 lignes ouvertes.**
+
+Aucun build PS5 ni validation console revendiqué.
 

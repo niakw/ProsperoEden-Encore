@@ -2047,17 +2047,19 @@ if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f3
     if shipping_vendor == "240550925b0ef097c24c3035c063bdceadd872de":
         # Three exact GPU owners differ from the preceding reviewed vendor;
         # keep the other eleven and all full-blob assertions unchanged.
+        actual_pair_vendor = subprocess.check_output(
+            ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
+        ).strip()
+        expected_pair_tree = {
+            "52b6582953b9b6c986f3fb9ebeea4b707cd50aab": "d56f1f3efcbe283d018b411289f36bd398905408",
+            "b62f36238ca154a0e6ada2be9c65ffb0b5981d97": "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a",
+            "0506a211d82c880a49053c2ecb1b3129523dcbb0": "3b10204a86ef1e189052c2d068e195b4ac997539",
+            "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8": "6cabcba90de3515962623cd53d44667e0c6df04a",
+            "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce",
+        }.get(actual_pair_vendor, "e40237d089b0a45f77d68ae281821c1a85ce9ca8")
         assert subprocess.check_output(
             ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
-            text=True).strip() == ("3b10204a86ef1e189052c2d068e195b4ac997539" if subprocess.check_output(
-                ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
-            ).strip() == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else
-                "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a" if subprocess.check_output(
-                ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
-            ).strip() == "b62f36238ca154a0e6ada2be9c65ffb0b5981d97" else
-                "d56f1f3efcbe283d018b411289f36bd398905408" if subprocess.check_output(
-                ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
-            ).strip() == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab" else "e40237d089b0a45f77d68ae281821c1a85ce9ca8")
+            text=True).strip() == expected_pair_tree
         selected_nov26_gpu_pair.update({
             "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "0d22781acbc4e0f32424beb6b0f494b6aa2b034f",
             "eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",

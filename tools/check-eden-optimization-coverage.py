@@ -1609,7 +1609,7 @@ else:
         if table_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97"}:
             for relative, expected in {
                 "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "2bacc8ebdc1c09cd96a7c83d26f57035619f622c",
-                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": ("4b7ca333e3f1dfaf2c5d61963dedc82179ec3146" if table_pin == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab" else "634f7a6fc5d27e13b39360c2d28ec961c4f36236"),
+                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": ("4b7ca333e3f1dfaf2c5d61963dedc82179ec3146" if table_pin in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97"} else "634f7a6fc5d27e13b39360c2d28ec961c4f36236"),
                 "tests/ns2_gpu_identity_mapping_source.py": ("23be79dbe84fc2f51a2db1fa741f6fd3c7e28daf" if table_pin == "b62f36238ca154a0e6ada2be9c65ffb0b5981d97" else "63339d64588f34597f081102d8f1a77ed861971e")
         }.items():
                 raw = (ROOT / "vendor" / relative).read_bytes()

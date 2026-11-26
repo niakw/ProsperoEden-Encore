@@ -4707,3 +4707,18 @@ Aucune de ces quatre lignes ne représente un défaut runtime actuel de la cible
 **4 lignes ABI-DIFF quittent le pool : nouveau compteur global = 68 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console.
+
+
+### 2026-11-26 — Friend V1 / time:al / nvmemp requalifiés : palier global 64
+
+Base : **68 lignes ouvertes**.
+
+Quatre lignes historiques quittent le pool :
+- Friend cmd20600 : HOS23 nomme explicitement `GetUserPresenceViewV1`; Encore expose exactement ce nom et fail-closed faute de backend Nintendo Online ;
+- Friend cmd20800 : HOS23 nomme explicitement `LoadUserSettingV1`; Encore expose exactement ce nom et fail-closed pour la même raison. Les deux anciens ABI-DIFF étaient dus à l'absence du suffixe V1 dans le catalogue historique ;
+- `time:al` cmd0 `GetWakeUpEvent` était mal rattaché : HOS23 définit le service racine `IAlarmService` cmd0 comme `CreateWakeupAlarm`; l'event appartient à l'objet enfant `ISteadyClockAlarm`. L'ancienne ligne n'est pas un contrat du service racine ;
+- `nvmemp` cmd1 `GetPid` : l'owner shipping courant expose désormais le bon nom HOS23 et `RejectUnavailableMemoryProfiler`. Le service NVIDIA memory-profiler est optionnel/non disponible sur retail ; Encore échoue explicitement au lieu de trapper sur `UNIMPLEMENTED`.
+
+**4 lignes quittent le pool : nouveau compteur global = 64 lignes ouvertes.**
+
+Aucun nouveau patch C++ dans cette étape, aucun changement de gitlink, build PS5 ou validation console.

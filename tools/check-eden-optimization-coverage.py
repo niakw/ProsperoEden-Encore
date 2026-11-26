@@ -2059,7 +2059,8 @@ print("ENCORE_EDEN4559_F07_ISOLATION_PASS", f"owners={len(drawtexture_present)}"
 # Current vendor selection is independent of the historical F07 classifier.
 selected_nov26_hle = subprocess.check_output(
     ["git", "-C", str(ROOT/"vendor"), "rev-parse", "HEAD"],
-    text=True).strip() in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}
+    text=True).strip() in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d",
+                  "240550925b0ef097c24c3035c063bdceadd872de"}
 ns2_early_hle_receipts = {
     "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp":
         "df3edaf42d0596c69eaa6fea18b33fc02c6bff3c",

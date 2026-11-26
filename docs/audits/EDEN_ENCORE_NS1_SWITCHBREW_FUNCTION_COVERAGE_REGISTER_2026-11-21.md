@@ -5277,3 +5277,17 @@ Le PARTIEL historique `appletAE` cmd6 `IOverlayFunctions::SetScreenShotPermissio
 - moteur/gitlink `a693752f7993134bc61c8fdc21ea3c71a5405ada` épingle exactement ce vendor.
 
 **1 ligne PARTIEL quitte le pool : nouveau plancher = 30 / 4 853.** Les workflows du pin `a693752f` (`45855518449` X8D24 et `45855518451` provenance) sont démarrés au moment de cette entrée ; aucun résultat vert n'est revendiqué ici tant qu'ils ne sont pas terminés. Aucun build natif PS5 ni test console.
+
+### 2026-11-26 — Screenshot global effectif sur SaveCurrentScreenshot : compteur 30 minimum inchangé
+
+Le correctif de portée globale déjà compté au palier **31 → 30** est complété sans nouveau décrément.
+
+- vendor `1704a9de076c95a9cffbd33a7ae13713a3ce5664` applique `IOverlayFunctions::SetScreenShotPermissionGlobally` au `MainApplet` et non plus seulement à l'applet overlay ;
+- vendor `391e535c40fa21d450db988905ae16c5dd4d4d05` raccorde cet état au chemin réel `ISelfController::SaveCurrentScreenshot` : si `screenshot_permission == Disable`, aucune capture album n'est produite et l'appel échoue explicitement avec `ResultUnknown`;
+- aucun code Capture numérique supposé n'est importé : Napple propose Capture/1052 pour « screenshot not permitted » mais le marque lui-même non vérifié ;
+- les commandes DisplayController cmd8/cmd28 conservent leur booléen IPC propre `isScreenShotPermitted`; la politique globale ne l'écrase pas artificiellement.
+
+Moteur/gitlink final : `7427fa08622f383929403311dfd61ce20a467d87` → vendor `391e535c40fa21d450db988905ae16c5dd4d4d05`.
+Les workflows `45856105906` (X8D24) et `45856105821` (provenance vendor) sont **verts**. Aucun build natif PS5 ni test console.
+
+**Compteur de revue inchangé : 30 / 4 853 minimum.** Le décrément correspondant à cmd6 a déjà été compté une seule fois.

@@ -150,6 +150,15 @@ def restore_r437_without_production_r2(path: Path) -> str:
     actual = subprocess.check_output(
         ["git", "hash-object", str(path)], text=True).strip()
     source = path.read_text()
+    if actual == "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86":
+        # Review the precise multi-owner synchronous readback delta on the audit copy.
+        successor = "void BufferCache<P>::DownloadMemory(DAddr device_addr, u64 size) {\n    // The cache page table covers 16 GiB of guest physical memory.\n    constexpr DAddr address_limit = DAddr{1} << 34;\n    if (!size || device_addr >= address_limit || size > address_limit - device_addr) {\n        return;\n    }\n    const DAddr end_addr = device_addr + size;\n    ForEachBufferInRange(device_addr, size, [&](BufferId, Buffer& buffer) {\n        // The memory tracker is shared across buffers. Never clear or copy\n        // another buffer's GPU-written pages using this buffer's offsets.\n        // Match Lichii's per-owner intersection before the destructive readback.\n        const DAddr start = (std::max)(device_addr, buffer.CpuAddr());\n        const DAddr end = (std::min)(end_addr, buffer.CpuAddr() + buffer.SizeBytes());\n        if (start < end) {\n            DownloadBufferMemory(buffer, start, end - start);\n        }\n    });\n}"
+        predecessor = "void BufferCache<P>::DownloadMemory(DAddr device_addr, u64 size) {\n    ForEachBufferInRange(device_addr, size, [&](BufferId, Buffer& buffer) {\n        DownloadBufferMemory(buffer, device_addr, size);\n    });\n}"
+        assert source.count(successor) == 1
+        source = source.replace(successor, predecessor, 1)
+        raw = source.encode("utf-8")
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == "24323ea00c4088d45d5357a6df5382a7447669ab", actual
     if actual == "24323ea00c4088d45d5357a6df5382a7447669ab":
         # Reviewed vendor 637edccb: consecutive same-buffer readbacks, capped at eight.
         # Reverse the exact transfer hunk only in the historical audit copy.

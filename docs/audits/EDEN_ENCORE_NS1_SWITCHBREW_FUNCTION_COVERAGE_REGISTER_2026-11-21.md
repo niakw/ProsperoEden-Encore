@@ -4149,3 +4149,20 @@ Encore ne place pas l'invité en half-awake/suspend et `IsInHalfAwake=false` / `
 **2 lignes PARTIEL quittent le pool. Nouveau compteur global : 142 lignes ouvertes.**
 
 Arithmétique : **144 - 2 = 142**. Aucun patch runtime ni build PS5 dans cette requalification.
+
+
+### 2026-11-26 — HDCP + sleep-locks invités : palier global 138
+
+Base : **142 lignes ouvertes**.
+
+Quatre PARTIEL AM sont désormais qualifiés sur les propriétaires réellement sélectionnés :
+- `SetHdcpAuthenticationActivated` conserve l'état dans l'Applet sous verrou ; `GetHdcpAuthenticationState` le relit et le changement signale le vrai `HDCPStateChangedEvent` ;
+- `RequestToAcquireSleepLock` signale immédiatement le vrai événement de lock, cohérent avec l'absence d'arbitre de sommeil hôte ;
+- `ReleaseSleepLock` efface cet événement ;
+- vendor **`6a0b05125438a8509d5baddf87e8cb638aac80b1`** complète `ReleaseSleepLockTransiently` : release puis réacquisition immédiate, cohérente avec le même arbitre virtuel toujours disponible.
+
+La PS5 physique n'est ni mise en veille ni soumise à HDCP par ces commandes : elles modélisent l'état du système Switch invité.
+
+**4 lignes PARTIEL quittent le pool. Nouveau compteur global : 138 lignes ouvertes.**
+
+Arithmétique : **142 - 4 = 138**. Gitlink repinné sur `6a0b05125438a8509d5baddf87e8cb638aac80b1`. Aucun build PS5 ni validation console revendiqués.

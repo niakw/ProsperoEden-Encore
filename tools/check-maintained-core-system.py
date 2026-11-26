@@ -216,7 +216,8 @@ for native in (False, True):
 # R457 sparse and final FC27/P0 provenance gates) and verify the live lifetime
 # order directly rather than replaying an incomplete historical reverse chain.
 ns2 = (root / "vendor/encore-active/ns2-runtime/process/core/core.cpp").read_text()
-assert git_blob(ns2) == "0e0aadb72c8de5bb2c66ce9105b1dd2d381b5f98", (
+# 20d278d9: release SM GPU factories before Services while kernel lives.
+assert git_blob(ns2) == "0f854ca3eab4dd0435d6ac58d401f8359301c168", (
     "reviewed current NS2 Core source drift")
 ns2_shutdown = ns2.split("    void ShutdownMainProcess() {", 1)[1].split(
     "\n    bool IsShuttingDown()", 1)[0]
@@ -227,8 +228,8 @@ shutdown_order = (
     "gpu_core.reset();",
     "service_manager->Close();",
     "kernel.CloseServices();",
-    "services.reset();",
     "service_manager->ReleaseRegisteredHandlersForShutdown();",
+    "services.reset();",
     "kernel.ShutdownCores();",
     "service_manager.reset();",
     "fs_controller.Reset();",

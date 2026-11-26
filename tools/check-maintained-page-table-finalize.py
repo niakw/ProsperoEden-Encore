@@ -25,9 +25,14 @@ assert pinned.count(original) == 1, "upstream finalizer changed"
 # generation-specific 128 GiB alias and its extra InitializeForProcess bool
 # were deliberately removed from shipping vendor. Do not resurrect that ABI.
 # The selected page-table translation unit must contain the exact G16 lifetime
-# guard as its ONLY difference from the pinned Eden base.
+# guard and the reviewed GPU-accessible attribute permission check.
 expected = pinned.replace(original, replacement, 1)
-assert maintained == expected, "G16 page-table shipping delta drift"
+# 7130ede3: GPU-accessible also requires a changeable memory state.
+attribute_before = "        (True(mask & KMemoryAttribute::Uncached) ? KMemoryState::FlagCanChangeAttribute\n                                                 : KMemoryState::None) |"
+attribute_after = "        (True(mask & (KMemoryAttribute::Uncached | KMemoryAttribute::GpuAccessible))\n             ? KMemoryState::FlagCanChangeAttribute\n             : KMemoryState::None) |"
+assert expected.count(attribute_before) == 1
+assert maintained == expected.replace(attribute_before, attribute_after, 1), (
+    "G16 finalizer / GPU attribute permission delta drift")
 page_h = (root / "vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel/k_page_table_base.h").read_text()
 address_cpp = (root / "vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/k_address_space_info.cpp").read_text()
 assert maintained.count("Result KPageTableBase::InitializeForProcess(") == 1

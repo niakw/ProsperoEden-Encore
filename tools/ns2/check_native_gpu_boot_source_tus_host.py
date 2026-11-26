@@ -155,8 +155,9 @@ dma_header = r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pus
 def git_blob(path):
     raw=path.read_bytes()
     return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-assert git_blob(dma_owner) == 'a8c95c51445ddafc2b8f42a92099359aae33e836'
-assert git_blob(dma_header) == '7965c196bff1364f64e747f152bcc314b1db3658'
+# Reviewed fence parking / AS revocation / H17 successors through d13311b3.
+assert git_blob(dma_owner) == '5cf42158c7cc4462bc9a12a18b482cbd6de20bf8'
+assert git_blob(dma_header) == '4cb9f79deeb56ab7397c6209939c94dffbb7575b'
 dma_text=dma_owner.read_text()
 dma_header_text=dma_header.read_text()
 for token in (
@@ -167,6 +168,9 @@ for token in (
     'ResolveSplitMethod(header.addr, park_call)',
     'split_method_end = header.addr + static_cast<GPUVAddr>(header.size) * sizeof(u32)',
     'parked_methods.clear();',
+    'require_native_submission_lease();',
+    'NativeGpuChannelRegistry::Instance().ReportFault(&channel_state);',
+    'FailNativeSubmission("Native GPFIFO address-space lease retired");',
 ):
     assert token in dma_text, ('NS2 split GPFIFO owner drift',token)
 for token in (
@@ -174,6 +178,7 @@ for token in (
     'static constexpr std::size_t MaxParkedMethods = 16;',
     'std::vector<ParkedMethod> parked_methods;',
     'GPUVAddr split_method_end{};',
+    'std::shared_ptr<const std::atomic<bool>> native_submission_lease;',
 ):
     assert token in dma_header_text, ('NS2 split GPFIFO ABI drift',token)
 assert dma_text.count('ResolveSplitMethod(') == 2

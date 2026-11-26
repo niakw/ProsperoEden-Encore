@@ -5020,4 +5020,20 @@ L'ancien motif « seul le service Nintendo peut prouver le resolve » ne s'appli
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 31 lignes ouvertes.**
 
 Aucun nouveau patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+### 2026-11-26 — NIFM IRequest policies/bookkeeping requalifiés : 31 → 21
+
+Base précédente : **31 lignes ouvertes**.
+
+Dix PARTIEL historiques de `IRequest` sont requalifiés sur leur contrat observable et une implémentation indépendante Napple :
+- cmd8 `SetPriority(u8)` ; cmd10 `SetRejectable(b8)` ; cmd13 `SetInstant(b8)` ;
+- cmd14 `SetSustainable(b8,u8)` ; cmd15 `SetRawPriority(u8)` ; cmd16 `SetGreedy(b8)` ; cmd17 `SetSharable(b8)` ;
+- cmd23 `SetKeptInSleep(b8)` ; cmd24 `RegisterSocketDescriptor(u32)` ; cmd25 `UnregisterSocketDescriptor(u32)`.
+
+Encore consomme déjà exactement les ABI HOS/SwIPC, conserve les politiques sous `state_lock` dans l'objet Request et maintient la collection des descripteurs sockets sans fabriquer de connectivité. Napple implémente indépendamment le même modèle : setters de champs Request et ajout/retrait local des descripteurs, sans sortie IPC ni effet hôte additionnel démontré.
+
+`SetRequirementByRevision` / `GetRevision` avaient déjà quitté le pool et ne sont pas recomptés ici. `SetNetworkProfileId`, `SetExclusiveClient`, `SetWowlDelayedWakeTime` et les comportements d'arbitrage/routage NIFM restent suivis séparément.
+
+**10 lignes PARTIEL quittent le pool : nouveau compteur global = 21 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
 

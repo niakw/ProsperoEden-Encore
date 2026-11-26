@@ -244,6 +244,17 @@ if selected == "05bf05a8dca75b3e12871ec886a810310cdf43d6":
     }.items():
         assert blob(V/relative) == receipt, ("FC27 SSBO exact vendor source drift", relative)
     expected.add(selected)
+if selected == "240550925b0ef097c24c3035c063bdceadd872de":
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "e40237d089b0a45f77d68ae281821c1a85ce9ca8"
+    for relative, digest in {
+                "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "2bacc8ebdc1c09cd96a7c83d26f57035619f622c",
+                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "634f7a6fc5d27e13b39360c2d28ec961c4f36236",
+                "tests/ns2_gpu_identity_mapping_source.py": "63339d64588f34597f081102d8f1a77ed861971e"
+        }.items():
+        assert blob(V / relative) == digest, ("GSV image-only SSBO successor drift",relative)
+    expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"

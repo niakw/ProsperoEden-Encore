@@ -1,16 +1,16 @@
 # Eden Encore — suivi maître F07 et exploitation PS5
 
-> **Campagne console du 26/11 — priorité FC27 requalifiée par mesures et docs constructeurs.** 
+> **Campagne console du 26/11 — priorité FC27 requalifiée par mesures et docs constructeurs.**
 > ### 🟢 2026-11-26 — Contrôle des mesures FC27 et des recommandations Vulkan/AMD/NVIDIA
-> 
+>
 > Capture de référence **antérieure aux nouveaux correctifs** : `heap(20261126-163140).log`, moteur `68122b0bf143dd0a73562796f48cfdee179f9576`, NS1 FC27. **121 fenêtres de ~5 s, 16 937 images, moyenne pondérée 27,89 FPS, minimum fenêtre 14,093 FPS, pire image 508,771 ms, 41 images >100 ms (15 >200 ms, 2 >500 ms).** Attentes cumulées des mutex invités `31 309,8 ms`, 1 086 559 contentions ; ces cumuls couvrent les threads et **ne sont pas des temps par image**.
-> 
+>
 > Comparaison des fenêtres : **24 fenêtres <25 FPS** → moyenne `cache_wait_ms=838` ms / 5 s et `cache_contended=27012` ; **80 fenêtres >=29,8 FPS** → `104,2` ms et `4329`. Le compteur de fences GPU est inférieur dans les fenêtres dégradées. Corrélation nette de contention CPU BufferCache/TextureCache, **cause exclusive non prouvée** ; `jit_ms=0` sur ces fenêtres ne prouve pas que le JIT n'intervient jamais.
-> 
+>
 > Sources propriétaires croisées : [Khronos Vulkan — Profiling](https://docs.vulkan.org/guide/latest/profiling.html) (bulles CPU/GPU, waits) et [CPU/GPU sync](https://docs.vulkan.org/samples/latest/samples/performance/wait_idle/README.html) (éviter waits globaux, fences par tâche) ; [AMD GPUOpen — Vulkan Barriers](https://gpuopen.com/learn/vulkan-barriers-explained/) (dépendances assez précises pour ne pas drainer inutilement la GPU) ; [NVIDIA — Vulkan Do's and Don'ts](https://developer.nvidia.com/blog/vulkan-dos-donts/) (préparer le travail sans attendre chaque soumission, principe transposable, pas de réglage matériel NVIDIA sur PS5). Le cache shader déjà admis dans les logs (`compute_records=148`, `graphics_records=696`, ~10,35 Mio) et le pipeline builder déjà placé en FIFO/RR ne justifient **pas** une nouvelle précompilation arbitraire.
-> 
+>
 > **Décision :** prioriser un raccourcissement des sections critiques des caches *dans les sources effectivement sélectionnées*, en conservant ordre de publication mémoire, cohérence des textures/HUD et protections CPU-write. Un microbench ou une CI verte ne prouve aucun gain de gameplay. Ne pas déclencher de build PS5 avant correction fonctionnelle et autorisation.
-> 
+>
 
 > **26/11 — correction P0/P1 du propriétaire GPU réellement sélectionné :** le profil PS5 impose Vulkan/RADV **et** le launcher OpenGL ; le sélecteur G21 compile donc `gpu_gl_native.cpp` et non `gpu_vulkan.cpp`. Vendor `93e3259c7aea3a88a7fd5f80cf706903fac6ccc9` : retraite FIFO bloquante des channels, registre protégé, pointeur initialisé, capture applet à propriétaire partagé, fast path sans mutex pour ticks vides avec drain borné conservé, fast path dirty GPU et horloge invitée NS2 réintégrés dans le propriétaire actif. Le teardown OpenGL conditionnel, Stop/clear/wake, ordre FIFO et parcours Maxwell NS1 sont préservés. Contrats hôtes et empreintes exactes actualisés ; CI, graphe Ninja PS5 complet et console non qualifiés. Aucun gain FPS ou démarrage revendiqué.
 

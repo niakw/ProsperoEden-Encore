@@ -2925,14 +2925,14 @@ checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True
 # 26 Nov: exact shipping native semaphore-retirement successor, independently
 # authenticated without relaxing the frozen FC27 owner receipts. QMD3/G10
 # host real-owner CI is green; these source hashes are not PS5 validation.
-if actual_vendor_pin in {"eace7e056485299e7252c506433a1429a4475051", "05bf05a8dca75b3e12871ec886a810310cdf43d6"}:
+if actual_vendor_pin in {"eace7e056485299e7252c506433a1429a4475051", "05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de"}:
     native_fence_blobs = {
     "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "23725030557268e6593c9e5f64cb063730b77787",
     "encore-active/eden-backports/src/video_core/fence_manager.h": "fa30c9a0c0a26c39af5174983fc7b4f63062a991",
     "encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "5cbd0d0f3482c5811b5b700fee55faf8a89b9f61",
     "encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "0d22781acbc4e0f32424beb6b0f494b6aa2b034f",
     "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
-    "tests/ns2_gpu_identity_mapping_source.py": "f6c829ee56bfdf764ce43f3b30389f3588276597",
+    "tests/ns2_gpu_identity_mapping_source.py": "63339d64588f34597f081102d8f1a77ed861971e" if actual_vendor_pin == "240550925b0ef097c24c3035c063bdceadd872de" else "f6c829ee56bfdf764ce43f3b30389f3588276597",
     "tools/ns2/check_g10_qmd_release_backing_host.py": "5f51f3f6f02d54c24afdd6eff22b77b95071ef7e",
     "tools/ns2/check_g10_qmd_release_callback_host.py": "78280ebadb0b330f2374cc8fb2a8bddd36d0c68c"
 }
@@ -2967,6 +2967,23 @@ if actual_vendor_pin in {"eace7e056485299e7252c506433a1429a4475051", "05bf05a8dc
         assert m["entries"]["src/video_core/fence_manager.h"]["active"] == (
             "364fcbdd6584502fb7613c8cbce0d9069832f9289b9913ad021756413cbf5920"
         )
+    if actual_vendor_pin == "240550925b0ef097c24c3035c063bdceadd872de":
+        assert subprocess.check_output(
+            ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+        ).strip() == "e40237d089b0a45f77d68ae281821c1a85ce9ca8"
+        for relative, expected_blob in {
+                "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "2bacc8ebdc1c09cd96a7c83d26f57035619f622c",
+                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "634f7a6fc5d27e13b39360c2d28ec961c4f36236",
+                "tests/ns2_gpu_identity_mapping_source.py": "63339d64588f34597f081102d8f1a77ed861971e"
+        }.items():
+            raw = (V / relative).read_bytes()
+            actual_blob = hashlib.sha1(
+                b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+            ).hexdigest()
+            assert actual_blob == expected_blob, ("Native GSV image source drift", relative)
+        layout = (V / "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h").read_text()
+        assert "const u64 bytes_per_pixel = preference[6] == 5 ? 8 : 4;" in layout
+        assert "const u64 requested_images = std::max<u64>(count, 1);" in layout
     REVIEWED_PINS.add(actual_vendor_pin)
 assert actual_vendor_pin==checked and actual_vendor_pin in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

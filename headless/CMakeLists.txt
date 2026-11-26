@@ -5161,49 +5161,5 @@ if(PS5_NATIVE)
     message(STATUS "Encore final native GPU/BCAT source owners verified")
 endif()
 
-# PS5 shared NS1/NS2 GPU/NVDRV ABI: the source archive used by Ninja can be
-# older than the maintained vendor headers. These four class definitions are
-# consumed by both the pinned NS1 TUs and the selected NS2 NVDRV/GMMU owners.
-# Copy tracked complete headers into the existing common include overlay,
-# which already precedes the cached Eden source tree in both native targets.
-# Never patch the pinned tree, split ChannelState layouts or duplicate TUs.
-if(PS5_NATIVE)
-    set(EDEN_NATIVE_GPU_ABI_ROOT "${PORT_ROOT}/vendor/sources/eden/src")
-    foreach(eden_native_gpu_header IN ITEMS
-            video_core/control/channel_state.h
-            core/hle/service/nvdrv/core/container.h
-            core/hle/service/nvdrv/devices/nvdevice.h
-            core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.h)
-        if(NOT EXISTS "${EDEN_NATIVE_GPU_ABI_ROOT}/${eden_native_gpu_header}")
-            message(FATAL_ERROR "Missing common native GPU ABI: ${eden_native_gpu_header}")
-        endif()
-        configure_file(
-            "${EDEN_NATIVE_GPU_ABI_ROOT}/${eden_native_gpu_header}"
-            "${PORT_BUILD_DIR}/include/${eden_native_gpu_header}" COPYONLY)
-    endforeach()
-    # Both core and video_core already select PORT_BUILD_DIR/include BEFORE
-    # their cached source roots. Keep the same header identity everywhere.
-    target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
-    target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
-endif()
 
-# The native rasterizer is the reviewed layered-clear implementation and calls
-# Vulkan::Framebuffer::Layers(). Its companion header lives in the NS2 ASTC
-# maintained overlay; the otherwise-selected Eden Vulkan header lacks it.
-# Retain the complete shared header without changing texture cache semantics.
-if(PS5_NATIVE AND EDEN_PS5_VULKAN)
-    set(EDEN_NATIVE_LAYERED_FRAMEBUFFER_HEADER
-        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h")
-    if(NOT EXISTS "${EDEN_NATIVE_LAYERED_FRAMEBUFFER_HEADER}")
-        message(FATAL_ERROR "Missing native layered Vulkan Framebuffer ABI")
-    endif()
-    file(STRINGS "${EDEN_NATIVE_LAYERED_FRAMEBUFFER_HEADER}"
-        eden_native_framebuffer_layers
-        REGEX "u32 Layers\\(\\) const noexcept" LIMIT_COUNT 1)
-    if(NOT eden_native_framebuffer_layers)
-        message(FATAL_ERROR "Native layered Vulkan Framebuffer accessor changed")
-    endif()
-    configure_file("${EDEN_NATIVE_LAYERED_FRAMEBUFFER_HEADER}"
-        "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_texture_cache.h" COPYONLY)
-    target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
-endif()
+

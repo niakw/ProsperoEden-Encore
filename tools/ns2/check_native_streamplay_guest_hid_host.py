@@ -100,7 +100,6 @@ struct HLERequestContext {
 };
 }
 namespace IPC {
-inline constexpr Result ResultNotSupported = -501;
 class ResponseBuilder {
 public:
     Service::HLERequestContext& context;
@@ -180,7 +179,7 @@ int main() {
             if (command == 453) continue;
             Service::HLERequestContext legacy{};
             user.Dispatch(command, legacy);
-            assert(legacy.result == IPC::ResultNotSupported);
+            assert(legacy.result == 0x20b); // HIPC(11), description(1)
             assert(legacy.copy_handles == 0 && legacy.interface_count == 0);
         }
         assert(KSharedMemory::create_count == 0);

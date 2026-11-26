@@ -91,6 +91,8 @@ def main():
         oversized_icon.write_bytes(content_module.oversized_icon_fixture())
         large_raw = temp / "large-raw.nup"
         large_raw.write_bytes(content_module.large_raw_fixture())
+        edition = temp / "embedded-edition.nup"
+        edition.write_bytes(content_module.embedded_edition_fixture())
         completed = subprocess.run(
             [str(binary), str(addon), str(standalone),
              str(executable), str(foreign_update), str(foreign_npdm),
@@ -99,7 +101,7 @@ def main():
              str(nacp_extracted), str(corrupt_nacp),
              str(short_nacp), str(valid_compressed),
              str(overlong_compressed), str(partial_compressed),
-             str(oversized_icon), str(large_raw)],
+             str(oversized_icon), str(large_raw), str(edition)],
             check=True, capture_output=True, text=True)
         print(completed.stdout, end="")
         print(completed.stderr, end="", file=sys.stderr)

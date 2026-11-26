@@ -9,6 +9,7 @@
 #include "core/file_sys/romfs.h"
 #include "core/file_sys/control_metadata.h"
 #include "core/file_sys/vfs/vfs.h"
+#include "core/file_sys/vfs/vfs_layered.h"
 
 #include <algorithm>
 #include <atomic>
@@ -105,7 +106,7 @@ std::unique_ptr<AppLoader> GetLoader(
 } // namespace Loader
 
 int main(int argc, char** argv) {
-    assert(argc == 20);
+    assert(argc == 21);
     auto input = std::make_shared<MemoryFile>(Load(argv[1]));
     // File recognition must be based on the superblock, not .nup extension.
     // This cheap probe does not replace the full archive validation.
@@ -166,6 +167,32 @@ int main(int argc, char** argv) {
     using Eden::NupV1::ContentView;
     assert(!mount->Effective(ContentView::ExeFS));
     assert(!mount->PackageView(100, ContentView::RomFS));
+
+
+    // A standalone NS1 update can contain an ordinary, valid NS1 ExeFS and
+    // a separate NPDM-verified Switch 2 program1. Prefer the latter, then
+    // overlay program1 resources without losing shared update assets.
+    auto edition_mount = Eden::NupV1::Native::Mount::Open(
+        std::make_shared<MemoryFile>(Load(argv[20])), &error);
+    assert(edition_mount && error.empty());
+    Eden::NupV1::Native::ContentSet edition{edition_mount};
+    assert(edition.HasExecutableMain());
+    const auto edition_exefs = edition.ExeFS();
+    assert(edition_exefs);
+    assert(Read(edition_exefs->GetFile("main")) == "native-main");
+    assert(Read(edition_exefs->GetFile("main.npdm")) == "switch2-npdm");
+    assert(Read(edition.CreateRomFS()) == "state.bin=native-state\n");
+    const auto native_package_root = edition_mount->PackageRoot(0);
+    const auto native_program = native_package_root->GetSubdirectory("program1");
+    const auto native_romfs = native_program->GetSubdirectory("romfs");
+    const auto normal_romfs = edition_mount->Effective(ContentView::RomFS);
+    assert(native_romfs && normal_romfs);
+    const auto layered_romfs = FileSys::LayeredVfsDirectory::MakeLayeredDirectory(
+        {native_romfs, normal_romfs}, "romfs");
+    const auto shared_assets = layered_romfs->GetSubdirectory("assets");
+    assert(shared_assets);
+    assert(Read(shared_assets->GetFile("shared.bin")) == "shared-assets");
+    assert(Read(shared_assets->GetFile("native.bin")) == "native-assets");
 
     auto effective = mount->Effective(ContentView::RomFS);
     assert(effective && effective->IsReadable() && !effective->IsWritable());

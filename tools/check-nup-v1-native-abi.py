@@ -23,6 +23,7 @@ FILES = (
     "core/file_sys/vfs/vfs.h",
     "core/file_sys/vfs/vfs_types.h",
     "core/file_sys/vfs/vfs_vector.h",
+    "core/file_sys/vfs/vfs_layered.h",
     "common/bit_field.h",
     "common/swap.h",
     "core/file_sys/control_metadata.h",
@@ -32,6 +33,19 @@ FILES = (
 )
 
 def main() -> None:
+    # The pinned C++ source must prefer an NPDM-verified embedded Switch 2
+    # program before a valid legacy update ExeFS, including with full RomFS.
+    content = (ROOT / "headless/nup_v1_native_content.cpp").read_text()
+    exefs = content.split("FileSys::VirtualDir ContentSet::ExeFS() const {", 1)[1].split(
+        "FileSys::VirtualFile ContentSet::CreateRomFS()", 1)[0]
+    assert exefs.index("FindEmbeddedSwitch2Program(*mount_)") < exefs.index("if (newest_update)")
+    assert "metadata.IsSwitch2()" in content
+    assert "(packages[*newest].title_id >> 56) != 0x01" in content
+    romfs = content.split("FileSys::VirtualFile ContentSet::CreateRomFS() const {", 1)[1].split(
+        "FileSys::VirtualFile ContentSet::CreateAddOnRomFS(", 1)[0]
+    assert "FileSys::LayeredVfsDirectory::MakeLayeredDirectory(" in romfs
+    assert "{embedded->romfs, std::move(directory)}" in romfs
+    assert "CreateRomFS(std::move(directory), nullptr)" in romfs
     pinned = subprocess.check_output(
         ["git", "-C", str(ROOT), "rev-parse", "HEAD:vendor"], text=True
     ).strip()

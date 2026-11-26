@@ -11,6 +11,7 @@
 #include "core/loader/loader.h" // Loader::ResultStatus has only a forward declaration in program_metadata.h
 #include "core/file_sys/romfs.h"
 #include "core/file_sys/vfs/vfs.h"
+#include "core/file_sys/vfs/vfs_layered.h"
 
 namespace Eden::NupV1::Native {
 namespace {
@@ -29,13 +30,15 @@ std::optional<EmbeddedSwitch2Program> FindEmbeddedSwitch2Program(const Mount& mo
     std::optional<std::size_t> newest;
     for (std::size_t i = 0; i < packages.size(); ++i) {
         const auto& p = packages[i];
-        if (p.kind == 0) return std::nullopt; // only the standalone-update form
-        if (p.kind == 1 && p.standalone_update &&
-            (p.title_id >> 56) == 0x01 &&
-            (!newest || p.version > packages[*newest].version))
+        if (p.kind == 0) return std::nullopt; // only standalone updates
+        if (p.kind == 1 && (!newest || p.version > packages[*newest].version))
             newest = i;
     }
-    if (!newest) return std::nullopt;
+    // Never select an older embedded edition over a newer ordinary update.
+    // Mirrors Lichii's FindBestUpdatePackage + SelectProgram precedence.
+    if (!newest || !packages[*newest].standalone_update ||
+        (packages[*newest].title_id >> 56) != 0x01)
+        return std::nullopt;
     const auto root = mount.PackageRoot(*newest);
     const auto program1 = root ? root->GetSubdirectory("program1") : FileSys::VirtualDir{};
     const auto exefs = program1 ? program1->GetSubdirectory("exefs") : FileSys::VirtualDir{};
@@ -130,6 +133,11 @@ ContentSet::ContentSet(std::shared_ptr<Mount> mount,
 
 FileSys::VirtualDir ContentSet::ExeFS() const {
     if (!mount_) return {};
+    // Lichii SelectProgram prefers a verified standalone NS2 program1 even
+    // when that NS1 update also has a valid legacy ExeFS. The embedded NPDM
+    // must authenticate platform 04 and the exact program-index-1 title.
+    if (const auto embedded = FindEmbeddedSwitch2Program(*mount_); embedded)
+        return embedded->exefs;
     // An update's ExeFS is one executable, not a per-file patch over base
     // modules. Never combine a new main with an old main.npdm or SDK.
     // Lichii SelectProgram likewise chooses a single program package.
@@ -159,20 +167,25 @@ FileSys::VirtualDir ContentSet::ExeFS() const {
             base_exefs->GetFile("main.npdm"))
             return base_exefs;
     }
-    // A standalone NS1 update may instead embed a separately identified
-    // NS2 program1, admitted only after exact platform/title NPDM checks.
-    const auto embedded = FindEmbeddedSwitch2Program(*mount_);
-    return embedded ? embedded->exefs : FileSys::VirtualDir{};
+    return {};
+
 }
 
 FileSys::VirtualFile ContentSet::CreateRomFS() const {
     if (!mount_) return {};
-    const auto regular_exefs = mount_->Effective(ContentView::ExeFS);
     auto directory = mount_->Effective(ContentView::RomFS);
-    if (!regular_exefs || !regular_exefs->GetFile("main") ||
-        !regular_exefs->GetFile("main.npdm")) {
-        if (const auto embedded = FindEmbeddedSwitch2Program(*mount_); embedded) {
-            if (embedded->romfs) directory = embedded->romfs;
+    // The native program1 tree overlays, rather than replaces, the regular
+    // update RomFS. The existing read-only layered VFS merges shared nested
+    // directories and gives program1 files precedence (Lichii ReadRomFS).
+    // CreateRomFS's second parameter is an IPS/stub patch directory, not an
+    // ordinary file overlay: merge in VFS BEFORE serializing.
+    if (const auto embedded = FindEmbeddedSwitch2Program(*mount_);
+        embedded && embedded->romfs) {
+        if (directory) {
+            directory = FileSys::LayeredVfsDirectory::MakeLayeredDirectory(
+                {embedded->romfs, std::move(directory)}, "romfs");
+        } else {
+            directory = embedded->romfs;
         }
     }
     return directory ? FileSys::CreateRomFS(std::move(directory), nullptr)

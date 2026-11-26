@@ -2598,6 +2598,57 @@ selected_nov26_post_f07_overrides = {
 }
 assert len(selected_nov26_post_f07_overrides) == 4
 
+# Additions since the immutable F07 snapshots. These 43 sources are NOT
+# reclassified as historically reviewed or console-validated. A distinct exact
+# vendor pin plus source-tree byte identity qualifies only their provenance.
+selected_nov26_post_f07_additions = {
+    "eden-backports/src/common/net/net.h",
+    "eden-core/include/video_core/engines/maxwell_dma.h",
+    "eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h",
+    "eden-core/overrides/bcat/core/hle/service/bcat/service_creator.h",
+    "eden-core/overrides/buffer-hotpath/common/range_sets.h",
+    "eden-core/overrides/buffer-hotpath/common/range_sets.inc",
+    "eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h",
+    "eden-core/overrides/core/native_renderer_lifetime.h",
+    "eden-core/overrides/video_core/cdma_pusher.h",
+    "eden-core/overrides/video_core/host1x/control.h",
+    "eden-core/overrides/video_core/host1x/host1x.h",
+    "eden-core/overrides/video_core/host1x/syncpoint_manager.h",
+    "eden-core/src/core/hle/kernel/svc/svc_cache.cpp",
+    "eden-core/src/core/hle/service/bcat/delivery_cache_storage_service.cpp",
+    "eden-core/src/core/hle/service/bcat/service_creator.cpp",
+    "eden-core/src/video_core/cdma_pusher.cpp",
+    "eden-core/src/video_core/host1x/control.cpp",
+    "eden-core/src/video_core/host1x/host1x.cpp",
+    "eden-core/src/video_core/host1x/nvdec.cpp",
+    "eden-core/src/video_core/texture_cache/format_lookup_table.cpp",
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_context_get_set.cpp",
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_memory.cpp",
+    "eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_atomic.cpp",
+    "eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_context_get_set.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_floating_point.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp",
+    "eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_add.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_fused_multiply_add.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_multiply.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_add.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_fused_multiply_add.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_min_max.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_multiply.cpp",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp",
+    "ns2-runtime/hle/core/hle/service/am/service/performance_functions.h",
+}
+assert len(selected_nov26_post_f07_additions) == 43
+
+
 # Current vendor source additions postdate the immutable 337-path F07
 # catalogue. One exact ledger serves both source inventories.
 current_vendor_post_f07_owner_blobs = {
@@ -2798,6 +2849,26 @@ assert {p for p in physical if p.startswith("eden-header-hygiene/")} == warning_
 # rather than treating an arbitrary new count as historical coverage.
 catalog_paths = set(re.findall(r"^\| `([^`]+)` \|", section, re.MULTILINE))
 assert len(catalog_paths) == 337, ("Historical F07 catalog drift",len(catalog_paths))
+if shipping_vendor == "806252e96253489c18d11551bf2dcfd668502719":
+    # The old 337-source snapshot must remain exact. Separate only the
+    # ten newer owners still present after the existing specialized ledgers.
+    post_snapshot = set(physical) - catalog_paths
+    new_owners = post_snapshot & selected_nov26_post_f07_additions
+    assert len(new_owners) == 10 and post_snapshot == new_owners, (
+        "Nov26 unclassified native owners", sorted(post_snapshot - new_owners))
+    assert not catalog_paths - set(physical), "Historical native source missing"
+    for relative in selected_nov26_post_f07_additions:
+        path = active / relative
+        assert path.is_file(), relative
+        pinned = subprocess.check_output([
+            "git", "-C", str(root / "vendor"), "rev-parse",
+            "HEAD:encore-active/" + relative], text=True).strip()
+        actual = subprocess.check_output(
+            ["git", "hash-object", str(path)], text=True).strip()
+        assert actual == pinned, ("Selected source differs from vendor gitlink", relative)
+    physical = [p for p in physical if p not in new_owners]
+    print("ENCORE_POST_F07_SELECTED_CATALOG_SEPARATION_PASS",
+          "historical=337 additions=43 native_unclassified=10", flush=True)
 assert len(physical) == 337, ("Shipping source catalogue changed",len(physical),
     "unclassified=" + repr(sorted(set(physical) - catalog_paths)),
     "missing=" + repr(sorted(catalog_paths - set(physical))))

@@ -2563,6 +2563,43 @@ historical_handled={
     "headless/jit_memory_policy.h" if e["path"]=="headless/experimental_performance.h"
     else e["path"] for e in STATE["handled_paths"]
 }
+# The current vendor has 43 source additions which postdate the immutable
+# 518-owner F07 photograph. Distinguish these paths from historical coverage
+# only after proving every file matches the exact pinned vendor commit.
+# CMake/native and console qualification are independent of this accounting.
+if selected_nov26_vendor:
+    inv_nodes = [
+        node.value for node in ast.parse(
+            (ROOT / "tools/check-active-source-inventory.py").read_text()
+        ).body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name)
+                and target.id == "selected_nov26_post_f07_additions"
+                for target in node.targets)
+    ]
+    assert len(inv_nodes) == 1
+    additions = ast.literal_eval(inv_nodes[0])
+    assert isinstance(additions, set) and len(additions) == 43
+    selected_delta = {
+        "vendor/encore-active/" + relative for relative in additions
+    }
+    observed_delta = owners - historical_handled
+    assert observed_delta == selected_delta, (
+        "Nov26 post-F07 owner additions changed",
+        sorted(observed_delta - selected_delta),
+        sorted(selected_delta - observed_delta))
+    assert not historical_handled - owners, "Historical F07 source missing"
+    for relative in additions:
+        source_path = ROOT / "vendor/encore-active" / relative
+        pinned = subprocess.check_output([
+            "git", "-C", str(ROOT / "vendor"), "rev-parse",
+            "HEAD:encore-active/" + relative], text=True).strip()
+        actual = subprocess.check_output(
+            ["git", "hash-object", str(source_path)], text=True).strip()
+        assert pinned == actual, ("Nov26 source not from gitlink", relative)
+    owners = owners - selected_delta
+    print("ENCORE_F07_518_IMMUTABLE_43_SELECTED_ADDITIONS_PASS",
+          "historical=518 new_source_owners=43", flush=True)
 if len(owners)!=518:
     print("F07_UNCLASSIFIED_SOURCE_OWNERS_JSON="+json.dumps(
         sorted(owners-historical_handled),separators=(",",":")),flush=True)

@@ -4360,3 +4360,17 @@ Requalification de `btm:sys` cmd3 `GetPairedGamepadCount` contre l'owner actif `
 **1 ligne PARTIEL quitte le pool. Nouveau compteur global : 110 lignes ouvertes.**
 
 Aucun patch runtime, changement de gitlink, build PS5 ou validation console dans cette requalification.
+
+
+### 2026-11-26 — AUDCTL master volume réellement appliqué : palier global 109
+
+Base : **110 lignes ouvertes**.
+
+Vendor `0bb36bc586e3b26462191a1be3143d0a67d4a7db`, provenance `309d1457511f554971cd19683b3c8b3813aa7598`, ferme `audctl` cmd23 `SetSystemOutputMasterVolume`. Le master 0.0–1.0 ne reste plus un simple champ local :
+- il est appliqué immédiatement au sink actif et aux sessions `audout:u` ;
+- `SetTargetVolume`, `SetTargetMute` et `SetOutputTarget` calculent désormais le volume effectif `target × master × mute`, donc un changement de cible ne perd plus le master ;
+- `GetSystemOutputMasterVolume` continue à relire le même état.
+
+**1 ligne PARTIEL quitte le pool. Nouveau compteur global : 109 lignes ouvertes.**
+
+Gitlink repinné sur `309d1457511f554971cd19683b3c8b3813aa7598`. `SetInputTargetForceEnabled` reste ouvert : aucun consommateur de routage input n'est encore démontré. Aucun build PS5 ni validation console revendiqués.

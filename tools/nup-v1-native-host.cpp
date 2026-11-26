@@ -106,7 +106,7 @@ std::unique_ptr<AppLoader> GetLoader(
 } // namespace Loader
 
 int main(int argc, char** argv) {
-    assert(argc == 21);
+    assert(argc == 21 || argc == 22);
     auto input = std::make_shared<MemoryFile>(Load(argv[1]));
     // File recognition must be based on the superblock, not .nup extension.
     // This cheap probe does not replace the full archive validation.
@@ -202,6 +202,26 @@ int main(int argc, char** argv) {
     assert(shared_assets);
     assert(Read(shared_assets->GetFile("shared.bin")) == "shared-assets");
     assert(Read(shared_assets->GetFile("native.bin")) == "native-assets");
+
+    if (argc == 22) {
+        // A regular NS1 base + matching NS2 update must expose the same
+        // verified NS1 AoC family as a standalone embedded edition.
+        auto paired_mount = Eden::NupV1::Native::Mount::Open(
+            std::make_shared<MemoryFile>(Load(argv[21])), &error);
+        assert(paired_mount && error.empty());
+        Eden::NupV1::Native::ContentSet paired{
+            paired_mount, 0x0400123400000001ULL};
+        assert(paired.HasExecutableMain());
+        assert(Read(paired.ExeFS()->GetFile("main.npdm")) == "switch2-npdm");
+        assert(paired.AddOns().size() == 1);
+        assert(Read(paired.CreateAddOnRomFS(2)) == "bonus.bin=edition-addon\n");
+        Eden::NupV1::Native::ContentSet foreign_paired{
+            paired_mount, 0x0400123400002001ULL};
+        assert(foreign_paired.AddOns().empty());
+        Eden::NupV1::Native::ContentSet wrong_index{
+            paired_mount, 0x0400123400000002ULL};
+        assert(wrong_index.AddOns().empty());
+    }
 
     auto effective = mount->Effective(ContentView::RomFS);
     assert(effective && effective->IsReadable() && !effective->IsWritable());

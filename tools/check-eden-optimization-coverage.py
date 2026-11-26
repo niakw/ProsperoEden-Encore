@@ -2825,7 +2825,7 @@ for e in entries:
     assert hashlib.sha256(active.read_bytes()).hexdigest()==record["active"]
     assert active.stat().st_size==record["bytes"]
     assert e["shipping_upstream_sha256"]==record["upstream"]
-    if actual_buffer_hotpath_pin and e["shipping_relpath"] == "src/video_core/fence_manager.h":
+    if (selected_nov26_vendor or actual_buffer_hotpath_pin) and e["shipping_relpath"] == "src/video_core/fence_manager.h":
         assert (e["shipping_active_sha256"], e["shipping_bytes"]) == ("012cc72932c34fcc82090791d5a4c8c8d64c34966e69948bb4cf6c7b23349c97", 9151)
         assert (record["active"], record["bytes"]) == ("71e095bcfbd1666a7c46b8ffab8ad4357b895bdef1eb8c1fb69992cd8836c6b3", 10589)
     elif (vendor_head in {"01c942171fea39c1f7cf31d13ab36895aebb593a",

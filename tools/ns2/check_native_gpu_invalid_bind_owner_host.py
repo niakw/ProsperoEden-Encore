@@ -20,7 +20,7 @@ END = '\nvoid Puller::ProcessFenceActionMethod('
 source=PULLER.read_text()
 assert source.count(START)==1 and source.count(END)==1
 method=START+source.split(START,1)[1].split(END,1)[0]
-assert method.count('dma_pusher.BindSubchannel(nullptr, method_call.subchannel,')==1
+assert method.count('dma_pusher.BindSubchannel(nullptr, method_call.subchannel,')==2
 assert method.count('retire_native_3d();')==3
 assert method.count('retire_native_compute();')==3
 # The shipping Puller now calls the DmaPusher fatal helper to report the
@@ -28,6 +28,8 @@ assert method.count('retire_native_compute();')==3
 # channel registry's fault publication; do not require that old behavior.
 fatal = 'dma_pusher.FailNativeSubmission("Native GPFIFO SET_OBJECT class unsupported");'
 assert fatal in method
+assert method.index('    if (engine == 0 && ') < method.index('    switch (engine_id) {')
+assert method.index('    retire_native_3d();\n    retire_native_compute();') < method.index('    if (engine == 0 && ')
 assert method.index('dma_pusher.BindSubchannel(nullptr, method_call.subchannel,') < method.index(fatal)
 dma = DMA.read_text()
 helper = dma.split(
@@ -183,11 +185,32 @@ int main() {
 #else
     assert(native_faults==0);
 #endif
+    // SDK SET_OBJECT(0) is an authenticated NS2 unbind, not a failed GPFIFO.
+    // Verify this against the real extracted Puller method with both native
+    // 3D and compute tickets, including the absence of a fake completion.
+    bind(0xc797);
+    const auto previous_graphics_retire = registry.retired_graphics;
+    bind(0);
+    assert(dma.subchannels[2] == nullptr &&
+           registry.retired_graphics == previous_graphics_retire + 1);
+#ifdef PS5_NATIVE
+    assert(native_faults==4 && dma.reported_native_faults==4);
+#endif
+    bind(0xc7c0);
+    const auto previous_compute_retire = registry.retired_compute;
+    bind(0);
+    assert(dma.subchannels[2] == nullptr &&
+           registry.retired_compute == previous_compute_retire + 1);
+#ifdef PS5_NATIVE
+    assert(native_faults==4 && dma.reported_native_faults==4);
+#endif
     // Invalid class and forbidden Ampere bind must not alter old NS1 behavior.
     registry.native=false;
     bind(static_cast<u32>(EngineID::MAXWELL_B));
     assert(dma.subchannels[2] == &dma.channel_state.payload->maxwell_3d);
     bind(0x5678);
+    assert(dma.subchannels[2] == &dma.channel_state.payload->maxwell_3d);
+    bind(0); // NS1 keeps its historical class-zero default handling.
     assert(dma.subchannels[2] == &dma.channel_state.payload->maxwell_3d);
     bind(0xc797);
     assert(dma.subchannels[2] == &dma.channel_state.payload->maxwell_3d);

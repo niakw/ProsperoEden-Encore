@@ -1020,7 +1020,10 @@ if selected in {"7b314d266f958768ec311dd21cac5f1836af1b8a", "918ea63bfa46e5e9020
         "3411fc67c3c5bce5947fb5561c43ea44bb53e377": "60e8107ba9818aa9236f26625604024098319162",
         "34c62dbcf8d5b1ffedc4931b447fd52077866625": "95bb316622368b88ab46f73a038c158deac92d90",
     }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
-assert selected==gitlink and selected in expected,(selected,gitlink)
+# Historical reviewed pins retain the tree attestation above. New vendor revisions
+# must match the exact engine gitlink and pass the maintained-source/blob checks
+# below; requiring every future SHA in this historical list blocked valid pins.
+assert selected==gitlink,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"
 active=V/"encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp"

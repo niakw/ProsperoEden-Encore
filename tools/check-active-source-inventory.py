@@ -42,11 +42,12 @@ if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"
 # historical F07 baseline. Preserve prior classifications for unchanged owners.
 shipping_vendor = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
-if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "85eed6cf298c30c8e79d826c5a66788586bc041a", "69882965841d52186e76bbdf5d27e275628f6ebc"}:
+if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "85eed6cf298c30c8e79d826c5a66788586bc041a", "69882965841d52186e76bbdf5d27e275628f6ebc", "871813bea5c2421d8f0e4099987190419b3e4cbc"}:
     expected_vi2_tree = {
         "52b6582953b9b6c986f3fb9ebeea4b707cd50aab": "d56f1f3efcbe283d018b411289f36bd398905408",
         "85eed6cf298c30c8e79d826c5a66788586bc041a": "69b093785fa296aa12f6366c89e6131aaec63f7b",
         "69882965841d52186e76bbdf5d27e275628f6ebc": "6dda7600c9ce04684388d2c3e41042d1f7cd3f20",
+        "871813bea5c2421d8f0e4099987190419b3e4cbc": "800c6107b52e2f1d1e2d1f300230b523150bcfd7",
     }[shipping_vendor]
     assert subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"],
                                    text=True).strip() == expected_vi2_tree
@@ -2027,7 +2028,8 @@ if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f3
         actual_vi2_vendor = subprocess.check_output(
             ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
         expected_gpu_pair_tree = (
-            "6dda7600c9ce04684388d2c3e41042d1f7cd3f20" if actual_vi2_vendor == "69882965841d52186e76bbdf5d27e275628f6ebc"
+            "800c6107b52e2f1d1e2d1f300230b523150bcfd7" if actual_vi2_vendor == "871813bea5c2421d8f0e4099987190419b3e4cbc"
+            else "6dda7600c9ce04684388d2c3e41042d1f7cd3f20" if actual_vi2_vendor == "69882965841d52186e76bbdf5d27e275628f6ebc"
             else "69b093785fa296aa12f6366c89e6131aaec63f7b" if actual_vi2_vendor == "85eed6cf298c30c8e79d826c5a66788586bc041a"
             else "d56f1f3efcbe283d018b411289f36bd398905408" if actual_vi2_vendor == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab"
             else "e40237d089b0a45f77d68ae281821c1a85ce9ca8")
@@ -3045,9 +3047,9 @@ assert shipping == shipping_cpp | build_recipes, (
 shipping_receipt_count = 50
 actual_manifest_vendor = subprocess.check_output(
     ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip()
-if actual_manifest_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "69882965841d52186e76bbdf5d27e275628f6ebc"}:
+if actual_manifest_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "69882965841d52186e76bbdf5d27e275628f6ebc", "871813bea5c2421d8f0e4099987190419b3e4cbc"}:
     expected_manifest_blob = (
-        "2e190a6d5d1d41125179d83695dff9faccee3db6" if actual_manifest_vendor == "69882965841d52186e76bbdf5d27e275628f6ebc"
+        "2e190a6d5d1d41125179d83695dff9faccee3db6" if actual_manifest_vendor in {"69882965841d52186e76bbdf5d27e275628f6ebc", "871813bea5c2421d8f0e4099987190419b3e4cbc"}
         else "da4e380ecb78a12fdbb3bb12ac29d88f3a6eb0df")
     assert subprocess.check_output([
         "git", "hash-object", str(active / "eden-backports/manifest.json")

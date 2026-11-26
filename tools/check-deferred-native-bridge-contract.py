@@ -399,6 +399,19 @@ def reverse_collected_batch_lock_successor(source):
 # R457 MSAA fallback is later than the frozen R23/M07 source receipt.
 # Verify both full blobs and undo only the reviewed owner hunk in memory.
 # Keep the original source checks below; never modify the selected vendor.
+# Native C797/C7C0 strict fence is a separate, reviewed Vulkan ABI owner.
+# Reverse exactly its added method on this historical audit copy before
+# replaying the older M07/FC27 rasterizer ownership graph.
+if m07_source_blob(original_m07) == "ff8ad79ef203456063dbd848eab3ea575628edfc":
+    native_fence_method = ("bool RasterizerVulkan::SignalNativeFence(std::function<void()>&& func) {\n"
+                           "    fence_manager.SignalNativeFence(std::move(func));\n"
+                           "    return true;\n"
+                           "}\n")
+    assert original_m07.count(native_fence_method) == 1, "Native fence source moved"
+    original_m07 = original_m07.replace(native_fence_method, "", 1)
+    assert m07_source_blob(original_m07) == "39b2ed67e51937aecad666de4113ce792d32132d", (
+        "Native strict-fence predecessor drift")
+    print("ENCORE_M07_NATIVE_STRICT_FENCE_EXACT_REVERSE_PASS")
 m07_selected_sha = m07_source_blob(original_m07)
 original_m07 = reverse_attribute_index_batch_successor(original_m07)
 original_m07 = reverse_collected_batch_preflight_successor(original_m07)

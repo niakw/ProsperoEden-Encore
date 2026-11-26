@@ -138,7 +138,9 @@ def main()->int:
         '&layer,*c->display,m_aruid)',
         'GetPresentImage(p[5])',
         'GetLayerProducerHandle(',
-        'std::make_shared<android::GraphicBuffer>(',
+        'storage=std::make_shared<std::optional<android::GraphicBuffer>>();',
+        'auto& graphic=storage->emplace(nv.GetNvMapFile(),native);',
+        'std::shared_ptr<android::GraphicBuffer> buffer(std::move(storage), &graphic);',
         'c->producer->AttachBuffer(&idx,buffer)',
         'c->producer->QueueBuffer(idx,input,&output)',
         'c.producer->DetachNextBuffer(',
@@ -169,6 +171,17 @@ def main()->int:
         'pref[6]==1&&outw<=width&&outh<=height',
     ):
         assert evidence in text, "VI2 compositor must preserve real queue/fence owner: " + evidence
+    vi2_present = text.split('void Present(HLERequestContext& ctx) {',1)[1].split(
+        'void Cancel(HLERequestContext& ctx) {',1)[0]
+    # Preallocate both shared control blocks before GraphicBuffer's NVMap pin.
+    # Preserve the aliasing lifetime through AttachBuffer and the queue owner.
+    assert vi2_present.index('storage=std::make_shared<std::optional<android::GraphicBuffer>>();') < (
+        vi2_present.index('storage->emplace(nv.GetNvMapFile(),native)'))
+    assert vi2_present.index('storage->emplace(nv.GetNvMapFile(),native)') < (
+        vi2_present.index('c->producer->AttachBuffer(&idx,buffer)'))
+    assert vi2_present.index('c->producer->AttachBuffer(&idx,buffer)') < (
+        vi2_present.index('c->retained[slot]=buffer'))
+    assert 'std::make_shared<android::GraphicBuffer>(' not in vi2_present
     # VI2 201 -> 212 -> 251 is observed in the MKW boot trace. A
     # registered client can query availability before display binding; the
     # real compositor layer is created by the bind, and reused on rebind.

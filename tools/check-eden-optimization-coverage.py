@@ -1594,19 +1594,21 @@ else:
     # Normalize only THIS historical table fingerprint after authenticating
     # the entire shipping vendor tree and its unchanged source, not the whole
     # F07 GPU runtime profile.
-    if table_pin in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de"}:
+    if table_pin in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab"}:
         actual_tree = subprocess.check_output(
             ["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD^{tree}"], text=True
         ).strip()
-        assert actual_tree == ("e40237d089b0a45f77d68ae281821c1a85ce9ca8" if table_pin == "240550925b0ef097c24c3035c063bdceadd872de" else "fce8c6e09f27364904886bfbdfca299fbc3e0780")
+        assert actual_tree == ("d56f1f3efcbe283d018b411289f36bd398905408" if table_pin == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab" else
+                               "e40237d089b0a45f77d68ae281821c1a85ce9ca8" if table_pin == "240550925b0ef097c24c3035c063bdceadd872de" else
+                               "fce8c6e09f27364904886bfbdfca299fbc3e0780")
         assert subprocess.check_output(
             ["git","hash-object","vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"],
             cwd=ROOT, text=True
         ).strip() == "87eed0b2319c719d27332c8e24f97a73e496f108"
-        if table_pin == "240550925b0ef097c24c3035c063bdceadd872de":
+        if table_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab"}:
             for relative, expected in {
                 "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "2bacc8ebdc1c09cd96a7c83d26f57035619f622c",
-                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "634f7a6fc5d27e13b39360c2d28ec961c4f36236",
+                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": ("4b7ca333e3f1dfaf2c5d61963dedc82179ec3146" if table_pin == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab" else "634f7a6fc5d27e13b39360c2d28ec961c4f36236"),
                 "tests/ns2_gpu_identity_mapping_source.py": "63339d64588f34597f081102d8f1a77ed861971e"
         }.items():
                 raw = (ROOT / "vendor" / relative).read_bytes()

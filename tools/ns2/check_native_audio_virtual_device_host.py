@@ -87,12 +87,31 @@ struct IAudioRendererManager {};
 #include <cstdint>
 #include <span>
 #include <vector>
+#include <memory>
+#include <string>
+#include <unordered_map>
 using u8 = std::uint8_t;
 using u32 = std::uint32_t;
 using u64 = std::uint64_t;
 using Result = int;
 inline constexpr Result ResultSuccess = 0;
-namespace Core { struct System {}; }
+namespace Core {
+struct RegisteredServices {
+    std::unordered_map<std::string, std::shared_ptr<void>> entries;
+    template<class T> std::shared_ptr<T> GetService(const char* name) const {
+        auto it = entries.find(name);
+        return it == entries.end() ? nullptr : std::static_pointer_cast<T>(it->second);
+    }
+    template<class T> void Register(const char* name, const std::shared_ptr<T>& service) {
+        entries[name] = service;
+    }
+    void Remove(const char* name) { entries.erase(name); }
+};
+struct System {
+    RegisteredServices services;
+    RegisteredServices& ServiceManager() { return services; }
+};
+}
 namespace Service {
 struct HLERequestContext {
     Result result{-999};
@@ -101,6 +120,7 @@ struct HLERequestContext {
     std::vector<u32> request_words;
     u32 response_count{};
     int response_size{}, object_count{};
+    std::shared_ptr<void> ipc_object;
     struct Thread {
         Kernel::KProcess* process{};
         Kernel::KProcess* GetOwnerProcess() const { return process; }
@@ -136,8 +156,17 @@ struct ResponseBuilder {
         assert(&c==&ctx);
         ++ctx.object_count;
     }
+    template<class T>
+    void PushIpcInterface(Service::HLERequestContext& c,const std::shared_ptr<T>& manager) {
+        assert(&c==&ctx && manager);
+        ctx.ipc_object=manager;
+        ++ctx.object_count;
+    }
 };
 }
+''',
+    "core/hle/service/sm/sm.h": r'''
+#pragma once
 ''',
     "core/hle/service/service.h": r'''
 #pragma once
@@ -145,6 +174,7 @@ struct ResponseBuilder {
 #include <cstddef>
 #include "core/hle/service/ipc_helpers.h"
 #define LOG_WARNING(...) ((void)0)
+#define LOG_INFO(...) ((void)0)
 namespace Service {
 template<class T> class ServiceFramework {
 protected:
@@ -304,9 +334,40 @@ int main() {
     assert(streams->engaged_calls==1 && streams->disengaged_calls==1);
     // Existing NS1 aud:u manager bridge remains available; no source
     // fork or blanket unknown-command success was introduced.
+    // The same registered NS1 managers must be returned by every NS2 aud:u
+    // request. Never allocate a second manager with a detached audio callback.
+    auto input_owner=std::make_shared<IAudioInManager>();
+    auto output_owner=std::make_shared<IAudioOutManager>();
+    auto renderer_owner=std::make_shared<IAudioRendererManager>();
+    system.ServiceManager().Register("audin:u",input_owner);
+    system.ServiceManager().Register("audout:u",output_owner);
+    system.ServiceManager().Register("audren:u",renderer_owner);
     INx2AudioUserClient existing{system};
-    assert(existing.HasCommand(1) && existing.HasCommand(2) &&
-           !existing.HasCommand(0));
+    assert(existing.HasCommand(0) && existing.HasCommand(1) && existing.HasCommand(2));
+    HLERequestContext audio_in{};
+    existing.Dispatch(0,audio_in);
+    assert(audio_in.result==ResultSuccess && audio_in.object_count==1 &&
+           audio_in.ipc_object==input_owner);
+    HLERequestContext audio_out{};
+    audio_out.request_words={0};
+    existing.Dispatch(1,audio_out);
+    assert(audio_out.result==ResultSuccess && audio_out.object_count==1 &&
+           audio_out.ipc_object==output_owner);
+    HLERequestContext audio_out_second{};
+    audio_out_second.request_words={1};
+    existing.Dispatch(1,audio_out_second);
+    assert(audio_out_second.ipc_object==output_owner);
+    HLERequestContext audio_renderer{};
+    audio_renderer.request_words={0};
+    existing.Dispatch(2,audio_renderer);
+    assert(audio_renderer.result==ResultSuccess && audio_renderer.object_count==1 &&
+           audio_renderer.ipc_object==renderer_owner);
+    system.ServiceManager().Remove("audout:u");
+    HLERequestContext missing_output{};
+    missing_output.request_words={0};
+    existing.Dispatch(1,missing_output);
+    assert(missing_output.result==ResultNotFound && missing_output.object_count==0 &&
+           !missing_output.ipc_object);
     std::puts("NS2_AUDIO_VIRTUAL_DEVICE_HOST_PASS list=1 default=1 properties=1 "
               "invalid_name=1 small_buffer=1 unknown_latency=1 "
               "format_pcm16_float=1 attach_valid=1 detach_valid=1 "

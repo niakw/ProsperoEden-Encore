@@ -175,11 +175,17 @@ assert 'Result SetEngagedBatch(std::span<const u32> ids' in (
     audio_root / 'nx2_sysmix_user_service.h').read_text()
 for name in ('audout:u', 'audren:u', 'audin:u', 'audctl', 'hwopus'):
     assert audio.count('RegisterNamedService("' + name + '"') == 1, name
-for command, method, manager in (
-    (1, 'GetAudioOutManager', 'IAudioOutManager'),
-    (2, 'GetAudioRendererManager', 'IAudioRendererManager')):
+for command, method, manager, service in (
+    (0, 'GetAudioInManager', 'IAudioInManager', 'audin:u'),
+    (1, 'GetAudioOutManager', 'IAudioOutManager', 'audout:u'),
+    (2, 'GetAudioRendererManager', 'IAudioRendererManager', 'audren:u')):
     assert '{' + str(command) + ', &INx2AudioUserClient::' + method in client
-    assert 'rb.PushIpcInterface<' + manager + '>(ctx, system)' in client
+    assert 'ReplyRegisteredManager<' + manager + '>(ctx, "' + service + '")' in client
+assert 'auto manager = system.ServiceManager().GetService<T>(service);' in client
+assert 'rb.PushIpcInterface<T>(ctx, manager)' in client
+assert 'rb.Push(ResultNotFound);' in client
+assert 'std::make_shared<IAudioOutManager>' not in client
+assert 'std::make_shared<IAudioRendererManager>' not in client
 assert 'auto stub fallback' not in client.lower()
 streamplay = (audio_root.parent / 'nx2_streamplay.h').read_text()
 assert audio.count('RegisterNamedService("stpl:u"') == 1

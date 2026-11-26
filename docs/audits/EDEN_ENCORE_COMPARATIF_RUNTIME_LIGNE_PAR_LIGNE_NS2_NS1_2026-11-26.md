@@ -6870,3 +6870,7753 @@ Source : [nx.cpp:974–980](https://github.com/heydemoura/EglantinePS5/blob/75a5
 - L'absence d'une fonction dans un fork n'est pas assimilée à un bug Encore.
 
 **Couverture ajoutée :** 10 fonctions, 19 comparaisons, 1274 lignes-source parcourues (répétitions incluses), 1 homologue(s) absent(s)/non extrait(s). Aucun résultat console ni statut « résolu » n'est changé.
+
+## Annexe V — TextureCache et pipelines Vulkan (FC27 P1 / première frame NS2)
+
+Cette annexe se concentre sur les coûts et la fraîcheur des ressources après que le programme et le GPU ont démarré. Elle ne transforme pas les différences upstream en optimisations proposées. Pour FC27, seule une comparaison console à scène/cache identiques pourra convertir un écart en cause de frametime/HUD.
+
+### P1-T01 · TextureCache::RunGarbageCollector
+
+Homologue comportemental avec signatures différentes. Les forks exposent explicitement out_of_memory/critical ; Encore dérive sa politique localement. Le diff doit être lu avec les seuils, la durée sous mutex et l'ordre de suppression des images, pas seulement le nombre d'images collectées.
+
+Encore : fonction absente/non extraite dans le propriétaire actif.
+
+### P1-T02 · TextureCache::TickFrame
+
+Point de cadence par frame : compteurs, async decode/unswizzle, pression mémoire et GC. Toute logique ajoutée ici peut coûter chaque frame ; toute logique retirée peut déplacer le coût vers une lecture synchronisée.
+
+Encore : [texture_cache.h:474–532](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h#L474-L532) — 59 lignes.
+
+<details>
+<summary>Lichii — 1320–1799 : 21 alignées, 38 propres Encore, 459 propres upstream</summary>
+
+Source : [texture_cache.h:1320–1799](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/texture_cache/texture_cache.h#L1320-L1799).
+
+```diff
+   474  1320 | void TextureCache<P>::TickFrame() {
+-  475       | #ifdef PS5_NATIVE
+-  476       |     // C03: exact driver budget/GC events plus 1-in-16 async/runtime samples.
+-  477       |     // Timers run only in Detailed Logging; the order and cache locks remain.
+-  478       |     const bool detailed = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed);
+-  479       |     const bool sample_housekeeping = detailed && ::Eden::Performance::ShouldSampleTextureHousekeeping();
+-  480       | #endif
+-  481       |     // If we can obtain the memory info, use it instead of the estimate.
++       1321 |     VideoCommon::GpuSplit::RenderOwned("TextureCache::TickFrame");
++       1322 |     FinishAsyncOverlapDownloads(false);
++       1323 |     if (Common::DkbFrameTrace::Enabled()) {
++       1324 |         static u64 frames{};
++       1325 |         if (++frames % 600 == 0 && (overlap_download_batches != 0 || overlap_download_skips != 0 || join_writebacks != 0 ||
++       1326 |                                     join_writeback_reuses != 0)) {
++       1327 |             LOG_INFO(HW_GPU,
++       1328 |                      "DKB gc overlap downloads last 600 frames: {} batches, {} images, {} KiB, "
++       1329 |                      "waited {:.1f} ms, {} skipped under newer data, {} written around newer "
++       1330 |                      "bytes, {} pages noted, {} cancelled",
++       1331 |                      overlap_download_batches, overlap_download_images,
++       1332 |                      overlap_download_bytes >> 10,
++       1333 |                      static_cast<double>(overlap_download_wait_us) / 1000.0,
++       1334 |                      overlap_download_skips, overlap_partial_keeps,
++       1335 |                      overlap_writeback_ticks.size(), async_overlap_cancels);
++       1336 |             async_overlap_cancels = 0;
++       1337 |             overlap_partial_keeps = 0;
++       1338 |             if (join_writebacks != 0) {
++       1339 |                 LOG_INFO(HW_GPU,
++       1340 |                          "DKB join writebacks last 600 frames: {} joins, {} images, waited {:.1f} ms, {} "
++       1341 |                          "already in memory",
++       1342 |                          join_writebacks, join_writeback_images,
++       1343 |                          static_cast<double>(join_writeback_wait_us) / 1000.0,
++       1344 |                          join_writeback_reuses);
++       1345 |             }
++       1346 |             join_writebacks = join_writeback_images = join_writeback_wait_us = 0;
++       1347 |             join_writeback_reuses = 0;
++       1348 |             overlap_download_skips = 0;
++       1349 |             overlap_download_batches = overlap_download_images = 0;
++       1350 |             overlap_download_bytes = overlap_download_wait_us = 0;
++       1351 |         }
++       1352 |     }
++       1353 |     // Upload buffers grown for one huge image (title 1's 341 MiB terrain layer pools) are freed
++       1354 |     // rather than kept for the rest of the session.
++       1355 |     for (auto* const scratch : {&swizzle_data_buffer, &unswizzle_data_buffer}) {
++       1356 |         if (scratch->capacity() > LargeScratchCapacity) {
++       1357 |             scratch->release();
++       1358 |         }
++       1359 |     }
++       1360 |     if constexpr (requires { runtime.CurrentTick(); }) {
++       1361 |         while (!gpu_sentenced_images.empty() &&
++       1362 |                runtime.IsFree(gpu_sentenced_images.front().tick)) {
++       1363 |             gpu_sentenced_bytes -= gpu_sentenced_images.front().bytes;
++       1364 |             gpu_sentenced_images.pop_front();
++       1365 |         }
++       1366 |         while (!retained_image_keepers.empty() &&
++       1367 |                runtime.IsFree(retained_image_keepers.front().tick)) {
++       1368 |             retained_image_keepers.pop_front();
++       1369 |         }
++       1370 |         if (frame_tick % 600 == 0) {
++       1371 |             const u64 total = free_guard.retained_held + free_guard.landed_early +
++       1372 |                               free_guard.freed_early + free_guard.unswizzle_dropped;
++       1373 |             if (total != free_guard.logged_total) {
++       1374 |                 free_guard.logged_total = total;
++       1375 |                 LOG_INFO(HW_GPU,
++       1376 |                          "Free guard (session): {} images deleted with a download queued held "
++       1377 |                          "until their delete tick completed, {} downloads landed before that "
++       1378 |                          "tick was known complete, {} images held now, {} early frees "
++       1379 |                          "(must be 0); {} async unswizzles dropped with their image",
++       1380 |                          free_guard.retained_held, free_guard.landed_early,
++       1381 |                          retained_image_keepers.size(), free_guard.freed_early,
++       1382 |                          free_guard.unswizzle_dropped);
++       1383 |             }
++       1384 |         }
++       1385 |     }
++       1386 |     // If we can obtain the memory info, use it instead of the estimate. Read before the budget
++       1387 |     // check below, which counts what isn't images from it.
+   482  1388 |     if (runtime.CanReportMemoryUsage()) {
+-  483       | #ifdef PS5_NATIVE
+-  484       |         // A driver memory-budget probe can run under texture_cache.mutex.
+-  485       |         // While comfortably below the GC watermark, sample every other
+-  486       |         // frame; at 2/3 of the watermark or higher, sample EVERY frame to
+-  487       |         // preserve prompt reclaim and avoid an allocation-pressure blind spot.
+-  488       |         const bool near_gc_watermark =
+-  489       |             total_used_memory >= minimum_memory - minimum_memory / 3;
+-  490       |         if (near_gc_watermark || (frame_tick & 1u) == 0) {
+-  491       |             ::Eden::Performance::CachePhaseTimer budget_query{
+-  492       |                 ::Eden::Performance::CachePhase::TextureBudgetQuery, detailed};
+   493  1389 |             total_used_memory = runtime.GetDeviceMemoryUsage();
++       1390 |         // Images the collector deleted keep their memory for TICKS_TO_DESTROY frames: counting
++       1391 |         // it kept the collector in aggressive mode, deleting 40+ images a frame for frames after
++       1392 |         // it had freed enough (title 1: frames over 100 ms for seconds at a time).
++       1393 |         for (const u64 bytes : sentenced_image_bytes) {
++       1394 |             total_used_memory -= (std::min)(total_used_memory, bytes);
+   494  1395 |         }
+-  495       | #else
+-  496       |         total_used_memory = runtime.GetDeviceMemoryUsage();
+-  497       | #endif
++       1396 |         total_used_memory -= (std::min)(total_used_memory, gpu_sentenced_bytes);
+   498  1397 |     }
+-  499       |     if (total_used_memory > minimum_memory) {
+-  500       | #ifdef PS5_NATIVE
+-  501       |         ::Eden::Performance::CachePhaseTimer gc_collect{
+-  502       |             ::Eden::Performance::CachePhase::TextureGcCollect, detailed};
+-  503       | #endif
+-  504       |         RunGarbageCollector();
++       1398 |     bool spill_collect = false; ///< Memory spilled to host memory: collect hard this frame
++       1399 |     if constexpr (HAS_DEVICE_MEMORY_INFO) {
++       1400 |         // Switch 2 titles (native tiling) stream far more texture data than Eden's thresholds
++       1401 |         // were tuned for: title 1's attract loop alone keeps ~5.3 GB resident, so the collector
++       1402 |         // sat in aggressive mode evicting decoded ASTC (and decoding it again). Total use is
++       1403 |         // measured from the driver, so collect only near the device budget instead.
++       1404 |         if (!native_thresholds_applied && gpu_memory != nullptr && gpu_memory->UsesNativeTiling()) {
++       1405 |             native_thresholds_applied = true;
++       1406 |             const u64 device_local = runtime.GetDeviceLocalMemory();
++       1407 |             critical_memory = (std::max)(critical_memory, device_local - 256_MiB);
++       1408 |             expected_memory = (std::max)(expected_memory, device_local - 1280_MiB);
++       1409 |             ApplyThresholdOverrides();
++       1410 |             native_critical_memory = critical_memory;
++       1411 |             native_expected_memory = expected_memory;
+   505  1412 |     }
++       1413 |         // Follow the driver's budget (re-read now and then): it shrinks when other programs use
++       1414 |         // VRAM (another game: 7.0 -> 6.4 GB), and collecting only past it means the driver pages
++       1415 |         // textures out. It is also the room to use: Eden's device memory figure is capped near
++       1416 |         // 7 GB, which on a 12 GB card (11.2 GB budget) kept title 1 evicting textures with 3 GB
++       1417 |         // unused. Both thresholds stay under it with a margin (1/8 of it, at most 1 GiB): past it
++       1418 |         // allocations fail and images end up unbacked (garbage textures), and Windows shrinks the
++       1419 |         // budget as the card fills (16 GB card: 13.5 GB left mid-race), hence the re-read every 30
++       1420 |         // frames. EDEN_NX2_TC_*_MIB overrides can raise the thresholds up to this budget.
++       1421 |         if constexpr (requires { runtime.GetDeviceMemoryBudget(); }) {
++       1422 |             if constexpr (requires { runtime.MemoryPressureEvents(); }) {
++       1423 |                 // Images that did not fit (made in host memory or with nothing bound) mean the
++       1424 |                 // thresholds sit too high for this card and driver: leave more room until the
++       1425 |                 // pressure has been gone for a while.
++       1426 |                 if (native_thresholds_applied) {
++       1427 |                     const u32 events = runtime.MemoryPressureEvents();
++       1428 |                     if (events != seen_pressure_events) {
++       1429 |                         seen_pressure_events = events;
++       1430 |                         pressure_margin = (std::min)(pressure_margin + 512_MiB, 3_GiB);
++       1431 |                         pressure_quiet_frames = 0;
++       1432 |                         budget_check_frames = 0; // thresholds are recomputed below
++       1433 |                         LOG_WARNING(HW_GPU, "Out of device memory: keeping {} MiB more free",
++       1434 |                                     pressure_margin >> 20);
++       1435 |                     } else if (pressure_margin != 0 && ++pressure_quiet_frames % 600 == 0) {
++       1436 |                         pressure_margin -= (std::min)(pressure_margin, 128_MiB);
++       1437 |                         budget_check_frames = 0;
++       1438 |                     }
++       1439 |                 }
++       1440 |             }
++       1441 |             if constexpr (requires { runtime.TakeSpilledBytes(); }) {
++       1442 |                 // Device-local memory the allocator placed in host memory (heap over its
++       1443 |                 // budget, discrete GPU). RTX 4050 Laptop in title 1's Castle Town: 290-420 MiB
++       1444 |                 // spilled for minutes, 50-57 -> 20-26 fps. Answering each spill like an
++       1445 |                 // out-of-memory event (+512 MiB) took the margin to 1.5 GiB while the scene
++       1446 |                 // loaded (the old scene still resident) and left the cache under the new
++       1447 |                 // scene's working set: ASTC decodes 55/s -> 950/s, no better fps. So, per
++       1448 |                 // episode: first a few forced collects; only if it still spills after them,
++       1449 |                 // a margin of what spilled in the last ~2 s plus 128 MiB (at most 768 MiB),
++       1450 |                 // which shrinks by 128 MiB every 240 quiet frames.
++       1451 |                 if (native_thresholds_applied) {
++       1452 |                     constexpr u64 SpillWindowFrames = 120;
++       1453 |                     constexpr u64 SpillGraceFrames = 60;
++       1454 |                     constexpr u64 SpillCollectSpacing = 15;
++       1455 |                     constexpr u32 MaxSpillCollects = 4;
++       1456 |                     constexpr u64 SpillDecayFrames = 240;
++       1457 |                     constexpr u64 SpillEpisodeEndFrames = 300;
++       1458 |                     const u64 spilled = runtime.TakeSpilledBytes();
++       1459 |                     if (frame_tick - spill_window_start >= SpillWindowFrames) {
++       1460 |                         spill_window_start = frame_tick;
++       1461 |                         spill_window_bytes = 0;
++       1462 |                     }
++       1463 |                     spill_log_bytes += spilled;
++       1464 |                     if (spilled != 0) {
++       1465 |                         spill_window_bytes += spilled;
++       1466 |                         spill_quiet_frames = 0;
++       1467 |                         if (spill_collect_tick == 0) {
++       1468 |                             spill_collect_tick = frame_tick + 1;
++       1469 |                         }
++       1470 |                         // The forced collects run only on frames that spill, so a sparse
++       1471 |                         // episode may still have some left after the grace period: use them
++       1472 |                         // all before raising the margin.
++       1473 |                         const u64 since = frame_tick + 1 - spill_collect_tick;
++       1474 |                         if (spill_forced_collects < MaxSpillCollects) {
++       1475 |                             if (spill_forced_collects == 0 ||
++       1476 |                                 frame_tick >= spill_last_collect + SpillCollectSpacing) {
++       1477 |                                 spill_last_collect = frame_tick;
++       1478 |                                 ++spill_forced_collects;
++       1479 |                                 ++spill_log_collects;
++       1480 |                                 spill_collect = true;
++       1481 |                             }
++       1482 |                         } else if (since >= SpillGraceFrames) {
++       1483 |                             const u64 target = (std::min)(spill_window_bytes + 128_MiB, 768_MiB);
++       1484 |                             if (target > spill_margin) {
++       1485 |                                 spill_margin = target;
++       1486 |                                 budget_check_frames = 0; // thresholds are recomputed below
++       1487 |                                 LOG_WARNING(HW_GPU,
++       1488 |                                             "Still spilling to host memory after {} forced "
++       1489 |                                             "collects: keeping {} MiB more free",
++       1490 |                                             spill_forced_collects, spill_margin >> 20);
++       1491 |                             }
++       1492 |                         }
++       1493 |                     } else {
++       1494 |                         ++spill_quiet_frames;
++       1495 |                         if (spill_quiet_frames == SpillEpisodeEndFrames) {
++       1496 |                             spill_collect_tick = 0;
++       1497 |                             spill_forced_collects = 0;
++       1498 |                         }
++       1499 |                         if (spill_margin != 0 && spill_quiet_frames % SpillDecayFrames == 0) {
++       1500 |                             spill_margin -= (std::min)(spill_margin, 128_MiB);
++       1501 |                             budget_check_frames = 0;
++       1502 |                         }
++       1503 |                     }
++       1504 |                     if (spill_margin != 0 || spill_log_bytes != 0) {
++       1505 |                         const auto now = std::chrono::steady_clock::now();
++       1506 |                         if (now - spill_log_time >= std::chrono::seconds{10}) {
++       1507 |                             spill_log_time = now;
++       1508 |                             LOG_INFO(HW_GPU,
++       1509 |                                      "Host spill: {} MiB placed in host memory and {} forced "
++       1510 |                                      "collects since the last line; spill margin {} MiB, out of "
++       1511 |                                      "memory margin {} MiB, critical {} MiB",
++       1512 |                                      spill_log_bytes >> 20, spill_log_collects, spill_margin >> 20,
++       1513 |                                      pressure_margin >> 20, critical_memory >> 20);
++       1514 |                             spill_log_bytes = 0;
++       1515 |                             spill_log_collects = 0;
++       1516 |                         }
++       1517 |                     }
++       1518 |                 }
++       1519 |             }
++       1520 |             // The larger of the two answers to memory that did not fit.
++       1521 |             const u64 fit_margin = (std::max)(pressure_margin, spill_margin);
++       1522 |             if (native_thresholds_applied && budget_check_frames++ % 30 == 0) {
++       1523 |                 const u64 budget = runtime.GetDeviceMemoryBudget();
++       1524 |                 retention_limit = 0;
++       1525 |                 if (budget > 2_GiB) {
++       1526 |                     const u64 margin = (std::min)(budget / 8, 1_GiB);
++       1527 |                     if constexpr (requires { runtime.GetDeviceMemorySlack(); }) {
++       1528 |                         // The usage counted here leaves out the unused part of the allocator's
++       1529 |                         // blocks, which the driver counts and a full heap cannot hand to a new
++       1530 |                         // image (RX 7800 XT: 1.06 GiB of it, the whole margin, with the heap at
++       1531 |                         // its budget for a minute before images stopped fitting). Reserve it
++       1532 |                         // too: at once when it grows, slowly when it shrinks, so evicting images
++       1533 |                         // (which leaves partly used blocks) does not chase the threshold down.
++       1534 |                         const u64 slack = (std::min)(runtime.GetDeviceMemorySlack(), 1536_MiB);
++       1535 |                         slack_margin = slack >= slack_margin
++       1536 |                                            ? slack
++       1537 |                                            : slack_margin - (std::min)(slack_margin - slack, 16_MiB);
++       1538 |                     }
++       1539 |                     const u64 reserved = margin + fit_margin + slack_margin;
++       1540 |                     critical_memory = budget - (std::min)(reserved, budget / 2);
++       1541 |                     // The device's budget is not all the room there is: see HostCriticalMemory.
++       1542 |                     // The usage is the driver's, which still counts images waiting to be freed.
++       1543 |                     const std::optional<u64> commit_room = Common::GetProcessCommitRoom();
++       1544 |                     const u64 host_critical =
++       1545 |                         commit_room
++       1546 |                             ? HostCriticalMemory(runtime.GetDeviceMemoryUsage(), *commit_room)
++       1547 |                             : (std::numeric_limits<u64>::max)();
++       1548 |                     critical_memory = (std::min)(critical_memory, host_critical);
++       1549 |                     retention_budget = RetentionBudget(retention_budget, budget);
++       1550 |                     const u64 room_margin =
++       1551 |                         (std::min)(fit_margin + slack_margin, retention_budget / 2);
++       1552 |                     retention_limit = (std::min)(retention_budget - room_margin, host_critical);
++       1553 |                     expected_memory = critical_memory - (std::min)(margin, critical_memory / 2);
++       1554 |                     ApplyThresholdOverrides(false);
++       1555 |                     u64 other_memory = 0;
++       1556 |                     if constexpr (requires { runtime.GetDeviceHeapMemoryBudget(); }) {
++       1557 |                         // An integrated GPU's budget is the share of system memory it is capped
++       1558 |                         // to (4 or 6 GiB) so that textures don't fill RAM, but the usage compared
++       1559 |                         // with the thresholds is everything in device memory. Ocarina's ~4 GB of
++       1560 |                         // other allocations kept a Radeon 860M past critical with 1.3 GB of
++       1561 |                         // images: deleting them all could not get under it, and the collector
++       1562 |                         // recreated ~480 images a second, downloading ~70 with a GPU wait (#739).
++       1563 |                         // There the share bounds the images: what isn't images is added to the
++       1564 |                         // thresholds, up to the heap's own budget and the host's commit. The
++       1565 |                         // EDEN_NX2_TC_*_MIB overrides set the thresholds by hand, so they are left
++       1566 |                         // as the overrides made them.
++       1567 |                         static const bool overridden =
++       1568 |                             std::getenv("EDEN_NX2_TC_EXPECTED_MIB") != nullptr ||
++       1569 |                             std::getenv("EDEN_NX2_TC_CRITICAL_MIB") != nullptr;
++       1570 |                         const u64 heap_budget = runtime.GetDeviceHeapMemoryBudget();
++       1571 |                         if (heap_budget > budget) {
++       1572 |                             u64 image_bytes = 0;
++       1573 |                             for (const auto [image_id, image] : slot_images) {
++       1574 |                                 image_bytes += ImageAllocationBytes(*image);
++       1575 |                                 if (image->HasScaled()) {
++       1576 |                                     image_bytes += GetScaledImageSizeBytes(*image);
++       1577 |                                 }
++       1578 |                             }
++       1579 |                             other_memory =
++       1580 |                                 total_used_memory - (std::min)(total_used_memory, image_bytes);
++       1581 |                         }
++       1582 |                         if (heap_budget > budget && !overridden) {
++       1583 |                             const u64 heap_critical =
++       1584 |                                 heap_budget - (std::min)(reserved, heap_budget / 2);
++       1585 |                             const u64 gap = critical_memory - expected_memory;
++       1586 |                             const u64 raised = (std::min)(
++       1587 |                                 (std::min)(critical_memory + other_memory, heap_critical),
++       1588 |                                 host_critical);
++       1589 |                             critical_memory = (std::max)(critical_memory, raised);
++       1590 |                             expected_memory =
++       1591 |                                 critical_memory - (std::min)(gap, critical_memory / 2);
++       1592 |                             // The retention floor is compared with the same usage, so it gets the
++       1593 |                             // same raise: without it the usage stayed past the floor, and images
++       1594 |                             // went after the mode's age instead of MinEvictionAge.
++       1595 |                             const u64 heap_room =
++       1596 |                                 heap_budget - (std::min)(room_margin, heap_budget / 2);
++       1597 |                             retention_limit = (std::min)(
++       1598 |                                 (std::min)(retention_limit + other_memory, heap_room),
++       1599 |                                 host_critical);
++       1600 |                         }
++       1601 |                     }
++       1602 |                     // Log the first values and real changes (the budget moves by a few MiB all
++       1603 |                     // the time). Compared after the cap: before it, every check differed from
++       1604 |                     // the capped value by more than 256 MiB and logged twice a second. Compared
++       1605 |                     // with the last values logged, so a threshold that host memory lowers a
++       1606 |                     // little at each check is logged too.
++       1607 |                     const u64 change = critical_memory > logged_critical_memory
++       1608 |                                            ? critical_memory - logged_critical_memory
++       1609 |                                            : logged_critical_memory - critical_memory;
++       1610 |                     const bool log = budget_check_frames == 1 || change >= 256_MiB;
++       1611 |                     if (log) {
++       1612 |                         logged_critical_memory = critical_memory;
++       1613 |                         LogThresholds();
++       1614 |                         LOG_INFO(HW_GPU,
++       1615 |                                  "Memory margins: base {} MiB, out of memory {} MiB, host spill {} "
++       1616 |                                  "MiB, block slack {} MiB, not textures {} MiB; budget {} MiB, "
++       1617 |                                  "retention limit {} MiB (lowest budget lately {} MiB)",
++       1618 |                                  margin >> 20, pressure_margin >> 20, spill_margin >> 20,
++       1619 |                                  slack_margin >> 20, other_memory >> 20, budget >> 20,
++       1620 |                                  retention_limit >> 20, retention_budget >> 20);
++       1621 |                         if (commit_room) {
++       1622 |                             LOG_INFO(HW_GPU,
++       1623 |                                      "Host memory: {} MiB of commit left for this process, {}",
++       1624 |                                      *commit_room >> 20,
++       1625 |                                      critical_memory == host_critical
++       1626 |                                          ? "which bounds the thresholds"
++       1627 |                                          : "the device budget bounds the thresholds");
++       1628 |                         }
++       1629 |                     }
++       1630 |                 }
++       1631 |             }
++       1632 |         }
++       1633 |     }
++       1634 |     // EDEN_NX2_MEM_TRACE=1: every 2 s, what the cache holds next to what the process and the
++       1635 |     // driver report (memory climbs).
++       1636 |     static const bool mem_trace = std::getenv("EDEN_NX2_MEM_TRACE") != nullptr;
++       1637 |     if (const auto now = std::chrono::steady_clock::now();
++       1638 |         mem_trace && now - mem_trace_time >= std::chrono::seconds{2}) {
++       1639 |         mem_trace_time = now;
++       1640 |         u64 image_bytes{};
++       1641 |         u64 gpu_written_bytes{};
++       1642 |         size_t images{};
++       1643 |         size_t unbacked{};
++       1644 |         for (const auto [image_id, image] : slot_images) {
++       1645 |             ++images;
++       1646 |             if (True(image->flags & ImageFlagBits::Unbacked)) {
++       1647 |                 ++unbacked;
++       1648 |                 continue;
++       1649 |             }
++       1650 |             const u64 bytes = GetScaledImageSizeBytes(*image);
++       1651 |             image_bytes += bytes;
++       1652 |             if (True(image->flags & ImageFlagBits::GpuModified)) {
++       1653 |                 gpu_written_bytes += bytes;
++       1654 |             }
++       1655 |         }
++       1656 |         u64 decode_bytes{};
++       1657 |         for (const auto& decode : async_decodes) {
++       1658 |             // The worker sizes the buffer before it publishes complete.
++       1659 |             if (decode->complete.load(std::memory_order_acquire)) {
++       1660 |                 decode_bytes += decode->decoded_data.capacity();
++       1661 |             }
++       1662 |         }
++       1663 |         const u64 sentenced = std::accumulate(sentenced_image_bytes.begin(),
++       1664 |                                               sentenced_image_bytes.end(), gpu_sentenced_bytes);
++       1665 |         LOG_INFO(HW_GPU,
++       1666 |                  "Memory trace: texture cache {} images {} MiB ({} MiB GPU-written, {} unbacked), "
++       1667 |                  "device usage {} MiB (expected {} MiB, critical {} MiB), sentenced {} MiB, {} "
++       1668 |                  "async decodes {} MiB, scratch {} MiB",
++       1669 |                  images, image_bytes >> 20, gpu_written_bytes >> 20, unbacked,
++       1670 |                  total_used_memory >> 20, expected_memory >> 20, critical_memory >> 20,
++       1671 |                  sentenced >> 20, async_decodes.size(), decode_bytes >> 20,
++       1672 |                  (swizzle_data_buffer.capacity() + unswizzle_data_buffer.capacity()) >> 20);
++       1673 |         if constexpr (requires { runtime.LogMemoryTrace(); }) {
++       1674 |             runtime.LogMemoryTrace();
++       1675 |         }
++       1676 |     }
++       1677 |     // Every 600 frames: device memory in use against the collector's thresholds.
++       1678 |     // Skip expensive heap allocation, map construction, and sorting unless debug logging is explicitly enabled.
++       1679 |     static const bool log_tc = std::getenv("EDEN_NX2_TC_LOG") != nullptr;
++       1680 |     static u64 frames{};
++       1681 |     if (log_tc && ++frames % 600 == 0) {
++       1682 |         u64 image_bytes{};
++       1683 |         size_t images{};
++       1684 |         std::vector<std::pair<u64, const Image*>> largest;
++       1685 |         std::map<u32, std::pair<u64, u32>> by_format;
++       1686 |         for (const auto [image_id, image] : slot_images) {
++       1687 |             const u64 bytes = GetScaledImageSizeBytes(*image);
++       1688 |             image_bytes += bytes;
++       1689 |             ++images;
++       1690 |             if (debug_stats) {
++       1691 |                 largest.emplace_back(bytes, image);
++       1692 |                 auto& format = by_format[static_cast<u32>(image->info.format)];
++       1693 |                 format.first += bytes;
++       1694 |                 ++format.second;
++       1695 |             }
++       1696 |         }
++       1697 |         LOG_INFO(HW_GPU, "Texture cache: device memory {} MiB (expected {} MiB, critical {} MiB), {} images {} MiB",
++       1698 |                  total_used_memory >> 20, expected_memory >> 20, critical_memory >> 20, images,
++       1699 |                  image_bytes >> 20);
++       1700 |         std::partial_sort(largest.begin(), largest.begin() + std::min<size_t>(12, largest.size()),
++       1701 |                           largest.end(), [](const auto& a, const auto& b) { return a.first > b.first; });
++       1702 |         for (size_t i = 0; i < std::min<size_t>(12, largest.size()); ++i) {
++       1703 |             const Image& image = *largest[i].second;
++       1704 |             LOG_DEBUG(HW_GPU, "  {} MiB: {:#x} {}x{}x{} layers {} levels {} format {} type {} flags {:#x}",
++       1705 |                      largest[i].first >> 20, image.gpu_addr, image.info.size.width, image.info.size.height,
++       1706 |                      image.info.size.depth, image.info.resources.layers, image.info.resources.levels,
++       1707 |                      static_cast<u32>(image.info.format), static_cast<u32>(image.info.type),
++       1708 |                      static_cast<u32>(image.flags));
++       1709 |         }
++       1710 |         std::vector<std::pair<u64, u32>> formats;
++       1711 |         for (const auto& [format, total] : by_format) formats.emplace_back(total.first, format);
++       1712 |         std::sort(formats.rbegin(), formats.rend());
++       1713 |         for (size_t i = 0; i < std::min<size_t>(8, formats.size()); ++i) {
++       1714 |             LOG_DEBUG(HW_GPU, "  format {}: {} MiB in {} images", formats[i].second, formats[i].first >> 20,
++       1715 |                      by_format[formats[i].second].second);
++       1716 |         }
++       1717 |         if constexpr (requires { runtime.LogMemoryStatistics(); }) {
++       1718 |             runtime.LogMemoryStatistics();
++       1719 |         }
++       1720 |         LOG_INFO(HW_GPU, "Texture cache last 600 frames: created {} images, deleted {} (collector {}, {} costly, {} downloaded), {} async decodes, ASTC {} opaque / {} alpha",
++       1721 |                  images_created, images_deleted, gc_deletes + gc_costly_deletes, gc_costly_deletes,
++       1722 |                  gc_download_deletes,
++       1723 |                  async_decodes_queued, astc_opaque_images, astc_alpha_images);
++       1724 |         LOG_INFO(HW_GPU, "Texture cache last 600 frames: {} uploads from guest memory, {} MiB (largest {} MiB, {} by layer)",
++       1725 |                  images_uploaded, uploaded_bytes >> 20, largest_upload >> 20, layer_uploads);
++       1726 |         LOG_INFO(HW_GPU,
++       1727 |                  "Texture cache last 600 frames: stale uploads skipped {} ({} MiB), {} uploaded "
++       1728 |                  "for buffer-written pages; {} MiB of pages marked stale",
++       1729 |                  tc_stale_skips, tc_stale_skip_bytes >> 20, tc_stale_gpu_written,
++       1730 |                  (stale_pages.Count() << StalePages::PAGE_BITS) >> 20);
++       1731 |         tc_stale_skips = tc_stale_skip_bytes = tc_stale_gpu_written = 0;
++       1732 |         images_uploaded = uploaded_bytes = largest_upload = layer_uploads = 0;
++       1733 |         astc_opaque_images = astc_alpha_images = 0;
++       1734 |         std::vector<std::pair<u32, u64>> shapes;
++       1735 |         for (const auto& [key, value] : created_shapes) shapes.emplace_back(value.first, key);
++       1736 |         std::sort(shapes.rbegin(), shapes.rend());
++       1737 |         for (size_t i = 0; i < std::min<size_t>(10, shapes.size()); ++i) {
++       1738 |             const u64 key = shapes[i].second;
++       1739 |             LOG_DEBUG(HW_GPU, "  created {}x: format {} type {} levels {} layers {} {}x{} (last at {:#x})",
++       1740 |                      shapes[i].first, key >> 56, (key >> 52) & 0xF, (key >> 48) & 0xF,
++       1741 |                      (key >> 36) & 0xFFF, (key >> 18) & 0x3FFFF, key & 0x3FFFF,
++       1742 |                      created_shapes[key].second);
++       1743 |         }
++       1744 |         created_shapes.clear();
++       1745 |         // The per-image and per-shape tallies only feed debug lines: skip them while those are off.
++       1746 |         debug_stats = Common::Log::IsLevelEnabled(Common::Log::Class::HW_GPU, Common::Log::Level::Debug);
++       1747 |         gc_deletes = gc_costly_deletes = gc_download_deletes = async_decodes_queued = 0;
++       1748 |         images_created = images_deleted = 0;
++       1749 |     }
++       1750 |     // An image that could not be made at all: the driver is out of memory whatever the counts
++       1751 |     // say, so collect as at the critical threshold.
++       1752 |     bool out_of_memory = false;
++       1753 |     if constexpr (requires { runtime.FailedImages(); }) {
++       1754 |         const u32 failed = runtime.FailedImages();
++       1755 |         out_of_memory = failed != seen_failed_images;
++       1756 |         seen_failed_images = failed;
++       1757 |     }
++       1758 |     // A forced collect for memory spilled to host memory collects as at the critical threshold
++       1759 |     // for this frame: it stops once usage is under it and keeps the retention floor. Collecting as
++       1760 |     // out of memory instead deleted every image unused for 10 frames, decoded ASTC included, on a
++       1761 |     // 4 GB GTX 1650 whose scene does not fit (#2127): each spill episode evicted the working set,
++       1762 |     // which was decoded again (ASTC decodes 1000-1585 per 5 s against 2-15 on a 16 GB card) and
++       1763 |     // spilled again, with frames up to 2.5 s.
++       1764 |     if (out_of_memory || spill_collect || total_used_memory > minimum_memory) {
++       1765 |         RunGarbageCollector(out_of_memory, spill_collect);
++       1766 |     }
++       1767 |     if (out_of_memory) {
++       1768 |         // Textures left out for lack of memory are made again on their next read, once a frame
++       1769 |         // while images keep failing.
++       1770 |         ++churn.invalidations;
++       1771 |         for (size_t c : active_channel_ids) {
++       1772 |             channel_storage[c].graphics_image_table.Invalidate();
++       1773 |             channel_storage[c].compute_image_table.Invalidate();
++       1774 |         }
++       1775 |     }
+   506  1776 |     sentenced_images.Tick();
++       1777 |     sentenced_image_index = (sentenced_image_index + 1) % TICKS_TO_DESTROY;
++       1778 |     sentenced_image_bytes[sentenced_image_index] = 0;
+   507  1779 |     sentenced_framebuffers.Tick();
+   508  1780 |     sentenced_image_view.Tick();
+-  509       | #ifdef PS5_NATIVE
+-  510       |     ::Eden::Performance::CachePhaseTimer async_tick{
+-  511       |         ::Eden::Performance::CachePhase::TextureAsyncTick, sample_housekeeping};
+-  512       | #endif
+   513  1781 |     TickAsyncDecode();
+   514  1782 |     TickAsyncUnswizzle();
+-  515       | #ifdef PS5_NATIVE
+-  516       |     async_tick.Stop();
+-  517       |     ::Eden::Performance::CachePhaseTimer runtime_tick{
+-  518       |         ::Eden::Performance::CachePhase::TextureRuntimeTick, sample_housekeeping};
+-  519       | #endif
++       1783 |     if (frame_tick % 600 == 0 && !uploaded_ranges.empty()) {
++       1784 |         for (const auto& [address, size] : uploaded_ranges) {
++       1785 |             device_memory.HintCold(address, size);
++       1786 |         }
++       1787 |         uploaded_ranges.clear();
++       1788 |     }
++       1789 | 
+   520  1790 |     runtime.TickFrame();
+-  521       | #ifdef PS5_NATIVE
+-  522       |     runtime_tick.Stop();
+-  523       | #endif
+   524  1791 |     ++frame_tick;
+   525  1792 | 
+   526  1793 |     if constexpr (IMPLEMENTS_ASYNC_DOWNLOADS) {
+   527  1794 |         for (auto& buffer : async_buffers_death_ring) {
+   528  1795 |             runtime.FreeDeferredStagingBuffer(buffer);
+   529  1796 |         }
+   530  1797 |         async_buffers_death_ring.clear();
+   531  1798 |     }
+   532  1799 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 410–742 : 22 alignées, 37 propres Encore, 311 propres upstream</summary>
+
+Source : [texture_cache.h:410–742](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/texture_cache/texture_cache.h#L410-L742).
+
+```diff
+   474   410 | void TextureCache<P>::TickFrame() {
+-  475       | #ifdef PS5_NATIVE
+-  476       |     // C03: exact driver budget/GC events plus 1-in-16 async/runtime samples.
+-  477       |     // Timers run only in Detailed Logging; the order and cache locks remain.
+-  478       |     const bool detailed = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed);
+-  479       |     const bool sample_housekeeping = detailed && ::Eden::Performance::ShouldSampleTextureHousekeeping();
+-  480       | #endif
++        411 |     // Upload buffers grown for one huge image (title 1's 341 MiB terrain layer pools) are freed
++        412 |     // rather than kept for the rest of the session.
++        413 |     for (auto* const scratch : {&swizzle_data_buffer, &unswizzle_data_buffer}) {
++        414 |         if (scratch->capacity() > LargeScratchCapacity) {
++        415 |             scratch->release();
++        416 |         }
++        417 |     }
++        418 |     if constexpr (HAS_DEVICE_MEMORY_INFO) {
++        419 |         // Switch 2 titles (native tiling) stream far more texture data than Eden's thresholds
++        420 |         // were tuned for: title 1's attract loop alone keeps ~5.3 GB resident, so the collector
++        421 |         // sat in aggressive mode evicting decoded ASTC (and decoding it again). Total use is
++        422 |         // measured from the driver, so collect only near the device budget instead.
++        423 |         if (!native_thresholds_applied && gpu_memory != nullptr && gpu_memory->UsesNativeTiling()) {
++        424 |             native_thresholds_applied = true;
++        425 |             const u64 device_local = runtime.GetDeviceLocalMemory();
++        426 |             critical_memory = (std::max)(critical_memory, device_local - 256_MiB);
++        427 |             expected_memory = (std::max)(expected_memory, device_local - 1280_MiB);
++        428 |             ApplyThresholdOverrides();
++        429 |             native_critical_memory = critical_memory;
++        430 |             native_expected_memory = expected_memory;
++        431 |         }
++        432 |         // Follow the driver's budget (re-read now and then): it shrinks when other programs use
++        433 |         // VRAM (another game: 7.0 -> 6.4 GB), and collecting only past it means the driver pages
++        434 |         // textures out. It is also the room to use: Eden's device memory figure is capped near
++        435 |         // 7 GB, which on a 12 GB card (11.2 GB budget) kept title 1 evicting textures with 3 GB
++        436 |         // unused. Both thresholds stay under it with a margin (1/8 of it, at most 1 GiB): past it
++        437 |         // allocations fail and images end up unbacked (garbage textures), and Windows shrinks the
++        438 |         // budget as the card fills (16 GB card: 13.5 GB left mid-race), hence the re-read every 30
++        439 |         // frames. EDEN_NX2_TC_*_MIB overrides can raise the thresholds up to this budget.
++        440 |         if constexpr (requires { runtime.GetDeviceMemoryBudget(); }) {
++        441 |             if constexpr (requires { runtime.MemoryPressureEvents(); }) {
++        442 |                 // Images that did not fit (made in host memory or with nothing bound) mean the
++        443 |                 // thresholds sit too high for this card and driver: leave more room until the
++        444 |                 // pressure has been gone for a while.
++        445 |                 if (native_thresholds_applied) {
++        446 |                     const u32 events = runtime.MemoryPressureEvents();
++        447 |                     if (events != seen_pressure_events) {
++        448 |                         seen_pressure_events = events;
++        449 |                         pressure_margin = (std::min)(pressure_margin + 512_MiB, 3_GiB);
++        450 |                         pressure_quiet_frames = 0;
++        451 |                         budget_check_frames = 0; // thresholds are recomputed below
++        452 |                         LOG_WARNING(HW_GPU, "Out of device memory: keeping {} MiB more free",
++        453 |                                     pressure_margin >> 20);
++        454 |                     } else if (pressure_margin != 0 && ++pressure_quiet_frames % 600 == 0) {
++        455 |                         pressure_margin -= (std::min)(pressure_margin, 128_MiB);
++        456 |                         budget_check_frames = 0;
++        457 |                     }
++        458 |                 }
++        459 |             }
++        460 |             if (native_thresholds_applied && budget_check_frames++ % 30 == 0) {
++        461 |                 const u64 budget = runtime.GetDeviceMemoryBudget();
++        462 |                 retention_limit = 0;
++        463 |                 if (budget > 2_GiB) {
++        464 |                     const u64 margin = (std::min)(budget / 8, 1_GiB);
++        465 |                     if constexpr (requires { runtime.GetDeviceMemorySlack(); }) {
++        466 |                         // The usage counted here leaves out the unused part of the allocator's
++        467 |                         // blocks, which the driver counts and a full heap cannot hand to a new
++        468 |                         // image (RX 7800 XT: 1.06 GiB of it, the whole margin, with the heap at
++        469 |                         // its budget for a minute before images stopped fitting). Reserve it
++        470 |                         // too: at once when it grows, slowly when it shrinks, so evicting images
++        471 |                         // (which leaves partly used blocks) does not chase the threshold down.
++        472 |                         const u64 slack = (std::min)(runtime.GetDeviceMemorySlack(), 1536_MiB);
++        473 |                         slack_margin = slack >= slack_margin
++        474 |                                            ? slack
++        475 |                                            : slack_margin - (std::min)(slack_margin - slack, 16_MiB);
++        476 |                     }
++        477 |                     critical_memory =
++        478 |                         budget - (std::min)(margin + pressure_margin + slack_margin, budget / 2);
++        479 |                     // The device's budget is not all the room there is: see HostCriticalMemory.
++        480 |                     // The usage is the driver's, which still counts images waiting to be freed.
++        481 |                     const std::optional<u64> commit_room = Common::GetSystemCommitRoom();
++        482 |                     const u64 host_critical =
++        483 |                         commit_room
++        484 |                             ? HostCriticalMemory(runtime.GetDeviceMemoryUsage(), *commit_room)
++        485 |                             : (std::numeric_limits<u64>::max)();
++        486 |                     critical_memory = (std::min)(critical_memory, host_critical);
++        487 |                     retention_budget = RetentionBudget(retention_budget, budget);
++        488 |                     const u64 room_margin =
++        489 |                         (std::min)(pressure_margin + slack_margin, retention_budget / 2);
++        490 |                     retention_limit = (std::min)(retention_budget - room_margin, host_critical);
++        491 |                     expected_memory = critical_memory - (std::min)(margin, critical_memory / 2);
++        492 |                     ApplyThresholdOverrides(false);
++        493 |                     // Log the first values and real changes (the budget moves by a few MiB all
++        494 |                     // the time). Compared after the cap: before it, every check differed from
++        495 |                     // the capped value by more than 256 MiB and logged twice a second. Compared
++        496 |                     // with the last values logged, so a threshold that host memory lowers a
++        497 |                     // little at each check is logged too.
++        498 |                     const u64 change = critical_memory > logged_critical_memory
++        499 |                                            ? critical_memory - logged_critical_memory
++        500 |                                            : logged_critical_memory - critical_memory;
++        501 |                     const bool log = budget_check_frames == 1 || change >= 256_MiB;
++        502 |                     if (log) {
++        503 |                         logged_critical_memory = critical_memory;
++        504 |                         LogThresholds();
++        505 |                         LOG_INFO(HW_GPU,
++        506 |                                  "Memory margins: base {} MiB, out of memory {} MiB, block slack {} MiB; "
++        507 |                                  "retention limit {} MiB (lowest budget lately {} MiB)",
++        508 |                                  margin >> 20, pressure_margin >> 20, slack_margin >> 20,
++        509 |                                  retention_limit >> 20, retention_budget >> 20);
++        510 |                         if (commit_room) {
++        511 |                             LOG_INFO(HW_GPU, "Host memory: {} MiB of commit left, {}",
++        512 |                                      *commit_room >> 20,
++        513 |                                      critical_memory == host_critical
++        514 |                                          ? "which bounds the thresholds"
++        515 |                                          : "the device budget bounds the thresholds");
++        516 |                         }
++        517 |                     }
++        518 |                 }
++        519 |             }
++        520 |         }
++        521 |     }
++        522 |     if constexpr (requires { runtime.CurrentTick(); }) {
++        523 |         while (!gpu_sentenced_images.empty() &&
++        524 |                runtime.IsFree(gpu_sentenced_images.front().tick)) {
++        525 |             gpu_sentenced_bytes -= gpu_sentenced_images.front().bytes;
++        526 |             gpu_sentenced_images.pop_front();
++        527 |         }
++        528 |     }
+   481   529 |     // If we can obtain the memory info, use it instead of the estimate.
+   482   530 |     if (runtime.CanReportMemoryUsage()) {
+-  483       | #ifdef PS5_NATIVE
+-  484       |         // A driver memory-budget probe can run under texture_cache.mutex.
+-  485       |         // While comfortably below the GC watermark, sample every other
+-  486       |         // frame; at 2/3 of the watermark or higher, sample EVERY frame to
+-  487       |         // preserve prompt reclaim and avoid an allocation-pressure blind spot.
+-  488       |         const bool near_gc_watermark =
+-  489       |             total_used_memory >= minimum_memory - minimum_memory / 3;
+-  490       |         if (near_gc_watermark || (frame_tick & 1u) == 0) {
+-  491       |             ::Eden::Performance::CachePhaseTimer budget_query{
+-  492       |                 ::Eden::Performance::CachePhase::TextureBudgetQuery, detailed};
+   493   531 |             total_used_memory = runtime.GetDeviceMemoryUsage();
++        532 |         // Images the collector deleted keep their memory for TICKS_TO_DESTROY frames: counting
++        533 |         // it kept the collector in aggressive mode, deleting 40+ images a frame for frames after
++        534 |         // it had freed enough (title 1: frames over 100 ms for seconds at a time).
++        535 |         for (const u64 bytes : sentenced_image_bytes) {
++        536 |             total_used_memory -= (std::min)(total_used_memory, bytes);
+   494   537 |         }
+-  495       | #else
+-  496       |         total_used_memory = runtime.GetDeviceMemoryUsage();
+-  497       | #endif
++        538 |         total_used_memory -= (std::min)(total_used_memory, gpu_sentenced_bytes);
+   498   539 |     }
+-  499       |     if (total_used_memory > minimum_memory) {
+-  500       | #ifdef PS5_NATIVE
+-  501       |         ::Eden::Performance::CachePhaseTimer gc_collect{
+-  502       |             ::Eden::Performance::CachePhase::TextureGcCollect, detailed};
+-  503       | #endif
+-  504       |         RunGarbageCollector();
++        540 |     // EDEN_NX2_MEM_TRACE=1: every 2 s, what the cache holds next to what the process and the
++        541 |     // driver report (memory climbs).
++        542 |     static const bool mem_trace = std::getenv("EDEN_NX2_MEM_TRACE") != nullptr;
++        543 |     if (const auto now = std::chrono::steady_clock::now();
++        544 |         mem_trace && now - mem_trace_time >= std::chrono::seconds{2}) {
++        545 |         mem_trace_time = now;
++        546 |         u64 image_bytes{};
++        547 |         u64 gpu_written_bytes{};
++        548 |         size_t images{};
++        549 |         size_t unbacked{};
++        550 |         for (const auto [image_id, image] : slot_images) {
++        551 |             ++images;
++        552 |             if (True(image->flags & ImageFlagBits::Unbacked)) {
++        553 |                 ++unbacked;
++        554 |                 continue;
+   505   555 |     }
++        556 |             const u64 bytes = GetScaledImageSizeBytes(*image);
++        557 |             image_bytes += bytes;
++        558 |             if (True(image->flags & ImageFlagBits::GpuModified)) {
++        559 |                 gpu_written_bytes += bytes;
++        560 |             }
++        561 |         }
++        562 |         u64 decode_bytes{};
++        563 |         for (const auto& decode : async_decodes) {
++        564 |             // The worker sizes the buffer before it publishes complete.
++        565 |             if (decode->complete.load(std::memory_order_acquire)) {
++        566 |                 decode_bytes += decode->decoded_data.capacity();
++        567 |             }
++        568 |         }
++        569 |         const u64 sentenced = std::accumulate(sentenced_image_bytes.begin(),
++        570 |                                               sentenced_image_bytes.end(), gpu_sentenced_bytes);
++        571 |         LOG_INFO(HW_GPU,
++        572 |                  "Memory trace: texture cache {} images {} MiB ({} MiB GPU-written, {} unbacked), "
++        573 |                  "device usage {} MiB (expected {} MiB, critical {} MiB), sentenced {} MiB, {} "
++        574 |                  "async decodes {} MiB, scratch {} MiB",
++        575 |                  images, image_bytes >> 20, gpu_written_bytes >> 20, unbacked,
++        576 |                  total_used_memory >> 20, expected_memory >> 20, critical_memory >> 20,
++        577 |                  sentenced >> 20, async_decodes.size(), decode_bytes >> 20,
++        578 |                  (swizzle_data_buffer.capacity() + unswizzle_data_buffer.capacity()) >> 20);
++        579 |         {
++        580 |             // What the collector could take: images unused for 2 and for 10 frames, by kind
++        581 |             // (overlapped ones go without a download, GPU-written ones are downloaded first).
++        582 |             u64 unused[2][3]{};
++        583 |             for (size_t i = 0; i < 2; ++i) {
++        584 |                 const u64 age = i == 0 ? 2 : 10;
++        585 |                 if (frame_tick <= age) {
++        586 |                     continue;
++        587 |                 }
++        588 |                 lru_cache.ForEachItemBelow(frame_tick - age, [&](ImageId image_id) {
++        589 |                     const auto& image = slot_images[image_id];
++        590 |                     const u64 bytes = GetScaledImageSizeBytes(image);
++        591 |                     unused[i][True(image.flags & ImageFlagBits::BadOverlap)    ? 0
++        592 |                               : True(image.flags & ImageFlagBits::GpuModified) ? 1
++        593 |                                                                                : 2] += bytes;
++        594 |                     return false;
++        595 |                 });
++        596 |             }
++        597 |             LOG_INFO(HW_GPU,
++        598 |                      "Memory trace: unused 2 frames: {} MiB overlapped, {} MiB GPU-written, {} MiB "
++        599 |                      "other; unused 10 frames: {} MiB overlapped, {} MiB GPU-written, {} MiB other",
++        600 |                      unused[0][0] >> 20, unused[0][1] >> 20, unused[0][2] >> 20, unused[1][0] >> 20,
++        601 |                      unused[1][1] >> 20, unused[1][2] >> 20);
++        602 |         }
++        603 |         if constexpr (requires { runtime.MemoryPressureEvents(); runtime.FailedImages(); }) {
++        604 |             LOG_INFO(HW_GPU,
++        605 |                      "Memory trace: {} allocations over budget, {} images not made; margins: out of "
++        606 |                      "memory {} MiB, block slack {} MiB; retention limit {} MiB",
++        607 |                      runtime.MemoryPressureEvents(), runtime.FailedImages(), pressure_margin >> 20,
++        608 |                      slack_margin >> 20, retention_limit >> 20);
++        609 |         }
++        610 |         if constexpr (requires { runtime.LogMemoryTrace(); }) {
++        611 |             runtime.LogMemoryTrace();
++        612 |         }
++        613 |     }
++        614 |     // Every 600 frames: device memory in use against the collector's thresholds.
++        615 |     // Skip expensive heap allocation, map construction, and sorting unless debug logging is explicitly enabled.
++        616 |     static const bool log_tc = std::getenv("EDEN_NX2_TC_LOG") != nullptr;
++        617 |     static u64 frames{};
++        618 |     if (log_tc && ++frames % 600 == 0) {
++        619 |         u64 image_bytes{};
++        620 |         size_t images{};
++        621 |         std::vector<std::pair<u64, const Image*>> largest;
++        622 |         std::map<u32, std::pair<u64, u32>> by_format;
++        623 |         for (const auto [image_id, image] : slot_images) {
++        624 |             const u64 bytes = GetScaledImageSizeBytes(*image);
++        625 |             image_bytes += bytes;
++        626 |             ++images;
++        627 |             if (debug_stats) {
++        628 |                 largest.emplace_back(bytes, image);
++        629 |                 auto& format = by_format[static_cast<u32>(image->info.format)];
++        630 |                 format.first += bytes;
++        631 |                 ++format.second;
++        632 |             }
++        633 |         }
++        634 |         LOG_INFO(HW_GPU, "Texture cache: device memory {} MiB (expected {} MiB, critical {} MiB), {} images {} MiB",
++        635 |                  total_used_memory >> 20, expected_memory >> 20, critical_memory >> 20, images,
++        636 |                  image_bytes >> 20);
++        637 |         std::partial_sort(largest.begin(), largest.begin() + std::min<size_t>(12, largest.size()),
++        638 |                           largest.end(), [](const auto& a, const auto& b) { return a.first > b.first; });
++        639 |         for (size_t i = 0; i < std::min<size_t>(12, largest.size()); ++i) {
++        640 |             const Image& image = *largest[i].second;
++        641 |             LOG_DEBUG(HW_GPU, "  {} MiB: {:#x} {}x{}x{} layers {} levels {} format {} type {} flags {:#x}",
++        642 |                      largest[i].first >> 20, image.gpu_addr, image.info.size.width, image.info.size.height,
++        643 |                      image.info.size.depth, image.info.resources.layers, image.info.resources.levels,
++        644 |                      static_cast<u32>(image.info.format), static_cast<u32>(image.info.type),
++        645 |                      static_cast<u32>(image.flags));
++        646 |         }
++        647 |         std::vector<std::pair<u64, u32>> formats;
++        648 |         for (const auto& [format, total] : by_format) formats.emplace_back(total.first, format);
++        649 |         std::sort(formats.rbegin(), formats.rend());
++        650 |         for (size_t i = 0; i < std::min<size_t>(8, formats.size()); ++i) {
++        651 |             LOG_DEBUG(HW_GPU, "  format {}: {} MiB in {} images", formats[i].second, formats[i].first >> 20,
++        652 |                      by_format[formats[i].second].second);
++        653 |         }
++        654 |         if constexpr (requires { runtime.LogMemoryStatistics(); }) {
++        655 |             runtime.LogMemoryStatistics();
++        656 |         }
++        657 |         LOG_INFO(HW_GPU, "Texture cache last 600 frames: created {} images, deleted {} (collector {}, {} costly, {} downloaded), {} async decodes, ASTC {} opaque / {} alpha",
++        658 |                  images_created, images_deleted, gc_deletes + gc_costly_deletes, gc_costly_deletes,
++        659 |                  gc_download_deletes,
++        660 |                  async_decodes_queued, astc_opaque_images, astc_alpha_images);
++        661 |         LOG_INFO(HW_GPU, "Texture cache last 600 frames: {} uploads from guest memory, {} MiB (largest {} MiB, {} by layer)",
++        662 |                  images_uploaded, uploaded_bytes >> 20, largest_upload >> 20, layer_uploads);
++        663 |         LOG_INFO(HW_GPU,
++        664 |                  "Texture cache last 600 frames: stale uploads skipped {} ({} MiB), {} uploaded "
++        665 |                  "for buffer-written pages; {} MiB of pages marked stale",
++        666 |                  tc_stale_skips, tc_stale_skip_bytes >> 20, tc_stale_gpu_written,
++        667 |                  (stale_pages.Count() << StalePages::PAGE_BITS) >> 20);
++        668 |         tc_stale_skips = tc_stale_skip_bytes = tc_stale_gpu_written = 0;
++        669 |         images_uploaded = uploaded_bytes = largest_upload = layer_uploads = 0;
++        670 |         astc_opaque_images = astc_alpha_images = 0;
++        671 |         std::vector<std::pair<u32, u64>> shapes;
++        672 |         for (const auto& [key, value] : created_shapes) shapes.emplace_back(value.first, key);
++        673 |         std::sort(shapes.rbegin(), shapes.rend());
++        674 |         static const bool log_shapes = std::getenv("EDEN_NX2_TC_SHAPES") != nullptr;
++        675 |         if (log_shapes) {
++        676 |             LOG_INFO(HW_GPU, "Texture cache last 600 frames: {} shapes made", shapes.size());
++        677 |         }
++        678 |         for (size_t i = 0; i < std::min<size_t>(log_shapes ? 24 : 10, shapes.size()); ++i) {
++        679 |             const u64 key = shapes[i].second;
++        680 |             if (log_shapes) {
++        681 |                 LOG_INFO(HW_GPU, "  created {}x: format {} type {} levels {} layers {} {}x{} (last at {:#x})",
++        682 |                          shapes[i].first, key >> 56, (key >> 52) & 0xF, (key >> 48) & 0xF,
++        683 |                          (key >> 36) & 0xFFF, (key >> 18) & 0x3FFFF, key & 0x3FFFF,
++        684 |                          created_shapes[key].second);
++        685 |                 continue;
++        686 |             }
++        687 |             LOG_DEBUG(HW_GPU, "  created {}x: format {} type {} levels {} layers {} {}x{} (last at {:#x})",
++        688 |                      shapes[i].first, key >> 56, (key >> 52) & 0xF, (key >> 48) & 0xF,
++        689 |                      (key >> 36) & 0xFFF, (key >> 18) & 0x3FFFF, key & 0x3FFFF,
++        690 |                      created_shapes[key].second);
++        691 |         }
++        692 |         created_shapes.clear();
++        693 |         // The per-image and per-shape tallies only feed debug lines: skip them while those are off.
++        694 |         debug_stats = log_shapes ||
++        695 |                       Common::Log::IsLevelEnabled(Common::Log::Class::HW_GPU, Common::Log::Level::Debug);
++        696 |         gc_deletes = gc_costly_deletes = gc_download_deletes = async_decodes_queued = 0;
++        697 |         images_created = images_deleted = 0;
++        698 |     }
++        699 |     // An image that could not be made at all: the driver is out of memory whatever the counts
++        700 |     // say, so collect as at the critical threshold.
++        701 |     bool out_of_memory = false;
++        702 |     if constexpr (requires { runtime.FailedImages(); }) {
++        703 |         const u32 failed = runtime.FailedImages();
++        704 |         out_of_memory = failed != seen_failed_images;
++        705 |         seen_failed_images = failed;
++        706 |     }
++        707 |     if (out_of_memory || total_used_memory > minimum_memory) {
++        708 |         RunGarbageCollector(out_of_memory);
++        709 |     }
++        710 |     if (out_of_memory) {
++        711 |         // Textures left out for lack of memory are made again on their next read, once a frame
++        712 |         // while images keep failing.
++        713 |         for (size_t c : active_channel_ids) {
++        714 |             channel_storage[c].graphics_image_table.Invalidate();
++        715 |             channel_storage[c].compute_image_table.Invalidate();
++        716 |         }
++        717 |     }
+   506   718 |     sentenced_images.Tick();
++        719 |     sentenced_image_index = (sentenced_image_index + 1) % TICKS_TO_DESTROY;
++        720 |     sentenced_image_bytes[sentenced_image_index] = 0;
+   507   721 |     sentenced_framebuffers.Tick();
+   508   722 |     sentenced_image_view.Tick();
+-  509       | #ifdef PS5_NATIVE
+-  510       |     ::Eden::Performance::CachePhaseTimer async_tick{
+-  511       |         ::Eden::Performance::CachePhase::TextureAsyncTick, sample_housekeeping};
+-  512       | #endif
++        723 |     ::Eden::AstcPolicy::Frame();
+   513   724 |     TickAsyncDecode();
+   514   725 |     TickAsyncUnswizzle();
+-  515       | #ifdef PS5_NATIVE
+-  516       |     async_tick.Stop();
+-  517       |     ::Eden::Performance::CachePhaseTimer runtime_tick{
+-  518       |         ::Eden::Performance::CachePhase::TextureRuntimeTick, sample_housekeeping};
+-  519       | #endif
++        726 |     if (frame_tick % 600 == 0 && !uploaded_ranges.empty()) {
++        727 |         for (const auto& [address, size] : uploaded_ranges) {
++        728 |             device_memory.HintCold(address, size);
++        729 |         }
++        730 |         uploaded_ranges.clear();
++        731 |     }
++        732 | 
+   520   733 |     runtime.TickFrame();
+-  521       | #ifdef PS5_NATIVE
+-  522       |     runtime_tick.Stop();
+-  523       | #endif
+   524   734 |     ++frame_tick;
+   525   735 | 
+   526   736 |     if constexpr (IMPLEMENTS_ASYNC_DOWNLOADS) {
+   527   737 |         for (auto& buffer : async_buffers_death_ring) {
+   528   738 |             runtime.FreeDeferredStagingBuffer(buffer);
+   529   739 |         }
+   530   740 |         async_buffers_death_ring.clear();
+   531   741 |     }
+   532   742 | }
+```
+
+</details>
+
+### P1-T03 · TextureCache::SynchronizeDescriptors
+
+Directement pertinent aux HUD/textures : vérifier invalidation et rafraîchissement des descripteurs sans confondre une texture stale avec une pipeline shader tardive.
+
+Encore : [texture_cache.h:833–859](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h#L833-L859) — 27 lignes.
+
+<details>
+<summary>Lichii — 2162–2188 : 18 alignées, 9 propres Encore, 9 propres upstream</summary>
+
+Source : [texture_cache.h:2162–2188](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/texture_cache/texture_cache.h#L2162-L2188).
+
+```diff
+   833  2162 | void TextureCache<P>::SynchronizeDescriptors(bool compute) {
++       2163 |     VideoCommon::GpuSplit::RenderOwned("TextureCache::SynchronizeDescriptors");
+   834  2164 |     if (compute) {
+   835  2165 |         const bool linked_tsc = kepler_compute->launch_description.linked_tsc;
+   836  2166 |         const u32 tic_limit = kepler_compute->regs.tic.limit;
+-  837       |         const u32 tsc_limit = linked_tsc ? tic_limit : kepler_compute->regs.tsc.limit;
+-  838       |         bool bindings_changed = false;
+-  839       |         if (channel_state->compute_sampler_table.Synchronize(kepler_compute->regs.tsc.Address(), tsc_limit))
+-  840       |             bindings_changed = true;
+-  841       |         if (channel_state->compute_image_table.Synchronize(kepler_compute->regs.tic.Address(), tic_limit))
+-  842       |             bindings_changed = true;
+-  843       |         if (bindings_changed) {
+-  844       |             ++texture_bindings_serial;
+-  845       |         }
++       2167 |         SynchronizeComputeDescriptors({
++       2168 |             .tic = kepler_compute->regs.tic.Address(),
++       2169 |             .tic_limit = tic_limit,
++       2170 |             .tsc = kepler_compute->regs.tsc.Address(),
++       2171 |             .tsc_limit = linked_tsc ? tic_limit : kepler_compute->regs.tsc.limit,
++       2172 |             .linked_tsc = linked_tsc,
++       2173 |         });
+   846  2174 |     } else {
+   847  2175 |         const bool linked_tsc = maxwell3d->regs.sampler_binding == Tegra::Engines::Maxwell3D::Regs::SamplerBinding::ViaHeaderBinding;
+   848  2176 |         const u32 tic_limit = maxwell3d->regs.tex_header.limit;
+   849  2177 |         const u32 tsc_limit = linked_tsc ? tic_limit : maxwell3d->regs.tex_sampler.limit;
+   850  2178 |         bool bindings_changed = false;
+   851  2179 |         if (channel_state->graphics_sampler_table.Synchronize(maxwell3d->regs.tex_sampler.Address(), tsc_limit))
+   852  2180 |             bindings_changed = true;
+   853  2181 |         if (channel_state->graphics_image_table.Synchronize(maxwell3d->regs.tex_header.Address(), tic_limit))
+   854  2182 |             bindings_changed = true;
+   855  2183 |         if (bindings_changed) {
+   856  2184 |             ++texture_bindings_serial;
++       2185 |             ++churn.refreshes;
+   857  2186 |         }
+   858  2187 |     }
+   859  2188 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 1082–1108 : 27 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [texture_cache.h:1082–1108](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/texture_cache/texture_cache.h#L1082-L1108).
+
+```diff
+   833  1082 | void TextureCache<P>::SynchronizeDescriptors(bool compute) {
+   834  1083 |     if (compute) {
+   835  1084 |         const bool linked_tsc = kepler_compute->launch_description.linked_tsc;
+   836  1085 |         const u32 tic_limit = kepler_compute->regs.tic.limit;
+   837  1086 |         const u32 tsc_limit = linked_tsc ? tic_limit : kepler_compute->regs.tsc.limit;
+   838  1087 |         bool bindings_changed = false;
+   839  1088 |         if (channel_state->compute_sampler_table.Synchronize(kepler_compute->regs.tsc.Address(), tsc_limit))
+   840  1089 |             bindings_changed = true;
+   841  1090 |         if (channel_state->compute_image_table.Synchronize(kepler_compute->regs.tic.Address(), tic_limit))
+   842  1091 |             bindings_changed = true;
+   843  1092 |         if (bindings_changed) {
+   844  1093 |             ++texture_bindings_serial;
+   845  1094 |         }
+   846  1095 |     } else {
+   847  1096 |         const bool linked_tsc = maxwell3d->regs.sampler_binding == Tegra::Engines::Maxwell3D::Regs::SamplerBinding::ViaHeaderBinding;
+   848  1097 |         const u32 tic_limit = maxwell3d->regs.tex_header.limit;
+   849  1098 |         const u32 tsc_limit = linked_tsc ? tic_limit : maxwell3d->regs.tex_sampler.limit;
+   850  1099 |         bool bindings_changed = false;
+   851  1100 |         if (channel_state->graphics_sampler_table.Synchronize(maxwell3d->regs.tex_sampler.Address(), tsc_limit))
+   852  1101 |             bindings_changed = true;
+   853  1102 |         if (channel_state->graphics_image_table.Synchronize(maxwell3d->regs.tex_header.Address(), tic_limit))
+   854  1103 |             bindings_changed = true;
+   855  1104 |         if (bindings_changed) {
+   856  1105 |             ++texture_bindings_serial;
+   857  1106 |         }
+   858  1107 |     }
+   859  1108 | }
+```
+
+</details>
+
+### P1-T04 · TextureCache::DownloadMemory
+
+Chemin GPU→CPU potentiellement bloquant. Comparer regroupement des images, waits async et écriture invité ; corréler ensuite avec les pauses >100 ms, pas avant.
+
+Encore : [texture_cache.h:1352–1446](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h#L1352-L1446) — 95 lignes.
+
+<details>
+<summary>Lichii — 2636–2722 : 29 alignées, 66 propres Encore, 58 propres upstream</summary>
+
+Source : [texture_cache.h:2636–2722](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/texture_cache/texture_cache.h#L2636-L2722).
+
+```diff
+  1352  2636 | void TextureCache<P>::DownloadMemory(DAddr cpu_addr, size_t size) {
+- 1353       |     std::optional<Eden::Performance::Timer> cost_timer;
+- 1354       |     if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>) {
+- 1355       |         if (Eden::Performance::vulkan_cost_enabled.load(std::memory_order_relaxed))
+- 1356       |             cost_timer.emplace(Eden::Performance::vulkan_api[14]);
++       2637 |     VideoCommon::GpuSplit::RenderOwned("TextureCache::DownloadMemory");
++       2638 |     VideoCommon::Nx2Profile::Scope profile_scope{VideoCommon::Nx2Profile::Zone::TextureCache};
++       2639 |     // Write-backs landed for this read: an older image downloaded below leaves their ranges as
++       2640 |     // they are, newest data winning as between write-backs. A range a write-back left to newer
++       2641 |     // data (or to the guest's writes) holds that data, at its own tick.
++       2642 |     using WritebackRanges::TickedRange;
++       2643 |     boost::container::small_vector<TickedRange, 8> landed;
++       2644 |     if (WritebackPendingOver(cpu_addr, size)) {
++       2645 |         for (const AsyncOverlapDownload& download : async_overlap_downloads) {
++       2646 |             if (!download.cancelled) {
++       2647 |                 WritebackRanges::AppendLanded(landed, download.cpu_addr, download.size,
++       2648 |                                               download.tick, download.keep, download.keep_ticks);
+  1357  2649 |     }
+- 1358       | 
+- 1359       |     boost::container::small_vector<ImageId, 16> images;
+- 1360       | #ifdef PS5_NATIVE
+- 1361       |     // DownloadMemory can fail after clearing GPU-dirty state but before guest
+- 1362       |     // pixels are published. Restore every touched image on unwinding, even
+- 1363       |     // when an earlier staged image was already copied successfully.
+- 1364       |     const int uncaught_before_readback = std::uncaught_exceptions();
+- 1365       |     SCOPE_EXIT {
+- 1366       |         if (std::uncaught_exceptions() > uncaught_before_readback) {
+- 1367       |             for (const ImageId id : images) {
+- 1368       |                 slot_images[id].flags |= ImageFlagBits::GpuModified;
+  1369  2650 |             }
++       2651 |         // A write-back still on the GPU holds this memory's data: land it before the guest reads
++       2652 |         // (waiting as the downloads below do, on the flushing thread with the cache's lock).
++       2653 |         FinishAsyncOverlapDownloads(true);
+  1370  2654 |         }
+- 1371       |     };
+- 1372       | #endif
++       2655 |     boost::container::small_vector<ImageId, 16> images;
+  1373  2656 |     ForEachImageInRegion(cpu_addr, size, [this, &images](ImageId image_id, ImageBase& image) {
+  1374  2657 |         if (!IsDownloadable(image)) {
+  1375  2658 |             return;
+  1376  2659 |         }
+- 1377       | #ifdef PS5_NATIVE
+- 1378       |         // The list can allocate: track the image BEFORE clearing its flag.
+- 1379       |         images.push_back(image_id);
+  1380  2660 |         image.flags &= ~ImageFlagBits::GpuModified;
+- 1381       | #else
+- 1382       |         image.flags &= ~ImageFlagBits::GpuModified;
+  1383  2661 |         images.push_back(image_id);
+- 1384       | #endif
+  1385  2662 |     });
+  1386  2663 |     if (images.empty()) {
+  1387  2664 |         return;
+  1388  2665 |     }
++       2666 |     const StutterTrace::SiteScope site{StutterTrace::Site::TextureDownload};
+  1389  2667 |     std::ranges::sort(images, [this](ImageId lhs, ImageId rhs) {
+  1390  2668 |         return slot_images[lhs].modification_tick < slot_images[rhs].modification_tick;
+  1391  2669 |     });
+- 1392       |     if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>) {
+- 1393       |         // Keep independent copies in one submission, then publish guest writes
+- 1394       |         // in modification order. A staging allocation stays busy until its tick.
++       2670 |     // Record the copies of a batch, wait for the GPU once, then swizzle in modification order
++       2671 |     // (the copies only read, so they do not depend on each other). A batch is capped so the
++       2672 |     // staging memory held at once stays bounded.
++       2673 |     constexpr size_t MaxBatchBytes = 64_MiB;
+  1395  2674 |         using Map = decltype(runtime.DownloadStagingBuffer(size_t{}));
+- 1396       |         // Up to 40 small independent readbacks can now share one GPU
+- 1397       |         // completion fence. Keep their total staging bytes capped at 32 MiB
+- 1398       |         // and publish guest writes in their original modification order.
+- 1399       |         // Pinned Vulkan StagingBufferRef is a non-owning value handle;
+- 1400       |         // the staging pool owns the backing memory and its tick lifetime.
+- 1401       |         constexpr size_t readback_batch_limit = 40;
+- 1402       |         boost::container::small_vector<std::pair<ImageId, Map>, readback_batch_limit> pending;
+- 1403       |         constexpr size_t batch_limit = 32_MiB;
+- 1404       |         size_t batch_bytes = 0;
+- 1405       |         const auto finish_batch = [&] {
+- 1406       |             if (pending.empty()) return;
++       2675 |     using Copies = decltype(FullDownloadCopies(std::declval<const ImageInfo&>()));
++       2676 |     struct Pending {
++       2677 |         ImageId image_id;
++       2678 |         Map map;
++       2679 |         Copies copies;
++       2680 |     };
++       2681 |     boost::container::small_vector<Pending, 16> pending;
++       2682 |     size_t pending_bytes = 0;
++       2683 |     const auto flush_pending = [&] {
++       2684 |         if (pending.empty()) {
++       2685 |             return;
++       2686 |         }
+  1407  2687 |             runtime.Finish();
+- 1408       |             for (auto& [image_id, map] : pending) {
+- 1409       |                 Image& image = slot_images[image_id];
+- 1410       |                 const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
+- 1411       |                 SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, map.mapped_span,
+- 1412       |                              swizzle_data_buffer);
++       2688 |         for (Pending& entry : pending) {
++       2689 |             Image& image = slot_images[entry.image_id];
++       2690 |             KeepRanges keep;
++       2691 |             KeepNewerLanded(image, image.modification_tick, keep);
++       2692 |             if (!landed.empty()) {
++       2693 |                 ForEachWrittenRange(image, [&](DAddr begin, DAddr end) {
++       2694 |                     for (const TickedRange& range : landed) {
++       2695 |                         if (range.tick > image.modification_tick && range.begin < end &&
++       2696 |                             begin < range.end) {
++       2697 |                             keep.emplace_back((std::max)(range.begin, begin),
++       2698 |                                               (std::min)(range.end, end));
+  1413  2699 |             }
+- 1414       |             pending.clear();
+- 1415       |             batch_bytes = 0;
+- 1416       |         };
+- 1417       |         for (const ImageId image_id : images) {
+- 1418       |             Image& image = slot_images[image_id];
+- 1419       |             const size_t bytes = image.unswizzled_size_bytes;
+- 1420       |             if (pending.size() == readback_batch_limit || bytes > batch_limit - batch_bytes)
+- 1421       |                 finish_batch();
+- 1422       |             auto map = runtime.DownloadStagingBuffer(bytes);
+- 1423       |             const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
+- 1424       |             image.DownloadMemory(map, copies);
+- 1425       |             pending.emplace_back(image_id, std::move(map));
+- 1426       |             // Oversized images retain the original one-image allocation/wait.
+- 1427       |             if (bytes >= batch_limit) {
+- 1428       |                 finish_batch();
+- 1429       |             } else {
+- 1430       |                 batch_bytes += bytes;
+  1431  2700 |             }
++       2701 |                 });
+  1432  2702 |         }
+- 1433       |         finish_batch();
+- 1434       |         return;
++       2703 |             if (WriteBackImage(image, entry.copies, entry.map.mapped_span, keep)) {
++       2704 |                 NoteFlushed(image);
+  1435  2705 |     }
+- 1436       | 
++       2706 |         }
++       2707 |         pending.clear();
++       2708 |         pending_bytes = 0;
++       2709 |     };
+  1437  2710 |     for (const ImageId image_id : images) {
+  1438  2711 |         Image& image = slot_images[image_id];
++       2712 |         if (!pending.empty() && pending_bytes + image.unswizzled_size_bytes > MaxBatchBytes) {
++       2713 |             flush_pending();
++       2714 |         }
+  1439  2715 |         auto map = runtime.DownloadStagingBuffer(image.unswizzled_size_bytes);
+- 1440       |         const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
++       2716 |         auto copies = FullDownloadCopies(image.info);
+  1441  2717 |         image.DownloadMemory(map, copies);
+- 1442       |         runtime.Finish();
+- 1443       |         SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, map.mapped_span,
+- 1444       |                      swizzle_data_buffer);
++       2718 |         pending_bytes += image.unswizzled_size_bytes;
++       2719 |         pending.push_back(Pending{image_id, map, std::move(copies)});
+  1445  2720 |     }
++       2721 |     flush_pending();
+  1446  2722 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 1436–1498 : 33 alignées, 62 propres Encore, 30 propres upstream</summary>
+
+Source : [texture_cache.h:1436–1498](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/texture_cache/texture_cache.h#L1436-L1498).
+
+```diff
+  1352  1436 | void TextureCache<P>::DownloadMemory(DAddr cpu_addr, size_t size) {
+  1353  1437 |     std::optional<Eden::Performance::Timer> cost_timer;
+  1354  1438 |     if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>) {
+  1355  1439 |         if (Eden::Performance::vulkan_cost_enabled.load(std::memory_order_relaxed))
+  1356  1440 |             cost_timer.emplace(Eden::Performance::vulkan_api[14]);
+  1357  1441 |     }
+  1358  1442 | 
++       1443 |     VideoCommon::Nx2Profile::Scope profile_scope{VideoCommon::Nx2Profile::Zone::TextureCache};
+  1359  1444 |     boost::container::small_vector<ImageId, 16> images;
+- 1360       | #ifdef PS5_NATIVE
+- 1361       |     // DownloadMemory can fail after clearing GPU-dirty state but before guest
+- 1362       |     // pixels are published. Restore every touched image on unwinding, even
+- 1363       |     // when an earlier staged image was already copied successfully.
+- 1364       |     const int uncaught_before_readback = std::uncaught_exceptions();
+- 1365       |     SCOPE_EXIT {
+- 1366       |         if (std::uncaught_exceptions() > uncaught_before_readback) {
+- 1367       |             for (const ImageId id : images) {
+- 1368       |                 slot_images[id].flags |= ImageFlagBits::GpuModified;
+- 1369       |             }
+- 1370       |         }
+- 1371       |     };
+- 1372       | #endif
+  1373  1445 |     ForEachImageInRegion(cpu_addr, size, [this, &images](ImageId image_id, ImageBase& image) {
+  1374  1446 |         if (!IsDownloadable(image)) {
+  1375  1447 |             return;
+  1376  1448 |         }
+- 1377       | #ifdef PS5_NATIVE
+- 1378       |         // The list can allocate: track the image BEFORE clearing its flag.
+- 1379       |         images.push_back(image_id);
+  1380  1449 |         image.flags &= ~ImageFlagBits::GpuModified;
+- 1381       | #else
+- 1382       |         image.flags &= ~ImageFlagBits::GpuModified;
+  1383  1450 |         images.push_back(image_id);
+- 1384       | #endif
+  1385  1451 |     });
+  1386  1452 |     if (images.empty()) {
+  1387  1453 |         return;
+  1388  1454 |     }
++       1455 |     const StutterTrace::SiteScope site{StutterTrace::Site::TextureDownload};
+  1389  1456 |     std::ranges::sort(images, [this](ImageId lhs, ImageId rhs) {
+  1390  1457 |         return slot_images[lhs].modification_tick < slot_images[rhs].modification_tick;
+  1391  1458 |     });
+- 1392       |     if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>) {
+- 1393       |         // Keep independent copies in one submission, then publish guest writes
+- 1394       |         // in modification order. A staging allocation stays busy until its tick.
++       1459 |     // Record the copies of a batch, wait for the GPU once, then swizzle in modification order
++       1460 |     // (the copies only read, so they do not depend on each other). A batch is capped so the
++       1461 |     // staging memory held at once stays bounded.
++       1462 |     constexpr size_t MaxBatchBytes = 64_MiB;
+  1395  1463 |         using Map = decltype(runtime.DownloadStagingBuffer(size_t{}));
+- 1396       |         // Up to 40 small independent readbacks can now share one GPU
+- 1397       |         // completion fence. Keep their total staging bytes capped at 32 MiB
+- 1398       |         // and publish guest writes in their original modification order.
+- 1399       |         // Pinned Vulkan StagingBufferRef is a non-owning value handle;
+- 1400       |         // the staging pool owns the backing memory and its tick lifetime.
+- 1401       |         constexpr size_t readback_batch_limit = 40;
+- 1402       |         boost::container::small_vector<std::pair<ImageId, Map>, readback_batch_limit> pending;
+- 1403       |         constexpr size_t batch_limit = 32_MiB;
+- 1404       |         size_t batch_bytes = 0;
+- 1405       |         const auto finish_batch = [&] {
+- 1406       |             if (pending.empty()) return;
++       1464 |     using Copies = decltype(FullDownloadCopies(std::declval<const ImageInfo&>()));
++       1465 |     struct Pending {
++       1466 |         ImageId image_id;
++       1467 |         Map map;
++       1468 |         Copies copies;
++       1469 |     };
++       1470 |     boost::container::small_vector<Pending, 16> pending;
++       1471 |     size_t pending_bytes = 0;
++       1472 |     const auto flush_pending = [&] {
++       1473 |         if (pending.empty()) {
++       1474 |             return;
++       1475 |         }
+  1407  1476 |             runtime.Finish();
+- 1408       |             for (auto& [image_id, map] : pending) {
+- 1409       |                 Image& image = slot_images[image_id];
+- 1410       |                 const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
+- 1411       |                 SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, map.mapped_span,
+- 1412       |                              swizzle_data_buffer);
++       1477 |         for (Pending& entry : pending) {
++       1478 |             Image& image = slot_images[entry.image_id];
++       1479 |             SwizzleImage(*gpu_memory, image.gpu_addr, image.info, entry.copies,
++       1480 |                          entry.map.mapped_span, swizzle_data_buffer);
++       1481 |             ClearStaleImage(image);
+  1413  1482 |             }
+  1414  1483 |             pending.clear();
+- 1415       |             batch_bytes = 0;
++       1484 |         pending_bytes = 0;
+  1416  1485 |         };
+  1417  1486 |         for (const ImageId image_id : images) {
+  1418  1487 |             Image& image = slot_images[image_id];
+- 1419       |             const size_t bytes = image.unswizzled_size_bytes;
+- 1420       |             if (pending.size() == readback_batch_limit || bytes > batch_limit - batch_bytes)
+- 1421       |                 finish_batch();
+- 1422       |             auto map = runtime.DownloadStagingBuffer(bytes);
+- 1423       |             const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
+- 1424       |             image.DownloadMemory(map, copies);
+- 1425       |             pending.emplace_back(image_id, std::move(map));
+- 1426       |             // Oversized images retain the original one-image allocation/wait.
+- 1427       |             if (bytes >= batch_limit) {
+- 1428       |                 finish_batch();
+- 1429       |             } else {
+- 1430       |                 batch_bytes += bytes;
+- 1431       |             }
+- 1432       |         }
+- 1433       |         finish_batch();
+- 1434       |         return;
++       1488 |         if (!pending.empty() && pending_bytes + image.unswizzled_size_bytes > MaxBatchBytes) {
++       1489 |             flush_pending();
+  1435  1490 |     }
+- 1436       | 
+- 1437       |     for (const ImageId image_id : images) {
+- 1438       |         Image& image = slot_images[image_id];
+  1439  1491 |         auto map = runtime.DownloadStagingBuffer(image.unswizzled_size_bytes);
+- 1440       |         const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
++       1492 |         auto copies = FullDownloadCopies(image.info);
+  1441  1493 |         image.DownloadMemory(map, copies);
+- 1442       |         runtime.Finish();
+- 1443       |         SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, map.mapped_span,
+- 1444       |                      swizzle_data_buffer);
++       1494 |         pending_bytes += image.unswizzled_size_bytes;
++       1495 |         pending.push_back(Pending{image_id, map, std::move(copies)});
+  1445  1496 |     }
++       1497 |     flush_pending();
+  1446  1498 | }
+```
+
+</details>
+
+### P1-T05 · TextureCache::GetFlushArea
+
+Détermine si une lecture CPU doit forcer un flush. C'est l'une des frontières les plus sensibles pour un HUD en retard : un faux 'propre' donne des données anciennes ; un faux 'sale' provoque des stalls.
+
+Encore : [texture_cache.h:1449–1472](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h#L1449-L1472) — 24 lignes.
+
+<details>
+<summary>Lichii — 2725–2764 : 24 alignées, 0 propres Encore, 16 propres upstream</summary>
+
+Source : [texture_cache.h:2725–2764](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/texture_cache/texture_cache.h#L2725-L2764).
+
+```diff
+  1449  2725 | std::optional<VideoCore::RasterizerDownloadArea> TextureCache<P>::GetFlushArea(DAddr cpu_addr,
+  1450  2726 |                                                                                u64 size) {
++       2727 |     VideoCommon::GpuSplit::RenderOwned("TextureCache::GetFlushArea");
+  1451  2728 |     std::optional<VideoCore::RasterizerDownloadArea> area{};
+  1452  2729 |     ForEachImageInRegion(cpu_addr, size, [&](ImageId, ImageBase& image) {
+  1453  2730 |         if (False(image.flags & ImageFlagBits::GpuModified)) {
+  1454  2731 |             return;
+  1455  2732 |         }
+  1456  2733 |         if (!area) {
+  1457  2734 |             area.emplace();
+  1458  2735 |             area->start_address = cpu_addr;
+  1459  2736 |             area->end_address = cpu_addr + size;
+  1460  2737 |             area->preemtive = true;
+  1461  2738 |         }
+  1462  2739 |         area->start_address = (std::min)(area->start_address, image.cpu_addr);
+  1463  2740 |         area->end_address = (std::max)(area->end_address, image.cpu_addr_end);
+  1464  2741 |         for (auto image_view_id : image.image_view_ids) {
+  1465  2742 |             auto& image_view = slot_image_views[image_view_id];
+  1466  2743 |             image_view.flags |= ImageViewFlagBits::PreemtiveDownload;
+  1467  2744 |         }
+  1468  2745 |         area->preemtive &= image.info.forced_flushed;
+  1469  2746 |         image.info.forced_flushed = true;
+  1470  2747 |     });
++       2748 |     // Write-backs still on the GPU: DownloadMemory lands them.
++       2749 |     for (const AsyncOverlapDownload& download : async_overlap_downloads) {
++       2750 |         if (download.cancelled || download.cpu_addr + download.size <= cpu_addr ||
++       2751 |             cpu_addr + size <= download.cpu_addr) {
++       2752 |             continue;
++       2753 |         }
++       2754 |         if (!area) {
++       2755 |             area.emplace();
++       2756 |             area->start_address = cpu_addr;
++       2757 |             area->end_address = cpu_addr + size;
++       2758 |             area->preemtive = true;
++       2759 |         }
++       2760 |         area->start_address = (std::min)(area->start_address, download.cpu_addr);
++       2761 |         area->end_address = (std::max)(area->end_address, download.cpu_addr + download.size);
++       2762 |     }
+  1471  2763 |     return area;
+  1472  2764 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 1501–1524 : 24 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [texture_cache.h:1501–1524](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/texture_cache/texture_cache.h#L1501-L1524).
+
+```diff
+  1449  1501 | std::optional<VideoCore::RasterizerDownloadArea> TextureCache<P>::GetFlushArea(DAddr cpu_addr,
+  1450  1502 |                                                                                u64 size) {
+  1451  1503 |     std::optional<VideoCore::RasterizerDownloadArea> area{};
+  1452  1504 |     ForEachImageInRegion(cpu_addr, size, [&](ImageId, ImageBase& image) {
+  1453  1505 |         if (False(image.flags & ImageFlagBits::GpuModified)) {
+  1454  1506 |             return;
+  1455  1507 |         }
+  1456  1508 |         if (!area) {
+  1457  1509 |             area.emplace();
+  1458  1510 |             area->start_address = cpu_addr;
+  1459  1511 |             area->end_address = cpu_addr + size;
+  1460  1512 |             area->preemtive = true;
+  1461  1513 |         }
+  1462  1514 |         area->start_address = (std::min)(area->start_address, image.cpu_addr);
+  1463  1515 |         area->end_address = (std::max)(area->end_address, image.cpu_addr_end);
+  1464  1516 |         for (auto image_view_id : image.image_view_ids) {
+  1465  1517 |             auto& image_view = slot_image_views[image_view_id];
+  1466  1518 |             image_view.flags |= ImageViewFlagBits::PreemtiveDownload;
+  1467  1519 |         }
+  1468  1520 |         area->preemtive &= image.info.forced_flushed;
+  1469  1521 |         image.info.forced_flushed = true;
+  1470  1522 |     });
+  1471  1523 |     return area;
+  1472  1524 | }
+```
+
+</details>
+
+### P1-T06 · TextureCache::FindOrInsertImage
+
+Comparer critères d'identité, alias, taille et options de recherche. Des divergences ici peuvent créer des copies inutiles ou des vues réutilisées trop longtemps.
+
+Encore : [texture_cache.h:2374–2380](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h#L2374-L2380) — 7 lignes.
+
+<details>
+<summary>Lichii — 4252–4265 : 5 alignées, 2 propres Encore, 9 propres upstream</summary>
+
+Source : [texture_cache.h:4252–4265](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/texture_cache/texture_cache.h#L4252-L4265).
+
+```diff
+  2374  4252 | ImageId TextureCache<P>::FindOrInsertImage(const ImageInfo& info, GPUVAddr gpu_addr,
+- 2375       |                                            RelaxedOptions options) {
+- 2376       |     if (const ImageId image_id = FindImage(info, gpu_addr, options); image_id) {
++       4253 |                                            RelaxedOptions options, bool* retry) {
++       4254 |     bool deferred = false;
++       4255 |     if (const ImageId image_id = FindImage(info, gpu_addr, options, &deferred); image_id) {
+  2377  4256 |         return image_id;
+  2378  4257 |     }
++       4258 |     if (deferred) {
++       4259 |         if (retry != nullptr) {
++       4260 |             *retry = true;
++       4261 |         }
++       4262 |         return NULL_IMAGE_ID;
++       4263 |     }
+  2379  4264 |     return InsertImage(info, gpu_addr, options);
+  2380  4265 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 2850–2856 : 7 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [texture_cache.h:2850–2856](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/texture_cache/texture_cache.h#L2850-L2856).
+
+```diff
+  2374  2850 | ImageId TextureCache<P>::FindOrInsertImage(const ImageInfo& info, GPUVAddr gpu_addr,
+  2375  2851 |                                            RelaxedOptions options) {
+  2376  2852 |     if (const ImageId image_id = FindImage(info, gpu_addr, options); image_id) {
+  2377  2853 |         return image_id;
+  2378  2854 |     }
+  2379  2855 |     return InsertImage(info, gpu_addr, options);
+  2380  2856 | }
+```
+
+</details>
+
+### P1-T07 · TextureCache::FindImage
+
+Même famille, mais uniquement recherche. Le diff sert à isoler les règles de compatibilité et d'alias avant création.
+
+Encore : [texture_cache.h:2383–2461](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h#L2383-L2461) — 79 lignes.
+
+<details>
+<summary>Lichii — 4268–4323 : 45 alignées, 34 propres Encore, 11 propres upstream</summary>
+
+Source : [texture_cache.h:4268–4323](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/texture_cache/texture_cache.h#L4268-L4323).
+
+```diff
+  2383  4268 | ImageId TextureCache<P>::FindImage(const ImageInfo& info, GPUVAddr gpu_addr,
+- 2384       |                                    RelaxedOptions options) {
+- 2385       |     std::optional<DAddr> cpu_addr = gpu_memory->GpuToCpuAddress(gpu_addr);
+- 2386       |     if (!cpu_addr) {
+- 2387       |         cpu_addr = gpu_memory->GpuToCpuAddress(gpu_addr, CalculateGuestSizeInBytes(info));
++       4269 |                                    RelaxedOptions options, bool* retry) {
++       4270 |     const size_t size = CalculateGuestSizeInBytes(info);
++       4271 |     const std::optional<DAddr> cpu_addr = ImageCpuAddress(gpu_addr, size);
+  2388  4272 |         if (!cpu_addr) {
+  2389  4273 |             return ImageId{};
+  2390  4274 |         }
++       4275 |     if (retry && info.maxwell_gob_layout && gpu_memory->UsesNativeTiling() &&
++       4276 |         !GobViewBytesReady(*cpu_addr, size)) {
++       4277 |         *retry = true;
++       4278 |         return NULL_IMAGE_ID;
+  2391  4279 |     }
+  2392  4280 |     const bool broken_views =
+  2393  4281 |         runtime.HasBrokenTextureViewFormats() || True(options & RelaxedOptions::ForceBrokenViews);
+  2394  4282 |     const bool native_bgr = runtime.HasNativeBgr();
++       4283 |     const bool native_tiling = gpu_memory->UsesNativeTiling() && !info.maxwell_gob_layout;
+  2395  4284 |     const bool flexible_formats = True(options & RelaxedOptions::Format);
+  2396  4285 |     ImageId image_id{};
+- 2397       | #ifdef PS5_NATIVE
+- 2398       |     // Keep the first highest-tick match during the existing region walk:
+- 2399       |     // no candidate vector, no second texture-cache slot scan under its mutex.
+- 2400       |     u64 newest_candidate_tick{};
+- 2401       |     bool has_candidate = false;
+- 2402       |     const auto SelectCandidate = [&](ImageId id, const ImageBase& image) {
+- 2403       |         if (!has_candidate || newest_candidate_tick < image.modification_tick) {
+- 2404       |             image_id = id;
+- 2405       |             newest_candidate_tick = image.modification_tick;
+- 2406       |             has_candidate = true;
+- 2407       |         }
+- 2408       |     };
+- 2409       | #else
+  2410  4286 |     boost::container::small_vector<ImageId, 8> image_ids;
+- 2411       | #endif
+  2412  4287 |     const auto lambda = [&](ImageId existing_image_id, ImageBase& existing_image) {
+  2413  4288 |         if (True(existing_image.flags & ImageFlagBits::Remapped)) {
+  2414  4289 |             return false;
+  2415  4290 |         }
+  2416  4291 |         if (info.type == ImageType::Linear || existing_image.info.type == ImageType::Linear)
+  2417  4292 |             [[unlikely]] {
+  2418  4293 |             const bool strict_size = False(options & RelaxedOptions::Size) &&
+  2419  4294 |                                      True(existing_image.flags & ImageFlagBits::Strong);
+  2420  4295 |             const ImageInfo& existing = existing_image.info;
+  2421  4296 |             if (existing_image.gpu_addr == gpu_addr && existing.type == info.type &&
+  2422  4297 |                 existing.pitch == info.pitch &&
+  2423  4298 |                 IsPitchLinearSameSize(existing, info, strict_size) &&
+  2424  4299 |                 IsViewCompatible(existing.format, info.format, broken_views, native_bgr)) {
+- 2425       |                 #ifdef PS5_NATIVE
+- 2426       |                 SelectCandidate(existing_image_id, existing_image);
+- 2427       |                 #else
+  2428  4300 |                 image_id = existing_image_id;
+  2429  4301 |                 image_ids.push_back(existing_image_id);
+- 2430       |                 #endif
+  2431  4302 |                 return !flexible_formats && existing.format == info.format;
+  2432  4303 |             }
+- 2433       |         } else if (IsSubresource(info, existing_image, gpu_addr, options, broken_views,
++       4304 |         } else if (existing_image.info.native_tiling == native_tiling &&
++       4305 |                    IsSubresource(info, existing_image, gpu_addr, options, broken_views,
+  2434  4306 |                                  native_bgr)) {
+- 2435       |             #ifdef PS5_NATIVE
+- 2436       |             SelectCandidate(existing_image_id, existing_image);
+- 2437       |             #else
+  2438  4307 |             image_id = existing_image_id;
+  2439  4308 |             image_ids.push_back(existing_image_id);
+- 2440       |             #endif
+  2441  4309 |             return !flexible_formats && existing_image.info.format == info.format;
+  2442  4310 |         }
+  2443  4311 |         return false;
+  2444  4312 |     };
+- 2445       |     ForEachImageInRegion(*cpu_addr, CalculateGuestSizeInBytes(info), lambda);
+- 2446       | #ifdef PS5_NATIVE
+- 2447       |     // A strict less-than comparison preserves the first equal-tick match,
+- 2448       |     // including ForEachImageInRegion's existing exact-match early exit.
+- 2449       |     return image_id;
+- 2450       | #else
++       4313 |     ForEachImageInRegion(*cpu_addr, size, lambda);
+  2451  4314 |     if (image_ids.size() <= 1) [[likely]] {
+  2452  4315 |         return image_id;
+  2453  4316 |     }
+  2454  4317 |     auto image_ids_compare = [this](ImageId a, ImageId b) {
+  2455  4318 |         auto& image_a = slot_images[a];
+  2456  4319 |         auto& image_b = slot_images[b];
+  2457  4320 |         return image_a.modification_tick < image_b.modification_tick;
+  2458  4321 |     };
+  2459  4322 |     return *std::ranges::max_element(image_ids, image_ids_compare);
+- 2460       | #endif
+  2461  4323 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 2859–2906 : 47 alignées, 32 propres Encore, 1 propres upstream</summary>
+
+Source : [texture_cache.h:2859–2906](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/texture_cache/texture_cache.h#L2859-L2906).
+
+```diff
+  2383  2859 | ImageId TextureCache<P>::FindImage(const ImageInfo& info, GPUVAddr gpu_addr,
+  2384  2860 |                                    RelaxedOptions options) {
+- 2385       |     std::optional<DAddr> cpu_addr = gpu_memory->GpuToCpuAddress(gpu_addr);
+- 2386       |     if (!cpu_addr) {
+- 2387       |         cpu_addr = gpu_memory->GpuToCpuAddress(gpu_addr, CalculateGuestSizeInBytes(info));
++       2861 |     const std::optional<DAddr> cpu_addr = ImageCpuAddress(gpu_addr, CalculateGuestSizeInBytes(info));
+  2388  2862 |         if (!cpu_addr) {
+  2389  2863 |             return ImageId{};
+  2390  2864 |         }
+- 2391       |     }
+  2392  2865 |     const bool broken_views =
+  2393  2866 |         runtime.HasBrokenTextureViewFormats() || True(options & RelaxedOptions::ForceBrokenViews);
+  2394  2867 |     const bool native_bgr = runtime.HasNativeBgr();
+  2395  2868 |     const bool flexible_formats = True(options & RelaxedOptions::Format);
+  2396  2869 |     ImageId image_id{};
+- 2397       | #ifdef PS5_NATIVE
+- 2398       |     // Keep the first highest-tick match during the existing region walk:
+- 2399       |     // no candidate vector, no second texture-cache slot scan under its mutex.
+- 2400       |     u64 newest_candidate_tick{};
+- 2401       |     bool has_candidate = false;
+- 2402       |     const auto SelectCandidate = [&](ImageId id, const ImageBase& image) {
+- 2403       |         if (!has_candidate || newest_candidate_tick < image.modification_tick) {
+- 2404       |             image_id = id;
+- 2405       |             newest_candidate_tick = image.modification_tick;
+- 2406       |             has_candidate = true;
+- 2407       |         }
+- 2408       |     };
+- 2409       | #else
+  2410  2870 |     boost::container::small_vector<ImageId, 8> image_ids;
+- 2411       | #endif
+  2412  2871 |     const auto lambda = [&](ImageId existing_image_id, ImageBase& existing_image) {
+  2413  2872 |         if (True(existing_image.flags & ImageFlagBits::Remapped)) {
+  2414  2873 |             return false;
+  2415  2874 |         }
+  2416  2875 |         if (info.type == ImageType::Linear || existing_image.info.type == ImageType::Linear)
+  2417  2876 |             [[unlikely]] {
+  2418  2877 |             const bool strict_size = False(options & RelaxedOptions::Size) &&
+  2419  2878 |                                      True(existing_image.flags & ImageFlagBits::Strong);
+  2420  2879 |             const ImageInfo& existing = existing_image.info;
+  2421  2880 |             if (existing_image.gpu_addr == gpu_addr && existing.type == info.type &&
+  2422  2881 |                 existing.pitch == info.pitch &&
+  2423  2882 |                 IsPitchLinearSameSize(existing, info, strict_size) &&
+  2424  2883 |                 IsViewCompatible(existing.format, info.format, broken_views, native_bgr)) {
+- 2425       |                 #ifdef PS5_NATIVE
+- 2426       |                 SelectCandidate(existing_image_id, existing_image);
+- 2427       |                 #else
+  2428  2884 |                 image_id = existing_image_id;
+  2429  2885 |                 image_ids.push_back(existing_image_id);
+- 2430       |                 #endif
+  2431  2886 |                 return !flexible_formats && existing.format == info.format;
+  2432  2887 |             }
+  2433  2888 |         } else if (IsSubresource(info, existing_image, gpu_addr, options, broken_views,
+  2434  2889 |                                  native_bgr)) {
+- 2435       |             #ifdef PS5_NATIVE
+- 2436       |             SelectCandidate(existing_image_id, existing_image);
+- 2437       |             #else
+  2438  2890 |             image_id = existing_image_id;
+  2439  2891 |             image_ids.push_back(existing_image_id);
+- 2440       |             #endif
+  2441  2892 |             return !flexible_formats && existing_image.info.format == info.format;
+  2442  2893 |         }
+  2443  2894 |         return false;
+  2444  2895 |     };
+  2445  2896 |     ForEachImageInRegion(*cpu_addr, CalculateGuestSizeInBytes(info), lambda);
+- 2446       | #ifdef PS5_NATIVE
+- 2447       |     // A strict less-than comparison preserves the first equal-tick match,
+- 2448       |     // including ForEachImageInRegion's existing exact-match early exit.
+- 2449       |     return image_id;
+- 2450       | #else
+  2451  2897 |     if (image_ids.size() <= 1) [[likely]] {
+  2452  2898 |         return image_id;
+  2453  2899 |     }
+  2454  2900 |     auto image_ids_compare = [this](ImageId a, ImageId b) {
+  2455  2901 |         auto& image_a = slot_images[a];
+  2456  2902 |         auto& image_b = slot_images[b];
+  2457  2903 |         return image_a.modification_tick < image_b.modification_tick;
+  2458  2904 |     };
+  2459  2905 |     return *std::ranges::max_element(image_ids, image_ids_compare);
+- 2460       | #endif
+  2461  2906 | }
+```
+
+</details>
+
+### P1-T08 · TextureCache::CommitAsyncFlushes
+
+Comparer la publication des flushes différés. Historique Encore : ne jamais réintroduire une publication différée sans comprendre les rollbacks BufferCache/TextureCache.
+
+Encore : [texture_cache.h:1749–1854](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h#L1749-L1854) — 106 lignes.
+
+<details>
+<summary>Lichii — 3293–3353 : 38 alignées, 68 propres Encore, 23 propres upstream</summary>
+
+Source : [texture_cache.h:3293–3353](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/texture_cache/texture_cache.h#L3293-L3353).
+
+```diff
+  1749  3293 | void TextureCache<P>::CommitAsyncFlushes() {
++       3294 |     VideoCommon::Nx2Profile::Scope profile_scope{VideoCommon::Nx2Profile::Zone::TextureCache};
+  1750  3295 |     // This is intentionally passing the value by copy
+  1751  3296 |     if constexpr (IMPLEMENTS_ASYNC_DOWNLOADS) {
+  1752  3297 |         auto& download_ids = uncommitted_downloads;
++       3298 |         const size_t redundant_images = DeduplicatePendingImageDownloads(download_ids, slot_images);
+  1753  3299 |         if (download_ids.empty()) {
+- 1754       | #ifndef PS5_NATIVE
+  1755  3300 |             committed_downloads.emplace_back(std::move(uncommitted_downloads));
+  1756  3301 |             uncommitted_downloads.clear();
+  1757  3302 |             async_buffers.emplace_back(std::move(uncommitted_async_buffers));
+  1758  3303 |             uncommitted_async_buffers.clear();
+  1759  3304 |             return;
+- 1760       | #endif
+- 1761       |             // Native empty batches use the same atomic pair-publication below.
+  1762  3305 |         }
+- 1763       | #ifdef PS5_NATIVE
+- 1764       |         // Already-enqueued DMA staging belongs to its existing pending slots.
+- 1765       |         // Only the extra swizzle batch allocated below may be discarded on
+- 1766       |         // failed publication; never lose or duplicate earlier DMA reservations.
+- 1767       |         const size_t initial_staging_count = uncommitted_async_buffers.size();
+- 1768       |         bool batch_published = false;
+- 1769       |         SCOPE_EXIT {
+- 1770       |             if (!batch_published) {
+- 1771       |                 while (uncommitted_async_buffers.size() > initial_staging_count) {
+- 1772       |                     runtime.FreeDeferredStagingBuffer(uncommitted_async_buffers.back());
+- 1773       |                     uncommitted_async_buffers.pop_back();
+- 1774       |                 }
+- 1775       |             }
+- 1776       |         };
+- 1777       | #endif
+  1778  3306 |         size_t total_size_bytes = 0;
+  1779  3307 |         size_t last_async_buffer_id = uncommitted_async_buffers.size();
+  1780  3308 |         bool any_none_dma = false;
+  1781  3309 |         for (PendingDownload& download_info : download_ids) {
+  1782  3310 |             if (download_info.is_swizzle) {
+- 1783       | #ifdef PS5_NATIVE
+- 1784       |                 // Both 64-byte alignment and batch accumulation must fit in
+- 1785       |                 // size_t BEFORE staging allocation. An overflow would make a
+- 1786       |                 // mapped buffer look large enough for a smaller, wrapped batch.
+- 1787       |                 const size_t bytes = slot_images[download_info.object_id].unswizzled_size_bytes;
+- 1788       |                 constexpr size_t max_bytes = (std::numeric_limits<size_t>::max)();
+- 1789       |                 if (bytes > max_bytes - 63) {
+- 1790       |                     throw std::bad_alloc{};
+- 1791       |                 }
+- 1792       |                 const size_t aligned_bytes = Common::AlignUp(bytes, size_t{64});
+- 1793       |                 if (aligned_bytes > max_bytes - total_size_bytes) {
+- 1794       |                     throw std::bad_alloc{};
+- 1795       |                 }
+- 1796       |                 total_size_bytes += aligned_bytes;
+- 1797       | #else
+- 1798       |                 total_size_bytes +=
+- 1799       |                     Common::AlignUp(slot_images[download_info.object_id].unswizzled_size_bytes, 64);
+- 1800       | #endif
++       3311 |                 const ImageBase& image = download_info.GetImage(slot_images);
++       3312 |                 total_size_bytes += Common::AlignUp(image.unswizzled_size_bytes, 64);
+  1801  3313 |                 any_none_dma = true;
+  1802  3314 |                 download_info.async_buffer_id = last_async_buffer_id;
++       3315 |                 // Staged below: the flush writes these contents, however the image changes.
++       3316 |                 download_info.tick = image.modification_tick;
+  1803  3317 |             }
+  1804  3318 |         }
+  1805  3319 | 
+  1806  3320 |         if (any_none_dma) {
++       3321 |             if (NativeDrawDiagnostics() && total_size_bytes >= 64_MiB) {
++       3322 |                 LOG_WARNING(HW_GPU, "Large image readback batch: bytes={}, entries={}, duplicates_removed={}, submitted_batches={}, retained_buffers={}",
++       3323 |                             total_size_bytes, download_ids.size(), redundant_images,
++       3324 |                             committed_downloads.size(), async_buffers_death_ring.size());
++       3325 |                 size_t traced_images = 0;
++       3326 |                 for (const auto& download : download_ids) {
++       3327 |                     if (!download.is_swizzle || traced_images++ >= 8) continue;
++       3328 |                     const auto& image = download.GetImage(slot_images);
++       3329 |                     LOG_WARNING(HW_GPU, "Readback image: gpu={:#x}, cpu={:#x}, format={}, size={}x{}x{}, levels={}, layers={}, layer_stride={}, guest_bytes={}, download_bytes={}",
++       3330 |                                 image.gpu_addr, image.cpu_addr, image.info.format,
++       3331 |                                 image.info.size.width, image.info.size.height, image.info.size.depth,
++       3332 |                                 image.info.resources.levels, image.info.resources.layers,
++       3333 |                                 image.info.layer_stride, image.guest_size_bytes, image.unswizzled_size_bytes);
++       3334 |                 }
++       3335 |             }
+  1807  3336 |             auto download_map = runtime.DownloadStagingBuffer(total_size_bytes, true);
+- 1808       | #ifdef PS5_NATIVE
+- 1809       |             // The pinned staging handle does not own its pool reservation.
+- 1810       |             // If command recording or queue growth fails, keep this buffer
+- 1811       |             // GPU-safe in the deferred pool and leave the commit retryable.
+- 1812       |             bool staging_transferred = false;
+- 1813       |             SCOPE_EXIT {
+- 1814       |                 if (!staging_transferred) runtime.FreeDeferredStagingBuffer(download_map);
+- 1815       |             };
+- 1816       | #endif
+  1817  3337 |             for (const PendingDownload& download_info : download_ids) {
+  1818  3338 |                 if (download_info.is_swizzle) {
+- 1819       |                     Image& image = slot_images[download_info.object_id];
+- 1820       |                     const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
++       3339 |                     Image& image = download_info.GetImage(slot_images);
++       3340 |                     const auto copies = FullDownloadCopies(image.info);
+  1821  3341 |                     image.DownloadMemory(download_map, copies);
+  1822  3342 |                     download_map.offset += Common::AlignUp(image.unswizzled_size_bytes, 64);
+  1823  3343 |                 }
+  1824  3344 |             }
+  1825  3345 |             uncommitted_async_buffers.emplace_back(download_map);
+- 1826       | #ifdef PS5_NATIVE
+- 1827       |             staging_transferred = true;
+- 1828       | #endif
+  1829  3346 |         }
+  1830  3347 | 
+- 1831       | #ifdef PS5_NATIVE
+- 1832       |         // Publish the buffers and their identifiers as one logical pair.
+- 1833       |         // A rejected second deque insertion must restore the first queue
+- 1834       |         // before allowing another batch to reuse these staging indices.
+  1835  3348 |         async_buffers.emplace_back(std::move(uncommitted_async_buffers));
+- 1836       |         try {
+- 1837       |             committed_downloads.emplace_back(std::move(uncommitted_downloads));
+- 1838       |         } catch (...) {
+- 1839       |             uncommitted_async_buffers = std::move(async_buffers.back());
+- 1840       |             async_buffers.pop_back();
+- 1841       |             throw;
+- 1842       |         }
+- 1843       |         batch_published = true;
+  1844  3349 |         uncommitted_async_buffers.clear();
+- 1845       |         uncommitted_downloads.clear();
+- 1846       |         return;
+- 1847       | #else
+- 1848       |         async_buffers.emplace_back(std::move(uncommitted_async_buffers));
+- 1849       |         uncommitted_async_buffers.clear();
+- 1850       | #endif
+  1851  3350 |     }
+  1852  3351 |     committed_downloads.emplace_back(std::move(uncommitted_downloads));
+  1853  3352 |     uncommitted_downloads.clear();
+  1854  3353 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 2032–2090 : 39 alignées, 67 propres Encore, 20 propres upstream</summary>
+
+Source : [texture_cache.h:2032–2090](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/texture_cache/texture_cache.h#L2032-L2090).
+
+```diff
+  1749  2032 | void TextureCache<P>::CommitAsyncFlushes() {
++       2033 |     VideoCommon::Nx2Profile::Scope profile_scope{VideoCommon::Nx2Profile::Zone::TextureCache};
+  1750  2034 |     // This is intentionally passing the value by copy
+  1751  2035 |     if constexpr (IMPLEMENTS_ASYNC_DOWNLOADS) {
+  1752  2036 |         auto& download_ids = uncommitted_downloads;
++       2037 |         const size_t redundant_images = DeduplicatePendingImageDownloads(download_ids, slot_images);
+  1753  2038 |         if (download_ids.empty()) {
+- 1754       | #ifndef PS5_NATIVE
+  1755  2039 |             committed_downloads.emplace_back(std::move(uncommitted_downloads));
+  1756  2040 |             uncommitted_downloads.clear();
+  1757  2041 |             async_buffers.emplace_back(std::move(uncommitted_async_buffers));
+  1758  2042 |             uncommitted_async_buffers.clear();
+  1759  2043 |             return;
+- 1760       | #endif
+- 1761       |             // Native empty batches use the same atomic pair-publication below.
+  1762  2044 |         }
+- 1763       | #ifdef PS5_NATIVE
+- 1764       |         // Already-enqueued DMA staging belongs to its existing pending slots.
+- 1765       |         // Only the extra swizzle batch allocated below may be discarded on
+- 1766       |         // failed publication; never lose or duplicate earlier DMA reservations.
+- 1767       |         const size_t initial_staging_count = uncommitted_async_buffers.size();
+- 1768       |         bool batch_published = false;
+- 1769       |         SCOPE_EXIT {
+- 1770       |             if (!batch_published) {
+- 1771       |                 while (uncommitted_async_buffers.size() > initial_staging_count) {
+- 1772       |                     runtime.FreeDeferredStagingBuffer(uncommitted_async_buffers.back());
+- 1773       |                     uncommitted_async_buffers.pop_back();
+- 1774       |                 }
+- 1775       |             }
+- 1776       |         };
+- 1777       | #endif
+  1778  2045 |         size_t total_size_bytes = 0;
+  1779  2046 |         size_t last_async_buffer_id = uncommitted_async_buffers.size();
+  1780  2047 |         bool any_none_dma = false;
+  1781  2048 |         for (PendingDownload& download_info : download_ids) {
+  1782  2049 |             if (download_info.is_swizzle) {
+- 1783       | #ifdef PS5_NATIVE
+- 1784       |                 // Both 64-byte alignment and batch accumulation must fit in
+- 1785       |                 // size_t BEFORE staging allocation. An overflow would make a
+- 1786       |                 // mapped buffer look large enough for a smaller, wrapped batch.
+- 1787       |                 const size_t bytes = slot_images[download_info.object_id].unswizzled_size_bytes;
+- 1788       |                 constexpr size_t max_bytes = (std::numeric_limits<size_t>::max)();
+- 1789       |                 if (bytes > max_bytes - 63) {
+- 1790       |                     throw std::bad_alloc{};
+- 1791       |                 }
+- 1792       |                 const size_t aligned_bytes = Common::AlignUp(bytes, size_t{64});
+- 1793       |                 if (aligned_bytes > max_bytes - total_size_bytes) {
+- 1794       |                     throw std::bad_alloc{};
+- 1795       |                 }
+- 1796       |                 total_size_bytes += aligned_bytes;
+- 1797       | #else
+  1798  2050 |                 total_size_bytes +=
+- 1799       |                     Common::AlignUp(slot_images[download_info.object_id].unswizzled_size_bytes, 64);
+- 1800       | #endif
++       2051 |                     Common::AlignUp(download_info.GetImage(slot_images).unswizzled_size_bytes, 64);
+  1801  2052 |                 any_none_dma = true;
+  1802  2053 |                 download_info.async_buffer_id = last_async_buffer_id;
+  1803  2054 |             }
+  1804  2055 |         }
+  1805  2056 | 
+  1806  2057 |         if (any_none_dma) {
++       2058 |             if (NativeDrawDiagnostics() && total_size_bytes >= 64_MiB) {
++       2059 |                 LOG_WARNING(HW_GPU, "Large image readback batch: bytes={}, entries={}, duplicates_removed={}, submitted_batches={}, retained_buffers={}",
++       2060 |                             total_size_bytes, download_ids.size(), redundant_images,
++       2061 |                             committed_downloads.size(), async_buffers_death_ring.size());
++       2062 |                 size_t traced_images = 0;
++       2063 |                 for (const auto& download : download_ids) {
++       2064 |                     if (!download.is_swizzle || traced_images++ >= 8) continue;
++       2065 |                     const auto& image = download.GetImage(slot_images);
++       2066 |                     LOG_WARNING(HW_GPU, "Readback image: gpu={:#x}, cpu={:#x}, format={}, size={}x{}x{}, levels={}, layers={}, layer_stride={}, guest_bytes={}, download_bytes={}",
++       2067 |                                 image.gpu_addr, image.cpu_addr, image.info.format,
++       2068 |                                 image.info.size.width, image.info.size.height, image.info.size.depth,
++       2069 |                                 image.info.resources.levels, image.info.resources.layers,
++       2070 |                                 image.info.layer_stride, image.guest_size_bytes, image.unswizzled_size_bytes);
++       2071 |                 }
++       2072 |             }
+  1807  2073 |             auto download_map = runtime.DownloadStagingBuffer(total_size_bytes, true);
+- 1808       | #ifdef PS5_NATIVE
+- 1809       |             // The pinned staging handle does not own its pool reservation.
+- 1810       |             // If command recording or queue growth fails, keep this buffer
+- 1811       |             // GPU-safe in the deferred pool and leave the commit retryable.
+- 1812       |             bool staging_transferred = false;
+- 1813       |             SCOPE_EXIT {
+- 1814       |                 if (!staging_transferred) runtime.FreeDeferredStagingBuffer(download_map);
+- 1815       |             };
+- 1816       | #endif
+  1817  2074 |             for (const PendingDownload& download_info : download_ids) {
+  1818  2075 |                 if (download_info.is_swizzle) {
+- 1819       |                     Image& image = slot_images[download_info.object_id];
+- 1820       |                     const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
++       2076 |                     Image& image = download_info.GetImage(slot_images);
++       2077 |                     const auto copies = FullDownloadCopies(image.info);
+  1821  2078 |                     image.DownloadMemory(download_map, copies);
+  1822  2079 |                     download_map.offset += Common::AlignUp(image.unswizzled_size_bytes, 64);
+  1823  2080 |                 }
+  1824  2081 |             }
+  1825  2082 |             uncommitted_async_buffers.emplace_back(download_map);
+- 1826       | #ifdef PS5_NATIVE
+- 1827       |             staging_transferred = true;
+- 1828       | #endif
+  1829  2083 |         }
+  1830  2084 | 
+- 1831       | #ifdef PS5_NATIVE
+- 1832       |         // Publish the buffers and their identifiers as one logical pair.
+- 1833       |         // A rejected second deque insertion must restore the first queue
+- 1834       |         // before allowing another batch to reuse these staging indices.
+  1835  2085 |         async_buffers.emplace_back(std::move(uncommitted_async_buffers));
+- 1836       |         try {
+- 1837       |             committed_downloads.emplace_back(std::move(uncommitted_downloads));
+- 1838       |         } catch (...) {
+- 1839       |             uncommitted_async_buffers = std::move(async_buffers.back());
+- 1840       |             async_buffers.pop_back();
+- 1841       |             throw;
+- 1842       |         }
+- 1843       |         batch_published = true;
+  1844  2086 |         uncommitted_async_buffers.clear();
+- 1845       |         uncommitted_downloads.clear();
+- 1846       |         return;
+- 1847       | #else
+- 1848       |         async_buffers.emplace_back(std::move(uncommitted_async_buffers));
+- 1849       |         uncommitted_async_buffers.clear();
+- 1850       | #endif
+  1851  2087 |     }
+  1852  2088 |     committed_downloads.emplace_back(std::move(uncommitted_downloads));
+  1853  2089 |     uncommitted_downloads.clear();
+  1854  2090 | }
+```
+
+</details>
+
+### P1-T09 · TextureCache::PopAsyncFlushes
+
+Chemin de consommation des flushes. Mesurer ultérieurement wait/bytes sur FC27 ; ici uniquement comparer la sémantique et la durée de vie.
+
+Encore : [texture_cache.h:1857–2015](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h#L1857-L2015) — 159 lignes.
+
+<details>
+<summary>Lichii — 3356–3457 : 67 alignées, 92 propres Encore, 35 propres upstream</summary>
+
+Source : [texture_cache.h:3356–3457](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/texture_cache/texture_cache.h#L3356-L3457).
+
+```diff
+  1857  3356 | void TextureCache<P>::PopAsyncFlushes() {
+- 1858       |     std::optional<Eden::Performance::Timer> cost_timer;
+- 1859       |     if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>) {
+- 1860       |         if (Eden::Performance::vulkan_cost_enabled.load(std::memory_order_relaxed))
+- 1861       |             cost_timer.emplace(Eden::Performance::vulkan_api[15]);
+- 1862       |     }
+- 1863       | 
+  1864  3357 |     if (committed_downloads.empty()) {
+  1865  3358 |         return;
+  1866  3359 |     }
++       3360 |     VideoCommon::Nx2Profile::Scope profile_scope{VideoCommon::Nx2Profile::Zone::TextureCache};
+  1867  3361 |     if constexpr (IMPLEMENTS_ASYNC_DOWNLOADS) {
+  1868  3362 |         const auto& download_ids = committed_downloads.front();
+  1869  3363 |         if (download_ids.empty()) {
+- 1870       | #ifdef PS5_NATIVE
+- 1871       |             // An empty async batch can still own deferred staging handles
+- 1872       |             // after an interrupted DMA or an empty pair publication.
+- 1873       |             // StagingBufferRef is non-owning: dequeueing it is not a free.
+- 1874       |             for (auto& buffer : async_buffers.front()) {
+- 1875       |                 runtime.FreeDeferredStagingBuffer(buffer);
+- 1876       |             }
+- 1877       | #endif
+  1878  3364 |             committed_downloads.pop_front();
+  1879  3365 |             async_buffers.pop_front();
+  1880  3366 |             return;
+  1881  3367 |         }
+- 1882       | #ifdef PS5_NATIVE
+- 1883       |         // Keep staging queued until the entire guest download is consumed.
+- 1884       |         // Save only offsets (usually <= 4), not a full vector of handles.
+- 1885       |         auto& download_map = async_buffers.front();
+- 1886       |         boost::container::small_vector<size_t, 4> remaining_offsets;
+- 1887       |         remaining_offsets.reserve(download_map.size());
+- 1888       |         for (const auto& buffer : download_map) {
+- 1889       |             remaining_offsets.push_back(buffer.offset);
+- 1890       |         }
+- 1891       |         // Reserve deferred returns BEFORE guest writes. On any failure,
+- 1892       |         // discard only newly queued returns and retry the intact batch.
+- 1893       |         const size_t previous_death_count = async_buffers_death_ring.size();
+- 1894       |         bool batch_consumed = false;
+- 1895       |         SCOPE_EXIT {
+- 1896       |             if (!batch_consumed) {
+- 1897       |                 while (async_buffers_death_ring.size() > previous_death_count) {
+- 1898       |                     async_buffers_death_ring.pop_back();
+- 1899       |                 }
+- 1900       |             }
+- 1901       |         };
+- 1902       |         for (const auto& buffer : download_map) {
+- 1903       |             async_buffers_death_ring.emplace_back(buffer);
+- 1904       |         }
+- 1905       |         for (size_t i = download_ids.size(); i > 0; --i) {
+- 1906       |             const auto& download_info = download_ids[i - 1];
+- 1907       |             if (download_info.async_buffer_id >= download_map.size()) {
+- 1908       |                 throw std::bad_alloc{};
+- 1909       |             }
+- 1910       |             const auto& download_buffer = download_map[download_info.async_buffer_id];
+- 1911       |             auto& offset = remaining_offsets[download_info.async_buffer_id];
+- 1912       |             if (!download_buffer.buffer || offset > download_buffer.mapped_span.size()) {
+- 1913       |                 throw std::bad_alloc{};
+- 1914       |             }
+- 1915       |             if (download_info.is_swizzle) {
+- 1916       |                 const ImageBase& image = slot_images[download_info.object_id];
+- 1917       |                 const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
+- 1918       |                 const size_t bytes = image.unswizzled_size_bytes;
+- 1919       |                 if (bytes > (std::numeric_limits<size_t>::max)() - 63) {
+- 1920       |                     throw std::bad_alloc{};
+- 1921       |                 }
+- 1922       |                 const size_t aligned = Common::AlignUp(bytes, size_t{64});
+- 1923       |                 if (aligned > offset) {
+- 1924       |                     throw std::bad_alloc{};
+- 1925       |                 }
+- 1926       |                 offset -= aligned;
+- 1927       |                 std::span<u8> download_span = download_buffer.mapped_span.subspan(offset);
+- 1928       |                 SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, download_span,
+- 1929       |                              swizzle_data_buffer);
+- 1930       |             } else {
+- 1931       |                 const BufferDownload& buffer_info = slot_buffer_downloads[download_info.object_id];
+- 1932       |                 if (buffer_info.size > download_buffer.mapped_span.size() - offset) {
+- 1933       |                     throw std::bad_alloc{};
+- 1934       |                 }
+- 1935       |                 std::span<u8> download_span = download_buffer.mapped_span.subspan(offset);
+- 1936       |                 gpu_memory->WriteBlockUnsafe(buffer_info.address, download_span.data(),
+- 1937       |                                              buffer_info.size);
+- 1938       |             }
+- 1939       |         }
+- 1940       |         // Do not erase DMA slots until every guest write has succeeded.
+- 1941       |         for (const auto& download_info : download_ids) {
+- 1942       |             if (!download_info.is_swizzle) {
+- 1943       |                 slot_buffer_downloads.erase(download_info.object_id);
+- 1944       |             }
+- 1945       |         }
+- 1946       |         committed_downloads.pop_front();
+- 1947       |         async_buffers.pop_front();
+- 1948       |         batch_consumed = true;
+- 1949       | #else
+  1950  3368 |         auto download_map = std::move(async_buffers.front());
+  1951  3369 |         for (size_t i = download_ids.size(); i > 0; i--) {
+  1952  3370 |             auto& download_info = download_ids[i - 1];
+  1953  3371 |             auto& download_buffer = download_map[download_info.async_buffer_id];
+  1954  3372 |             if (download_info.is_swizzle) {
+- 1955       |                 const ImageBase& image = slot_images[download_info.object_id];
+- 1956       |                 const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
++       3373 |                 const ImageBase& image = download_info.GetImage(slot_images);
++       3374 |                 if constexpr (requires { runtime.IsFree(u64{}); }) {
++       3375 |                     if (download_info.retired_image &&
++       3376 |                         !runtime.IsFree(download_info.retired_tick)) {
++       3377 |                         if (download_info.retired_image.use_count() == 1) {
++       3378 |                             ++free_guard.freed_early;
++       3379 |                         }
++       3380 |                         if (free_guard.landed_early++ < 8) {
++       3381 |                             LOG_WARNING(HW_GPU,
++       3382 |                                         "Free guard: image {:#x} ({}x{}) deleted with a download "
++       3383 |                                         "queued; the download landed before the GPU passed the "
++       3384 |                                         "delete (tick {}), kept until it does",
++       3385 |                                         image.gpu_addr, image.info.size.width,
++       3386 |                                         image.info.size.height, download_info.retired_tick);
++       3387 |                         }
++       3388 |                     }
++       3389 |                 }
++       3390 |                 const auto copies = FullDownloadCopies(image.info);
+  1957  3391 |                 download_buffer.offset -= Common::AlignUp(image.unswizzled_size_bytes, 64);
+  1958  3392 |                 std::span<u8> download_span =
+  1959  3393 |                     download_buffer.mapped_span.subspan(download_buffer.offset);
+- 1960       |                 SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, download_span, swizzle_data_buffer);
++       3394 |                 // Newer data written meanwhile stays: a write-back queued after this flush was
++       3395 |                 // committed can land before it pops, and the snapshot is older.
++       3396 |                 KeepRanges keep;
++       3397 |                 KeepNewerLanded(image, download_info.tick, keep);
++       3398 |                 if (WriteBackImage(image, copies, download_span, keep)) {
++       3399 |                     NoteFlushed(image, download_info.tick);
++       3400 |                 }
+  1961  3401 |             } else {
+  1962  3402 |                 const BufferDownload& buffer_info = slot_buffer_downloads[download_info.object_id];
+  1963  3403 |                 std::span<u8> download_span =
+  1964  3404 |                     download_buffer.mapped_span.subspan(download_buffer.offset);
+  1965  3405 |                 gpu_memory->WriteBlockUnsafe(buffer_info.address, download_span.data(),
+  1966  3406 |                                              buffer_info.size);
++       3407 |                 ClearStaleGpu(*gpu_memory, buffer_info.address, buffer_info.size);
+  1967  3408 |                 slot_buffer_downloads.erase(download_info.object_id);
+  1968  3409 |             }
+  1969  3410 |         }
+  1970  3411 |         for (auto& download_buffer : download_map) {
+  1971  3412 |             async_buffers_death_ring.emplace_back(download_buffer);
+  1972  3413 |         }
+  1973  3414 |         committed_downloads.pop_front();
+  1974  3415 |         async_buffers.pop_front();
+- 1975       | #endif
+  1976  3416 |     } else {
+  1977  3417 |         const auto& download_ids = committed_downloads.front();
+  1978  3418 |         if (download_ids.empty()) {
+  1979  3419 |             committed_downloads.pop_front();
+  1980  3420 |             return;
+  1981  3421 |         }
+  1982  3422 |         size_t total_size_bytes = 0;
+  1983  3423 |         for (const PendingDownload& download_info : download_ids) {
+  1984  3424 |             if (download_info.is_swizzle) {
+- 1985       |                 total_size_bytes += slot_images[download_info.object_id].unswizzled_size_bytes;
++       3425 |                 total_size_bytes += download_info.GetImage(slot_images).unswizzled_size_bytes;
+  1986  3426 |             }
+  1987  3427 |         }
+  1988  3428 |         auto download_map = runtime.DownloadStagingBuffer(total_size_bytes);
+  1989  3429 |         const size_t original_offset = download_map.offset;
+  1990  3430 |         for (const PendingDownload& download_info : download_ids) {
+  1991  3431 |             if (!download_info.is_swizzle) {
+  1992  3432 |                 continue;
+  1993  3433 |             }
+- 1994       |             Image& image = slot_images[download_info.object_id];
+- 1995       |             const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
++       3434 |             Image& image = download_info.GetImage(slot_images);
++       3435 |             const auto copies = FullDownloadCopies(image.info);
+  1996  3436 |             image.DownloadMemory(download_map, copies);
+  1997  3437 |             download_map.offset += image.unswizzled_size_bytes;
+  1998  3438 |         }
+  1999  3439 |         // Wait for downloads to finish
+  2000  3440 |         runtime.Finish();
+  2001  3441 |         download_map.offset = original_offset;
+  2002  3442 |         std::span<u8> download_span = download_map.mapped_span;
+  2003  3443 |         for (const PendingDownload& download_info : download_ids) {
+  2004  3444 |             if (!download_info.is_swizzle) {
+  2005  3445 |                 continue;
+  2006  3446 |             }
+- 2007       |             const ImageBase& image = slot_images[download_info.object_id];
+- 2008       |             const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
+- 2009       |             SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, download_span, swizzle_data_buffer);
++       3447 |             const ImageBase& image = download_info.GetImage(slot_images);
++       3448 |             const auto copies = FullDownloadCopies(image.info);
++       3449 |             if (WriteBackImage(image, copies, download_span)) {
++       3450 |                 NoteFlushed(image);
++       3451 |             }
+  2010  3452 |             download_map.offset += image.unswizzled_size_bytes;
+  2011  3453 |             download_span = download_span.subspan(image.unswizzled_size_bytes);
+  2012  3454 |         }
+  2013  3455 |         committed_downloads.pop_front();
+  2014  3456 |     }
+  2015  3457 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 2093–2178 : 75 alignées, 84 propres Encore, 11 propres upstream</summary>
+
+Source : [texture_cache.h:2093–2178](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/texture_cache/texture_cache.h#L2093-L2178).
+
+```diff
+  1857  2093 | void TextureCache<P>::PopAsyncFlushes() {
+  1858  2094 |     std::optional<Eden::Performance::Timer> cost_timer;
+  1859  2095 |     if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>) {
+  1860  2096 |         if (Eden::Performance::vulkan_cost_enabled.load(std::memory_order_relaxed))
+  1861  2097 |             cost_timer.emplace(Eden::Performance::vulkan_api[15]);
+  1862  2098 |     }
+  1863  2099 | 
+  1864  2100 |     if (committed_downloads.empty()) {
+  1865  2101 |         return;
+  1866  2102 |     }
++       2103 |     VideoCommon::Nx2Profile::Scope profile_scope{VideoCommon::Nx2Profile::Zone::TextureCache};
+  1867  2104 |     if constexpr (IMPLEMENTS_ASYNC_DOWNLOADS) {
+  1868  2105 |         const auto& download_ids = committed_downloads.front();
+  1869  2106 |         if (download_ids.empty()) {
+- 1870       | #ifdef PS5_NATIVE
+- 1871       |             // An empty async batch can still own deferred staging handles
+- 1872       |             // after an interrupted DMA or an empty pair publication.
+- 1873       |             // StagingBufferRef is non-owning: dequeueing it is not a free.
+- 1874       |             for (auto& buffer : async_buffers.front()) {
+- 1875       |                 runtime.FreeDeferredStagingBuffer(buffer);
+- 1876       |             }
+- 1877       | #endif
+  1878  2107 |             committed_downloads.pop_front();
+  1879  2108 |             async_buffers.pop_front();
+  1880  2109 |             return;
+  1881  2110 |         }
+- 1882       | #ifdef PS5_NATIVE
+- 1883       |         // Keep staging queued until the entire guest download is consumed.
+- 1884       |         // Save only offsets (usually <= 4), not a full vector of handles.
+- 1885       |         auto& download_map = async_buffers.front();
+- 1886       |         boost::container::small_vector<size_t, 4> remaining_offsets;
+- 1887       |         remaining_offsets.reserve(download_map.size());
+- 1888       |         for (const auto& buffer : download_map) {
+- 1889       |             remaining_offsets.push_back(buffer.offset);
+- 1890       |         }
+- 1891       |         // Reserve deferred returns BEFORE guest writes. On any failure,
+- 1892       |         // discard only newly queued returns and retry the intact batch.
+- 1893       |         const size_t previous_death_count = async_buffers_death_ring.size();
+- 1894       |         bool batch_consumed = false;
+- 1895       |         SCOPE_EXIT {
+- 1896       |             if (!batch_consumed) {
+- 1897       |                 while (async_buffers_death_ring.size() > previous_death_count) {
+- 1898       |                     async_buffers_death_ring.pop_back();
+- 1899       |                 }
+- 1900       |             }
+- 1901       |         };
+- 1902       |         for (const auto& buffer : download_map) {
+- 1903       |             async_buffers_death_ring.emplace_back(buffer);
+- 1904       |         }
+- 1905       |         for (size_t i = download_ids.size(); i > 0; --i) {
+- 1906       |             const auto& download_info = download_ids[i - 1];
+- 1907       |             if (download_info.async_buffer_id >= download_map.size()) {
+- 1908       |                 throw std::bad_alloc{};
+- 1909       |             }
+- 1910       |             const auto& download_buffer = download_map[download_info.async_buffer_id];
+- 1911       |             auto& offset = remaining_offsets[download_info.async_buffer_id];
+- 1912       |             if (!download_buffer.buffer || offset > download_buffer.mapped_span.size()) {
+- 1913       |                 throw std::bad_alloc{};
+- 1914       |             }
+- 1915       |             if (download_info.is_swizzle) {
+- 1916       |                 const ImageBase& image = slot_images[download_info.object_id];
+- 1917       |                 const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
+- 1918       |                 const size_t bytes = image.unswizzled_size_bytes;
+- 1919       |                 if (bytes > (std::numeric_limits<size_t>::max)() - 63) {
+- 1920       |                     throw std::bad_alloc{};
+- 1921       |                 }
+- 1922       |                 const size_t aligned = Common::AlignUp(bytes, size_t{64});
+- 1923       |                 if (aligned > offset) {
+- 1924       |                     throw std::bad_alloc{};
+- 1925       |                 }
+- 1926       |                 offset -= aligned;
+- 1927       |                 std::span<u8> download_span = download_buffer.mapped_span.subspan(offset);
+- 1928       |                 SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, download_span,
+- 1929       |                              swizzle_data_buffer);
+- 1930       |             } else {
+- 1931       |                 const BufferDownload& buffer_info = slot_buffer_downloads[download_info.object_id];
+- 1932       |                 if (buffer_info.size > download_buffer.mapped_span.size() - offset) {
+- 1933       |                     throw std::bad_alloc{};
+- 1934       |                 }
+- 1935       |                 std::span<u8> download_span = download_buffer.mapped_span.subspan(offset);
+- 1936       |                 gpu_memory->WriteBlockUnsafe(buffer_info.address, download_span.data(),
+- 1937       |                                              buffer_info.size);
+- 1938       |             }
+- 1939       |         }
+- 1940       |         // Do not erase DMA slots until every guest write has succeeded.
+- 1941       |         for (const auto& download_info : download_ids) {
+- 1942       |             if (!download_info.is_swizzle) {
+- 1943       |                 slot_buffer_downloads.erase(download_info.object_id);
+- 1944       |             }
+- 1945       |         }
+- 1946       |         committed_downloads.pop_front();
+- 1947       |         async_buffers.pop_front();
+- 1948       |         batch_consumed = true;
+- 1949       | #else
+  1950  2111 |         auto download_map = std::move(async_buffers.front());
+  1951  2112 |         for (size_t i = download_ids.size(); i > 0; i--) {
+  1952  2113 |             auto& download_info = download_ids[i - 1];
+  1953  2114 |             auto& download_buffer = download_map[download_info.async_buffer_id];
+  1954  2115 |             if (download_info.is_swizzle) {
+- 1955       |                 const ImageBase& image = slot_images[download_info.object_id];
+- 1956       |                 const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
++       2116 |                 const ImageBase& image = download_info.GetImage(slot_images);
++       2117 |                 const auto copies = FullDownloadCopies(image.info);
+  1957  2118 |                 download_buffer.offset -= Common::AlignUp(image.unswizzled_size_bytes, 64);
+  1958  2119 |                 std::span<u8> download_span =
+  1959  2120 |                     download_buffer.mapped_span.subspan(download_buffer.offset);
+  1960  2121 |                 SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, download_span, swizzle_data_buffer);
++       2122 |                 ClearStaleImage(image);
+  1961  2123 |             } else {
+  1962  2124 |                 const BufferDownload& buffer_info = slot_buffer_downloads[download_info.object_id];
+  1963  2125 |                 std::span<u8> download_span =
+  1964  2126 |                     download_buffer.mapped_span.subspan(download_buffer.offset);
+  1965  2127 |                 gpu_memory->WriteBlockUnsafe(buffer_info.address, download_span.data(),
+  1966  2128 |                                              buffer_info.size);
++       2129 |                 ClearStaleGpu(buffer_info.address, buffer_info.size);
+  1967  2130 |                 slot_buffer_downloads.erase(download_info.object_id);
+  1968  2131 |             }
+  1969  2132 |         }
+  1970  2133 |         for (auto& download_buffer : download_map) {
+  1971  2134 |             async_buffers_death_ring.emplace_back(download_buffer);
+  1972  2135 |         }
+  1973  2136 |         committed_downloads.pop_front();
+  1974  2137 |         async_buffers.pop_front();
+- 1975       | #endif
+  1976  2138 |     } else {
+  1977  2139 |         const auto& download_ids = committed_downloads.front();
+  1978  2140 |         if (download_ids.empty()) {
+  1979  2141 |             committed_downloads.pop_front();
+  1980  2142 |             return;
+  1981  2143 |         }
+  1982  2144 |         size_t total_size_bytes = 0;
+  1983  2145 |         for (const PendingDownload& download_info : download_ids) {
+  1984  2146 |             if (download_info.is_swizzle) {
+- 1985       |                 total_size_bytes += slot_images[download_info.object_id].unswizzled_size_bytes;
++       2147 |                 total_size_bytes += download_info.GetImage(slot_images).unswizzled_size_bytes;
+  1986  2148 |             }
+  1987  2149 |         }
+  1988  2150 |         auto download_map = runtime.DownloadStagingBuffer(total_size_bytes);
+  1989  2151 |         const size_t original_offset = download_map.offset;
+  1990  2152 |         for (const PendingDownload& download_info : download_ids) {
+  1991  2153 |             if (!download_info.is_swizzle) {
+  1992  2154 |                 continue;
+  1993  2155 |             }
+- 1994       |             Image& image = slot_images[download_info.object_id];
+- 1995       |             const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
++       2156 |             Image& image = download_info.GetImage(slot_images);
++       2157 |             const auto copies = FullDownloadCopies(image.info);
+  1996  2158 |             image.DownloadMemory(download_map, copies);
+  1997  2159 |             download_map.offset += image.unswizzled_size_bytes;
+  1998  2160 |         }
+  1999  2161 |         // Wait for downloads to finish
+  2000  2162 |         runtime.Finish();
+  2001  2163 |         download_map.offset = original_offset;
+  2002  2164 |         std::span<u8> download_span = download_map.mapped_span;
+  2003  2165 |         for (const PendingDownload& download_info : download_ids) {
+  2004  2166 |             if (!download_info.is_swizzle) {
+  2005  2167 |                 continue;
+  2006  2168 |             }
+- 2007       |             const ImageBase& image = slot_images[download_info.object_id];
+- 2008       |             const auto copies = FixSmallVectorADL(FullDownloadCopies(image.info));
++       2169 |             const ImageBase& image = download_info.GetImage(slot_images);
++       2170 |             const auto copies = FullDownloadCopies(image.info);
+  2009  2171 |             SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, download_span, swizzle_data_buffer);
++       2172 |             ClearStaleImage(image);
+  2010  2173 |             download_map.offset += image.unswizzled_size_bytes;
+  2011  2174 |             download_span = download_span.subspan(image.unswizzled_size_bytes);
+  2012  2175 |         }
+  2013  2176 |         committed_downloads.pop_front();
+  2014  2177 |     }
+  2015  2178 | }
+```
+
+</details>
+
+### P1-P01 · PipelineCache::LoadDiskResources
+
+Chargement du cache au boot. Lichii/Eglantine ont évolué vers davantage de planification/précache ; Encore conserve un propriétaire plus compact. Une différence peut affecter le premier usage, mais ne prouve pas que le cache disque est la cause du HUD tardif.
+
+Encore : [vk_pipeline_cache_cost.cpp:1347–2964](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp#L1347-L2964) — 1618 lignes.
+
+<details>
+<summary>Lichii — 1276–1399 : 32 alignées, 1586 propres Encore, 92 propres upstream</summary>
+
+Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/renderer_vulkan/vk_pipeline_cache.cpp#L1276-L1399).
+
+```diff
+  1347  1276 | void PipelineCache::LoadDiskResources(u64 title_id, std::stop_token stop_loading,
+  1348  1277 |                                       const VideoCore::DiskResourceLoadCallback& callback) {
+  1349  1278 |     if (title_id == 0) {
+  1350  1279 |         return;
+  1351  1280 |     }
+  1352  1281 |     if (!pipeline_cache_filename.empty()) {
++       1282 |         StopBackgroundJobs();
+  1353  1283 |         serialization_thread.WaitForRequests();
+  1354  1284 |         if (use_vulkan_pipeline_cache && !vulkan_pipeline_cache_filename.empty()) {
+  1355  1285 |             SerializeVulkanPipelineCache(vulkan_pipeline_cache_filename, vulkan_pipeline_cache,
+  1356  1286 |                                          CACHE_VERSION);
+  1357  1287 |         }
++       1288 |         shader_cache_v2 = nullptr;
++       1289 |         cache_v2.reset();
++       1290 |         pipeline_binaries.reset();
+  1358  1291 |     }
+  1359  1292 | 
++       1293 |     namespace StutterTrace = VideoCommon::StutterTrace;
++       1294 |     const auto load_begin = std::chrono::steady_clock::now();
++       1295 |     StutterTrace::BootMarker("shader_load_begin");
+  1360  1296 |     const auto shader_dir{Common::FS::GetEdenPath(Common::FS::EdenPath::ShaderDir)};
+  1361  1297 |     const auto base_dir{shader_dir / fmt::format("{:016x}", title_id)};
+  1362  1298 |     if (!Common::FS::CreateDir(shader_dir) || !Common::FS::CreateDir(base_dir)) {
+  1363  1299 |         LOG_ERROR(Common_Filesystem, "Failed to create pipeline cache directories");
+  1364  1300 |         return;
+  1365  1301 |     }
+- 1366       |     pipeline_cache_filename = base_dir / "vulkan.bin";
+- 1367       | 
+- 1368       |     if (use_vulkan_pipeline_cache) {
+- 1369       |         vulkan_pipeline_cache_filename = base_dir / "vulkan_pipelines.bin";
+- 1370       |         vulkan_pipeline_cache =
+- 1371       |             LoadVulkanPipelineCache(vulkan_pipeline_cache_filename, CACHE_VERSION);
+- 1372       |     }
+- 1373       | 
+- 1374       | #ifdef PS5_NATIVE
+- 1375       |     // ENCORE_PS5_CACHE_DIAG_BEGIN
+- 1376       |     // Once per game load only: separate a missing per-title environment log,
+- 1377       |     // a header-only log, and an existing cache whose records get rejected.
+- 1378       |     // Never inspect or walk these files in the draw/submit hot path.
+- 1379       |     struct DiskCacheProbe {
+- 1380       |         bool present{};
+- 1381       |         std::uintmax_t bytes{};
+- 1382       |     };
+- 1383       |     const auto probe_cache = [](const std::filesystem::path& path) -> DiskCacheProbe {
+- 1384       |         std::error_code error;
+- 1385       |         const auto bytes = std::filesystem::file_size(path, error);
+- 1386       |         return {!error, error ? std::uintmax_t{} : bytes};
+- 1387       |     };
+- 1388       |     const auto env_before = probe_cache(pipeline_cache_filename);
+- 1389       |     const auto driver_before = use_vulkan_pipeline_cache
+- 1390       |                                    ? probe_cache(vulkan_pipeline_cache_filename)
+- 1391       |                                    : DiskCacheProbe{};
+- 1392       |     std::printf("EDEN_PS5_SHADER_CACHE_DISK title=%016llX stage=before"
+- 1393       |                 " env_present=%u env_bytes=%llu driver_enabled=%u"
+- 1394       |                 " driver_present=%u driver_bytes=%llu cache_version=%u\n",
+- 1395       |                 static_cast<unsigned long long>(title_id),
+- 1396       |                 unsigned(env_before.present),
+- 1397       |                 static_cast<unsigned long long>(env_before.bytes),
+- 1398       |                 unsigned(use_vulkan_pipeline_cache), unsigned(driver_before.present),
+- 1399       |                 static_cast<unsigned long long>(driver_before.bytes),
+- 1400       |                 unsigned(CACHE_VERSION));
+- 1401       |     // ENCORE_PS5_CACHE_DIAG_END
+- 1402       |     // The PS5 is launching one foreground game, so do not delay it by
+- 1403       |     // compiling the full backlog of shaders from earlier sessions.
+- 1404       |     // An already-stopped token is a special initialization-only request:
+- 1405       |     // after naming the per-title cache, leave workers RUNNING for later jobs.
+- 1406       |     if (stop_loading.stop_requested()) {
+- 1407       |         LOG_INFO(Render_Vulkan, "PS5 lazy shader cache ready for {:016x}", title_id);
+- 1408       |         return;
+- 1409       |     }
+- 1410       | #endif
+- 1411       | 
+- 1412       | #ifdef PS5_NATIVE
+- 1413       |     // FC27: the old fixed 32-entry PREFIX admitted 18 compute and only
+- 1414       |     // 14 graphics shaders from a 28.7 MiB cache. Thousands of newer records
+- 1415       |     // were ignored and the GPU owner still translated 303 new graphics keys.
+- 1416       |     // A recorded FC27 warm cache contains 710 valid pipeline records, yet the
+- 1417       |     // 32-entry prewarm left 361 guest shaders to translate during the match.
+- 1418       |     // FC27 PS5 25/11: 598 valid cached keys, only 128 restored in 704 ms,
+- 1419       |     // and 243 first-use translations during gameplay. Prebuild the newest
+- 1420       |     // 768 DISTINCT cached keys before guest Run when the existing file-size
+- 1421       |     // limit allows it. Keep the 32-entry prefix for large/absent caches;
+- 1422       |     // this changes no GPU barriers, shader output or draw ordering.
+- 1423       |     constexpr size_t kStartupPrewarmPipelines = 32;
+- 1424       |     constexpr size_t kRecentPrewarmPipelines = 768;
+- 1425       |     constexpr std::uintmax_t kRecentShaderCacheScanLimit = 64ULL << 20;
+- 1426       |     const bool prefer_recent_cache =
+- 1427       |         env_before.present && env_before.bytes > 12 &&
+- 1428       |         env_before.bytes <= kRecentShaderCacheScanLimit;
+- 1429       |     const size_t prewarm_pipeline_limit =
+- 1430       |         prefer_recent_cache ? kRecentPrewarmPipelines : kStartupPrewarmPipelines;
+- 1431       |     using PrewarmKey = std::variant<ComputePipelineCacheKey, GraphicsPipelineCacheKey>;
+- 1432       |     std::list<std::pair<PrewarmKey, Common::UniqueFunction<void>>> recent_cache_builds;
+- 1433       |     const auto startup_prewarm_started = std::chrono::steady_clock::now();
+- 1434       |     std::stop_source startup_reader;
+- 1435       | #endif
+- 1436       |     struct {
+- 1437       |         std::mutex mutex;
+- 1438       |         size_t total{};
+- 1439       |         size_t built{};
+- 1440       |         size_t valid{};
+- 1441       |         bool has_loaded{};
+- 1442       | #ifdef PS5_NATIVE
+- 1443       |         std::exception_ptr worker_error;
+- 1444       | #endif
+- 1445       |         // ENCORE_PS5_CACHE_DIAG_BEGIN
+- 1446       | #ifdef PS5_NATIVE
+- 1447       |         // Updated only by the disk reader; the main thread reads after drain.
+- 1448       |         size_t disk_compute_records{};
+- 1449       |         size_t disk_graphics_records{};
+- 1450       |         size_t disk_graphics_admitted{};
+- 1451       | #endif
+- 1452       |         // ENCORE_PS5_CACHE_DIAG_END
+- 1453       |         std::unique_ptr<PipelineStatistics> statistics;
+- 1454       |     } state;
+- 1455       | 
+- 1456       |     if (device.IsKhrPipelineExecutablePropertiesEnabled()) {
+- 1457       |         state.statistics = std::make_unique<PipelineStatistics>(device);
+- 1458       |     }
+- 1459       |     const auto schedule_prewarm = [&]([[maybe_unused]] const auto& key,
+- 1460       |                                       Common::UniqueFunction<void> build) {
+- 1461       | #ifdef PS5_NATIVE
+- 1462       |         // ThreadWorker does not catch task exceptions. Keep the first failure
+- 1463       |         // until all accepted jobs have finished borrowing this loading state.
+- 1464       |         build = Common::UniqueFunction<void>{[&state, task = std::move(build)]() mutable {
+- 1465       |             try {
+- 1466       |                 task();
+- 1467       |             } catch (...) {
+- 1468       |                 std::scoped_lock lock{state.mutex};
+- 1469       |                 if (!state.worker_error) state.worker_error = std::current_exception();
+- 1470       |             }
+- 1471       |         }};
+- 1472       |         if (prefer_recent_cache) {
+- 1473       |             // No driver work while scanning the file. Move-only jobs own all
+- 1474       |             // shader environments and cannot outlive this loading function.
+- 1475       |             // Discard oldest unstarted work without creating GPU pipelines.
+- 1476       |             // Live misses append to the disk cache, including keys skipped by
+- 1477       |             // earlier bounded prewarms. Retain the most recent occurrence of
+- 1478       |             // each full typed key, not 128 possibly duplicate records.
+- 1479       |             // The bounded list owns only unstarted jobs; no live GPU resource
+- 1480       |             // or shader environment used by another worker is replaced.
+- 1481       |             const PrewarmKey candidate{key};
+- 1482       |             const auto duplicate = std::find_if(
+- 1483       |                 recent_cache_builds.begin(), recent_cache_builds.end(),
+- 1484       |                 [&](const auto& entry) { return entry.first == candidate; });
+- 1485       |             if (duplicate != recent_cache_builds.end())
+- 1486       |                 recent_cache_builds.erase(duplicate);
+- 1487       |             if (recent_cache_builds.size() == prewarm_pipeline_limit)
+- 1488       |                 recent_cache_builds.pop_front();
+- 1489       |             recent_cache_builds.emplace_back(candidate, std::move(build));
+- 1490       |             return;
+- 1491       |         }
+- 1492       | #endif
+- 1493       |         workers.QueueWork(std::move(build));
+- 1494       |         {
+- 1495       |             std::scoped_lock lock{state.mutex};
+- 1496       |             ++state.total;
+- 1497       |         }
+- 1498       | #ifdef PS5_NATIVE
+- 1499       |         if (state.total == prewarm_pipeline_limit)
+- 1500       |             startup_reader.request_stop();
+- 1501       | #endif
+- 1502       |     };
+- 1503       |     const auto load_compute{[&](std::ifstream& file, FileEnvironment env) {
+- 1504       |         // ENCORE_PS5_CACHE_DIAG_BEGIN
+- 1505       | #ifdef PS5_NATIVE
+- 1506       |         ++state.disk_compute_records;
+- 1507       | #endif
+- 1508       |         // ENCORE_PS5_CACHE_DIAG_END
+- 1509       |         ComputePipelineCacheKey key;
+- 1510       |         file.read(reinterpret_cast<char*>(&key), sizeof(key));
+- 1511       | 
+- 1512       |         schedule_prewarm(key, [this, key, env_ = std::move(env), &state, &callback]() mutable {
+- 1513       |             ShaderPools pools;
+- 1514       |             auto pipeline{CreateComputePipeline(pools, key, env_, state.statistics.get(), false)};
+- 1515       |             std::scoped_lock lock{state.mutex};
+- 1516       |             // Do not seed a failed Vulkan compute pipeline for future dispatches.
+- 1517       |             if (pipeline && pipeline->IsBound()) {
+- 1518       |                 compute_cache.emplace(key, std::move(pipeline));
+- 1519       |                 ++state.valid;
+- 1520       |             }
+- 1521       |             ++state.built;
+- 1522       |             if (state.has_loaded) {
+- 1523       |                 callback(VideoCore::LoadCallbackStage::Build, state.built, state.total);
+- 1524       |             }
+- 1525       |         });
+- 1526       |     }};
+- 1527       |     const auto load_graphics{[&](std::ifstream& file, std::vector<FileEnvironment> envs) {
+- 1528       |         // ENCORE_PS5_CACHE_DIAG_BEGIN
+- 1529       | #ifdef PS5_NATIVE
+- 1530       |         ++state.disk_graphics_records;
+- 1531       | #endif
+- 1532       |         // ENCORE_PS5_CACHE_DIAG_END
+- 1533       |         GraphicsPipelineCacheKey key;
+- 1534       |         file.read(reinterpret_cast<char*>(&key), sizeof(key));
+- 1535       | 
+- 1536       |         // Disk records are untrusted: the six guest programs include both
+- 1537       |         // VertexA and VertexB, even though Vulkan exposes five graphics stages.
+- 1538       |         size_t env_index = 0;
+- 1539       |         for (size_t index = 0; index < key.unique_hashes.size(); ++index) {
+- 1540       |             if (key.unique_hashes[index] == 0) continue;
+- 1541       |             if (env_index == envs.size() ||
+- 1542       |                 envs[env_index].ShaderStage() != (index == 0 ? Shader::Stage::VertexA
+- 1543       |                                                             : Shader::StageFromIndex(index - 1))) {
+- 1544       |                 return;
+- 1545       |             }
+- 1546       |             ++env_index;
+- 1547       |         }
+- 1548       |         if (env_index == 0 || env_index != envs.size()) return;
+- 1549       | 
+- 1550       |         if ((key.state.extended_dynamic_state != 0) !=
+- 1551       |                 dynamic_features.has_extended_dynamic_state ||
+- 1552       |             (key.state.extended_dynamic_state_2 != 0) !=
+- 1553       |                 dynamic_features.has_extended_dynamic_state_2 ||
+- 1554       |             (key.state.extended_dynamic_state_2_logic_op != 0) !=
+- 1555       |                 dynamic_features.has_extended_dynamic_state_2_logic_op ||
+- 1556       |             (key.state.extended_dynamic_state_3_blend != 0) !=
+- 1557       |                 dynamic_features.has_extended_dynamic_state_3_blend ||
+- 1558       |             (key.state.extended_dynamic_state_3_enables != 0) !=
+- 1559       |                 dynamic_features.has_extended_dynamic_state_3_enables ||
+- 1560       |             (key.state.color_write_enable_dynamic != 0) !=
+- 1561       |                 dynamic_features.has_color_write_enable ||
+- 1562       |             ((key.state.dynamic_vertex_input != 0) !=
+- 1563       |                  dynamic_features.has_dynamic_vertex_input &&
+- 1564       |              !(dynamic_features.has_dynamic_vertex_input &&
+- 1565       |                ::Eden::DevVulkan::static_vertex_input &&
+- 1566       |                EdenAttributelessStaticKey(key.state)))) {
+- 1567       |             return;
+- 1568       |         }
+- 1569       | 
+- 1570       |         const bool key_requests_provoking_last = key.state.provoking_vertex_last != 0;
+- 1571       |         if (key_requests_provoking_last && !dynamic_features.has_provoking_vertex_last_mode) {
+- 1572       |             return;
+- 1573       |         }
+- 1574       | 
+- 1575       |         const bool key_uses_transform_feedback = key.state.xfb_enabled != 0;
+- 1576       |         if (key_uses_transform_feedback && key_requests_provoking_last &&
+- 1577       |             !dynamic_features.has_provoking_vertex_tf_preserve) {
+- 1578       |             return;
+- 1579       |         }
+- 1580       | 
+- 1581       |         schedule_prewarm(key, [this, key, envs_ = std::move(envs), &state, &callback]() mutable {
+- 1582       |             ShaderPools pools;
+- 1583       |             boost::container::static_vector<Shader::Environment*, Maxwell::MaxShaderProgram> env_ptrs;
+- 1584       |             for (auto& env : envs_) {
+- 1585       |                 env_ptrs.push_back(&env);
+- 1586       |             }
+- 1587       |             auto pipeline{CreateGraphicsPipeline(pools, key, MakeSpan(env_ptrs),
+- 1588       |                                                  state.statistics.get(), false)};
+- 1589       | 
+- 1590       |             std::scoped_lock lock{state.mutex};
+- 1591       |             // Leave a failed Vulkan build absent from the prewarm map,
+- 1592       |             // so the normal first-use path may try the key again.
+- 1593       | #ifdef PS5_NATIVE
+- 1594       |             if (pipeline && pipeline->CanExecuteDraw()) {
+- 1595       | #else
+- 1596       |             if (pipeline) {
+- 1597       | #endif
+- 1598       |                 graphics_cache.emplace(key, std::move(pipeline));
+- 1599       |                 ++state.valid;
+- 1600       |             }
+- 1601       |             ++state.built;
+- 1602       |             if (state.has_loaded) {
+- 1603       |                 callback(VideoCore::LoadCallbackStage::Build, state.built, state.total);
+- 1604       |             }
+- 1605       |         });
+- 1606       |         // ENCORE_PS5_CACHE_DIAG_BEGIN
+- 1607       | #ifdef PS5_NATIVE
+- 1608       |         ++state.disk_graphics_admitted;
+- 1609       | #endif
+- 1610       |         // ENCORE_PS5_CACHE_DIAG_END
+- 1611       |     }};
+- 1612       |     // Only the reader observes the quota stop. Passing this token to
+- 1613       |     // workers.WaitForRequests() would permanently request_stop() on the
+- 1614       |     // shader-builder pool, breaking first-use shaders later in gameplay.
+- 1615       | #ifdef PS5_NATIVE
+- 1616       |     // Newest-entry mode must read to the last VALID record (also repairing
+- 1617       |     // a corrupt tail); large caches retain the old first-32 stop token.
+- 1618       |     const std::stop_token reader_token{
+- 1619       |         prefer_recent_cache ? stop_loading : startup_reader.get_token()};
+- 1620       | #else
+- 1621       |     const std::stop_token reader_token{stop_loading};
+- 1622       | #endif
+- 1623       | #ifdef PS5_NATIVE
+- 1624       |     // The progress callback below also runs before the normal drain and can
+- 1625       |     // throw. Keep locally borrowed prewarm state alive on EVERY exceptional
+- 1626       |     // exit, not only failures of the disk reader. No extra wait on success.
+- 1627       |     struct PrewarmDrain {
+- 1628       |         Common::ThreadWorker& compiler;
+- 1629       |         bool joined{};
+- 1630       |         ~PrewarmDrain() {
+- 1631       |             if (!joined) compiler.WaitForRequests();
++       1302 |     namespace CacheV2 = VideoCommon::ShaderCacheV2;
++       1303 |     pipeline_cache_filename = base_dir / CacheV2::FileName;
++       1304 |     // Left by a boot load that never finished (a driver crash, abort or hang): this boot builds
++       1305 |     // nothing from the cache. The lock is held for as long as the marker may be there, so while
++       1306 |     // another emulator holds it, its load is running (or its crash dump is being written).
++       1307 |     auto boot_marker = pipeline_cache_filename;
++       1308 |     boot_marker += ".booting";
++       1309 |     auto boot_lock_path = boot_marker;
++       1310 |     boot_lock_path += ".lock";
++       1311 |     const Common::FS::FileLock boot_lock{boot_lock_path};
++       1312 |     const bool build_at_boot =
++       1313 |         boot_lock.Held() ? !Common::FS::Exists(boot_marker) : !boot_lock.Busy();
++       1314 |     if (boot_lock.Busy()) {
++       1315 |         LOG_WARNING(Render_Vulkan, "Shader cache v2: another emulator is loading this title's "
++       1316 |                                    "cache; building none at boot this time");
++       1317 |     } else if (!build_at_boot) {
++       1318 |         LOG_WARNING(Render_Vulkan, "Shader cache v2: the last boot ended while building cached "
++       1319 |                                    "pipelines; building none at boot this time");
+  1632  1320 |         }
+- 1633       |     } prewarm_drain{workers};
+- 1634       | #endif
+- 1635       | #ifdef PS5_NATIVE
+- 1636       |     // A damaged disk cache or an enqueue failure can interrupt the reader
+- 1637       |     // after jobs borrowed local state. Always reach the non-cancelling drain.
+- 1638       |     try {
+- 1639       | #endif
+- 1640       |         VideoCommon::LoadPipelines(reader_token, pipeline_cache_filename, CACHE_VERSION, load_compute,
+- 1641       |                                    load_graphics);
+- 1642       | #ifdef PS5_NATIVE
+- 1643       |         if (prefer_recent_cache && !stop_loading.stop_requested()) {
+- 1644       |             for (auto& entry : recent_cache_builds) {
+- 1645       |                 workers.QueueWork(std::move(entry.second));
+- 1646       |                 std::scoped_lock lock{state.mutex};
+- 1647       |                 ++state.total;
++       1321 |     const auto migration =
++       1322 |         MigrateLegacyPipelineCache(base_dir, pipeline_cache_filename, MaxUsedPipelineAge(device));
++       1323 |     if (migration.version) {
++       1324 |         LOG_INFO(Render_Vulkan,
++       1325 |                  "Shader cache v2 started from the version {} cache: {} graphics and {} "
++       1326 |                  "compute pipelines ({} records collapsed), {} used-list entries",
++       1327 |                  *migration.version, migration.graphics, migration.compute, migration.collapsed,
++       1328 |                  migration.used);
++       1329 |     } else if (migration.failed) {
++       1330 |         LOG_WARNING(Render_Vulkan, "Couldn't start shader cache v2 from the older cache");
+  1648  1331 |             }
+- 1649       |             recent_cache_builds.clear();
++       1332 |     cache_v2 = std::make_unique<CacheV2::Cache>(pipeline_cache_filename);
++       1333 |     if (!build_at_boot) {
++       1334 |         cache_v2->KeepStalePrograms();
+  1650  1335 |         }
+- 1651       |     } catch (const std::exception& error) {
+- 1652       |         LOG_WARNING(Render_Vulkan, "PS5 shader prewarm aborted: {}", error.what());
+- 1653       |     } catch (...) {
+- 1654       |         LOG_WARNING(Render_Vulkan, "PS5 shader prewarm aborted: unknown exception");
++       1336 |     shader_cache_v2 = cache_v2.get();
++       1337 |     pipeline_binaries = PipelineBinaries::Open(device, base_dir);
++       1338 |     // Without the lock: another emulator's appends are complete records or a cut-off tail.
++       1339 |     // The payload hashes are checked on the shader job workers.
++       1340 |     auto log_v2 = std::make_shared<CacheV2::LogFile>(CacheV2::ReadLogFile(
++       1341 |         pipeline_cache_filename, [this](size_t count, const std::function<void(size_t)>& task) {
++       1342 |             VideoCommon::ParallelFor(*shader_jobs, count, task);
++       1343 |         }));
++       1344 |     cache_v2->LoadPrograms(log_v2->parsed.live);
++       1345 |     const CacheV2::LogStats& stats = log_v2->parsed.stats;
++       1346 |     LOG_INFO(Render_Vulkan,
++       1347 |              "Shader cache v2: {} bytes, {} live records, {} superseded, {} tombstones, {} "
++       1348 |              "damaged headers, {} damaged records, {} bytes skipped, {} bytes cut off",
++       1349 |              stats.file_size, stats.live, stats.superseded, stats.tombstones, stats.bad_headers,
++       1350 |              stats.bad_payloads, stats.skipped_bytes, stats.torn_tail_bytes);
++       1351 |     std::vector<u64> expired_sessions;
++       1352 |     used_pipelines =
++       1353 |         UsedPipelinesFromLog(log_v2->parsed.live, MaxUsedPipelineAge(device), expired_sessions);
++       1354 |     for (const u64 session : expired_sessions) {
++       1355 |         cache_v2->Writer().Append(CacheV2::RecordKind::Tombstone, session,
++       1356 |                                   CacheV2::TombstonePayload(CacheV2::RecordKind::Used));
+  1655  1357 |     }
+- 1656       | #endif
+- 1657       | 
+- 1658       |     LOG_INFO(Render_Vulkan, "Total Pipeline Count: {}", state.total);
+- 1659       | 
+- 1660       |     std::unique_lock lock{state.mutex};
+- 1661       |     callback(VideoCore::LoadCallbackStage::Build, 0, state.total);
+- 1662       |     state.has_loaded = true;
+- 1663       |     lock.unlock();
+- 1664       | 
+- 1665       | #ifdef PS5_NATIVE
+- 1666       |     // A cancelled title-cache load must never stop the persistent shader
+- 1667       |     // compiler pool: StatefulThreadWorker::WaitForRequests(stop_token)
+- 1668       |     // requests stop on every worker when that token is cancelled.
+- 1669       |     // Only the disk reader observes cancellation. The bounded queued jobs
+- 1670       |     // must complete before their borrowed stack state can be destroyed.
+- 1671       |     workers.WaitForRequests();
+- 1672       |     prewarm_drain.joined = true;
+- 1673       |     // Propagate the original failure on the loading owner, not std::terminate
+- 1674       |     // on a worker. Never advertise a partial failed cache as a successful load.
+- 1675       |     if (state.worker_error) std::rethrow_exception(state.worker_error);
+- 1676       | #else
+- 1677       |     workers.WaitForRequests(stop_loading);
+- 1678       | #endif
+- 1679       | #ifdef PS5_NATIVE
+- 1680       |     // Completed attempts include failed native handles; track valid results.
+- 1681       |     // One startup summary, never a per-frame or per-draw instrumentation cost.
+- 1682       |     const auto startup_prewarm_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+- 1683       |         std::chrono::steady_clock::now() - startup_prewarm_started).count();
+- 1684       |     std::printf("EDEN_PS5_SHADER_PREWARM queued=%zu completed=%zu valid=%zu rejected=%zu prebuild_ms=%lld limit=%zu\n",
+- 1685       |                 state.total, state.built, state.valid, state.built - state.valid,
+- 1686       |                 static_cast<long long>(startup_prewarm_ms), prewarm_pipeline_limit);
+- 1687       |     // ENCORE_PS5_CACHE_DIAG_BEGIN
+- 1688       |     const auto env_after = probe_cache(pipeline_cache_filename);
+- 1689       |     std::printf("EDEN_PS5_SHADER_CACHE_ADMISSION title=%016llX"
+- 1690       |                 " env_before_present=%u env_before_bytes=%llu"
+- 1691       |                 " env_after_present=%u env_after_bytes=%llu"
+- 1692       |                 " compute_records=%zu graphics_records=%zu graphics_filtered=%zu"
+- 1693       |                 " queued=%zu cache_version=%u\n",
+- 1694       |                 static_cast<unsigned long long>(title_id),
+- 1695       |                 unsigned(env_before.present),
+- 1696       |                 static_cast<unsigned long long>(env_before.bytes),
+- 1697       |                 unsigned(env_after.present),
+- 1698       |                 static_cast<unsigned long long>(env_after.bytes),
+- 1699       |                 state.disk_compute_records, state.disk_graphics_records,
+- 1700       |                 state.disk_graphics_records - state.disk_graphics_admitted,
+- 1701       |                 state.total, unsigned(CACHE_VERSION));
+- 1702       |     // ENCORE_PS5_CACHE_DIAG_END
+- 1703       | #endif
++       1358 |     used_session_time = static_cast<u64>(std::chrono::duration_cast<std::chrono::nanoseconds>(
++       1359 |                                              std::chrono::system_clock::now().time_since_epoch())
++       1360 |                                              .count());
++       1361 |     used_session_key = used_session_time ^ std::random_device{}();
++       1362 |     used_pipelines_saved = std::chrono::steady_clock::now();
+  1704  1363 | 
++       1364 |     namespace ShaderWarm = VideoCommon::ShaderWarm;
++       1365 |     const bool precache =
++       1366 |         ShaderWarm::PrecacheBeforeStart(
++       1367 |             Settings::values.precache_shaders.GetValue(), ShaderWarm::TakeWarmBeforeStart(),
++       1368 |             ShaderWarm::WarmRequested(ShaderWarm::ComputeWarmPath(title_id))) &&
++       1369 |         build_at_boot;
+  1705  1370 |     if (use_vulkan_pipeline_cache) {
+- 1706       |         SerializeVulkanPipelineCache(vulkan_pipeline_cache_filename, vulkan_pipeline_cache,
+- 1707       |                                      CACHE_VERSION);
+- 1708       |         size_t size = 0;
+- 1709       |         vulkan_pipeline_cache.Read(&size, nullptr);
+- 1710       |         last_cache_size.store(size, std::memory_order_relaxed);
+- 1711       |         last_flush = std::chrono::steady_clock::now();
+- 1712       |     }
+- 1713       | 
+- 1714       |     if (state.statistics) {
+- 1715       |         state.statistics->Report();
+- 1716       |     }
+- 1717       | }
+- 1718       | 
+- 1719       | void PipelineCache::QueueVulkanPipelineCacheFlush() {
+- 1720       |     if (!use_vulkan_pipeline_cache || vulkan_pipeline_cache_filename.empty()) {
+- 1721       |         return;
+- 1722       |     }
+- 1723       | #ifdef PS5_NATIVE
+- 1724       |     // Recover a failed background serialization without racing the owner's
+- 1725       |     // non-atomic quota. The existing time gate still bounds retry frequency.
+- 1726       |     if (flush_worker_failed.exchange(false, std::memory_order_acq_rel)) {
+- 1727       |         pipelines_since_flush = VULKAN_CACHE_FLUSH_PIPELINES;
+- 1728       |     }
+- 1729       | #endif
+- 1730       |     if (++pipelines_since_flush < VULKAN_CACHE_FLUSH_PIPELINES) {
+- 1731       |         return;
+- 1732       |     }
+- 1733       |     const auto now = std::chrono::steady_clock::now();
+- 1734       |     const auto megabytes = last_cache_size.load(std::memory_order_relaxed) / (1024 * 1024);
+- 1735       |     const std::chrono::seconds interval{
+- 1736       |         std::max<size_t>(VULKAN_CACHE_FLUSH_MIN_SECONDS, megabytes)};
+- 1737       |     if (last_flush.time_since_epoch().count() != 0 && now - last_flush < interval) {
+- 1738       |         return;
+- 1739       |     }
+- 1740       |     if (flush_in_flight.exchange(true, std::memory_order_acq_rel)) {
+- 1741       |         return;
+- 1742       |     }
+- 1743       |     pipelines_since_flush = 0;
+- 1744       |     last_flush = now;
+- 1745       |     // A transient driver-cache read or serializer exception must not pin
+- 1746       |     // flush_in_flight=true for the lifetime of the foreground title.
+- 1747       |     // Keep the existing periodic budget, filename and background worker.
+- 1748       |     try {
+- 1749       |         serialization_thread.QueueWork([this] {
+- 1750       |             struct ReleaseFlush {
+- 1751       |                 std::atomic_bool& in_flight;
+- 1752       |                 ~ReleaseFlush() { in_flight.store(false, std::memory_order_release); }
+- 1753       |             } release{flush_in_flight};
+- 1754       |             try {
+- 1755       |                 SerializeVulkanPipelineCache(vulkan_pipeline_cache_filename, vulkan_pipeline_cache,
+- 1756       |                                              CACHE_VERSION);
+- 1757       |                 size_t size = 0;
+- 1758       |                 vulkan_pipeline_cache.Read(&size, nullptr);
+- 1759       |                 last_cache_size.store(size, std::memory_order_relaxed);
+- 1760       |             } catch (const std::exception& error) {
+- 1761       | #ifdef PS5_NATIVE
+- 1762       |                 // Signal a new checkpoint, but only the GPU owner may update
+- 1763       |                 // the ordinary pipeline build quota on its next call.
+- 1764       |                 flush_worker_failed.store(true, std::memory_order_release);
+- 1765       | #endif
+- 1766       |                 LOG_WARNING(Render_Vulkan, "Deferred driver cache flush failed: {}", error.what());
+- 1767       |             } catch (...) {
+- 1768       | #ifdef PS5_NATIVE
+- 1769       |                 flush_worker_failed.store(true, std::memory_order_release);
+- 1770       | #endif
+- 1771       |                 LOG_WARNING(Render_Vulkan, "Deferred driver cache flush failed: unknown exception");
+- 1772       |             }
+- 1773       |         });
+- 1774       |     } catch (const std::exception& error) {
+- 1775       |         flush_in_flight.store(false, std::memory_order_release);
+- 1776       |         // Keep this checkpoint due for a later retry, without bypassing the
+- 1777       |         // existing time gate if the serializer is temporarily unavailable.
+- 1778       |         pipelines_since_flush = VULKAN_CACHE_FLUSH_PIPELINES;
+- 1779       |         LOG_WARNING(Render_Vulkan, "Deferred cache flush queue rejected: {}", error.what());
+- 1780       |     } catch (...) {
+- 1781       |         flush_in_flight.store(false, std::memory_order_release);
+- 1782       |         pipelines_since_flush = VULKAN_CACHE_FLUSH_PIPELINES;
+- 1783       |         LOG_WARNING(Render_Vulkan, "Deferred cache flush queue rejected: unknown exception");
+- 1784       |     }
+- 1785       | }
+- 1786       | 
+- 1787       | GraphicsPipeline* PipelineCache::CurrentGraphicsPipelineSlowPath() {
+- 1788       |     const auto [pair, is_new]{graphics_cache.try_emplace(graphics_key)};
+- 1789       |     auto& pipeline{pair->second};
+- 1790       |     if (is_new) {
+- 1791       | #ifdef PS5_NATIVE
+- 1792       |         // F07: first-use guest shader translation and SPIR-V generation are
+- 1793       |         // synchronous even when the Vulkan pipeline build is queued.
+- 1794       |         // Count EVERY cold miss with Detailed Logging, not one in 16 draws.
+- 1795       |         // Quiet releases take no clock readings on this path.
+- 1796       |         ::Eden::Performance::CachePhaseTimer first_use_cpu_phase{
+- 1797       |             ::Eden::Performance::CachePhase::GraphicsPipelineCreate,
+- 1798       |             ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 1799       | #endif
+- 1800       | #ifdef PS5_NATIVE
+- 1801       |         ColdShaderMissTrace cold_miss{"graphics", graphics_key.Hash(), false};
+- 1802       | #endif
+- 1803       |         pipeline = CreateGraphicsPipeline();
+- 1804       | #ifdef PS5_NATIVE
+- 1805       |         first_use_cpu_phase.Stop();
+- 1806       |         cold_miss.Complete(static_cast<bool>(pipeline));
+- 1807       |         if (!pipeline) {
+- 1808       |             // Failed-key retry metadata is capped, but a burst of >=64
+- 1809       |             // failures must not permanently deny NEW shaders their one
+- 1810       |             // delayed recovery attempt. Rotate only on failure, never on a
+- 1811       |             // successful draw or during the hot null-cache lookup.
+- 1812       |             if (failed_graphics_retries.size() >= 64) {
+- 1813       |                 const auto oldest = std::min_element(
+- 1814       |                     failed_graphics_retries.begin(), failed_graphics_retries.end(),
+- 1815       |                     [](const auto& left, const auto& right) {
+- 1816       |                         return left.second.eligible_at < right.second.eligible_at;
+- 1817       |                     });
+- 1818       |                 if (oldest != failed_graphics_retries.end()) {
+- 1819       |                     failed_graphics_retries.erase(oldest);
+- 1820       |                 }
+- 1821       |             }
+- 1822       |             failed_graphics_retries.try_emplace(
+- 1823       |                 graphics_key, GraphicsRetryState{
+- 1824       |                     std::chrono::steady_clock::now() + std::chrono::seconds(2), false});
+- 1825       |         }
+- 1826       | #endif
+- 1827       |     }
+- 1828       | #ifdef PS5_NATIVE
+- 1829       |     else if (!pipeline) {
+- 1830       |         const auto failed = failed_graphics_retries.find(graphics_key);
+- 1831       |         if (failed != failed_graphics_retries.end() && !failed->second.attempted &&
+- 1832       |             std::chrono::steady_clock::now() >= failed->second.eligible_at) {
+- 1833       |             // Publish the attempted bit BEFORE the potentially expensive
+- 1834       |             // guest IR/SPIR-V translation. Repeated failed HUD draws stay O(1).
+- 1835       |             failed->second.attempted = true;
+- 1836       |             ::Eden::Performance::CachePhaseTimer retry_cpu_cost{
+- 1837       |                 ::Eden::Performance::CachePhase::GraphicsPipelineCreate,
+- 1838       |                 ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 1839       |             ColdShaderMissTrace cold_retry{"graphics", graphics_key.Hash(), true};
+- 1840       |             pipeline = CreateGraphicsPipeline();
+- 1841       |             retry_cpu_cost.Stop();
+- 1842       |             cold_retry.Complete(static_cast<bool>(pipeline));
+- 1843       |             // The null graphics_cache entry itself guarantees at most one
+- 1844       |             // retry for this key. Retaining consumed retry metadata would
+- 1845       |             // exhaust the 64-key budget after unrelated transient failures.
+- 1846       |             failed_graphics_retries.erase(failed);
+- 1847       |         }
+- 1848       |     }
+- 1849       | #endif
+- 1850       |     if (!pipeline) {
+- 1851       |         return nullptr;
+- 1852       |     }
+- 1853       |     if (current_pipeline) {
+- 1854       |         current_pipeline->AddTransition(pipeline.get());
+- 1855       |     }
+- 1856       |     current_pipeline = pipeline.get();
+- 1857       |     if (::Eden::DevVulkan::trace_pipelines) {
+- 1858       |         const auto first_use = ::Eden::PipelineTrace::graphics_first_use.Record(
+- 1859       |             ::Eden::DevVulkan::gpu_time_session.load(std::memory_order_acquire), current_pipeline);
+- 1860       |         if (first_use != 0) {
+- 1861       |             const auto& h = graphics_key.unique_hashes;
+- 1862       |             char text[256];
+- 1863       |             std::snprintf(text, sizeof(text), "G%zu p=%p new=%d va=%llx vb=%llx tc=%llx te=%llx gs=%llx fs=%llx",
+- 1864       |                           first_use, (const void*)current_pipeline, int(is_new), (unsigned long long)h[0], (unsigned long long)h[1],
+- 1865       |                           (unsigned long long)h[2], (unsigned long long)h[3], (unsigned long long)h[4],
+- 1866       |                           (unsigned long long)h[5]);
+- 1867       |             ::Eden::Report("pipeline", text);
+- 1868       |             LOG_INFO(Render_Vulkan, "EDEN_PIPELINE_FIRST_USE {}", text);
+- 1869       |         }
+- 1870       |     }
+- 1871       |     return BuiltPipeline(current_pipeline);
+- 1872       | }
+- 1873       | 
+- 1874       | GraphicsPipeline* PipelineCache::BuiltPipeline(GraphicsPipeline* pipeline) const noexcept {
+- 1875       |     if (pipeline->IsBuilt()) {
+- 1876       |         return pipeline;
+- 1877       |     }
+- 1878       | #ifdef PS5_NATIVE
+- 1879       |     // Prefer correct output over a missing shader draw. A not-yet-built
+- 1880       |     // async pipeline is safe to return: ConfigureDraw records an ordered
+- 1881       |     // scheduler-worker wait, and R378's SCOPE_EXIT publishes completion
+- 1882       |     // even on worker failure. No waiting under the guest cache pair here.
+- 1883       |     // The standard "skip complex first-use draws" policy stays unchanged
+- 1884       |     // on desktop/mobile, where it can improve cold first-use frame times.
+- 1885       |     return pipeline;
+- 1886       | #endif
+- 1887       |     if (!use_asynchronous_shaders) {
+- 1888       |         return pipeline;
+- 1889       |     }
+- 1890       |     // If games are using a small index count, we can assume these are full screen quads.
+- 1891       |     // Usually these shaders are only used once for building textures so we can assume they
+- 1892       |     // can't be built async
+- 1893       |     const auto& draw_state = maxwell3d->draw_manager.draw_state;
+- 1894       |     if (draw_state.index_buffer.count <= 6 || draw_state.vertex_buffer.count <= 6) {
+- 1895       |         return pipeline;
+- 1896       |     }
+- 1897       |     return nullptr;
+- 1898       | }
+- 1899       | 
+- 1900       | std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline(
+- 1901       |     ShaderPools& pools, const GraphicsPipelineCacheKey& key,
+- 1902       |     std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,
+- 1903       |     bool build_in_parallel, bool parallel_translate_stages) try {
+- 1904       | #ifdef PS5_NATIVE
+- 1905       |     // The optional optimizer must yield to foreground graphics translation
+- 1906       |     // even before the first-use Vulkan pipeline reaches the worker queue.
+- 1907       |     // Disk prewarm passes build_in_parallel=false and remains uncounted.
+- 1908       |     GraphicsTranslationPriorityScope translation_priority{
+- 1909       |         build_in_parallel && ::Eden::DevVulkan::fast_first_pipelines};
+- 1910       | #endif
+- 1911       |     auto hash = key.Hash();
+- 1912       |     LOG_DEBUG(Render_Vulkan, "{:#016x}", hash);
+- 1913       |     size_t env_index{0};
+- 1914       |     std::array<Shader::IR::Program, Maxwell::MaxShaderProgram> programs;
+- 1915       | #ifdef PS5_NATIVE
+- 1916       |     // Eden #4503 drops known-broken non-NVIDIA fragment shaders entirely.
+- 1917       |     // On PS5 that visibly removes guest draws. Keep the exact predicate but
+- 1918       |     // route only matching programs through the newer Lichii/Eglantine
+- 1919       |     // broadcast/select SPIR-V fallback.
+- 1920       |     std::array<bool, Maxwell::MaxShaderProgram> fragment_shuffle_fallback{};
+- 1921       | #endif
+- 1922       |     const bool uses_vertex_a{key.unique_hashes[0] != 0};
+- 1923       |     const bool uses_vertex_b{key.unique_hashes[1] != 0};
+- 1924       | 
+- 1925       |     // Layer passthrough generation for devices without VK_EXT_shader_viewport_index_layer
+- 1926       |     Shader::IR::Program* layer_source_program{};
+- 1927       | 
+- 1928       | #ifdef PS5_NATIVE
+- 1929       |     // Lichii's stage-parallel model adapted to Encore's active renderer:
+- 1930       |     // every stage owns its IR pools until SPIR-V emission has consumed the
+- 1931       |     // resulting Program. Only NS1 first-use calls can enable this flag; NS2
+- 1932       |     // native keeps its authenticated GMMU/channel translation synchronous.
+- 1933       |     std::array<std::unique_ptr<ShaderPools>, Maxwell::MaxShaderProgram> parallel_pools{};
+- 1934       |     std::array<std::unique_ptr<Shader::IR::Program>, Maxwell::MaxShaderProgram>
+- 1935       |         parallel_programs{};
+- 1936       |     std::array<std::exception_ptr, Maxwell::MaxShaderProgram> parallel_errors{};
+- 1937       |     // CachePhaseTimer's per-key shader attribution is intentionally thread-local.
+- 1938       |     // Give every stage worker a private accumulator, then merge after the owner
+- 1939       |     // joins them so EDEN_VULKAN_SHADER_MISS keeps the pre-parallel accounting.
+- 1940       |     std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>
+- 1941       |         parallel_stage_costs{};
+- 1942       | 
+- 1943       |     // Worker translation must never traverse the live guest GMMU. Snapshot
+- 1944       |     // every guest byte that CFG/IR may consult while still on the GPU owner:
+- 1945       |     // shader code is already copied by GetGraphicsEnvironments/SetCachedSize,
+- 1946       |     // and this block captures the TIC pool plus enabled per-stage CBUFs.
+- 1947       |     constexpr u32 DisabledSnapshotCbuf = (std::numeric_limits<u32>::max)();
+- 1948       |     constexpr u64 MaxTextureSnapshotBytes = u64{4} << 20;
+- 1949       |     constexpr u64 MaxCbufSnapshotBytes =
+- 1950       |         u64{Maxwell::MaxShaderStage} * Maxwell::MaxConstBuffers *
+- 1951       |         Maxwell::MaxConstBufferSize;
+- 1952       |     constexpr u64 MaxShaderSnapshotBytes =
+- 1953       |         MaxTextureSnapshotBytes + MaxCbufSnapshotBytes;
+- 1954       |     std::vector<u8> parallel_texture_snapshot;
+- 1955       |     std::array<std::array<std::vector<u8>, Maxwell::MaxConstBuffers>,
+- 1956       |                Maxwell::MaxShaderStage>
+- 1957       |         parallel_cbuf_storage{};
+- 1958       |     std::array<std::array<const u8*, Maxwell::MaxConstBuffers>,
+- 1959       |                Maxwell::MaxShaderStage>
+- 1960       |         parallel_cbuf_ptrs{};
+- 1961       |     std::array<std::array<u32, Maxwell::MaxConstBuffers>,
+- 1962       |                Maxwell::MaxShaderStage>
+- 1963       |         parallel_cbuf_sizes{};
+- 1964       |     for (auto& sizes : parallel_cbuf_sizes) {
+- 1965       |         sizes.fill(DisabledSnapshotCbuf);
+- 1966       |     }
+- 1967       | 
+- 1968       |     GPUVAddr snapshot_texture_base{};
+- 1969       |     u32 snapshot_texture_limit{};
+- 1970       |     bool snapshot_via_header_index{};
+- 1971       |     u32 snapshot_viewport_transform_state{};
+- 1972       | 
+- 1973       |     if (parallel_translate_stages) {
+- 1974       |         for (Shader::Environment* const env : envs) {
+- 1975       |             // HLE replacement lookup still belongs to Maxwell3D::replace_table.
+- 1976       |             // Keep those rare shaders on the GPU owner until that table has an
+- 1977       |             // immutable per-environment representation too.
+- 1978       |             if (env->HasHLEMacroState()) {
+- 1979       |                 parallel_translate_stages = false;
+- 1980       |                 break;
+- 1981       |             }
+- 1982       |         }
+- 1983       |     }
+- 1984       | 
+- 1985       |     if (parallel_translate_stages) {
+- 1986       |         // Disk prewarm uses FileEnvironment and can run without a bound
+- 1987       |         // graphics channel. Only the live NS1 owner may read these registers.
+- 1988       |         const auto& snapshot_tex_header = maxwell3d->regs.tex_header;
+- 1989       |         snapshot_texture_base = snapshot_tex_header.Address();
+- 1990       |         snapshot_texture_limit = static_cast<u32>(snapshot_tex_header.limit);
+- 1991       |         snapshot_via_header_index =
+- 1992       |             maxwell3d->regs.sampler_binding == Maxwell::SamplerBinding::ViaHeaderBinding;
+- 1993       |         snapshot_viewport_transform_state =
+- 1994       |             maxwell3d->regs.viewport_scale_offset_enabled;
+- 1995       |         const u64 snapshot_texture_bytes =
+- 1996       |             (u64{snapshot_texture_limit} + 1) * sizeof(Tegra::Texture::TICEntry);
+- 1997       |         bool snapshot_ok =
+- 1998       |             snapshot_texture_bytes <= MaxTextureSnapshotBytes &&
+- 1999       |             snapshot_texture_base <=
+- 2000       |                 (std::numeric_limits<GPUVAddr>::max)() - (snapshot_texture_bytes - 1) &&
+- 2001       |             gpu_memory->IsWithinGPUAddressRange(
+- 2002       |                 snapshot_texture_base + snapshot_texture_bytes - 1);
+- 2003       |         u64 snapshot_bytes = snapshot_texture_bytes;
+- 2004       |         std::array<bool, Maxwell::MaxShaderStage> stage_needed{};
+- 2005       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2006       |             if (key.unique_hashes[index] == 0) {
+- 2007       |                 continue;
+- 2008       |             }
+- 2009       |             const size_t physical_stage = index <= 1 ? 0 : index - 1;
+- 2010       |             stage_needed[physical_stage] = true;
+- 2011       |         }
+- 2012       | 
+- 2013       |         for (size_t stage = 0; snapshot_ok && stage < Maxwell::MaxShaderStage; ++stage) {
+- 2014       |             if (!stage_needed[stage]) {
+- 2015       |                 continue;
+- 2016       |             }
+- 2017       |             const auto& cbufs = maxwell3d->state.shader_stages[stage].const_buffers;
+- 2018       |             for (size_t bank = 0; bank < Maxwell::MaxConstBuffers; ++bank) {
+- 2019       |                 const auto& cbuf = cbufs[bank];
+- 2020       |                 if (!cbuf.enabled) {
+- 2021       |                     continue;
+- 2022       |                 }
+- 2023       |                 if (cbuf.size > Maxwell::MaxConstBufferSize ||
+- 2024       |                     snapshot_bytes > MaxShaderSnapshotBytes - cbuf.size) {
+- 2025       |                     snapshot_ok = false;
+- 2026       |                     break;
+- 2027       |                 }
+- 2028       |                 parallel_cbuf_sizes[stage][bank] = cbuf.size;
+- 2029       |                 snapshot_bytes += cbuf.size;
+- 2030       |                 if (cbuf.size == 0) {
+- 2031       |                     continue;
+- 2032       |                 }
+- 2033       |                 const u64 last_offset = u64{cbuf.size} - 1;
+- 2034       |                 if (cbuf.address >
+- 2035       |                         (std::numeric_limits<GPUVAddr>::max)() - last_offset ||
+- 2036       |                     !gpu_memory->IsFullyMappedRange(cbuf.address, cbuf.size)) {
+- 2037       |                     snapshot_ok = false;
+- 2038       |                     break;
+- 2039       |                 }
+- 2040       |             }
+- 2041       |         }
+- 2042       | 
+- 2043       |         if (snapshot_ok) {
+- 2044       |             try {
+- 2045       |                 parallel_texture_snapshot.resize(
+- 2046       |                     static_cast<size_t>(snapshot_texture_bytes));
+- 2047       |                 // Normal owner-thread reads preserve GPU-written descriptor/
+- 2048       |                 // uniform bytes before workers are allowed to consume them.
+- 2049       |                 gpu_memory->ReadBlock(snapshot_texture_base,
+- 2050       |                                       parallel_texture_snapshot.data(),
+- 2051       |                                       parallel_texture_snapshot.size());
+- 2052       |                 for (size_t stage = 0; stage < Maxwell::MaxShaderStage; ++stage) {
+- 2053       |                     if (!stage_needed[stage]) {
+- 2054       |                         continue;
+- 2055       |                     }
+- 2056       |                     const auto& cbufs =
+- 2057       |                         maxwell3d->state.shader_stages[stage].const_buffers;
+- 2058       |                     for (size_t bank = 0; bank < Maxwell::MaxConstBuffers; ++bank) {
+- 2059       |                         const u32 bytes = parallel_cbuf_sizes[stage][bank];
+- 2060       |                         if (bytes == DisabledSnapshotCbuf || bytes == 0) {
+- 2061       |                             continue;
+- 2062       |                         }
+- 2063       |                         auto& storage = parallel_cbuf_storage[stage][bank];
+- 2064       |                         storage.resize(bytes);
+- 2065       |                         gpu_memory->ReadBlock(cbufs[bank].address, storage.data(),
+- 2066       |                                               storage.size());
+- 2067       |                         parallel_cbuf_ptrs[stage][bank] = storage.data();
+- 2068       |                     }
+- 2069       |                 }
+- 2070       |             } catch (const std::bad_alloc&) {
+- 2071       |                 snapshot_ok = false;
+- 2072       |             }
+- 2073       |         }
+- 2074       |         parallel_translate_stages = snapshot_ok;
+- 2075       |     }
+- 2076       | 
+- 2077       |     if (parallel_translate_stages) try {
+- 2078       |         // QueueWork and pool allocation may throw after earlier tasks borrowed
+- 2079       |         // these locals. Drain before unwinding, without stopping persistent workers.
+- 2080       |         struct TranslationDrain {
+- 2081       |             Common::ThreadWorker& worker;
+- 2082       |             bool joined{};
+- 2083       |             ~TranslationDrain() {
+- 2084       |                 if (!joined) worker.WaitForRequests();
+- 2085       |             }
+- 2086       |         } translation_drain{shader_translation_workers};
+- 2087       |         // The GPU owner would otherwise sit idle until every stage completes.
+- 2088       |         // Queue the preceding stages, then translate the final active stage
+- 2089       |         // locally using exactly the same immutable snapshot and private pools.
+- 2090       |         size_t parallel_env_index{};
+- 2091       |         const size_t parallel_stage_count = envs.size();
+- 2092       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2093       |             if (key.unique_hashes[index] == 0) {
+- 2094       |                 continue;
+- 2095       |             }
+- 2096       |             Shader::Environment* const env = envs[parallel_env_index++];
+- 2097       |             const u32 cfg_offset{
+- 2098       |                 static_cast<u32>(env->StartAddress() + sizeof(Shader::ProgramHeader))};
+- 2099       |             parallel_pools[index] = std::make_unique<ShaderPools>();
+- 2100       |             ShaderPools* const stage_pools = parallel_pools[index].get();
+- 2101       |             const bool exits_to_dispatcher = index == 0;
+- 2102       |             const size_t physical_stage = index <= 1 ? 0 : index - 1;
+- 2103       |             auto translate_stage =
+- 2104       |                 [this, env, stage_pools, cfg_offset, exits_to_dispatcher, index,
+- 2105       |                  physical_stage, snapshot_texture_base, snapshot_texture_limit,
+- 2106       |                  snapshot_via_header_index, snapshot_viewport_transform_state,
+- 2107       |                  &parallel_texture_snapshot, &parallel_cbuf_ptrs,
+- 2108       |                  &parallel_cbuf_sizes, &parallel_programs, &parallel_errors,
+- 2109       |                  &parallel_stage_costs] {
+- 2110       |                     struct ShaderMissStageScope {
+- 2111       |                         ::Eden::Performance::ShaderMissStageCosts* previous{
+- 2112       |                             ::Eden::Performance::shader_miss_stage_active};
+- 2113       |                         explicit ShaderMissStageScope(
+- 2114       |                             ::Eden::Performance::ShaderMissStageCosts* current) noexcept {
+- 2115       |                             ::Eden::Performance::shader_miss_stage_active = current;
+- 2116       |                         }
+- 2117       |                         ~ShaderMissStageScope() {
+- 2118       |                             ::Eden::Performance::shader_miss_stage_active = previous;
+- 2119       |                         }
+- 2120       |                     } shader_miss_stage_scope{&parallel_stage_costs[index]};
+- 2121       |                     struct ImmutableGuestSnapshotScope {
+- 2122       |                         ImmutableGuestSnapshotScope(
+- 2123       |                             GPUVAddr texture_base, u32 texture_limit,
+- 2124       |                             const std::vector<u8>& texture, bool via_header_index,
+- 2125       |                             u32 viewport_transform_state,
+- 2126       |                             const std::array<const u8*, Maxwell::MaxConstBuffers>& cbuf_data,
+- 2127       |                             const std::array<u32, Maxwell::MaxConstBuffers>& cbuf_sizes) {
+- 2128       |                             VideoCommon::SetShaderTranslationSnapshotForThread(
+- 2129       |                                 texture_base, texture_limit, texture.data(),
+- 2130       |                                 via_header_index, viewport_transform_state,
+- 2131       |                                 cbuf_data.data(), cbuf_sizes.data(),
+- 2132       |                                 Maxwell::MaxConstBuffers);
+- 2133       |                         }
+- 2134       |                         ~ImmutableGuestSnapshotScope() {
+- 2135       |                             VideoCommon::ClearShaderTranslationSnapshotForThread();
+- 2136       |                         }
+- 2137       |                     } immutable_snapshot_scope{
+- 2138       |                         snapshot_texture_base, snapshot_texture_limit,
+- 2139       |                         parallel_texture_snapshot, snapshot_via_header_index,
+- 2140       |                         snapshot_viewport_transform_state,
+- 2141       |                         parallel_cbuf_ptrs[physical_stage],
+- 2142       |                         parallel_cbuf_sizes[physical_stage]};
+- 2143       |                     try {
+- 2144       |                         ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2145       |                             ::Eden::Performance::CachePhase::ShaderCfg,
+- 2146       |                             ::Eden::Performance::detailed_gpu_profile.load(
+- 2147       |                                 std::memory_order_relaxed)};
+- 2148       |                         auto cfg_cost = Eden::Performance::VulkanTimer(20);
+- 2149       |                         Shader::Maxwell::Flow::CFG cfg(
+- 2150       |                             *env, stage_pools->flow_block, cfg_offset, exits_to_dispatcher);
+- 2151       |                         cfg_cost.reset();
+- 2152       |                         cfg_stage_cost.Stop();
+- 2153       |                         auto program = ([&] {
+- 2154       |                             auto cost = Eden::Performance::VulkanTimer(21);
+- 2155       |                             ::Eden::Performance::CachePhaseTimer stage_cost{
+- 2156       |                                 ::Eden::Performance::CachePhase::ShaderIr,
+- 2157       |                                 ::Eden::Performance::detailed_gpu_profile.load(
+- 2158       |                                     std::memory_order_relaxed)};
+- 2159       |                             return TranslateProgram(stage_pools->inst, stage_pools->block,
+- 2160       |                                                     *env, cfg, host_info);
+- 2161       |                         }());
+- 2162       |                         parallel_programs[index] =
+- 2163       |                             std::make_unique<Shader::IR::Program>(std::move(program));
+- 2164       |                     } catch (...) {
+- 2165       |                         parallel_errors[index] = std::current_exception();
+- 2166       |                     }
+- 2167       |                 };
+- 2168       |             if (parallel_env_index == parallel_stage_count) {
+- 2169       |                 translate_stage();
+- 2170       |             } else {
+- 2171       |                 shader_translation_workers.QueueWork(std::move(translate_stage));
+- 2172       |             }
+- 2173       |         }
+- 2174       |         // The GPU owner intentionally waits here. Workers see only immutable
+- 2175       |         // host snapshots plus each environment's already-copied shader code;
+- 2176       |         // no worker traverses the live GMMU/PTE table.
+- 2177       |         shader_translation_workers.WaitForRequests();
+- 2178       |         translation_drain.joined = true;
+- 2179       |         if (auto* const owner_stage_costs =
+- 2180       |                 ::Eden::Performance::shader_miss_stage_active) {
+- 2181       |             for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2182       |                 if (key.unique_hashes[index] == 0) {
+- 2183       |                     continue;
+- 2184       |                 }
+- 2185       |                 // These are CPU-work totals, matching the former serial keyed
+- 2186       |                 // timers. The enclosing miss cpu_ns remains the elapsed critical
+- 2187       |                 // path and therefore reflects the parallel overlap.
+- 2188       |                 owner_stage_costs->cfg_ns += parallel_stage_costs[index].cfg_ns;
+- 2189       |                 owner_stage_costs->ir_ns += parallel_stage_costs[index].ir_ns;
+- 2190       |             }
+- 2191       |         }
+- 2192       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2193       |             if (parallel_errors[index]) {
+- 2194       |                 try {
+- 2195       |                     std::rethrow_exception(parallel_errors[index]);
+- 2196       |                 } catch (const std::out_of_range&) {
+- 2197       |                     // The immutable snapshot can reject a valid owner-thread read.
+- 2198       |                     throw ParallelGraphicsRetry{};
+- 2199       |                 }
+- 2200       |             }
+- 2201       |             if (key.unique_hashes[index] != 0 && !parallel_programs[index]) {
+- 2202       |                 throw ParallelGraphicsRetry{};
+- 2203       |             }
+- 2204       |         }
+- 2205       |     } catch (const std::bad_alloc&) {
+- 2206       |         // The drain guard has joined any accepted jobs before this handler.
+- 2207       |         throw ParallelGraphicsRetry{};
+- 2208       |     }
+- 2209       | #endif
+- 2210       | 
+- 2211       |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2212       |         const bool is_emulated_stage = layer_source_program != nullptr &&
+- 2213       |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
+- 2214       |         if (key.unique_hashes[index] == 0 && is_emulated_stage) {
+- 2215       |             auto topology = MaxwellToOutputTopology(key.state.topology);
+- 2216       |             programs[index] = GenerateGeometryPassthrough(pools.inst, pools.block, host_info,
+- 2217       |                                                           *layer_source_program, topology);
+- 2218       |             continue;
+- 2219       |         }
+- 2220       |         if (key.unique_hashes[index] == 0) {
+- 2221       |             continue;
+- 2222       |         }
+- 2223       |         Shader::Environment& env{*envs[env_index]};
+- 2224       |         ++env_index;
+- 2225       | 
+- 2226       | #ifdef PS5_NATIVE
+- 2227       |         if (parallel_translate_stages) {
+- 2228       |             if (!uses_vertex_a || index != 1) {
+- 2229       |                 programs[index] = std::move(*parallel_programs[index]);
+- 2230       |             } else {
+- 2231       |                 auto& program_va{programs[0]};
+- 2232       |                 auto program_vb{std::move(*parallel_programs[index])};
+- 2233       |                 programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);
+- 2234       |             }
+- 2235       |         } else
+- 2236       | #endif
+- 2237       |         {
+- 2238       |             const u32 cfg_offset{
+- 2239       |                 static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
+- 2240       |             ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2241       |                 ::Eden::Performance::CachePhase::ShaderCfg,
+- 2242       |                 ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 2243       |             auto cfg_cost = Eden::Performance::VulkanTimer(20);
+- 2244       |             Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);
+- 2245       |             cfg_cost.reset();
+- 2246       |             cfg_stage_cost.Stop();
+- 2247       |             if (!uses_vertex_a || index != 1) {
+- 2248       |                 // Normal path
+- 2249       |                 programs[index] = ([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }());
+- 2250       |             } else {
+- 2251       |                 // VertexB path when VertexA is present.
+- 2252       |                 auto& program_va{programs[0]};
+- 2253       |                 auto program_vb{([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }())};
+- 2254       |                 programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);
+- 2255       |             }
+- 2256       |         }
+- 2257       | 
+- 2258       |         // Avoid native subgroup shuffle for the known PositionXY fragment
+- 2259       |         // pattern on non-NVIDIA drivers. Desktop/mobile preserve Eden #4503's
+- 2260       |         // fail-closed skip. PS5 instead uses the newer upstream broadcast
+- 2261       |         // fallback so the whole guest draw is not silently discarded.
+- 2262       |         if (device.GetDriverID() != VK_DRIVER_ID_NVIDIA_PROPRIETARY &&
+- 2263       |             Shader::Optimization::HasBrokenPattern(programs[index])) {
+- 2264       | #ifdef PS5_NATIVE
+- 2265       |             fragment_shuffle_fallback[index] = true;
+- 2266       |             LOG_WARNING(Render_Vulkan,
+- 2267       |                         "0x{:016x}: using PS5 fragment shuffle fallback",
+- 2268       |                         key.unique_hashes[index]);
+- 2269       |             static std::atomic<unsigned> fragment_shuffle_witness{};
+- 2270       |             const unsigned fallback_witness =
+- 2271       |                 fragment_shuffle_witness.fetch_add(1, std::memory_order_relaxed) + 1;
+- 2272       |             if (fallback_witness <= 8) {
+- 2273       |                 std::fprintf(stderr,
+- 2274       |                              "EDEN_FRAGMENT_SHUFFLE_FALLBACK count=%u hash=0x%016llx\n",
+- 2275       |                              fallback_witness,
+- 2276       |                              static_cast<unsigned long long>(key.unique_hashes[index]));
+- 2277       |             }
+- 2278       | #else
+- 2279       |             LOG_WARNING(Render_Vulkan,
+- 2280       |                         "0x{:016x}: skipping fragment shuffle with known driver issue",
+- 2281       |                         key.unique_hashes[index]);
+- 2282       |             return nullptr;
+- 2283       | #endif
+- 2284       |         }
+- 2285       | 
+- 2286       |         if (Settings::values.dump_guest_shaders) {
+- 2287       |             env.Dump(hash, key.unique_hashes[index]);
+- 2288       |         }
+- 2289       | 
+- 2290       |         if (programs[index].info.requires_layer_emulation) {
+- 2291       |             layer_source_program = &programs[index];
+- 2292       |         }
+- 2293       |     }
+- 2294       |     if (uses_vertex_b) {
+- 2295       |         EdenRecordAttributeless({key.unique_hashes[0], key.unique_hashes[1]}, programs[1].info);
+- 2296       |     }
+- 2297       |     std::array<const Shader::Info*, Maxwell::MaxShaderStage> infos{};
+- 2298       |     std::array<vk::ShaderModule, Maxwell::MaxShaderStage> modules;
+- 2299       | 
+- 2300       |     const Shader::IR::Program* previous_stage{};
+- 2301       |     Shader::Backend::Bindings binding;
+- 2302       |     for (size_t index = uses_vertex_a && uses_vertex_b ? 1 : 0; index < Maxwell::MaxShaderProgram;
+- 2303       |          ++index) {
+- 2304       |         const bool is_emulated_stage = layer_source_program != nullptr &&
+- 2305       |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
+- 2306       |         if (key.unique_hashes[index] == 0 && !is_emulated_stage) {
+- 2307       |             continue;
+- 2308       |         }
+- 2309       |         UNIMPLEMENTED_IF(index == 0);
+- 2310       | 
+- 2311       |         Shader::IR::Program& program{programs[index]};
+- 2312       |         const size_t stage_index{index - 1};
+- 2313       |         infos[stage_index] = &program.info;
+- 2314       | 
+- 2315       |         const auto runtime_info{MakeRuntimeInfo(programs, key, program, previous_stage, device)};
+- 2316       |         ConvertLegacyToGeneric(program, runtime_info);
+- 2317       |         auto emit_profile = profile;
+- 2318       | #ifdef PS5_NATIVE
+- 2319       |         emit_profile.has_broken_spirv_fragment_shuffle = fragment_shuffle_fallback[index];
+- 2320       | #endif
+- 2321       |         const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(emit_profile, runtime_info, program, binding); }())};
+- 2322       |         device.SaveShader(code);
+- 2323       |         modules[stage_index] = ([&] { auto cost = Eden::Performance::VulkanTimer(23); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderModule, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return BuildShader(device, code); }());
+- 2324       | 
+- 2325       |         // Text log + .spv dump. Text log is gated by gpu_log_level != Off; .spv dump
+- 2326       |         // is independent and gated only by gpu_log_shader_dumps.
+- 2327       |         const bool should_log = GPU::Logging::IsActive();
+- 2328       |         const bool should_dump = Settings::values.gpu_log_shader_dumps.GetValue();
+- 2329       |         if (should_log || should_dump) {
+- 2330       |             static constexpr std::array stage_names{"vertex", "tess_control", "tess_eval", "geometry", "fragment"};
+- 2331       |             const std::string shader_name = fmt::format("shader_{:016x}_{}", key.unique_hashes[index], stage_names[stage_index]);
+- 2332       |             if (should_log) {
+- 2333       |                 const std::string shader_info = fmt::format("SPIR-V size: {} bytes, hash: {:016x}",
+- 2334       |                     code.size() * sizeof(u32), key.unique_hashes[index]);
+- 2335       |                 GPU::Logging::GPULogger::GetInstance().LogShaderCompilation(shader_name, shader_info);
+- 2336       |             }
+- 2337       |             if (should_dump) {
+- 2338       |                 GPU::Logging::DumpSpirvShader(key.unique_hashes[index],
+- 2339       |                                               std::span<const u32>(code.data(), code.size()));
+- 2340       |             }
+- 2341       |         }
+- 2342       | 
+- 2343       |         if (device.HasDebuggingToolAttached()) {
+- 2344       |             const std::string name{fmt::format("Shader {:016x}", key.unique_hashes[index])};
+- 2345       |             modules[stage_index].SetObjectNameEXT(name.c_str());
+- 2346       |         }
+- 2347       |         previous_stage = &program;
+- 2348       |     }
+- 2349       |     Common::ThreadWorker* const thread_worker{build_in_parallel ? &workers : nullptr};
+- 2350       |     return std::make_unique<GraphicsPipeline>(
+- 2351       |         scheduler, buffer_cache, texture_cache, vulkan_pipeline_cache, &shader_notify, device,
+- 2352       |         descriptor_pool, guest_descriptor_queue, descriptor_buffer_ring, thread_worker, statistics,
+- 2353       |         render_pass_cache, key, std::move(modules), infos);
+- 2354       | 
+- 2355       | } catch (const Shader::Exception& exception) {
+- 2356       | #ifdef PS5_NATIVE
+- 2357       |     // Failed first-use shaders can be retried. Do not rebuild their CFGs or
+- 2358       |     // write .ash dumps on the normal quiet PS5 path: this is optional debug
+- 2359       |     // work on the same GPU-owner thread that already failed translation.
+- 2360       |     if (Settings::values.dump_guest_shaders) {
+- 2361       |         try {
+- 2362       | #endif
+- 2363       |     auto hash = key.Hash();
+- 2364       |     size_t env_index{0};
+- 2365       |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2366       |         if (key.unique_hashes[index] == 0) {
+- 2367       |             continue;
+- 2368       |         }
+- 2369       |         Shader::Environment& env{*envs[env_index]};
+- 2370       |         ++env_index;
+- 2371       | 
+- 2372       |         const u32 cfg_offset{static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
+- 2373       |         ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2374       |             ::Eden::Performance::CachePhase::ShaderCfg,
+- 2375       |             ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 2376       |         auto cfg_cost = Eden::Performance::VulkanTimer(20);
+- 2377       |         Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);
+- 2378       |         cfg_cost.reset();
+- 2379       |         cfg_stage_cost.Stop();
+- 2380       |         env.Dump(hash, key.unique_hashes[index]);
+- 2381       |     }
+- 2382       | #ifdef PS5_NATIVE
+- 2383       |         } catch (const std::exception& dump_error) {
+- 2384       |             // Preserve the original shader failure even if the diagnostic
+- 2385       |             // CFG pass or the dump file itself fails.
+- 2386       |             LOG_WARNING(Render_Vulkan, "Failed shader diagnostic dump: {}", dump_error.what());
+- 2387       |         } catch (...) {
+- 2388       |             LOG_WARNING(Render_Vulkan, "Failed shader diagnostic dump: unknown exception");
+- 2389       |         }
+- 2390       |     }
+- 2391       | #endif
+- 2392       |     LOG_ERROR(Render_Vulkan, "{}", exception.what());
+- 2393       |     return nullptr;
+- 2394       | }
+- 2395       | #ifdef PS5_NATIVE
+- 2396       | catch (const std::exception& exception) {
+- 2397       |     // Native Ampere lowerers, GMMU adapters and SPIR-V helpers may reject
+- 2398       |     // unimplemented guest instruction forms with std::runtime_error rather
+- 2399       |     // than Shader::Exception. A failed guest draw must not escape the GPU
+- 2400       |     // owner thread. The RAII native scope belongs to the outer call and
+- 2401       |     // remains active throughout this synchronous translation.
+- 2402       |     // Do not swallow or change the historical Switch 1 error path.
+- 2403       |     if (!Shader::Ampere::NativeSpirvCbufBoundsActive())
+- 2404       |         throw;
+- 2405       |     LOG_WARNING(Render_Vulkan, "NS2 native graphics shader rejected: {}",
+- 2406       |                 exception.what());
+- 2407       |     return nullptr;
+- 2408       | }
+- 2409       | #endif
+- 2410       | 
+- 2411       | std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline() {
+- 2412       |     auto timer = Eden::Performance::VulkanTimer(17);
+- 2413       | #ifdef PS5_NATIVE
+- 2414       |     // Reserve priority before guest shader environment reads and pool reset.
+- 2415       |     // The inner translation scope overlaps this reservation, so there is no
+- 2416       |     // idle gap for speculative Vulkan optimization before the first-use build.
+- 2417       |     GraphicsTranslationPriorityScope first_use_preparation_priority{
+- 2418       |         ::Eden::DevVulkan::fast_first_pipelines};
+- 2419       | #endif
+- 2420       | #ifdef PS5_NATIVE
+- 2421       |     // Research-only real GPU bridge: feed the maintained Vulkan
+- 2422       |     // CFG -> IR -> SPIR-V -> GraphicsPipeline builder with *translated*
+- 2423       |     // Maxwell-compatible instructions, never raw 128-bit Ampere words.
+- 2424       |     const auto ticket =
+- 2425       |         Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()
+- 2426       |             .CaptureGraphicsTicket(maxwell3d);
+- 2427       |     if (ticket) {
+- 2428       |         auto native_translation_cache =
+- 2429       |             Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()
+- 2430       |                 .AcquireGraphicsTranslationCache(maxwell3d, *ticket);
+- 2431       |         if (!native_translation_cache) return nullptr;
+- 2432       |         // A stale key or program reconfiguration must not bypass the
+- 2433       |         // pre-capture stage guard. Check the exact stages in this key.
+- 2434       |         u32 keyed_stages{};
+- 2435       |         for (std::size_t i = 0; i < graphics_key.unique_hashes.size(); ++i) {
+- 2436       |             if (graphics_key.unique_hashes[i])
+- 2437       |                 keyed_stages |= u32{1} << i;
+- 2438       |         }
+- 2439       |         const bool mesh_control = (maxwell3d->regs.reg_array[0x114c / 4] & 1U) != 0;
+- 2440       |         const bool has_task = Shader::Ampere::NativeMeshTaskPresent(
+- 2441       |             keyed_stages, mesh_control);
+- 2442       |         if (!Shader::Ampere::NativeMeshGraphicsStageMaskSupported(
+- 2443       |                 keyed_stages, mesh_control))
+- 2444       |             return nullptr;
+- 2445       |         const auto base = maxwell3d->regs.program_region.Address();
+- 2446       |         // Preserve the stage-program register set used by the SPIR-V
+- 2447       |         // translation, not merely a graphics channel epoch.
+- 2448       |         std::array<GPUVAddr, Maxwell::MaxShaderProgram> captured_offsets{};
+- 2449       |         std::array<Shader::Environment*, Maxwell::MaxShaderProgram> ptrs{};
+- 2450       |         std::vector<std::unique_ptr<Shader::Environment>> native_envs;
+- 2451       |         native_envs.reserve(Maxwell::MaxShaderProgram);
+- 2452       |         std::size_t active{};
+- 2453       |         for (std::size_t i = 0; i < graphics_key.unique_hashes.size(); ++i) {
+- 2454       |             if (!graphics_key.unique_hashes[i]) continue;
+- 2455       |             if (i >= 6) return nullptr;
+- 2456       |             const auto stage = mesh_control && i == 1
+- 2457       |                 ? (has_task ? Shader::Stage::Task : Shader::Stage::Mesh)
+- 2458       |                 : mesh_control && i == 2 ? Shader::Stage::Mesh
+- 2459       |                 : i == 0 ? Shader::Stage::VertexA
+- 2460       |                 : Shader::StageFromIndex(i - 1);
+- 2461       |             const u32 physical_bank = mesh_control &&
+- 2462       |                 (stage == Shader::Stage::Task || stage == Shader::Stage::Mesh)
+- 2463       |                     ? Shader::Ampere::NativeMeshSlotCbufBank(stage, has_task)
+- 2464       |                     : Shader::Ampere::NativeGraphicsCbufBank(stage);
+- 2465       |             const auto offset = maxwell3d->regs.pipelines[i].offset;
+- 2466       |             if (base > std::numeric_limits<GPUVAddr>::max() - offset)
+- 2467       |                 return nullptr;
+- 2468       |             captured_offsets[i] = offset;
+- 2469       |             auto original = std::make_unique<GraphicsEnvironment>(
+- 2470       |                 *maxwell3d, *gpu_memory,
+- 2471       |                 static_cast<Maxwell::ShaderType>(i), base, offset);
+- 2472       |             const VideoCommon::Ns2GraphicsCbufContext cbuf_context{
+- 2473       |                 gpu_memory, maxwell3d, physical_bank};
+- 2474       |             auto adapted = VideoCommon::CreateNs2GraphicsShaderEnvironment(
+- 2475       |                 *gpu_memory, std::move(original), base + offset,
+- 2476       |                 static_cast<u32>(stage), native_translation_cache.get(),
+- 2477       |                 &cbuf_context);
+- 2478       |             if (!adapted || !Service::Nvidia::Devices::NativeGpuChannelRegistry::
+- 2479       |                                 Instance().IsGraphicsCurrent(maxwell3d, *ticket))
+- 2480       |                 return nullptr;
+- 2481       |             // Shader key and translated stream must refer to exactly the
+- 2482       |             // same guest bytes. A GMMU remap between key and build aborts.
+- 2483       |             // The factory above only creates NativeMaxwellEnvironment; avoid
+- 2484       |             // enabling RTTI in the PS5 video_core compilation profile.
+- 2485       |             const auto* native_env =
+- 2486       |                 static_cast<const Shader::Ampere::NativeMaxwellEnvironment*>(
+- 2487       |                     adapted.get());
+- 2488       |             if (!native_env ||
+- 2489       |                 native_env->Image().diagnostic_cache_key != graphics_key.unique_hashes[i])
+- 2490       |                 return nullptr;
+- 2491       |             ptrs[active++] = adapted.get();
+- 2492       |             native_envs.emplace_back(std::move(adapted));
+- 2493       |         }
+- 2494       |         main_pools.ReleaseContents();
+- 2495       |         // The graphics builder emits SPIR-V synchronously on this thread,
+- 2496       |         // including the merged VertexA/B stage. Native-only bounds must not
+- 2497       |         // leak into later Switch 1 draws or unrelated compiler workers.
+- 2498       |         Shader::Ampere::NativeSpirvCbufBoundsScope native_bounds;
+- 2499       |         auto pipeline = CreateGraphicsPipeline(
+- 2500       |             main_pools, graphics_key,
+- 2501       |             std::span<Shader::Environment* const>{ptrs.data(), active}, nullptr, true, false);
+- 2502       |         auto& registry = Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance();
+- 2503       |         if (!pipeline || !registry.IsGraphicsCurrent(maxwell3d, *ticket) ||
+- 2504       |             maxwell3d->regs.program_region.Address() != base)
+- 2505       |             return nullptr;
+- 2506       |         // The compiler may have spent substantial time on CFG/IR/SPIR-V.
+- 2507       |         // Guest code, stage enables, or per-stage base offsets can change
+- 2508       |         // without advancing the channel epoch. Refuse a pipeline assembled
+- 2509       |         // from old source even when its diagnostic hash matched at entry.
+- 2510       |         u32 live_stages{};
+- 2511       |         for (std::size_t i = 0; i < graphics_key.unique_hashes.size(); ++i) {
+- 2512       |             if (maxwell3d->regs.IsShaderConfigEnabled(i) &&
+- 2513       |                 (i != 5 || maxwell3d->regs.rasterize_enable))
+- 2514       |                 live_stages |= u32{1} << i;
+- 2515       |         }
+- 2516       |         const u32 live_executable_stages =
+- 2517       |             mesh_control ? live_stages & ~(1U << 4) : live_stages;
+- 2518       |         if (live_executable_stages != keyed_stages ||
+- 2519       |             ((maxwell3d->regs.reg_array[0x114c / 4] & 1U) != 0) != mesh_control)
+- 2520       |             return nullptr;
+- 2521       |         for (std::size_t i = 0; i < graphics_key.unique_hashes.size(); ++i) {
+- 2522       |             if (!graphics_key.unique_hashes[i]) continue;
+- 2523       |             if (maxwell3d->regs.pipelines[i].offset != captured_offsets[i])
+- 2524       |                 return nullptr;
+- 2525       |             const auto stage = mesh_control && i == 1
+- 2526       |                 ? (has_task ? Shader::Stage::Task : Shader::Stage::Mesh)
+- 2527       |                 : mesh_control && i == 2 ? Shader::Stage::Mesh
+- 2528       |                 : i == 0 ? Shader::Stage::VertexA
+- 2529       |                 : Shader::StageFromIndex(i - 1);
+- 2530       |             const u32 physical_bank = mesh_control &&
+- 2531       |                 (stage == Shader::Stage::Task || stage == Shader::Stage::Mesh)
+- 2532       |                     ? Shader::Ampere::NativeMeshSlotCbufBank(stage, has_task)
+- 2533       |                     : Shader::Ampere::NativeGraphicsCbufBank(stage);
+- 2534       |             const VideoCommon::Ns2GraphicsCbufContext cbuf_context{
+- 2535       |                 gpu_memory, maxwell3d, physical_bank};
+- 2536       |             // Capture reauthenticates all native 128-bit instructions and
+- 2537       |             // indirect BRX CBUF targets on every cache hit. No title hacks.
+- 2538       |             const auto verified = VideoCommon::CaptureNs2GraphicsShaderFromGpu(
+- 2539       |                 *gpu_memory, base + captured_offsets[i],
+- 2540       |                 static_cast<u32>(stage), native_translation_cache.get(),
+- 2541       |                 &cbuf_context);
+- 2542       |             if (!verified.Ready() ||
+- 2543       |                 verified.image.diagnostic_cache_key !=
+- 2544       |                     graphics_key.unique_hashes[i] ||
+- 2545       |                 !registry.IsGraphicsCurrent(maxwell3d, *ticket))
+- 2546       |                 return nullptr;
+- 2547       |         }
+- 2548       |         // NS2 translated shader keys/layouts are deliberately never
+- 2549       |         // serialized into the NS1 disk shader cache.
+- 2550       |         return pipeline;
+- 2551       |     }
+- 2552       | #endif
+- 2553       |     GraphicsEnvironments environments;
+- 2554       |     // Preparing guest shader environments is distinct from CFG/IR/SPIR-V
+- 2555       |     // translation. Keep GPU-thread ownership and source read order unchanged.
+- 2556       |     // Quiet release does not read a clock or update counters.
+- 2557       |     {
+- 2558       |         ::Eden::Performance::CachePhaseTimer environment_cost{
+- 2559       |             ::Eden::Performance::CachePhase::GraphicsShaderEnvironment,
+- 2560       |             ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 2561       |         GetGraphicsEnvironments(environments, graphics_key.unique_hashes);
+- 2562       |     }
+- 2563       | 
+- 2564       |     ([&] { auto cost = Eden::Performance::VulkanTimer(19); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderPoolReset, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return main_pools.ReleaseContents(); }());
+- 2565       | #ifdef PS5_NATIVE
+- 2566       |     bool parallel_translate_stages{};
+- 2567       |     const size_t shader_stage_count = std::count_if(
+- 2568       |         graphics_key.unique_hashes.begin(), graphics_key.unique_hashes.end(),
+- 2569       |         [](u64 hash) { return hash != 0; });
+- 2570       |     if (shader_stage_count >= 2) {
+- 2571       |         // Lichii upstream bound: flushing at most 4 MiB keeps this owner-thread
+- 2572       |         // operation cheaper than serializing multiple expensive IR translations.
+- 2573       |         constexpr u64 MaxFlushedTexturePoolBytes = u64{4} << 20;
+- 2574       |         const auto& tex_header = maxwell3d->regs.tex_header;
+- 2575       |         const u64 pool_bytes =
+- 2576       |             (u64{static_cast<u32>(tex_header.limit)} + 1) *
+- 2577       |             sizeof(Tegra::Texture::TICEntry);
+- 2578       |         const GPUVAddr pool_base = tex_header.Address();
+- 2579       |         const u64 last_offset = pool_bytes - 1;
+- 2580       |         if (pool_bytes <= MaxFlushedTexturePoolBytes &&
+- 2581       |             pool_base <= std::numeric_limits<GPUVAddr>::max() - last_offset) {
+- 2582       |             const GPUVAddr pool_last = pool_base + last_offset;
+- 2583       |             if (gpu_memory->IsWithinGPUAddressRange(pool_last)) {
+- 2584       |                 // Full TIC/CBUF byte snapshots are built inside
+- 2585       |                 // CreateGraphicsPipeline on the GPU owner before queueing work.
+- 2586       |                 parallel_translate_stages = true;
+- 2587       |             }
+- 2588       |         }
+- 2589       |     }
+- 2590       |     // Keep the original cached shader bytes and pristine environment state for a
+- 2591       |     // single serial retry. Workers can mutate their environment's lookup caches.
+- 2592       |     std::optional<GraphicsEnvironments> parallel_environments;
+- 2593       |     if (parallel_translate_stages) {
+- 2594       |         try {
+- 2595       |             parallel_environments.emplace();
+- 2596       |             parallel_environments->envs = environments.envs;
+- 2597       |             size_t active{};
+- 2598       |             for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2599       |                 if (graphics_key.unique_hashes[index] != 0) {
+- 2600       |                     parallel_environments->env_ptrs[active++] =
+- 2601       |                         &parallel_environments->envs[index];
+- 2602       |                 }
+- 2603       |             }
+- 2604       |         } catch (const std::bad_alloc&) {
+- 2605       |             parallel_environments.reset();
+- 2606       |         }
+- 2607       |     }
+- 2608       |     std::unique_ptr<GraphicsPipeline> pipeline;
+- 2609       |     if (parallel_environments) {
+- 2610       |         try {
+- 2611       |             pipeline = CreateGraphicsPipeline(main_pools, graphics_key,
+- 2612       |                                               parallel_environments->Span(), nullptr, true, true);
+- 2613       |         } catch (const ParallelGraphicsRetry&) {
+- 2614       |             parallel_environments.reset();
+- 2615       |         }
+- 2616       |     }
+- 2617       |     if (!parallel_environments) {
+- 2618       |         pipeline = CreateGraphicsPipeline(main_pools, graphics_key, environments.Span(),
+- 2619       |                                           nullptr, true, false);
+- 2620       |     }
+- 2621       |     auto& serialized_environments = parallel_environments ? *parallel_environments : environments;
+- 2622       | #else
+- 2623       |     auto pipeline{
+- 2624       |         CreateGraphicsPipeline(main_pools, graphics_key, environments.Span(), nullptr, true)};
+- 2625       |     auto& serialized_environments = environments;
+- 2626       | #endif
+- 2627       |     if (!pipeline || pipeline_cache_filename.empty()) {
+- 2628       |         return pipeline;
+- 2629       |     }
+- 2630       | #ifdef PS5_NATIVE
+- 2631       |     // Cache persistence is optional to running this shader. A rejected
+- 2632       |     // serializer job must not discard an otherwise usable Vulkan pipeline.
+- 2633       |     try {
+- 2634       | #endif
+- 2635       |     serialization_thread.QueueWork([this, key = graphics_key, envs = std::move(serialized_environments.envs)] {
+- 2636       |         boost::container::static_vector<const GenericEnvironment*, Maxwell::MaxShaderProgram>
+- 2637       |             env_ptrs;
+- 2638       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2639       |             if (key.unique_hashes[index] != 0) {
+- 2640       |                 env_ptrs.push_back(&envs[index]);
+- 2641       |             }
+- 2642       |         }
+- 2643       |         SerializePipeline(key, env_ptrs, pipeline_cache_filename, CACHE_VERSION);
+- 2644       |     });
+- 2645       | #ifdef PS5_NATIVE
+- 2646       |     } catch (const std::exception& error) {
+- 2647       |         LOG_WARNING(Render_Vulkan, "Graphics shader cache write not queued: {}", error.what());
+- 2648       |     } catch (...) {
+- 2649       |         LOG_WARNING(Render_Vulkan, "Graphics shader cache write not queued: unknown exception");
+- 2650       |     }
+- 2651       | #endif
+- 2652       |     QueueVulkanPipelineCacheFlush();
+- 2653       |     return pipeline;
+- 2654       | }
+- 2655       | 
+- 2656       | std::unique_ptr<ComputePipeline> PipelineCache::CreateComputePipeline(
+- 2657       |     const ComputePipelineCacheKey& key, const ShaderInfo* shader) {
+- 2658       |     auto timer = Eden::Performance::VulkanTimer(17);
+- 2659       | #ifdef PS5_NATIVE
+- 2660       |     // Count compute environment setup and shader pool reset as foreground
+- 2661       |     // work, not only the downstream CFG/IR/SPIR-V translation.
+- 2662       |     ComputeTranslationPriorityScope first_use_preparation_priority{true};
+- 2663       | #endif
+- 2664       |     const GPUVAddr program_base{kepler_compute->regs.code_loc.Address()};
+- 2665       |     const auto& qmd{kepler_compute->launch_description};
+- 2666       |     ComputeEnvironment env{*kepler_compute, *gpu_memory, program_base, qmd.program_start};
+- 2667       |     env.SetCachedSize(shader->size_bytes);
+- 2668       | 
+- 2669       |     ([&] { auto cost = Eden::Performance::VulkanTimer(19); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderPoolReset, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return main_pools.ReleaseContents(); }());
+- 2670       |     auto pipeline{CreateComputePipeline(main_pools, key, env, nullptr, true)};
+- 2671       |     if (!pipeline || pipeline_cache_filename.empty()) {
+- 2672       |         return pipeline;
+- 2673       |     }
+- 2674       | #ifdef PS5_NATIVE
+- 2675       |     // Cache persistence is optional to running this shader. A rejected
+- 2676       |     // serializer job must not discard an otherwise usable Vulkan pipeline.
+- 2677       |     try {
+- 2678       | #endif
+- 2679       |     serialization_thread.QueueWork([this, key, env_ = std::move(env)] {
+- 2680       |         SerializePipeline(key, std::array<const GenericEnvironment*, 1>{&env_},
+- 2681       |                           pipeline_cache_filename, CACHE_VERSION);
+- 2682       |     });
+- 2683       | #ifdef PS5_NATIVE
+- 2684       |     } catch (const std::exception& error) {
+- 2685       |         LOG_WARNING(Render_Vulkan, "Compute shader cache write not queued: {}", error.what());
+- 2686       |     } catch (...) {
+- 2687       |         LOG_WARNING(Render_Vulkan, "Compute shader cache write not queued: unknown exception");
+- 2688       |     }
+- 2689       | #endif
+- 2690       |     QueueVulkanPipelineCacheFlush();
+- 2691       |     return pipeline;
+- 2692       | }
+- 2693       | 
+- 2694       | std::unique_ptr<ComputePipeline> PipelineCache::CreateComputePipeline(
+- 2695       |     ShaderPools& pools, const ComputePipelineCacheKey& key, Shader::Environment& env,
+- 2696       |     PipelineStatistics* statistics, bool build_in_parallel) try {
+- 2697       | #ifdef PS5_NATIVE
+- 2698       |     // Count cold shader translation as foreground work. The pipeline
+- 2699       |     // constructor separately counts the queued driver build; both stages
+- 2700       |     // now prevent speculative graphics optimization from competing.
+- 2701       |     ComputeTranslationPriorityScope translation_priority{build_in_parallel};
+- 2702       | #endif
+- 2703       |     auto hash = key.Hash();
+- 2704       |     if (device.HasBrokenCompute()) {
+- 2705       |         LOG_ERROR(Render_Vulkan, "Skipping {:#016x}", hash);
+- 2706       |         return nullptr;
+- 2707       |     }
+- 2708       | 
+- 2709       |     LOG_DEBUG(Render_Vulkan, "{:#016x}", hash);
+- 2710       | 
+- 2711       |     ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2712       |         ::Eden::Performance::CachePhase::ShaderCfg,
+- 2713       |         ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 2714       |     auto cfg_cost = Eden::Performance::VulkanTimer(20);
+- 2715       |         Shader::Maxwell::Flow::CFG cfg{env, pools.flow_block, env.StartAddress()};
+- 2716       |         cfg_cost.reset();
+- 2717       |         cfg_stage_cost.Stop();
+- 2718       | 
+- 2719       |     // Dump it before error.
+- 2720       |     if (Settings::values.dump_guest_shaders) {
+- 2721       |         env.Dump(hash, key.unique_hash);
+- 2722       |     }
+- 2723       | 
+- 2724       |     auto program{([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }())};
+- 2725       |     const VkDriverIdKHR driver_id = device.GetDriverID();
+- 2726       |     const bool needs_shared_mem_clamp =
+- 2727       |         driver_id == VK_DRIVER_ID_QUALCOMM_PROPRIETARY ||
+- 2728       |         driver_id == VK_DRIVER_ID_ARM_PROPRIETARY;
+- 2729       |     const u32 max_shared_memory = device.GetMaxComputeSharedMemorySize();
+- 2730       |     if (needs_shared_mem_clamp && program.shared_memory_size > max_shared_memory) {
+- 2731       |         LOG_WARNING(Render_Vulkan,
+- 2732       |                     "Compute shader {:#016x} requests {}KB shared memory but device max is {}KB - clamping",
+- 2733       |                     key.unique_hash,
+- 2734       |                     program.shared_memory_size / 1024,
+- 2735       |                     max_shared_memory / 1024);
+- 2736       |         program.shared_memory_size = max_shared_memory;
+- 2737       |     }
+- 2738       |     const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(profile, program); }())};
+- 2739       |     device.SaveShader(code);
+- 2740       |     vk::ShaderModule spv_module{([&] { auto cost = Eden::Performance::VulkanTimer(23); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderModule, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return BuildShader(device, code); }())};
+- 2741       | 
+- 2742       |     // Text log + .spv dump. Same split as the graphics path.
+- 2743       |     const bool should_log = GPU::Logging::IsActive();
+- 2744       |     const bool should_dump = Settings::values.gpu_log_shader_dumps.GetValue();
+- 2745       |     if (should_log || should_dump) {
+- 2746       |         const std::string shader_name = fmt::format("shader_{:016x}_compute", key.unique_hash);
+- 2747       |         if (should_log) {
+- 2748       |             const std::string shader_info = fmt::format("SPIR-V size: {} bytes, hash: {:016x}",
+- 2749       |                 code.size() * sizeof(u32), key.unique_hash);
+- 2750       |             GPU::Logging::GPULogger::GetInstance().LogShaderCompilation(shader_name, shader_info);
+- 2751       |         }
+- 2752       |         if (should_dump) {
+- 2753       |             GPU::Logging::DumpSpirvShader(key.unique_hash,
+- 2754       |                                           std::span<const u32>(code.data(), code.size()));
+- 2755       |         }
+- 2756       |     }
+- 2757       | 
+- 2758       |     if (device.HasDebuggingToolAttached()) {
+- 2759       |         const auto name{fmt::format("Shader {:016x}", key.unique_hash)};
+- 2760       |         spv_module.SetObjectNameEXT(name.c_str());
+- 2761       |     }
+- 2762       |     Common::ThreadWorker* const thread_worker{build_in_parallel ? &workers : nullptr};
+- 2763       | #ifdef PS5_NATIVE
+- 2764       |     auto result = std::make_unique<ComputePipeline>(device, scheduler, vulkan_pipeline_cache, descriptor_pool,
+- 2765       |                                                     guest_descriptor_queue, descriptor_buffer_ring,
+- 2766       |                                                     thread_worker, statistics,
+- 2767       |                                                     &shader_notify, program.info, std::move(spv_module),
+- 2768       |                                                     key.unique_hash);
+- 2769       |     // The shader stage hash is not the compute CACHE key: include workgroup
+- 2770       |     // sizes and shared memory for correlation with S01's exact key.Hash().
+- 2771       |     result->SetDiagnosticCacheKeyHash(key.Hash());
+- 2772       |     return result;
+- 2773       | #else
+- 2774       |     return std::make_unique<ComputePipeline>(device, scheduler, vulkan_pipeline_cache, descriptor_pool,
+- 2775       |                                              guest_descriptor_queue, descriptor_buffer_ring,
+- 2776       |                                              thread_worker, statistics,
+- 2777       |                                              &shader_notify, program.info, std::move(spv_module),
+- 2778       |                                              key.unique_hash);
+- 2779       | #endif
+- 2780       | 
+- 2781       | } catch (const Shader::Exception& exception) {
+- 2782       |     LOG_ERROR(Render_Vulkan, "{}", exception.what());
+- 2783       |     return nullptr;
+- 2784       | }
+- 2785       | 
+- 2786       | void PipelineCache::SerializeVulkanPipelineCache(const std::filesystem::path& filename,
+- 2787       |                                                  const vk::PipelineCache& pipeline_cache,
+- 2788       |                                                  u32 cache_version) {
+- 2789       |     auto timer = Eden::Performance::VulkanTimer(18);
+- 2790       | #ifdef PS5_NATIVE
+- 2791       |     // The foreground title may exit while background serializer work exists.
+- 2792       |     // Serialize staged files to one writer at a time. Never erase the
+- 2793       |     // previously verified driver cache in a write/rename failure path.
+- 2794       |     static std::mutex save_mutex;
+- 2795       |     const std::lock_guard save_lock{save_mutex};
+- 2796       |     auto staging = filename;
+- 2797       |     staging += ".new";
+- 2798       |     try {
+- 2799       |         std::ofstream file;
+- 2800       |         file.exceptions(std::ios::failbit | std::ios::badbit);
+- 2801       |         file.open(staging, std::ios::binary | std::ios::trunc);
+- 2802       |         file.write(VULKAN_CACHE_MAGIC_NUMBER.data(), VULKAN_CACHE_MAGIC_NUMBER.size())
+- 2803       |             .write(reinterpret_cast<const char*>(&cache_version), sizeof(cache_version));
+- 2804       | 
+- 2805       |         size_t cache_size = 0;
+- 2806       |         std::vector<char> cache_data;
+- 2807       |         if (pipeline_cache) {
+- 2808       |             pipeline_cache.Read(&cache_size, nullptr);
+- 2809       |             if (cache_size > kNativeDriverCacheStagingLimit) {
+- 2810       |                 LOG_WARNING(Render_Vulkan, "Driver cache exceeds native staging budget; retaining old cache");
+- 2811       |                 file.close();
+- 2812       |                 std::error_code cleanup_error;
+- 2813       |                 std::filesystem::remove(staging, cleanup_error);
+- 2814       |                 return;
+- 2815       |             }
+- 2816       |             cache_data.resize(cache_size);
+- 2817       |             pipeline_cache.Read(&cache_size, cache_data.data());
+- 2818       |         }
+- 2819       |         if (cache_size != 0)
+- 2820       |             file.write(cache_data.data(), static_cast<std::streamsize>(cache_size));
+- 2821       |         file.flush();
+- 2822       |         file.close();
+- 2823       |         std::error_code rename_error;
+- 2824       |         std::filesystem::rename(staging, filename, rename_error);
+- 2825       |         if (rename_error) {
+- 2826       |             LOG_WARNING(Common_Filesystem, "Driver cache rename failed: {}", rename_error.message());
+- 2827       |             std::error_code cleanup_error;
+- 2828       |             std::filesystem::remove(staging, cleanup_error);
+- 2829       |             return;
+- 2830       |         }
+- 2831       |         LOG_INFO(Render_Vulkan, "Saved PS5 driver pipeline cache atomically: {}",
+- 2832       |                  Common::FS::PathToUTF8String(filename));
+- 2833       |     } catch (const std::exception& error) {
+- 2834       |         LOG_WARNING(Common_Filesystem, "Retained old driver cache after failed save: {}", error.what());
+- 2835       |         std::error_code cleanup_error;
+- 2836       |         std::filesystem::remove(staging, cleanup_error);
+- 2837       |     }
+- 2838       | #else
+- 2839       |     try {
+- 2840       |         std::ofstream file(filename, std::ios::binary);
+- 2841       |         file.exceptions(std::ifstream::failbit);
+- 2842       |         if (!file.is_open())
+- 2843       |             return;
+- 2844       |         file.write(VULKAN_CACHE_MAGIC_NUMBER.data(), VULKAN_CACHE_MAGIC_NUMBER.size())
+- 2845       |             .write(reinterpret_cast<const char*>(&cache_version), sizeof(cache_version));
+- 2846       |         size_t cache_size = 0;
+- 2847       |         std::vector<char> cache_data;
+- 2848       |         if (pipeline_cache) {
+- 2849       |             pipeline_cache.Read(&cache_size, nullptr);
+- 2850       |             cache_data.resize(cache_size);
+- 2851       |             pipeline_cache.Read(&cache_size, cache_data.data());
+- 2852       |         }
+- 2853       |         file.write(cache_data.data(), cache_size);
+- 2854       |     } catch (const std::ios_base::failure& error) {
+- 2855       |         LOG_ERROR(Common_Filesystem, "{}", error.what());
+- 2856       |     }
+- 2857       | #endif
+- 2858       | }
+- 2859       | 
+- 2860       | vk::PipelineCache PipelineCache::LoadVulkanPipelineCache(const std::filesystem::path& filename,
+- 2861       |                                                          u32 expected_cache_version) {
+- 2862       |     const auto create_pipeline_cache = [this](size_t data_size, const void* data) {
+- 2863       |         VkPipelineCacheCreateInfo pipeline_cache_ci = {
+- 2864       |             .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
+- 2865       |             .pNext = nullptr,
+- 2866       |             .flags = 0,
+- 2867       |             .initialDataSize = data_size,
+- 2868       |             .pInitialData = data};
+- 2869       |         try {
+- 2870       |             return device.GetLogical().CreatePipelineCache(pipeline_cache_ci);
+- 2871       |         } catch (const std::exception& error) {
+- 2872       |             if (data_size == 0) throw;
++       1371 |         vulkan_pipeline_cache_filename =
++       1372 |             VideoCommon::VersionedPipelineCachePath(base_dir, "vulkan_pipelines", CACHE_VERSION);
++       1373 |         if (VideoCommon::CarryOverPipelineCache(
++       1374 |                 base_dir, "vulkan_pipelines", VULKAN_CACHE_MAGIC_NUMBER,
++       1375 |                 VideoCommon::CompatibleVulkanPipelineCacheVersions, CACHE_VERSION)
++       1376 |                 .failed) {
+  2873  1377 |             LOG_WARNING(Render_Vulkan,
+- 2874       |                         "Ignoring incompatible driver pipeline cache: {}", error.what());
+- 2875       |             pipeline_cache_ci.initialDataSize = 0;
+- 2876       |             pipeline_cache_ci.pInitialData = nullptr;
+- 2877       |             return device.GetLogical().CreatePipelineCache(pipeline_cache_ci);
+- 2878       |         }
+- 2879       |     };
+- 2880       |     try {
+- 2881       |         std::ifstream file(filename, std::ios::binary | std::ios::ate);
+- 2882       |         if (!file.is_open()) {
+- 2883       |             return create_pipeline_cache(0, nullptr);
+- 2884       |         }
+- 2885       |         file.exceptions(std::ifstream::failbit);
+- 2886       |         const auto end{file.tellg()};
+- 2887       |         file.seekg(0, std::ios::beg);
+- 2888       | 
+- 2889       |         std::array<char, 8> magic_number;
+- 2890       |         u32 cache_version;
+- 2891       | #ifdef EDEN_NS2_PIPELINE_CACHE_GUARD
+- 2892       |         // Reject truncated (including failed tellg) Vulkan driver cache headers
+- 2893       |         // before reading or subtracting an unsigned header size.
+- 2894       |         if (end < std::streampos{static_cast<std::streamoff>(
+- 2895       |                       magic_number.size() + sizeof(cache_version))}) {
+- 2896       |             file.close();
+- 2897       |             LOG_WARNING(Common_Filesystem, "Short Vulkan driver cache; rebuilding fresh");
+- 2898       |             Common::FS::RemoveFile(filename);
+- 2899       |             return create_pipeline_cache(0, nullptr);
+- 2900       |         }
+- 2901       | #endif
+- 2902       |         file.read(magic_number.data(), magic_number.size())
+- 2903       |             .read(reinterpret_cast<char*>(&cache_version), sizeof(cache_version));
+- 2904       |         if (magic_number != VULKAN_CACHE_MAGIC_NUMBER || cache_version != expected_cache_version) {
+- 2905       |             file.close();
+- 2906       |             if (Common::FS::RemoveFile(filename)) {
+- 2907       |                 if (magic_number != VULKAN_CACHE_MAGIC_NUMBER) {
+- 2908       |                     LOG_ERROR(Common_Filesystem, "Invalid Vulkan driver pipeline cache file");
+- 2909       |                 }
+- 2910       |                 if (cache_version != expected_cache_version) {
+- 2911       |                     LOG_INFO(Common_Filesystem, "Deleting old Vulkan driver pipeline cache");
+- 2912       |                 }
+- 2913       |             } else {
+- 2914       |                 LOG_ERROR(Common_Filesystem,
+- 2915       |                           "Invalid Vulkan pipeline cache file and failed to delete it in \"{}\"",
+- 2916       |                           Common::FS::PathToUTF8String(filename));
+- 2917       |             }
+- 2918       |             return create_pipeline_cache(0, nullptr);
+- 2919       |         }
+- 2920       | 
+- 2921       |         static constexpr size_t header_size = magic_number.size() + sizeof(cache_version);
+- 2922       |         const size_t cache_size = static_cast<size_t>(end) - header_size;
+- 2923       | #ifdef PS5_NATIVE
+- 2924       |         if (cache_size < kNativeDriverCacheHeaderSize ||
+- 2925       |             cache_size > kNativeDriverCacheStagingLimit) {
+- 2926       |             LOG_WARNING(Render_Vulkan, "Driver cache payload outside native staging bounds: {}", cache_size);
+- 2927       |             return create_pipeline_cache(0, nullptr);
++       1378 |                         "Couldn't copy the older driver pipeline cache; this one starts empty");
+  2928  1379 |         }
+- 2929       |         std::array<unsigned char, kNativeDriverCacheHeaderSize> driver_header{};
+- 2930       |         file.read(reinterpret_cast<char*>(driver_header.data()), driver_header.size());
+- 2931       |         if (!NativeDriverCacheHeaderMatches(driver_header, device.GetPhysical().GetProperties())) {
+- 2932       |             LOG_WARNING(Render_Vulkan, "Driver cache header incompatible; using fresh driver cache");
+- 2933       |             return create_pipeline_cache(0, nullptr);
++       1380 |         vulkan_pipeline_cache =
++       1381 |             LoadVulkanPipelineCache(vulkan_pipeline_cache_filename, CACHE_VERSION);
++       1382 |         if (!vulkan_pipeline_cache_restored) {
++       1383 |             // The precache progress names builds the lost cache held. Dropped before the empty
++       1384 |             // cache is saved, which would make the progress readable again at the next boot.
++       1385 |             std::error_code ec;
++       1386 |             std::filesystem::remove(
++       1387 |                 ShaderWarm::WarmProgressPath(ShaderWarm::ComputeWarmPath(title_id)), ec);
+  2934  1388 |         }
+- 2935       |         file.seekg(static_cast<std::streamoff>(header_size), std::ios::beg);
+- 2936       |         std::vector<char> cache_data;
+- 2937       |         try {
+- 2938       |             cache_data.resize(cache_size);
+- 2939       |         } catch (const std::bad_alloc&) {
+- 2940       |             LOG_WARNING(Render_Vulkan, "Driver cache allocation failed; using fresh driver cache");
+- 2941       |             return create_pipeline_cache(0, nullptr);
+  2942  1389 |         }
+- 2943       | #else
+- 2944       |         std::vector<char> cache_data(cache_size);
+- 2945       | #endif
+- 2946       |         file.read(cache_data.data(), cache_size);
+- 2947       | 
+- 2948       |         LOG_INFO(Render_Vulkan,
+- 2949       |                  "Loaded Vulkan driver pipeline cache: ", Common::FS::PathToUTF8String(filename));
+- 2950       | 
+- 2951       |         return create_pipeline_cache(cache_size, cache_data.data());
+- 2952       | 
+- 2953       |     } catch (const std::ios_base::failure& e) {
+- 2954       |         LOG_ERROR(Common_Filesystem, "{}", e.what());
+- 2955       |         if (!Common::FS::RemoveFile(filename)) {
+- 2956       |             LOG_ERROR(Common_Filesystem, "Failed to delete Vulkan driver pipeline cache file {}",
+- 2957       |                       Common::FS::PathToUTF8String(filename));
++       1390 |     if (boot_lock.Held() && !Common::FS::NewFile(boot_marker)) {
++       1391 |         LOG_WARNING(Common_Filesystem, "Couldn't create {}",
++       1392 |                     Common::FS::PathToUTF8String(boot_marker));
+  2958  1393 |         }
+- 2959       | 
+- 2960       |         return create_pipeline_cache(0, nullptr);
++       1394 |     LoadPipelinesV2(title_id, std::move(log_v2), stop_loading, callback, load_begin, precache,
++       1395 |                     build_at_boot);
++       1396 |     if (boot_lock.Held()) {
++       1397 |         Common::FS::RemoveFile(boot_marker);
+  2961  1398 |     }
+  2962  1399 | }
+- 2963       | 
+- 2964       | } // namespace Vulkan
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 1134–1228 : 28 alignées, 1590 propres Encore, 67 propres upstream</summary>
+
+Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/renderer_vulkan/vk_pipeline_cache.cpp#L1134-L1228).
+
+```diff
+  1347  1134 | void PipelineCache::LoadDiskResources(u64 title_id, std::stop_token stop_loading,
+  1348  1135 |                                       const VideoCore::DiskResourceLoadCallback& callback) {
+  1349  1136 |     if (title_id == 0) {
+  1350  1137 |         return;
+  1351  1138 |     }
+  1352  1139 |     if (!pipeline_cache_filename.empty()) {
++       1140 |         StopBackgroundJobs();
+  1353  1141 |         serialization_thread.WaitForRequests();
+  1354  1142 |         if (use_vulkan_pipeline_cache && !vulkan_pipeline_cache_filename.empty()) {
+  1355  1143 |             SerializeVulkanPipelineCache(vulkan_pipeline_cache_filename, vulkan_pipeline_cache,
+  1356  1144 |                                          CACHE_VERSION);
+  1357  1145 |         }
++       1146 |         shader_cache_v2 = nullptr;
++       1147 |         cache_v2.reset();
++       1148 |         pipeline_binaries.reset();
+  1358  1149 |     }
+  1359  1150 | 
++       1151 |     namespace StutterTrace = VideoCommon::StutterTrace;
++       1152 |     const auto load_begin = std::chrono::steady_clock::now();
++       1153 |     StutterTrace::BootMarker("shader_load_begin");
+  1360  1154 |     const auto shader_dir{Common::FS::GetEdenPath(Common::FS::EdenPath::ShaderDir)};
+  1361  1155 |     const auto base_dir{shader_dir / fmt::format("{:016x}", title_id)};
+  1362  1156 |     if (!Common::FS::CreateDir(shader_dir) || !Common::FS::CreateDir(base_dir)) {
+  1363  1157 |         LOG_ERROR(Common_Filesystem, "Failed to create pipeline cache directories");
+  1364  1158 |         return;
+  1365  1159 |     }
+- 1366       |     pipeline_cache_filename = base_dir / "vulkan.bin";
+- 1367       | 
+- 1368       |     if (use_vulkan_pipeline_cache) {
+- 1369       |         vulkan_pipeline_cache_filename = base_dir / "vulkan_pipelines.bin";
+- 1370       |         vulkan_pipeline_cache =
+- 1371       |             LoadVulkanPipelineCache(vulkan_pipeline_cache_filename, CACHE_VERSION);
+- 1372       |     }
+- 1373       | 
+- 1374       | #ifdef PS5_NATIVE
+- 1375       |     // ENCORE_PS5_CACHE_DIAG_BEGIN
+- 1376       |     // Once per game load only: separate a missing per-title environment log,
+- 1377       |     // a header-only log, and an existing cache whose records get rejected.
+- 1378       |     // Never inspect or walk these files in the draw/submit hot path.
+- 1379       |     struct DiskCacheProbe {
+- 1380       |         bool present{};
+- 1381       |         std::uintmax_t bytes{};
+- 1382       |     };
+- 1383       |     const auto probe_cache = [](const std::filesystem::path& path) -> DiskCacheProbe {
+- 1384       |         std::error_code error;
+- 1385       |         const auto bytes = std::filesystem::file_size(path, error);
+- 1386       |         return {!error, error ? std::uintmax_t{} : bytes};
+- 1387       |     };
+- 1388       |     const auto env_before = probe_cache(pipeline_cache_filename);
+- 1389       |     const auto driver_before = use_vulkan_pipeline_cache
+- 1390       |                                    ? probe_cache(vulkan_pipeline_cache_filename)
+- 1391       |                                    : DiskCacheProbe{};
+- 1392       |     std::printf("EDEN_PS5_SHADER_CACHE_DISK title=%016llX stage=before"
+- 1393       |                 " env_present=%u env_bytes=%llu driver_enabled=%u"
+- 1394       |                 " driver_present=%u driver_bytes=%llu cache_version=%u\n",
+- 1395       |                 static_cast<unsigned long long>(title_id),
+- 1396       |                 unsigned(env_before.present),
+- 1397       |                 static_cast<unsigned long long>(env_before.bytes),
+- 1398       |                 unsigned(use_vulkan_pipeline_cache), unsigned(driver_before.present),
+- 1399       |                 static_cast<unsigned long long>(driver_before.bytes),
+- 1400       |                 unsigned(CACHE_VERSION));
+- 1401       |     // ENCORE_PS5_CACHE_DIAG_END
+- 1402       |     // The PS5 is launching one foreground game, so do not delay it by
+- 1403       |     // compiling the full backlog of shaders from earlier sessions.
+- 1404       |     // An already-stopped token is a special initialization-only request:
+- 1405       |     // after naming the per-title cache, leave workers RUNNING for later jobs.
+- 1406       |     if (stop_loading.stop_requested()) {
+- 1407       |         LOG_INFO(Render_Vulkan, "PS5 lazy shader cache ready for {:016x}", title_id);
+- 1408       |         return;
+- 1409       |     }
+- 1410       | #endif
+- 1411       | 
+- 1412       | #ifdef PS5_NATIVE
+- 1413       |     // FC27: the old fixed 32-entry PREFIX admitted 18 compute and only
+- 1414       |     // 14 graphics shaders from a 28.7 MiB cache. Thousands of newer records
+- 1415       |     // were ignored and the GPU owner still translated 303 new graphics keys.
+- 1416       |     // A recorded FC27 warm cache contains 710 valid pipeline records, yet the
+- 1417       |     // 32-entry prewarm left 361 guest shaders to translate during the match.
+- 1418       |     // FC27 PS5 25/11: 598 valid cached keys, only 128 restored in 704 ms,
+- 1419       |     // and 243 first-use translations during gameplay. Prebuild the newest
+- 1420       |     // 768 DISTINCT cached keys before guest Run when the existing file-size
+- 1421       |     // limit allows it. Keep the 32-entry prefix for large/absent caches;
+- 1422       |     // this changes no GPU barriers, shader output or draw ordering.
+- 1423       |     constexpr size_t kStartupPrewarmPipelines = 32;
+- 1424       |     constexpr size_t kRecentPrewarmPipelines = 768;
+- 1425       |     constexpr std::uintmax_t kRecentShaderCacheScanLimit = 64ULL << 20;
+- 1426       |     const bool prefer_recent_cache =
+- 1427       |         env_before.present && env_before.bytes > 12 &&
+- 1428       |         env_before.bytes <= kRecentShaderCacheScanLimit;
+- 1429       |     const size_t prewarm_pipeline_limit =
+- 1430       |         prefer_recent_cache ? kRecentPrewarmPipelines : kStartupPrewarmPipelines;
+- 1431       |     using PrewarmKey = std::variant<ComputePipelineCacheKey, GraphicsPipelineCacheKey>;
+- 1432       |     std::list<std::pair<PrewarmKey, Common::UniqueFunction<void>>> recent_cache_builds;
+- 1433       |     const auto startup_prewarm_started = std::chrono::steady_clock::now();
+- 1434       |     std::stop_source startup_reader;
+- 1435       | #endif
+- 1436       |     struct {
+- 1437       |         std::mutex mutex;
+- 1438       |         size_t total{};
+- 1439       |         size_t built{};
+- 1440       |         size_t valid{};
+- 1441       |         bool has_loaded{};
+- 1442       | #ifdef PS5_NATIVE
+- 1443       |         std::exception_ptr worker_error;
+- 1444       | #endif
+- 1445       |         // ENCORE_PS5_CACHE_DIAG_BEGIN
+- 1446       | #ifdef PS5_NATIVE
+- 1447       |         // Updated only by the disk reader; the main thread reads after drain.
+- 1448       |         size_t disk_compute_records{};
+- 1449       |         size_t disk_graphics_records{};
+- 1450       |         size_t disk_graphics_admitted{};
+- 1451       | #endif
+- 1452       |         // ENCORE_PS5_CACHE_DIAG_END
+- 1453       |         std::unique_ptr<PipelineStatistics> statistics;
+- 1454       |     } state;
+- 1455       | 
+- 1456       |     if (device.IsKhrPipelineExecutablePropertiesEnabled()) {
+- 1457       |         state.statistics = std::make_unique<PipelineStatistics>(device);
+- 1458       |     }
+- 1459       |     const auto schedule_prewarm = [&]([[maybe_unused]] const auto& key,
+- 1460       |                                       Common::UniqueFunction<void> build) {
+- 1461       | #ifdef PS5_NATIVE
+- 1462       |         // ThreadWorker does not catch task exceptions. Keep the first failure
+- 1463       |         // until all accepted jobs have finished borrowing this loading state.
+- 1464       |         build = Common::UniqueFunction<void>{[&state, task = std::move(build)]() mutable {
+- 1465       |             try {
+- 1466       |                 task();
+- 1467       |             } catch (...) {
+- 1468       |                 std::scoped_lock lock{state.mutex};
+- 1469       |                 if (!state.worker_error) state.worker_error = std::current_exception();
+- 1470       |             }
+- 1471       |         }};
+- 1472       |         if (prefer_recent_cache) {
+- 1473       |             // No driver work while scanning the file. Move-only jobs own all
+- 1474       |             // shader environments and cannot outlive this loading function.
+- 1475       |             // Discard oldest unstarted work without creating GPU pipelines.
+- 1476       |             // Live misses append to the disk cache, including keys skipped by
+- 1477       |             // earlier bounded prewarms. Retain the most recent occurrence of
+- 1478       |             // each full typed key, not 128 possibly duplicate records.
+- 1479       |             // The bounded list owns only unstarted jobs; no live GPU resource
+- 1480       |             // or shader environment used by another worker is replaced.
+- 1481       |             const PrewarmKey candidate{key};
+- 1482       |             const auto duplicate = std::find_if(
+- 1483       |                 recent_cache_builds.begin(), recent_cache_builds.end(),
+- 1484       |                 [&](const auto& entry) { return entry.first == candidate; });
+- 1485       |             if (duplicate != recent_cache_builds.end())
+- 1486       |                 recent_cache_builds.erase(duplicate);
+- 1487       |             if (recent_cache_builds.size() == prewarm_pipeline_limit)
+- 1488       |                 recent_cache_builds.pop_front();
+- 1489       |             recent_cache_builds.emplace_back(candidate, std::move(build));
+- 1490       |             return;
+- 1491       |         }
+- 1492       | #endif
+- 1493       |         workers.QueueWork(std::move(build));
+- 1494       |         {
+- 1495       |             std::scoped_lock lock{state.mutex};
+- 1496       |             ++state.total;
+- 1497       |         }
+- 1498       | #ifdef PS5_NATIVE
+- 1499       |         if (state.total == prewarm_pipeline_limit)
+- 1500       |             startup_reader.request_stop();
+- 1501       | #endif
+- 1502       |     };
+- 1503       |     const auto load_compute{[&](std::ifstream& file, FileEnvironment env) {
+- 1504       |         // ENCORE_PS5_CACHE_DIAG_BEGIN
+- 1505       | #ifdef PS5_NATIVE
+- 1506       |         ++state.disk_compute_records;
+- 1507       | #endif
+- 1508       |         // ENCORE_PS5_CACHE_DIAG_END
+- 1509       |         ComputePipelineCacheKey key;
+- 1510       |         file.read(reinterpret_cast<char*>(&key), sizeof(key));
+- 1511       | 
+- 1512       |         schedule_prewarm(key, [this, key, env_ = std::move(env), &state, &callback]() mutable {
+- 1513       |             ShaderPools pools;
+- 1514       |             auto pipeline{CreateComputePipeline(pools, key, env_, state.statistics.get(), false)};
+- 1515       |             std::scoped_lock lock{state.mutex};
+- 1516       |             // Do not seed a failed Vulkan compute pipeline for future dispatches.
+- 1517       |             if (pipeline && pipeline->IsBound()) {
+- 1518       |                 compute_cache.emplace(key, std::move(pipeline));
+- 1519       |                 ++state.valid;
+- 1520       |             }
+- 1521       |             ++state.built;
+- 1522       |             if (state.has_loaded) {
+- 1523       |                 callback(VideoCore::LoadCallbackStage::Build, state.built, state.total);
+- 1524       |             }
+- 1525       |         });
+- 1526       |     }};
+- 1527       |     const auto load_graphics{[&](std::ifstream& file, std::vector<FileEnvironment> envs) {
+- 1528       |         // ENCORE_PS5_CACHE_DIAG_BEGIN
+- 1529       | #ifdef PS5_NATIVE
+- 1530       |         ++state.disk_graphics_records;
+- 1531       | #endif
+- 1532       |         // ENCORE_PS5_CACHE_DIAG_END
+- 1533       |         GraphicsPipelineCacheKey key;
+- 1534       |         file.read(reinterpret_cast<char*>(&key), sizeof(key));
+- 1535       | 
+- 1536       |         // Disk records are untrusted: the six guest programs include both
+- 1537       |         // VertexA and VertexB, even though Vulkan exposes five graphics stages.
+- 1538       |         size_t env_index = 0;
+- 1539       |         for (size_t index = 0; index < key.unique_hashes.size(); ++index) {
+- 1540       |             if (key.unique_hashes[index] == 0) continue;
+- 1541       |             if (env_index == envs.size() ||
+- 1542       |                 envs[env_index].ShaderStage() != (index == 0 ? Shader::Stage::VertexA
+- 1543       |                                                             : Shader::StageFromIndex(index - 1))) {
+- 1544       |                 return;
+- 1545       |             }
+- 1546       |             ++env_index;
+- 1547       |         }
+- 1548       |         if (env_index == 0 || env_index != envs.size()) return;
+- 1549       | 
+- 1550       |         if ((key.state.extended_dynamic_state != 0) !=
+- 1551       |                 dynamic_features.has_extended_dynamic_state ||
+- 1552       |             (key.state.extended_dynamic_state_2 != 0) !=
+- 1553       |                 dynamic_features.has_extended_dynamic_state_2 ||
+- 1554       |             (key.state.extended_dynamic_state_2_logic_op != 0) !=
+- 1555       |                 dynamic_features.has_extended_dynamic_state_2_logic_op ||
+- 1556       |             (key.state.extended_dynamic_state_3_blend != 0) !=
+- 1557       |                 dynamic_features.has_extended_dynamic_state_3_blend ||
+- 1558       |             (key.state.extended_dynamic_state_3_enables != 0) !=
+- 1559       |                 dynamic_features.has_extended_dynamic_state_3_enables ||
+- 1560       |             (key.state.color_write_enable_dynamic != 0) !=
+- 1561       |                 dynamic_features.has_color_write_enable ||
+- 1562       |             ((key.state.dynamic_vertex_input != 0) !=
+- 1563       |                  dynamic_features.has_dynamic_vertex_input &&
+- 1564       |              !(dynamic_features.has_dynamic_vertex_input &&
+- 1565       |                ::Eden::DevVulkan::static_vertex_input &&
+- 1566       |                EdenAttributelessStaticKey(key.state)))) {
+- 1567       |             return;
+- 1568       |         }
+- 1569       | 
+- 1570       |         const bool key_requests_provoking_last = key.state.provoking_vertex_last != 0;
+- 1571       |         if (key_requests_provoking_last && !dynamic_features.has_provoking_vertex_last_mode) {
+- 1572       |             return;
+- 1573       |         }
+- 1574       | 
+- 1575       |         const bool key_uses_transform_feedback = key.state.xfb_enabled != 0;
+- 1576       |         if (key_uses_transform_feedback && key_requests_provoking_last &&
+- 1577       |             !dynamic_features.has_provoking_vertex_tf_preserve) {
+- 1578       |             return;
++       1160 |     namespace CacheV2 = VideoCommon::ShaderCacheV2;
++       1161 |     pipeline_cache_filename = base_dir / CacheV2::FileName;
++       1162 |     const auto migration =
++       1163 |         MigrateLegacyPipelineCache(base_dir, pipeline_cache_filename, MaxUsedPipelineAge(device));
++       1164 |     if (migration.version) {
++       1165 |         LOG_INFO(Render_Vulkan,
++       1166 |                  "Shader cache v2 started from the version {} cache: {} graphics and {} "
++       1167 |                  "compute pipelines ({} records collapsed), {} used-list entries",
++       1168 |                  *migration.version, migration.graphics, migration.compute, migration.collapsed,
++       1169 |                  migration.used);
++       1170 |     } else if (migration.failed) {
++       1171 |         LOG_WARNING(Render_Vulkan, "Couldn't start shader cache v2 from the older cache");
+  1579  1172 |         }
+- 1580       | 
+- 1581       |         schedule_prewarm(key, [this, key, envs_ = std::move(envs), &state, &callback]() mutable {
+- 1582       |             ShaderPools pools;
+- 1583       |             boost::container::static_vector<Shader::Environment*, Maxwell::MaxShaderProgram> env_ptrs;
+- 1584       |             for (auto& env : envs_) {
+- 1585       |                 env_ptrs.push_back(&env);
++       1173 |     cache_v2 = std::make_unique<CacheV2::Cache>(pipeline_cache_filename);
++       1174 |     shader_cache_v2 = cache_v2.get();
++       1175 |     pipeline_binaries = PipelineBinaries::Open(device, base_dir);
++       1176 |     // Without the lock: another emulator's appends are complete records or a cut-off tail.
++       1177 |     // The payload hashes are checked on the shader job workers.
++       1178 |     auto log_v2 = std::make_shared<CacheV2::LogFile>(CacheV2::ReadLogFile(
++       1179 |         pipeline_cache_filename, [this](size_t count, const std::function<void(size_t)>& task) {
++       1180 |             VideoCommon::ParallelFor(*shader_jobs, count, task);
++       1181 |         }));
++       1182 |     cache_v2->LoadPrograms(log_v2->parsed.live);
++       1183 |     const CacheV2::LogStats& stats = log_v2->parsed.stats;
++       1184 |     LOG_INFO(Render_Vulkan,
++       1185 |              "Shader cache v2: {} bytes, {} live records, {} superseded, {} tombstones, {} "
++       1186 |              "damaged headers, {} damaged records, {} bytes skipped, {} bytes cut off",
++       1187 |              stats.file_size, stats.live, stats.superseded, stats.tombstones, stats.bad_headers,
++       1188 |              stats.bad_payloads, stats.skipped_bytes, stats.torn_tail_bytes);
++       1189 |     std::vector<u64> expired_sessions;
++       1190 |     used_pipelines =
++       1191 |         UsedPipelinesFromLog(log_v2->parsed.live, MaxUsedPipelineAge(device), expired_sessions);
++       1192 |     for (const u64 session : expired_sessions) {
++       1193 |         cache_v2->Writer().Append(CacheV2::RecordKind::Tombstone, session,
++       1194 |                                   CacheV2::TombstonePayload(CacheV2::RecordKind::Used));
+  1586  1195 |             }
+- 1587       |             auto pipeline{CreateGraphicsPipeline(pools, key, MakeSpan(env_ptrs),
+- 1588       |                                                  state.statistics.get(), false)};
++       1196 |     used_session_time = static_cast<u64>(std::chrono::duration_cast<std::chrono::nanoseconds>(
++       1197 |                                              std::chrono::system_clock::now().time_since_epoch())
++       1198 |                                              .count());
++       1199 |     used_session_key = used_session_time ^ std::random_device{}();
++       1200 |     used_pipelines_saved = std::chrono::steady_clock::now();
+  1589  1201 | 
+- 1590       |             std::scoped_lock lock{state.mutex};
+- 1591       |             // Leave a failed Vulkan build absent from the prewarm map,
+- 1592       |             // so the normal first-use path may try the key again.
+- 1593       | #ifdef PS5_NATIVE
+- 1594       |             if (pipeline && pipeline->CanExecuteDraw()) {
+- 1595       | #else
+- 1596       |             if (pipeline) {
+- 1597       | #endif
+- 1598       |                 graphics_cache.emplace(key, std::move(pipeline));
+- 1599       |                 ++state.valid;
+- 1600       |             }
+- 1601       |             ++state.built;
+- 1602       |             if (state.has_loaded) {
+- 1603       |                 callback(VideoCore::LoadCallbackStage::Build, state.built, state.total);
+- 1604       |             }
+- 1605       |         });
+- 1606       |         // ENCORE_PS5_CACHE_DIAG_BEGIN
+- 1607       | #ifdef PS5_NATIVE
+- 1608       |         ++state.disk_graphics_admitted;
+- 1609       | #endif
+- 1610       |         // ENCORE_PS5_CACHE_DIAG_END
+- 1611       |     }};
+- 1612       |     // Only the reader observes the quota stop. Passing this token to
+- 1613       |     // workers.WaitForRequests() would permanently request_stop() on the
+- 1614       |     // shader-builder pool, breaking first-use shaders later in gameplay.
+- 1615       | #ifdef PS5_NATIVE
+- 1616       |     // Newest-entry mode must read to the last VALID record (also repairing
+- 1617       |     // a corrupt tail); large caches retain the old first-32 stop token.
+- 1618       |     const std::stop_token reader_token{
+- 1619       |         prefer_recent_cache ? stop_loading : startup_reader.get_token()};
+- 1620       | #else
+- 1621       |     const std::stop_token reader_token{stop_loading};
+- 1622       | #endif
+- 1623       | #ifdef PS5_NATIVE
+- 1624       |     // The progress callback below also runs before the normal drain and can
+- 1625       |     // throw. Keep locally borrowed prewarm state alive on EVERY exceptional
+- 1626       |     // exit, not only failures of the disk reader. No extra wait on success.
+- 1627       |     struct PrewarmDrain {
+- 1628       |         Common::ThreadWorker& compiler;
+- 1629       |         bool joined{};
+- 1630       |         ~PrewarmDrain() {
+- 1631       |             if (!joined) compiler.WaitForRequests();
+- 1632       |         }
+- 1633       |     } prewarm_drain{workers};
+- 1634       | #endif
+- 1635       | #ifdef PS5_NATIVE
+- 1636       |     // A damaged disk cache or an enqueue failure can interrupt the reader
+- 1637       |     // after jobs borrowed local state. Always reach the non-cancelling drain.
+- 1638       |     try {
+- 1639       | #endif
+- 1640       |         VideoCommon::LoadPipelines(reader_token, pipeline_cache_filename, CACHE_VERSION, load_compute,
+- 1641       |                                    load_graphics);
+- 1642       | #ifdef PS5_NATIVE
+- 1643       |         if (prefer_recent_cache && !stop_loading.stop_requested()) {
+- 1644       |             for (auto& entry : recent_cache_builds) {
+- 1645       |                 workers.QueueWork(std::move(entry.second));
+- 1646       |                 std::scoped_lock lock{state.mutex};
+- 1647       |                 ++state.total;
+- 1648       |             }
+- 1649       |             recent_cache_builds.clear();
+- 1650       |         }
+- 1651       |     } catch (const std::exception& error) {
+- 1652       |         LOG_WARNING(Render_Vulkan, "PS5 shader prewarm aborted: {}", error.what());
+- 1653       |     } catch (...) {
+- 1654       |         LOG_WARNING(Render_Vulkan, "PS5 shader prewarm aborted: unknown exception");
++       1202 |     // With the shader precache this boot, the cached graphics pipelines skipped below are built
++       1203 |     // on the loading screen too, unless an earlier precache built them for this driver.
++       1204 |     namespace ShaderWarm = VideoCommon::ShaderWarm;
++       1205 |     const bool precache = ShaderWarm::PrecacheBeforeStart(
++       1206 |         Settings::values.precache_shaders.GetValue(), ShaderWarm::TakeWarmBeforeStart());
++       1207 |     std::unordered_set<u64> precached_pipelines;
++       1208 |     if (precache) {
++       1209 |         precached_pipelines = ShaderWarm::ReadPrecachedPipelines(
++       1210 |             ShaderWarm::PrecachedPipelinesPath(title_id),
++       1211 |             {device.GetDriverVersion(), device.GetDeviceID(), CACHE_VERSION});
+  1655  1212 |     }
+- 1656       | #endif
+- 1657       | 
+- 1658       |     LOG_INFO(Render_Vulkan, "Total Pipeline Count: {}", state.total);
+- 1659       | 
+- 1660       |     std::unique_lock lock{state.mutex};
+- 1661       |     callback(VideoCore::LoadCallbackStage::Build, 0, state.total);
+- 1662       |     state.has_loaded = true;
+- 1663       |     lock.unlock();
+- 1664       | 
+- 1665       | #ifdef PS5_NATIVE
+- 1666       |     // A cancelled title-cache load must never stop the persistent shader
+- 1667       |     // compiler pool: StatefulThreadWorker::WaitForRequests(stop_token)
+- 1668       |     // requests stop on every worker when that token is cancelled.
+- 1669       |     // Only the disk reader observes cancellation. The bounded queued jobs
+- 1670       |     // must complete before their borrowed stack state can be destroyed.
+- 1671       |     workers.WaitForRequests();
+- 1672       |     prewarm_drain.joined = true;
+- 1673       |     // Propagate the original failure on the loading owner, not std::terminate
+- 1674       |     // on a worker. Never advertise a partial failed cache as a successful load.
+- 1675       |     if (state.worker_error) std::rethrow_exception(state.worker_error);
+- 1676       | #else
+- 1677       |     workers.WaitForRequests(stop_loading);
+- 1678       | #endif
+- 1679       | #ifdef PS5_NATIVE
+- 1680       |     // Completed attempts include failed native handles; track valid results.
+- 1681       |     // One startup summary, never a per-frame or per-draw instrumentation cost.
+- 1682       |     const auto startup_prewarm_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+- 1683       |         std::chrono::steady_clock::now() - startup_prewarm_started).count();
+- 1684       |     std::printf("EDEN_PS5_SHADER_PREWARM queued=%zu completed=%zu valid=%zu rejected=%zu prebuild_ms=%lld limit=%zu\n",
+- 1685       |                 state.total, state.built, state.valid, state.built - state.valid,
+- 1686       |                 static_cast<long long>(startup_prewarm_ms), prewarm_pipeline_limit);
+- 1687       |     // ENCORE_PS5_CACHE_DIAG_BEGIN
+- 1688       |     const auto env_after = probe_cache(pipeline_cache_filename);
+- 1689       |     std::printf("EDEN_PS5_SHADER_CACHE_ADMISSION title=%016llX"
+- 1690       |                 " env_before_present=%u env_before_bytes=%llu"
+- 1691       |                 " env_after_present=%u env_after_bytes=%llu"
+- 1692       |                 " compute_records=%zu graphics_records=%zu graphics_filtered=%zu"
+- 1693       |                 " queued=%zu cache_version=%u\n",
+- 1694       |                 static_cast<unsigned long long>(title_id),
+- 1695       |                 unsigned(env_before.present),
+- 1696       |                 static_cast<unsigned long long>(env_before.bytes),
+- 1697       |                 unsigned(env_after.present),
+- 1698       |                 static_cast<unsigned long long>(env_after.bytes),
+- 1699       |                 state.disk_compute_records, state.disk_graphics_records,
+- 1700       |                 state.disk_graphics_records - state.disk_graphics_admitted,
+- 1701       |                 state.total, unsigned(CACHE_VERSION));
+- 1702       |     // ENCORE_PS5_CACHE_DIAG_END
+- 1703       | #endif
+- 1704       | 
+  1705  1213 |     if (use_vulkan_pipeline_cache) {
+- 1706       |         SerializeVulkanPipelineCache(vulkan_pipeline_cache_filename, vulkan_pipeline_cache,
+- 1707       |                                      CACHE_VERSION);
+- 1708       |         size_t size = 0;
+- 1709       |         vulkan_pipeline_cache.Read(&size, nullptr);
+- 1710       |         last_cache_size.store(size, std::memory_order_relaxed);
+- 1711       |         last_flush = std::chrono::steady_clock::now();
+- 1712       |     }
+- 1713       | 
+- 1714       |     if (state.statistics) {
+- 1715       |         state.statistics->Report();
+- 1716       |     }
+- 1717       | }
+- 1718       | 
+- 1719       | void PipelineCache::QueueVulkanPipelineCacheFlush() {
+- 1720       |     if (!use_vulkan_pipeline_cache || vulkan_pipeline_cache_filename.empty()) {
+- 1721       |         return;
+- 1722       |     }
+- 1723       | #ifdef PS5_NATIVE
+- 1724       |     // Recover a failed background serialization without racing the owner's
+- 1725       |     // non-atomic quota. The existing time gate still bounds retry frequency.
+- 1726       |     if (flush_worker_failed.exchange(false, std::memory_order_acq_rel)) {
+- 1727       |         pipelines_since_flush = VULKAN_CACHE_FLUSH_PIPELINES;
+- 1728       |     }
+- 1729       | #endif
+- 1730       |     if (++pipelines_since_flush < VULKAN_CACHE_FLUSH_PIPELINES) {
+- 1731       |         return;
+- 1732       |     }
+- 1733       |     const auto now = std::chrono::steady_clock::now();
+- 1734       |     const auto megabytes = last_cache_size.load(std::memory_order_relaxed) / (1024 * 1024);
+- 1735       |     const std::chrono::seconds interval{
+- 1736       |         std::max<size_t>(VULKAN_CACHE_FLUSH_MIN_SECONDS, megabytes)};
+- 1737       |     if (last_flush.time_since_epoch().count() != 0 && now - last_flush < interval) {
+- 1738       |         return;
+- 1739       |     }
+- 1740       |     if (flush_in_flight.exchange(true, std::memory_order_acq_rel)) {
+- 1741       |         return;
+- 1742       |     }
+- 1743       |     pipelines_since_flush = 0;
+- 1744       |     last_flush = now;
+- 1745       |     // A transient driver-cache read or serializer exception must not pin
+- 1746       |     // flush_in_flight=true for the lifetime of the foreground title.
+- 1747       |     // Keep the existing periodic budget, filename and background worker.
+- 1748       |     try {
+- 1749       |         serialization_thread.QueueWork([this] {
+- 1750       |             struct ReleaseFlush {
+- 1751       |                 std::atomic_bool& in_flight;
+- 1752       |                 ~ReleaseFlush() { in_flight.store(false, std::memory_order_release); }
+- 1753       |             } release{flush_in_flight};
+- 1754       |             try {
+- 1755       |                 SerializeVulkanPipelineCache(vulkan_pipeline_cache_filename, vulkan_pipeline_cache,
+- 1756       |                                              CACHE_VERSION);
+- 1757       |                 size_t size = 0;
+- 1758       |                 vulkan_pipeline_cache.Read(&size, nullptr);
+- 1759       |                 last_cache_size.store(size, std::memory_order_relaxed);
+- 1760       |             } catch (const std::exception& error) {
+- 1761       | #ifdef PS5_NATIVE
+- 1762       |                 // Signal a new checkpoint, but only the GPU owner may update
+- 1763       |                 // the ordinary pipeline build quota on its next call.
+- 1764       |                 flush_worker_failed.store(true, std::memory_order_release);
+- 1765       | #endif
+- 1766       |                 LOG_WARNING(Render_Vulkan, "Deferred driver cache flush failed: {}", error.what());
+- 1767       |             } catch (...) {
+- 1768       | #ifdef PS5_NATIVE
+- 1769       |                 flush_worker_failed.store(true, std::memory_order_release);
+- 1770       | #endif
+- 1771       |                 LOG_WARNING(Render_Vulkan, "Deferred driver cache flush failed: unknown exception");
+- 1772       |             }
+- 1773       |         });
+- 1774       |     } catch (const std::exception& error) {
+- 1775       |         flush_in_flight.store(false, std::memory_order_release);
+- 1776       |         // Keep this checkpoint due for a later retry, without bypassing the
+- 1777       |         // existing time gate if the serializer is temporarily unavailable.
+- 1778       |         pipelines_since_flush = VULKAN_CACHE_FLUSH_PIPELINES;
+- 1779       |         LOG_WARNING(Render_Vulkan, "Deferred cache flush queue rejected: {}", error.what());
+- 1780       |     } catch (...) {
+- 1781       |         flush_in_flight.store(false, std::memory_order_release);
+- 1782       |         pipelines_since_flush = VULKAN_CACHE_FLUSH_PIPELINES;
+- 1783       |         LOG_WARNING(Render_Vulkan, "Deferred cache flush queue rejected: unknown exception");
+- 1784       |     }
+- 1785       | }
+- 1786       | 
+- 1787       | GraphicsPipeline* PipelineCache::CurrentGraphicsPipelineSlowPath() {
+- 1788       |     const auto [pair, is_new]{graphics_cache.try_emplace(graphics_key)};
+- 1789       |     auto& pipeline{pair->second};
+- 1790       |     if (is_new) {
+- 1791       | #ifdef PS5_NATIVE
+- 1792       |         // F07: first-use guest shader translation and SPIR-V generation are
+- 1793       |         // synchronous even when the Vulkan pipeline build is queued.
+- 1794       |         // Count EVERY cold miss with Detailed Logging, not one in 16 draws.
+- 1795       |         // Quiet releases take no clock readings on this path.
+- 1796       |         ::Eden::Performance::CachePhaseTimer first_use_cpu_phase{
+- 1797       |             ::Eden::Performance::CachePhase::GraphicsPipelineCreate,
+- 1798       |             ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 1799       | #endif
+- 1800       | #ifdef PS5_NATIVE
+- 1801       |         ColdShaderMissTrace cold_miss{"graphics", graphics_key.Hash(), false};
+- 1802       | #endif
+- 1803       |         pipeline = CreateGraphicsPipeline();
+- 1804       | #ifdef PS5_NATIVE
+- 1805       |         first_use_cpu_phase.Stop();
+- 1806       |         cold_miss.Complete(static_cast<bool>(pipeline));
+- 1807       |         if (!pipeline) {
+- 1808       |             // Failed-key retry metadata is capped, but a burst of >=64
+- 1809       |             // failures must not permanently deny NEW shaders their one
+- 1810       |             // delayed recovery attempt. Rotate only on failure, never on a
+- 1811       |             // successful draw or during the hot null-cache lookup.
+- 1812       |             if (failed_graphics_retries.size() >= 64) {
+- 1813       |                 const auto oldest = std::min_element(
+- 1814       |                     failed_graphics_retries.begin(), failed_graphics_retries.end(),
+- 1815       |                     [](const auto& left, const auto& right) {
+- 1816       |                         return left.second.eligible_at < right.second.eligible_at;
+- 1817       |                     });
+- 1818       |                 if (oldest != failed_graphics_retries.end()) {
+- 1819       |                     failed_graphics_retries.erase(oldest);
+- 1820       |                 }
+- 1821       |             }
+- 1822       |             failed_graphics_retries.try_emplace(
+- 1823       |                 graphics_key, GraphicsRetryState{
+- 1824       |                     std::chrono::steady_clock::now() + std::chrono::seconds(2), false});
+- 1825       |         }
+- 1826       | #endif
+- 1827       |     }
+- 1828       | #ifdef PS5_NATIVE
+- 1829       |     else if (!pipeline) {
+- 1830       |         const auto failed = failed_graphics_retries.find(graphics_key);
+- 1831       |         if (failed != failed_graphics_retries.end() && !failed->second.attempted &&
+- 1832       |             std::chrono::steady_clock::now() >= failed->second.eligible_at) {
+- 1833       |             // Publish the attempted bit BEFORE the potentially expensive
+- 1834       |             // guest IR/SPIR-V translation. Repeated failed HUD draws stay O(1).
+- 1835       |             failed->second.attempted = true;
+- 1836       |             ::Eden::Performance::CachePhaseTimer retry_cpu_cost{
+- 1837       |                 ::Eden::Performance::CachePhase::GraphicsPipelineCreate,
+- 1838       |                 ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 1839       |             ColdShaderMissTrace cold_retry{"graphics", graphics_key.Hash(), true};
+- 1840       |             pipeline = CreateGraphicsPipeline();
+- 1841       |             retry_cpu_cost.Stop();
+- 1842       |             cold_retry.Complete(static_cast<bool>(pipeline));
+- 1843       |             // The null graphics_cache entry itself guarantees at most one
+- 1844       |             // retry for this key. Retaining consumed retry metadata would
+- 1845       |             // exhaust the 64-key budget after unrelated transient failures.
+- 1846       |             failed_graphics_retries.erase(failed);
+- 1847       |         }
+- 1848       |     }
+- 1849       | #endif
+- 1850       |     if (!pipeline) {
+- 1851       |         return nullptr;
+- 1852       |     }
+- 1853       |     if (current_pipeline) {
+- 1854       |         current_pipeline->AddTransition(pipeline.get());
+- 1855       |     }
+- 1856       |     current_pipeline = pipeline.get();
+- 1857       |     if (::Eden::DevVulkan::trace_pipelines) {
+- 1858       |         const auto first_use = ::Eden::PipelineTrace::graphics_first_use.Record(
+- 1859       |             ::Eden::DevVulkan::gpu_time_session.load(std::memory_order_acquire), current_pipeline);
+- 1860       |         if (first_use != 0) {
+- 1861       |             const auto& h = graphics_key.unique_hashes;
+- 1862       |             char text[256];
+- 1863       |             std::snprintf(text, sizeof(text), "G%zu p=%p new=%d va=%llx vb=%llx tc=%llx te=%llx gs=%llx fs=%llx",
+- 1864       |                           first_use, (const void*)current_pipeline, int(is_new), (unsigned long long)h[0], (unsigned long long)h[1],
+- 1865       |                           (unsigned long long)h[2], (unsigned long long)h[3], (unsigned long long)h[4],
+- 1866       |                           (unsigned long long)h[5]);
+- 1867       |             ::Eden::Report("pipeline", text);
+- 1868       |             LOG_INFO(Render_Vulkan, "EDEN_PIPELINE_FIRST_USE {}", text);
+- 1869       |         }
+- 1870       |     }
+- 1871       |     return BuiltPipeline(current_pipeline);
+- 1872       | }
+- 1873       | 
+- 1874       | GraphicsPipeline* PipelineCache::BuiltPipeline(GraphicsPipeline* pipeline) const noexcept {
+- 1875       |     if (pipeline->IsBuilt()) {
+- 1876       |         return pipeline;
+- 1877       |     }
+- 1878       | #ifdef PS5_NATIVE
+- 1879       |     // Prefer correct output over a missing shader draw. A not-yet-built
+- 1880       |     // async pipeline is safe to return: ConfigureDraw records an ordered
+- 1881       |     // scheduler-worker wait, and R378's SCOPE_EXIT publishes completion
+- 1882       |     // even on worker failure. No waiting under the guest cache pair here.
+- 1883       |     // The standard "skip complex first-use draws" policy stays unchanged
+- 1884       |     // on desktop/mobile, where it can improve cold first-use frame times.
+- 1885       |     return pipeline;
+- 1886       | #endif
+- 1887       |     if (!use_asynchronous_shaders) {
+- 1888       |         return pipeline;
+- 1889       |     }
+- 1890       |     // If games are using a small index count, we can assume these are full screen quads.
+- 1891       |     // Usually these shaders are only used once for building textures so we can assume they
+- 1892       |     // can't be built async
+- 1893       |     const auto& draw_state = maxwell3d->draw_manager.draw_state;
+- 1894       |     if (draw_state.index_buffer.count <= 6 || draw_state.vertex_buffer.count <= 6) {
+- 1895       |         return pipeline;
+- 1896       |     }
+- 1897       |     return nullptr;
+- 1898       | }
+- 1899       | 
+- 1900       | std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline(
+- 1901       |     ShaderPools& pools, const GraphicsPipelineCacheKey& key,
+- 1902       |     std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,
+- 1903       |     bool build_in_parallel, bool parallel_translate_stages) try {
+- 1904       | #ifdef PS5_NATIVE
+- 1905       |     // The optional optimizer must yield to foreground graphics translation
+- 1906       |     // even before the first-use Vulkan pipeline reaches the worker queue.
+- 1907       |     // Disk prewarm passes build_in_parallel=false and remains uncounted.
+- 1908       |     GraphicsTranslationPriorityScope translation_priority{
+- 1909       |         build_in_parallel && ::Eden::DevVulkan::fast_first_pipelines};
+- 1910       | #endif
+- 1911       |     auto hash = key.Hash();
+- 1912       |     LOG_DEBUG(Render_Vulkan, "{:#016x}", hash);
+- 1913       |     size_t env_index{0};
+- 1914       |     std::array<Shader::IR::Program, Maxwell::MaxShaderProgram> programs;
+- 1915       | #ifdef PS5_NATIVE
+- 1916       |     // Eden #4503 drops known-broken non-NVIDIA fragment shaders entirely.
+- 1917       |     // On PS5 that visibly removes guest draws. Keep the exact predicate but
+- 1918       |     // route only matching programs through the newer Lichii/Eglantine
+- 1919       |     // broadcast/select SPIR-V fallback.
+- 1920       |     std::array<bool, Maxwell::MaxShaderProgram> fragment_shuffle_fallback{};
+- 1921       | #endif
+- 1922       |     const bool uses_vertex_a{key.unique_hashes[0] != 0};
+- 1923       |     const bool uses_vertex_b{key.unique_hashes[1] != 0};
+- 1924       | 
+- 1925       |     // Layer passthrough generation for devices without VK_EXT_shader_viewport_index_layer
+- 1926       |     Shader::IR::Program* layer_source_program{};
+- 1927       | 
+- 1928       | #ifdef PS5_NATIVE
+- 1929       |     // Lichii's stage-parallel model adapted to Encore's active renderer:
+- 1930       |     // every stage owns its IR pools until SPIR-V emission has consumed the
+- 1931       |     // resulting Program. Only NS1 first-use calls can enable this flag; NS2
+- 1932       |     // native keeps its authenticated GMMU/channel translation synchronous.
+- 1933       |     std::array<std::unique_ptr<ShaderPools>, Maxwell::MaxShaderProgram> parallel_pools{};
+- 1934       |     std::array<std::unique_ptr<Shader::IR::Program>, Maxwell::MaxShaderProgram>
+- 1935       |         parallel_programs{};
+- 1936       |     std::array<std::exception_ptr, Maxwell::MaxShaderProgram> parallel_errors{};
+- 1937       |     // CachePhaseTimer's per-key shader attribution is intentionally thread-local.
+- 1938       |     // Give every stage worker a private accumulator, then merge after the owner
+- 1939       |     // joins them so EDEN_VULKAN_SHADER_MISS keeps the pre-parallel accounting.
+- 1940       |     std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>
+- 1941       |         parallel_stage_costs{};
+- 1942       | 
+- 1943       |     // Worker translation must never traverse the live guest GMMU. Snapshot
+- 1944       |     // every guest byte that CFG/IR may consult while still on the GPU owner:
+- 1945       |     // shader code is already copied by GetGraphicsEnvironments/SetCachedSize,
+- 1946       |     // and this block captures the TIC pool plus enabled per-stage CBUFs.
+- 1947       |     constexpr u32 DisabledSnapshotCbuf = (std::numeric_limits<u32>::max)();
+- 1948       |     constexpr u64 MaxTextureSnapshotBytes = u64{4} << 20;
+- 1949       |     constexpr u64 MaxCbufSnapshotBytes =
+- 1950       |         u64{Maxwell::MaxShaderStage} * Maxwell::MaxConstBuffers *
+- 1951       |         Maxwell::MaxConstBufferSize;
+- 1952       |     constexpr u64 MaxShaderSnapshotBytes =
+- 1953       |         MaxTextureSnapshotBytes + MaxCbufSnapshotBytes;
+- 1954       |     std::vector<u8> parallel_texture_snapshot;
+- 1955       |     std::array<std::array<std::vector<u8>, Maxwell::MaxConstBuffers>,
+- 1956       |                Maxwell::MaxShaderStage>
+- 1957       |         parallel_cbuf_storage{};
+- 1958       |     std::array<std::array<const u8*, Maxwell::MaxConstBuffers>,
+- 1959       |                Maxwell::MaxShaderStage>
+- 1960       |         parallel_cbuf_ptrs{};
+- 1961       |     std::array<std::array<u32, Maxwell::MaxConstBuffers>,
+- 1962       |                Maxwell::MaxShaderStage>
+- 1963       |         parallel_cbuf_sizes{};
+- 1964       |     for (auto& sizes : parallel_cbuf_sizes) {
+- 1965       |         sizes.fill(DisabledSnapshotCbuf);
+- 1966       |     }
+- 1967       | 
+- 1968       |     GPUVAddr snapshot_texture_base{};
+- 1969       |     u32 snapshot_texture_limit{};
+- 1970       |     bool snapshot_via_header_index{};
+- 1971       |     u32 snapshot_viewport_transform_state{};
+- 1972       | 
+- 1973       |     if (parallel_translate_stages) {
+- 1974       |         for (Shader::Environment* const env : envs) {
+- 1975       |             // HLE replacement lookup still belongs to Maxwell3D::replace_table.
+- 1976       |             // Keep those rare shaders on the GPU owner until that table has an
+- 1977       |             // immutable per-environment representation too.
+- 1978       |             if (env->HasHLEMacroState()) {
+- 1979       |                 parallel_translate_stages = false;
+- 1980       |                 break;
+- 1981       |             }
+- 1982       |         }
+- 1983       |     }
+- 1984       | 
+- 1985       |     if (parallel_translate_stages) {
+- 1986       |         // Disk prewarm uses FileEnvironment and can run without a bound
+- 1987       |         // graphics channel. Only the live NS1 owner may read these registers.
+- 1988       |         const auto& snapshot_tex_header = maxwell3d->regs.tex_header;
+- 1989       |         snapshot_texture_base = snapshot_tex_header.Address();
+- 1990       |         snapshot_texture_limit = static_cast<u32>(snapshot_tex_header.limit);
+- 1991       |         snapshot_via_header_index =
+- 1992       |             maxwell3d->regs.sampler_binding == Maxwell::SamplerBinding::ViaHeaderBinding;
+- 1993       |         snapshot_viewport_transform_state =
+- 1994       |             maxwell3d->regs.viewport_scale_offset_enabled;
+- 1995       |         const u64 snapshot_texture_bytes =
+- 1996       |             (u64{snapshot_texture_limit} + 1) * sizeof(Tegra::Texture::TICEntry);
+- 1997       |         bool snapshot_ok =
+- 1998       |             snapshot_texture_bytes <= MaxTextureSnapshotBytes &&
+- 1999       |             snapshot_texture_base <=
+- 2000       |                 (std::numeric_limits<GPUVAddr>::max)() - (snapshot_texture_bytes - 1) &&
+- 2001       |             gpu_memory->IsWithinGPUAddressRange(
+- 2002       |                 snapshot_texture_base + snapshot_texture_bytes - 1);
+- 2003       |         u64 snapshot_bytes = snapshot_texture_bytes;
+- 2004       |         std::array<bool, Maxwell::MaxShaderStage> stage_needed{};
+- 2005       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2006       |             if (key.unique_hashes[index] == 0) {
+- 2007       |                 continue;
+- 2008       |             }
+- 2009       |             const size_t physical_stage = index <= 1 ? 0 : index - 1;
+- 2010       |             stage_needed[physical_stage] = true;
+- 2011       |         }
+- 2012       | 
+- 2013       |         for (size_t stage = 0; snapshot_ok && stage < Maxwell::MaxShaderStage; ++stage) {
+- 2014       |             if (!stage_needed[stage]) {
+- 2015       |                 continue;
+- 2016       |             }
+- 2017       |             const auto& cbufs = maxwell3d->state.shader_stages[stage].const_buffers;
+- 2018       |             for (size_t bank = 0; bank < Maxwell::MaxConstBuffers; ++bank) {
+- 2019       |                 const auto& cbuf = cbufs[bank];
+- 2020       |                 if (!cbuf.enabled) {
+- 2021       |                     continue;
+- 2022       |                 }
+- 2023       |                 if (cbuf.size > Maxwell::MaxConstBufferSize ||
+- 2024       |                     snapshot_bytes > MaxShaderSnapshotBytes - cbuf.size) {
+- 2025       |                     snapshot_ok = false;
+- 2026       |                     break;
+- 2027       |                 }
+- 2028       |                 parallel_cbuf_sizes[stage][bank] = cbuf.size;
+- 2029       |                 snapshot_bytes += cbuf.size;
+- 2030       |                 if (cbuf.size == 0) {
+- 2031       |                     continue;
+- 2032       |                 }
+- 2033       |                 const u64 last_offset = u64{cbuf.size} - 1;
+- 2034       |                 if (cbuf.address >
+- 2035       |                         (std::numeric_limits<GPUVAddr>::max)() - last_offset ||
+- 2036       |                     !gpu_memory->IsFullyMappedRange(cbuf.address, cbuf.size)) {
+- 2037       |                     snapshot_ok = false;
+- 2038       |                     break;
+- 2039       |                 }
+- 2040       |             }
+- 2041       |         }
+- 2042       | 
+- 2043       |         if (snapshot_ok) {
+- 2044       |             try {
+- 2045       |                 parallel_texture_snapshot.resize(
+- 2046       |                     static_cast<size_t>(snapshot_texture_bytes));
+- 2047       |                 // Normal owner-thread reads preserve GPU-written descriptor/
+- 2048       |                 // uniform bytes before workers are allowed to consume them.
+- 2049       |                 gpu_memory->ReadBlock(snapshot_texture_base,
+- 2050       |                                       parallel_texture_snapshot.data(),
+- 2051       |                                       parallel_texture_snapshot.size());
+- 2052       |                 for (size_t stage = 0; stage < Maxwell::MaxShaderStage; ++stage) {
+- 2053       |                     if (!stage_needed[stage]) {
+- 2054       |                         continue;
+- 2055       |                     }
+- 2056       |                     const auto& cbufs =
+- 2057       |                         maxwell3d->state.shader_stages[stage].const_buffers;
+- 2058       |                     for (size_t bank = 0; bank < Maxwell::MaxConstBuffers; ++bank) {
+- 2059       |                         const u32 bytes = parallel_cbuf_sizes[stage][bank];
+- 2060       |                         if (bytes == DisabledSnapshotCbuf || bytes == 0) {
+- 2061       |                             continue;
+- 2062       |                         }
+- 2063       |                         auto& storage = parallel_cbuf_storage[stage][bank];
+- 2064       |                         storage.resize(bytes);
+- 2065       |                         gpu_memory->ReadBlock(cbufs[bank].address, storage.data(),
+- 2066       |                                               storage.size());
+- 2067       |                         parallel_cbuf_ptrs[stage][bank] = storage.data();
+- 2068       |                     }
+- 2069       |                 }
+- 2070       |             } catch (const std::bad_alloc&) {
+- 2071       |                 snapshot_ok = false;
+- 2072       |             }
+- 2073       |         }
+- 2074       |         parallel_translate_stages = snapshot_ok;
+- 2075       |     }
+- 2076       | 
+- 2077       |     if (parallel_translate_stages) try {
+- 2078       |         // QueueWork and pool allocation may throw after earlier tasks borrowed
+- 2079       |         // these locals. Drain before unwinding, without stopping persistent workers.
+- 2080       |         struct TranslationDrain {
+- 2081       |             Common::ThreadWorker& worker;
+- 2082       |             bool joined{};
+- 2083       |             ~TranslationDrain() {
+- 2084       |                 if (!joined) worker.WaitForRequests();
+- 2085       |             }
+- 2086       |         } translation_drain{shader_translation_workers};
+- 2087       |         // The GPU owner would otherwise sit idle until every stage completes.
+- 2088       |         // Queue the preceding stages, then translate the final active stage
+- 2089       |         // locally using exactly the same immutable snapshot and private pools.
+- 2090       |         size_t parallel_env_index{};
+- 2091       |         const size_t parallel_stage_count = envs.size();
+- 2092       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2093       |             if (key.unique_hashes[index] == 0) {
+- 2094       |                 continue;
+- 2095       |             }
+- 2096       |             Shader::Environment* const env = envs[parallel_env_index++];
+- 2097       |             const u32 cfg_offset{
+- 2098       |                 static_cast<u32>(env->StartAddress() + sizeof(Shader::ProgramHeader))};
+- 2099       |             parallel_pools[index] = std::make_unique<ShaderPools>();
+- 2100       |             ShaderPools* const stage_pools = parallel_pools[index].get();
+- 2101       |             const bool exits_to_dispatcher = index == 0;
+- 2102       |             const size_t physical_stage = index <= 1 ? 0 : index - 1;
+- 2103       |             auto translate_stage =
+- 2104       |                 [this, env, stage_pools, cfg_offset, exits_to_dispatcher, index,
+- 2105       |                  physical_stage, snapshot_texture_base, snapshot_texture_limit,
+- 2106       |                  snapshot_via_header_index, snapshot_viewport_transform_state,
+- 2107       |                  &parallel_texture_snapshot, &parallel_cbuf_ptrs,
+- 2108       |                  &parallel_cbuf_sizes, &parallel_programs, &parallel_errors,
+- 2109       |                  &parallel_stage_costs] {
+- 2110       |                     struct ShaderMissStageScope {
+- 2111       |                         ::Eden::Performance::ShaderMissStageCosts* previous{
+- 2112       |                             ::Eden::Performance::shader_miss_stage_active};
+- 2113       |                         explicit ShaderMissStageScope(
+- 2114       |                             ::Eden::Performance::ShaderMissStageCosts* current) noexcept {
+- 2115       |                             ::Eden::Performance::shader_miss_stage_active = current;
+- 2116       |                         }
+- 2117       |                         ~ShaderMissStageScope() {
+- 2118       |                             ::Eden::Performance::shader_miss_stage_active = previous;
+- 2119       |                         }
+- 2120       |                     } shader_miss_stage_scope{&parallel_stage_costs[index]};
+- 2121       |                     struct ImmutableGuestSnapshotScope {
+- 2122       |                         ImmutableGuestSnapshotScope(
+- 2123       |                             GPUVAddr texture_base, u32 texture_limit,
+- 2124       |                             const std::vector<u8>& texture, bool via_header_index,
+- 2125       |                             u32 viewport_transform_state,
+- 2126       |                             const std::array<const u8*, Maxwell::MaxConstBuffers>& cbuf_data,
+- 2127       |                             const std::array<u32, Maxwell::MaxConstBuffers>& cbuf_sizes) {
+- 2128       |                             VideoCommon::SetShaderTranslationSnapshotForThread(
+- 2129       |                                 texture_base, texture_limit, texture.data(),
+- 2130       |                                 via_header_index, viewport_transform_state,
+- 2131       |                                 cbuf_data.data(), cbuf_sizes.data(),
+- 2132       |                                 Maxwell::MaxConstBuffers);
+- 2133       |                         }
+- 2134       |                         ~ImmutableGuestSnapshotScope() {
+- 2135       |                             VideoCommon::ClearShaderTranslationSnapshotForThread();
+- 2136       |                         }
+- 2137       |                     } immutable_snapshot_scope{
+- 2138       |                         snapshot_texture_base, snapshot_texture_limit,
+- 2139       |                         parallel_texture_snapshot, snapshot_via_header_index,
+- 2140       |                         snapshot_viewport_transform_state,
+- 2141       |                         parallel_cbuf_ptrs[physical_stage],
+- 2142       |                         parallel_cbuf_sizes[physical_stage]};
+- 2143       |                     try {
+- 2144       |                         ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2145       |                             ::Eden::Performance::CachePhase::ShaderCfg,
+- 2146       |                             ::Eden::Performance::detailed_gpu_profile.load(
+- 2147       |                                 std::memory_order_relaxed)};
+- 2148       |                         auto cfg_cost = Eden::Performance::VulkanTimer(20);
+- 2149       |                         Shader::Maxwell::Flow::CFG cfg(
+- 2150       |                             *env, stage_pools->flow_block, cfg_offset, exits_to_dispatcher);
+- 2151       |                         cfg_cost.reset();
+- 2152       |                         cfg_stage_cost.Stop();
+- 2153       |                         auto program = ([&] {
+- 2154       |                             auto cost = Eden::Performance::VulkanTimer(21);
+- 2155       |                             ::Eden::Performance::CachePhaseTimer stage_cost{
+- 2156       |                                 ::Eden::Performance::CachePhase::ShaderIr,
+- 2157       |                                 ::Eden::Performance::detailed_gpu_profile.load(
+- 2158       |                                     std::memory_order_relaxed)};
+- 2159       |                             return TranslateProgram(stage_pools->inst, stage_pools->block,
+- 2160       |                                                     *env, cfg, host_info);
+- 2161       |                         }());
+- 2162       |                         parallel_programs[index] =
+- 2163       |                             std::make_unique<Shader::IR::Program>(std::move(program));
+- 2164       |                     } catch (...) {
+- 2165       |                         parallel_errors[index] = std::current_exception();
+- 2166       |                     }
+- 2167       |                 };
+- 2168       |             if (parallel_env_index == parallel_stage_count) {
+- 2169       |                 translate_stage();
+- 2170       |             } else {
+- 2171       |                 shader_translation_workers.QueueWork(std::move(translate_stage));
+- 2172       |             }
+- 2173       |         }
+- 2174       |         // The GPU owner intentionally waits here. Workers see only immutable
+- 2175       |         // host snapshots plus each environment's already-copied shader code;
+- 2176       |         // no worker traverses the live GMMU/PTE table.
+- 2177       |         shader_translation_workers.WaitForRequests();
+- 2178       |         translation_drain.joined = true;
+- 2179       |         if (auto* const owner_stage_costs =
+- 2180       |                 ::Eden::Performance::shader_miss_stage_active) {
+- 2181       |             for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2182       |                 if (key.unique_hashes[index] == 0) {
+- 2183       |                     continue;
+- 2184       |                 }
+- 2185       |                 // These are CPU-work totals, matching the former serial keyed
+- 2186       |                 // timers. The enclosing miss cpu_ns remains the elapsed critical
+- 2187       |                 // path and therefore reflects the parallel overlap.
+- 2188       |                 owner_stage_costs->cfg_ns += parallel_stage_costs[index].cfg_ns;
+- 2189       |                 owner_stage_costs->ir_ns += parallel_stage_costs[index].ir_ns;
+- 2190       |             }
+- 2191       |         }
+- 2192       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2193       |             if (parallel_errors[index]) {
+- 2194       |                 try {
+- 2195       |                     std::rethrow_exception(parallel_errors[index]);
+- 2196       |                 } catch (const std::out_of_range&) {
+- 2197       |                     // The immutable snapshot can reject a valid owner-thread read.
+- 2198       |                     throw ParallelGraphicsRetry{};
+- 2199       |                 }
+- 2200       |             }
+- 2201       |             if (key.unique_hashes[index] != 0 && !parallel_programs[index]) {
+- 2202       |                 throw ParallelGraphicsRetry{};
+- 2203       |             }
+- 2204       |         }
+- 2205       |     } catch (const std::bad_alloc&) {
+- 2206       |         // The drain guard has joined any accepted jobs before this handler.
+- 2207       |         throw ParallelGraphicsRetry{};
+- 2208       |     }
+- 2209       | #endif
+- 2210       | 
+- 2211       |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2212       |         const bool is_emulated_stage = layer_source_program != nullptr &&
+- 2213       |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
+- 2214       |         if (key.unique_hashes[index] == 0 && is_emulated_stage) {
+- 2215       |             auto topology = MaxwellToOutputTopology(key.state.topology);
+- 2216       |             programs[index] = GenerateGeometryPassthrough(pools.inst, pools.block, host_info,
+- 2217       |                                                           *layer_source_program, topology);
+- 2218       |             continue;
+- 2219       |         }
+- 2220       |         if (key.unique_hashes[index] == 0) {
+- 2221       |             continue;
+- 2222       |         }
+- 2223       |         Shader::Environment& env{*envs[env_index]};
+- 2224       |         ++env_index;
+- 2225       | 
+- 2226       | #ifdef PS5_NATIVE
+- 2227       |         if (parallel_translate_stages) {
+- 2228       |             if (!uses_vertex_a || index != 1) {
+- 2229       |                 programs[index] = std::move(*parallel_programs[index]);
+- 2230       |             } else {
+- 2231       |                 auto& program_va{programs[0]};
+- 2232       |                 auto program_vb{std::move(*parallel_programs[index])};
+- 2233       |                 programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);
+- 2234       |             }
+- 2235       |         } else
+- 2236       | #endif
+- 2237       |         {
+- 2238       |             const u32 cfg_offset{
+- 2239       |                 static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
+- 2240       |             ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2241       |                 ::Eden::Performance::CachePhase::ShaderCfg,
+- 2242       |                 ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 2243       |             auto cfg_cost = Eden::Performance::VulkanTimer(20);
+- 2244       |             Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);
+- 2245       |             cfg_cost.reset();
+- 2246       |             cfg_stage_cost.Stop();
+- 2247       |             if (!uses_vertex_a || index != 1) {
+- 2248       |                 // Normal path
+- 2249       |                 programs[index] = ([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }());
+- 2250       |             } else {
+- 2251       |                 // VertexB path when VertexA is present.
+- 2252       |                 auto& program_va{programs[0]};
+- 2253       |                 auto program_vb{([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }())};
+- 2254       |                 programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);
+- 2255       |             }
+- 2256       |         }
+- 2257       | 
+- 2258       |         // Avoid native subgroup shuffle for the known PositionXY fragment
+- 2259       |         // pattern on non-NVIDIA drivers. Desktop/mobile preserve Eden #4503's
+- 2260       |         // fail-closed skip. PS5 instead uses the newer upstream broadcast
+- 2261       |         // fallback so the whole guest draw is not silently discarded.
+- 2262       |         if (device.GetDriverID() != VK_DRIVER_ID_NVIDIA_PROPRIETARY &&
+- 2263       |             Shader::Optimization::HasBrokenPattern(programs[index])) {
+- 2264       | #ifdef PS5_NATIVE
+- 2265       |             fragment_shuffle_fallback[index] = true;
+- 2266       |             LOG_WARNING(Render_Vulkan,
+- 2267       |                         "0x{:016x}: using PS5 fragment shuffle fallback",
+- 2268       |                         key.unique_hashes[index]);
+- 2269       |             static std::atomic<unsigned> fragment_shuffle_witness{};
+- 2270       |             const unsigned fallback_witness =
+- 2271       |                 fragment_shuffle_witness.fetch_add(1, std::memory_order_relaxed) + 1;
+- 2272       |             if (fallback_witness <= 8) {
+- 2273       |                 std::fprintf(stderr,
+- 2274       |                              "EDEN_FRAGMENT_SHUFFLE_FALLBACK count=%u hash=0x%016llx\n",
+- 2275       |                              fallback_witness,
+- 2276       |                              static_cast<unsigned long long>(key.unique_hashes[index]));
+- 2277       |             }
+- 2278       | #else
+- 2279       |             LOG_WARNING(Render_Vulkan,
+- 2280       |                         "0x{:016x}: skipping fragment shuffle with known driver issue",
+- 2281       |                         key.unique_hashes[index]);
+- 2282       |             return nullptr;
+- 2283       | #endif
+- 2284       |         }
+- 2285       | 
+- 2286       |         if (Settings::values.dump_guest_shaders) {
+- 2287       |             env.Dump(hash, key.unique_hashes[index]);
+- 2288       |         }
+- 2289       | 
+- 2290       |         if (programs[index].info.requires_layer_emulation) {
+- 2291       |             layer_source_program = &programs[index];
+- 2292       |         }
+- 2293       |     }
+- 2294       |     if (uses_vertex_b) {
+- 2295       |         EdenRecordAttributeless({key.unique_hashes[0], key.unique_hashes[1]}, programs[1].info);
+- 2296       |     }
+- 2297       |     std::array<const Shader::Info*, Maxwell::MaxShaderStage> infos{};
+- 2298       |     std::array<vk::ShaderModule, Maxwell::MaxShaderStage> modules;
+- 2299       | 
+- 2300       |     const Shader::IR::Program* previous_stage{};
+- 2301       |     Shader::Backend::Bindings binding;
+- 2302       |     for (size_t index = uses_vertex_a && uses_vertex_b ? 1 : 0; index < Maxwell::MaxShaderProgram;
+- 2303       |          ++index) {
+- 2304       |         const bool is_emulated_stage = layer_source_program != nullptr &&
+- 2305       |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
+- 2306       |         if (key.unique_hashes[index] == 0 && !is_emulated_stage) {
+- 2307       |             continue;
+- 2308       |         }
+- 2309       |         UNIMPLEMENTED_IF(index == 0);
+- 2310       | 
+- 2311       |         Shader::IR::Program& program{programs[index]};
+- 2312       |         const size_t stage_index{index - 1};
+- 2313       |         infos[stage_index] = &program.info;
+- 2314       | 
+- 2315       |         const auto runtime_info{MakeRuntimeInfo(programs, key, program, previous_stage, device)};
+- 2316       |         ConvertLegacyToGeneric(program, runtime_info);
+- 2317       |         auto emit_profile = profile;
+- 2318       | #ifdef PS5_NATIVE
+- 2319       |         emit_profile.has_broken_spirv_fragment_shuffle = fragment_shuffle_fallback[index];
+- 2320       | #endif
+- 2321       |         const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(emit_profile, runtime_info, program, binding); }())};
+- 2322       |         device.SaveShader(code);
+- 2323       |         modules[stage_index] = ([&] { auto cost = Eden::Performance::VulkanTimer(23); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderModule, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return BuildShader(device, code); }());
+- 2324       | 
+- 2325       |         // Text log + .spv dump. Text log is gated by gpu_log_level != Off; .spv dump
+- 2326       |         // is independent and gated only by gpu_log_shader_dumps.
+- 2327       |         const bool should_log = GPU::Logging::IsActive();
+- 2328       |         const bool should_dump = Settings::values.gpu_log_shader_dumps.GetValue();
+- 2329       |         if (should_log || should_dump) {
+- 2330       |             static constexpr std::array stage_names{"vertex", "tess_control", "tess_eval", "geometry", "fragment"};
+- 2331       |             const std::string shader_name = fmt::format("shader_{:016x}_{}", key.unique_hashes[index], stage_names[stage_index]);
+- 2332       |             if (should_log) {
+- 2333       |                 const std::string shader_info = fmt::format("SPIR-V size: {} bytes, hash: {:016x}",
+- 2334       |                     code.size() * sizeof(u32), key.unique_hashes[index]);
+- 2335       |                 GPU::Logging::GPULogger::GetInstance().LogShaderCompilation(shader_name, shader_info);
+- 2336       |             }
+- 2337       |             if (should_dump) {
+- 2338       |                 GPU::Logging::DumpSpirvShader(key.unique_hashes[index],
+- 2339       |                                               std::span<const u32>(code.data(), code.size()));
+- 2340       |             }
+- 2341       |         }
+- 2342       | 
+- 2343       |         if (device.HasDebuggingToolAttached()) {
+- 2344       |             const std::string name{fmt::format("Shader {:016x}", key.unique_hashes[index])};
+- 2345       |             modules[stage_index].SetObjectNameEXT(name.c_str());
+- 2346       |         }
+- 2347       |         previous_stage = &program;
+- 2348       |     }
+- 2349       |     Common::ThreadWorker* const thread_worker{build_in_parallel ? &workers : nullptr};
+- 2350       |     return std::make_unique<GraphicsPipeline>(
+- 2351       |         scheduler, buffer_cache, texture_cache, vulkan_pipeline_cache, &shader_notify, device,
+- 2352       |         descriptor_pool, guest_descriptor_queue, descriptor_buffer_ring, thread_worker, statistics,
+- 2353       |         render_pass_cache, key, std::move(modules), infos);
+- 2354       | 
+- 2355       | } catch (const Shader::Exception& exception) {
+- 2356       | #ifdef PS5_NATIVE
+- 2357       |     // Failed first-use shaders can be retried. Do not rebuild their CFGs or
+- 2358       |     // write .ash dumps on the normal quiet PS5 path: this is optional debug
+- 2359       |     // work on the same GPU-owner thread that already failed translation.
+- 2360       |     if (Settings::values.dump_guest_shaders) {
+- 2361       |         try {
+- 2362       | #endif
+- 2363       |     auto hash = key.Hash();
+- 2364       |     size_t env_index{0};
+- 2365       |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2366       |         if (key.unique_hashes[index] == 0) {
+- 2367       |             continue;
+- 2368       |         }
+- 2369       |         Shader::Environment& env{*envs[env_index]};
+- 2370       |         ++env_index;
+- 2371       | 
+- 2372       |         const u32 cfg_offset{static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
+- 2373       |         ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2374       |             ::Eden::Performance::CachePhase::ShaderCfg,
+- 2375       |             ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 2376       |         auto cfg_cost = Eden::Performance::VulkanTimer(20);
+- 2377       |         Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);
+- 2378       |         cfg_cost.reset();
+- 2379       |         cfg_stage_cost.Stop();
+- 2380       |         env.Dump(hash, key.unique_hashes[index]);
+- 2381       |     }
+- 2382       | #ifdef PS5_NATIVE
+- 2383       |         } catch (const std::exception& dump_error) {
+- 2384       |             // Preserve the original shader failure even if the diagnostic
+- 2385       |             // CFG pass or the dump file itself fails.
+- 2386       |             LOG_WARNING(Render_Vulkan, "Failed shader diagnostic dump: {}", dump_error.what());
+- 2387       |         } catch (...) {
+- 2388       |             LOG_WARNING(Render_Vulkan, "Failed shader diagnostic dump: unknown exception");
+- 2389       |         }
+- 2390       |     }
+- 2391       | #endif
+- 2392       |     LOG_ERROR(Render_Vulkan, "{}", exception.what());
+- 2393       |     return nullptr;
+- 2394       | }
+- 2395       | #ifdef PS5_NATIVE
+- 2396       | catch (const std::exception& exception) {
+- 2397       |     // Native Ampere lowerers, GMMU adapters and SPIR-V helpers may reject
+- 2398       |     // unimplemented guest instruction forms with std::runtime_error rather
+- 2399       |     // than Shader::Exception. A failed guest draw must not escape the GPU
+- 2400       |     // owner thread. The RAII native scope belongs to the outer call and
+- 2401       |     // remains active throughout this synchronous translation.
+- 2402       |     // Do not swallow or change the historical Switch 1 error path.
+- 2403       |     if (!Shader::Ampere::NativeSpirvCbufBoundsActive())
+- 2404       |         throw;
+- 2405       |     LOG_WARNING(Render_Vulkan, "NS2 native graphics shader rejected: {}",
+- 2406       |                 exception.what());
+- 2407       |     return nullptr;
+- 2408       | }
+- 2409       | #endif
+- 2410       | 
+- 2411       | std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline() {
+- 2412       |     auto timer = Eden::Performance::VulkanTimer(17);
+- 2413       | #ifdef PS5_NATIVE
+- 2414       |     // Reserve priority before guest shader environment reads and pool reset.
+- 2415       |     // The inner translation scope overlaps this reservation, so there is no
+- 2416       |     // idle gap for speculative Vulkan optimization before the first-use build.
+- 2417       |     GraphicsTranslationPriorityScope first_use_preparation_priority{
+- 2418       |         ::Eden::DevVulkan::fast_first_pipelines};
+- 2419       | #endif
+- 2420       | #ifdef PS5_NATIVE
+- 2421       |     // Research-only real GPU bridge: feed the maintained Vulkan
+- 2422       |     // CFG -> IR -> SPIR-V -> GraphicsPipeline builder with *translated*
+- 2423       |     // Maxwell-compatible instructions, never raw 128-bit Ampere words.
+- 2424       |     const auto ticket =
+- 2425       |         Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()
+- 2426       |             .CaptureGraphicsTicket(maxwell3d);
+- 2427       |     if (ticket) {
+- 2428       |         auto native_translation_cache =
+- 2429       |             Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()
+- 2430       |                 .AcquireGraphicsTranslationCache(maxwell3d, *ticket);
+- 2431       |         if (!native_translation_cache) return nullptr;
+- 2432       |         // A stale key or program reconfiguration must not bypass the
+- 2433       |         // pre-capture stage guard. Check the exact stages in this key.
+- 2434       |         u32 keyed_stages{};
+- 2435       |         for (std::size_t i = 0; i < graphics_key.unique_hashes.size(); ++i) {
+- 2436       |             if (graphics_key.unique_hashes[i])
+- 2437       |                 keyed_stages |= u32{1} << i;
+- 2438       |         }
+- 2439       |         const bool mesh_control = (maxwell3d->regs.reg_array[0x114c / 4] & 1U) != 0;
+- 2440       |         const bool has_task = Shader::Ampere::NativeMeshTaskPresent(
+- 2441       |             keyed_stages, mesh_control);
+- 2442       |         if (!Shader::Ampere::NativeMeshGraphicsStageMaskSupported(
+- 2443       |                 keyed_stages, mesh_control))
+- 2444       |             return nullptr;
+- 2445       |         const auto base = maxwell3d->regs.program_region.Address();
+- 2446       |         // Preserve the stage-program register set used by the SPIR-V
+- 2447       |         // translation, not merely a graphics channel epoch.
+- 2448       |         std::array<GPUVAddr, Maxwell::MaxShaderProgram> captured_offsets{};
+- 2449       |         std::array<Shader::Environment*, Maxwell::MaxShaderProgram> ptrs{};
+- 2450       |         std::vector<std::unique_ptr<Shader::Environment>> native_envs;
+- 2451       |         native_envs.reserve(Maxwell::MaxShaderProgram);
+- 2452       |         std::size_t active{};
+- 2453       |         for (std::size_t i = 0; i < graphics_key.unique_hashes.size(); ++i) {
+- 2454       |             if (!graphics_key.unique_hashes[i]) continue;
+- 2455       |             if (i >= 6) return nullptr;
+- 2456       |             const auto stage = mesh_control && i == 1
+- 2457       |                 ? (has_task ? Shader::Stage::Task : Shader::Stage::Mesh)
+- 2458       |                 : mesh_control && i == 2 ? Shader::Stage::Mesh
+- 2459       |                 : i == 0 ? Shader::Stage::VertexA
+- 2460       |                 : Shader::StageFromIndex(i - 1);
+- 2461       |             const u32 physical_bank = mesh_control &&
+- 2462       |                 (stage == Shader::Stage::Task || stage == Shader::Stage::Mesh)
+- 2463       |                     ? Shader::Ampere::NativeMeshSlotCbufBank(stage, has_task)
+- 2464       |                     : Shader::Ampere::NativeGraphicsCbufBank(stage);
+- 2465       |             const auto offset = maxwell3d->regs.pipelines[i].offset;
+- 2466       |             if (base > std::numeric_limits<GPUVAddr>::max() - offset)
+- 2467       |                 return nullptr;
+- 2468       |             captured_offsets[i] = offset;
+- 2469       |             auto original = std::make_unique<GraphicsEnvironment>(
+- 2470       |                 *maxwell3d, *gpu_memory,
+- 2471       |                 static_cast<Maxwell::ShaderType>(i), base, offset);
+- 2472       |             const VideoCommon::Ns2GraphicsCbufContext cbuf_context{
+- 2473       |                 gpu_memory, maxwell3d, physical_bank};
+- 2474       |             auto adapted = VideoCommon::CreateNs2GraphicsShaderEnvironment(
+- 2475       |                 *gpu_memory, std::move(original), base + offset,
+- 2476       |                 static_cast<u32>(stage), native_translation_cache.get(),
+- 2477       |                 &cbuf_context);
+- 2478       |             if (!adapted || !Service::Nvidia::Devices::NativeGpuChannelRegistry::
+- 2479       |                                 Instance().IsGraphicsCurrent(maxwell3d, *ticket))
+- 2480       |                 return nullptr;
+- 2481       |             // Shader key and translated stream must refer to exactly the
+- 2482       |             // same guest bytes. A GMMU remap between key and build aborts.
+- 2483       |             // The factory above only creates NativeMaxwellEnvironment; avoid
+- 2484       |             // enabling RTTI in the PS5 video_core compilation profile.
+- 2485       |             const auto* native_env =
+- 2486       |                 static_cast<const Shader::Ampere::NativeMaxwellEnvironment*>(
+- 2487       |                     adapted.get());
+- 2488       |             if (!native_env ||
+- 2489       |                 native_env->Image().diagnostic_cache_key != graphics_key.unique_hashes[i])
+- 2490       |                 return nullptr;
+- 2491       |             ptrs[active++] = adapted.get();
+- 2492       |             native_envs.emplace_back(std::move(adapted));
+- 2493       |         }
+- 2494       |         main_pools.ReleaseContents();
+- 2495       |         // The graphics builder emits SPIR-V synchronously on this thread,
+- 2496       |         // including the merged VertexA/B stage. Native-only bounds must not
+- 2497       |         // leak into later Switch 1 draws or unrelated compiler workers.
+- 2498       |         Shader::Ampere::NativeSpirvCbufBoundsScope native_bounds;
+- 2499       |         auto pipeline = CreateGraphicsPipeline(
+- 2500       |             main_pools, graphics_key,
+- 2501       |             std::span<Shader::Environment* const>{ptrs.data(), active}, nullptr, true, false);
+- 2502       |         auto& registry = Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance();
+- 2503       |         if (!pipeline || !registry.IsGraphicsCurrent(maxwell3d, *ticket) ||
+- 2504       |             maxwell3d->regs.program_region.Address() != base)
+- 2505       |             return nullptr;
+- 2506       |         // The compiler may have spent substantial time on CFG/IR/SPIR-V.
+- 2507       |         // Guest code, stage enables, or per-stage base offsets can change
+- 2508       |         // without advancing the channel epoch. Refuse a pipeline assembled
+- 2509       |         // from old source even when its diagnostic hash matched at entry.
+- 2510       |         u32 live_stages{};
+- 2511       |         for (std::size_t i = 0; i < graphics_key.unique_hashes.size(); ++i) {
+- 2512       |             if (maxwell3d->regs.IsShaderConfigEnabled(i) &&
+- 2513       |                 (i != 5 || maxwell3d->regs.rasterize_enable))
+- 2514       |                 live_stages |= u32{1} << i;
+- 2515       |         }
+- 2516       |         const u32 live_executable_stages =
+- 2517       |             mesh_control ? live_stages & ~(1U << 4) : live_stages;
+- 2518       |         if (live_executable_stages != keyed_stages ||
+- 2519       |             ((maxwell3d->regs.reg_array[0x114c / 4] & 1U) != 0) != mesh_control)
+- 2520       |             return nullptr;
+- 2521       |         for (std::size_t i = 0; i < graphics_key.unique_hashes.size(); ++i) {
+- 2522       |             if (!graphics_key.unique_hashes[i]) continue;
+- 2523       |             if (maxwell3d->regs.pipelines[i].offset != captured_offsets[i])
+- 2524       |                 return nullptr;
+- 2525       |             const auto stage = mesh_control && i == 1
+- 2526       |                 ? (has_task ? Shader::Stage::Task : Shader::Stage::Mesh)
+- 2527       |                 : mesh_control && i == 2 ? Shader::Stage::Mesh
+- 2528       |                 : i == 0 ? Shader::Stage::VertexA
+- 2529       |                 : Shader::StageFromIndex(i - 1);
+- 2530       |             const u32 physical_bank = mesh_control &&
+- 2531       |                 (stage == Shader::Stage::Task || stage == Shader::Stage::Mesh)
+- 2532       |                     ? Shader::Ampere::NativeMeshSlotCbufBank(stage, has_task)
+- 2533       |                     : Shader::Ampere::NativeGraphicsCbufBank(stage);
+- 2534       |             const VideoCommon::Ns2GraphicsCbufContext cbuf_context{
+- 2535       |                 gpu_memory, maxwell3d, physical_bank};
+- 2536       |             // Capture reauthenticates all native 128-bit instructions and
+- 2537       |             // indirect BRX CBUF targets on every cache hit. No title hacks.
+- 2538       |             const auto verified = VideoCommon::CaptureNs2GraphicsShaderFromGpu(
+- 2539       |                 *gpu_memory, base + captured_offsets[i],
+- 2540       |                 static_cast<u32>(stage), native_translation_cache.get(),
+- 2541       |                 &cbuf_context);
+- 2542       |             if (!verified.Ready() ||
+- 2543       |                 verified.image.diagnostic_cache_key !=
+- 2544       |                     graphics_key.unique_hashes[i] ||
+- 2545       |                 !registry.IsGraphicsCurrent(maxwell3d, *ticket))
+- 2546       |                 return nullptr;
+- 2547       |         }
+- 2548       |         // NS2 translated shader keys/layouts are deliberately never
+- 2549       |         // serialized into the NS1 disk shader cache.
+- 2550       |         return pipeline;
+- 2551       |     }
+- 2552       | #endif
+- 2553       |     GraphicsEnvironments environments;
+- 2554       |     // Preparing guest shader environments is distinct from CFG/IR/SPIR-V
+- 2555       |     // translation. Keep GPU-thread ownership and source read order unchanged.
+- 2556       |     // Quiet release does not read a clock or update counters.
+- 2557       |     {
+- 2558       |         ::Eden::Performance::CachePhaseTimer environment_cost{
+- 2559       |             ::Eden::Performance::CachePhase::GraphicsShaderEnvironment,
+- 2560       |             ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 2561       |         GetGraphicsEnvironments(environments, graphics_key.unique_hashes);
+- 2562       |     }
+- 2563       | 
+- 2564       |     ([&] { auto cost = Eden::Performance::VulkanTimer(19); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderPoolReset, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return main_pools.ReleaseContents(); }());
+- 2565       | #ifdef PS5_NATIVE
+- 2566       |     bool parallel_translate_stages{};
+- 2567       |     const size_t shader_stage_count = std::count_if(
+- 2568       |         graphics_key.unique_hashes.begin(), graphics_key.unique_hashes.end(),
+- 2569       |         [](u64 hash) { return hash != 0; });
+- 2570       |     if (shader_stage_count >= 2) {
+- 2571       |         // Lichii upstream bound: flushing at most 4 MiB keeps this owner-thread
+- 2572       |         // operation cheaper than serializing multiple expensive IR translations.
+- 2573       |         constexpr u64 MaxFlushedTexturePoolBytes = u64{4} << 20;
+- 2574       |         const auto& tex_header = maxwell3d->regs.tex_header;
+- 2575       |         const u64 pool_bytes =
+- 2576       |             (u64{static_cast<u32>(tex_header.limit)} + 1) *
+- 2577       |             sizeof(Tegra::Texture::TICEntry);
+- 2578       |         const GPUVAddr pool_base = tex_header.Address();
+- 2579       |         const u64 last_offset = pool_bytes - 1;
+- 2580       |         if (pool_bytes <= MaxFlushedTexturePoolBytes &&
+- 2581       |             pool_base <= std::numeric_limits<GPUVAddr>::max() - last_offset) {
+- 2582       |             const GPUVAddr pool_last = pool_base + last_offset;
+- 2583       |             if (gpu_memory->IsWithinGPUAddressRange(pool_last)) {
+- 2584       |                 // Full TIC/CBUF byte snapshots are built inside
+- 2585       |                 // CreateGraphicsPipeline on the GPU owner before queueing work.
+- 2586       |                 parallel_translate_stages = true;
+- 2587       |             }
+- 2588       |         }
+- 2589       |     }
+- 2590       |     // Keep the original cached shader bytes and pristine environment state for a
+- 2591       |     // single serial retry. Workers can mutate their environment's lookup caches.
+- 2592       |     std::optional<GraphicsEnvironments> parallel_environments;
+- 2593       |     if (parallel_translate_stages) {
+- 2594       |         try {
+- 2595       |             parallel_environments.emplace();
+- 2596       |             parallel_environments->envs = environments.envs;
+- 2597       |             size_t active{};
+- 2598       |             for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2599       |                 if (graphics_key.unique_hashes[index] != 0) {
+- 2600       |                     parallel_environments->env_ptrs[active++] =
+- 2601       |                         &parallel_environments->envs[index];
+- 2602       |                 }
+- 2603       |             }
+- 2604       |         } catch (const std::bad_alloc&) {
+- 2605       |             parallel_environments.reset();
+- 2606       |         }
+- 2607       |     }
+- 2608       |     std::unique_ptr<GraphicsPipeline> pipeline;
+- 2609       |     if (parallel_environments) {
+- 2610       |         try {
+- 2611       |             pipeline = CreateGraphicsPipeline(main_pools, graphics_key,
+- 2612       |                                               parallel_environments->Span(), nullptr, true, true);
+- 2613       |         } catch (const ParallelGraphicsRetry&) {
+- 2614       |             parallel_environments.reset();
+- 2615       |         }
+- 2616       |     }
+- 2617       |     if (!parallel_environments) {
+- 2618       |         pipeline = CreateGraphicsPipeline(main_pools, graphics_key, environments.Span(),
+- 2619       |                                           nullptr, true, false);
+- 2620       |     }
+- 2621       |     auto& serialized_environments = parallel_environments ? *parallel_environments : environments;
+- 2622       | #else
+- 2623       |     auto pipeline{
+- 2624       |         CreateGraphicsPipeline(main_pools, graphics_key, environments.Span(), nullptr, true)};
+- 2625       |     auto& serialized_environments = environments;
+- 2626       | #endif
+- 2627       |     if (!pipeline || pipeline_cache_filename.empty()) {
+- 2628       |         return pipeline;
+- 2629       |     }
+- 2630       | #ifdef PS5_NATIVE
+- 2631       |     // Cache persistence is optional to running this shader. A rejected
+- 2632       |     // serializer job must not discard an otherwise usable Vulkan pipeline.
+- 2633       |     try {
+- 2634       | #endif
+- 2635       |     serialization_thread.QueueWork([this, key = graphics_key, envs = std::move(serialized_environments.envs)] {
+- 2636       |         boost::container::static_vector<const GenericEnvironment*, Maxwell::MaxShaderProgram>
+- 2637       |             env_ptrs;
+- 2638       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2639       |             if (key.unique_hashes[index] != 0) {
+- 2640       |                 env_ptrs.push_back(&envs[index]);
+- 2641       |             }
+- 2642       |         }
+- 2643       |         SerializePipeline(key, env_ptrs, pipeline_cache_filename, CACHE_VERSION);
+- 2644       |     });
+- 2645       | #ifdef PS5_NATIVE
+- 2646       |     } catch (const std::exception& error) {
+- 2647       |         LOG_WARNING(Render_Vulkan, "Graphics shader cache write not queued: {}", error.what());
+- 2648       |     } catch (...) {
+- 2649       |         LOG_WARNING(Render_Vulkan, "Graphics shader cache write not queued: unknown exception");
+- 2650       |     }
+- 2651       | #endif
+- 2652       |     QueueVulkanPipelineCacheFlush();
+- 2653       |     return pipeline;
+- 2654       | }
+- 2655       | 
+- 2656       | std::unique_ptr<ComputePipeline> PipelineCache::CreateComputePipeline(
+- 2657       |     const ComputePipelineCacheKey& key, const ShaderInfo* shader) {
+- 2658       |     auto timer = Eden::Performance::VulkanTimer(17);
+- 2659       | #ifdef PS5_NATIVE
+- 2660       |     // Count compute environment setup and shader pool reset as foreground
+- 2661       |     // work, not only the downstream CFG/IR/SPIR-V translation.
+- 2662       |     ComputeTranslationPriorityScope first_use_preparation_priority{true};
+- 2663       | #endif
+- 2664       |     const GPUVAddr program_base{kepler_compute->regs.code_loc.Address()};
+- 2665       |     const auto& qmd{kepler_compute->launch_description};
+- 2666       |     ComputeEnvironment env{*kepler_compute, *gpu_memory, program_base, qmd.program_start};
+- 2667       |     env.SetCachedSize(shader->size_bytes);
+- 2668       | 
+- 2669       |     ([&] { auto cost = Eden::Performance::VulkanTimer(19); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderPoolReset, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return main_pools.ReleaseContents(); }());
+- 2670       |     auto pipeline{CreateComputePipeline(main_pools, key, env, nullptr, true)};
+- 2671       |     if (!pipeline || pipeline_cache_filename.empty()) {
+- 2672       |         return pipeline;
+- 2673       |     }
+- 2674       | #ifdef PS5_NATIVE
+- 2675       |     // Cache persistence is optional to running this shader. A rejected
+- 2676       |     // serializer job must not discard an otherwise usable Vulkan pipeline.
+- 2677       |     try {
+- 2678       | #endif
+- 2679       |     serialization_thread.QueueWork([this, key, env_ = std::move(env)] {
+- 2680       |         SerializePipeline(key, std::array<const GenericEnvironment*, 1>{&env_},
+- 2681       |                           pipeline_cache_filename, CACHE_VERSION);
+- 2682       |     });
+- 2683       | #ifdef PS5_NATIVE
+- 2684       |     } catch (const std::exception& error) {
+- 2685       |         LOG_WARNING(Render_Vulkan, "Compute shader cache write not queued: {}", error.what());
+- 2686       |     } catch (...) {
+- 2687       |         LOG_WARNING(Render_Vulkan, "Compute shader cache write not queued: unknown exception");
+- 2688       |     }
+- 2689       | #endif
+- 2690       |     QueueVulkanPipelineCacheFlush();
+- 2691       |     return pipeline;
+- 2692       | }
+- 2693       | 
+- 2694       | std::unique_ptr<ComputePipeline> PipelineCache::CreateComputePipeline(
+- 2695       |     ShaderPools& pools, const ComputePipelineCacheKey& key, Shader::Environment& env,
+- 2696       |     PipelineStatistics* statistics, bool build_in_parallel) try {
+- 2697       | #ifdef PS5_NATIVE
+- 2698       |     // Count cold shader translation as foreground work. The pipeline
+- 2699       |     // constructor separately counts the queued driver build; both stages
+- 2700       |     // now prevent speculative graphics optimization from competing.
+- 2701       |     ComputeTranslationPriorityScope translation_priority{build_in_parallel};
+- 2702       | #endif
+- 2703       |     auto hash = key.Hash();
+- 2704       |     if (device.HasBrokenCompute()) {
+- 2705       |         LOG_ERROR(Render_Vulkan, "Skipping {:#016x}", hash);
+- 2706       |         return nullptr;
+- 2707       |     }
+- 2708       | 
+- 2709       |     LOG_DEBUG(Render_Vulkan, "{:#016x}", hash);
+- 2710       | 
+- 2711       |     ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2712       |         ::Eden::Performance::CachePhase::ShaderCfg,
+- 2713       |         ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 2714       |     auto cfg_cost = Eden::Performance::VulkanTimer(20);
+- 2715       |         Shader::Maxwell::Flow::CFG cfg{env, pools.flow_block, env.StartAddress()};
+- 2716       |         cfg_cost.reset();
+- 2717       |         cfg_stage_cost.Stop();
+- 2718       | 
+- 2719       |     // Dump it before error.
+- 2720       |     if (Settings::values.dump_guest_shaders) {
+- 2721       |         env.Dump(hash, key.unique_hash);
+- 2722       |     }
+- 2723       | 
+- 2724       |     auto program{([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }())};
+- 2725       |     const VkDriverIdKHR driver_id = device.GetDriverID();
+- 2726       |     const bool needs_shared_mem_clamp =
+- 2727       |         driver_id == VK_DRIVER_ID_QUALCOMM_PROPRIETARY ||
+- 2728       |         driver_id == VK_DRIVER_ID_ARM_PROPRIETARY;
+- 2729       |     const u32 max_shared_memory = device.GetMaxComputeSharedMemorySize();
+- 2730       |     if (needs_shared_mem_clamp && program.shared_memory_size > max_shared_memory) {
+- 2731       |         LOG_WARNING(Render_Vulkan,
+- 2732       |                     "Compute shader {:#016x} requests {}KB shared memory but device max is {}KB - clamping",
+- 2733       |                     key.unique_hash,
+- 2734       |                     program.shared_memory_size / 1024,
+- 2735       |                     max_shared_memory / 1024);
+- 2736       |         program.shared_memory_size = max_shared_memory;
+- 2737       |     }
+- 2738       |     const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(profile, program); }())};
+- 2739       |     device.SaveShader(code);
+- 2740       |     vk::ShaderModule spv_module{([&] { auto cost = Eden::Performance::VulkanTimer(23); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderModule, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return BuildShader(device, code); }())};
+- 2741       | 
+- 2742       |     // Text log + .spv dump. Same split as the graphics path.
+- 2743       |     const bool should_log = GPU::Logging::IsActive();
+- 2744       |     const bool should_dump = Settings::values.gpu_log_shader_dumps.GetValue();
+- 2745       |     if (should_log || should_dump) {
+- 2746       |         const std::string shader_name = fmt::format("shader_{:016x}_compute", key.unique_hash);
+- 2747       |         if (should_log) {
+- 2748       |             const std::string shader_info = fmt::format("SPIR-V size: {} bytes, hash: {:016x}",
+- 2749       |                 code.size() * sizeof(u32), key.unique_hash);
+- 2750       |             GPU::Logging::GPULogger::GetInstance().LogShaderCompilation(shader_name, shader_info);
+- 2751       |         }
+- 2752       |         if (should_dump) {
+- 2753       |             GPU::Logging::DumpSpirvShader(key.unique_hash,
+- 2754       |                                           std::span<const u32>(code.data(), code.size()));
+- 2755       |         }
+- 2756       |     }
+- 2757       | 
+- 2758       |     if (device.HasDebuggingToolAttached()) {
+- 2759       |         const auto name{fmt::format("Shader {:016x}", key.unique_hash)};
+- 2760       |         spv_module.SetObjectNameEXT(name.c_str());
+- 2761       |     }
+- 2762       |     Common::ThreadWorker* const thread_worker{build_in_parallel ? &workers : nullptr};
+- 2763       | #ifdef PS5_NATIVE
+- 2764       |     auto result = std::make_unique<ComputePipeline>(device, scheduler, vulkan_pipeline_cache, descriptor_pool,
+- 2765       |                                                     guest_descriptor_queue, descriptor_buffer_ring,
+- 2766       |                                                     thread_worker, statistics,
+- 2767       |                                                     &shader_notify, program.info, std::move(spv_module),
+- 2768       |                                                     key.unique_hash);
+- 2769       |     // The shader stage hash is not the compute CACHE key: include workgroup
+- 2770       |     // sizes and shared memory for correlation with S01's exact key.Hash().
+- 2771       |     result->SetDiagnosticCacheKeyHash(key.Hash());
+- 2772       |     return result;
+- 2773       | #else
+- 2774       |     return std::make_unique<ComputePipeline>(device, scheduler, vulkan_pipeline_cache, descriptor_pool,
+- 2775       |                                              guest_descriptor_queue, descriptor_buffer_ring,
+- 2776       |                                              thread_worker, statistics,
+- 2777       |                                              &shader_notify, program.info, std::move(spv_module),
+- 2778       |                                              key.unique_hash);
+- 2779       | #endif
+- 2780       | 
+- 2781       | } catch (const Shader::Exception& exception) {
+- 2782       |     LOG_ERROR(Render_Vulkan, "{}", exception.what());
+- 2783       |     return nullptr;
+- 2784       | }
+- 2785       | 
+- 2786       | void PipelineCache::SerializeVulkanPipelineCache(const std::filesystem::path& filename,
+- 2787       |                                                  const vk::PipelineCache& pipeline_cache,
+- 2788       |                                                  u32 cache_version) {
+- 2789       |     auto timer = Eden::Performance::VulkanTimer(18);
+- 2790       | #ifdef PS5_NATIVE
+- 2791       |     // The foreground title may exit while background serializer work exists.
+- 2792       |     // Serialize staged files to one writer at a time. Never erase the
+- 2793       |     // previously verified driver cache in a write/rename failure path.
+- 2794       |     static std::mutex save_mutex;
+- 2795       |     const std::lock_guard save_lock{save_mutex};
+- 2796       |     auto staging = filename;
+- 2797       |     staging += ".new";
+- 2798       |     try {
+- 2799       |         std::ofstream file;
+- 2800       |         file.exceptions(std::ios::failbit | std::ios::badbit);
+- 2801       |         file.open(staging, std::ios::binary | std::ios::trunc);
+- 2802       |         file.write(VULKAN_CACHE_MAGIC_NUMBER.data(), VULKAN_CACHE_MAGIC_NUMBER.size())
+- 2803       |             .write(reinterpret_cast<const char*>(&cache_version), sizeof(cache_version));
+- 2804       | 
+- 2805       |         size_t cache_size = 0;
+- 2806       |         std::vector<char> cache_data;
+- 2807       |         if (pipeline_cache) {
+- 2808       |             pipeline_cache.Read(&cache_size, nullptr);
+- 2809       |             if (cache_size > kNativeDriverCacheStagingLimit) {
+- 2810       |                 LOG_WARNING(Render_Vulkan, "Driver cache exceeds native staging budget; retaining old cache");
+- 2811       |                 file.close();
+- 2812       |                 std::error_code cleanup_error;
+- 2813       |                 std::filesystem::remove(staging, cleanup_error);
+- 2814       |                 return;
+- 2815       |             }
+- 2816       |             cache_data.resize(cache_size);
+- 2817       |             pipeline_cache.Read(&cache_size, cache_data.data());
+- 2818       |         }
+- 2819       |         if (cache_size != 0)
+- 2820       |             file.write(cache_data.data(), static_cast<std::streamsize>(cache_size));
+- 2821       |         file.flush();
+- 2822       |         file.close();
+- 2823       |         std::error_code rename_error;
+- 2824       |         std::filesystem::rename(staging, filename, rename_error);
+- 2825       |         if (rename_error) {
+- 2826       |             LOG_WARNING(Common_Filesystem, "Driver cache rename failed: {}", rename_error.message());
+- 2827       |             std::error_code cleanup_error;
+- 2828       |             std::filesystem::remove(staging, cleanup_error);
+- 2829       |             return;
+- 2830       |         }
+- 2831       |         LOG_INFO(Render_Vulkan, "Saved PS5 driver pipeline cache atomically: {}",
+- 2832       |                  Common::FS::PathToUTF8String(filename));
+- 2833       |     } catch (const std::exception& error) {
+- 2834       |         LOG_WARNING(Common_Filesystem, "Retained old driver cache after failed save: {}", error.what());
+- 2835       |         std::error_code cleanup_error;
+- 2836       |         std::filesystem::remove(staging, cleanup_error);
+- 2837       |     }
+- 2838       | #else
+- 2839       |     try {
+- 2840       |         std::ofstream file(filename, std::ios::binary);
+- 2841       |         file.exceptions(std::ifstream::failbit);
+- 2842       |         if (!file.is_open())
+- 2843       |             return;
+- 2844       |         file.write(VULKAN_CACHE_MAGIC_NUMBER.data(), VULKAN_CACHE_MAGIC_NUMBER.size())
+- 2845       |             .write(reinterpret_cast<const char*>(&cache_version), sizeof(cache_version));
+- 2846       |         size_t cache_size = 0;
+- 2847       |         std::vector<char> cache_data;
+- 2848       |         if (pipeline_cache) {
+- 2849       |             pipeline_cache.Read(&cache_size, nullptr);
+- 2850       |             cache_data.resize(cache_size);
+- 2851       |             pipeline_cache.Read(&cache_size, cache_data.data());
+- 2852       |         }
+- 2853       |         file.write(cache_data.data(), cache_size);
+- 2854       |     } catch (const std::ios_base::failure& error) {
+- 2855       |         LOG_ERROR(Common_Filesystem, "{}", error.what());
+- 2856       |     }
+- 2857       | #endif
+- 2858       | }
+- 2859       | 
+- 2860       | vk::PipelineCache PipelineCache::LoadVulkanPipelineCache(const std::filesystem::path& filename,
+- 2861       |                                                          u32 expected_cache_version) {
+- 2862       |     const auto create_pipeline_cache = [this](size_t data_size, const void* data) {
+- 2863       |         VkPipelineCacheCreateInfo pipeline_cache_ci = {
+- 2864       |             .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
+- 2865       |             .pNext = nullptr,
+- 2866       |             .flags = 0,
+- 2867       |             .initialDataSize = data_size,
+- 2868       |             .pInitialData = data};
+- 2869       |         try {
+- 2870       |             return device.GetLogical().CreatePipelineCache(pipeline_cache_ci);
+- 2871       |         } catch (const std::exception& error) {
+- 2872       |             if (data_size == 0) throw;
++       1214 |         vulkan_pipeline_cache_filename =
++       1215 |             VideoCommon::VersionedPipelineCachePath(base_dir, "vulkan_pipelines", CACHE_VERSION);
++       1216 |         if (VideoCommon::CarryOverPipelineCache(
++       1217 |                 base_dir, "vulkan_pipelines", VULKAN_CACHE_MAGIC_NUMBER,
++       1218 |                 VideoCommon::CompatibleVulkanPipelineCacheVersions, CACHE_VERSION)
++       1219 |                 .failed) {
+  2873  1220 |             LOG_WARNING(Render_Vulkan,
+- 2874       |                         "Ignoring incompatible driver pipeline cache: {}", error.what());
+- 2875       |             pipeline_cache_ci.initialDataSize = 0;
+- 2876       |             pipeline_cache_ci.pInitialData = nullptr;
+- 2877       |             return device.GetLogical().CreatePipelineCache(pipeline_cache_ci);
+- 2878       |         }
+- 2879       |     };
+- 2880       |     try {
+- 2881       |         std::ifstream file(filename, std::ios::binary | std::ios::ate);
+- 2882       |         if (!file.is_open()) {
+- 2883       |             return create_pipeline_cache(0, nullptr);
+- 2884       |         }
+- 2885       |         file.exceptions(std::ifstream::failbit);
+- 2886       |         const auto end{file.tellg()};
+- 2887       |         file.seekg(0, std::ios::beg);
+- 2888       | 
+- 2889       |         std::array<char, 8> magic_number;
+- 2890       |         u32 cache_version;
+- 2891       | #ifdef EDEN_NS2_PIPELINE_CACHE_GUARD
+- 2892       |         // Reject truncated (including failed tellg) Vulkan driver cache headers
+- 2893       |         // before reading or subtracting an unsigned header size.
+- 2894       |         if (end < std::streampos{static_cast<std::streamoff>(
+- 2895       |                       magic_number.size() + sizeof(cache_version))}) {
+- 2896       |             file.close();
+- 2897       |             LOG_WARNING(Common_Filesystem, "Short Vulkan driver cache; rebuilding fresh");
+- 2898       |             Common::FS::RemoveFile(filename);
+- 2899       |             return create_pipeline_cache(0, nullptr);
+- 2900       |         }
+- 2901       | #endif
+- 2902       |         file.read(magic_number.data(), magic_number.size())
+- 2903       |             .read(reinterpret_cast<char*>(&cache_version), sizeof(cache_version));
+- 2904       |         if (magic_number != VULKAN_CACHE_MAGIC_NUMBER || cache_version != expected_cache_version) {
+- 2905       |             file.close();
+- 2906       |             if (Common::FS::RemoveFile(filename)) {
+- 2907       |                 if (magic_number != VULKAN_CACHE_MAGIC_NUMBER) {
+- 2908       |                     LOG_ERROR(Common_Filesystem, "Invalid Vulkan driver pipeline cache file");
+- 2909       |                 }
+- 2910       |                 if (cache_version != expected_cache_version) {
+- 2911       |                     LOG_INFO(Common_Filesystem, "Deleting old Vulkan driver pipeline cache");
+- 2912       |                 }
+- 2913       |             } else {
+- 2914       |                 LOG_ERROR(Common_Filesystem,
+- 2915       |                           "Invalid Vulkan pipeline cache file and failed to delete it in \"{}\"",
+- 2916       |                           Common::FS::PathToUTF8String(filename));
+- 2917       |             }
+- 2918       |             return create_pipeline_cache(0, nullptr);
+- 2919       |         }
+- 2920       | 
+- 2921       |         static constexpr size_t header_size = magic_number.size() + sizeof(cache_version);
+- 2922       |         const size_t cache_size = static_cast<size_t>(end) - header_size;
+- 2923       | #ifdef PS5_NATIVE
+- 2924       |         if (cache_size < kNativeDriverCacheHeaderSize ||
+- 2925       |             cache_size > kNativeDriverCacheStagingLimit) {
+- 2926       |             LOG_WARNING(Render_Vulkan, "Driver cache payload outside native staging bounds: {}", cache_size);
+- 2927       |             return create_pipeline_cache(0, nullptr);
+- 2928       |         }
+- 2929       |         std::array<unsigned char, kNativeDriverCacheHeaderSize> driver_header{};
+- 2930       |         file.read(reinterpret_cast<char*>(driver_header.data()), driver_header.size());
+- 2931       |         if (!NativeDriverCacheHeaderMatches(driver_header, device.GetPhysical().GetProperties())) {
+- 2932       |             LOG_WARNING(Render_Vulkan, "Driver cache header incompatible; using fresh driver cache");
+- 2933       |             return create_pipeline_cache(0, nullptr);
+- 2934       |         }
+- 2935       |         file.seekg(static_cast<std::streamoff>(header_size), std::ios::beg);
+- 2936       |         std::vector<char> cache_data;
+- 2937       |         try {
+- 2938       |             cache_data.resize(cache_size);
+- 2939       |         } catch (const std::bad_alloc&) {
+- 2940       |             LOG_WARNING(Render_Vulkan, "Driver cache allocation failed; using fresh driver cache");
+- 2941       |             return create_pipeline_cache(0, nullptr);
+- 2942       |         }
+- 2943       | #else
+- 2944       |         std::vector<char> cache_data(cache_size);
+- 2945       | #endif
+- 2946       |         file.read(cache_data.data(), cache_size);
+- 2947       | 
+- 2948       |         LOG_INFO(Render_Vulkan,
+- 2949       |                  "Loaded Vulkan driver pipeline cache: ", Common::FS::PathToUTF8String(filename));
+- 2950       | 
+- 2951       |         return create_pipeline_cache(cache_size, cache_data.data());
+- 2952       | 
+- 2953       |     } catch (const std::ios_base::failure& e) {
+- 2954       |         LOG_ERROR(Common_Filesystem, "{}", e.what());
+- 2955       |         if (!Common::FS::RemoveFile(filename)) {
+- 2956       |             LOG_ERROR(Common_Filesystem, "Failed to delete Vulkan driver pipeline cache file {}",
+- 2957       |                       Common::FS::PathToUTF8String(filename));
++       1221 |                         "Couldn't copy the older driver pipeline cache; this one starts empty");
+  2958  1222 |         }
+- 2959       | 
+- 2960       |         return create_pipeline_cache(0, nullptr);
++       1223 |         vulkan_pipeline_cache =
++       1224 |             LoadVulkanPipelineCache(vulkan_pipeline_cache_filename, CACHE_VERSION);
+  2961  1225 |     }
++       1226 |     LoadPipelinesV2(title_id, std::move(log_v2), stop_loading, callback, load_begin, precache,
++       1227 |                     std::move(precached_pipelines));
+  2962  1228 | }
+- 2963       | 
+- 2964       | } // namespace Vulkan
+```
+
+</details>
+
+### P1-P02 · PipelineCache::QueueVulkanPipelineCacheFlush
+
+Comparer fréquence et propriété de sauvegarde/flush du cache Vulkan. Un flush sur le chemin de frame peut coûter, mais la persistance ne doit pas être sacrifiée sans mesure.
+
+Encore : [vk_pipeline_cache_cost.cpp:1719–1785](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp#L1719-L1785) — 67 lignes.
+
+<details>
+<summary>Lichii — 2317–2345 : 26 alignées, 41 propres Encore, 3 propres upstream</summary>
+
+Source : [vk_pipeline_cache.cpp:2317–2345](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/renderer_vulkan/vk_pipeline_cache.cpp#L2317-L2345).
+
+```diff
+  1719  2317 | void PipelineCache::QueueVulkanPipelineCacheFlush() {
+- 1720       |     if (!use_vulkan_pipeline_cache || vulkan_pipeline_cache_filename.empty()) {
++       2318 |     if (!use_vulkan_pipeline_cache || vulkan_pipeline_cache_filename.empty() ||
++       2319 |         !device.CanReadPipelineCacheDuringBuilds()) {
+  1721  2320 |         return;
+  1722  2321 |     }
+- 1723       | #ifdef PS5_NATIVE
+- 1724       |     // Recover a failed background serialization without racing the owner's
+- 1725       |     // non-atomic quota. The existing time gate still bounds retry frequency.
+- 1726       |     if (flush_worker_failed.exchange(false, std::memory_order_acq_rel)) {
+- 1727       |         pipelines_since_flush = VULKAN_CACHE_FLUSH_PIPELINES;
+- 1728       |     }
+- 1729       | #endif
+  1730  2322 |     if (++pipelines_since_flush < VULKAN_CACHE_FLUSH_PIPELINES) {
+  1731  2323 |         return;
+  1732  2324 |     }
+  1733  2325 |     const auto now = std::chrono::steady_clock::now();
+  1734  2326 |     const auto megabytes = last_cache_size.load(std::memory_order_relaxed) / (1024 * 1024);
+  1735  2327 |     const std::chrono::seconds interval{
+  1736  2328 |         std::max<size_t>(VULKAN_CACHE_FLUSH_MIN_SECONDS, megabytes)};
+  1737  2329 |     if (last_flush.time_since_epoch().count() != 0 && now - last_flush < interval) {
+  1738  2330 |         return;
+  1739  2331 |     }
+  1740  2332 |     if (flush_in_flight.exchange(true, std::memory_order_acq_rel)) {
+  1741  2333 |         return;
+  1742  2334 |     }
+  1743  2335 |     pipelines_since_flush = 0;
+  1744  2336 |     last_flush = now;
+- 1745       |     // A transient driver-cache read or serializer exception must not pin
+- 1746       |     // flush_in_flight=true for the lifetime of the foreground title.
+- 1747       |     // Keep the existing periodic budget, filename and background worker.
+- 1748       |     try {
+  1749  2337 |         serialization_thread.QueueWork([this] {
+- 1750       |             struct ReleaseFlush {
+- 1751       |                 std::atomic_bool& in_flight;
+- 1752       |                 ~ReleaseFlush() { in_flight.store(false, std::memory_order_release); }
+- 1753       |             } release{flush_in_flight};
+- 1754       |             try {
+  1755  2338 |                 SerializeVulkanPipelineCache(vulkan_pipeline_cache_filename, vulkan_pipeline_cache,
+  1756  2339 |                                              CACHE_VERSION);
+  1757  2340 |                 size_t size = 0;
+  1758  2341 |                 vulkan_pipeline_cache.Read(&size, nullptr);
+  1759  2342 |                 last_cache_size.store(size, std::memory_order_relaxed);
+- 1760       |             } catch (const std::exception& error) {
+- 1761       | #ifdef PS5_NATIVE
+- 1762       |                 // Signal a new checkpoint, but only the GPU owner may update
+- 1763       |                 // the ordinary pipeline build quota on its next call.
+- 1764       |                 flush_worker_failed.store(true, std::memory_order_release);
+- 1765       | #endif
+- 1766       |                 LOG_WARNING(Render_Vulkan, "Deferred driver cache flush failed: {}", error.what());
+- 1767       |             } catch (...) {
+- 1768       | #ifdef PS5_NATIVE
+- 1769       |                 flush_worker_failed.store(true, std::memory_order_release);
+- 1770       | #endif
+- 1771       |                 LOG_WARNING(Render_Vulkan, "Deferred driver cache flush failed: unknown exception");
+- 1772       |             }
+- 1773       |         });
+- 1774       |     } catch (const std::exception& error) {
+  1775  2343 |         flush_in_flight.store(false, std::memory_order_release);
+- 1776       |         // Keep this checkpoint due for a later retry, without bypassing the
+- 1777       |         // existing time gate if the serializer is temporarily unavailable.
+- 1778       |         pipelines_since_flush = VULKAN_CACHE_FLUSH_PIPELINES;
+- 1779       |         LOG_WARNING(Render_Vulkan, "Deferred cache flush queue rejected: {}", error.what());
+- 1780       |     } catch (...) {
+- 1781       |         flush_in_flight.store(false, std::memory_order_release);
+- 1782       |         pipelines_since_flush = VULKAN_CACHE_FLUSH_PIPELINES;
+- 1783       |         LOG_WARNING(Render_Vulkan, "Deferred cache flush queue rejected: unknown exception");
+- 1784       |     }
++       2344 |     });
+  1785  2345 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 1957–1984 : 27 alignées, 40 propres Encore, 1 propres upstream</summary>
+
+Source : [vk_pipeline_cache.cpp:1957–1984](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/renderer_vulkan/vk_pipeline_cache.cpp#L1957-L1984).
+
+```diff
+  1719  1957 | void PipelineCache::QueueVulkanPipelineCacheFlush() {
+  1720  1958 |     if (!use_vulkan_pipeline_cache || vulkan_pipeline_cache_filename.empty()) {
+  1721  1959 |         return;
+  1722  1960 |     }
+- 1723       | #ifdef PS5_NATIVE
+- 1724       |     // Recover a failed background serialization without racing the owner's
+- 1725       |     // non-atomic quota. The existing time gate still bounds retry frequency.
+- 1726       |     if (flush_worker_failed.exchange(false, std::memory_order_acq_rel)) {
+- 1727       |         pipelines_since_flush = VULKAN_CACHE_FLUSH_PIPELINES;
+- 1728       |     }
+- 1729       | #endif
+  1730  1961 |     if (++pipelines_since_flush < VULKAN_CACHE_FLUSH_PIPELINES) {
+  1731  1962 |         return;
+  1732  1963 |     }
+  1733  1964 |     const auto now = std::chrono::steady_clock::now();
+  1734  1965 |     const auto megabytes = last_cache_size.load(std::memory_order_relaxed) / (1024 * 1024);
+  1735  1966 |     const std::chrono::seconds interval{
+  1736  1967 |         std::max<size_t>(VULKAN_CACHE_FLUSH_MIN_SECONDS, megabytes)};
+  1737  1968 |     if (last_flush.time_since_epoch().count() != 0 && now - last_flush < interval) {
+  1738  1969 |         return;
+  1739  1970 |     }
+  1740  1971 |     if (flush_in_flight.exchange(true, std::memory_order_acq_rel)) {
+  1741  1972 |         return;
+  1742  1973 |     }
+  1743  1974 |     pipelines_since_flush = 0;
+  1744  1975 |     last_flush = now;
+- 1745       |     // A transient driver-cache read or serializer exception must not pin
+- 1746       |     // flush_in_flight=true for the lifetime of the foreground title.
+- 1747       |     // Keep the existing periodic budget, filename and background worker.
+- 1748       |     try {
+  1749  1976 |         serialization_thread.QueueWork([this] {
+- 1750       |             struct ReleaseFlush {
+- 1751       |                 std::atomic_bool& in_flight;
+- 1752       |                 ~ReleaseFlush() { in_flight.store(false, std::memory_order_release); }
+- 1753       |             } release{flush_in_flight};
+- 1754       |             try {
+  1755  1977 |                 SerializeVulkanPipelineCache(vulkan_pipeline_cache_filename, vulkan_pipeline_cache,
+  1756  1978 |                                              CACHE_VERSION);
+  1757  1979 |                 size_t size = 0;
+  1758  1980 |                 vulkan_pipeline_cache.Read(&size, nullptr);
+  1759  1981 |                 last_cache_size.store(size, std::memory_order_relaxed);
+- 1760       |             } catch (const std::exception& error) {
+- 1761       | #ifdef PS5_NATIVE
+- 1762       |                 // Signal a new checkpoint, but only the GPU owner may update
+- 1763       |                 // the ordinary pipeline build quota on its next call.
+- 1764       |                 flush_worker_failed.store(true, std::memory_order_release);
+- 1765       | #endif
+- 1766       |                 LOG_WARNING(Render_Vulkan, "Deferred driver cache flush failed: {}", error.what());
+- 1767       |             } catch (...) {
+- 1768       | #ifdef PS5_NATIVE
+- 1769       |                 flush_worker_failed.store(true, std::memory_order_release);
+- 1770       | #endif
+- 1771       |                 LOG_WARNING(Render_Vulkan, "Deferred driver cache flush failed: unknown exception");
+- 1772       |             }
+- 1773       |         });
+- 1774       |     } catch (const std::exception& error) {
+  1775  1982 |         flush_in_flight.store(false, std::memory_order_release);
+- 1776       |         // Keep this checkpoint due for a later retry, without bypassing the
+- 1777       |         // existing time gate if the serializer is temporarily unavailable.
+- 1778       |         pipelines_since_flush = VULKAN_CACHE_FLUSH_PIPELINES;
+- 1779       |         LOG_WARNING(Render_Vulkan, "Deferred cache flush queue rejected: {}", error.what());
+- 1780       |     } catch (...) {
+- 1781       |         flush_in_flight.store(false, std::memory_order_release);
+- 1782       |         pipelines_since_flush = VULKAN_CACHE_FLUSH_PIPELINES;
+- 1783       |         LOG_WARNING(Render_Vulkan, "Deferred cache flush queue rejected: unknown exception");
+- 1784       |     }
++       1983 |     });
+  1785  1984 | }
+```
+
+</details>
+
+### P1-P03 · PipelineCache::CreateGraphicsPipeline (runtime)
+
+Le premier overload trouvé dans chaque source est comparé. Vérifier traduction IR/SPIR-V, parallélisme, fallback et publication. Les forks possèdent plusieurs overloads : le document ne prétend pas couvrir tout le pipeline avec cette seule comparaison.
+
+Encore : [vk_pipeline_cache_cost.cpp:1900–2394](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp#L1900-L2394) — 495 lignes.
+
+<details>
+<summary>Lichii — 2882–3435 : 110 alignées, 385 propres Encore, 444 propres upstream</summary>
+
+Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/renderer_vulkan/vk_pipeline_cache.cpp#L2882-L3435).
+
+```diff
+  1900  2882 | std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline(
+  1901  2883 |     ShaderPools& pools, const GraphicsPipelineCacheKey& key,
+  1902  2884 |     std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,
+- 1903       |     bool build_in_parallel, bool parallel_translate_stages) try {
+- 1904       | #ifdef PS5_NATIVE
+- 1905       |     // The optional optimizer must yield to foreground graphics translation
+- 1906       |     // even before the first-use Vulkan pipeline reaches the worker queue.
+- 1907       |     // Disk prewarm passes build_in_parallel=false and remains uncounted.
+- 1908       |     GraphicsTranslationPriorityScope translation_priority{
+- 1909       |         build_in_parallel && ::Eden::DevVulkan::fast_first_pipelines};
+- 1910       | #endif
++       2885 |     bool build_in_parallel, std::shared_ptr<ShaderPools> emit_pools,
++       2886 |     ParallelTranslation* parallel) try {
+  1911  2887 |     auto hash = key.Hash();
+  1912  2888 |     LOG_DEBUG(Render_Vulkan, "{:#016x}", hash);
++       2889 |     // Declared before the programs, whose IR they hold
++       2890 |     std::vector<std::shared_ptr<ShaderPools>> stage_pools;
++       2891 |     SCOPE_EXIT {
++       2892 |         for (std::shared_ptr<ShaderPools>& stage : stage_pools) {
++       2893 |             ReturnPools(std::move(stage));
++       2894 |         }
++       2895 |     };
++       2896 |     std::vector<VideoCommon::StageTranslation> translations;
++       2897 |     std::array<VideoCommon::StageTranslation*, Maxwell::MaxShaderProgram> translated{};
++       2898 |     if (parallel) {
++       2899 |         translations.reserve(envs.size());
++       2900 |         size_t stage_env{};
++       2901 |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
++       2902 |             if (key.unique_hashes[index] == 0) {
++       2903 |                 continue;
++       2904 |             }
++       2905 |             Shader::Environment& env{*envs[stage_env++]};
++       2906 |             if (index == static_cast<size_t>(Maxwell::ShaderType::Geometry) &&
++       2907 |                 !device.IsGeometryShaderSupported() && env.IsNativeProgram()) {
++       2908 |                 continue; // The pipeline is skipped below before this stage is needed
++       2909 |             }
++       2910 |             translations.push_back({
++       2911 |                 .env = &env,
++       2912 |                 .pools = stage_pools.emplace_back(TakeSparePools()).get(),
++       2913 |                 .cfg_offset = static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader)),
++       2914 |                 .exits_to_dispatcher = index == 0,
++       2915 |             });
++       2916 |             translated[index] = &translations.back();
++       2917 |         }
++       2918 |         const auto begin = std::chrono::steady_clock::now();
++       2919 |         VideoCommon::TranslateStages(*shader_jobs, translations, host_info);
++       2920 |         parallel->wait += std::chrono::steady_clock::now() - begin;
++       2921 |         for (const VideoCommon::StageTranslation& translation : translations) {
++       2922 |             parallel->stages += translation.time;
++       2923 |         }
++       2924 |         parallel->count = translations.size();
++       2925 |     }
+  1913  2926 |     size_t env_index{0};
+  1914  2927 |     std::array<Shader::IR::Program, Maxwell::MaxShaderProgram> programs;
+- 1915       | #ifdef PS5_NATIVE
+- 1916       |     // Eden #4503 drops known-broken non-NVIDIA fragment shaders entirely.
+- 1917       |     // On PS5 that visibly removes guest draws. Keep the exact predicate but
+- 1918       |     // route only matching programs through the newer Lichii/Eglantine
+- 1919       |     // broadcast/select SPIR-V fallback.
+- 1920       |     std::array<bool, Maxwell::MaxShaderProgram> fragment_shuffle_fallback{};
+- 1921       | #endif
+  1922  2928 |     const bool uses_vertex_a{key.unique_hashes[0] != 0};
+  1923  2929 |     const bool uses_vertex_b{key.unique_hashes[1] != 0};
+  1924  2930 | 
+  1925  2931 |     // Layer passthrough generation for devices without VK_EXT_shader_viewport_index_layer
+  1926  2932 |     Shader::IR::Program* layer_source_program{};
+- 1927       | 
+- 1928       | #ifdef PS5_NATIVE
+- 1929       |     // Lichii's stage-parallel model adapted to Encore's active renderer:
+- 1930       |     // every stage owns its IR pools until SPIR-V emission has consumed the
+- 1931       |     // resulting Program. Only NS1 first-use calls can enable this flag; NS2
+- 1932       |     // native keeps its authenticated GMMU/channel translation synchronous.
+- 1933       |     std::array<std::unique_ptr<ShaderPools>, Maxwell::MaxShaderProgram> parallel_pools{};
+- 1934       |     std::array<std::unique_ptr<Shader::IR::Program>, Maxwell::MaxShaderProgram>
+- 1935       |         parallel_programs{};
+- 1936       |     std::array<std::exception_ptr, Maxwell::MaxShaderProgram> parallel_errors{};
+- 1937       |     // CachePhaseTimer's per-key shader attribution is intentionally thread-local.
+- 1938       |     // Give every stage worker a private accumulator, then merge after the owner
+- 1939       |     // joins them so EDEN_VULKAN_SHADER_MISS keeps the pre-parallel accounting.
+- 1940       |     std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>
+- 1941       |         parallel_stage_costs{};
++       2933 |     bool mesh_unsupported{};
+  1942  2934 | 
+- 1943       |     // Worker translation must never traverse the live guest GMMU. Snapshot
+- 1944       |     // every guest byte that CFG/IR may consult while still on the GPU owner:
+- 1945       |     // shader code is already copied by GetGraphicsEnvironments/SetCachedSize,
+- 1946       |     // and this block captures the TIC pool plus enabled per-stage CBUFs.
+- 1947       |     constexpr u32 DisabledSnapshotCbuf = (std::numeric_limits<u32>::max)();
+- 1948       |     constexpr u64 MaxTextureSnapshotBytes = u64{4} << 20;
+- 1949       |     constexpr u64 MaxCbufSnapshotBytes =
+- 1950       |         u64{Maxwell::MaxShaderStage} * Maxwell::MaxConstBuffers *
+- 1951       |         Maxwell::MaxConstBufferSize;
+- 1952       |     constexpr u64 MaxShaderSnapshotBytes =
+- 1953       |         MaxTextureSnapshotBytes + MaxCbufSnapshotBytes;
+- 1954       |     std::vector<u8> parallel_texture_snapshot;
+- 1955       |     std::array<std::array<std::vector<u8>, Maxwell::MaxConstBuffers>,
+- 1956       |                Maxwell::MaxShaderStage>
+- 1957       |         parallel_cbuf_storage{};
+- 1958       |     std::array<std::array<const u8*, Maxwell::MaxConstBuffers>,
+- 1959       |                Maxwell::MaxShaderStage>
+- 1960       |         parallel_cbuf_ptrs{};
+- 1961       |     std::array<std::array<u32, Maxwell::MaxConstBuffers>,
+- 1962       |                Maxwell::MaxShaderStage>
+- 1963       |         parallel_cbuf_sizes{};
+- 1964       |     for (auto& sizes : parallel_cbuf_sizes) {
+- 1965       |         sizes.fill(DisabledSnapshotCbuf);
++       2935 |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
++       2936 |         const bool is_emulated_stage = layer_source_program != nullptr &&
++       2937 |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
++       2938 |         if (key.unique_hashes[index] == 0 && is_emulated_stage) {
++       2939 |             auto topology = MaxwellToOutputTopology(key.state.topology);
++       2940 |             programs[index] = GenerateGeometryPassthrough(pools.inst, pools.block, host_info,
++       2941 |                                                           *layer_source_program, topology);
++       2942 |             continue;
+  1966  2943 |     }
+- 1967       | 
+- 1968       |     GPUVAddr snapshot_texture_base{};
+- 1969       |     u32 snapshot_texture_limit{};
+- 1970       |     bool snapshot_via_header_index{};
+- 1971       |     u32 snapshot_viewport_transform_state{};
+- 1972       | 
+- 1973       |     if (parallel_translate_stages) {
+- 1974       |         for (Shader::Environment* const env : envs) {
+- 1975       |             // HLE replacement lookup still belongs to Maxwell3D::replace_table.
+- 1976       |             // Keep those rare shaders on the GPU owner until that table has an
+- 1977       |             // immutable per-environment representation too.
+- 1978       |             if (env->HasHLEMacroState()) {
+- 1979       |                 parallel_translate_stages = false;
+- 1980       |                 break;
++       2944 |         if (key.unique_hashes[index] == 0) {
++       2945 |             continue;
+  1981  2946 |             }
++       2947 |         Shader::Environment& env{*envs[env_index]};
++       2948 |         ++env_index;
++       2949 |         if (index == static_cast<size_t>(Maxwell::ShaderType::Geometry) &&
++       2950 |             !device.IsGeometryShaderSupported() && env.IsNativeProgram()) {
++       2951 |             // A native (Switch 2) geometry program on a device without geometry shaders: the
++       2952 |             // pipeline cannot run it, so its draws are skipped.
++       2953 |             static std::atomic<bool> logged{};
++       2954 |             if (!logged.exchange(true)) {
++       2955 |                 LOG_WARNING(Render_Vulkan, "Skipping native geometry shader pipelines: the device has no geometry shaders");
+  1982  2956 |         }
++       2957 |             return nullptr;
+  1983  2958 |     }
+- 1984       | 
+- 1985       |     if (parallel_translate_stages) {
+- 1986       |         // Disk prewarm uses FileEnvironment and can run without a bound
+- 1987       |         // graphics channel. Only the live NS1 owner may read these registers.
+- 1988       |         const auto& snapshot_tex_header = maxwell3d->regs.tex_header;
+- 1989       |         snapshot_texture_base = snapshot_tex_header.Address();
+- 1990       |         snapshot_texture_limit = static_cast<u32>(snapshot_tex_header.limit);
+- 1991       |         snapshot_via_header_index =
+- 1992       |             maxwell3d->regs.sampler_binding == Maxwell::SamplerBinding::ViaHeaderBinding;
+- 1993       |         snapshot_viewport_transform_state =
+- 1994       |             maxwell3d->regs.viewport_scale_offset_enabled;
+- 1995       |         const u64 snapshot_texture_bytes =
+- 1996       |             (u64{snapshot_texture_limit} + 1) * sizeof(Tegra::Texture::TICEntry);
+- 1997       |         bool snapshot_ok =
+- 1998       |             snapshot_texture_bytes <= MaxTextureSnapshotBytes &&
+- 1999       |             snapshot_texture_base <=
+- 2000       |                 (std::numeric_limits<GPUVAddr>::max)() - (snapshot_texture_bytes - 1) &&
+- 2001       |             gpu_memory->IsWithinGPUAddressRange(
+- 2002       |                 snapshot_texture_base + snapshot_texture_bytes - 1);
+- 2003       |         u64 snapshot_bytes = snapshot_texture_bytes;
+- 2004       |         std::array<bool, Maxwell::MaxShaderStage> stage_needed{};
+- 2005       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2006       |             if (key.unique_hashes[index] == 0) {
+- 2007       |                 continue;
++       2959 |         // Without VK_EXT_mesh_shader the driver cannot build a task/mesh pipeline; the draw is
++       2960 |         // skipped (see the pipeline check in the rasterizer). The stages are still translated
++       2961 |         // so the skipped pipeline's needs can be reported below.
++       2962 |         if ((env.ShaderStage() == Shader::Stage::Task ||
++       2963 |              env.ShaderStage() == Shader::Stage::Mesh) &&
++       2964 |             !device.IsExtMeshShaderSupported()) {
++       2965 |             static std::atomic<bool> logged{};
++       2966 |             if (!logged.exchange(true, std::memory_order_relaxed)) {
++       2967 |                 LOG_WARNING(Render_Vulkan,
++       2968 |                             "{} has no VK_EXT_mesh_shader: pipelines with task/mesh shaders are "
++       2969 |                             "skipped, so the geometry they draw (such as foliage and props) will "
++       2970 |                             "be missing",
++       2971 |                             device.GetModelName());
+  2008  2972 |             }
+- 2009       |             const size_t physical_stage = index <= 1 ? 0 : index - 1;
+- 2010       |             stage_needed[physical_stage] = true;
++       2973 |             mesh_unsupported = true;
+  2011  2974 |         }
+  2012  2975 | 
+- 2013       |         for (size_t stage = 0; snapshot_ok && stage < Maxwell::MaxShaderStage; ++stage) {
+- 2014       |             if (!stage_needed[stage]) {
+- 2015       |                 continue;
++       2976 |         const auto translate = [&] {
++       2977 |             if (translated[index]) {
++       2978 |                 return translated[index]->Take();
+  2016  2979 |             }
+- 2017       |             const auto& cbufs = maxwell3d->state.shader_stages[stage].const_buffers;
+- 2018       |             for (size_t bank = 0; bank < Maxwell::MaxConstBuffers; ++bank) {
+- 2019       |                 const auto& cbuf = cbufs[bank];
+- 2020       |                 if (!cbuf.enabled) {
+- 2021       |                     continue;
++       2980 |             const u32 cfg_offset{
++       2981 |                 static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
++       2982 |             Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);
++       2983 |             return TranslateProgram(pools.inst, pools.block, env, cfg, host_info);
++       2984 |         };
++       2985 |         if (!uses_vertex_a || index != 1) {
++       2986 |             // Normal path
++       2987 |             programs[index] = translate();
++       2988 |         } else {
++       2989 |             // VertexB path when VertexA is present.
++       2990 |             auto& program_va{programs[0]};
++       2991 |             auto program_vb{translate()};
++       2992 |             programs[index] = MergeDualVertexPrograms(program_va, program_vb, env, host_info);
++       2993 |             // Each half fit its texture arrays to the stage limits on its own; joined, they are
++       2994 |             // one stage.
++       2995 |             Shader::Optimization::LimitSampledTextureArrays(programs[index], host_info);
+  2022  2996 |                 }
+- 2023       |                 if (cbuf.size > Maxwell::MaxConstBufferSize ||
+- 2024       |                     snapshot_bytes > MaxShaderSnapshotBytes - cbuf.size) {
+- 2025       |                     snapshot_ok = false;
+- 2026       |                     break;
++       2997 | 
++       2998 |         if (device.GetDriverID() != VK_DRIVER_ID_NVIDIA_PROPRIETARY && Shader::Optimization::HasBrokenPattern(programs[index])) {
++       2999 |             LOG_WARNING(Render_Vulkan, "0x{:016x}: Skipping shader with known issues", key.unique_hashes[index]);
++       3000 |             return nullptr;
+  2027  3001 |                 }
+- 2028       |                 parallel_cbuf_sizes[stage][bank] = cbuf.size;
+- 2029       |                 snapshot_bytes += cbuf.size;
+- 2030       |                 if (cbuf.size == 0) {
+- 2031       |                     continue;
++       3002 | 
++       3003 |         if (Settings::values.dump_guest_shaders) {
++       3004 |             env.Dump(hash, key.unique_hashes[index]);
+  2032  3005 |                 }
+- 2033       |                 const u64 last_offset = u64{cbuf.size} - 1;
+- 2034       |                 if (cbuf.address >
+- 2035       |                         (std::numeric_limits<GPUVAddr>::max)() - last_offset ||
+- 2036       |                     !gpu_memory->IsFullyMappedRange(cbuf.address, cbuf.size)) {
+- 2037       |                     snapshot_ok = false;
+- 2038       |                     break;
++       3006 | 
++       3007 |         if (programs[index].info.requires_layer_emulation) {
++       3008 |             layer_source_program = &programs[index];
+  2039  3009 |                 }
+  2040  3010 |             }
++       3011 |     {
++       3012 |         // Fit the set before mesh fallback chooses its auxiliary buffer bindings: cutting arrays
++       3013 |         // can merge descriptors, so both their element counts and their binding counts can change.
++       3014 |         std::array<Shader::IR::Program*, Maxwell::MaxShaderProgram> stages{};
++       3015 |         size_t num_stages{};
++       3016 |         for (size_t index = uses_vertex_a && uses_vertex_b ? 1 : 0;
++       3017 |              index < Maxwell::MaxShaderProgram; ++index) {
++       3018 |             const bool is_emulated_stage = layer_source_program != nullptr &&
++       3019 |                                            index == static_cast<u32>(Maxwell::ShaderType::Geometry);
++       3020 |             if (key.unique_hashes[index] != 0 || is_emulated_stage) {
++       3021 |                 stages[num_stages++] = &programs[index];
+  2041  3022 |         }
+- 2042       | 
+- 2043       |         if (snapshot_ok) {
+- 2044       |             try {
+- 2045       |                 parallel_texture_snapshot.resize(
+- 2046       |                     static_cast<size_t>(snapshot_texture_bytes));
+- 2047       |                 // Normal owner-thread reads preserve GPU-written descriptor/
+- 2048       |                 // uniform bytes before workers are allowed to consume them.
+- 2049       |                 gpu_memory->ReadBlock(snapshot_texture_base,
+- 2050       |                                       parallel_texture_snapshot.data(),
+- 2051       |                                       parallel_texture_snapshot.size());
+- 2052       |                 for (size_t stage = 0; stage < Maxwell::MaxShaderStage; ++stage) {
+- 2053       |                     if (!stage_needed[stage]) {
+- 2054       |                         continue;
+  2055  3023 |                     }
+- 2056       |                     const auto& cbufs =
+- 2057       |                         maxwell3d->state.shader_stages[stage].const_buffers;
+- 2058       |                     for (size_t bank = 0; bank < Maxwell::MaxConstBuffers; ++bank) {
+- 2059       |                         const u32 bytes = parallel_cbuf_sizes[stage][bank];
+- 2060       |                         if (bytes == DisabledSnapshotCbuf || bytes == 0) {
+- 2061       |                             continue;
++       3024 |         Shader::Optimization::LimitPipelineSampledTextureArrays(
++       3025 |             std::span{stages.data(), num_stages}, host_info);
+  2062  3026 |                         }
+- 2063       |                         auto& storage = parallel_cbuf_storage[stage][bank];
+- 2064       |                         storage.resize(bytes);
+- 2065       |                         gpu_memory->ReadBlock(cbufs[bank].address, storage.data(),
+- 2066       |                                               storage.size());
+- 2067       |                         parallel_cbuf_ptrs[stage][bank] = storage.data();
++       3027 |     // Mesh emulation without VK_EXT_mesh_shader (prototype): a mesh program, after an optional
++       3028 |     // task program, before a pixel program only.
++       3029 |     std::optional<MeshEmulationSetup> mesh_emulation;
++       3030 |     size_t mesh_index{};
++       3031 |     if (mesh_unsupported) {
++       3032 |         ReportUnsupportedMeshPipeline(key, programs);
++       3033 |         const bool has_task{key.unique_hashes[1] != 0 &&
++       3034 |                             programs[1].stage == Shader::Stage::Task};
++       3035 |         for (size_t index = 1; index < Maxwell::MaxShaderProgram; ++index) {
++       3036 |             if (key.unique_hashes[index] != 0 && programs[index].stage == Shader::Stage::Mesh) {
++       3037 |                 mesh_index = index;
++       3038 |                 break;
+  2068  3039 |                     }
+  2069  3040 |                 }
+- 2070       |             } catch (const std::bad_alloc&) {
+- 2071       |                 snapshot_ok = false;
++       3041 |         bool eligible{mesh_index != 0 && (mesh_index == 1 || has_task) &&
++       3042 |                       layer_source_program == nullptr};
++       3043 |         const Shader::IR::Program& mesh{programs[mesh_index]};
++       3044 |         // Points (0), lines (1) and triangles (4).
++       3045 |         const u32 topology{mesh.mesh.topology};
++       3046 |         eligible = eligible && (topology == 0 || topology == 1 || topology == 4) &&
++       3047 |                    !mesh.mesh.vertex_lines.empty() && mesh.mesh.max_vertices != 0 &&
++       3048 |                    mesh.mesh.max_primitives != 0;
++       3049 |         for (size_t index = 1; index < Maxwell::MaxShaderProgram && eligible; ++index) {
++       3050 |             const bool emulated{index == mesh_index || (has_task && index == 1)};
++       3051 |             eligible = emulated || key.unique_hashes[index] == 0 ||
++       3052 |                        programs[index].stage == Shader::Stage::Fragment;
+  2072  3053 |             }
++       3054 |         if (!eligible) {
++       3055 |             return nullptr;
+  2073  3056 |         }
+- 2074       |         parallel_translate_stages = snapshot_ok;
++       3057 |         // Per-primitive outputs reach the pixel program flat through the vertex shader. A vertex
++       3058 |         // shader writes Layer and ViewportIndex only with VK_EXT_shader_viewport_index_layer, and
++       3059 |         // PrimitiveId goes through a generic location nothing else uses.
++       3060 |         std::bitset<Shader::IR::NUM_GENERICS> vertex_generics, primitive_generics;
++       3061 |         for (const u32 line : mesh.mesh.vertex_lines) {
++       3062 |             const auto attribute{static_cast<Shader::IR::Attribute>(line)};
++       3063 |             if (Shader::IR::IsGeneric(attribute)) {
++       3064 |                 vertex_generics.set(Shader::IR::GenericAttributeIndex(attribute));
+  2075  3065 |     }
+- 2076       | 
+- 2077       |     if (parallel_translate_stages) try {
+- 2078       |         // QueueWork and pool allocation may throw after earlier tasks borrowed
+- 2079       |         // these locals. Drain before unwinding, without stopping persistent workers.
+- 2080       |         struct TranslationDrain {
+- 2081       |             Common::ThreadWorker& worker;
+- 2082       |             bool joined{};
+- 2083       |             ~TranslationDrain() {
+- 2084       |                 if (!joined) worker.WaitForRequests();
+  2085  3066 |             }
+- 2086       |         } translation_drain{shader_translation_workers};
+- 2087       |         // The GPU owner would otherwise sit idle until every stage completes.
+- 2088       |         // Queue the preceding stages, then translate the final active stage
+- 2089       |         // locally using exactly the same immutable snapshot and private pools.
+- 2090       |         size_t parallel_env_index{};
+- 2091       |         const size_t parallel_stage_count = envs.size();
+- 2092       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2093       |             if (key.unique_hashes[index] == 0) {
+- 2094       |                 continue;
++       3067 |         bool writes_primitive_id{};
++       3068 |         const char* primitive_reason{};
++       3069 |         for (const u32 line : mesh.mesh.primitive_lines) {
++       3070 |             const auto attribute{static_cast<Shader::IR::Attribute>(line)};
++       3071 |             if (Shader::IR::IsGeneric(attribute)) {
++       3072 |                 primitive_generics.set(Shader::IR::GenericAttributeIndex(attribute));
++       3073 |             } else if (attribute == Shader::IR::Attribute::PrimitiveId) {
++       3074 |                 writes_primitive_id = true;
++       3075 |             } else if ((attribute == Shader::IR::Attribute::Layer ||
++       3076 |                         attribute == Shader::IR::Attribute::ViewportIndex) &&
++       3077 |                        !profile.support_viewport_index_layer_non_geometry) {
++       3078 |                 primitive_reason =
++       3079 |                     "Layer or ViewportIndex without VK_EXT_shader_viewport_index_layer";
+  2095  3080 |             }
+- 2096       |             Shader::Environment* const env = envs[parallel_env_index++];
+- 2097       |             const u32 cfg_offset{
+- 2098       |                 static_cast<u32>(env->StartAddress() + sizeof(Shader::ProgramHeader))};
+- 2099       |             parallel_pools[index] = std::make_unique<ShaderPools>();
+- 2100       |             ShaderPools* const stage_pools = parallel_pools[index].get();
+- 2101       |             const bool exits_to_dispatcher = index == 0;
+- 2102       |             const size_t physical_stage = index <= 1 ? 0 : index - 1;
+- 2103       |             auto translate_stage =
+- 2104       |                 [this, env, stage_pools, cfg_offset, exits_to_dispatcher, index,
+- 2105       |                  physical_stage, snapshot_texture_base, snapshot_texture_limit,
+- 2106       |                  snapshot_via_header_index, snapshot_viewport_transform_state,
+- 2107       |                  &parallel_texture_snapshot, &parallel_cbuf_ptrs,
+- 2108       |                  &parallel_cbuf_sizes, &parallel_programs, &parallel_errors,
+- 2109       |                  &parallel_stage_costs] {
+- 2110       |                     struct ShaderMissStageScope {
+- 2111       |                         ::Eden::Performance::ShaderMissStageCosts* previous{
+- 2112       |                             ::Eden::Performance::shader_miss_stage_active};
+- 2113       |                         explicit ShaderMissStageScope(
+- 2114       |                             ::Eden::Performance::ShaderMissStageCosts* current) noexcept {
+- 2115       |                             ::Eden::Performance::shader_miss_stage_active = current;
+  2116  3081 |                         }
+- 2117       |                         ~ShaderMissStageScope() {
+- 2118       |                             ::Eden::Performance::shader_miss_stage_active = previous;
++       3082 |         if ((vertex_generics & primitive_generics).any()) {
++       3083 |             primitive_reason = "a generic written both per vertex and per primitive";
+  2119  3084 |                         }
+- 2120       |                     } shader_miss_stage_scope{&parallel_stage_costs[index]};
+- 2121       |                     struct ImmutableGuestSnapshotScope {
+- 2122       |                         ImmutableGuestSnapshotScope(
+- 2123       |                             GPUVAddr texture_base, u32 texture_limit,
+- 2124       |                             const std::vector<u8>& texture, bool via_header_index,
+- 2125       |                             u32 viewport_transform_state,
+- 2126       |                             const std::array<const u8*, Maxwell::MaxConstBuffers>& cbuf_data,
+- 2127       |                             const std::array<u32, Maxwell::MaxConstBuffers>& cbuf_sizes) {
+- 2128       |                             VideoCommon::SetShaderTranslationSnapshotForThread(
+- 2129       |                                 texture_base, texture_limit, texture.data(),
+- 2130       |                                 via_header_index, viewport_transform_state,
+- 2131       |                                 cbuf_data.data(), cbuf_sizes.data(),
+- 2132       |                                 Maxwell::MaxConstBuffers);
++       3085 |         const size_t pixel_index{static_cast<size_t>(Maxwell::ShaderType::Pixel)};
++       3086 |         const Shader::Info* const pixel{
++       3087 |             key.unique_hashes[pixel_index] != 0 ? &programs[pixel_index].info : nullptr};
++       3088 |         u32 primitive_id_location{~0U};
++       3089 |         if (writes_primitive_id && pixel && pixel->loads[Shader::IR::Attribute::PrimitiveId]) {
++       3090 |             const auto used{vertex_generics | primitive_generics};
++       3091 |             for (u32 index = 0; index < Shader::IR::NUM_GENERICS && !pixel->loads.Legacy();
++       3092 |                  ++index) {
++       3093 |                 if (!used[index] && !pixel->loads.Generic(index)) {
++       3094 |                     primitive_id_location = index;
++       3095 |                     break;
+  2133  3096 |                         }
+- 2134       |                         ~ImmutableGuestSnapshotScope() {
+- 2135       |                             VideoCommon::ClearShaderTranslationSnapshotForThread();
+  2136  3097 |                         }
+- 2137       |                     } immutable_snapshot_scope{
+- 2138       |                         snapshot_texture_base, snapshot_texture_limit,
+- 2139       |                         parallel_texture_snapshot, snapshot_via_header_index,
+- 2140       |                         snapshot_viewport_transform_state,
+- 2141       |                         parallel_cbuf_ptrs[physical_stage],
+- 2142       |                         parallel_cbuf_sizes[physical_stage]};
+- 2143       |                     try {
+- 2144       |                         ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2145       |                             ::Eden::Performance::CachePhase::ShaderCfg,
+- 2146       |                             ::Eden::Performance::detailed_gpu_profile.load(
+- 2147       |                                 std::memory_order_relaxed)};
+- 2148       |                         auto cfg_cost = Eden::Performance::VulkanTimer(20);
+- 2149       |                         Shader::Maxwell::Flow::CFG cfg(
+- 2150       |                             *env, stage_pools->flow_block, cfg_offset, exits_to_dispatcher);
+- 2151       |                         cfg_cost.reset();
+- 2152       |                         cfg_stage_cost.Stop();
+- 2153       |                         auto program = ([&] {
+- 2154       |                             auto cost = Eden::Performance::VulkanTimer(21);
+- 2155       |                             ::Eden::Performance::CachePhaseTimer stage_cost{
+- 2156       |                                 ::Eden::Performance::CachePhase::ShaderIr,
+- 2157       |                                 ::Eden::Performance::detailed_gpu_profile.load(
+- 2158       |                                     std::memory_order_relaxed)};
+- 2159       |                             return TranslateProgram(stage_pools->inst, stage_pools->block,
+- 2160       |                                                     *env, cfg, host_info);
+- 2161       |                         }());
+- 2162       |                         parallel_programs[index] =
+- 2163       |                             std::make_unique<Shader::IR::Program>(std::move(program));
+- 2164       |                     } catch (...) {
+- 2165       |                         parallel_errors[index] = std::current_exception();
++       3098 |             if (primitive_id_location == ~0U) {
++       3099 |                 primitive_reason = "no free generic location for PrimitiveId";
+  2166  3100 |                     }
+- 2167       |                 };
+- 2168       |             if (parallel_env_index == parallel_stage_count) {
+- 2169       |                 translate_stage();
+- 2170       |             } else {
+- 2171       |                 shader_translation_workers.QueueWork(std::move(translate_stage));
+  2172  3101 |             }
++       3102 |         if (primitive_reason) {
++       3103 |             LOG_WARNING(Render_Vulkan, "Mesh emulation skipped for pipeline {:016x}: {}", hash,
++       3104 |                         primitive_reason);
++       3105 |             return nullptr;
+  2173  3106 |         }
+- 2174       |         // The GPU owner intentionally waits here. Workers see only immutable
+- 2175       |         // host snapshots plus each environment's already-copied shader code;
+- 2176       |         // no worker traverses the live GMMU/PTE table.
+- 2177       |         shader_translation_workers.WaitForRequests();
+- 2178       |         translation_drain.joined = true;
+- 2179       |         if (auto* const owner_stage_costs =
+- 2180       |                 ::Eden::Performance::shader_miss_stage_active) {
+- 2181       |             for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
++       3107 |         // Task and mesh share the compute stage, including the fallback's storage buffers.
++       3108 |         // Shrink their arrays before counting resources and assigning auxiliary bindings.
++       3109 |         std::array<Shader::IR::Program*, 2> compute_programs{&programs[mesh_index], &programs[1]};
++       3110 |         Shader::Optimization::LimitSharedStageSampledTextureArrays(
++       3111 |             std::span{compute_programs.data(), has_task ? size_t{2} : size_t{1}}, host_info,
++       3112 |             has_task ? 4U : 1U);
++       3113 |         // Descriptor arrays occupy one binding, just as in DefineTextures and the layout builder.
++       3114 |         u32 output_binding{};
++       3115 |         u32 compute_storage_buffers{has_task ? 4U : 1U};
++       3116 |         u32 compute_sampled_images{};
++       3117 |         u32 compute_samplers{};
++       3118 |         u32 compute_resources{compute_storage_buffers};
++       3119 |         for (size_t index = 1; index < Maxwell::MaxShaderProgram; ++index) {
+  2182  3120 |                 if (key.unique_hashes[index] == 0) {
+  2183  3121 |                     continue;
+  2184  3122 |                 }
+- 2185       |                 // These are CPU-work totals, matching the former serial keyed
+- 2186       |                 // timers. The enclosing miss cpu_ns remains the elapsed critical
+- 2187       |                 // path and therefore reflects the parallel overlap.
+- 2188       |                 owner_stage_costs->cfg_ns += parallel_stage_costs[index].cfg_ns;
+- 2189       |                 owner_stage_costs->ir_ns += parallel_stage_costs[index].ir_ns;
++       3123 |             const Shader::Info& info{programs[index].info};
++       3124 |             const bool emulated{index == mesh_index || (has_task && index == 1)};
++       3125 |             const auto add = [&](const auto& descriptors, u32* category) {
++       3126 |                 const u32 count{Shader::NumDescriptors(descriptors)};
++       3127 |                 output_binding += static_cast<u32>(descriptors.size());
++       3128 |                 if (emulated) {
++       3129 |                     compute_resources += count;
++       3130 |                     if (category) {
++       3131 |                         *category += count;
+  2190  3132 |             }
+  2191  3133 |         }
+- 2192       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2193       |             if (parallel_errors[index]) {
+- 2194       |                 try {
+- 2195       |                     std::rethrow_exception(parallel_errors[index]);
+- 2196       |                 } catch (const std::out_of_range&) {
+- 2197       |                     // The immutable snapshot can reject a valid owner-thread read.
+- 2198       |                     throw ParallelGraphicsRetry{};
++       3134 |             };
++       3135 |             add(info.constant_buffer_descriptors, nullptr);
++       3136 |             add(info.storage_buffers_descriptors, &compute_storage_buffers);
++       3137 |             add(info.texture_buffer_descriptors, &compute_sampled_images);
++       3138 |             add(info.image_buffer_descriptors, nullptr);
++       3139 |             add(info.texture_descriptors, &compute_sampled_images);
++       3140 |             add(info.image_descriptors, nullptr);
++       3141 |             if (emulated) {
++       3142 |                 compute_samplers += Shader::NumDescriptors(info.texture_descriptors);
+  2199  3143 |                 }
+  2200  3144 |             }
+- 2201       |             if (key.unique_hashes[index] != 0 && !parallel_programs[index]) {
+- 2202       |                 throw ParallelGraphicsRetry{};
++       3145 |         if (compute_storage_buffers > device.GetMaxPerStageDescriptorStorageBuffers() ||
++       3146 |             compute_sampled_images > host_info.max_per_stage_descriptor_sampled_images ||
++       3147 |             compute_samplers > host_info.max_per_stage_descriptor_samplers ||
++       3148 |             compute_resources > host_info.max_per_stage_resources) {
++       3149 |             LOG_WARNING(
++       3150 |                 Render_Vulkan,
++       3151 |                 "Mesh emulation skipped: {} storage buffers, {} sampled images, {} samplers "
++       3152 |                 "and {} resources exceed the compute stage limits",
++       3153 |                 compute_storage_buffers, compute_sampled_images, compute_samplers,
++       3154 |                 compute_resources);
++       3155 |             return nullptr;
+  2203  3156 |             }
++       3157 |         mesh_emulation.emplace();
++       3158 |         mesh_emulation->output_binding = output_binding;
++       3159 |         mesh_emulation->primitive_id_location = primitive_id_location;
++       3160 |         if (has_task) {
++       3161 |             // After the output: the task payload, offset and argument buffers.
++       3162 |             mesh_emulation->has_task = true;
++       3163 |             mesh_emulation->mesh_stage = static_cast<u32>(mesh_index - 1);
++       3164 |             mesh_emulation->payload_stride = (std::max)(programs[1].mesh.payload_words, 2U);
++       3165 |             mesh_emulation->payload_binding = output_binding + 1;
++       3166 |             mesh_emulation->offsets_binding = output_binding + 2;
++       3167 |             mesh_emulation->args_binding = output_binding + 3;
++       3168 |             mesh_emulation->distribution_spirv =
++       3169 |                 Shader::Backend::SPIRV::EmitMeshEmulationDistribution(profile);
+  2204  3170 |         }
+- 2205       |     } catch (const std::bad_alloc&) {
+- 2206       |         // The drain guard has joined any accepted jobs before this handler.
+- 2207       |         throw ParallelGraphicsRetry{};
++       3171 |         mesh_emulation->block_words = Shader::Backend::SPIRV::MeshEmulationBlockWords(mesh.mesh);
++       3172 |         mesh_emulation->max_primitives = mesh.mesh.max_primitives;
++       3173 |         mesh_emulation->primitive_vertices = mesh.mesh.PrimitiveVertices();
++       3174 |         mesh_emulation->max_vertices = mesh.mesh.max_vertices;
++       3175 |         mesh_emulation->vertex_lines = static_cast<u32>(mesh.mesh.vertex_lines.size());
++       3176 |         for (u32 line = 0; line < mesh.mesh.vertex_lines.size(); ++line) {
++       3177 |             const u32 attribute{mesh.mesh.vertex_lines[line]};
++       3178 |             const u32 position_x{static_cast<u32>(Shader::IR::Attribute::PositionX)};
++       3179 |             if (attribute >= position_x && attribute < position_x + 4) {
++       3180 |                 mesh_emulation->position_lines[attribute - position_x] = line;
+  2208  3181 |     }
+- 2209       | #endif
+- 2210       | 
+- 2211       |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2212       |         const bool is_emulated_stage = layer_source_program != nullptr &&
+- 2213       |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
+- 2214       |         if (key.unique_hashes[index] == 0 && is_emulated_stage) {
+- 2215       |             auto topology = MaxwellToOutputTopology(key.state.topology);
+- 2216       |             programs[index] = GenerateGeometryPassthrough(pools.inst, pools.block, host_info,
+- 2217       |                                                           *layer_source_program, topology);
+- 2218       |             continue;
+  2219  3182 |         }
+- 2220       |         if (key.unique_hashes[index] == 0) {
++       3183 |         static std::atomic<u32> emulated{};
++       3184 |         if (const u32 count{++emulated}; count <= 64) {
++       3185 |             // The input region addresses the mesh program reads (0 is its workgroup index).
++       3186 |             std::string reads;
++       3187 |             for (const Shader::IR::Block* block : mesh.blocks) {
++       3188 |                 for (const Shader::IR::Inst& inst : block->Instructions()) {
++       3189 |                     if (inst.GetOpcode() != Shader::IR::Opcode::IsbeRead) {
+  2221  3190 |             continue;
+  2222  3191 |         }
+- 2223       |         Shader::Environment& env{*envs[env_index]};
+- 2224       |         ++env_index;
+- 2225       | 
+- 2226       | #ifdef PS5_NATIVE
+- 2227       |         if (parallel_translate_stages) {
+- 2228       |             if (!uses_vertex_a || index != 1) {
+- 2229       |                 programs[index] = std::move(*parallel_programs[index]);
+- 2230       |             } else {
+- 2231       |                 auto& program_va{programs[0]};
+- 2232       |                 auto program_vb{std::move(*parallel_programs[index])};
+- 2233       |                 programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);
++       3192 |                     const Shader::IR::Value address{inst.Arg(0)};
++       3193 |                     reads += address.IsImmediate() ? fmt::format(" {:#x}", address.U32())
++       3194 |                                                    : std::string{" dynamic"};
+  2234  3195 |             }
+- 2235       |         } else
+- 2236       | #endif
++       3196 |             }
++       3197 |             LOG_INFO(Render_Vulkan,
++       3198 |                      "Mesh emulation #{}: pipeline {:016x}, {} vertices x {} lines, {} triangles "
++       3199 |                      "per workgroup, output binding {}, task {} (payload {} words), input "
++       3200 |                      "reads:{}",
++       3201 |                      count, hash, mesh.mesh.max_vertices, mesh.mesh.vertex_lines.size(),
++       3202 |                      mesh.mesh.max_primitives, output_binding, has_task,
++       3203 |                      mesh_emulation->payload_stride, reads.empty() ? " none" : reads);
++       3204 |         }
++       3205 |     }
++       3206 |     // A tessellation pipeline the driver would refuse is skipped like a missing mesh pipeline:
++       3207 |     // the draw is dropped (see the pipeline check in the rasterizer) instead of failing the build.
+  2237  3208 |         {
+- 2238       |             const u32 cfg_offset{
+- 2239       |                 static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
+- 2240       |             ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2241       |                 ::Eden::Performance::CachePhase::ShaderCfg,
+- 2242       |                 ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 2243       |             auto cfg_cost = Eden::Performance::VulkanTimer(20);
+- 2244       |             Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);
+- 2245       |             cfg_cost.reset();
+- 2246       |             cfg_stage_cost.Stop();
+- 2247       |             if (!uses_vertex_a || index != 1) {
+- 2248       |                 // Normal path
+- 2249       |                 programs[index] = ([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }());
+- 2250       |             } else {
+- 2251       |                 // VertexB path when VertexA is present.
+- 2252       |                 auto& program_va{programs[0]};
+- 2253       |                 auto program_vb{([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }())};
+- 2254       |                 programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);
++       3209 |         const Shader::IR::Program* control{};
++       3210 |         const Shader::IR::Program* evaluation{};
++       3211 |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
++       3212 |             if (key.unique_hashes[index] == 0) {
++       3213 |                 continue;
+  2255  3214 |             }
++       3215 |             if (programs[index].stage == Shader::Stage::TessellationControl) {
++       3216 |                 control = &programs[index];
++       3217 |             } else if (programs[index].stage == Shader::Stage::TessellationEval) {
++       3218 |                 evaluation = &programs[index];
+  2256  3219 |         }
+- 2257       | 
+- 2258       |         // Avoid native subgroup shuffle for the known PositionXY fragment
+- 2259       |         // pattern on non-NVIDIA drivers. Desktop/mobile preserve Eden #4503's
+- 2260       |         // fail-closed skip. PS5 instead uses the newer upstream broadcast
+- 2261       |         // fallback so the whole guest draw is not silently discarded.
+- 2262       |         if (device.GetDriverID() != VK_DRIVER_ID_NVIDIA_PROPRIETARY &&
+- 2263       |             Shader::Optimization::HasBrokenPattern(programs[index])) {
+- 2264       | #ifdef PS5_NATIVE
+- 2265       |             fragment_shuffle_fallback[index] = true;
+- 2266       |             LOG_WARNING(Render_Vulkan,
+- 2267       |                         "0x{:016x}: using PS5 fragment shuffle fallback",
+- 2268       |                         key.unique_hashes[index]);
+- 2269       |             static std::atomic<unsigned> fragment_shuffle_witness{};
+- 2270       |             const unsigned fallback_witness =
+- 2271       |                 fragment_shuffle_witness.fetch_add(1, std::memory_order_relaxed) + 1;
+- 2272       |             if (fallback_witness <= 8) {
+- 2273       |                 std::fprintf(stderr,
+- 2274       |                              "EDEN_FRAGMENT_SHUFFLE_FALLBACK count=%u hash=0x%016llx\n",
+- 2275       |                              fallback_witness,
+- 2276       |                              static_cast<unsigned long long>(key.unique_hashes[index]));
+  2277  3220 |             }
+- 2278       | #else
++       3221 |         if (control != nullptr || evaluation != nullptr) {
++       3222 |             const u32 max_patch_size = device.GetMaxTessellationPatchSize();
++       3223 |             const char* reason = nullptr;
++       3224 |             if (!device.IsTessellationSupported()) {
++       3225 |                 reason = "the device has no tessellation shaders";
++       3226 |             } else if (control == nullptr || evaluation == nullptr) {
++       3227 |                 reason = "it has only one of the control and evaluation stages";
++       3228 |             } else if (control->invocations == 0 || control->invocations > max_patch_size) {
++       3229 |                 reason = "the control shader's output vertex count is out of range";
++       3230 |             }
++       3231 |             if (reason != nullptr) {
+  2279  3232 |             LOG_WARNING(Render_Vulkan,
+- 2280       |                         "0x{:016x}: skipping fragment shuffle with known driver issue",
+- 2281       |                         key.unique_hashes[index]);
++       3233 |                             "Skipping tessellation pipeline: {} (tcs={} tes={}, tcs output "
++       3234 |                             "vertices {}, patch control points {}, device max patch size {})",
++       3235 |                             reason, control != nullptr, evaluation != nullptr,
++       3236 |                             control != nullptr ? control->invocations : 0,
++       3237 |                             key.state.patch_control_points_minus_one.Value() + 1, max_patch_size);
+  2282  3238 |             return nullptr;
+- 2283       | #endif
+  2284  3239 |         }
+- 2285       | 
+- 2286       |         if (Settings::values.dump_guest_shaders) {
+- 2287       |             env.Dump(hash, key.unique_hashes[index]);
+  2288  3240 |         }
+- 2289       | 
+- 2290       |         if (programs[index].info.requires_layer_emulation) {
+- 2291       |             layer_source_program = &programs[index];
+  2292  3241 |         }
++       3242 |     // Each stage stays within the limit on its own; together they share one descriptor set.
++       3243 |     if (const u32 set_limit = host_info.max_descriptor_set_storage_buffers; set_limit != 0) {
++       3244 |         size_t storage_buffers{};
++       3245 |         for (size_t index = uses_vertex_a && uses_vertex_b ? 1 : 0;
++       3246 |              index < Maxwell::MaxShaderProgram; ++index) {
++       3247 |             if (key.unique_hashes[index] != 0) {
++       3248 |                 storage_buffers +=
++       3249 |                     Shader::NumDescriptors(programs[index].info.storage_buffers_descriptors);
+  2293  3250 |     }
+- 2294       |     if (uses_vertex_b) {
+- 2295       |         EdenRecordAttributeless({key.unique_hashes[0], key.unique_hashes[1]}, programs[1].info);
+  2296  3251 |     }
++       3252 |         // The fallback binds its output buffer (and, for task draws, payload,
++       3253 |         // offsets and indirect arguments) into the same descriptor set.
++       3254 |         const size_t auxiliary_buffers{
++       3255 |             mesh_emulation ? (mesh_emulation->has_task ? 4U : 1U) : 0U};
++       3256 |         if (!FitsStorageBufferSetLimit(storage_buffers, auxiliary_buffers, set_limit)) {
++       3257 |             throw Shader::NotImplementedException(
++       3258 |                 "Binding {} storage buffers ({} for mesh fallback) to a descriptor set limited to {}",
++       3259 |                 storage_buffers + auxiliary_buffers, auxiliary_buffers, set_limit);
++       3260 |         }
++       3261 |     }
++       3262 |     u64 deferred_ir_bytes = 0;
++       3263 |     std::unique_ptr<QueuedIrBudget::Reservation> ir_reservation;
++       3264 |     if (emit_pools) {
++       3265 |         deferred_ir_bytes = IrBytes(programs);
++       3266 |         ir_reservation = queued_ir.TryReserve(deferred_ir_bytes);
++       3267 |     }
++       3268 |     const bool defer_emission = ir_reservation != nullptr;
+  2297  3269 |     std::array<const Shader::Info*, Maxwell::MaxShaderStage> infos{};
+- 2298       |     std::array<vk::ShaderModule, Maxwell::MaxShaderStage> modules;
++       3270 |     std::array<std::vector<u32>, Maxwell::MaxShaderStage> stage_spirv;
++       3271 |     std::array<std::optional<Shader::RuntimeInfo>, Maxwell::MaxShaderStage> deferred_runtime_infos;
++       3272 |     std::array<std::vector<u32>, Maxwell::MaxShaderStage> reference_spirv;
+  2299  3273 | 
+  2300  3274 |     const Shader::IR::Program* previous_stage{};
+  2301  3275 |     Shader::Backend::Bindings binding;
+  2302  3276 |     for (size_t index = uses_vertex_a && uses_vertex_b ? 1 : 0; index < Maxwell::MaxShaderProgram;
+  2303  3277 |          ++index) {
+  2304  3278 |         const bool is_emulated_stage = layer_source_program != nullptr &&
+  2305  3279 |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
+  2306  3280 |         if (key.unique_hashes[index] == 0 && !is_emulated_stage) {
+  2307  3281 |             continue;
+  2308  3282 |         }
+  2309  3283 |         UNIMPLEMENTED_IF(index == 0);
+  2310  3284 | 
+  2311  3285 |         Shader::IR::Program& program{programs[index]};
+  2312  3286 |         const size_t stage_index{index - 1};
+  2313  3287 |         infos[stage_index] = &program.info;
++       3288 |         if (t_dropped_unmapped_pointer_word != nullptr &&
++       3289 |             program.info.binds_unmapped_pointer_word) {
++       3290 |             *t_dropped_unmapped_pointer_word = true;
++       3291 |             return nullptr;
++       3292 |         }
+  2314  3293 | 
+- 2315       |         const auto runtime_info{MakeRuntimeInfo(programs, key, program, previous_stage, device)};
++       3294 |         if (program.is_geometry_passthrough && previous_stage != nullptr &&
++       3295 |             !host_info.support_geometry_shader_passthrough) {
++       3296 |             // Emulated passthrough: only the previous stage's outputs can pass through. Copying all
++       3297 |             // 32 generics exceeds AMD's 128 output components, and amdvlk fail-fasts instead of
++       3298 |             // returning an error. The previous stage's legacy outputs are generics by now, so the
++       3299 |             // ones they were mapped to are kept.
++       3300 |             Shader::Maxwell::TrimGeometryPassthrough(program, previous_stage->info.stores);
++       3301 |         }
++       3302 |         auto runtime_info{MakeRuntimeInfo(programs, key, program, previous_stage, device)};
++       3303 |         if (mesh_emulation && (program.stage == Shader::Stage::Mesh ||
++       3304 |                                program.stage == Shader::Stage::Task)) {
++       3305 |             runtime_info.mesh_as_compute = true;
++       3306 |             runtime_info.mesh_output_binding = mesh_emulation->output_binding;
++       3307 |             if (mesh_emulation->has_task) {
++       3308 |                 runtime_info.mesh_task_payload_binding = mesh_emulation->payload_binding;
++       3309 |                 runtime_info.mesh_task_offsets_binding = mesh_emulation->offsets_binding;
++       3310 |                 runtime_info.mesh_task_args_binding = mesh_emulation->args_binding;
++       3311 |                 runtime_info.mesh_task_payload_stride = mesh_emulation->payload_stride;
++       3312 |             }
++       3313 |             if (program.stage == Shader::Stage::Mesh) {
++       3314 |                 mesh_emulation->vertex_spirv = Shader::Backend::SPIRV::EmitMeshEmulationVertex(
++       3315 |                     profile, program.mesh, mesh_emulation->output_binding,
++       3316 |                     mesh_emulation->has_task ? mesh_emulation->args_binding : ~0U,
++       3317 |                     runtime_info.convert_depth_mode && !profile.support_native_ndc,
++       3318 |                     runtime_info.fixed_state_point_size.value_or(1.0f),
++       3319 |                     mesh_emulation->primitive_id_location);
++       3320 |             }
++       3321 |         }
++       3322 |         if (mesh_emulation && program.stage == Shader::Stage::Fragment) {
++       3323 |             runtime_info.per_primitive_flat = true;
++       3324 |             runtime_info.primitive_id_location = mesh_emulation->primitive_id_location;
++       3325 |         }
+  2316  3326 |         ConvertLegacyToGeneric(program, runtime_info);
+- 2317       |         auto emit_profile = profile;
+- 2318       | #ifdef PS5_NATIVE
+- 2319       |         emit_profile.has_broken_spirv_fragment_shuffle = fragment_shuffle_fallback[index];
+- 2320       | #endif
+- 2321       |         const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(emit_profile, runtime_info, program, binding); }())};
+- 2322       |         device.SaveShader(code);
+- 2323       |         modules[stage_index] = ([&] { auto cost = Eden::Performance::VulkanTimer(23); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderModule, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return BuildShader(device, code); }());
+- 2324       | 
+- 2325       |         // Text log + .spv dump. Text log is gated by gpu_log_level != Off; .spv dump
+- 2326       |         // is independent and gated only by gpu_log_shader_dumps.
+- 2327       |         const bool should_log = GPU::Logging::IsActive();
+- 2328       |         const bool should_dump = Settings::values.gpu_log_shader_dumps.GetValue();
+- 2329       |         if (should_log || should_dump) {
+- 2330       |             static constexpr std::array stage_names{"vertex", "tess_control", "tess_eval", "geometry", "fragment"};
+- 2331       |             const std::string shader_name = fmt::format("shader_{:016x}_{}", key.unique_hashes[index], stage_names[stage_index]);
+- 2332       |             if (should_log) {
+- 2333       |                 const std::string shader_info = fmt::format("SPIR-V size: {} bytes, hash: {:016x}",
+- 2334       |                     code.size() * sizeof(u32), key.unique_hashes[index]);
+- 2335       |                 GPU::Logging::GPULogger::GetInstance().LogShaderCompilation(shader_name, shader_info);
++       3327 |         if (index == static_cast<size_t>(Maxwell::ShaderType::Geometry)) {
++       3328 |             PruneUnreadGeometryOutputs(
++       3329 |                 program, programs[static_cast<size_t>(Maxwell::ShaderType::Pixel)], key,
++       3330 |                 device.IsNvGeometryShaderPassthroughSupported());
+  2336  3331 |             }
+- 2337       |             if (should_dump) {
+- 2338       |                 GPU::Logging::DumpSpirvShader(key.unique_hashes[index],
+- 2339       |                                               std::span<const u32>(code.data(), code.size()));
++       3332 |         // EDEN_NX2_MESH_EMULATION_DUMP=<dir>: write the emulation's vertex shader for spirv-val.
++       3333 |         // (Emitting the mesh program a second time here to dump its compute shader crashed the
++       3334 |         // build that followed, so only the vertex shader is written.)
++       3335 |         if (mesh_emulation && program.stage == Shader::Stage::Mesh) {
++       3336 |             if (const char* const dump{std::getenv("EDEN_NX2_MESH_EMULATION_DUMP")}) {
++       3337 |                 const auto& code{mesh_emulation->vertex_spirv};
++       3338 |                 std::ofstream file{fmt::format("{}/{:016x}.vert.spv", dump, hash),
++       3339 |                                    std::ios::binary};
++       3340 |                 file.write(reinterpret_cast<const char*>(code.data()),
++       3341 |                            static_cast<std::streamsize>(code.size() * sizeof(u32)));
+  2340  3342 |             }
+  2341  3343 |         }
+- 2342       | 
+- 2343       |         if (device.HasDebuggingToolAttached()) {
+- 2344       |             const std::string name{fmt::format("Shader {:016x}", key.unique_hashes[index])};
+- 2345       |             modules[stage_index].SetObjectNameEXT(name.c_str());
++       3344 |         if (defer_emission) {
++       3345 |             deferred_runtime_infos[stage_index] = runtime_info;
++       3346 |             if (VideoCommon::Nx2Perf::Verify()) {
++       3347 |                 reference_spirv[stage_index] = EmitSPIRV(profile, runtime_info, program, binding);
+  2346  3348 |         }
++       3349 |         } else {
++       3350 |             const auto begin = std::chrono::steady_clock::now();
++       3351 |             stage_spirv[stage_index] = EmitStageSpirv(device, profile, runtime_info, program,
++       3352 |                                                       binding, key.unique_hashes[index],
++       3353 |                                                       stage_index);
++       3354 |             if (build_in_parallel) {
++       3355 |                 AddRuntimeSpirvTime(0, begin);
++       3356 |             }
++       3357 |         }
+  2347  3358 |         previous_stage = &program;
+  2348  3359 |     }
+- 2349       |     Common::ThreadWorker* const thread_worker{build_in_parallel ? &workers : nullptr};
+- 2350       |     return std::make_unique<GraphicsPipeline>(
+- 2351       |         scheduler, buffer_cache, texture_cache, vulkan_pipeline_cache, &shader_notify, device,
+- 2352       |         descriptor_pool, guest_descriptor_queue, descriptor_buffer_ring, thread_worker, statistics,
+- 2353       |         render_pass_cache, key, std::move(modules), infos);
++       3360 |     std::function<std::array<std::vector<u32>, Maxwell::MaxShaderStage>()> emit_stages;
++       3361 |     if (defer_emission) {
++       3362 |         auto job = std::make_shared<DeferredStages>();
++       3363 |         job->reservation = std::move(ir_reservation);
++       3364 |         job->pools = emit_pools;
++       3365 |         job->stage_pools = std::move(stage_pools);
++       3366 |         stage_pools.clear();
++       3367 |         job->programs = std::move(programs);
++       3368 |         job->runtime_infos = std::move(deferred_runtime_infos);
++       3369 |         job->reference_spirv = std::move(reference_spirv);
++       3370 |         for (size_t stage = 0; stage < infos.size(); ++stage) {
++       3371 |             if (infos[stage]) {
++       3372 |                 infos[stage] = &job->programs[stage + 1].info;
++       3373 |             }
++       3374 |         }
++       3375 |         emit_stages = [this, job = std::move(job), hashes = key.unique_hashes]() mutable {
++       3376 |             const auto begin = std::chrono::steady_clock::now();
++       3377 |             std::array<std::vector<u32>, Maxwell::MaxShaderStage> spirv;
++       3378 |             Shader::Backend::Bindings stage_binding;
++       3379 |             for (size_t stage = 0; stage < spirv.size(); ++stage) {
++       3380 |                 if (job->runtime_infos[stage]) {
++       3381 |                     spirv[stage] =
++       3382 |                         EmitStageSpirv(device, profile, *job->runtime_infos[stage],
++       3383 |                                        job->programs[stage + 1], stage_binding, hashes[stage + 1],
++       3384 |                                        stage, job->reference_spirv[stage]);
++       3385 |                 }
++       3386 |             }
++       3387 |             auto completed_pools = std::move(job->pools);
++       3388 |             auto completed_stages = std::move(job->stage_pools);
++       3389 |             job.reset();
++       3390 |             ReturnPools(std::move(completed_pools));
++       3391 |             for (std::shared_ptr<ShaderPools>& stage : completed_stages) {
++       3392 |                 ReturnPools(std::move(stage));
++       3393 |             }
++       3394 |             AddRuntimeSpirvTime(1, begin);
++       3395 |             return spirv;
++       3396 |         };
++       3397 |     }
++       3398 |     static_assert(VideoCommon::EvictedPointerSlots::NumPrograms == Maxwell::MaxShaderProgram);
++       3399 |     VideoCommon::EvictedPointerSlots::Slots mapped_pointers;
++       3400 |     for (size_t index = 0, mapped_env = 0; index < Maxwell::MaxShaderProgram; ++index) {
++       3401 |         if (key.unique_hashes[index] != 0) {
++       3402 |             mapped_pointers[index] = envs[mapped_env++]->MappedStoragePointerKeys();
++       3403 |         }
++       3404 |     }
++       3405 |     auto pipeline = std::make_unique<GraphicsPipeline>(
++       3406 |         scheduler, buffer_cache, texture_cache, vulkan_pipeline_cache, pipeline_binaries.get(),
++       3407 |         &shader_notify, device, descriptor_pool, guest_descriptor_queue, descriptor_buffer_ring,
++       3408 |         BuildQueue(build_in_parallel, defer_emission ? deferred_ir_bytes : 0), statistics,
++       3409 |         render_pass_cache, key, std::move(stage_spirv), infos, std::move(emit_stages),
++       3410 |         std::move(mesh_emulation));
++       3411 |     pipeline->SetMappedPointers(std::move(mapped_pointers));
++       3412 |     return pipeline;
+  2354  3413 | 
+  2355  3414 | } catch (const Shader::Exception& exception) {
+- 2356       | #ifdef PS5_NATIVE
+- 2357       |     // Failed first-use shaders can be retried. Do not rebuild their CFGs or
+- 2358       |     // write .ash dumps on the normal quiet PS5 path: this is optional debug
+- 2359       |     // work on the same GPU-owner thread that already failed translation.
+- 2360       |     if (Settings::values.dump_guest_shaders) {
+- 2361       |         try {
+- 2362       | #endif
+  2363  3415 |     auto hash = key.Hash();
+  2364  3416 |     size_t env_index{0};
+  2365  3417 |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+  2366  3418 |         if (key.unique_hashes[index] == 0) {
+  2367  3419 |             continue;
+  2368  3420 |         }
+  2369  3421 |         Shader::Environment& env{*envs[env_index]};
+  2370  3422 |         ++env_index;
+  2371  3423 | 
+  2372  3424 |         const u32 cfg_offset{static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
+- 2373       |         ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2374       |             ::Eden::Performance::CachePhase::ShaderCfg,
+- 2375       |             ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 2376       |         auto cfg_cost = Eden::Performance::VulkanTimer(20);
++       3425 |         try {
++       3426 |             // Walks the program for the dump; the one that failed may fail here again, and an
++       3427 |             // exception leaving this handler would end the process.
+  2377  3428 |         Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);
+- 2378       |         cfg_cost.reset();
+- 2379       |         cfg_stage_cost.Stop();
+- 2380       |         env.Dump(hash, key.unique_hashes[index]);
+- 2381       |     }
+- 2382       | #ifdef PS5_NATIVE
+- 2383       |         } catch (const std::exception& dump_error) {
+- 2384       |             // Preserve the original shader failure even if the diagnostic
+- 2385       |             // CFG pass or the dump file itself fails.
+- 2386       |             LOG_WARNING(Render_Vulkan, "Failed shader diagnostic dump: {}", dump_error.what());
+- 2387       |         } catch (...) {
+- 2388       |             LOG_WARNING(Render_Vulkan, "Failed shader diagnostic dump: unknown exception");
++       3429 |         } catch (const Shader::Exception&) {
+  2389  3430 |         }
++       3431 |         env.Dump(hash, key.unique_hashes[index]);
+  2390  3432 |     }
+- 2391       | #endif
+  2392  3433 |     LOG_ERROR(Render_Vulkan, "{}", exception.what());
+  2393  3434 |     return nullptr;
+  2394  3435 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 2409–2890 : 111 alignées, 384 propres Encore, 371 propres upstream</summary>
+
+Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/renderer_vulkan/vk_pipeline_cache.cpp#L2409-L2890).
+
+```diff
+  1900  2409 | std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline(
+  1901  2410 |     ShaderPools& pools, const GraphicsPipelineCacheKey& key,
+  1902  2411 |     std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,
+- 1903       |     bool build_in_parallel, bool parallel_translate_stages) try {
+- 1904       | #ifdef PS5_NATIVE
+- 1905       |     // The optional optimizer must yield to foreground graphics translation
+- 1906       |     // even before the first-use Vulkan pipeline reaches the worker queue.
+- 1907       |     // Disk prewarm passes build_in_parallel=false and remains uncounted.
+- 1908       |     GraphicsTranslationPriorityScope translation_priority{
+- 1909       |         build_in_parallel && ::Eden::DevVulkan::fast_first_pipelines};
+- 1910       | #endif
++       2412 |     bool build_in_parallel, std::shared_ptr<ShaderPools> emit_pools,
++       2413 |     ParallelTranslation* parallel) try {
+  1911  2414 |     auto hash = key.Hash();
+  1912  2415 |     LOG_DEBUG(Render_Vulkan, "{:#016x}", hash);
++       2416 |     // Declared before the programs, whose IR they hold
++       2417 |     std::vector<std::shared_ptr<ShaderPools>> stage_pools;
++       2418 |     SCOPE_EXIT {
++       2419 |         for (std::shared_ptr<ShaderPools>& stage : stage_pools) {
++       2420 |             ReturnPools(std::move(stage));
++       2421 |         }
++       2422 |     };
++       2423 |     std::vector<VideoCommon::StageTranslation> translations;
++       2424 |     std::array<VideoCommon::StageTranslation*, Maxwell::MaxShaderProgram> translated{};
++       2425 |     if (parallel) {
++       2426 |         translations.reserve(envs.size());
++       2427 |         size_t stage_env{};
++       2428 |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
++       2429 |             if (key.unique_hashes[index] == 0) {
++       2430 |                 continue;
++       2431 |             }
++       2432 |             Shader::Environment& env{*envs[stage_env++]};
++       2433 |             if (index == static_cast<size_t>(Maxwell::ShaderType::Geometry) &&
++       2434 |                 !device.IsGeometryShaderSupported() && env.IsNativeProgram()) {
++       2435 |                 continue; // The pipeline is skipped below before this stage is needed
++       2436 |             }
++       2437 |             translations.push_back({
++       2438 |                 .env = &env,
++       2439 |                 .pools = stage_pools.emplace_back(TakeSparePools()).get(),
++       2440 |                 .cfg_offset = static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader)),
++       2441 |                 .exits_to_dispatcher = index == 0,
++       2442 |             });
++       2443 |             translated[index] = &translations.back();
++       2444 |         }
++       2445 |         const auto begin = std::chrono::steady_clock::now();
++       2446 |         VideoCommon::TranslateStages(*shader_jobs, translations, host_info);
++       2447 |         parallel->wait += std::chrono::steady_clock::now() - begin;
++       2448 |         for (const VideoCommon::StageTranslation& translation : translations) {
++       2449 |             parallel->stages += translation.time;
++       2450 |         }
++       2451 |         parallel->count = translations.size();
++       2452 |     }
+  1913  2453 |     size_t env_index{0};
+  1914  2454 |     std::array<Shader::IR::Program, Maxwell::MaxShaderProgram> programs;
+- 1915       | #ifdef PS5_NATIVE
+- 1916       |     // Eden #4503 drops known-broken non-NVIDIA fragment shaders entirely.
+- 1917       |     // On PS5 that visibly removes guest draws. Keep the exact predicate but
+- 1918       |     // route only matching programs through the newer Lichii/Eglantine
+- 1919       |     // broadcast/select SPIR-V fallback.
+- 1920       |     std::array<bool, Maxwell::MaxShaderProgram> fragment_shuffle_fallback{};
+- 1921       | #endif
+  1922  2455 |     const bool uses_vertex_a{key.unique_hashes[0] != 0};
+  1923  2456 |     const bool uses_vertex_b{key.unique_hashes[1] != 0};
+  1924  2457 | 
+  1925  2458 |     // Layer passthrough generation for devices without VK_EXT_shader_viewport_index_layer
+  1926  2459 |     Shader::IR::Program* layer_source_program{};
+- 1927       | 
+- 1928       | #ifdef PS5_NATIVE
+- 1929       |     // Lichii's stage-parallel model adapted to Encore's active renderer:
+- 1930       |     // every stage owns its IR pools until SPIR-V emission has consumed the
+- 1931       |     // resulting Program. Only NS1 first-use calls can enable this flag; NS2
+- 1932       |     // native keeps its authenticated GMMU/channel translation synchronous.
+- 1933       |     std::array<std::unique_ptr<ShaderPools>, Maxwell::MaxShaderProgram> parallel_pools{};
+- 1934       |     std::array<std::unique_ptr<Shader::IR::Program>, Maxwell::MaxShaderProgram>
+- 1935       |         parallel_programs{};
+- 1936       |     std::array<std::exception_ptr, Maxwell::MaxShaderProgram> parallel_errors{};
+- 1937       |     // CachePhaseTimer's per-key shader attribution is intentionally thread-local.
+- 1938       |     // Give every stage worker a private accumulator, then merge after the owner
+- 1939       |     // joins them so EDEN_VULKAN_SHADER_MISS keeps the pre-parallel accounting.
+- 1940       |     std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>
+- 1941       |         parallel_stage_costs{};
+- 1942       | 
+- 1943       |     // Worker translation must never traverse the live guest GMMU. Snapshot
+- 1944       |     // every guest byte that CFG/IR may consult while still on the GPU owner:
+- 1945       |     // shader code is already copied by GetGraphicsEnvironments/SetCachedSize,
+- 1946       |     // and this block captures the TIC pool plus enabled per-stage CBUFs.
+- 1947       |     constexpr u32 DisabledSnapshotCbuf = (std::numeric_limits<u32>::max)();
+- 1948       |     constexpr u64 MaxTextureSnapshotBytes = u64{4} << 20;
+- 1949       |     constexpr u64 MaxCbufSnapshotBytes =
+- 1950       |         u64{Maxwell::MaxShaderStage} * Maxwell::MaxConstBuffers *
+- 1951       |         Maxwell::MaxConstBufferSize;
+- 1952       |     constexpr u64 MaxShaderSnapshotBytes =
+- 1953       |         MaxTextureSnapshotBytes + MaxCbufSnapshotBytes;
+- 1954       |     std::vector<u8> parallel_texture_snapshot;
+- 1955       |     std::array<std::array<std::vector<u8>, Maxwell::MaxConstBuffers>,
+- 1956       |                Maxwell::MaxShaderStage>
+- 1957       |         parallel_cbuf_storage{};
+- 1958       |     std::array<std::array<const u8*, Maxwell::MaxConstBuffers>,
+- 1959       |                Maxwell::MaxShaderStage>
+- 1960       |         parallel_cbuf_ptrs{};
+- 1961       |     std::array<std::array<u32, Maxwell::MaxConstBuffers>,
+- 1962       |                Maxwell::MaxShaderStage>
+- 1963       |         parallel_cbuf_sizes{};
+- 1964       |     for (auto& sizes : parallel_cbuf_sizes) {
+- 1965       |         sizes.fill(DisabledSnapshotCbuf);
+- 1966       |     }
+- 1967       | 
+- 1968       |     GPUVAddr snapshot_texture_base{};
+- 1969       |     u32 snapshot_texture_limit{};
+- 1970       |     bool snapshot_via_header_index{};
+- 1971       |     u32 snapshot_viewport_transform_state{};
+- 1972       | 
+- 1973       |     if (parallel_translate_stages) {
+- 1974       |         for (Shader::Environment* const env : envs) {
+- 1975       |             // HLE replacement lookup still belongs to Maxwell3D::replace_table.
+- 1976       |             // Keep those rare shaders on the GPU owner until that table has an
+- 1977       |             // immutable per-environment representation too.
+- 1978       |             if (env->HasHLEMacroState()) {
+- 1979       |                 parallel_translate_stages = false;
+- 1980       |                 break;
+- 1981       |             }
+- 1982       |         }
+- 1983       |     }
++       2460 |     bool mesh_unsupported{};
+  1984  2461 | 
+- 1985       |     if (parallel_translate_stages) {
+- 1986       |         // Disk prewarm uses FileEnvironment and can run without a bound
+- 1987       |         // graphics channel. Only the live NS1 owner may read these registers.
+- 1988       |         const auto& snapshot_tex_header = maxwell3d->regs.tex_header;
+- 1989       |         snapshot_texture_base = snapshot_tex_header.Address();
+- 1990       |         snapshot_texture_limit = static_cast<u32>(snapshot_tex_header.limit);
+- 1991       |         snapshot_via_header_index =
+- 1992       |             maxwell3d->regs.sampler_binding == Maxwell::SamplerBinding::ViaHeaderBinding;
+- 1993       |         snapshot_viewport_transform_state =
+- 1994       |             maxwell3d->regs.viewport_scale_offset_enabled;
+- 1995       |         const u64 snapshot_texture_bytes =
+- 1996       |             (u64{snapshot_texture_limit} + 1) * sizeof(Tegra::Texture::TICEntry);
+- 1997       |         bool snapshot_ok =
+- 1998       |             snapshot_texture_bytes <= MaxTextureSnapshotBytes &&
+- 1999       |             snapshot_texture_base <=
+- 2000       |                 (std::numeric_limits<GPUVAddr>::max)() - (snapshot_texture_bytes - 1) &&
+- 2001       |             gpu_memory->IsWithinGPUAddressRange(
+- 2002       |                 snapshot_texture_base + snapshot_texture_bytes - 1);
+- 2003       |         u64 snapshot_bytes = snapshot_texture_bytes;
+- 2004       |         std::array<bool, Maxwell::MaxShaderStage> stage_needed{};
+  2005  2462 |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2006       |             if (key.unique_hashes[index] == 0) {
++       2463 |         const bool is_emulated_stage = layer_source_program != nullptr &&
++       2464 |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
++       2465 |         if (key.unique_hashes[index] == 0 && is_emulated_stage) {
++       2466 |             auto topology = MaxwellToOutputTopology(key.state.topology);
++       2467 |             programs[index] = GenerateGeometryPassthrough(pools.inst, pools.block, host_info,
++       2468 |                                                           *layer_source_program, topology);
+  2007  2469 |                 continue;
+  2008  2470 |             }
+- 2009       |             const size_t physical_stage = index <= 1 ? 0 : index - 1;
+- 2010       |             stage_needed[physical_stage] = true;
+- 2011       |         }
+- 2012       | 
+- 2013       |         for (size_t stage = 0; snapshot_ok && stage < Maxwell::MaxShaderStage; ++stage) {
+- 2014       |             if (!stage_needed[stage]) {
++       2471 |         if (key.unique_hashes[index] == 0) {
+  2015  2472 |                 continue;
+  2016  2473 |             }
+- 2017       |             const auto& cbufs = maxwell3d->state.shader_stages[stage].const_buffers;
+- 2018       |             for (size_t bank = 0; bank < Maxwell::MaxConstBuffers; ++bank) {
+- 2019       |                 const auto& cbuf = cbufs[bank];
+- 2020       |                 if (!cbuf.enabled) {
+- 2021       |                     continue;
++       2474 |         Shader::Environment& env{*envs[env_index]};
++       2475 |         ++env_index;
++       2476 |         if (index == static_cast<size_t>(Maxwell::ShaderType::Geometry) &&
++       2477 |             !device.IsGeometryShaderSupported() && env.IsNativeProgram()) {
++       2478 |             // A native (Switch 2) geometry program on a device without geometry shaders: the
++       2479 |             // pipeline cannot run it, so its draws are skipped.
++       2480 |             static std::atomic<bool> logged{};
++       2481 |             if (!logged.exchange(true)) {
++       2482 |                 LOG_WARNING(Render_Vulkan, "Skipping native geometry shader pipelines: the device has no geometry shaders");
+  2022  2483 |                 }
+- 2023       |                 if (cbuf.size > Maxwell::MaxConstBufferSize ||
+- 2024       |                     snapshot_bytes > MaxShaderSnapshotBytes - cbuf.size) {
+- 2025       |                     snapshot_ok = false;
+- 2026       |                     break;
++       2484 |             return nullptr;
+  2027  2485 |                 }
+- 2028       |                 parallel_cbuf_sizes[stage][bank] = cbuf.size;
+- 2029       |                 snapshot_bytes += cbuf.size;
+- 2030       |                 if (cbuf.size == 0) {
+- 2031       |                     continue;
++       2486 |         // Without VK_EXT_mesh_shader the driver cannot build a task/mesh pipeline; the draw is
++       2487 |         // skipped (see the pipeline check in the rasterizer). The stages are still translated
++       2488 |         // so the skipped pipeline's needs can be reported below.
++       2489 |         if ((env.ShaderStage() == Shader::Stage::Task ||
++       2490 |              env.ShaderStage() == Shader::Stage::Mesh) &&
++       2491 |             !device.IsExtMeshShaderSupported()) {
++       2492 |             static std::atomic<bool> logged{};
++       2493 |             if (!logged.exchange(true, std::memory_order_relaxed)) {
++       2494 |                 LOG_WARNING(Render_Vulkan,
++       2495 |                             "{} has no VK_EXT_mesh_shader: pipelines with task/mesh shaders are "
++       2496 |                             "skipped, so the geometry they draw (such as foliage and props) will "
++       2497 |                             "be missing",
++       2498 |                             device.GetModelName());
+  2032  2499 |                 }
+- 2033       |                 const u64 last_offset = u64{cbuf.size} - 1;
+- 2034       |                 if (cbuf.address >
+- 2035       |                         (std::numeric_limits<GPUVAddr>::max)() - last_offset ||
+- 2036       |                     !gpu_memory->IsFullyMappedRange(cbuf.address, cbuf.size)) {
+- 2037       |                     snapshot_ok = false;
+- 2038       |                     break;
++       2500 |             mesh_unsupported = true;
+  2039  2501 |                 }
++       2502 | 
++       2503 |         const auto translate = [&] {
++       2504 |             if (translated[index]) {
++       2505 |                 return translated[index]->Take();
+  2040  2506 |             }
++       2507 |             const u32 cfg_offset{
++       2508 |                 static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
++       2509 |             auto cfg_cost = Eden::Performance::VulkanTimer(20);
++       2510 |         Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);
++       2511 |         cfg_cost.reset();
++       2512 |             return TranslateProgram(pools.inst, pools.block, env, cfg, host_info);
++       2513 |         };
++       2514 |         if (!uses_vertex_a || index != 1) {
++       2515 |             // Normal path
++       2516 |             programs[index] = translate();
++       2517 |         } else {
++       2518 |             // VertexB path when VertexA is present.
++       2519 |             auto& program_va{programs[0]};
++       2520 |             auto program_vb{translate()};
++       2521 |             programs[index] = MergeDualVertexPrograms(program_va, program_vb, env, host_info);
++       2522 |             // Each half fit its texture arrays to the stage limits on its own; joined, they are
++       2523 |             // one stage.
++       2524 |             Shader::Optimization::LimitSampledTextureArrays(programs[index], host_info);
+  2041  2525 |         }
+  2042  2526 | 
+- 2043       |         if (snapshot_ok) {
+- 2044       |             try {
+- 2045       |                 parallel_texture_snapshot.resize(
+- 2046       |                     static_cast<size_t>(snapshot_texture_bytes));
+- 2047       |                 // Normal owner-thread reads preserve GPU-written descriptor/
+- 2048       |                 // uniform bytes before workers are allowed to consume them.
+- 2049       |                 gpu_memory->ReadBlock(snapshot_texture_base,
+- 2050       |                                       parallel_texture_snapshot.data(),
+- 2051       |                                       parallel_texture_snapshot.size());
+- 2052       |                 for (size_t stage = 0; stage < Maxwell::MaxShaderStage; ++stage) {
+- 2053       |                     if (!stage_needed[stage]) {
+- 2054       |                         continue;
++       2527 |         if (device.GetDriverID() != VK_DRIVER_ID_NVIDIA_PROPRIETARY && Shader::Optimization::HasBrokenPattern(programs[index])) {
++       2528 |             LOG_WARNING(Render_Vulkan, "0x{:016x}: Skipping shader with known issues", key.unique_hashes[index]);
++       2529 |             return nullptr;
+  2055  2530 |                     }
+- 2056       |                     const auto& cbufs =
+- 2057       |                         maxwell3d->state.shader_stages[stage].const_buffers;
+- 2058       |                     for (size_t bank = 0; bank < Maxwell::MaxConstBuffers; ++bank) {
+- 2059       |                         const u32 bytes = parallel_cbuf_sizes[stage][bank];
+- 2060       |                         if (bytes == DisabledSnapshotCbuf || bytes == 0) {
+- 2061       |                             continue;
++       2531 | 
++       2532 |         if (Settings::values.dump_guest_shaders) {
++       2533 |             env.Dump(hash, key.unique_hashes[index]);
+  2062  2534 |                         }
+- 2063       |                         auto& storage = parallel_cbuf_storage[stage][bank];
+- 2064       |                         storage.resize(bytes);
+- 2065       |                         gpu_memory->ReadBlock(cbufs[bank].address, storage.data(),
+- 2066       |                                               storage.size());
+- 2067       |                         parallel_cbuf_ptrs[stage][bank] = storage.data();
++       2535 | 
++       2536 |         if (programs[index].info.requires_layer_emulation) {
++       2537 |             layer_source_program = &programs[index];
+  2068  2538 |                     }
+  2069  2539 |                 }
+- 2070       |             } catch (const std::bad_alloc&) {
+- 2071       |                 snapshot_ok = false;
++       2540 |     {
++       2541 |         // Fit the set before mesh fallback chooses its auxiliary buffer bindings: cutting arrays
++       2542 |         // can merge descriptors, so both their element counts and their binding counts can change.
++       2543 |         std::array<Shader::IR::Program*, Maxwell::MaxShaderProgram> stages{};
++       2544 |         size_t num_stages{};
++       2545 |         for (size_t index = uses_vertex_a && uses_vertex_b ? 1 : 0;
++       2546 |              index < Maxwell::MaxShaderProgram; ++index) {
++       2547 |             const bool is_emulated_stage = layer_source_program != nullptr &&
++       2548 |                                            index == static_cast<u32>(Maxwell::ShaderType::Geometry);
++       2549 |             if (key.unique_hashes[index] != 0 || is_emulated_stage) {
++       2550 |                 stages[num_stages++] = &programs[index];
+  2072  2551 |             }
+  2073  2552 |         }
+- 2074       |         parallel_translate_stages = snapshot_ok;
++       2553 |         Shader::Optimization::LimitPipelineSampledTextureArrays(
++       2554 |             std::span{stages.data(), num_stages}, host_info);
+  2075  2555 |     }
+- 2076       | 
+- 2077       |     if (parallel_translate_stages) try {
+- 2078       |         // QueueWork and pool allocation may throw after earlier tasks borrowed
+- 2079       |         // these locals. Drain before unwinding, without stopping persistent workers.
+- 2080       |         struct TranslationDrain {
+- 2081       |             Common::ThreadWorker& worker;
+- 2082       |             bool joined{};
+- 2083       |             ~TranslationDrain() {
+- 2084       |                 if (!joined) worker.WaitForRequests();
++       2556 |     // Mesh emulation without VK_EXT_mesh_shader (prototype): a mesh program, after an optional
++       2557 |     // task program, drawing triangles without per-primitive outputs, before a pixel program only.
++       2558 |     std::optional<MeshEmulationSetup> mesh_emulation;
++       2559 |     size_t mesh_index{};
++       2560 |     if (mesh_unsupported) {
++       2561 |         ReportUnsupportedMeshPipeline(key, programs);
++       2562 |         const bool has_task{key.unique_hashes[1] != 0 &&
++       2563 |                             programs[1].stage == Shader::Stage::Task};
++       2564 |         for (size_t index = 1; index < Maxwell::MaxShaderProgram; ++index) {
++       2565 |             if (key.unique_hashes[index] != 0 && programs[index].stage == Shader::Stage::Mesh) {
++       2566 |                 mesh_index = index;
++       2567 |                 break;
+  2085  2568 |             }
+- 2086       |         } translation_drain{shader_translation_workers};
+- 2087       |         // The GPU owner would otherwise sit idle until every stage completes.
+- 2088       |         // Queue the preceding stages, then translate the final active stage
+- 2089       |         // locally using exactly the same immutable snapshot and private pools.
+- 2090       |         size_t parallel_env_index{};
+- 2091       |         const size_t parallel_stage_count = envs.size();
+- 2092       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2093       |             if (key.unique_hashes[index] == 0) {
+- 2094       |                 continue;
+  2095  2569 |             }
+- 2096       |             Shader::Environment* const env = envs[parallel_env_index++];
+- 2097       |             const u32 cfg_offset{
+- 2098       |                 static_cast<u32>(env->StartAddress() + sizeof(Shader::ProgramHeader))};
+- 2099       |             parallel_pools[index] = std::make_unique<ShaderPools>();
+- 2100       |             ShaderPools* const stage_pools = parallel_pools[index].get();
+- 2101       |             const bool exits_to_dispatcher = index == 0;
+- 2102       |             const size_t physical_stage = index <= 1 ? 0 : index - 1;
+- 2103       |             auto translate_stage =
+- 2104       |                 [this, env, stage_pools, cfg_offset, exits_to_dispatcher, index,
+- 2105       |                  physical_stage, snapshot_texture_base, snapshot_texture_limit,
+- 2106       |                  snapshot_via_header_index, snapshot_viewport_transform_state,
+- 2107       |                  &parallel_texture_snapshot, &parallel_cbuf_ptrs,
+- 2108       |                  &parallel_cbuf_sizes, &parallel_programs, &parallel_errors,
+- 2109       |                  &parallel_stage_costs] {
+- 2110       |                     struct ShaderMissStageScope {
+- 2111       |                         ::Eden::Performance::ShaderMissStageCosts* previous{
+- 2112       |                             ::Eden::Performance::shader_miss_stage_active};
+- 2113       |                         explicit ShaderMissStageScope(
+- 2114       |                             ::Eden::Performance::ShaderMissStageCosts* current) noexcept {
+- 2115       |                             ::Eden::Performance::shader_miss_stage_active = current;
++       2570 |         bool eligible{mesh_index != 0 && (mesh_index == 1 || has_task) &&
++       2571 |                       layer_source_program == nullptr};
++       2572 |         const Shader::IR::Program& mesh{programs[mesh_index]};
++       2573 |         eligible = eligible && mesh.mesh.topology == 4 && mesh.mesh.primitive_lines.empty() &&
++       2574 |                    !mesh.mesh.vertex_lines.empty() && mesh.mesh.max_vertices != 0 &&
++       2575 |                    mesh.mesh.max_primitives != 0;
++       2576 |         for (size_t index = 1; index < Maxwell::MaxShaderProgram && eligible; ++index) {
++       2577 |             const bool emulated{index == mesh_index || (has_task && index == 1)};
++       2578 |             eligible = emulated || key.unique_hashes[index] == 0 ||
++       2579 |                        programs[index].stage == Shader::Stage::Fragment;
+  2116  2580 |                         }
+- 2117       |                         ~ShaderMissStageScope() {
+- 2118       |                             ::Eden::Performance::shader_miss_stage_active = previous;
++       2581 |         if (!eligible) {
++       2582 |             return nullptr;
+  2119  2583 |                         }
+- 2120       |                     } shader_miss_stage_scope{&parallel_stage_costs[index]};
+- 2121       |                     struct ImmutableGuestSnapshotScope {
+- 2122       |                         ImmutableGuestSnapshotScope(
+- 2123       |                             GPUVAddr texture_base, u32 texture_limit,
+- 2124       |                             const std::vector<u8>& texture, bool via_header_index,
+- 2125       |                             u32 viewport_transform_state,
+- 2126       |                             const std::array<const u8*, Maxwell::MaxConstBuffers>& cbuf_data,
+- 2127       |                             const std::array<u32, Maxwell::MaxConstBuffers>& cbuf_sizes) {
+- 2128       |                             VideoCommon::SetShaderTranslationSnapshotForThread(
+- 2129       |                                 texture_base, texture_limit, texture.data(),
+- 2130       |                                 via_header_index, viewport_transform_state,
+- 2131       |                                 cbuf_data.data(), cbuf_sizes.data(),
+- 2132       |                                 Maxwell::MaxConstBuffers);
++       2584 |         // Task and mesh share the compute stage, including the fallback's storage buffers.
++       2585 |         // Shrink their arrays before counting resources and assigning auxiliary bindings.
++       2586 |         std::array<Shader::IR::Program*, 2> compute_programs{&programs[mesh_index], &programs[1]};
++       2587 |         Shader::Optimization::LimitSharedStageSampledTextureArrays(
++       2588 |             std::span{compute_programs.data(), has_task ? size_t{2} : size_t{1}}, host_info,
++       2589 |             has_task ? 4U : 1U);
++       2590 |         // Descriptor arrays occupy one binding, just as in DefineTextures and the layout builder.
++       2591 |         u32 output_binding{};
++       2592 |         u32 compute_storage_buffers{has_task ? 4U : 1U};
++       2593 |         u32 compute_sampled_images{};
++       2594 |         u32 compute_samplers{};
++       2595 |         u32 compute_resources{compute_storage_buffers};
++       2596 |         for (size_t index = 1; index < Maxwell::MaxShaderProgram; ++index) {
++       2597 |             if (key.unique_hashes[index] == 0) {
++       2598 |                 continue;
+  2133  2599 |                         }
+- 2134       |                         ~ImmutableGuestSnapshotScope() {
+- 2135       |                             VideoCommon::ClearShaderTranslationSnapshotForThread();
++       2600 |             const Shader::Info& info{programs[index].info};
++       2601 |             const bool emulated{index == mesh_index || (has_task && index == 1)};
++       2602 |             const auto add = [&](const auto& descriptors, u32* category) {
++       2603 |                 const u32 count{Shader::NumDescriptors(descriptors)};
++       2604 |                 output_binding += static_cast<u32>(descriptors.size());
++       2605 |                 if (emulated) {
++       2606 |                     compute_resources += count;
++       2607 |                     if (category) {
++       2608 |                         *category += count;
+  2136  2609 |                         }
+- 2137       |                     } immutable_snapshot_scope{
+- 2138       |                         snapshot_texture_base, snapshot_texture_limit,
+- 2139       |                         parallel_texture_snapshot, snapshot_via_header_index,
+- 2140       |                         snapshot_viewport_transform_state,
+- 2141       |                         parallel_cbuf_ptrs[physical_stage],
+- 2142       |                         parallel_cbuf_sizes[physical_stage]};
+- 2143       |                     try {
+- 2144       |                         ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2145       |                             ::Eden::Performance::CachePhase::ShaderCfg,
+- 2146       |                             ::Eden::Performance::detailed_gpu_profile.load(
+- 2147       |                                 std::memory_order_relaxed)};
+- 2148       |                         auto cfg_cost = Eden::Performance::VulkanTimer(20);
+- 2149       |                         Shader::Maxwell::Flow::CFG cfg(
+- 2150       |                             *env, stage_pools->flow_block, cfg_offset, exits_to_dispatcher);
+- 2151       |                         cfg_cost.reset();
+- 2152       |                         cfg_stage_cost.Stop();
+- 2153       |                         auto program = ([&] {
+- 2154       |                             auto cost = Eden::Performance::VulkanTimer(21);
+- 2155       |                             ::Eden::Performance::CachePhaseTimer stage_cost{
+- 2156       |                                 ::Eden::Performance::CachePhase::ShaderIr,
+- 2157       |                                 ::Eden::Performance::detailed_gpu_profile.load(
+- 2158       |                                     std::memory_order_relaxed)};
+- 2159       |                             return TranslateProgram(stage_pools->inst, stage_pools->block,
+- 2160       |                                                     *env, cfg, host_info);
+- 2161       |                         }());
+- 2162       |                         parallel_programs[index] =
+- 2163       |                             std::make_unique<Shader::IR::Program>(std::move(program));
+- 2164       |                     } catch (...) {
+- 2165       |                         parallel_errors[index] = std::current_exception();
+  2166  2610 |                     }
+  2167  2611 |                 };
+- 2168       |             if (parallel_env_index == parallel_stage_count) {
+- 2169       |                 translate_stage();
+- 2170       |             } else {
+- 2171       |                 shader_translation_workers.QueueWork(std::move(translate_stage));
++       2612 |             add(info.constant_buffer_descriptors, nullptr);
++       2613 |             add(info.storage_buffers_descriptors, &compute_storage_buffers);
++       2614 |             add(info.texture_buffer_descriptors, &compute_sampled_images);
++       2615 |             add(info.image_buffer_descriptors, nullptr);
++       2616 |             add(info.texture_descriptors, &compute_sampled_images);
++       2617 |             add(info.image_descriptors, nullptr);
++       2618 |             if (emulated) {
++       2619 |                 compute_samplers += Shader::NumDescriptors(info.texture_descriptors);
+  2172  2620 |             }
+  2173  2621 |         }
+- 2174       |         // The GPU owner intentionally waits here. Workers see only immutable
+- 2175       |         // host snapshots plus each environment's already-copied shader code;
+- 2176       |         // no worker traverses the live GMMU/PTE table.
+- 2177       |         shader_translation_workers.WaitForRequests();
+- 2178       |         translation_drain.joined = true;
+- 2179       |         if (auto* const owner_stage_costs =
+- 2180       |                 ::Eden::Performance::shader_miss_stage_active) {
+- 2181       |             for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2182       |                 if (key.unique_hashes[index] == 0) {
+- 2183       |                     continue;
++       2622 |         if (compute_storage_buffers > device.GetMaxPerStageDescriptorStorageBuffers() ||
++       2623 |             compute_sampled_images > device.GetMaxPerStageDescriptorSampledImages() ||
++       2624 |             compute_samplers > device.GetMaxPerStageDescriptorSamplers() ||
++       2625 |             compute_resources > device.GetMaxPerStageResources()) {
++       2626 |             LOG_WARNING(
++       2627 |                 Render_Vulkan,
++       2628 |                 "Mesh emulation skipped: {} storage buffers, {} sampled images, {} samplers "
++       2629 |                 "and {} resources exceed the compute stage limits",
++       2630 |                 compute_storage_buffers, compute_sampled_images, compute_samplers,
++       2631 |                 compute_resources);
++       2632 |             return nullptr;
+  2184  2633 |                 }
+- 2185       |                 // These are CPU-work totals, matching the former serial keyed
+- 2186       |                 // timers. The enclosing miss cpu_ns remains the elapsed critical
+- 2187       |                 // path and therefore reflects the parallel overlap.
+- 2188       |                 owner_stage_costs->cfg_ns += parallel_stage_costs[index].cfg_ns;
+- 2189       |                 owner_stage_costs->ir_ns += parallel_stage_costs[index].ir_ns;
++       2634 |         mesh_emulation.emplace();
++       2635 |         mesh_emulation->output_binding = output_binding;
++       2636 |         if (has_task) {
++       2637 |             // After the output: the task payload, offset and argument buffers.
++       2638 |             mesh_emulation->has_task = true;
++       2639 |             mesh_emulation->mesh_stage = static_cast<u32>(mesh_index - 1);
++       2640 |             mesh_emulation->payload_stride = (std::max)(programs[1].mesh.payload_words, 2U);
++       2641 |             mesh_emulation->payload_binding = output_binding + 1;
++       2642 |             mesh_emulation->offsets_binding = output_binding + 2;
++       2643 |             mesh_emulation->args_binding = output_binding + 3;
++       2644 |             mesh_emulation->distribution_spirv =
++       2645 |                 Shader::Backend::SPIRV::EmitMeshEmulationDistribution(profile);
+  2190  2646 |             }
++       2647 |         mesh_emulation->block_words = Shader::Backend::SPIRV::MeshEmulationBlockWords(mesh.mesh);
++       2648 |         mesh_emulation->max_primitives = mesh.mesh.max_primitives;
++       2649 |         mesh_emulation->max_vertices = mesh.mesh.max_vertices;
++       2650 |         mesh_emulation->vertex_lines = static_cast<u32>(mesh.mesh.vertex_lines.size());
++       2651 |         for (u32 line = 0; line < mesh.mesh.vertex_lines.size(); ++line) {
++       2652 |             const u32 attribute{mesh.mesh.vertex_lines[line]};
++       2653 |             const u32 position_x{static_cast<u32>(Shader::IR::Attribute::PositionX)};
++       2654 |             if (attribute >= position_x && attribute < position_x + 4) {
++       2655 |                 mesh_emulation->position_lines[attribute - position_x] = line;
+  2191  2656 |         }
+- 2192       |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2193       |             if (parallel_errors[index]) {
+- 2194       |                 try {
+- 2195       |                     std::rethrow_exception(parallel_errors[index]);
+- 2196       |                 } catch (const std::out_of_range&) {
+- 2197       |                     // The immutable snapshot can reject a valid owner-thread read.
+- 2198       |                     throw ParallelGraphicsRetry{};
+  2199  2657 |                 }
++       2658 |         static std::atomic<u32> emulated{};
++       2659 |         if (const u32 count{++emulated}; count <= 64) {
++       2660 |             // The input region addresses the mesh program reads (0 is its workgroup index).
++       2661 |             std::string reads;
++       2662 |             for (const Shader::IR::Block* block : mesh.blocks) {
++       2663 |                 for (const Shader::IR::Inst& inst : block->Instructions()) {
++       2664 |                     if (inst.GetOpcode() != Shader::IR::Opcode::IsbeRead) {
++       2665 |                         continue;
+  2200  2666 |             }
+- 2201       |             if (key.unique_hashes[index] != 0 && !parallel_programs[index]) {
+- 2202       |                 throw ParallelGraphicsRetry{};
++       2667 |                     const Shader::IR::Value address{inst.Arg(0)};
++       2668 |                     reads += address.IsImmediate() ? fmt::format(" {:#x}", address.U32())
++       2669 |                                                    : std::string{" dynamic"};
+  2203  2670 |             }
+  2204  2671 |         }
+- 2205       |     } catch (const std::bad_alloc&) {
+- 2206       |         // The drain guard has joined any accepted jobs before this handler.
+- 2207       |         throw ParallelGraphicsRetry{};
++       2672 |             LOG_INFO(Render_Vulkan,
++       2673 |                      "Mesh emulation #{}: pipeline {:016x}, {} vertices x {} lines, {} triangles "
++       2674 |                      "per workgroup, output binding {}, task {} (payload {} words), input "
++       2675 |                      "reads:{}",
++       2676 |                      count, hash, mesh.mesh.max_vertices, mesh.mesh.vertex_lines.size(),
++       2677 |                      mesh.mesh.max_primitives, output_binding, has_task,
++       2678 |                      mesh_emulation->payload_stride, reads.empty() ? " none" : reads);
+  2208  2679 |     }
+- 2209       | #endif
+- 2210       | 
+- 2211       |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+- 2212       |         const bool is_emulated_stage = layer_source_program != nullptr &&
+- 2213       |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
+- 2214       |         if (key.unique_hashes[index] == 0 && is_emulated_stage) {
+- 2215       |             auto topology = MaxwellToOutputTopology(key.state.topology);
+- 2216       |             programs[index] = GenerateGeometryPassthrough(pools.inst, pools.block, host_info,
+- 2217       |                                                           *layer_source_program, topology);
+- 2218       |             continue;
+  2219  2680 |         }
++       2681 |     // A tessellation pipeline the driver would refuse is skipped like a missing mesh pipeline:
++       2682 |     // the draw is dropped (see the pipeline check in the rasterizer) instead of failing the build.
++       2683 |     {
++       2684 |         const Shader::IR::Program* control{};
++       2685 |         const Shader::IR::Program* evaluation{};
++       2686 |         for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+  2220  2687 |         if (key.unique_hashes[index] == 0) {
+  2221  2688 |             continue;
+  2222  2689 |         }
+- 2223       |         Shader::Environment& env{*envs[env_index]};
+- 2224       |         ++env_index;
+- 2225       | 
+- 2226       | #ifdef PS5_NATIVE
+- 2227       |         if (parallel_translate_stages) {
+- 2228       |             if (!uses_vertex_a || index != 1) {
+- 2229       |                 programs[index] = std::move(*parallel_programs[index]);
+- 2230       |             } else {
+- 2231       |                 auto& program_va{programs[0]};
+- 2232       |                 auto program_vb{std::move(*parallel_programs[index])};
+- 2233       |                 programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);
+- 2234       |             }
+- 2235       |         } else
+- 2236       | #endif
+- 2237       |         {
+- 2238       |             const u32 cfg_offset{
+- 2239       |                 static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
+- 2240       |             ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2241       |                 ::Eden::Performance::CachePhase::ShaderCfg,
+- 2242       |                 ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
+- 2243       |             auto cfg_cost = Eden::Performance::VulkanTimer(20);
+- 2244       |             Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);
+- 2245       |             cfg_cost.reset();
+- 2246       |             cfg_stage_cost.Stop();
+- 2247       |             if (!uses_vertex_a || index != 1) {
+- 2248       |                 // Normal path
+- 2249       |                 programs[index] = ([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }());
+- 2250       |             } else {
+- 2251       |                 // VertexB path when VertexA is present.
+- 2252       |                 auto& program_va{programs[0]};
+- 2253       |                 auto program_vb{([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }())};
+- 2254       |                 programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);
++       2690 |             if (programs[index].stage == Shader::Stage::TessellationControl) {
++       2691 |                 control = &programs[index];
++       2692 |             } else if (programs[index].stage == Shader::Stage::TessellationEval) {
++       2693 |                 evaluation = &programs[index];
+  2255  2694 |             }
+  2256  2695 |         }
+- 2257       | 
+- 2258       |         // Avoid native subgroup shuffle for the known PositionXY fragment
+- 2259       |         // pattern on non-NVIDIA drivers. Desktop/mobile preserve Eden #4503's
+- 2260       |         // fail-closed skip. PS5 instead uses the newer upstream broadcast
+- 2261       |         // fallback so the whole guest draw is not silently discarded.
+- 2262       |         if (device.GetDriverID() != VK_DRIVER_ID_NVIDIA_PROPRIETARY &&
+- 2263       |             Shader::Optimization::HasBrokenPattern(programs[index])) {
+- 2264       | #ifdef PS5_NATIVE
+- 2265       |             fragment_shuffle_fallback[index] = true;
+- 2266       |             LOG_WARNING(Render_Vulkan,
+- 2267       |                         "0x{:016x}: using PS5 fragment shuffle fallback",
+- 2268       |                         key.unique_hashes[index]);
+- 2269       |             static std::atomic<unsigned> fragment_shuffle_witness{};
+- 2270       |             const unsigned fallback_witness =
+- 2271       |                 fragment_shuffle_witness.fetch_add(1, std::memory_order_relaxed) + 1;
+- 2272       |             if (fallback_witness <= 8) {
+- 2273       |                 std::fprintf(stderr,
+- 2274       |                              "EDEN_FRAGMENT_SHUFFLE_FALLBACK count=%u hash=0x%016llx\n",
+- 2275       |                              fallback_witness,
+- 2276       |                              static_cast<unsigned long long>(key.unique_hashes[index]));
++       2696 |         if (control != nullptr || evaluation != nullptr) {
++       2697 |             const u32 max_patch_size = device.GetMaxTessellationPatchSize();
++       2698 |             const char* reason = nullptr;
++       2699 |             if (!device.IsTessellationSupported()) {
++       2700 |                 reason = "the device has no tessellation shaders";
++       2701 |             } else if (control == nullptr || evaluation == nullptr) {
++       2702 |                 reason = "it has only one of the control and evaluation stages";
++       2703 |             } else if (control->invocations == 0 || control->invocations > max_patch_size) {
++       2704 |                 reason = "the control shader's output vertex count is out of range";
+  2277  2705 |             }
+- 2278       | #else
++       2706 |             if (reason != nullptr) {
+  2279  2707 |             LOG_WARNING(Render_Vulkan,
+- 2280       |                         "0x{:016x}: skipping fragment shuffle with known driver issue",
+- 2281       |                         key.unique_hashes[index]);
++       2708 |                             "Skipping tessellation pipeline: {} (tcs={} tes={}, tcs output "
++       2709 |                             "vertices {}, patch control points {}, device max patch size {})",
++       2710 |                             reason, control != nullptr, evaluation != nullptr,
++       2711 |                             control != nullptr ? control->invocations : 0,
++       2712 |                             key.state.patch_control_points_minus_one.Value() + 1, max_patch_size);
+  2282  2713 |             return nullptr;
+- 2283       | #endif
+  2284  2714 |         }
+- 2285       | 
+- 2286       |         if (Settings::values.dump_guest_shaders) {
+- 2287       |             env.Dump(hash, key.unique_hashes[index]);
+  2288  2715 |         }
+- 2289       | 
+- 2290       |         if (programs[index].info.requires_layer_emulation) {
+- 2291       |             layer_source_program = &programs[index];
+  2292  2716 |         }
++       2717 |     // Each stage stays within the limit on its own; together they share one descriptor set.
++       2718 |     if (const u32 set_limit = host_info.max_descriptor_set_storage_buffers; set_limit != 0) {
++       2719 |         size_t storage_buffers{};
++       2720 |         for (size_t index = uses_vertex_a && uses_vertex_b ? 1 : 0;
++       2721 |              index < Maxwell::MaxShaderProgram; ++index) {
++       2722 |             if (key.unique_hashes[index] != 0) {
++       2723 |                 storage_buffers +=
++       2724 |                     Shader::NumDescriptors(programs[index].info.storage_buffers_descriptors);
+  2293  2725 |     }
++       2726 |         }
++       2727 |         // The fallback binds its output buffer (and, for task draws, payload,
++       2728 |         // offsets and indirect arguments) into the same descriptor set.
++       2729 |         const size_t auxiliary_buffers{
++       2730 |             mesh_emulation ? (mesh_emulation->has_task ? 4U : 1U) : 0U};
++       2731 |         if (!FitsStorageBufferSetLimit(storage_buffers, auxiliary_buffers, set_limit)) {
++       2732 |             throw Shader::NotImplementedException(
++       2733 |                 "Binding {} storage buffers ({} for mesh fallback) to a descriptor set limited to {}",
++       2734 |                 storage_buffers + auxiliary_buffers, auxiliary_buffers, set_limit);
++       2735 |         }
++       2736 |     }
++       2737 |     u64 deferred_ir_bytes = 0;
++       2738 |     std::unique_ptr<QueuedIrBudget::Reservation> ir_reservation;
++       2739 |     if (emit_pools) {
++       2740 |         deferred_ir_bytes = IrBytes(programs);
++       2741 |         ir_reservation = queued_ir.TryReserve(deferred_ir_bytes);
++       2742 |     }
++       2743 |     const bool defer_emission = ir_reservation != nullptr;
+  2294  2744 |     if (uses_vertex_b) {
+  2295  2745 |         EdenRecordAttributeless({key.unique_hashes[0], key.unique_hashes[1]}, programs[1].info);
+  2296  2746 |     }
+  2297  2747 |     std::array<const Shader::Info*, Maxwell::MaxShaderStage> infos{};
+  2298  2748 |     std::array<vk::ShaderModule, Maxwell::MaxShaderStage> modules;
++       2749 |     std::array<std::optional<Shader::RuntimeInfo>, Maxwell::MaxShaderStage> deferred_runtime_infos;
++       2750 |     std::array<std::vector<u32>, Maxwell::MaxShaderStage> reference_spirv;
+  2299  2751 | 
+  2300  2752 |     const Shader::IR::Program* previous_stage{};
+  2301  2753 |     Shader::Backend::Bindings binding;
+  2302  2754 |     for (size_t index = uses_vertex_a && uses_vertex_b ? 1 : 0; index < Maxwell::MaxShaderProgram;
+  2303  2755 |          ++index) {
+  2304  2756 |         const bool is_emulated_stage = layer_source_program != nullptr &&
+  2305  2757 |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
+  2306  2758 |         if (key.unique_hashes[index] == 0 && !is_emulated_stage) {
+  2307  2759 |             continue;
+  2308  2760 |         }
+  2309  2761 |         UNIMPLEMENTED_IF(index == 0);
+  2310  2762 | 
+  2311  2763 |         Shader::IR::Program& program{programs[index]};
+  2312  2764 |         const size_t stage_index{index - 1};
+  2313  2765 |         infos[stage_index] = &program.info;
+  2314  2766 | 
+- 2315       |         const auto runtime_info{MakeRuntimeInfo(programs, key, program, previous_stage, device)};
++       2767 |         auto runtime_info{MakeRuntimeInfo(programs, key, program, previous_stage, device)};
++       2768 |         if (mesh_emulation && (program.stage == Shader::Stage::Mesh ||
++       2769 |                                program.stage == Shader::Stage::Task)) {
++       2770 |             runtime_info.mesh_as_compute = true;
++       2771 |             runtime_info.mesh_output_binding = mesh_emulation->output_binding;
++       2772 |             if (mesh_emulation->has_task) {
++       2773 |                 runtime_info.mesh_task_payload_binding = mesh_emulation->payload_binding;
++       2774 |                 runtime_info.mesh_task_offsets_binding = mesh_emulation->offsets_binding;
++       2775 |                 runtime_info.mesh_task_args_binding = mesh_emulation->args_binding;
++       2776 |                 runtime_info.mesh_task_payload_stride = mesh_emulation->payload_stride;
++       2777 |             }
++       2778 |             if (program.stage == Shader::Stage::Mesh) {
++       2779 |                 mesh_emulation->vertex_spirv = Shader::Backend::SPIRV::EmitMeshEmulationVertex(
++       2780 |                     profile, program.mesh, mesh_emulation->output_binding,
++       2781 |                     mesh_emulation->has_task ? mesh_emulation->args_binding : ~0U,
++       2782 |                     runtime_info.convert_depth_mode && !profile.support_native_ndc);
++       2783 |             }
++       2784 |         }
+  2316  2785 |         ConvertLegacyToGeneric(program, runtime_info);
+- 2317       |         auto emit_profile = profile;
+- 2318       | #ifdef PS5_NATIVE
+- 2319       |         emit_profile.has_broken_spirv_fragment_shuffle = fragment_shuffle_fallback[index];
+- 2320       | #endif
+- 2321       |         const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(emit_profile, runtime_info, program, binding); }())};
+- 2322       |         device.SaveShader(code);
+- 2323       |         modules[stage_index] = ([&] { auto cost = Eden::Performance::VulkanTimer(23); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderModule, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return BuildShader(device, code); }());
+- 2324       | 
+- 2325       |         // Text log + .spv dump. Text log is gated by gpu_log_level != Off; .spv dump
+- 2326       |         // is independent and gated only by gpu_log_shader_dumps.
+- 2327       |         const bool should_log = GPU::Logging::IsActive();
+- 2328       |         const bool should_dump = Settings::values.gpu_log_shader_dumps.GetValue();
+- 2329       |         if (should_log || should_dump) {
+- 2330       |             static constexpr std::array stage_names{"vertex", "tess_control", "tess_eval", "geometry", "fragment"};
+- 2331       |             const std::string shader_name = fmt::format("shader_{:016x}_{}", key.unique_hashes[index], stage_names[stage_index]);
+- 2332       |             if (should_log) {
+- 2333       |                 const std::string shader_info = fmt::format("SPIR-V size: {} bytes, hash: {:016x}",
+- 2334       |                     code.size() * sizeof(u32), key.unique_hashes[index]);
+- 2335       |                 GPU::Logging::GPULogger::GetInstance().LogShaderCompilation(shader_name, shader_info);
++       2786 |         // EDEN_NX2_MESH_EMULATION_DUMP=<dir>: write the emulation's vertex shader for spirv-val.
++       2787 |         // (Emitting the mesh program a second time here to dump its compute shader crashed the
++       2788 |         // build that followed, so only the vertex shader is written.)
++       2789 |         if (mesh_emulation && program.stage == Shader::Stage::Mesh) {
++       2790 |             if (const char* const dump{std::getenv("EDEN_NX2_MESH_EMULATION_DUMP")}) {
++       2791 |                 const auto& code{mesh_emulation->vertex_spirv};
++       2792 |                 std::ofstream file{fmt::format("{}/{:016x}.vert.spv", dump, hash),
++       2793 |                                    std::ios::binary};
++       2794 |                 file.write(reinterpret_cast<const char*>(code.data()),
++       2795 |                            static_cast<std::streamsize>(code.size() * sizeof(u32)));
+  2336  2796 |             }
+- 2337       |             if (should_dump) {
+- 2338       |                 GPU::Logging::DumpSpirvShader(key.unique_hashes[index],
+- 2339       |                                               std::span<const u32>(code.data(), code.size()));
+  2340  2797 |             }
++       2798 |         if (defer_emission) {
++       2799 |             deferred_runtime_infos[stage_index] = runtime_info;
++       2800 |             if (VideoCommon::Nx2Perf::Verify()) {
++       2801 |                 reference_spirv[stage_index] = ([&] { auto cost = Eden::Performance::VulkanTimer(22); return EmitSPIRV(profile, runtime_info, program, binding); }());
+  2341  2802 |         }
+- 2342       | 
+- 2343       |         if (device.HasDebuggingToolAttached()) {
+- 2344       |             const std::string name{fmt::format("Shader {:016x}", key.unique_hashes[index])};
+- 2345       |             modules[stage_index].SetObjectNameEXT(name.c_str());
++       2803 |         } else {
++       2804 |             const auto begin = std::chrono::steady_clock::now();
++       2805 |             modules[stage_index] = EmitShaderModule(device, profile, runtime_info, program, binding,
++       2806 |                                                    key.unique_hashes[index], stage_index);
++       2807 |             if (build_in_parallel) {
++       2808 |                 AddRuntimeSpirvTime(0, begin);
+  2346  2809 |         }
++       2810 |         }
+  2347  2811 |         previous_stage = &program;
+  2348  2812 |     }
+- 2349       |     Common::ThreadWorker* const thread_worker{build_in_parallel ? &workers : nullptr};
+- 2350       |     return std::make_unique<GraphicsPipeline>(
+- 2351       |         scheduler, buffer_cache, texture_cache, vulkan_pipeline_cache, &shader_notify, device,
+- 2352       |         descriptor_pool, guest_descriptor_queue, descriptor_buffer_ring, thread_worker, statistics,
+- 2353       |         render_pass_cache, key, std::move(modules), infos);
++       2813 |     std::function<std::array<vk::ShaderModule, Maxwell::MaxShaderStage>()> emit_stages;
++       2814 |     if (defer_emission) {
++       2815 |         auto job = std::make_shared<DeferredStages>();
++       2816 |         job->reservation = std::move(ir_reservation);
++       2817 |         job->pools = emit_pools;
++       2818 |         job->stage_pools = std::move(stage_pools);
++       2819 |         stage_pools.clear();
++       2820 |         job->programs = std::move(programs);
++       2821 |         job->runtime_infos = std::move(deferred_runtime_infos);
++       2822 |         job->reference_spirv = std::move(reference_spirv);
++       2823 |         for (size_t stage = 0; stage < infos.size(); ++stage) {
++       2824 |             if (infos[stage]) {
++       2825 |                 infos[stage] = &job->programs[stage + 1].info;
++       2826 |             }
++       2827 |         }
++       2828 |         emit_stages = [this, job = std::move(job), hashes = key.unique_hashes]() mutable {
++       2829 |             const auto begin = std::chrono::steady_clock::now();
++       2830 |             std::array<vk::ShaderModule, Maxwell::MaxShaderStage> stage_modules;
++       2831 |             Shader::Backend::Bindings stage_binding;
++       2832 |             for (size_t stage = 0; stage < stage_modules.size(); ++stage) {
++       2833 |                 if (job->runtime_infos[stage]) {
++       2834 |                     stage_modules[stage] =
++       2835 |                         EmitShaderModule(device, profile, *job->runtime_infos[stage],
++       2836 |                                          job->programs[stage + 1], stage_binding,
++       2837 |                                          hashes[stage + 1], stage, job->reference_spirv[stage]);
++       2838 |                 }
++       2839 |             }
++       2840 |             auto completed_pools = std::move(job->pools);
++       2841 |             auto completed_stages = std::move(job->stage_pools);
++       2842 |             job.reset();
++       2843 |             ReturnPools(std::move(completed_pools));
++       2844 |             for (std::shared_ptr<ShaderPools>& stage : completed_stages) {
++       2845 |                 ReturnPools(std::move(stage));
++       2846 |             }
++       2847 |             AddRuntimeSpirvTime(1, begin);
++       2848 |             return stage_modules;
++       2849 |         };
++       2850 |     }
++       2851 |     static_assert(VideoCommon::EvictedPointerSlots::NumPrograms == Maxwell::MaxShaderProgram);
++       2852 |     VideoCommon::EvictedPointerSlots::Slots mapped_pointers;
++       2853 |     for (size_t index = 0, mapped_env = 0; index < Maxwell::MaxShaderProgram; ++index) {
++       2854 |         if (key.unique_hashes[index] != 0) {
++       2855 |             mapped_pointers[index] = envs[mapped_env++]->MappedStoragePointerKeys();
++       2856 |         }
++       2857 |     }
++       2858 |     auto pipeline = std::make_unique<GraphicsPipeline>(
++       2859 |         scheduler, buffer_cache, texture_cache, vulkan_pipeline_cache, pipeline_binaries.get(),
++       2860 |         &shader_notify, device, descriptor_pool, guest_descriptor_queue, descriptor_buffer_ring,
++       2861 |         BuildQueue(build_in_parallel, defer_emission ? deferred_ir_bytes : 0), statistics,
++       2862 |         render_pass_cache, key, std::move(modules), infos, std::move(emit_stages),
++       2863 |         std::move(mesh_emulation));
++       2864 |     pipeline->SetMappedPointers(std::move(mapped_pointers));
++       2865 |     return pipeline;
+  2354  2866 | 
+  2355  2867 | } catch (const Shader::Exception& exception) {
+- 2356       | #ifdef PS5_NATIVE
+- 2357       |     // Failed first-use shaders can be retried. Do not rebuild their CFGs or
+- 2358       |     // write .ash dumps on the normal quiet PS5 path: this is optional debug
+- 2359       |     // work on the same GPU-owner thread that already failed translation.
+- 2360       |     if (Settings::values.dump_guest_shaders) {
+- 2361       |         try {
+- 2362       | #endif
+  2363  2868 |     auto hash = key.Hash();
+  2364  2869 |     size_t env_index{0};
+  2365  2870 |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
+  2366  2871 |         if (key.unique_hashes[index] == 0) {
+  2367  2872 |             continue;
+  2368  2873 |         }
+  2369  2874 |         Shader::Environment& env{*envs[env_index]};
+  2370  2875 |         ++env_index;
+  2371  2876 | 
+  2372  2877 |         const u32 cfg_offset{static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
+- 2373       |         ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
+- 2374       |             ::Eden::Performance::CachePhase::ShaderCfg,
+- 2375       |             ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
++       2878 |         try {
++       2879 |             // Walks the program for the dump; the one that failed may fail here again, and an
++       2880 |             // exception leaving this handler would end the process.
+  2376  2881 |         auto cfg_cost = Eden::Performance::VulkanTimer(20);
+  2377  2882 |         Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);
+  2378  2883 |         cfg_cost.reset();
+- 2379       |         cfg_stage_cost.Stop();
+- 2380       |         env.Dump(hash, key.unique_hashes[index]);
+- 2381       |     }
+- 2382       | #ifdef PS5_NATIVE
+- 2383       |         } catch (const std::exception& dump_error) {
+- 2384       |             // Preserve the original shader failure even if the diagnostic
+- 2385       |             // CFG pass or the dump file itself fails.
+- 2386       |             LOG_WARNING(Render_Vulkan, "Failed shader diagnostic dump: {}", dump_error.what());
+- 2387       |         } catch (...) {
+- 2388       |             LOG_WARNING(Render_Vulkan, "Failed shader diagnostic dump: unknown exception");
++       2884 |         } catch (const Shader::Exception&) {
+  2389  2885 |         }
++       2886 |         env.Dump(hash, key.unique_hashes[index]);
+  2390  2887 |     }
+- 2391       | #endif
+  2392  2888 |     LOG_ERROR(Render_Vulkan, "{}", exception.what());
+  2393  2889 |     return nullptr;
+  2394  2890 | }
+```
+
+</details>
+
+### Différences structurelles de PipelineCache non alignables 1:1
+
+| Symbole | Observation source |
+|---|---|
+| `TranslateCachedGraphics` | Lichii/Eglantine ont un propriétaire dédié de traduction du cache graphique ; aucune définition homonyme n'est présente dans `vk_pipeline_cache_cost.cpp` Encore au SHA examiné. |
+| `PipelineCache::TickFrame` | Présent dans Lichii/Eglantine, pas comme méthode homonyme dans le propriétaire Encore examiné. Cela peut refléter une architecture différente, pas une fonctionnalité manquante. |
+| `SkipUnbuiltDispatch` | Présent dans les forks, absent comme méthode homonyme du propriétaire Encore. Ne pas convertir cette absence en patch sans suivre les appels et la politique de fallback. |
+| `QueueVulkanPipelineCacheSave` | Méthode distincte dans les forks ; Encore regroupe autrement sa persistance dans le propriétaire examiné. |
+
+**Couverture ajoutée :** 11 fonctions, 22 comparaisons directes, 8298 lignes-source parcourues (répétitions incluses), 1 homologue(s) absent(s)/non extrait(s). Les fonctions structurellement absentes sont consignées mais non comptées comme bugs.

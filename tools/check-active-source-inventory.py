@@ -50,7 +50,7 @@ if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca1
         "0506a211d82c880a49053c2ecb1b3129523dcbb0": "3b10204a86ef1e189052c2d068e195b4ac997539",
         "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8": "6cabcba90de3515962623cd53d44667e0c6df04a",
         "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce",
-        "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"}: "c98167e4b9ff0b42acac977cae57b26255b50040",
+        "8d3eaa4874ab0fa65a022913148acada1ea9c2fe": "c98167e4b9ff0b42acac977cae57b26255b50040",
     }[shipping_vendor]
     for relative, digest in {
         "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146",
@@ -70,9 +70,9 @@ if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca1
         for relative, digest in {
             "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
             "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h":
-                ("4e4a1f23d89a7ace963a9249afa47a592cb4eb6e" if shipping_vendor == "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"} else "4cb9f79deeb56ab7397c6209939c94dffbb7575b"),
+                ("4e4a1f23d89a7ace963a9249afa47a592cb4eb6e" if shipping_vendor == "8d3eaa4874ab0fa65a022913148acada1ea9c2fe" else "4cb9f79deeb56ab7397c6209939c94dffbb7575b"),
             "encore-active/eden-core/src/video_core/dma_pusher.cpp":
-                ("76eb30a7e58f17852069a05e2c12cd3c6521967f" if shipping_vendor == "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"} else "ca642b98443901eee4f88b02850237f3eda623c8"),
+                ("76eb30a7e58f17852069a05e2c12cd3c6521967f" if shipping_vendor == "8d3eaa4874ab0fa65a022913148acada1ea9c2fe" else "ca642b98443901eee4f88b02850237f3eda623c8"),
             "tests/ns2_gpu_identity_mapping_source.py":
                 ("787b18b8c9b2841874ceaea911947e533b59e198"
                  if shipping_vendor == "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"
@@ -2062,7 +2062,7 @@ if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f3
             "0506a211d82c880a49053c2ecb1b3129523dcbb0": "3b10204a86ef1e189052c2d068e195b4ac997539",
             "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8": "6cabcba90de3515962623cd53d44667e0c6df04a",
             "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce",
-        "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"}: "c98167e4b9ff0b42acac977cae57b26255b50040",
+        "8d3eaa4874ab0fa65a022913148acada1ea9c2fe": "c98167e4b9ff0b42acac977cae57b26255b50040",
         }.get(actual_pair_vendor, "e40237d089b0a45f77d68ae281821c1a85ce9ca8")
         assert subprocess.check_output(
             ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],

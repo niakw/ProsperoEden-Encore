@@ -3962,3 +3962,26 @@ Les signatures CMIF de `fsp:ldr` ont été alignées sur l'upstream Citron avant
 Arithmétique : **221 - 7 = 214**. Depuis le recalcul 631 : **417 lignes sorties du pool**.
 
 Le gitlink moteur est repinné sur le vendor **`f4cba5fab9559a61386a018e0b10acc38c119e0a`**. Aucun build PS5 ni validation console n'est revendiqué.
+
+
+### 2026-11-26 — réconciliation exhaustive des anciens NULL : palier global 184
+
+Base : **214 lignes ouvertes** après le lot `fsp:ldr` / `fsp:pr`.
+
+Le reliquat historique « NULL/correspondances non résolues » a été repris sur **l'ensemble des propriétaires actifs matérialisés** : 93 chemins C++ distincts, sélectionnés via manifeste `eden-backports` et overrides finaux PS5 connus, puis rapprochés par service/ID/nom avec les tables `FunctionInfo` du vendor `f4cba5fab9559a61386a018e0b10acc38c119e0a`.
+
+Le balayage par lots confirme :
+- avant le correctif FSP loader/program-registry, seulement **16 correspondances exactes** restaient réellement NULL/missing dans les propriétaires actifs ;
+- **7** de ces lignes ont été traitées par le lot FSP déjà compté au palier 214 ;
+- il reste donc **9 correspondances exactes**, toutes dans `fsp-srv` : cmd 0, 64, 80, 84, 130, 601, 611, 615 et 616 ;
+- les autres anciennes lignes classées « correspondance non résolue » sont désormais démontrées comme noms/version/owner historiques déjà raccordés ou explicitement rejetés. Les 35 lignes sans chemin source extractible (principalement CAPS movie streams et NS cmd23) avaient déjà été sorties lors du rapprochement initial et ne sont pas recomptées.
+
+Cela retire **30 lignes historiques supplémentaires** du pool sans modifier le runtime.
+
+**Nouveau compteur global : 184 lignes ouvertes.**
+
+Composition opérationnelle : **9 NULL exacts + 14 raccordements encore à qualifier + 161 non-NULL réellement ouverts = 184**.
+
+Arithmétique : **214 - 30 = 184**. Depuis le recalcul 631 : **447 lignes sorties du pool**.
+
+Aucun nouveau patch C++ dans cette requalification, aucun build PS5 ni validation console revendiqués.

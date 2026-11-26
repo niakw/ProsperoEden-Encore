@@ -5077,4 +5077,17 @@ Le manifeste shipping est synchronisé pour `application_manager_interface.cpp` 
 **2 lignes PARTIEL quittent le pool : nouveau compteur global = 16 lignes ouvertes.**
 
 Aucun build PS5 ni validation console revendiqué.
+### 2026-11-26 — NIFM profile/exclusive setters requalifiés : 16 → 14
+
+Base précédente : **16 lignes ouvertes**.
+
+Deux PARTIEL historiques NIFM quittent le pool :
+- `IRequest` cmd9 `SetNetworkProfileId(util::Uuid)` : Encore consomme désormais l'UUID ABI-correct 0x10 et le conserve dans l'état Request. Le SDK reconstruit expose cette commande comme un setter sans sortie et nx2native la traite explicitement comme `Answer::ok()` ;
+- `IGeneralService` cmd26 `SetExclusiveClient(ClientId)` : Encore consomme le `ClientId` 4 octets attendu et le conserve. Le SDK reconstruit confirme l'unique entrée `ClientId`, et nx2native traite également cmd26 comme `Answer::ok()` sans observable hôte supplémentaire.
+
+Ces deux commandes suivent donc le même modèle HLE que les politiques IRequest déjà qualifiées : état de requête/service local, sans obligation démontrée de piloter la pile réseau physique de l'hôte.
+
+**2 lignes PARTIEL quittent le pool : nouveau compteur global = 14 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
 

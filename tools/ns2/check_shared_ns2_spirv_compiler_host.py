@@ -22,11 +22,29 @@ assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in section
 assert 'target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")' in section
 assert 'target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}")' in section
 assert 'list(REMOVE_ITEM eden_ns2_shader_sources' in section
+assert 'eden_ns2_prior_eden_ns2_spirv_source_idx' in section
+assert 'eden_ns2_prior_eden_ns2_cbuf_direct_source_idx' in section
+assert 'eden_ns2_prior_eden_ns2_image_source_idx' in section
 assert 'backend/spirv/spirv_emit_context.cpp' in section
 assert 'backend/spirv/emit_spirv_context_get_set.cpp' in section
 assert 'backend/spirv/emit_spirv_image.cpp' in section
 assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")' in section
 assert 'set_property(TARGET shader_recompiler PROPERTY SOURCES' in section
+# NS1 SampleMask must survive selecting the shared native SPIR-V owners.
+ns2_context=(ROOT/'vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp').read_text()
+ns2_get=(ROOT/'vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp').read_text()
+ns1_context=(ROOT/'vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp').read_text()
+ns1_get=(ROOT/'vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp').read_text()
+sample_input='''    if (info.uses_sample_mask) {
+        input_sample_mask = DefineInput(*this, TypeArray(U32[1], Const(1U)), false,
+                                       spv::BuiltIn::SampleMask);
+    }'''
+sample_get='''Id EmitSampleMask(EmitContext& ctx) {
+    const Id pointer{ctx.OpAccessChain(ctx.input_u32, ctx.input_sample_mask, ctx.u32_zero_value)};
+    return ctx.OpLoad(ctx.U32[1], pointer);
+}'''
+assert ns2_context.count(sample_input)==ns1_context.count(sample_input)==1
+assert ns2_get.count(sample_get)==ns1_get.count(sample_get)==1
 assert 'configure_file("${EDEN_NS2_RASTERIZER_INTERFACE}"' in section
 assert 'EDEN_NS2_NATIVE_VULKAN' not in section
 
@@ -120,7 +138,8 @@ for owner in (pinned,cas_owner):
     assert "GlobalAtomicCompareExchange32" in owner
     assert "OpAtomicCompareExchange(U32[1], pointer" in owner
 assert "NativeSpirvCbufBoundsActive()" in cas_owner
-assert '"backend/spirv/spirv_emit_context.cpp"' in CMAKE
+assert 'set(eden_ns2_prior_eden_ns2_spirv_source_idx "${EDEN_NS1_SAMPLE_MASK_ROOT}/backend/spirv/spirv_emit_context.cpp")' in CMAKE
+assert 'list(REMOVE_ITEM eden_ns2_shader_sources "${eden_ns2_prior_eden_ns2_spirv_source_idx}")' in CMAKE
 assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_QMD_CBUF_SPIRV}")' in CMAKE
 print("P2_3_REAL_SPIRV_CAS_WORD_ABI_PASS f16x2=3 f32x2=3 u32_word=1 atomics=real",flush=True)
 

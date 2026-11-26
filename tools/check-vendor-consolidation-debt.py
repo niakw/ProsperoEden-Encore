@@ -1461,7 +1461,34 @@ guarded_get = (
 )
 assert nvdrv_expected.count(original_get) == 1, "N07 pinned session lookup changed"
 nvdrv_expected = nvdrv_expected.replace(original_get, guarded_get)
-assert (active / "eden-core/src" / nvdrv_rel).read_text() == nvdrv_expected
+# The retained NS2 GPU NVDRV owner adds a process-authenticated session lease
+# for native child handles. The historical source receipt predates this
+# shipping owner. Reverse exactly the reviewed addition on an audit copy,
+# never strip arbitrary changes or modify the production C++ source.
+nvdrv_maintained = (active / "eden-core/src" / nvdrv_rel).read_text()
+_nvdrv_bytes = nvdrv_maintained.encode("utf-8")
+_nvdrv_blob = hashlib.sha1(
+    b"blob " + str(len(_nvdrv_bytes)).encode() + b"\0" + _nvdrv_bytes
+).hexdigest()
+if _nvdrv_blob == "eec4677538f53cd709f8f6bee9975f3cba0426a0":
+    _limits = "#include <limits>\n"
+    _retain = """bool Container::RetainSession(SessionId id, const Kernel::KProcess* process) {
+    if (!process) return false;
+    const std::scoped_lock lock{impl->session_guard};
+    if (id.id >= impl->sessions.size()) return false;
+    auto& session = impl->sessions[id.id];
+    if (!session.is_active || session.process != process || session.ref_count <= 0 ||
+        session.ref_count == std::numeric_limits<s32>::max())
+        return false;
+    ++session.ref_count;
+    return true;
+}
+
+"""
+    assert nvdrv_maintained.count(_limits) == 1
+    assert nvdrv_maintained.count(_retain) == 1
+    nvdrv_maintained = nvdrv_maintained.replace(_limits, "", 1).replace(_retain, "", 1)
+assert nvdrv_maintained == nvdrv_expected
 assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_NVDRV_CONTAINER}")') == 1
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_NVDRV_CONTAINER}")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/nvdrv_container.cpp"' not in c

@@ -77,6 +77,16 @@ add_library(shader_recompiler STATIC dummy.cpp
     backend/spirv/spirv_emit_context.cpp
     backend/spirv/emit_spirv_context_get_set.cpp
     backend/spirv/emit_spirv_image.cpp)
+# Mirror the real NS1 maintained SampleMask/descriptor owner selection
+# before applying the shared NS2 QMD3 replacements.
+set(EDEN_NS1_SAMPLE_MASK_ROOT "{root}/vendor/encore-active/eden-shader/src/shader_recompiler")
+set(EDEN_NS1_IMAGE_DESCRIPTOR_SOURCE "${{EDEN_NS1_SAMPLE_MASK_ROOT}}/backend/spirv/emit_spirv_image.cpp")
+get_target_property(ns1_shader_sources shader_recompiler SOURCES)
+foreach(unit IN ITEMS spirv_emit_context.cpp emit_spirv_context_get_set.cpp emit_spirv_image.cpp)
+    list(REMOVE_ITEM ns1_shader_sources "backend/spirv/${{unit}}")
+    list(APPEND ns1_shader_sources "${{EDEN_NS1_SAMPLE_MASK_ROOT}}/backend/spirv/${{unit}}")
+endforeach()
+set_property(TARGET shader_recompiler PROPERTY SOURCES "${{ns1_shader_sources}}")
 add_library(dynarmic STATIC dummy.cpp)
 add_executable(eden-headless dummy.cpp)
 '''+owner+'''

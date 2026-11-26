@@ -442,9 +442,9 @@ r437_body = (active / r437_path).read_text()
 # its raw blob and reverse only the three exact added declaration blocks
 # before applying the original R437 byte-for-byte proof.
 def checked_guest_cache_lock_vendor(pin):
-    if pin not in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c"}:
+    if pin not in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3"}:
         return pin
-    if pin in {"95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c"}:
+    if pin in {"95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3"}:
         reviewed_tree = subprocess.check_output(
             ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"], text=True
         ).strip()
@@ -452,6 +452,7 @@ def checked_guest_cache_lock_vendor(pin):
             "95343060f948601930f2e62b919da0789f0830bb": "efa6548c57f7823d4e8b2c975944c6846b765ff3",
             "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af": "64179fcce4962f9b2b7c738504a6fa0e00b2b292",
             "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c": "3f7f1523cef730ad153bf658fbb3567222d6e956",
+            "150a3a79ca103061f73a9a50ca8f463a3b4712f3": "39fb9a3efe65f67115dfcdebe39a55334a702f2d",
         }[pin], ("Vendor source tree drift", pin, reviewed_tree)
     # Only the two exact new C++ function call sites may differ from the
     # reviewed integrated renderer. Runtime C++ is never modified here.
@@ -864,7 +865,9 @@ assert post_f07_image_array_owners <= set(physical_all), (
     sorted(post_f07_image_array_owners - set(physical_all)))
 assert not post_f07_image_array_owners.intersection(research_paths)
 image_select = (root / "headless/CMakeLists.txt").read_text()
-assert 'list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/emit_spirv_image.cpp")' in image_select
+assert 'set(eden_ns2_prior_eden_ns2_image_source_idx "${EDEN_NS1_IMAGE_DESCRIPTOR_SOURCE}")' in image_select
+assert 'list(FIND eden_ns2_shader_sources' in image_select
+assert 'list(REMOVE_ITEM eden_ns2_shader_sources "${eden_ns2_prior_eden_ns2_image_source_idx}")' in image_select
 assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")' in image_select
 print("ENCORE_P22C_SPIRV_DESCRIPTOR_ARRAY_OWNER_PASS",
       f"owners={len(post_f07_image_array_owners)}")

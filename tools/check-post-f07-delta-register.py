@@ -145,6 +145,36 @@ for entry in entries:
         assert actual == "534adb20bded1d44bc057bacc36dce2d93be770d", (
             "Reviewed Nov26 spine predecessor drift", actual)
         print("ENCORE_SPINE_PROVENANCE_EXACT_REVERSE_PASS", flush=True)
+    # Nov26 Home banner-first refresh is independently reviewed: reverse
+    # only its two exact replacements on the audit copy, proving the old
+    # successful fallback implementation before replaying F07 provenance.
+    if (entry["path"] == "headless/prosperoeden/pe/ui/home.cpp"
+            and actual == "96902efa0600d8669511022410e192f2e2866cfb"):
+        home_now = path.read_text()
+        banner_old = """    const std::string hero_artwork =
+        case_media::BackgroundAllowed(hero_banner) && !c.textures.known_missing(hero_banner)
+            ? hero_banner
+            : case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};
+"""
+        banner_new = """    // Keep retrying the banner while the screenshot fallback is visible.
+    const Cover banner_picture = prefs_.show_game_background &&
+            case_media::BackgroundAllowed(hero_banner)
+        ? c.textures.cover(hero_banner, 1920.0f) : Cover{};
+    const std::string hero_artwork =
+        banner_picture.texture != 0 ? hero_banner :
+        case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};
+"""
+        picture_old = "        const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f);"
+        picture_new = """        const Cover hero_picture = hero_artwork == hero_banner
+            ? banner_picture : c.textures.cover(hero_artwork, 1920.0f);"""
+        assert home_now.count(banner_new) == 1 and home_now.count(picture_new) == 1
+        predecessor = home_now.replace(banner_new, banner_old, 1).replace(picture_new, picture_old, 1)
+        actual = subprocess.run(
+            ["git", "hash-object", "--stdin"], input=predecessor.encode(),
+            stdout=subprocess.PIPE, check=True).stdout.decode().strip()
+        assert actual == "0536ef9acf649865cb8c9d1220ef89f329d3960d", (
+            "Nov26 Home banner predecessor drift", actual)
+        print("ENCORE_HOME_BANNER_EXACT_REVERSE_PASS", flush=True)
     if entry["path"] in launcher_consolidation:
         current_blob, predecessor_blob = launcher_consolidation[entry["path"]]
         if actual == current_blob or actual == launcher_loading_successors.get(entry["path"]):

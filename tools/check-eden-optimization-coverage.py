@@ -2502,6 +2502,26 @@ post_f07_gpu_wait_owners = {
     "headless/vk_rasterizer_shutdown_ps5.h": "07e18cab8a8df1c862903d9e99a521797dd7cf3e",
     "headless/vk_buffer_cache_shutdown_ps5.cpp": "fb55d7b30e95afbe567d41ebcd4b89229d6447b0",
 }
+# The current R08/present and strict forced-fence owners are reviewed
+# successors of this historical P0 synchronization set. Authenticate exact
+# source hashes and the causal safety anchors; leave older pins untouched.
+if selected_nov26_vendor:
+    post_f07_gpu_wait_owners.update({
+        "headless/fence_manager_ps5.h":
+            "d88c7f24bd39fd15ea1092d3df370a5b6378bead",
+        "headless/vulkan_present_manager_ps5.cpp":
+            "f25bd32e89e8047d96adf323653719fc358631b8",
+    })
+    selected_fence = (ROOT / "headless/fence_manager_ps5.h").read_text()
+    assert "bool force_retirement = false" in selected_fence
+    assert "SignalFence(std::move(func), true);" in selected_fence
+    assert "CreateFence(!force_retirement && !should_flush)" in selected_fence
+    selected_present = (ROOT / "headless/vulkan_present_manager_ps5.cpp").read_text()
+    assert "const VkFormat image_format = SwapchainImageFormat();" in selected_present
+    assert "frame->image_format = image_format;" in selected_present
+    assert "frame->image_view_format = image_view_format;" in selected_present
+    print("ENCORE_SELECTED_NATIVE_FENCE_R08_SOURCE_PASS owners=2", flush=True)
+
 for path, blob in post_f07_gpu_wait_owners.items():
     assert path in all_owners and subprocess.check_output(
         ["git", "hash-object", path], cwd=ROOT, text=True).strip() == blob, path

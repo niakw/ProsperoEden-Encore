@@ -4465,3 +4465,19 @@ Pour cmd14 `ResolverSetOptionRequest` :
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 104 lignes ouvertes.**
 
 Gitlink vendor attendu : `83e0306d0b0e8b7903488458227f4b89411668b0`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — LBL backlight invité + TS thermiques virtuelles requalifiés : palier global 100
+
+Base : **104 lignes ouvertes**.
+
+Quatre anciennes lignes PARTIEL sont requalifiées sur leurs propriétaires shipping, sans modification C++ :
+
+- `lbl` cmd6 `SwitchBacklightOn` et cmd7 `SwitchBacklightOff` modifient réellement `backlight_enabled`; cmd8 `GetBacklightSwitchStatus` relit cet état, et `SaveCurrentSetting/LoadCurrentSetting` le préservent avec le reste de l'état LBL. Le `fade_time` est consommé mais la transition visuelle n'est volontairement pas appliquée au matériel PS5. Un HLE Switch ne doit pas piloter le rétroéclairage physique de l'hôte : l'état invité observable est bien représenté.
+- `ts` cmd1 `GetTemperature` et cmd3 `GetTemperatureMilliC` renvoient des valeurs nominales cohérentes pour les deux locations Switch (`Internal=35°C`, `External=20°C`) et leur équivalent exact en milli-degrés. Exposer les thermiques PS5 comme thermiques Switch serait incorrect ; la sonde virtuelle stable constitue la politique HLE attendue pour un matériel invité absent.
+
+Ces quatre commandes ne sont donc plus ouvertes au seul motif qu'elles ne contrôlent/mesurent pas le matériel physique PS5.
+
+**4 lignes PARTIEL quittent le pool : nouveau compteur global = 100 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette requalification.

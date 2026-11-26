@@ -4820,3 +4820,20 @@ Sur la branche NS1, le dispatch `GetInfo` réellement compilé est l'overlay ven
 **Provenance :** vendor `7592ffcbf76077d6ad4083e988354827aeeb7ecc` puis `7ef6cacf8a6f415fb0bdea8f712be0773250c03b`, moteur/gitlink final `f4dc1bd7d70da4d18cae85ffeaa2dff0f86da7fe`. Les règles HOS14/23 sont recoupées avec SwitchBrew/libnx ; aucune modification des autres SVC, du CPU/JIT ou GPU. Le correctif ne prétend pas fournir les régions shadow-stack 37/38 ni les autres propriétés encore synthétiques.
 
 **Compteur global de revue : 48, inchangé.** La ligne `svcGetInfo` (0x29) reste PARTIEL tant que l'ensemble des cas qui lui appartiennent n'est pas qualifié. Aucun build PS5 ni test console réalisé. Contrôle de cohérence par diff des C++ actifs, emplacement CMake/manifeste et empreintes ; CI/native à qualifier séparément.
+
+### 2026-11-26 — FSP SaveDataExtraData persistant : correction du modèle directory-save, compteur global 48 inchangé
+
+Base : **48 lignes ouvertes**.
+
+La conclusion historique du 22/11 selon laquelle un directory-save ne possède pas d'ExtraData physique est corrigée après recroisement avec l'implémentation LibHac récente : `DirectorySaveDataFileSystem` lit et écrit réellement `SaveDataExtraData`, et l'implémentation étendue ajoute une gestion transactionnelle. Le vendor NS1 **`43606c6334a3e3e07c75ea3f89e9a87229a04424`** remplace donc les succès vides / sorties zéro du propriétaire actif `fsp_srv.cpp` par un état persistant de 0x200 octets.
+
+Adaptation Encore :
+- le sidecar est stocké à côté du répertoire de save, hors de la racine montée au guest, afin de ne pas exposer un fichier de métadonnées Horizon dans le filesystem du jeu ;
+- les créations cmd22/23/35/37 initialisent `attribute`, `owner_id`, `flags`, `size` et `journal_size` depuis les structures de création déjà reçues ;
+- cmd66/cmd70 appliquent le masque octet par octet avec la règle `(new & mask) | (old & ~mask)` ; cmd71 applique le masque de lecture ;
+- cmd59 suit le contrat LibHac et ne modifie que `flags` via un masque `0xFFFFFFFF` sur ce champ ;
+- cmd57/58/69 relisent les données persistées ; les saves antérieures sans sidecar restent lisibles avec un ExtraData initial reconstruit depuis leur `SaveDataAttribute`.
+
+Le manifeste `eden-backports` est synchronisé (`fsp_srv.cpp` SHA-256 `f54b6d0fbd0f80067682daa5c3383c6fcf585cff2b74b9ee313ef96ad5af4175`, 77 404 octets), et le CMake actif sélectionne bien cette unité. Le patch moteur `headless/backports/eden-fw23-services.patch` ne contient pas les lots FSP accumulés depuis cette ancienne base et n'est donc pas modifié artificiellement ; le runtime shipping est l'overlay vendor épinglé.
+
+**Compteur global : 48, inchangé.** Les cmds 57/58/59/66 restent PARTIEL dans le pool pour une raison distincte : Encore n'a pas encore l'indexer Horizon attribuant des `save_data_id` non nuls/stables aux saves Account/Device, de sorte que la résolution par ID n'est pas complète. Cmd69/70/71 bénéficient du correctif runtime mais n'ajoutent pas de ligne à soustraire au pool actuel. Aucun build PS5 ni test console revendiqué à ce stade.

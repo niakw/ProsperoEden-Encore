@@ -840,16 +840,19 @@ void ApplyNlibMetadata(const nlohmann::json& json, NlibEnrichment* result) {
     if (players > 0 && players <= 16) result->max_players = players;
 }
 
-void SelectNlibSynopsis(std::uint64_t title_id, int language_choice, NlibEnrichment& result) {
-    const std::string_view locale = Eden::kLanguageKeys[std::clamp(
-        language_choice, 0, static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
-    const auto text = Eden::Ns2Catalog::SelectDescription(title_id, locale.starts_with("fr"),
-                                                           result.description, result.intro);
-    // Copy before assigning: the selected view may alias either string.
-    const std::string synopsis{text};
-    result.description = synopsis;
-    if (result.intro.empty() || Eden::Ns2Catalog::CommercialDescription(result.intro))
-        result.intro = synopsis;
+void SelectNlibSynopsis(NlibEnrichment& result) {
+    // The intro is a tagline, not necessarily a synopsis. Never promote it
+    // to the Home description; use the GamesDB overview when needed.
+    result.description = std::string(Eden::Ns2Catalog::SelectDescription(result.description));
+    if (Eden::Ns2Catalog::CommercialDescription(result.intro)) result.intro.clear();
+}
+
+const Eden::Ns2Catalog::Entry* FindOfflineTitle(std::uint64_t id) {
+    static const auto catalog = [] {
+        std::ifstream input(Eden::AppResourceFile("ui/ns2-title-identities.txt"));
+        return Eden::Ns2Catalog::Read(input);
+    }();
+    return Eden::Ns2Catalog::Find(catalog, id);
 }
 
 bool CacheNlibJpeg(const std::string& endpoint, const std::string& path,
@@ -1232,13 +1235,11 @@ void ApplyCatalogSynopsis(NlibEnrichment& result, std::uint64_t title_id,
             !Eden::Ns2Catalog::CommercialDescription(found->second))
             result.description = found->second;
     }
-    if (result.description.empty()) {
-        const std::string_view locale = Eden::kLanguageKeys[std::clamp(
-            language_choice, 0, static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
-        result.description = Eden::Ns2Catalog::Description(title_id, locale.starts_with("fr"));
-    }
-    if (result.intro.empty() || Eden::Ns2Catalog::CommercialDescription(result.intro))
-        result.intro = result.description;
+    // Preserve original provider text if localized data is unavailable.
+    // Never manufacture or compile a per-title fallback.
+    (void)title_id;
+    (void)language_choice;
+    if (Eden::Ns2Catalog::CommercialDescription(result.intro)) result.intro.clear();
 }
 
 // Other-platform candidates are indexed only for exact, unambiguous titles.
@@ -1703,7 +1704,7 @@ NlibEnrichment CachedNlibEnrichment(std::uint64_t title_id, int language_choice)
     nlohmann::json metadata;
     if (LoadNlibMetadata(title_id, NlibLanguageCode(language_choice), &metadata))
         ApplyNlibMetadata(metadata, &result);
-    SelectNlibSynopsis(title_id, language_choice, result);
+    SelectNlibSynopsis(result);
     if (result.hero.empty() && !result.screenshots.empty())
         result.hero = result.screenshots.front();
     return result;
@@ -1826,7 +1827,7 @@ NlibEnrichment EnsureNlibEnrichment(std::uint64_t title_id, int language_choice,
                     metadata["_encore_artwork_checked_at"] = last_artwork_check;
                     (void)AtomicWriteText(NlibMetadataPath(title_id, language), metadata.dump());
                     ApplyNlibMetadata(metadata, &result);
-                    SelectNlibSynopsis(title_id, language_choice, result);
+                    SelectNlibSynopsis(result);
                     has_icon = metadata.contains("icon") && metadata["icon"].is_string();
                     has_banner = metadata.contains("banner") && metadata["banner"].is_string();
                     if (metadata.contains("screens") && metadata["screens"].is_object())
@@ -2758,22 +2759,12 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
             game.title_id = ResolveTitleId(path, file);
             const auto local_control = deconstructed ? ExtractedLocalNacp(entry.path(), language_choice)
                                                       : ExtractedSidecarMetadata{};
-            if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
+            if (const auto* known = FindOfflineTitle(game.title_id)) {
                 if (local_control.name.empty()) game.name = std::string(known->name);
                 SaveTitle(file, game.name);
                 if (!known->publisher.empty()) game.publisher = std::string(known->publisher);
                 if (!known->release_date.empty()) game.release_date = std::string(known->release_date);
                 if (!known->genre.empty()) game.categories = std::string(known->genre);
-                // Nlib's NX endpoint has no metadata for some retail NS2
-                // titles. Retain verified local text instead of a blank back.
-                const std::string_view locale = Eden::kLanguageKeys[std::clamp(
-                    language_choice, 0, static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
-                const auto overview = Eden::Ns2Catalog::Description(
-                    game.title_id, locale.starts_with("fr"));
-                if (!overview.empty()) {
-                    game.description = std::string(overview);
-                    game.intro = game.description;
-                }
                 std::fprintf(stderr, "EDEN_NS2_TITLE_RESOLVED id=%016llX name=%s source=%s\n",
                              static_cast<unsigned long long>(game.title_id), game.name.c_str(),
                              local_control.name.empty() ? "offline" : "local-nacp");
@@ -2807,7 +2798,7 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 NlibEnrichment list_metadata;
                 if (LoadNlibMetadata(game.title_id, NlibLanguageCode(language_choice), &metadata))
                     ApplyNlibMetadata(metadata, &list_metadata);
-                SelectNlibSynopsis(game.title_id, language_choice, list_metadata);
+                SelectNlibSynopsis(list_metadata);
                 ApplyCatalogSynopsis(list_metadata, game.title_id, UseNs2CaseIndex(game),
                                      list_metadata.name.empty() ? game.name : list_metadata.name,
                                      game.name, language_choice);
@@ -2875,7 +2866,7 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
         }
     }
     if (game.cover.empty() && !(cancel && cancel->load(std::memory_order_acquire))) {
-        const auto* known = Eden::Ns2Catalog::Find(game.title_id);
+        const auto* known = FindOfflineTitle(game.title_id);
         const std::string canonical = known ? std::string(known->name) : game.name;
         bool changed = false;
         const bool force_refresh = !rejected.empty() &&
@@ -2969,7 +2960,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     // Resolve canonical retail names locally before any Nlib request. NS2
     // extracted folders often omit spaces (e.g. DonkeyKongBananza).
     // NS1 preserves the exact previous name/filename fallback.
-    if (const auto* ns2 = Eden::Ns2Catalog::Find(game.title_id)) {
+    if (const auto* ns2 = FindOfflineTitle(game.title_id)) {
         game.case_artwork_changed = EnsureRetailCase(
             game.title_id, std::string(ns2->name), scanned_name,
             language_choice, cancel, true);
@@ -3001,7 +2992,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         game.cover = std::move(enrichment.icon);
         game.artwork_changed = true;
     } else if (game.cover.empty() || game.cover == CachedGamesDbSquare(game.title_id, second_generation)) {
-        const auto* known = Eden::Ns2Catalog::Find(game.title_id);
+        const auto* known = FindOfflineTitle(game.title_id);
         const std::string canonical = known ? std::string(known->name) : scanned_name;
         bool changed = false;
         if (EnsureGamesDbSquare(game.title_id, canonical, scanned_name,
@@ -3023,17 +3014,10 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     if (nlib_screenshots) game.screenshots = std::move(enrichment.screenshots);
     if (enrichment.max_players > 0) game.max_players = enrichment.max_players;
     if (!enrichment.name.empty()) game.name = std::move(enrichment.name);
-    else if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) game.name = std::string(known->name);
+    else if (const auto* known = FindOfflineTitle(game.title_id)) game.name = std::string(known->name);
     if (!enrichment.intro.empty()) game.intro = std::move(enrichment.intro);
     if (!enrichment.description.empty()) game.description = std::move(enrichment.description);
-    else if (game.description.empty()) {
-        // Preserve a localized, Title-ID-qualified offline description when
-        // a refreshed Nlib result has no NS2 record.
-        const std::string_view locale = Eden::kLanguageKeys[std::clamp(
-            language_choice, 0, static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
-        game.description = Eden::Ns2Catalog::Description(
-            game.title_id, locale.starts_with("fr"));
-    }
+    else if (Eden::Ns2Catalog::CommercialDescription(game.description)) game.description.clear();
     if (!enrichment.publisher.empty()) game.publisher = std::move(enrichment.publisher);
     if (!enrichment.developer.empty()) game.developer = std::move(enrichment.developer);
     if (!enrichment.release_date.empty()) game.release_date = std::move(enrichment.release_date);

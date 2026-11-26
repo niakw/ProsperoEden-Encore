@@ -1,60 +1,63 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Offline second-generation guest title identity fallback for games whose extracted
-// Control NCA/NACP and Nlib Switch 1 database are unavailable.
-// Names: https://www.switchbrew.org/wiki/Switch_2:Title_list/Games
-// Original box scans are resolved separately from the Switch 1 + 2 LaunchBox
-// media index; no merchandise photos are mistaken for physical flat scans.
+// Data-only identity reader. Game records and descriptions never belong in C++.
 #pragma once
 #include <array>
+#include <charconv>
 #include <cstdint>
+#include <istream>
+#include <string>
 #include <string_view>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 
 namespace Eden::Ns2Catalog {
 struct Entry {
-    std::uint64_t id;
-    std::string_view name;
-    std::string_view publisher;
-    std::string_view release_date;
-    std::string_view genre;
+    std::uint64_t id{};
+    std::string name, publisher, release_date, genre;
 };
-inline constexpr std::array<Entry, 18> kTitles{{
-    {0x040003901FBC2000ULL, "Survival Kids", "", "", ""},
-    {0x0400303021AAC000ULL, "DELTARUNE", "", "", ""},
-    {0x040052E01D3DA000ULL, "Nintendo GameCube - Nintendo Classics", "", "", ""},
-    {0x040057C02159A000ULL, "Nintendo Switch 2 Welcome Tour", "", "", ""},
-    {0x04006CC0223D2000ULL, "HITMAN World of Assassination - Signature Edition", "", "", ""},
-    {0x040074A01BF12000ULL, "Donkey Kong Bananza", "Nintendo", "2025-07-17", "Action · Platformer"},
-    {0x040077201BE50000ULL, "Kirby Air Riders", "", "", ""},
-    {0x040078001CCF6000ULL, "Street Fighter 6", "", "", ""},
-    {0x0400813022B32000ULL, "Fortnite", "", "", ""},
-    {0x040082902313C000ULL, "Arcade Archives 2 RIDGE RACER", "", "", ""},
-    {0x04009570209F8000ULL, "Hogwarts Legacy", "", "", ""},
-    {0x0400A4802437E000ULL, "Drag x Drive: Global Jam", "", "", ""},
-    {0x0400BBB020FF0000ULL, "Yakuza 0 Director's Cut", "", "", ""},
-    {0x0400C3F00006E000ULL, "Mario Kart World", "Nintendo", "2025-06-05", "Racing · Party"},
-    {0x0400CA40208C8000ULL, "Split Fiction", "", "", ""},
-    {0x0400CBA0221EA000ULL, "BRAVELY DEFAULT FLYING FAIRY HD Remaster", "", "", ""},
-    {0x0400DDB020648000ULL, "Cyberpunk 2077: Ultimate Edition", "", "", ""},
-    {0x0400E140216D4000ULL, "SONIC X SHADOW GENERATIONS", "", "", ""},
-}};
-// Localized, conservative offline overviews for retail NS2 titles when the
-// NS1-only Nlib endpoint has no metadata. The Title ID, not the display
-// name or an unverified file, is the sole lookup key.
-inline constexpr std::string_view Description(std::uint64_t id, bool french) noexcept {
-    switch (id) {
-    case 0x0400C3F00006E000ULL:
-        return french
-            ? "Parcourez un vaste monde de courses avec Mario et ses amis, sur circuits et routes ouvertes."
-            : "Race with Mario and friends across connected courses and open roads.";
-    case 0x040074A01BF12000ULL:
-        return french
-            ? "Explorez des environnements destructibles avec Donkey Kong dans une aventure de plateformes."
-            : "Explore destructible environments with Donkey Kong in a platforming adventure.";
-    default:
-        return {};
+using Catalog = std::unordered_map<std::uint64_t, Entry>;
+
+inline Catalog Read(std::istream& input) {
+    Catalog result;
+    std::unordered_set<std::uint64_t> ambiguous;
+    std::string row;
+    for (std::size_t count = 0; count < 40000 && std::getline(input, row); ++count) {
+        if (row.empty() || row[0] == '#' || row.size() > 1024) continue;
+        if (row.back() == '\r') row.pop_back();
+        std::array<std::string_view, 5> fields{};
+        std::string_view remaining{row};
+        bool valid = true;
+        for (std::size_t i = 0; i < fields.size(); ++i) {
+            const auto tab = remaining.find('\t');
+            if ((i < fields.size() - 1) != (tab != std::string_view::npos)) {
+                valid = false;
+                break;
+            }
+            fields[i] = remaining.substr(0, tab);
+            if (tab != std::string_view::npos) remaining.remove_prefix(tab + 1);
+        }
+        if (!valid || fields[0].size() != 16 || fields[1].empty()) continue;
+        std::uint64_t id{};
+        const auto parsed = std::from_chars(fields[0].data(), fields[0].data() + fields[0].size(), id, 16);
+        if (parsed.ec != std::errc{} || parsed.ptr != fields[0].data() + fields[0].size() ||
+            (id >> 56) != 4 || ambiguous.contains(id)) continue;
+        if (result.contains(id)) {
+            result.erase(id);
+            ambiguous.insert(id);
+            continue;
+        }
+        result.emplace(id, Entry{id, std::string(fields[1]), std::string(fields[2]),
+                                 std::string(fields[3]), std::string(fields[4])});
     }
+    return result;
 }
-// Reject purchase conditions instead of presenting them as a game synopsis.
+inline const Entry* Find(const Catalog& catalog, std::uint64_t id) noexcept {
+    const auto found = catalog.find(id);
+    return found == catalog.end() ? nullptr : &found->second;
+}
+
+// Reject purchase conditions, not real game descriptions.
 inline constexpr bool CommercialDescription(std::string_view text) noexcept {
     return text.starts_with("Si vous achetez") ||
            text.starts_with("If you purchase") ||
@@ -62,20 +65,8 @@ inline constexpr bool CommercialDescription(std::string_view text) noexcept {
            text.starts_with("En achetant") ||
            text.starts_with("When you purchase");
 }
-inline constexpr std::string_view SelectDescription(std::uint64_t id, bool french,
-                                                     std::string_view description,
-                                                     std::string_view intro) noexcept {
+inline constexpr std::string_view SelectDescription(std::string_view description) noexcept {
     if (!description.empty() && !CommercialDescription(description)) return description;
-    if (!intro.empty() && !CommercialDescription(intro)) return intro;
-    // The caller can now consult the generated catalogue before the legacy
-    // offline identity fallback. No per-title commercial-text exceptions.
-    (void)id;
-    (void)french;
     return {};
 }
-inline const Entry* Find(std::uint64_t id) noexcept {
-    for (const auto& item : kTitles)
-        if (item.id == id) return &item;
-    return nullptr;
-}
-}  // namespace Eden::Ns2Catalog
+} // namespace Eden::Ns2Catalog

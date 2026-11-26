@@ -403,7 +403,7 @@ assert "for (int scene : {1})" in native
 assert 'regions = {"fr", "eu"};' in native
 assert 'for (const char* fallback : {"us", "uk"})' in native
 assert "game.title_id, scanned_name, CleanTitle(game.file)," in native
-assert "Eden::Ns2Catalog::Find(game.title_id)" in native
+assert "FindOfflineTitle(game.title_id)" in native
 assert "game.title_id, std::string(ns2->name), scanned_name," in native
 assert "9524e5f7-ccc8-4ce6-a581-03f82c51825e.jpg" in indexer
 assert "a8bcb4cc-a3b0-4cf0-82f3-cb10dd18b27c.jpg" in indexer
@@ -955,12 +955,18 @@ with tempfile.TemporaryDirectory(prefix="encore-art-locks-") as dirname:
 #include <mutex>
 #include <set>
 #include <thread>
+#include <fstream>
 #include "ns2_title_catalog.h"
 using namespace std::chrono_literals;
 """ + helper + r"""
-int main() {
+int main(int argc, char** argv) {
+    assert(argc == 2);
+    std::ifstream input(argv[1]);
+    const auto catalog = Eden::Ns2Catalog::Read(input);
+    assert(catalog.size() == 18);
     std::set<std::size_t> before16, before64, after16, after64;
-    for (const auto& entry : Eden::Ns2Catalog::kTitles) {
+    for (const auto& [id, entry] : catalog) {
+        (void)id;
         before16.insert(entry.id % 16);
         before64.insert(entry.id % 64);
         after16.insert(ArtworkLockBucket(entry.id,16));
@@ -1002,7 +1008,7 @@ int main() {
         subprocess.run([compiler, "-std=c++20", opt, "-Wall", "-Wextra",
                         "-Werror", "-pthread", "-I", str(catalog_header.parent),
                         str(cpp), "-o", str(exe)], check=True, timeout=60)
-        subprocess.run([str(exe)], check=True, timeout=10)
+        subprocess.run([str(exe), str(root / "headless/prosperoeden/ui/ns2-title-identities.txt")], check=True, timeout=10)
 print("R457_ARTWORK_LOCK_BUCKET_HOST_PASS catalog=18 old=1/1 new=10/16 cancel_held_lock=1")
 
 # Execute the real ranked-cache admission/promotion helper against controlled

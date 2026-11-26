@@ -71,7 +71,8 @@ assert 'std::min(comma, dot)' in lib
 assert 'if (attempts >= 7' in services
 assert "stbi_failure_reason()" in services
 assert "EDEN_EXEFS_SIZE" in services
-assert "Eden::Ns2Catalog::Description(" in services
+assert "ApplyCatalogSynopsis(" in services
+assert "Eden::Ns2Catalog::Description(" not in services
 assert "if (it->second.texture == 0) {" in textures
 assert "target_pixels >= 1024" in textures
 # Library source must provide controller focus over each real screenshot.

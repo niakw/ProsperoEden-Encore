@@ -4349,3 +4349,14 @@ Le raw NFC pass-through fabriquait un octet de sortie et `ResultSuccess` alors q
 **3 lignes PARTIEL quittent le pool. Nouveau compteur global : 111 lignes ouvertes.**
 
 Gitlink repinné sur `6eb9ce055566750abd07e0fcfdf9beb22881dac1`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — BTM pairing database virtualisée : palier global 110
+
+Base : **111 lignes ouvertes**.
+
+Requalification de `btm:sys` cmd3 `GetPairedGamepadCount` contre l'owner actif `encore-active/eden-backports/src/core/hle/service/btm/btm_system_core.cpp`. Le service BTM maintient déjà un lifecycle invité cohérent (`Start/CancelGamepadPairing`, event réel, état `IsGamepadPairingStarted`, clear database). Encore n'expose volontairement **aucune base de pairing Bluetooth Switch** : les manettes PS5/USB sont des périphériques HID hôte et ne doivent pas être fabriquées comme appareils Bluetooth Switch persistants. Dans ce modèle, une base vide et `count=0` est l'état virtuel exact, pas un manque de lecture du matériel PS5.
+
+**1 ligne PARTIEL quitte le pool. Nouveau compteur global : 110 lignes ouvertes.**
+
+Aucun patch runtime, changement de gitlink, build PS5 ou validation console dans cette requalification.

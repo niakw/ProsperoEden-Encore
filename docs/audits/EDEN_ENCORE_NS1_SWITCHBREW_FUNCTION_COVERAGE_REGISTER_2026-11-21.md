@@ -5122,4 +5122,21 @@ Manifeste shipping synchronisé : `svc_info.cpp` SHA-256 `7201405d5afd7d591dd85f
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 12 lignes ouvertes.**
 
 Aucun build PS5 ni validation console revendiqué.
+### 2026-11-26 — SPL GetConfig fail-closed qualifié : 12 → 11
+
+Base précédente : **12 lignes ouvertes**.
+
+Le PARTIEL historique `spl:` cmd0 `GetConfig` est requalifié sur le propriétaire shipping réel `encore-active/eden-backports/src/core/hle/service/spl/spl_module.cpp`, et non sur le miroir pristine `sources/eden` :
+- le correctif historique de réponse CMIF est bien présent : lorsqu'un `ConfigItem` échoue, le handler construit une seule réponse d'erreur puis retourne immédiatement ;
+- `ConfigItem::HardwareState` est virtualisé explicitement en `HardwareState::Production`, et `IsDevelopment` dérive son booléen de ce même état au lieu d'inventer une unité dev ;
+- les autres `ConfigItem` standard nécessitant réellement secure-monitor/fuses/device secrets (`DramId`, `FuseVersion`, `DeviceId`, `MemoryMode`, `DeviceUniqueKeyGeneration`, etc.) retournent explicitement `ResultSecureMonitorNotImplemented` ; aucune valeur matérielle PS5 n'est exposée comme donnée Switch ;
+- les ConfigItem Exosphere possèdent chacun un résultat déterministe documenté (version, flags zéro ou `ResultSecureMonitorNotInitialized` pour payload absent), et toute clé inconnue retourne `ResultSecureMonitorInvalidArgument`.
+
+Cette politique suit la même convention que les autres commandes SPL déjà sorties du pool : **backend secure-monitor absent = rejet invité explicite**, pas succès fictif. Le fait que certaines clés matérielles restent indisponibles ne laisse donc plus cmd0 PARTIEL au niveau du contrat HLE observable.
+
+Le CMake shipping sélectionne `hle/service/spl/spl_module.cpp` et le manifeste vendor possède déjà l'owner backport correspondant ; aucun retour au miroir pristine n'est revendiqué.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 11 lignes ouvertes.**
+
+Aucun patch C++ supplémentaire, changement de gitlink, build PS5 ou validation console dans cette étape.
 

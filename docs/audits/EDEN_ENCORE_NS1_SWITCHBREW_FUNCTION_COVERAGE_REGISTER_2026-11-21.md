@@ -5364,3 +5364,23 @@ Les 9 AMBIGU historiques sont ainsi toutes rattachées : ACC cmd0/1/2, ES cmd100
 **2 lignes quittent le pool : nouveau plancher = 18 / 4 853.**
 
 Aucun patch runtime, changement de gitlink, build natif PS5 ou validation console dans cette étape.
+
+
+### 2026-11-26 — NIFM SetChannels fail-closed : 18 → 17 minimum
+
+Base précédente : **18 lignes ouvertes au minimum**.
+
+La ligne historique `nifm:a/nifm:s/nifm:u` cmd4 `SetChannels` restait PARTIEL : l'owner actif acceptait le buffer de canaux, le conservait localement puis retournait `ResultSuccess`, alors que le scanner réseau PS5 ne fournit aucune métadonnée de canal et ne peut donc appliquer ce filtre.
+
+Vendor **`5268e686883499c15f0336966af5a89235e07b66`** :
+- consomme toujours le buffer IPC pour préserver le contrat d'entrée ;
+- ne publie plus un état `requested_channels` sans consommateur ;
+- retourne `IPC::ResultNotSupported` au lieu d'annoncer un filtrage réussi qui n'a pas lieu ;
+- supprime les membres d'état devenus inutiles.
+Lichii et Eglantine conservent encore le stub historique `Success` sans effet ; aucune implémentation indépendante trouvée ne justifie ce faux succès.
+
+Reçu actif NIFM : SHA-256 `f99caacd689383081bcac27386029e05331f1ccac388465c8030e5c1cd45884c`, **63 792 octets**.
+
+**1 ligne PARTIEL quitte le pool : nouveau plancher = 17 / 4 853.**
+
+Aucun build natif PS5 ni validation console n'est revendiqué ; la CI du nouveau pin doit être vérifiée séparément.

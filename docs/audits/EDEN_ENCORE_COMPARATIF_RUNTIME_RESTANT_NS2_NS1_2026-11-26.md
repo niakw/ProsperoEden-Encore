@@ -430,6 +430,15 @@ Contrat comparé, sans backport aveugle :
 
 ## 5.8 VI2/GSV — constat P0 MKW 2114-0010 (26/11)
 
+### Contrôle ciblé complémentaire du 26 novembre — révisions et portée exactes
+
+- 🟢 **2026-11-26 — code actif et provenance contrôlés :** moteur `7cd38100a0f480af093c076d1157c10467394927`, gitlink/vendor `240550925b0ef097c24c3035c063bdceadd872de`. Propriétaires C++ sélectionnés : `graphics_supervisor.cpp` (blob `634f7a6f...`), `native_image_layout.h` (blob `2bacc8eb...`) et `graphics_supervisor_protocol.h` (blob `f318dfdf...`). Ce contrôle **n'est pas une qualification console**.
+- 🟢 **2026-11-26 — commandes comparées à Lichii `0288882f` et EglantinePS5 `75a552ff` :** VI2 31/32 acquiert puis duplique l'évènement natif (COPY handle), 261 l'attache au VSync ; GSV 435/111/423/429/315 prépare allocation, backing GPU, images et pool. Le décodage VI2 32 dans Encore exige `packet[0]=0x30`, `packet[1]=0x80000001`, `packet[2]=2`, puis le handle et l'index ; les upstream déduisent l'index depuis le descripteur TIPC. **Cette différence de validation n'est pas démontrée fautive dans les traces**.
+- 🟢 **2026-11-26 — divergence de formats vérifiée dans le C++ actif :** le calcul GSV admet RGBA8 (1), RGB10A2 (4) et RGBA16F (5), tandis que `IVi2Session::Present` conditionne l'attachement à `preference[6] == 1` et construit le `NvGraphicBuffer` en `PixelFormat::Rgba8888`. C'est une limitation réelle du chemin de présentation ; **aucune preuve que MKW atteigne VI2 229 ni demande 4/5 dans ce log**, donc **aucun élargissement de formats hasardeux**.
+- **Console non revalidée :** le log MKW cité plus bas provient du moteur `68122b0b`, antérieur au HEAD indiqué ici. Erreur VI `2114-0010` et zéro soumission/frame GPU sur ce test seulement. Les changements postérieurs ne prouvent aucune progression console.
+- **CI du HEAD `7cd38100` : non verte.** Garde de provenance backports (`Backport tree drift`, arbre `6aa75174...`) et contrôle GPU dirty-memory (`gpu_dirty_memory_manager.h` blob effectif `7769e314...`) encore en échec. Ces gardes ne doivent pas être contournées sans requalification des sources concernées. Build PS5 toujours gelé ; aucune modification runtime ou merge dans ce contrôle.
+
+
 ## 2026-11-26 — P0 MKW : erreur VI 2114-0010 après préparation des images
 
 🟢 **26/11/2026 — contrôle croisé de la trace PS5, du décodage Result, des trois propriétaires HLE et du comparatif NS2.** Pastille limitée à la provenance/lecture **source et logs**, **pas** à un correctif validé PS5.

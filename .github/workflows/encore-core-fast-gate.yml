@@ -477,6 +477,12 @@ jobs:
           python3 -B tools/check-ps5-f07-optional-optimizer-backlog-host.py
           python3 -B tools/check-vulkan-buffer-frame-tick-snapshot-host.py
           python3 -B tools/check-vulkan-buffer-usage-reset-host.py
+          # FC27 BufferCache P1: qualify the actual PS5 UsageTracker owner and
+          # its randomized ASan/UBSan oracle on every fast gate. The dedicated
+          # workflow is manual, so relying on it alone would leave this runtime
+          # change untested on ordinary main qualification.
+          python3 -B tools/check-ps5-usage-tracker-selection-host.py
+          python3 -B vendor/tests/ps5_buffer_usage_granularity_host.py
           python3 -B tools/check-ps5-quad-index-initial-fence-host.py
           python3 -B tools/check-vulkan-worker-fatal-drain-host.py
           python3 -B tools/check-shared-gpu-queue-lifetime-host.py

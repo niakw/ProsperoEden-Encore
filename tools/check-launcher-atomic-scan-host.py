@@ -57,6 +57,11 @@ assert "const Game* game = selected_valid" in draw_library
 assert "count > 0 ? &games_[static_cast<std::size_t>(library_.selected)]" not in draw_library
 
 assert "game.addons = enriched.addons;" in media_finish
+# Production's worker handoff carries an independently invalidated Spine path.
+services_hpp = (root / "headless/prosperoeden/pe/ui/services.hpp").read_text()
+assert "std::string box_spine{};" in services_hpp
+assert "textures_.invalidate(enriched.box_spine);" in media_finish
+assert "textures_.invalidate(enriched.box_spine);" in home_finish
 assert "game.addons_short = enriched.addons_short;" in media_finish
 assert "game.language = enriched.language;" in media_finish
 assert "game.language_note = enriched.language_note;" in media_finish
@@ -88,7 +93,7 @@ struct Game {
     std::string name;
     bool artwork_changed = false;
     unsigned case_artwork_changed = 0;
-    std::string cover, box_front, box_back, hero;
+    std::string cover, box_front, box_back, box_spine, hero;
     std::vector<std::string> screenshots;
     std::string intro, description, publisher, developer, release_date, categories, size = "—";
     std::string addons, addons_short, language, language_note;
@@ -102,7 +107,11 @@ namespace sys {
 template<class... Args> void log(const char*, Args...) {}
 }
 std::string tr(const char* message) { return message; }
-struct Textures { int invalidated = 0; void invalidate(const std::string&) { ++invalidated; } };
+struct Textures {
+    int invalidated = 0;
+    std::vector<std::string> paths;
+    void invalidate(const std::string& path) { ++invalidated; paths.push_back(path); }
+};
 struct Recent {
     std::uint64_t title_id = 0;
     std::string file;
@@ -245,6 +254,8 @@ int main() {
         enriched.title_id = 0x777;
         enriched.box_front = "front.webp";
         enriched.box_back = "rear.webp";
+        enriched.box_spine = "spine.webp";
+        enriched.case_artwork_changed = 4u;
         enriched.cover = "icon.webp";
         enriched.hero = "hero.webp";
         enriched.screenshots = {"scene.webp"};
@@ -256,6 +267,8 @@ int main() {
         found.set_value(enriched);
         home.finish_home_media();
         assert(home.games_[0].box_back == "rear.webp");
+        assert(std::find(home.textures_.paths.begin(), home.textures_.paths.end(),
+                         "spine.webp") != home.textures_.paths.end());
         assert(home.games_[1].box_back.empty());
         assert(home.games_[0].screenshots.size() == 1 && home.games_[1].screenshots.empty());
         assert(home.games_[2].box_back.empty());
@@ -304,6 +317,8 @@ int main() {
         nlib.cover = "mkw-icon.webp";
         nlib.box_front = "mkw-front.webp";
         nlib.box_back = "mkw-back.webp";
+        nlib.box_spine = "mkw-spine.webp";
+        nlib.case_artwork_changed = 4u;
         nlib.hero = "mkw-hero.webp";
         nlib.description = "Mario Kart World";
         nlib.screenshots = {"mkw-shot.webp"};
@@ -314,6 +329,8 @@ int main() {
         done.set_value(nlib);
         copies.finish_selected_media();
         assert(copies.games_[0].box_back == "mkw-back.webp");
+        assert(std::find(copies.textures_.paths.begin(), copies.textures_.paths.end(),
+                         "mkw-spine.webp") != copies.textures_.paths.end());
         assert(copies.games_[1].box_back.empty());
         assert(copies.games_[1].hero.empty());
         assert(copies.games_[0].screenshots.size() == 1 && copies.games_[1].screenshots.empty());

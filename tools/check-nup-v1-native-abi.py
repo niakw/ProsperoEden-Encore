@@ -37,12 +37,12 @@ def main() -> None:
     # program before a valid legacy update ExeFS, including with full RomFS.
     content = (ROOT / "headless/nup_v1_native_content.cpp").read_text()
     exefs = content.split("FileSys::VirtualDir ContentSet::ExeFS() const {", 1)[1].split(
-        "FileSys::VirtualFile ContentSet::CreateRomFS()", 1)[0]
+        "FileSys::VirtualFile ContentSet::CreateRomFS(", 1)[0]
     assert exefs.index("FindEmbeddedSwitch2Program(*mount_)") < exefs.index("if (newest_update)")
     assert "metadata.IsSwitch2()" in content
     assert "(packages[*newest].title_id >> 56) != 0x01" in content
     assert "embedded->program_id != *caller_program_id" in content
-    romfs = content.split("FileSys::VirtualFile ContentSet::CreateRomFS() const {", 1)[1].split(
+    romfs = content.split("FileSys::VirtualFile ContentSet::CreateRomFS(bool allow_upgrade_pack) const {", 1)[1].split(
         "FileSys::VirtualFile ContentSet::CreateAddOnRomFS(", 1)[0]
     assert "FileSys::LayeredVfsDirectory::MakeLayeredDirectory(" in romfs
     assert "{embedded->romfs, std::move(directory)}" in romfs

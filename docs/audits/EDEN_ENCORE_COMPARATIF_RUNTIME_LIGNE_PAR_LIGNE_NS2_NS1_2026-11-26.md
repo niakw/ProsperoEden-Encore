@@ -14620,3 +14620,930 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 | `QueueVulkanPipelineCacheSave` | Méthode distincte dans les forks ; Encore regroupe autrement sa persistance dans le propriétaire examiné. |
 
 **Couverture ajoutée :** 11 fonctions, 22 comparaisons directes, 8298 lignes-source parcourues (répétitions incluses), 1 homologue(s) absent(s)/non extrait(s). Les fonctions structurellement absentes sont consignées mais non comptées comme bugs.
+
+## Annexe VI — lowering Ampere → Maxwell, par famille d'opcodes
+
+Le fichier de lowering fait plusieurs milliers de lignes et diverge fortement entre les trois branches. Un diff monolithique serait peu exploitable. Cette annexe compare donc des **blocs d'opcodes numérotés exactement**, avec leurs lignes source. Les différences ne sont pas converties en demandes de backport : un opcode n'est prioritaire que lorsqu'un shader réel du titre l'emploie ou qu'un test/repro l'établit.
+
+### P0-SH01 · VOTE / VOTEU
+
+Compare les deux opcodes de vote/ballot. Les différences portent notamment sur validation des registres uniformes, masques de mots et mapping des prédicats. Une divergence est pertinente si un shader du titre utilise réellement cette forme.
+
+Encore : [lower_to_maxwell.h:1246–1269](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1246-L1269) — 24 lignes.
+
+<details>
+<summary>Lichii — 1040–1063 : 17 alignées, 7 propres Encore, 7 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:1040–1063](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1040-L1063).
+
+```diff
+- 1246       |         case 0x806: { // VOTE ballot in an ordinary register and independent predicate result.
+- 1247       |             if (insn.Bits(24, 8) || insn.words[1] || insn.Bits(72, 2) > 2 ||
+- 1248       |                 (insn.words[2] & ~(0x300U | 0xe0000U | 0x7800000U)))
+- 1249       |                 return fail(index, "native register vote mode");
++       1040 |         case 0x806: { // VOTE: register ballot, ordinary predicate input and output.
++       1041 |             if (insn.words[1] || insn.Bits(72, 2) > 2 || (insn.words[2] & ~0x078e0300U))
++       1042 |                 return fail(index, "native vote mode");
+  1250  1043 |             emit(base(0x50d8000000000000ULL) | (u64{insn.Bits(87, 4)} << 39) |
+  1251  1044 |                  (u64{insn.Bits(81, 3)} << 45) | (u64{insn.Bits(72, 2)} << 48));
+  1252  1045 |             break;
+  1253  1046 |         }
+  1254  1047 |         case 0x886: { // VOTEU ballot and independent uniform predicate output.
+  1255  1048 |             const u32 output = insn.Bits(81, 3), target = insn.Bits(16, 8);
+- 1256       |             if (target > 63 || insn.words[1] ||
+- 1257       |                 (output > 1 && output != 7) || insn.Bits(72, 2) > 2 || native_predicate != 7)
++       1049 |             const u32 mapped_target = uniform_register(target);
++       1050 |             if (mapped_target == ~0U || insn.Bits(24, 8) || insn.words[1] ||
++       1051 |                 (insn.words[2] & ~0x078e0300U) || insn.Bits(72, 2) > 2 || native_predicate != 7)
+  1258  1052 |                 return fail(index, "native uniform vote mode");
+  1259  1053 |             const u32 temporary = output == 7 ? 7 : 6 - output;
+  1260  1054 |             const u32 mask = 1U << temporary;
+  1261  1055 |             if (output != 7) emit(0x38e8000000070000ULL | 253 | (u64{255} << 8) | (u64{mask} << 20));
+- 1262       |             emit(0x50d8000000070000ULL | uniform_register(target) |
++       1056 |             emit(0x50d8000000070000ULL | mapped_target |
+  1263  1057 |                 (u64{insn.Bits(87, 4)} << 39) | (u64{temporary} << 45) | (u64{insn.Bits(72, 2)} << 48));
+  1264  1058 |             if (output != 7) {
+  1265  1059 |                 emit(0x38e8000000070000ULL | 239 | (u64{239} << 8) | (u64{mask} << 20));
+  1266  1060 |                 emit(0x38f0000000070000ULL | (u64{253} << 8) | (u64{mask} << 20));
+  1267  1061 |             }
+  1268  1062 |             break;
+  1269  1063 |         }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 1011–1034 : 17 alignées, 7 propres Encore, 7 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:1011–1034](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1011-L1034).
+
+```diff
+- 1246       |         case 0x806: { // VOTE ballot in an ordinary register and independent predicate result.
+- 1247       |             if (insn.Bits(24, 8) || insn.words[1] || insn.Bits(72, 2) > 2 ||
+- 1248       |                 (insn.words[2] & ~(0x300U | 0xe0000U | 0x7800000U)))
+- 1249       |                 return fail(index, "native register vote mode");
++       1011 |         case 0x806: { // VOTE: register ballot, ordinary predicate input and output.
++       1012 |             if (insn.words[1] || insn.Bits(72, 2) > 2 || (insn.words[2] & ~0x078e0300U))
++       1013 |                 return fail(index, "native vote mode");
+  1250  1014 |             emit(base(0x50d8000000000000ULL) | (u64{insn.Bits(87, 4)} << 39) |
+  1251  1015 |                  (u64{insn.Bits(81, 3)} << 45) | (u64{insn.Bits(72, 2)} << 48));
+  1252  1016 |             break;
+  1253  1017 |         }
+  1254  1018 |         case 0x886: { // VOTEU ballot and independent uniform predicate output.
+  1255  1019 |             const u32 output = insn.Bits(81, 3), target = insn.Bits(16, 8);
+- 1256       |             if (target > 63 || insn.words[1] ||
+- 1257       |                 (output > 1 && output != 7) || insn.Bits(72, 2) > 2 || native_predicate != 7)
++       1020 |             const u32 mapped_target = uniform_register(target);
++       1021 |             if (mapped_target == ~0U || insn.Bits(24, 8) || insn.words[1] ||
++       1022 |                 (insn.words[2] & ~0x078e0300U) || insn.Bits(72, 2) > 2 || native_predicate != 7)
+  1258  1023 |                 return fail(index, "native uniform vote mode");
+  1259  1024 |             const u32 temporary = output == 7 ? 7 : 6 - output;
+  1260  1025 |             const u32 mask = 1U << temporary;
+  1261  1026 |             if (output != 7) emit(0x38e8000000070000ULL | 253 | (u64{255} << 8) | (u64{mask} << 20));
+- 1262       |             emit(0x50d8000000070000ULL | uniform_register(target) |
++       1027 |             emit(0x50d8000000070000ULL | mapped_target |
+  1263  1028 |                 (u64{insn.Bits(87, 4)} << 39) | (u64{temporary} << 45) | (u64{insn.Bits(72, 2)} << 48));
+  1264  1029 |             if (output != 7) {
+  1265  1030 |                 emit(0x38e8000000070000ULL | 239 | (u64{239} << 8) | (u64{mask} << 20));
+  1266  1031 |                 emit(0x38f0000000070000ULL | (u64{253} << 8) | (u64{mask} << 20));
+  1267  1032 |             }
+  1268  1033 |             break;
+  1269  1034 |         }
+```
+
+</details>
+
+### P0-SH02 · ULDC direct/indexé
+
+Chargements de constant buffer uniformes. Important pour les shaders Ampere réels : largeur, signed/subword, alignement, bank et index uniform doivent rester cohérents.
+
+Encore : [lower_to_maxwell.h:1447–1472](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1447-L1472) — 26 lignes.
+
+<details>
+<summary>Lichii — 1167–1193 : 10 alignées, 16 propres Encore, 17 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:1167–1193](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1167-L1193).
+
+```diff
+- 1447       |         case 0xab9: case 0xabb: { // ULDC U8/S8/U16/S16/U32/U64, direct or indexed.
++       1167 |         case 0xab9: case 0xabb: { // ULDC, direct or indexed.
+  1448  1168 |             const u32 uniform_dest = insn.Bits(16, 8), index_reg = insn.Bits(24, 8);
+  1449  1169 |             const u32 width = insn.Bits(73, 3);
++       1170 |             const bool subword_load = width < 4;
+  1450  1171 |             const u32 offset = insn.Bits(38, 16);
+- 1451       |             // Indexed reads may use a byte-granular immediate because
+- 1452       |             // the UR index contributes the final byte address. Direct
+- 1453       |             // reads must retain natural alignment and the unsigned
+- 1454       |             // short displacement required by Maxwell subword LDC.
+- 1455       |             const bool subword = width <= 3; // Include signed S8/S16 variants.
+- 1456       |             const u32 alignment = width <= 1 ? 1U : width <= 3 ? 2U : 4U;
+- 1457       |             if (uniform_dest >= 63 || width > 5 ||
+- 1458       |                 (width == 5 && ((uniform_dest & 1) || uniform_dest >= 62)) ||
+- 1459       |                 (opcode == 0xab9 && (offset % alignment ||
+- 1460       |                                      (subword && offset >= 0x8000U))) || insn.Bits(62, 2) ||
++       1172 |             const u32 alignment = width < 4 ? 1U << (width / 2) : 4U;
++       1173 |             const u32 target = uniform_register(uniform_dest);
++       1174 |             const u32 index_target = opcode == 0xabb ? uniform_register(index_reg) : 255U;
++       1175 |             if (target == ~0U || target == 255 || (!subword_load && width != 4 && width != 5) ||
++       1176 |                 (opcode == 0xab9 && subword_load && offset >= 0x8000) ||
++       1177 |                 (width == 5 && ((uniform_dest & 1) || uniform_register(uniform_dest + 1) != target + 1)) ||
++       1178 |                 // An index register can align the offset; the host reads the aligned word either way.
++       1179 |                 bank() >= 18 || insn.Bits(62, 2) ||
++       1180 |                 (opcode == 0xab9 && (offset % alignment || !direct_cbuf_in_table())) ||
++       1181 |                 (opcode == 0xabb && !indexed_cbuf_in_range()) ||
+  1461  1182 |                 (insn.words[2] & ~0xe00U) != (opcode == 0xab9 ? 0U : 0x08000000U) ||
+- 1462       |                 (opcode == 0xabb && index_reg >= 63))
++       1183 |                 index_target == ~0U)
+  1463  1184 |                 return fail(index, "native uniform constant load mode");
+  1464  1185 |             if (opcode == 0xab9 && width == 4) {
+- 1465       |                 emit(0x4c98000000000000ULL | predicate | (uniform_register(uniform_dest)) | (u64{15} << 39) | cbuf());
++       1186 |                 emit(0x4c98000000000000ULL | predicate | target | (u64{15} << 39) | cbuf());
+  1466  1187 |             } else {
+- 1467       |                 emit(0xef90000000000000ULL | predicate | (uniform_register(uniform_dest)) |
+- 1468       |                      (u64{opcode == 0xab9 ? 255U : uniform_register(index_reg)} << 8) | (u64{insn.Bits(38, 16)} << 20) |
+- 1469       |                      (u64{insn.Bits(54, 5)} << 36) | (u64{width} << 48));
++       1188 |                 emit(0xef90000000000000ULL | predicate | target |
++       1189 |                      (u64{index_target} << 8) | (u64{cbuf_offset()} << 20) |
++       1190 |                      (u64{bank()} << 36) | (u64{width} << 48));
+  1470  1191 |             }
+  1471  1192 |             break;
+  1472  1193 |         }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 1138–1162 : 10 alignées, 16 propres Encore, 15 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:1138–1162](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1138-L1162).
+
+```diff
+- 1447       |         case 0xab9: case 0xabb: { // ULDC U8/S8/U16/S16/U32/U64, direct or indexed.
++       1138 |         case 0xab9: case 0xabb: { // ULDC, direct or indexed.
+  1448  1139 |             const u32 uniform_dest = insn.Bits(16, 8), index_reg = insn.Bits(24, 8);
+  1449  1140 |             const u32 width = insn.Bits(73, 3);
++       1141 |             const bool subword_load = width == 0 || width == 2;
+  1450  1142 |             const u32 offset = insn.Bits(38, 16);
+- 1451       |             // Indexed reads may use a byte-granular immediate because
+- 1452       |             // the UR index contributes the final byte address. Direct
+- 1453       |             // reads must retain natural alignment and the unsigned
+- 1454       |             // short displacement required by Maxwell subword LDC.
+- 1455       |             const bool subword = width <= 3; // Include signed S8/S16 variants.
+- 1456       |             const u32 alignment = width <= 1 ? 1U : width <= 3 ? 2U : 4U;
+- 1457       |             if (uniform_dest >= 63 || width > 5 ||
+- 1458       |                 (width == 5 && ((uniform_dest & 1) || uniform_dest >= 62)) ||
+- 1459       |                 (opcode == 0xab9 && (offset % alignment ||
+- 1460       |                                      (subword && offset >= 0x8000U))) || insn.Bits(62, 2) ||
++       1143 |             const u32 alignment = width == 0 ? 1U : width == 2 ? 2U : 4U;
++       1144 |             const u32 target = uniform_register(uniform_dest);
++       1145 |             const u32 index_target = opcode == 0xabb ? uniform_register(index_reg) : 255U;
++       1146 |             if (target == ~0U || target == 255 || (!subword_load && width != 4 && width != 5) ||
++       1147 |                 (opcode == 0xab9 && subword_load && offset >= 0x8000) ||
++       1148 |                 (width == 5 && ((uniform_dest & 1) || uniform_register(uniform_dest + 1) != target + 1)) ||
++       1149 |                 // An index register can align the offset; the host reads the aligned word either way.
++       1150 |                 bank() >= 18 || (opcode == 0xab9 && offset % alignment) || insn.Bits(62, 2) ||
+  1461  1151 |                 (insn.words[2] & ~0xe00U) != (opcode == 0xab9 ? 0U : 0x08000000U) ||
+- 1462       |                 (opcode == 0xabb && index_reg >= 63))
++       1152 |                 index_target == ~0U)
+  1463  1153 |                 return fail(index, "native uniform constant load mode");
+  1464  1154 |             if (opcode == 0xab9 && width == 4) {
+- 1465       |                 emit(0x4c98000000000000ULL | predicate | (uniform_register(uniform_dest)) | (u64{15} << 39) | cbuf());
++       1155 |                 emit(0x4c98000000000000ULL | predicate | target | (u64{15} << 39) | cbuf());
+  1466  1156 |             } else {
+- 1467       |                 emit(0xef90000000000000ULL | predicate | (uniform_register(uniform_dest)) |
+- 1468       |                      (u64{opcode == 0xab9 ? 255U : uniform_register(index_reg)} << 8) | (u64{insn.Bits(38, 16)} << 20) |
+- 1469       |                      (u64{insn.Bits(54, 5)} << 36) | (u64{width} << 48));
++       1157 |                 emit(0xef90000000000000ULL | predicate | target |
++       1158 |                      (u64{index_target} << 8) | (u64{offset} << 20) |
++       1159 |                      (u64{bank()} << 36) | (u64{width} << 48));
+  1470  1160 |             }
+  1471  1161 |             break;
+  1472  1162 |         }
+```
+
+</details>
+
+### P0-SH03 · ATOMS shared
+
+Atomiques shared-memory, notamment INC et opérations U32/S32. Les forks acceptent un ensemble d'opérations différent ; le document consigne l'écart sans élargir Encore.
+
+Encore : [lower_to_maxwell.h:1724–1748](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1724-L1748) — 25 lignes.
+
+<details>
+<summary>Lichii — 1487–1512 : 16 alignées, 9 propres Encore, 10 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:1487–1512](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1487-L1512).
+
+```diff
+  1724  1487 |         case 0xf8c: { // ATOMS.POPC.INC.32 with no returned value: one increment per active lane.
+- 1725       |             const u32 stride = insn.Bits(78, 2);
+- 1726       |             if (dest != 255 || insn.words[1] || (insn.words[2] & ~0xc000U) != 0x0d00003f)
++       1488 |             const u32 stride = insn.Bits(78, 2), offset = insn.Bits(40, 24);
++       1489 |             if (dest != 255 || (insn.words[1] & 0xff) || (offset & 3) ||
++       1490 |                 (insn.words[2] & ~0xc000U) != 0x0d00003f)
+  1727  1491 |                 return fail(index, "native shared increment mode");
+  1728  1492 |             u32 address = insn.Bits(24, 8);
+  1729  1493 |             if (stride && address != 255) {
+  1730  1494 |                 emit(0x3848000000000000ULL | predicate | 251 | (u64{address} << 8) |
+  1731  1495 |                     (u64{stride + 1} << 20));
+  1732  1496 |                 address = 251;
+  1733  1497 |             }
+  1734  1498 |             mov_imm(250, 1);
+- 1735       |             emit(0xec00000000000000ULL | predicate | 255 | (u64{address} << 8) | (u64{250} << 20));
++       1499 |             emit(0xec00000000000000ULL | predicate | 255 | (u64{address} << 8) | (u64{250} << 20) |
++       1500 |                 (u64{offset >> 2} << 30));
+  1736  1501 |             break;
+  1737  1502 |         }
+- 1738       |         case 0x38c: { // ATOMS.ADD/MIN/MAX/OR.U32, naturally aligned shared byte offset.
+- 1739       |             const u32 offset = insn.Bits(40, 24);
+- 1740       |             const u32 operation = insn.Bits(87, 4);
+- 1741       |             if ((operation != 0 && operation != 1 && operation != 2 && operation != 6) ||
+- 1742       |                 insn.words[2] != (operation << 23) || (offset & 3))
++       1503 |         case 0x38c: { // ATOMS (ADD/MIN/MAX/INC/DEC/AND/OR/XOR/EXCH, U32 or S32), aligned byte offset.
++       1504 |             // The operation (bits 87-90) is numbered as in Maxwell ATOMS (52-55); bit 73 is S32.
++       1505 |             const u32 offset = insn.Bits(40, 24), operation = insn.Bits(87, 4);
++       1506 |             if ((insn.words[2] & ~0x07800200U) || operation > 8 || (offset & 3))
+  1743  1507 |                 return fail(index, "native shared atomic mode");
+  1744  1508 |             emit(0xec00000000000000ULL | predicate | dest |
+  1745  1509 |                 (u64{insn.Bits(24, 8)} << 8) | (u64{insn.Bits(32, 8)} << 20) |
+- 1746       |                 (u64{offset >> 2} << 30) | (u64{operation} << 52));
++       1510 |                 (u64{insn.Bits(73, 1)} << 28) | (u64{offset >> 2} << 30) | (u64{operation} << 52));
+  1747  1511 |             break;
+  1748  1512 |         }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 1445–1470 : 16 alignées, 9 propres Encore, 10 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:1445–1470](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1445-L1470).
+
+```diff
+  1724  1445 |         case 0xf8c: { // ATOMS.POPC.INC.32 with no returned value: one increment per active lane.
+- 1725       |             const u32 stride = insn.Bits(78, 2);
+- 1726       |             if (dest != 255 || insn.words[1] || (insn.words[2] & ~0xc000U) != 0x0d00003f)
++       1446 |             const u32 stride = insn.Bits(78, 2), offset = insn.Bits(40, 24);
++       1447 |             if (dest != 255 || (insn.words[1] & 0xff) || (offset & 3) ||
++       1448 |                 (insn.words[2] & ~0xc000U) != 0x0d00003f)
+  1727  1449 |                 return fail(index, "native shared increment mode");
+  1728  1450 |             u32 address = insn.Bits(24, 8);
+  1729  1451 |             if (stride && address != 255) {
+  1730  1452 |                 emit(0x3848000000000000ULL | predicate | 251 | (u64{address} << 8) |
+  1731  1453 |                     (u64{stride + 1} << 20));
+  1732  1454 |                 address = 251;
+  1733  1455 |             }
+  1734  1456 |             mov_imm(250, 1);
+- 1735       |             emit(0xec00000000000000ULL | predicate | 255 | (u64{address} << 8) | (u64{250} << 20));
++       1457 |             emit(0xec00000000000000ULL | predicate | 255 | (u64{address} << 8) | (u64{250} << 20) |
++       1458 |                 (u64{offset >> 2} << 30));
+  1736  1459 |             break;
+  1737  1460 |         }
+- 1738       |         case 0x38c: { // ATOMS.ADD/MIN/MAX/OR.U32, naturally aligned shared byte offset.
+- 1739       |             const u32 offset = insn.Bits(40, 24);
+- 1740       |             const u32 operation = insn.Bits(87, 4);
+- 1741       |             if ((operation != 0 && operation != 1 && operation != 2 && operation != 6) ||
+- 1742       |                 insn.words[2] != (operation << 23) || (offset & 3))
++       1461 |         case 0x38c: { // ATOMS (ADD/MIN/MAX/INC/DEC/AND/OR/XOR/EXCH, U32 or S32), aligned byte offset.
++       1462 |             // The operation (bits 87-90) is numbered as in Maxwell ATOMS (52-55); bit 73 is S32.
++       1463 |             const u32 offset = insn.Bits(40, 24), operation = insn.Bits(87, 4);
++       1464 |             if ((insn.words[2] & ~0x07800200U) || operation > 8 || (offset & 3))
+  1743  1465 |                 return fail(index, "native shared atomic mode");
+  1744  1466 |             emit(0xec00000000000000ULL | predicate | dest |
+  1745  1467 |                 (u64{insn.Bits(24, 8)} << 8) | (u64{insn.Bits(32, 8)} << 20) |
+- 1746       |                 (u64{offset >> 2} << 30) | (u64{operation} << 52));
++       1468 |                 (u64{insn.Bits(73, 1)} << 28) | (u64{offset >> 2} << 30) | (u64{operation} << 52));
+  1747  1469 |             break;
+  1748  1470 |         }
+```
+
+</details>
+
+### P0-SH04 · MEMBAR / ERRBAR / BAR.SYNC
+
+Barrières et visibilité mémoire. Toute simplification non prouvée peut créer une première frame incorrecte ou une corruption silencieuse ; l'alignement exact est donc conservé.
+
+Encore : [lower_to_maxwell.h:2017–2035](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L2017-L2035) — 19 lignes.
+
+<details>
+<summary>Lichii — 1738–1756 : 18 alignées, 1 propres Encore, 1 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:1738–1756](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1738-L1756).
+
+```diff
+  2017  1738 |         case 0x992: { // MEMBAR.SC: preserve workgroup/device visibility.
+  2018  1739 |             const u32 scope = insn.Bits(76, 3);
+  2019  1740 |             if (insn.words[1] || insn.words[2] != (scope << 12) ||
+  2020  1741 |                 (scope != 0 && scope != 2 && scope != 3 && scope != 5))
+  2021  1742 |                 return fail(index, "native memory barrier scope");
+  2022  1743 |             const u32 legacy_scope = scope == 0 ? 0 : scope == 2 ? 1 : scope == 3 ? 2 : 3;
+  2023  1744 |             emit(0xef98000000000000ULL | predicate | (u64{legacy_scope} << 8));
+  2024  1745 |             break;
+  2025  1746 |         }
+  2026  1747 |         case 0x9ab: // ERRBAR: wait for prior memory operations on the host backend.
+  2027  1748 |             if (insn.words[1] || insn.words[2]) return fail(index, "native error barrier mode");
+  2028  1749 |             emit(0xef98000000000000ULL | predicate | (u64{1} << 8));
+  2029  1750 |             break;
+- 2030       |         case 0xb1d: // BAR.SYNC 0, full workgroup.
++       1751 |         case 0xb1d: // BAR.SYNC 0 (bit 80: .DEFER_BLOCKING), full workgroup.
+  2031  1752 |             if (insn.words[1] || (insn.words[2] & ~0x10000U) || native_predicate != 7)
+  2032  1753 |                 return fail(index, "native workgroup barrier mode");
+  2033  1754 |             emit(0xf0a8000000000000ULL | predicate | (u64{1} << 43) |
+  2034  1755 |                 (u64{1} << 44) | (u64{1} << 39) | (u64{7} << 39));
+  2035  1756 |             break;
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 1677–1695 : 18 alignées, 1 propres Encore, 1 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:1677–1695](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1677-L1695).
+
+```diff
+  2017  1677 |         case 0x992: { // MEMBAR.SC: preserve workgroup/device visibility.
+  2018  1678 |             const u32 scope = insn.Bits(76, 3);
+  2019  1679 |             if (insn.words[1] || insn.words[2] != (scope << 12) ||
+  2020  1680 |                 (scope != 0 && scope != 2 && scope != 3 && scope != 5))
+  2021  1681 |                 return fail(index, "native memory barrier scope");
+  2022  1682 |             const u32 legacy_scope = scope == 0 ? 0 : scope == 2 ? 1 : scope == 3 ? 2 : 3;
+  2023  1683 |             emit(0xef98000000000000ULL | predicate | (u64{legacy_scope} << 8));
+  2024  1684 |             break;
+  2025  1685 |         }
+  2026  1686 |         case 0x9ab: // ERRBAR: wait for prior memory operations on the host backend.
+  2027  1687 |             if (insn.words[1] || insn.words[2]) return fail(index, "native error barrier mode");
+  2028  1688 |             emit(0xef98000000000000ULL | predicate | (u64{1} << 8));
+  2029  1689 |             break;
+- 2030       |         case 0xb1d: // BAR.SYNC 0, full workgroup.
++       1690 |         case 0xb1d: // BAR.SYNC 0 (bit 80: .DEFER_BLOCKING), full workgroup.
+  2031  1691 |             if (insn.words[1] || (insn.words[2] & ~0x10000U) || native_predicate != 7)
+  2032  1692 |                 return fail(index, "native workgroup barrier mode");
+  2033  1693 |             emit(0xf0a8000000000000ULL | predicate | (u64{1} << 43) |
+  2034  1694 |                 (u64{1} << 44) | (u64{1} << 39) | (u64{7} << 39));
+  2035  1695 |             break;
+```
+
+</details>
+
+### P0-SH05 · LDGSTS / copie global→shared
+
+Chemin utilisé pour les copies Ampere vers shared memory. Les forks contiennent plusieurs modes promoted/descriptor ; Encore a sa propre couverture. À relier uniquement à un shader capturé qui tombe sur l'opcode.
+
+Encore : [lower_to_maxwell.h:2727–2754](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L2727-L2754) — 28 lignes.
+
+<details>
+<summary>Lichii — 1757–1786 : 4 alignées, 24 propres Encore, 26 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:1757–1786](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1757-L1786).
+
+```diff
+- 2727       |         case 0xfae: { // LDGSTS.E.BYPASS.128, completed synchronously with zero fill.
+- 2728       |             const u32 global_address = insn.Bits(24, 8), shared_address = insn.Bits(16, 8);
++       1757 |         case 0xfae: { // LDGSTS.E.BYPASS.128 [shared], [global.64], enable
++       1758 |             // Complete copies synchronously. Disabled sources zero-fill without touching global memory.
++       1759 |             const u32 shared = static_cast<u32>(dest), global = insn.Bits(24, 8);
++       1760 |             const u32 limit = uses_uniform_bank ? high_uniform_base : 246U;
++       1761 |             const bool promoted_copy = (insn.words[2] & ~0x0780003fU) == 0x08101d40U;
+  2729  1762 |             const u32 descriptor = insn.Bits(64, 6);
+- 2730       |             if (native_predicate != 7 || (global_address & 1) || global_address + 2 > reserved_register ||
+- 2731       |                 descriptor >= 63 || (descriptor & 1) || (insn.words[1] & 0xf000U) ||
+- 2732       |                 (insn.words[2] & ~(0x03800000U | 0x7fU)) != 0x0c101c00)
++       1763 |             const bool descriptor_copy = (insn.words[2] & ~0x0380007fU) == 0x0c101c00U &&
++       1764 |                                          descriptor < 63 && !(descriptor & 1);
++       1765 |             if ((insn.words[1] & 0x0000f000U) ||
++       1766 |                 (!promoted_copy && !descriptor_copy) ||
++       1767 |                 shared >= limit || (global & 1) || global + 1 >= limit)
+  2733  1768 |                 return fail(index, "native global-to-shared copy mode");
+- 2734       |             const u32 enable = insn.Bits(87, 3) | (insn.Bits(70, 1) << 3);
+- 2735       |             const u32 global_immediate = insn.words[1] & 0xfff;
+- 2736       |             const s32 global_offset = static_cast<s32>(global_immediate) - (global_immediate & 0x800 ? 0x1000 : 0);
+- 2737       |             const s32 shared_offset = static_cast<s32>(static_cast<s16>(insn.words[1] >> 16)) * 16;
+- 2738       |             for (u32 component = 0; component < 4; ++component) mov_imm(240 + component, 0);
+- 2739       |             // The uniform selector names the memory descriptor; the .64 register pair is the address.
+- 2740       |             if (enable != 15) for (u32 component = 0; component < 4; ++component) {
+- 2741       |                 emit(0xeed0000000000000ULL | (u64{enable} << 16) | (240 + component) |
+- 2742       |                      (u64{global_address} << 8) |
+- 2743       |                      (u64{(static_cast<u32>(global_offset) + component * 4U) & 0xffffffU} << 20) |
+- 2744       |                      (u64{1} << 45) | (u64{4} << 48));
+- 2745       |             }
+- 2746       |             for (u32 component = 0; component < 4; ++component) {
+- 2747       |                 emit(0xef58000000000000ULL | predicate | (240 + component) |
+- 2748       |                      (u64{shared_address} << 8) |
+- 2749       |                      (u64{(static_cast<u32>(shared_offset) + component * 4U) & 0xffffffU} << 20) |
+- 2750       |                      (u64{4} << 48));
+- 2751       |             }
+- 2752       |             emit(0xef98000000000000ULL | predicate);
++       1769 |             const s32 global_offset = static_cast<s32>(insn.Bits(32, 12) << 20) >> 20;
++       1770 |             const s32 shared_offset = static_cast<s32>(insn.Bits(48, 16) << 16) >> 12;
++       1771 |             for (u32 component = 0; component < 4; ++component) mov_imm(248 + component, 0);
++       1772 |             const u32 enable = insn.Bits(87, 3) |
++       1773 |                                (insn.Bits(promoted_copy ? 90 : 70, 1) << 3);
++       1774 |             const u32 skip = static_cast<u32>(result.instructions.size());
++       1775 |             emit(0);
++       1776 |             emit(0xeed0000000000000ULL | predicate | 248 | (u64{global} << 8) |
++       1777 |                  (u64{static_cast<u32>(global_offset) & 0xffffffU} << 20) |
++       1778 |                  (u64{1} << 45) | (u64{6} << 48));
++       1779 |             const u32 target = static_cast<u32>(result.instructions.size());
++       1780 |             const u32 distance = address_of(target) - address_of(skip) - 8;
++       1781 |             result.instructions[skip] = 0xe24000000000000fULL |
++       1782 |                                         (u64{enable ^ 8U} << 16) | (u64{distance} << 20);
++       1783 |             emit(0xef58000000000000ULL | predicate | 248 | (u64{shared} << 8) |
++       1784 |                  (u64{static_cast<u32>(shared_offset) & 0xffffffU} << 20) | (u64{6} << 48));
+  2753  1785 |             break;
+  2754  1786 |         }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 1696–1725 : 4 alignées, 24 propres Encore, 26 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:1696–1725](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L1696-L1725).
+
+```diff
+- 2727       |         case 0xfae: { // LDGSTS.E.BYPASS.128, completed synchronously with zero fill.
+- 2728       |             const u32 global_address = insn.Bits(24, 8), shared_address = insn.Bits(16, 8);
++       1696 |         case 0xfae: { // LDGSTS.E.BYPASS.128 [shared], [global.64], enable
++       1697 |             // Complete copies synchronously. Disabled sources zero-fill without touching global memory.
++       1698 |             const u32 shared = static_cast<u32>(dest), global = insn.Bits(24, 8);
++       1699 |             const u32 limit = uses_uniform_bank ? high_uniform_base : 246U;
++       1700 |             const bool promoted_copy = (insn.words[2] & ~0x0780003fU) == 0x08101d40U;
+  2729  1701 |             const u32 descriptor = insn.Bits(64, 6);
+- 2730       |             if (native_predicate != 7 || (global_address & 1) || global_address + 2 > reserved_register ||
+- 2731       |                 descriptor >= 63 || (descriptor & 1) || (insn.words[1] & 0xf000U) ||
+- 2732       |                 (insn.words[2] & ~(0x03800000U | 0x7fU)) != 0x0c101c00)
++       1702 |             const bool descriptor_copy = (insn.words[2] & ~0x0380007fU) == 0x0c101c00U &&
++       1703 |                                          descriptor < 63 && !(descriptor & 1);
++       1704 |             if ((insn.words[1] & 0x0000f000U) ||
++       1705 |                 (!promoted_copy && !descriptor_copy) ||
++       1706 |                 shared >= limit || (global & 1) || global + 1 >= limit)
+  2733  1707 |                 return fail(index, "native global-to-shared copy mode");
+- 2734       |             const u32 enable = insn.Bits(87, 3) | (insn.Bits(70, 1) << 3);
+- 2735       |             const u32 global_immediate = insn.words[1] & 0xfff;
+- 2736       |             const s32 global_offset = static_cast<s32>(global_immediate) - (global_immediate & 0x800 ? 0x1000 : 0);
+- 2737       |             const s32 shared_offset = static_cast<s32>(static_cast<s16>(insn.words[1] >> 16)) * 16;
+- 2738       |             for (u32 component = 0; component < 4; ++component) mov_imm(240 + component, 0);
+- 2739       |             // The uniform selector names the memory descriptor; the .64 register pair is the address.
+- 2740       |             if (enable != 15) for (u32 component = 0; component < 4; ++component) {
+- 2741       |                 emit(0xeed0000000000000ULL | (u64{enable} << 16) | (240 + component) |
+- 2742       |                      (u64{global_address} << 8) |
+- 2743       |                      (u64{(static_cast<u32>(global_offset) + component * 4U) & 0xffffffU} << 20) |
+- 2744       |                      (u64{1} << 45) | (u64{4} << 48));
+- 2745       |             }
+- 2746       |             for (u32 component = 0; component < 4; ++component) {
+- 2747       |                 emit(0xef58000000000000ULL | predicate | (240 + component) |
+- 2748       |                      (u64{shared_address} << 8) |
+- 2749       |                      (u64{(static_cast<u32>(shared_offset) + component * 4U) & 0xffffffU} << 20) |
+- 2750       |                      (u64{4} << 48));
+- 2751       |             }
+- 2752       |             emit(0xef98000000000000ULL | predicate);
++       1708 |             const s32 global_offset = static_cast<s32>(insn.Bits(32, 12) << 20) >> 20;
++       1709 |             const s32 shared_offset = static_cast<s32>(insn.Bits(48, 16) << 16) >> 12;
++       1710 |             for (u32 component = 0; component < 4; ++component) mov_imm(248 + component, 0);
++       1711 |             const u32 enable = insn.Bits(87, 3) |
++       1712 |                                (insn.Bits(promoted_copy ? 90 : 70, 1) << 3);
++       1713 |             const u32 skip = static_cast<u32>(result.instructions.size());
++       1714 |             emit(0);
++       1715 |             emit(0xeed0000000000000ULL | predicate | 248 | (u64{global} << 8) |
++       1716 |                  (u64{static_cast<u32>(global_offset) & 0xffffffU} << 20) |
++       1717 |                  (u64{1} << 45) | (u64{6} << 48));
++       1718 |             const u32 target = static_cast<u32>(result.instructions.size());
++       1719 |             const u32 distance = address_of(target) - address_of(skip) - 8;
++       1720 |             result.instructions[skip] = 0xe24000000000000fULL |
++       1721 |                                         (u64{enable ^ 8U} << 16) | (u64{distance} << 20);
++       1722 |             emit(0xef58000000000000ULL | predicate | 248 | (u64{shared} << 8) |
++       1723 |                  (u64{static_cast<u32>(shared_offset) & 0xffffffU} << 20) | (u64{6} << 48));
+  2753  1724 |             break;
+  2754  1725 |         }
+```
+
+</details>
+
+### P0-SH06 · I2F registre/uniforme
+
+Conversions integer→float, particulièrement U8/S8/U16/S16. Les différences de sélecteur, signedness et rounding sont fonctionnelles, pas seulement stylistiques.
+
+Encore : [lower_to_maxwell.h:3710–3726](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L3710-L3726) — 17 lignes.
+
+<details>
+<summary>Lichii — 3421–3450 : 3 alignées, 14 propres Encore, 27 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:3421–3450](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L3421-L3450).
+
+```diff
+- 3710       |         case 0x306: case 0xd06: { // I2F.F32 from the low 8/16/32 bits of a register, sign at bit 74
+- 3711       |             // Source size (bits 84-85), signedness (74) and rounding (78-79) use the same value
+- 3712       |             // order as the Maxwell I2F fields; only the F32 destination (75-76 == 2) is accepted.
+- 3713       |             // Bits 60-61 select the source byte or half-word (Maxwell I2F bits 41-42); 0xd06 reads
+- 3714       |             // a uniform register.
+- 3715       |             const u32 size = insn.Bits(84, 2), selector = insn.Bits(60, 2);
+- 3716       |             const u32 i2f_source = opcode == 0xd06 ? uniform_register(insn.Bits(32, 8)) : insn.Bits(32, 8);
+- 3717       |             if ((insn.words[2] & ~(0x0030c400U | (opcode == 0xd06 ? 0x08000000U : 0U))) != 0x1000 ||
+- 3718       |                 (insn.words[1] & ~0x300000ffU) || i2f_source == ~0U ||
+- 3719       |                 size == 3 || (size == 1 && selector > 1) || (size == 2 && selector != 0) ||
+- 3720       |                 ((insn.words[2] & ~0x08000000U) != 0x1000 && LowerGroupDisabled("byte_sel306")))
++       3421 |         case 0x306: case 0xd06: { // I2F.F32.U8, round-to-nearest (0xd06: uniform source)
++       3422 |             const u32 source = opcode == 0xd06 ? uniform_register(insn.Bits(32, 8)) : insn.Bits(32, 8);
++       3423 |             const u64 is_signed = insn.Bits(74, 1);
++       3424 |             if (opcode == 0x306 &&
++       3425 |                 (insn.words[2] == 0x00200c00 || insn.words[2] == 0x00209400)) {
++       3426 |                 const bool half = insn.words[2] == 0x00200c00;
++       3427 |                 if (insn.Bits(24, 8) || (insn.words[1] & ~0xffU) || (insn.words[3] & 0xc00001ffU))
++       3428 |                     return fail(index, "native scalar integer-to-float conversion mode");
++       3429 |                 emit(base(0x5cb8000000000000ULL) | (u64{half ? 1U : 2U} << 8) | (u64{2} << 10) |
++       3430 |                      (u64{1} << 13) | (u64{source} << 20) | (u64{half ? 0U : 2U} << 39));
++       3431 |                 break;
++       3432 |             }
++       3433 |             if (((opcode == 0x306 && (insn.words[2] & ~0x400U) == 0x00101000) ||
++       3434 |                  (opcode == 0xd06 && (insn.words[2] & ~0x400U) == 0x08101000U && !insn.Bits(61, 1) &&
++       3435 |                   !insn.Bits(24, 8) && !(insn.words[3] & 0xc00001ffU))) &&
++       3436 |                 !(insn.words[1] & 0xcfffff00U) && source != ~0U) {
++       3437 |                 // I2F.U16/S16 Rd, Rs(.H1): signedness and the halfword selector are independent.
++       3438 |                 emit(base(0x5cb8000000000000ULL) | (u64{2} << 8) | (u64{1} << 10) |
++       3439 |                      (u64{insn.Bits(74, 1)} << 13) | (u64{source} << 20) |
++       3440 |                      (u64{insn.Bits(60, 2) * 2} << 41));
++       3441 |                 break;
++       3442 |             }
++       3443 |             // I2F.{U,S}8 Rd, Rs.B0-B3: the byte selector (bits 60-61) as Maxwell's (41-42).
++       3444 |             if ((insn.words[2] & ~0x400U) != (opcode == 0xd06 ? 0x08001000U : 0x1000U) ||
++       3445 |                 (insn.words[1] & 0xcfffff00U) || source == ~0U)
+  3721  3446 |                 return fail(index, "native byte-to-float conversion mode");
+- 3722       |             emit(base(0x5cb8000000000000ULL) | (u64{2} << 8) | (u64{size} << 10) |
+- 3723       |                  (u64{insn.Bits(74, 1)} << 13) | (u64{insn.Bits(78, 2)} << 39) |
+- 3724       |                  (u64{selector} << 41) | (u64{i2f_source} << 20));
++       3447 |             emit(base(0x5cb8000000000000ULL) | (u64{2} << 8) | (is_signed << 13) | (u64{source} << 20) |
++       3448 |                  (u64{insn.Bits(60, 2)} << 41));
+  3725  3449 |             break;
+  3726  3450 |         }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 3243–3272 : 3 alignées, 14 propres Encore, 27 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:3243–3272](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L3243-L3272).
+
+```diff
+- 3710       |         case 0x306: case 0xd06: { // I2F.F32 from the low 8/16/32 bits of a register, sign at bit 74
+- 3711       |             // Source size (bits 84-85), signedness (74) and rounding (78-79) use the same value
+- 3712       |             // order as the Maxwell I2F fields; only the F32 destination (75-76 == 2) is accepted.
+- 3713       |             // Bits 60-61 select the source byte or half-word (Maxwell I2F bits 41-42); 0xd06 reads
+- 3714       |             // a uniform register.
+- 3715       |             const u32 size = insn.Bits(84, 2), selector = insn.Bits(60, 2);
+- 3716       |             const u32 i2f_source = opcode == 0xd06 ? uniform_register(insn.Bits(32, 8)) : insn.Bits(32, 8);
+- 3717       |             if ((insn.words[2] & ~(0x0030c400U | (opcode == 0xd06 ? 0x08000000U : 0U))) != 0x1000 ||
+- 3718       |                 (insn.words[1] & ~0x300000ffU) || i2f_source == ~0U ||
+- 3719       |                 size == 3 || (size == 1 && selector > 1) || (size == 2 && selector != 0) ||
+- 3720       |                 ((insn.words[2] & ~0x08000000U) != 0x1000 && LowerGroupDisabled("byte_sel306")))
++       3243 |         case 0x306: case 0xd06: { // I2F.F32.U8, round-to-nearest (0xd06: uniform source)
++       3244 |             const u32 source = opcode == 0xd06 ? uniform_register(insn.Bits(32, 8)) : insn.Bits(32, 8);
++       3245 |             const u64 is_signed = insn.Bits(74, 1);
++       3246 |             if (opcode == 0x306 &&
++       3247 |                 (insn.words[2] == 0x00200c00 || insn.words[2] == 0x00209400)) {
++       3248 |                 const bool half = insn.words[2] == 0x00200c00;
++       3249 |                 if (insn.Bits(24, 8) || (insn.words[1] & ~0xffU) || (insn.words[3] & 0xc00001ffU))
++       3250 |                     return fail(index, "native scalar integer-to-float conversion mode");
++       3251 |                 emit(base(0x5cb8000000000000ULL) | (u64{half ? 1U : 2U} << 8) | (u64{2} << 10) |
++       3252 |                      (u64{1} << 13) | (u64{source} << 20) | (u64{half ? 0U : 2U} << 39));
++       3253 |                 break;
++       3254 |             }
++       3255 |             if (((opcode == 0x306 && (insn.words[2] & ~0x400U) == 0x00101000) ||
++       3256 |                  (opcode == 0xd06 && insn.words[2] == 0x08101000U && !insn.Bits(61, 1) &&
++       3257 |                   !insn.Bits(24, 8) && !(insn.words[3] & 0xc00001ffU))) &&
++       3258 |                 !(insn.words[1] & 0xcfffff00U) && source != ~0U) {
++       3259 |                 // I2F.U16/S16 Rd, Rs(.H1): signedness and the halfword selector are independent.
++       3260 |                 emit(base(0x5cb8000000000000ULL) | (u64{2} << 8) | (u64{1} << 10) |
++       3261 |                      (u64{insn.Bits(74, 1)} << 13) | (u64{source} << 20) |
++       3262 |                      (u64{insn.Bits(60, 2) * 2} << 41));
++       3263 |                 break;
++       3264 |             }
++       3265 |             // I2F.{U,S}8 Rd, Rs.B0-B3: the byte selector (bits 60-61) as Maxwell's (41-42).
++       3266 |             if ((insn.words[2] & ~0x400U) != (opcode == 0xd06 ? 0x08001000U : 0x1000U) ||
++       3267 |                 (insn.words[1] & 0xcfffff00U) || source == ~0U)
+  3721  3268 |                 return fail(index, "native byte-to-float conversion mode");
+- 3722       |             emit(base(0x5cb8000000000000ULL) | (u64{2} << 8) | (u64{size} << 10) |
+- 3723       |                  (u64{insn.Bits(74, 1)} << 13) | (u64{insn.Bits(78, 2)} << 39) |
+- 3724       |                  (u64{selector} << 41) | (u64{i2f_source} << 20));
++       3269 |             emit(base(0x5cb8000000000000ULL) | (u64{2} << 8) | (is_signed << 13) | (u64{source} << 20) |
++       3270 |                  (u64{insn.Bits(60, 2)} << 41));
+  3725  3271 |             break;
+  3726  3272 |         }
+```
+
+</details>
+
+### P0-SH07 · PRMT
+
+Permutation de bytes/halfwords. Les variantes acceptées diffèrent fortement ; elles doivent rester fail-closed hors des encodages prouvés.
+
+Encore : [lower_to_maxwell.h:3371–3422](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L3371-L3422) — 52 lignes.
+
+<details>
+<summary>Lichii — 3024–3056 : 18 alignées, 34 propres Encore, 15 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:3024–3056](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L3024-L3056).
+
+```diff
+  3371  3024 |         case 0x816: { // Captured PRMT half-word concatenation
+- 3372       |             if (insn.words[1] == 0x7054 && !(insn.words[2] & ~0xffU)) {
+- 3373       |                 emit(0x0400000000000000ULL | predicate | 250 | (u64{insn.Bits(24, 8)} << 8) |
+- 3374       |                      (u64{0xff} << 20));
+- 3375       |                 emit(0x0400000000000000ULL | predicate | 251 | (u64{insn.Bits(64, 8)} << 8) |
+- 3376       |                      (u64{0xff00ffff} << 20));
+- 3377       |                 emit(0x3848000000000000ULL | predicate | 250 | (u64{250} << 8) | (u64{16} << 20));
+- 3378       |                 emit(base(0x5c40000000000000ULL) | (u64{251} << 8) | (u64{250} << 20) |
+- 3379       |                      (u64{1} << 41) | (u64{7} << 48));
+- 3380       |                 break;
+- 3381       |             }
+- 3382       |             if (insn.words[1] == 0x9910 && !(insn.words[2] & ~0xffU)) {
+- 3383       |                 emit(0x3848000000000000ULL | predicate | 250 | (u64{insn.Bits(24, 8)} << 8) |
+- 3384       |                      (u64{16} << 20));
+- 3385       |                 emit(base(0x3828000000000000ULL) | (u64{250} << 8) | (u64{16} << 20) | (u64{1} << 48));
+- 3386       |                 break;
+- 3387       |             }
+- 3388       |             if (insn.words[1] != 0x5410 && insn.words[1] != 0x5432 &&
+- 3389       |                 insn.words[1] != 0x7610 && insn.words[1] != 0x7632) {
+- 3390       |                 if ((insn.words[1] & ~0x7777U) || (insn.words[2] & ~0xffU))
+- 3391       |                     return fail(index, "native byte permutation mode");
+- 3392       |                 const u32 a = insn.Bits(24, 8), b = insn.Bits(64, 8);
+- 3393       |                 for (u32 byte = 0; byte < 4; ++byte) {
+- 3394       |                     const u32 selector = (insn.words[1] >> (byte * 4)) & 7;
+- 3395       |                     emit(0x3828000000000000ULL | predicate | 250 |
+- 3396       |                          (u64{selector < 4 ? a : b} << 8) | (u64{(selector & 3) * 8} << 20));
+- 3397       |                     emit(0x0400000000000000ULL | predicate | 250 | (u64{250} << 8) | (u64{0xff} << 20));
+- 3398       |                     if (byte == 0)
+- 3399       |                         emit(0x5c98000000000000ULL | predicate | 251 | (u64{250} << 20) | (u64{15} << 39));
+- 3400       |                     else
+- 3401       |                         emit(0x5c18000000000000ULL | predicate | 251 | (u64{250} << 8) |
+- 3402       |                              (u64{251} << 20) | (u64{byte * 8} << 39));
++       3025 |             if (insn.words[1] > 0xffff || (insn.words[2] & ~0xffU)) return fail(index, "native permutation mode");
++       3026 |             if (insn.words[1] != 0x5410 && insn.words[1] != 0x5432 && insn.words[1] != 0x7610 && insn.words[1] != 0x7632) {
++       3027 |                 // Byte i of the result is byte (s & 7) of c:a, or its sign bit repeated when s & 8.
++       3028 |                 const u32 a = insn.Bits(24, 8), c = insn.Bits(64, 8);
++       3029 |                 if (a >= 250 && a != 255) return fail(index, "native permutation source");
++       3030 |                 mov_imm(250, 0);
++       3031 |                 for (u32 i = 0; i < 4; ++i) {
++       3032 |                     const u32 select = (insn.words[1] >> (i * 4)) & 0xf;
++       3033 |                     const u32 source = select & 4 ? c : a, position = (select & 3) * 8;
++       3034 |                     emit(0x3800000000000000ULL | predicate | 251 | (u64{source} << 8) |
++       3035 |                          (u64{select & 8 ? (position + 7) | (1U << 8) : position | (8U << 8)} << 20) |
++       3036 |                          (u64{(select >> 3) & 1} << 48));
++       3037 |                     emit(0x36f0000000000000ULL | predicate | 250 | (u64{251} << 8) |
++       3038 |                          (u64{(i * 8) | (8U << 8)} << 20) | (u64{250} << 39));
+  3403  3039 |                 }
+- 3404       |                 emit(base(0x5c98000000000000ULL) | (u64{251} << 20) | (u64{15} << 39));
++       3040 |                 emit(base(0x5c10000000000000ULL) | (u64{250} << 8) | (u64{255} << 20));
+  3405  3041 |                 break;
+  3406  3042 |             }
+- 3407       |             if ((insn.words[1] != 0x5410 && insn.words[1] != 0x5432 && insn.words[1] != 0x7610 && insn.words[1] != 0x7632) ||
+- 3408       |                 (insn.words[2] & ~0xffU)) return fail(index, "native permutation mode");
+  3409  3043 |             const u32 a = insn.Bits(24, 8), b = insn.Bits(64, 8);
+  3410  3044 |             if (insn.words[1] != 0x5432 && insn.words[1] != 0x7632) {
+  3411  3045 |                 emit(0x0400000000000000ULL | predicate | 250 | (u64{a} << 8) | (u64{0xffff} << 20));
+  3412  3046 |             } else {
+  3413  3047 |                 emit(0x3828000000000000ULL | predicate | 250 | (u64{a} << 8) | (u64{16} << 20));
+  3414  3048 |             }
+  3415  3049 |             if (insn.words[1] == 0x7610 || insn.words[1] == 0x7632) {
+  3416  3050 |                 emit(0x0400000000000000ULL | predicate | 251 | (u64{b} << 8) | (u64{0xffff0000} << 20));
+  3417  3051 |                 emit(base(0x5c10000000000000ULL) | (u64{250} << 8) | (u64{251} << 20));
+  3418  3052 |             } else {
+  3419  3053 |                 emit(base(0x5c18000000000000ULL) | (u64{b} << 8) | (u64{250} << 20) | (u64{16} << 39));
+  3420  3054 |             }
+  3421  3055 |             break;
+  3422  3056 |         }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 2875–2907 : 18 alignées, 34 propres Encore, 15 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:2875–2907](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L2875-L2907).
+
+```diff
+  3371  2875 |         case 0x816: { // Captured PRMT half-word concatenation
+- 3372       |             if (insn.words[1] == 0x7054 && !(insn.words[2] & ~0xffU)) {
+- 3373       |                 emit(0x0400000000000000ULL | predicate | 250 | (u64{insn.Bits(24, 8)} << 8) |
+- 3374       |                      (u64{0xff} << 20));
+- 3375       |                 emit(0x0400000000000000ULL | predicate | 251 | (u64{insn.Bits(64, 8)} << 8) |
+- 3376       |                      (u64{0xff00ffff} << 20));
+- 3377       |                 emit(0x3848000000000000ULL | predicate | 250 | (u64{250} << 8) | (u64{16} << 20));
+- 3378       |                 emit(base(0x5c40000000000000ULL) | (u64{251} << 8) | (u64{250} << 20) |
+- 3379       |                      (u64{1} << 41) | (u64{7} << 48));
+- 3380       |                 break;
+- 3381       |             }
+- 3382       |             if (insn.words[1] == 0x9910 && !(insn.words[2] & ~0xffU)) {
+- 3383       |                 emit(0x3848000000000000ULL | predicate | 250 | (u64{insn.Bits(24, 8)} << 8) |
+- 3384       |                      (u64{16} << 20));
+- 3385       |                 emit(base(0x3828000000000000ULL) | (u64{250} << 8) | (u64{16} << 20) | (u64{1} << 48));
+- 3386       |                 break;
+- 3387       |             }
+- 3388       |             if (insn.words[1] != 0x5410 && insn.words[1] != 0x5432 &&
+- 3389       |                 insn.words[1] != 0x7610 && insn.words[1] != 0x7632) {
+- 3390       |                 if ((insn.words[1] & ~0x7777U) || (insn.words[2] & ~0xffU))
+- 3391       |                     return fail(index, "native byte permutation mode");
+- 3392       |                 const u32 a = insn.Bits(24, 8), b = insn.Bits(64, 8);
+- 3393       |                 for (u32 byte = 0; byte < 4; ++byte) {
+- 3394       |                     const u32 selector = (insn.words[1] >> (byte * 4)) & 7;
+- 3395       |                     emit(0x3828000000000000ULL | predicate | 250 |
+- 3396       |                          (u64{selector < 4 ? a : b} << 8) | (u64{(selector & 3) * 8} << 20));
+- 3397       |                     emit(0x0400000000000000ULL | predicate | 250 | (u64{250} << 8) | (u64{0xff} << 20));
+- 3398       |                     if (byte == 0)
+- 3399       |                         emit(0x5c98000000000000ULL | predicate | 251 | (u64{250} << 20) | (u64{15} << 39));
+- 3400       |                     else
+- 3401       |                         emit(0x5c18000000000000ULL | predicate | 251 | (u64{250} << 8) |
+- 3402       |                              (u64{251} << 20) | (u64{byte * 8} << 39));
++       2876 |             if (insn.words[1] > 0xffff || (insn.words[2] & ~0xffU)) return fail(index, "native permutation mode");
++       2877 |             if (insn.words[1] != 0x5410 && insn.words[1] != 0x5432 && insn.words[1] != 0x7610 && insn.words[1] != 0x7632) {
++       2878 |                 // Byte i of the result is byte (s & 7) of c:a, or its sign bit repeated when s & 8.
++       2879 |                 const u32 a = insn.Bits(24, 8), c = insn.Bits(64, 8);
++       2880 |                 if (a >= 250 && a != 255) return fail(index, "native permutation source");
++       2881 |                 mov_imm(250, 0);
++       2882 |                 for (u32 i = 0; i < 4; ++i) {
++       2883 |                     const u32 select = (insn.words[1] >> (i * 4)) & 0xf;
++       2884 |                     const u32 source = select & 4 ? c : a, position = (select & 3) * 8;
++       2885 |                     emit(0x3800000000000000ULL | predicate | 251 | (u64{source} << 8) |
++       2886 |                          (u64{select & 8 ? (position + 7) | (1U << 8) : position | (8U << 8)} << 20) |
++       2887 |                          (u64{(select >> 3) & 1} << 48));
++       2888 |                     emit(0x36f0000000000000ULL | predicate | 250 | (u64{251} << 8) |
++       2889 |                          (u64{(i * 8) | (8U << 8)} << 20) | (u64{250} << 39));
+  3403  2890 |                 }
+- 3404       |                 emit(base(0x5c98000000000000ULL) | (u64{251} << 20) | (u64{15} << 39));
++       2891 |                 emit(base(0x5c10000000000000ULL) | (u64{250} << 8) | (u64{255} << 20));
+  3405  2892 |                 break;
+  3406  2893 |             }
+- 3407       |             if ((insn.words[1] != 0x5410 && insn.words[1] != 0x5432 && insn.words[1] != 0x7610 && insn.words[1] != 0x7632) ||
+- 3408       |                 (insn.words[2] & ~0xffU)) return fail(index, "native permutation mode");
+  3409  2894 |             const u32 a = insn.Bits(24, 8), b = insn.Bits(64, 8);
+  3410  2895 |             if (insn.words[1] != 0x5432 && insn.words[1] != 0x7632) {
+  3411  2896 |                 emit(0x0400000000000000ULL | predicate | 250 | (u64{a} << 8) | (u64{0xffff} << 20));
+  3412  2897 |             } else {
+  3413  2898 |                 emit(0x3828000000000000ULL | predicate | 250 | (u64{a} << 8) | (u64{16} << 20));
+  3414  2899 |             }
+  3415  2900 |             if (insn.words[1] == 0x7610 || insn.words[1] == 0x7632) {
+  3416  2901 |                 emit(0x0400000000000000ULL | predicate | 251 | (u64{b} << 8) | (u64{0xffff0000} << 20));
+  3417  2902 |                 emit(base(0x5c10000000000000ULL) | (u64{250} << 8) | (u64{251} << 20));
+  3418  2903 |             } else {
+  3419  2904 |                 emit(base(0x5c18000000000000ULL) | (u64{b} << 8) | (u64{250} << 20) | (u64{16} << 39));
+  3420  2905 |             }
+  3421  2906 |             break;
+  3422  2907 |         }
+```
+
+</details>
+
+### P0-SH08 · BRX / branche indirecte
+
+Contrôle de flux indirect. Une mauvaise cible produit typiquement un shader faux ou un abort, mais pas nécessairement le blocage GSV observé avant shader. Le diff sert à tracer la couverture.
+
+Encore : [lower_to_maxwell.h:4205–4263](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L4205-L4263) — 59 lignes.
+
+<details>
+<summary>Lichii — 3939–3954 : 15 alignées, 44 propres Encore, 1 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:3939–3954](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L3939-L3954).
+
+```diff
+  4205  3939 |         case 0x949: case 0x958: { // Captured BRX / BRXU with absolute native-PC table values
+  4206  3940 |             if (insn.Bits(12, 4) != 7 || (insn.words[2] & ~0x3ffffU) != (opcode == 0x958 ? 0x0b800000U : 0x03800000U))
+  4207  3941 |                 return fail(index, "native computed branch mode");
+  4208  3942 |             const u64 raw = insn.words[1] | (u64{insn.words[2] & 0x3ffff} << 32);
+  4209  3943 |             const s64 relative = static_cast<s64>(raw << 14) >> 14;
+  4210  3944 |             if (s64{index} * 16 + 16 + relative != 0)
+  4211  3945 |                 return fail(index, "native computed branch relative base");
+  4212  3946 |             const s64 offset = -s64{address_of(static_cast<u32>(result.instructions.size()))} - 8;
+  4213  3947 |             if (offset < -0x800000) return fail(index, "native computed branch range");
+  4214  3948 |             const u32 source = opcode == 0x958 ? uniform_register(insn.Bits(24, 8)) : insn.Bits(24, 8);
+  4215  3949 |             if (source == ~0U) return fail(index, "native uniform computed branch source");
+- 4216       |             const auto plan = std::find_if(indirect_dispatch.begin(), indirect_dispatch.end(),
+- 4217       |                 [&](const auto& item) { return item.branch_instruction_index == index; });
+- 4218       |             if (plan != indirect_dispatch.end()) {
+- 4219       |                 // Native LDC still loads the original u32 PC. Compare
+- 4220       |                 // against snapshot values and jump to relocated native source
+- 4221       |                 // indices, never raw Ampere byte offsets. Dynamic BRX cannot
+- 4222       |                 // escape a live barrier/reconvergence stack with a synthetic
+- 4223       |                 // per-thread predicate, so reject that combination for now.
+- 4224       |                 if (!barrier_tokens.empty())
+- 4225       |                     return fail(index, "native indirect branch through barrier scope");
+- 4226       |                 // P6 is *not* scratch: the native program may read it later.
+- 4227       |                 // Preserve it in reserved R253 and branch to local stubs
+- 4228       |                 // that restore it before transferring to real targets.
+- 4229       |                 save_predicate();
+- 4230       |                 std::vector<std::size_t> stub_relocations;
+- 4231       |                 stub_relocations.reserve(plan->targets.size());
+- 4232       |                 for (const auto& entry : plan->targets) {
+- 4233       |                     mov_imm(252, entry.native_value);
+- 4234       |                     // ISETP.EQ.U32.AND P6, PT, Rsource, R252, PT.
+- 4235       |                     emit(0x5b60000000070000ULL | 7U | (u64{6} << 3) |
+- 4236       |                          (u64{source} << 8) | (u64{252} << 20) |
+- 4237       |                          (u64{7} << 39) | (u64{2} << 49));
+- 4238       |                     stub_relocations.push_back(relocations.size());
+- 4239       |                     relocations.push_back({static_cast<u32>(result.instructions.size()),
+- 4240       |                                            index});
+- 4241       |                     emit(0xe24000000000000fULL | (u64{6} << 16));
+- 4242       |                 }
+- 4243       |                 // A CBUF race or unsupported PC is never executable as a
+- 4244       |                 // fabricated Maxwell instruction. Restore guest P6 on miss.
+- 4245       |                 restore_predicate();
+- 4246       |                 emit(0xe30000000007000fULL);
+- 4247       |                 for (std::size_t entry_index = 0; entry_index < plan->targets.size();
+- 4248       |                      ++entry_index) {
+- 4249       |                     // The branch from the comparison targets this exact
+- 4250       |                     // emitted-word stub, including scheduling-word offsets.
+- 4251       |                     relocations[stub_relocations[entry_index]].output_target =
+- 4252       |                         static_cast<u32>(result.instructions.size());
+- 4253       |                     restore_predicate();
+- 4254       |                     relocations.push_back({static_cast<u32>(result.instructions.size()),
+- 4255       |                                            plan->targets[entry_index].native_instruction_index});
+- 4256       |                     emit(0xe24000000007000fULL);
+- 4257       |                 }
+- 4258       |                 break;
+- 4259       |             }
+  4260  3950 |             emit(0xe25000000000000fULL | predicate | (u64{source} << 8) |
+  4261  3951 |                  ((static_cast<u64>(offset) & 0xffffff) << 20));
++       3952 |             computed_branch = true;
+  4262  3953 |             break;
+  4263  3954 |         }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 3754–3769 : 15 alignées, 44 propres Encore, 1 propres upstream</summary>
+
+Source : [lower_to_maxwell.h:3754–3769](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h#L3754-L3769).
+
+```diff
+  4205  3754 |         case 0x949: case 0x958: { // Captured BRX / BRXU with absolute native-PC table values
+  4206  3755 |             if (insn.Bits(12, 4) != 7 || (insn.words[2] & ~0x3ffffU) != (opcode == 0x958 ? 0x0b800000U : 0x03800000U))
+  4207  3756 |                 return fail(index, "native computed branch mode");
+  4208  3757 |             const u64 raw = insn.words[1] | (u64{insn.words[2] & 0x3ffff} << 32);
+  4209  3758 |             const s64 relative = static_cast<s64>(raw << 14) >> 14;
+  4210  3759 |             if (s64{index} * 16 + 16 + relative != 0)
+  4211  3760 |                 return fail(index, "native computed branch relative base");
+  4212  3761 |             const s64 offset = -s64{address_of(static_cast<u32>(result.instructions.size()))} - 8;
+  4213  3762 |             if (offset < -0x800000) return fail(index, "native computed branch range");
+  4214  3763 |             const u32 source = opcode == 0x958 ? uniform_register(insn.Bits(24, 8)) : insn.Bits(24, 8);
+  4215  3764 |             if (source == ~0U) return fail(index, "native uniform computed branch source");
+- 4216       |             const auto plan = std::find_if(indirect_dispatch.begin(), indirect_dispatch.end(),
+- 4217       |                 [&](const auto& item) { return item.branch_instruction_index == index; });
+- 4218       |             if (plan != indirect_dispatch.end()) {
+- 4219       |                 // Native LDC still loads the original u32 PC. Compare
+- 4220       |                 // against snapshot values and jump to relocated native source
+- 4221       |                 // indices, never raw Ampere byte offsets. Dynamic BRX cannot
+- 4222       |                 // escape a live barrier/reconvergence stack with a synthetic
+- 4223       |                 // per-thread predicate, so reject that combination for now.
+- 4224       |                 if (!barrier_tokens.empty())
+- 4225       |                     return fail(index, "native indirect branch through barrier scope");
+- 4226       |                 // P6 is *not* scratch: the native program may read it later.
+- 4227       |                 // Preserve it in reserved R253 and branch to local stubs
+- 4228       |                 // that restore it before transferring to real targets.
+- 4229       |                 save_predicate();
+- 4230       |                 std::vector<std::size_t> stub_relocations;
+- 4231       |                 stub_relocations.reserve(plan->targets.size());
+- 4232       |                 for (const auto& entry : plan->targets) {
+- 4233       |                     mov_imm(252, entry.native_value);
+- 4234       |                     // ISETP.EQ.U32.AND P6, PT, Rsource, R252, PT.
+- 4235       |                     emit(0x5b60000000070000ULL | 7U | (u64{6} << 3) |
+- 4236       |                          (u64{source} << 8) | (u64{252} << 20) |
+- 4237       |                          (u64{7} << 39) | (u64{2} << 49));
+- 4238       |                     stub_relocations.push_back(relocations.size());
+- 4239       |                     relocations.push_back({static_cast<u32>(result.instructions.size()),
+- 4240       |                                            index});
+- 4241       |                     emit(0xe24000000000000fULL | (u64{6} << 16));
+- 4242       |                 }
+- 4243       |                 // A CBUF race or unsupported PC is never executable as a
+- 4244       |                 // fabricated Maxwell instruction. Restore guest P6 on miss.
+- 4245       |                 restore_predicate();
+- 4246       |                 emit(0xe30000000007000fULL);
+- 4247       |                 for (std::size_t entry_index = 0; entry_index < plan->targets.size();
+- 4248       |                      ++entry_index) {
+- 4249       |                     // The branch from the comparison targets this exact
+- 4250       |                     // emitted-word stub, including scheduling-word offsets.
+- 4251       |                     relocations[stub_relocations[entry_index]].output_target =
+- 4252       |                         static_cast<u32>(result.instructions.size());
+- 4253       |                     restore_predicate();
+- 4254       |                     relocations.push_back({static_cast<u32>(result.instructions.size()),
+- 4255       |                                            plan->targets[entry_index].native_instruction_index});
+- 4256       |                     emit(0xe24000000007000fULL);
+- 4257       |                 }
+- 4258       |                 break;
+- 4259       |             }
+  4260  3765 |             emit(0xe25000000000000fULL | predicate | (u64{source} << 8) |
+  4261  3766 |                  ((static_cast<u64>(offset) & 0xffffff) << 20));
++       3767 |             computed_branch = true;
+  4262  3768 |             break;
+  4263  3769 |         }
+```
+
+</details>
+
+### Interprétation
+
+- La couverture d'Encore n'est **ni un sous-ensemble simple ni un sur-ensemble simple** des forks : certaines formes sont plus strictes, d'autres ajoutent des cas capturés localement.
+- Lichii et Eglantine sont très proches sur plusieurs blocs ; cet accord reflète souvent un ancêtre commun et ne vaut pas deux validations indépendantes.
+- Pour MKW/DK/Pokopia, aucune de ces différences n'est élevée au rang de cause tant que le jeu n'atteint pas le shader correspondant ou qu'un programme capturé ne démontre l'échec.
+- Pour FC27 NS1, ce lowering Ampere n'est pas le chemin principal ; il reste documenté ici parce que le même backend Vulkan et plusieurs propriétaires de cache sont partagés.
+
+**Couverture ajoutée :** 8 blocs d'opcodes, 16 comparaisons directes, 908 lignes-source parcourues ; 202 alignées, 298 propres Encore, 206 propres upstream, 0 bloc(s) non extrait(s).

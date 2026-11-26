@@ -4595,3 +4595,18 @@ Les deux PARTIEL historiques `IAppletCommonFunctions` cmd50 `SetHomeButtonDouble
 **2 lignes PARTIEL quittent le pool : nouveau compteur global = 85 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console.
+
+
+### 2026-11-26 — NIFM getters d'état requalifiés : palier global 83
+
+Base : **85 lignes ouvertes**.
+
+Deux lignes PARTIEL NIFM sont séparées des setters/politiques d'arbitrage qui restent réellement incomplets :
+- cmd41 `GetAcceptableNetworkTypeFlag` : HOS23 attend un `u32`; Encore relit exactement le `u32` conservé par cmd40 ;
+- cmd20 `GetRevision` de `IRequest` : HOS23 attend un `u32`; Encore relit exactement `requirement_revision` conservé par cmd18.
+
+Le fait que les setters associés ne pilotent pas encore toute la sélection/arbitrage réseau ne rend pas ces **getters** partiels : leur contrat observable propre est rempli. Les setters cmd40/cmd18 restent dans le pool.
+
+**2 lignes PARTIEL quittent le pool : nouveau compteur global = 83 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console.

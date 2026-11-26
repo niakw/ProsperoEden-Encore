@@ -3985,3 +3985,22 @@ Composition opérationnelle : **9 NULL exacts + 14 raccordements encore à quali
 Arithmétique : **214 - 30 = 184**. Depuis le recalcul 631 : **447 lignes sorties du pool**.
 
 Aucun nouveau patch C++ dans cette requalification, aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — FSP proxy : zéro NULL exact dans le pool, palier global 175
+
+Base : **184 lignes ouvertes** au moteur `7b369874bf4035de7b05572d96e5ff75ecd30c1d` / gitlink vendor `f4cba5fab9559a61386a018e0b10acc38c119e0a`.
+
+Vendor **`ab8f5da7f62d0f7de6f9d840ef5d6eb3ac12319e`** traite les **9 dernières correspondances NULL exactes** de `fsp-srv` :
+- **fonctionnel** : cmd0 `OpenFileSystem` réutilise `OpenFileSystemWithIdImpl` avec le programme courant ; cmd64 `OpenSaveDataInternalStorageFileSystem` retrouve le save par ID puis ouvre réellement son répertoire via `SaveDataController` ; cmd615 `QuerySaveDataInternalStorageTotalSize` retourne la taille réelle du save directory ;
+- **fail-closed explicite** : cmds 80, 84, 130, 601, 611 et 616 retournent `ResultNotSupported` faute de backend qualifié, plutôt qu'un succès synthétique.
+
+Aucun des chemins de montage existants `OpenDataFileSystem*`, `OpenSaveDataFileSystem*`, GameCard, SD, BIS ou NCA n'est remplacé. Le cmd0 réutilise le résolveur NCA déjà actif.
+
+**Nouveau compteur global : 175 lignes ouvertes.**
+
+Composition opérationnelle : **0 NULL exact + 14 raccordements encore à qualifier + 161 non-NULL réellement ouverts = 175**.
+
+Arithmétique : **184 - 9 = 175**. Depuis le recalcul 631 : **456 lignes sorties du pool**.
+
+Le gitlink moteur est repinné sur **`ab8f5da7f62d0f7de6f9d840ef5d6eb3ac12319e`**. Statut : code intégré, pas de build PS5 ni validation console ; aucune CI automatique n'était encore publiée au moment du repin.

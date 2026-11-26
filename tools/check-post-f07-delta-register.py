@@ -171,6 +171,9 @@ for entry in entries:
                 # Exact merged case-artwork and standard title-name successor.
                 # The immutable Nov23 file is recovered only for this SHA.
                 "bccd866c676bd9cece33732b4912cdd9eb5aae4d",
+                # Nov26 exact successor: resets artwork-change flags and
+                # publishes the current case spine from the selected title.
+                "98ff90169756e3f521f6a9d4828ec4c20f8b75a7",
             }:
                 service_audit_source = subprocess.check_output(
                     ["git", "show",

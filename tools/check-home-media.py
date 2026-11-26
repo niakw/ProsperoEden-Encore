@@ -66,7 +66,11 @@ for needle in ('quick settings overlay', 'recently played: seven-ish large artwo
                'utility cards: the four Home actions', 'hero_button(details_rect, "..."'):
     assert needle in home, needle
 assert 'recent.max_players' not in home
-assert 'const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f)' in home
+# Preserve the responsive banner-first path and the validated screenshot fallback.
+assert 'const Cover hero_picture = hero_artwork == hero_banner' in home
+assert '? banner_picture : c.textures.cover(hero_artwork, 1920.0f);' in home
+assert 'banner_picture.texture != 0 ? hero_banner :' in home
+assert 'case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};' in home
 # The visible rail has its independent icon-only worker, not a second full media sweep.
 icons = lib.split("void Launcher::start_home_icons()", 1)[1].split("void Launcher::finish_home_icons()", 1)[0]
 assert "screen_ != Screen::home" in icons and "media_cancel_.load" in icons

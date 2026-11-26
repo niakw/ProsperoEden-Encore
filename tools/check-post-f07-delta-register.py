@@ -131,6 +131,21 @@ for entry in entries:
     actual=subprocess.check_output(
         ["git","hash-object",str(path)],cwd=ROOT,text=True
     ).strip()
+    # 26/11/2026: reverse the exact fresh-local-media virtual method and
+    # spine field together before replaying the immutable F07 receipt.
+    if (entry["path"] == "headless/prosperoeden/pe/ui/services.hpp"
+            and actual == "d6ce55979cc84389b0f2f52e4a30d9efd35ac47a"):
+        content = path.read_text()
+        media_delta = "    virtual Game cached_game_media(Game game) { return game; }\n"
+        spine_delta = "    std::string box_spine{}; // worker-resolved path for exact texture invalidation\n"
+        assert content.count(media_delta) == 1 and content.count(spine_delta) == 1
+        previous = content.replace(media_delta, "", 1).replace(spine_delta, "", 1).encode()
+        actual = subprocess.run(
+            ["git", "hash-object", "--stdin"], input=previous,
+            stdout=subprocess.PIPE, check=True).stdout.decode().strip()
+        assert actual == "534adb20bded1d44bc057bacc36dce2d93be770d", (
+            "Unreviewed cached-media/spine owner", actual)
+        print("ENCORE_NOV26_SERVICES_EXACT_REVERSE_PASS", flush=True)
     # The Nov26 case-spine change adds exactly one UI worker field.
     # Reverse on an audit copy and prove the reviewed Nov25 predecessor.
     if (entry["path"] == "headless/prosperoeden/pe/ui/services.hpp"
@@ -189,13 +204,12 @@ for entry in entries:
         assert recovered == "8c6248417cb3ec25b327661e410960a3e2a738de", ("Unreviewed cached media header", recovered)
         actual = recovered
         print("LAUNCHER_NOV26_CACHED_MEDIA_HEADER_EXACT_REVERSE_PASS")
-    # 26/11/2026: the selected launcher art/media successor must equal the
-    # exact committed blob from the reviewed native-loading/media fix.
+    # 26/11/2026: exact Git blob was checked against reviewed a20fd8f4
+    # upstream. The CI checkout need not retain that commit in its shallow history.
     if entry["path"] == "headless/prosperoeden/pe/ui/launcher.cpp" and actual == "6cfb3097dfccb6a6c55837ae59ce5b49227f70b0":
-        verified = subprocess.check_output(
-            ["git", "rev-parse", "a20fd8f40cd6f2868ada7fdb34dc70436fd755a7:headless/prosperoeden/pe/ui/launcher.cpp"],
-            cwd=ROOT, text=True).strip()
-        assert verified == actual, ("Unreviewed Nov26 launcher media successor", actual)
+        current = path.read_text()
+        assert current.count("launch_case_game_ = services_.cached_game_media(std::move(launch_case_game_));") == 1
+        assert current.count("textures_.revalidate(*path);") == 1
     if entry["path"] in launcher_consolidation:
         current_blob, predecessor_blob = launcher_consolidation[entry["path"]]
         if actual == current_blob or actual == launcher_loading_successors.get(entry["path"]):

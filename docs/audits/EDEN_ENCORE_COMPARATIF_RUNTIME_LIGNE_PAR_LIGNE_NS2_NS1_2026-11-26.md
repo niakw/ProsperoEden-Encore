@@ -739,12 +739,12 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
 +        450 | NvResult nvhost_gpu::SubmitGPFIFOImpl(IoctlSubmitGpfifo& params, Tegra::CommandList&& entries) {
    978   451 |     LOG_TRACE(Service_NVDRV, "called, gpfifo={:X}, num_entries={:X}, flags={:X}", params.address,
    979   452 |               params.num_entries, params.flags.raw);
-   980   453 | 
+   980   453 |
    981   454 |     auto& gpu = system.GPU();
-   982   455 | 
+   982   455 |
 -  983       |     std::scoped_lock lock(channel_mutex);
 +        456 |     std::unique_lock lock(channel_mutex);
-   984   457 | 
+   984   457 |
 -  985       |     // Reject malformed native submits BEFORE InitChannel, GPU channel
 -  986       |     // registry mutations or syncpoint reservations. Invalid guest flags
 -  987       |     // used to initialise a channel and bind an owner despite returning
@@ -782,7 +782,7 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
 +        459 |     if (!channel_state->initialized && channel_state->memory_manager) {
 +        460 |         system.GPU().InitChannel(*channel_state, channel_state->program_id);
   1018   461 |     }
-  1019   462 | 
+  1019   462 |
 - 1020       |     // A native GPU device may expose multiple FDs. A rejected or foreign
 - 1021       |     // process must not cause InitChannel on another guest's address space.
 - 1022       |     const Kernel::KProcess* native_owner = nullptr;
@@ -837,7 +837,7 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
 - 1071       |         }
 - 1072       |     }
 +        463 |     const auto bind_id = channel_state->bind_id;
-  1073   464 | 
+  1073   464 |
 - 1074       |     // Capture the exact source reservation before any channel mutation,
 - 1075       |     // rather than asking the legacy cached min/max fence predicate twice.
 - 1076       |     // The wait belongs to the command list and will be polled by the
@@ -867,7 +867,7 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
 +        467 |             LOG_TRACE(Service_NVDRV, "nx2 GPFIFO entry raw={:#018x} addr={:#x} size={:#x}", entry.raw,
 +        468 |                      entry.addr.Value(), entry.size.Value());
   1098   469 |     }
-- 1099       | 
+- 1099       |
 - 1100       |     // P2.7: every native GPFIFO entry must refer to a fully mapped GMMU
 - 1101       |     // command span BEFORE InitChannel, owner binding or fence reservation.
 - 1102       |     // A valid guest ioctl pointer only proves that the *list of headers*
@@ -919,7 +919,7 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
 +        494 |             for (const auto& entry : entries.command_lists) {
 +        495 |                 words += entry.size;
   1126   496 |     }
-- 1127       | 
+- 1127       |
 - 1128       |     // Lazily initialize channel when address space is available
 - 1129       |     if (!channel_state->initialized && channel_state->memory_manager) {
 - 1130       |         system.GPU().InitChannel(*channel_state, channel_state->program_id);
@@ -940,7 +940,7 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
 +        511 |                         entry.addr, entries.submitted_words.data() + offset,
 +        512 |                         entry.size * sizeof(u32));
   1131   513 |     }
-- 1132       | 
+- 1132       |
 - 1133       |     // A real native GPU channel requires a bound GMMU and initialized
 - 1134       |     // command scheduler. Never acknowledge 2nd-gen submissions before those
 - 1135       |     // resources exist, and never change the existing Switch 1 path.
@@ -991,7 +991,7 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
 - 1179       |             return NvResult::InvalidState;
 - 1180       |         channel_state->memory_manager->EnableNativeTiling();
   1181   517 |     }
-  1182   518 | 
+  1182   518 |
 - 1183       |     const auto bind_id = channel_state->bind_id;
 - 1184       |     const u32 native_completion = native_plan ? native_plan->completion_count : 0;
 - 1185       |     const auto push_gpu_entries = [&](Tegra::CommandList&& list) {
@@ -1000,7 +1000,7 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
 - 1188       |         gpu.PushGPUEntries(bind_id, std::move(list));
 - 1189       |     };
 +        519 |     auto& flags = params.flags;
-  1190   520 | 
+  1190   520 |
 - 1191       |     // The native wait is attached to entries, not a legacy FENCE_ACTION
 - 1192       |     // packet. This leaves the historical Maxwell submission path intact.
 - 1193       |     if (!native && flags.fence_wait.Value()) {
@@ -1008,15 +1008,15 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
   1194   522 |         if (flags.increment_value.Value()) {
   1195   523 |             return NvResult::BadParameter;
   1196   524 |         }
-  1197   525 | 
+  1197   525 |
   1198   526 |         if (!syncpoint_manager.IsFenceSignalled(params.fence)) {
 - 1199       |             push_gpu_entries(Tegra::CommandList{BuildWaitCommandList(params.fence)});
 +        527 |             gpu.PushGPUEntries(bind_id, Tegra::CommandList{BuildWaitCommandList(params.fence)});
   1200   528 |         }
   1201   529 |     }
-  1202   530 | 
+  1202   530 |
   1203   531 |     params.fence.id = channel_syncpoint;
-  1204   532 | 
+  1204   532 |
 - 1205       |     // Use the SAME reviewed native envelope that determined how many
 - 1206       |     // completion commands the GPU queue will issue. Never reserve a fence
 - 1207       |     // using a second, independently computed native increment count.
@@ -1029,12 +1029,12 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
   1212   535 |     params.fence.value = syncpoint_manager.IncrementSyncpointMaxExt(channel_syncpoint, increment);
 - 1213       |     push_gpu_entries(std::move(entries));
 +        536 |     gpu.PushGPUEntries(bind_id, std::move(entries));
-  1214   537 | 
+  1214   537 |
 +        538 |     if (g_nx2_driver && !flags.fence_increment.Value() && increment > 0) {
 +        539 |         gpu.PushGPUEntries(bind_id,
 +        540 |                            Tegra::CommandList{BuildIncrementCountCommandList(params.fence, increment)});
 +        541 |     }
-+        542 | 
++        542 |
   1215   543 |     if (flags.fence_increment.Value()) {
   1216   544 |         if (flags.suppress_wfi.Value()) {
 - 1217       |             push_gpu_entries(
@@ -1046,7 +1046,7 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
   1221   549 |                 Tegra::CommandList{BuildIncrementWithWfiCommandList(params.fence)});
   1222   550 |         }
   1223   551 |     }
-  1224   552 | 
+  1224   552 |
 - 1225       |     // The completed pushbuffer precedes its counter increment on the same
 - 1226       |     // ordered GPU queue. Do not signal before work has been submitted.
 - 1227       |     if (native_completion != 0) {
@@ -1060,13 +1060,13 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
 +        556 |                  params.num_entries, flags.raw, params.fence.id, params.fence.value,
 +        557 |                  system.Host1x().GetSyncpointManager().GetGuestSyncpointValue(params.fence.id));
   1232   558 |     }
-- 1233       | 
+- 1233       |
 - 1234       |     // Switch's submit struct defines flags as input. Preserve the accepted
 - 1235       |     // value on native Ioctl2 H:0x1B replies; OunceVK verifies it byte-for-byte.
 - 1236       |     // Maxwell/NS1 keeps Eden's historical zero-on-return behaviour.
 - 1237       |     if (!native)
   1238   559 |         flags.raw = 0;
-  1239   560 | 
+  1239   560 |
 +        561 |     static const bool sync_submit = [] {
 +        562 |         const char* value = std::getenv("EDEN_NX2_SYNC_SUBMIT");
 +        563 |         return value != nullptr && value[0] != '0';
@@ -1110,7 +1110,7 @@ Source : [nvhost_gpu.cpp:450–606](https://github.com/zortos293/Lichii/blob/028
 +        601 |                         syncpoints.GetGuestSyncpointValue(params.fence.id));
 +        602 |         }
 +        603 |     }
-+        604 | 
++        604 |
   1240   605 |     return NvResult::Success;
   1241   606 | }
 ```
@@ -1128,12 +1128,12 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
 +        413 | NvResult nvhost_gpu::SubmitGPFIFOImpl(IoctlSubmitGpfifo& params, Tegra::CommandList&& entries) {
    978   414 |     LOG_TRACE(Service_NVDRV, "called, gpfifo={:X}, num_entries={:X}, flags={:X}", params.address,
    979   415 |               params.num_entries, params.flags.raw);
-   980   416 | 
+   980   416 |
    981   417 |     auto& gpu = system.GPU();
-   982   418 | 
+   982   418 |
 -  983       |     std::scoped_lock lock(channel_mutex);
 +        419 |     std::unique_lock lock(channel_mutex);
-   984   420 | 
+   984   420 |
 -  985       |     // Reject malformed native submits BEFORE InitChannel, GPU channel
 -  986       |     // registry mutations or syncpoint reservations. Invalid guest flags
 -  987       |     // used to initialise a channel and bind an owner despite returning
@@ -1171,7 +1171,7 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
 +        422 |     if (!channel_state->initialized && channel_state->memory_manager) {
 +        423 |         system.GPU().InitChannel(*channel_state, channel_state->program_id);
   1018   424 |     }
-  1019   425 | 
+  1019   425 |
 - 1020       |     // A native GPU device may expose multiple FDs. A rejected or foreign
 - 1021       |     // process must not cause InitChannel on another guest's address space.
 - 1022       |     const Kernel::KProcess* native_owner = nullptr;
@@ -1226,7 +1226,7 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
 - 1071       |         }
 - 1072       |     }
 +        426 |     const auto bind_id = channel_state->bind_id;
-  1073   427 | 
+  1073   427 |
 - 1074       |     // Capture the exact source reservation before any channel mutation,
 - 1075       |     // rather than asking the legacy cached min/max fence predicate twice.
 - 1076       |     // The wait belongs to the command list and will be polled by the
@@ -1256,7 +1256,7 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
 +        430 |             LOG_TRACE(Service_NVDRV, "nx2 GPFIFO entry raw={:#018x} addr={:#x} size={:#x}", entry.raw,
 +        431 |                      entry.addr.Value(), entry.size.Value());
   1098   432 |     }
-- 1099       | 
+- 1099       |
 - 1100       |     // P2.7: every native GPFIFO entry must refer to a fully mapped GMMU
 - 1101       |     // command span BEFORE InitChannel, owner binding or fence reservation.
 - 1102       |     // A valid guest ioctl pointer only proves that the *list of headers*
@@ -1308,7 +1308,7 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
 +        457 |             for (const auto& entry : entries.command_lists) {
 +        458 |                 words += entry.size;
   1126   459 |     }
-- 1127       | 
+- 1127       |
 - 1128       |     // Lazily initialize channel when address space is available
 - 1129       |     if (!channel_state->initialized && channel_state->memory_manager) {
 - 1130       |         system.GPU().InitChannel(*channel_state, channel_state->program_id);
@@ -1329,7 +1329,7 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
 +        474 |                         entry.addr, entries.submitted_words.data() + offset,
 +        475 |                         entry.size * sizeof(u32));
   1131   476 |     }
-- 1132       | 
+- 1132       |
 - 1133       |     // A real native GPU channel requires a bound GMMU and initialized
 - 1134       |     // command scheduler. Never acknowledge 2nd-gen submissions before those
 - 1135       |     // resources exist, and never change the existing Switch 1 path.
@@ -1380,7 +1380,7 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
 - 1179       |             return NvResult::InvalidState;
 - 1180       |         channel_state->memory_manager->EnableNativeTiling();
   1181   480 |     }
-  1182   481 | 
+  1182   481 |
 - 1183       |     const auto bind_id = channel_state->bind_id;
 - 1184       |     const u32 native_completion = native_plan ? native_plan->completion_count : 0;
 - 1185       |     const auto push_gpu_entries = [&](Tegra::CommandList&& list) {
@@ -1389,7 +1389,7 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
 - 1188       |         gpu.PushGPUEntries(bind_id, std::move(list));
 - 1189       |     };
 +        482 |     auto& flags = params.flags;
-  1190   483 | 
+  1190   483 |
 - 1191       |     // The native wait is attached to entries, not a legacy FENCE_ACTION
 - 1192       |     // packet. This leaves the historical Maxwell submission path intact.
 - 1193       |     if (!native && flags.fence_wait.Value()) {
@@ -1397,15 +1397,15 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
   1194   485 |         if (flags.increment_value.Value()) {
   1195   486 |             return NvResult::BadParameter;
   1196   487 |         }
-  1197   488 | 
+  1197   488 |
   1198   489 |         if (!syncpoint_manager.IsFenceSignalled(params.fence)) {
 - 1199       |             push_gpu_entries(Tegra::CommandList{BuildWaitCommandList(params.fence)});
 +        490 |             gpu.PushGPUEntries(bind_id, Tegra::CommandList{BuildWaitCommandList(params.fence)});
   1200   491 |         }
   1201   492 |     }
-  1202   493 | 
+  1202   493 |
   1203   494 |     params.fence.id = channel_syncpoint;
-  1204   495 | 
+  1204   495 |
 - 1205       |     // Use the SAME reviewed native envelope that determined how many
 - 1206       |     // completion commands the GPU queue will issue. Never reserve a fence
 - 1207       |     // using a second, independently computed native increment count.
@@ -1418,12 +1418,12 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
   1212   498 |     params.fence.value = syncpoint_manager.IncrementSyncpointMaxExt(channel_syncpoint, increment);
 - 1213       |     push_gpu_entries(std::move(entries));
 +        499 |     gpu.PushGPUEntries(bind_id, std::move(entries));
-  1214   500 | 
+  1214   500 |
 +        501 |     if (g_nx2_driver && !flags.fence_increment.Value() && increment > 0) {
 +        502 |         gpu.PushGPUEntries(bind_id,
 +        503 |                            Tegra::CommandList{BuildIncrementCountCommandList(params.fence, increment)});
 +        504 |     }
-+        505 | 
++        505 |
   1215   506 |     if (flags.fence_increment.Value()) {
   1216   507 |         if (flags.suppress_wfi.Value()) {
 - 1217       |             push_gpu_entries(
@@ -1435,7 +1435,7 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
   1221   512 |                 Tegra::CommandList{BuildIncrementWithWfiCommandList(params.fence)});
   1222   513 |         }
   1223   514 |     }
-  1224   515 | 
+  1224   515 |
 - 1225       |     // The completed pushbuffer precedes its counter increment on the same
 - 1226       |     // ordered GPU queue. Do not signal before work has been submitted.
 - 1227       |     if (native_completion != 0) {
@@ -1449,13 +1449,13 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
 +        519 |                  params.num_entries, flags.raw, params.fence.id, params.fence.value,
 +        520 |                  system.Host1x().GetSyncpointManager().GetGuestSyncpointValue(params.fence.id));
   1232   521 |     }
-- 1233       | 
+- 1233       |
 - 1234       |     // Switch's submit struct defines flags as input. Preserve the accepted
 - 1235       |     // value on native Ioctl2 H:0x1B replies; OunceVK verifies it byte-for-byte.
 - 1236       |     // Maxwell/NS1 keeps Eden's historical zero-on-return behaviour.
 - 1237       |     if (!native)
   1238   522 |         flags.raw = 0;
-  1239   523 | 
+  1239   523 |
 +        524 |     static const bool sync_submit = [] {
 +        525 |         const char* value = std::getenv("EDEN_NX2_SYNC_SUBMIT");
 +        526 |         return value != nullptr && value[0] != '0';
@@ -1499,7 +1499,7 @@ Source : [nvhost_gpu.cpp:413–569](https://github.com/heydemoura/EglantinePS5/b
 +        564 |                         syncpoints.GetGuestSyncpointValue(params.fence.id));
 +        565 |         }
 +        566 |     }
-+        567 | 
++        567 |
   1240   568 |     return NvResult::Success;
   1241   569 | }
 ```
@@ -2537,9 +2537,9 @@ Source : [vk_rasterizer.cpp:4912–4978](https://github.com/zortos293/Lichii/blo
   2731  4955 |     if (device.IsExtTransformFeedbackSupported()) {
   2732  4956 |         flags |= VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT;
   2733  4957 |     }
-  2734  4958 | 
+  2734  4958 |
   2735  4959 |     query_cache.NotifyWFI();
-  2736  4960 | 
+  2736  4960 |
 +       4961 |     if (device.IsMoltenVK() && scheduler.IsRenderPassActive()) {
 +       4962 |         scheduler.DeferFragmentBarrier();
 +       4963 |         fence_manager.SignalOrdering();
@@ -2584,9 +2584,9 @@ Source : [vk_rasterizer.cpp:3146–3178](https://github.com/heydemoura/Eglantine
   2731  3155 |     if (device.IsExtTransformFeedbackSupported()) {
   2732  3156 |         flags |= VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT;
   2733  3157 |     }
-  2734  3158 | 
+  2734  3158 |
   2735  3159 |     query_cache.NotifyWFI();
-  2736  3160 | 
+  2736  3160 |
 +       3161 |     if (device.IsMoltenVK() && scheduler.IsRenderPassActive()) {
 +       3162 |         scheduler.DeferFragmentBarrier();
 +       3163 |         fence_manager.SignalOrdering();
@@ -2634,20 +2634,20 @@ Source : [nvhost_as_gpu.cpp:554–605](https://github.com/zortos293/Lichii/blob/
   1445   554 | NvResult nvhost_as_gpu::AllocateSpace(IoctlAllocSpace& params) {
   1446   555 |     LOG_DEBUG(Service_NVDRV, "called, pages={:X}, page_size={:X}, flags={:X}", params.pages,
   1447   556 |               params.page_size, params.flags);
-  1448   557 | 
+  1448   557 |
   1449   558 |     std::scoped_lock lock(mutex);
-  1450   559 | 
+  1450   559 |
 - 1451       |     if (native_sparse_poisoned && m_native_process &&
 - 1452       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process))
 - 1453       |         return NvResult::InvalidState;
   1454   560 |     if (!vm.initialised) {
   1455   561 |         return NvResult::BadValue;
   1456   562 |     }
-  1457   563 | 
+  1457   563 |
 - 1458       |     if (params.page_size != VM::YUZU_PAGESIZE && params.page_size != vm.big_page_size) {
 - 1459       |         return NvResult::BadValue;
 - 1460       |     }
-- 1461       | 
+- 1461       |
 - 1462       |     // Native GA10F can reserve sparse 4-KiB GPU VA without backing physical
 - 1463       |     // pages. The original Maxwell ioctl below deliberately keeps its legacy
 - 1464       |     // unsupported-small-sparse contract; never select this path by Title ID.
@@ -2662,7 +2662,7 @@ Source : [nvhost_as_gpu.cpp:554–605](https://github.com/zortos293/Lichii/blob/
 - 1473       |             static_cast<u32>(MappingFlags::Fixed) | static_cast<u32>(MappingFlags::Sparse);
 - 1474       |         if ((static_cast<u32>(params.flags) & ~allowed_flags) != 0)
 - 1475       |             return NvResult::BadValue;
-- 1476       | 
+- 1476       |
 - 1477       |         // All VA arithmetic is 64-bit; the actual allocator stores 4K page
 - 1478       |         // numbers in u32. A reservation never commits pages or pins NVMap.
 - 1479       |         auto& allocator = *vm.small_page_allocator;
@@ -2696,7 +2696,7 @@ Source : [nvhost_as_gpu.cpp:554–605](https://github.com/zortos293/Lichii/blob/
 - 1507       |                      address - std::prev(mapped)->first))
 - 1508       |                 return NvResult::BadValue;
 - 1509       |         }
-- 1510       | 
+- 1510       |
 - 1511       |         u32 first_page{};
 - 1512       |         bool reserved_pages = false;
 - 1513       |         bool tracked = false;
@@ -2747,7 +2747,7 @@ Source : [nvhost_as_gpu.cpp:554–605](https://github.com/zortos293/Lichii/blob/
 - 1558       |         params.offset = address;
 - 1559       |         return NvResult::Success;
 - 1560       |     }
-- 1561       | 
+- 1561       |
 - 1562       |     // NS2 regular 4K/big-page and big-page sparse reservations must not
 - 1563       |     // publish a guest VA without a live owner in allocation_map. The
 - 1564       |     // already-admitted native 4K sparse branch above is unchanged.
@@ -2776,7 +2776,7 @@ Source : [nvhost_as_gpu.cpp:554–605](https://github.com/zortos293/Lichii/blob/
 - 1587       |         const u64 size = static_cast<u64>(params.pages) * params.page_size;
 - 1588       |         if (min_va >= max_va || !size || size > max_va - min_va)
 - 1589       |             return NvResult::InsufficientMemory;
-- 1590       | 
+- 1590       |
 - 1591       |         u64 address = fixed ? static_cast<u64>(params.offset) : 0;
 - 1592       |         u32 start_page = 0;
 - 1593       |         if (fixed) {
@@ -2800,7 +2800,7 @@ Source : [nvhost_as_gpu.cpp:554–605](https://github.com/zortos293/Lichii/blob/
 - 1611       |                 return NvResult::BadValue;
 - 1612       |             start_page = static_cast<u32>(address >> shift);
 - 1613       |         }
-- 1614       | 
+- 1614       |
 - 1615       |         bool reserved = false;
 - 1616       |         try {
 - 1617       |             if (fixed) {
@@ -2850,21 +2850,21 @@ Source : [nvhost_as_gpu.cpp:554–605](https://github.com/zortos293/Lichii/blob/
 - 1660       |         params.offset = address;
 - 1661       |         return NvResult::Success;
 - 1662       |     }
-  1663   567 | 
+  1663   567 |
   1664   568 |     if (params.page_size != vm.big_page_size &&
   1665   569 |         ((params.flags & MappingFlags::Sparse) != MappingFlags::None)) {
   1666   570 |         UNIMPLEMENTED_MSG("Sparse small pages are not implemented!");
   1667   571 |         return NvResult::NotImplemented;
   1668   572 |     }
-  1669   573 | 
+  1669   573 |
 - 1670       |     const u32 page_size_bits{params.page_size == VM::YUZU_PAGESIZE ? VM::PAGE_SIZE_BITS
 +        574 |     const u32 page_size_bits{params.page_size == VM::LICHII_PAGESIZE ? VM::PAGE_SIZE_BITS
   1671   575 |                                                                    : vm.big_page_size_bits};
-  1672   576 | 
+  1672   576 |
 - 1673       |     auto& allocator{params.page_size == VM::YUZU_PAGESIZE ? *vm.small_page_allocator
 +        577 |     auto& allocator{params.page_size == VM::LICHII_PAGESIZE ? *vm.small_page_allocator
   1674   578 |                                                           : *vm.big_page_allocator};
-  1675   579 | 
+  1675   579 |
   1676   580 |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
   1677   581 |         allocator.AllocateFixed(static_cast<u32>(params.offset >> page_size_bits), params.pages);
   1678   582 |     } else {
@@ -2874,13 +2874,13 @@ Source : [nvhost_as_gpu.cpp:554–605](https://github.com/zortos293/Lichii/blob/
   1682   586 |             return NvResult::InsufficientMemory;
   1683   587 |         }
   1684   588 |     }
-  1685   589 | 
+  1685   589 |
   1686   590 |     u64 size{static_cast<u64>(params.pages) * params.page_size};
-  1687   591 | 
+  1687   591 |
   1688   592 |     if ((params.flags & MappingFlags::Sparse) != MappingFlags::None) {
   1689   593 |         gmmu->MapSparse(params.offset, size);
   1690   594 |     }
-  1691   595 | 
+  1691   595 |
   1692   596 |     allocation_map[params.offset] = {
   1693   597 |         .mappings{},
   1694   598 |         .size = size,
@@ -2889,7 +2889,7 @@ Source : [nvhost_as_gpu.cpp:554–605](https://github.com/zortos293/Lichii/blob/
 - 1697       |         .big_pages = params.page_size != VM::YUZU_PAGESIZE,
 +        601 |         .big_pages = params.page_size != VM::LICHII_PAGESIZE,
   1698   602 |     };
-  1699   603 | 
+  1699   603 |
   1700   604 |     return NvResult::Success;
   1701   605 | }
 ```
@@ -2905,20 +2905,20 @@ Source : [nvhost_as_gpu.cpp:483–534](https://github.com/heydemoura/EglantinePS
   1445   483 | NvResult nvhost_as_gpu::AllocateSpace(IoctlAllocSpace& params) {
   1446   484 |     LOG_DEBUG(Service_NVDRV, "called, pages={:X}, page_size={:X}, flags={:X}", params.pages,
   1447   485 |               params.page_size, params.flags);
-  1448   486 | 
+  1448   486 |
   1449   487 |     std::scoped_lock lock(mutex);
-  1450   488 | 
+  1450   488 |
 - 1451       |     if (native_sparse_poisoned && m_native_process &&
 - 1452       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process))
 - 1453       |         return NvResult::InvalidState;
   1454   489 |     if (!vm.initialised) {
   1455   490 |         return NvResult::BadValue;
   1456   491 |     }
-  1457   492 | 
+  1457   492 |
   1458   493 |     if (params.page_size != VM::YUZU_PAGESIZE && params.page_size != vm.big_page_size) {
   1459   494 |         return NvResult::BadValue;
   1460   495 |     }
-  1461   496 | 
+  1461   496 |
 - 1462       |     // Native GA10F can reserve sparse 4-KiB GPU VA without backing physical
 - 1463       |     // pages. The original Maxwell ioctl below deliberately keeps its legacy
 - 1464       |     // unsupported-small-sparse contract; never select this path by Title ID.
@@ -2933,7 +2933,7 @@ Source : [nvhost_as_gpu.cpp:483–534](https://github.com/heydemoura/EglantinePS
 - 1473       |             static_cast<u32>(MappingFlags::Fixed) | static_cast<u32>(MappingFlags::Sparse);
 - 1474       |         if ((static_cast<u32>(params.flags) & ~allowed_flags) != 0)
 - 1475       |             return NvResult::BadValue;
-- 1476       | 
+- 1476       |
 - 1477       |         // All VA arithmetic is 64-bit; the actual allocator stores 4K page
 - 1478       |         // numbers in u32. A reservation never commits pages or pins NVMap.
 - 1479       |         auto& allocator = *vm.small_page_allocator;
@@ -2967,7 +2967,7 @@ Source : [nvhost_as_gpu.cpp:483–534](https://github.com/heydemoura/EglantinePS
 - 1507       |                      address - std::prev(mapped)->first))
 - 1508       |                 return NvResult::BadValue;
 - 1509       |         }
-- 1510       | 
+- 1510       |
 - 1511       |         u32 first_page{};
 - 1512       |         bool reserved_pages = false;
 - 1513       |         bool tracked = false;
@@ -3018,7 +3018,7 @@ Source : [nvhost_as_gpu.cpp:483–534](https://github.com/heydemoura/EglantinePS
 - 1558       |         params.offset = address;
 - 1559       |         return NvResult::Success;
 - 1560       |     }
-- 1561       | 
+- 1561       |
 - 1562       |     // NS2 regular 4K/big-page and big-page sparse reservations must not
 - 1563       |     // publish a guest VA without a live owner in allocation_map. The
 - 1564       |     // already-admitted native 4K sparse branch above is unchanged.
@@ -3047,7 +3047,7 @@ Source : [nvhost_as_gpu.cpp:483–534](https://github.com/heydemoura/EglantinePS
 - 1587       |         const u64 size = static_cast<u64>(params.pages) * params.page_size;
 - 1588       |         if (min_va >= max_va || !size || size > max_va - min_va)
 - 1589       |             return NvResult::InsufficientMemory;
-- 1590       | 
+- 1590       |
 - 1591       |         u64 address = fixed ? static_cast<u64>(params.offset) : 0;
 - 1592       |         u32 start_page = 0;
 - 1593       |         if (fixed) {
@@ -3071,7 +3071,7 @@ Source : [nvhost_as_gpu.cpp:483–534](https://github.com/heydemoura/EglantinePS
 - 1611       |                 return NvResult::BadValue;
 - 1612       |             start_page = static_cast<u32>(address >> shift);
 - 1613       |         }
-- 1614       | 
+- 1614       |
 - 1615       |         bool reserved = false;
 - 1616       |         try {
 - 1617       |             if (fixed) {
@@ -3120,19 +3120,19 @@ Source : [nvhost_as_gpu.cpp:483–534](https://github.com/heydemoura/EglantinePS
 - 1660       |         params.offset = address;
 - 1661       |         return NvResult::Success;
 - 1662       |     }
-- 1663       | 
+- 1663       |
   1664   497 |     if (params.page_size != vm.big_page_size &&
   1665   498 |         ((params.flags & MappingFlags::Sparse) != MappingFlags::None)) {
   1666   499 |         UNIMPLEMENTED_MSG("Sparse small pages are not implemented!");
   1667   500 |         return NvResult::NotImplemented;
   1668   501 |     }
-  1669   502 | 
+  1669   502 |
   1670   503 |     const u32 page_size_bits{params.page_size == VM::YUZU_PAGESIZE ? VM::PAGE_SIZE_BITS
   1671   504 |                                                                    : vm.big_page_size_bits};
-  1672   505 | 
+  1672   505 |
   1673   506 |     auto& allocator{params.page_size == VM::YUZU_PAGESIZE ? *vm.small_page_allocator
   1674   507 |                                                           : *vm.big_page_allocator};
-  1675   508 | 
+  1675   508 |
   1676   509 |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
   1677   510 |         allocator.AllocateFixed(static_cast<u32>(params.offset >> page_size_bits), params.pages);
   1678   511 |     } else {
@@ -3142,13 +3142,13 @@ Source : [nvhost_as_gpu.cpp:483–534](https://github.com/heydemoura/EglantinePS
   1682   515 |             return NvResult::InsufficientMemory;
   1683   516 |         }
   1684   517 |     }
-  1685   518 | 
+  1685   518 |
   1686   519 |     u64 size{static_cast<u64>(params.pages) * params.page_size};
-  1687   520 | 
+  1687   520 |
   1688   521 |     if ((params.flags & MappingFlags::Sparse) != MappingFlags::None) {
   1689   522 |         gmmu->MapSparse(params.offset, size);
   1690   523 |     }
-  1691   524 | 
+  1691   524 |
   1692   525 |     allocation_map[params.offset] = {
   1693   526 |         .mappings{},
   1694   527 |         .size = size,
@@ -3156,7 +3156,7 @@ Source : [nvhost_as_gpu.cpp:483–534](https://github.com/heydemoura/EglantinePS
   1696   529 |         .sparse = (params.flags & MappingFlags::Sparse) != MappingFlags::None,
   1697   530 |         .big_pages = params.page_size != VM::YUZU_PAGESIZE,
   1698   531 |     };
-  1699   532 | 
+  1699   532 |
   1700   533 |     return NvResult::Success;
   1701   534 | }
 ```
@@ -3202,7 +3202,7 @@ Source : [nvhost_as_gpu.cpp:631–658](https://github.com/zortos293/Lichii/blob/
 +        638 |         auto const allocation = it->second;
   1789   639 |         if (allocation.page_size != params.page_size || allocation.size != (u64(params.pages) * params.page_size))
   1790   640 |             return NvResult::BadValue;
-  1791   641 | 
+  1791   641 |
 - 1792       |         // Native A:14 and GSV 216 share the sparse range/pin registry.
 - 1793       |         // Reserve all needed host nodes before unmapping any guest PTE.
 - 1794       |         NativeSparseMappingTable updated_sparse;
@@ -3221,11 +3221,11 @@ Source : [nvhost_as_gpu.cpp:631–658](https://github.com/zortos293/Lichii/blob/
 +        642 |         for (const auto mapping_offset : allocation.mappings) {
 +        643 |             void(FreeMappingLocked(mapping_offset));
   1807   644 |         }
-  1808   645 | 
+  1808   645 |
 - 1809       |         for (const auto mapping_offset : allocation.mappings)
 - 1810       |             if (!FreeMappingLocked(mapping_offset))
 - 1811       |                 return NvResult::BadValue;
-- 1812       | 
+- 1812       |
 - 1813       |         // Always retire GPU PTEs BEFORE dropping their pinned NVMap memory.
 - 1814       |         if (allocation.sparse) {
 - 1815       |             if (native_sparse) {
@@ -3250,12 +3250,12 @@ Source : [nvhost_as_gpu.cpp:631–658](https://github.com/zortos293/Lichii/blob/
 - 1832       |                 pin = native_sparse_pins.erase(pin);
 - 1833       |             }
 - 1834       |         }
-  1835   649 | 
+  1835   649 |
 - 1836       |         auto& allocator{params.page_size == VM::YUZU_PAGESIZE ? *vm.small_page_allocator : *vm.big_page_allocator};
 - 1837       |         u32 page_size_bits{params.page_size == VM::YUZU_PAGESIZE ? VM::PAGE_SIZE_BITS : vm.big_page_size_bits};
 +        650 |         auto& allocator{params.page_size == VM::LICHII_PAGESIZE ? *vm.small_page_allocator : *vm.big_page_allocator};
 +        651 |         u32 page_size_bits{params.page_size == VM::LICHII_PAGESIZE ? VM::PAGE_SIZE_BITS : vm.big_page_size_bits};
-  1838   652 | 
+  1838   652 |
   1839   653 |         allocator.Free(u32(params.offset >> page_size_bits), u32(allocation.size >> page_size_bits));
   1840   654 |         allocation_map.erase(params.offset);
   1841   655 |         return NvResult::Success;
@@ -3299,7 +3299,7 @@ Source : [nvhost_as_gpu.cpp:560–587](https://github.com/heydemoura/EglantinePS
 +        567 |         auto const allocation = it->second;
   1789   568 |         if (allocation.page_size != params.page_size || allocation.size != (u64(params.pages) * params.page_size))
   1790   569 |             return NvResult::BadValue;
-  1791   570 | 
+  1791   570 |
 - 1792       |         // Native A:14 and GSV 216 share the sparse range/pin registry.
 - 1793       |         // Reserve all needed host nodes before unmapping any guest PTE.
 - 1794       |         NativeSparseMappingTable updated_sparse;
@@ -3316,11 +3316,11 @@ Source : [nvhost_as_gpu.cpp:560–587](https://github.com/heydemoura/EglantinePS
 - 1805       |                 return NvResult::InsufficientMemory;
 - 1806       |             }
 - 1807       |         }
-- 1808       | 
+- 1808       |
   1809   571 |         for (const auto mapping_offset : allocation.mappings)
   1810   572 |             if (!FreeMappingLocked(mapping_offset))
   1811   573 |                 return NvResult::BadValue;
-  1812   574 | 
+  1812   574 |
 - 1813       |         // Always retire GPU PTEs BEFORE dropping their pinned NVMap memory.
 - 1814       |         if (allocation.sparse) {
 - 1815       |             if (native_sparse) {
@@ -3345,10 +3345,10 @@ Source : [nvhost_as_gpu.cpp:560–587](https://github.com/heydemoura/EglantinePS
 - 1832       |                 pin = native_sparse_pins.erase(pin);
 - 1833       |             }
 - 1834       |         }
-  1835   578 | 
+  1835   578 |
   1836   579 |         auto& allocator{params.page_size == VM::YUZU_PAGESIZE ? *vm.small_page_allocator : *vm.big_page_allocator};
   1837   580 |         u32 page_size_bits{params.page_size == VM::YUZU_PAGESIZE ? VM::PAGE_SIZE_BITS : vm.big_page_size_bits};
-  1838   581 | 
+  1838   581 |
   1839   582 |         allocator.Free(u32(params.offset >> page_size_bits), u32(allocation.size >> page_size_bits));
   1840   583 |         allocation_map.erase(params.offset);
   1841   584 |         return NvResult::Success;
@@ -3373,7 +3373,7 @@ Source : [nvhost_as_gpu.cpp:660–704](https://github.com/zortos293/Lichii/blob/
 ```diff
   1846   660 | NvResult nvhost_as_gpu::Remap(std::span<IoctlRemapEntry> entries) {
   1847   661 |     LOG_DEBUG(Service_NVDRV, "called, num_entries={:#x}", entries.size());
-  1848   662 | 
+  1848   662 |
 - 1849       |     if (m_native_process &&
 - 1850       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process)) {
 - 1851       |         // Native NVDRV A:14 shares the same transactional pin and mapping
@@ -3413,32 +3413,32 @@ Source : [nvhost_as_gpu.cpp:660–704](https://github.com/zortos293/Lichii/blob/
 - 1885       |             system.GPU().WaitForIdle();
 - 1886       |         return RemapNativeSparse(transaction);
 - 1887       |     }
-- 1888       | 
+- 1888       |
   1889   663 |     if (!vm.initialised) {
   1890   664 |         return NvResult::BadValue;
   1891   665 |     }
-  1892   666 | 
+  1892   666 |
   1893   667 |     for (const auto& entry : entries) {
   1894   668 |         GPUVAddr virtual_address{static_cast<u64>(entry.as_offset_big_pages)
   1895   669 |                                  << vm.big_page_size_bits};
   1896   670 |         u64 size{static_cast<u64>(entry.big_pages) << vm.big_page_size_bits};
-  1897   671 | 
+  1897   671 |
 - 1898       |         const auto alloc = NativeGpuAllocation::FindContaining(
 - 1899       |             allocation_map, virtual_address, size);
 - 1900       |         if (alloc == allocation_map.end()) {
 +        672 |         auto alloc{allocation_map.upper_bound(virtual_address)};
-+        673 | 
++        673 |
 +        674 |         if (alloc-- == allocation_map.begin() ||
 +        675 |             (virtual_address - alloc->first) + size > alloc->second.size) {
   1901   676 |             LOG_WARNING(Service_NVDRV, "Cannot remap into an unallocated region!");
   1902   677 |             return NvResult::BadValue;
   1903   678 |         }
-  1904   679 | 
+  1904   679 |
   1905   680 |         if (!alloc->second.sparse) {
   1906   681 |             LOG_WARNING(Service_NVDRV, "Cannot remap a non-sparse mapping!");
   1907   682 |             return NvResult::BadValue;
   1908   683 |         }
-  1909   684 | 
+  1909   684 |
   1910   685 |         const bool use_big_pages = alloc->second.big_pages;
   1911   686 |         if (!entry.handle) {
   1912   687 |             gmmu->MapSparse(virtual_address, size, use_big_pages);
@@ -3447,7 +3447,7 @@ Source : [nvhost_as_gpu.cpp:660–704](https://github.com/zortos293/Lichii/blob/
   1915   690 |             if (!handle) {
   1916   691 |                 return NvResult::BadValue;
   1917   692 |             }
-  1918   693 | 
+  1918   693 |
 - 1919       |             const DAddr base = nvmap.PinHandle(entry.handle, false);
 - 1920       |             const u64 source = static_cast<u64>(entry.handle_offset_big_pages)
 - 1921       |                                << vm.big_page_size_bits;
@@ -3459,12 +3459,12 @@ Source : [nvhost_as_gpu.cpp:660–704](https://github.com/zortos293/Lichii/blob/
 +        694 |             DAddr base = nvmap.PinHandle(entry.handle, false);
 +        695 |             DAddr device_address{static_cast<DAddr>(
 +        696 |                 base + (static_cast<u64>(entry.handle_offset_big_pages) << vm.big_page_size_bits))};
-  1927   697 | 
+  1927   697 |
   1928   698 |             gmmu->Map(virtual_address, device_address, size,
   1929   699 |                       static_cast<Tegra::PTEKind>(entry.kind), use_big_pages);
   1930   700 |         }
   1931   701 |     }
-  1932   702 | 
+  1932   702 |
   1933   703 |     return NvResult::Success;
   1934   704 | }
 ```
@@ -3479,7 +3479,7 @@ Source : [nvhost_as_gpu.cpp:589–633](https://github.com/heydemoura/EglantinePS
 ```diff
   1846   589 | NvResult nvhost_as_gpu::Remap(std::span<IoctlRemapEntry> entries) {
   1847   590 |     LOG_DEBUG(Service_NVDRV, "called, num_entries={:#x}", entries.size());
-  1848   591 | 
+  1848   591 |
 - 1849       |     if (m_native_process &&
 - 1850       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process)) {
 - 1851       |         // Native NVDRV A:14 shares the same transactional pin and mapping
@@ -3519,32 +3519,32 @@ Source : [nvhost_as_gpu.cpp:589–633](https://github.com/heydemoura/EglantinePS
 - 1885       |             system.GPU().WaitForIdle();
 - 1886       |         return RemapNativeSparse(transaction);
 - 1887       |     }
-- 1888       | 
+- 1888       |
   1889   592 |     if (!vm.initialised) {
   1890   593 |         return NvResult::BadValue;
   1891   594 |     }
-  1892   595 | 
+  1892   595 |
   1893   596 |     for (const auto& entry : entries) {
   1894   597 |         GPUVAddr virtual_address{static_cast<u64>(entry.as_offset_big_pages)
   1895   598 |                                  << vm.big_page_size_bits};
   1896   599 |         u64 size{static_cast<u64>(entry.big_pages) << vm.big_page_size_bits};
-  1897   600 | 
+  1897   600 |
 - 1898       |         const auto alloc = NativeGpuAllocation::FindContaining(
 - 1899       |             allocation_map, virtual_address, size);
 - 1900       |         if (alloc == allocation_map.end()) {
 +        601 |         auto alloc{allocation_map.upper_bound(virtual_address)};
-+        602 | 
++        602 |
 +        603 |         if (alloc-- == allocation_map.begin() ||
 +        604 |             (virtual_address - alloc->first) + size > alloc->second.size) {
   1901   605 |             LOG_WARNING(Service_NVDRV, "Cannot remap into an unallocated region!");
   1902   606 |             return NvResult::BadValue;
   1903   607 |         }
-  1904   608 | 
+  1904   608 |
   1905   609 |         if (!alloc->second.sparse) {
   1906   610 |             LOG_WARNING(Service_NVDRV, "Cannot remap a non-sparse mapping!");
   1907   611 |             return NvResult::BadValue;
   1908   612 |         }
-  1909   613 | 
+  1909   613 |
   1910   614 |         const bool use_big_pages = alloc->second.big_pages;
   1911   615 |         if (!entry.handle) {
   1912   616 |             gmmu->MapSparse(virtual_address, size, use_big_pages);
@@ -3553,7 +3553,7 @@ Source : [nvhost_as_gpu.cpp:589–633](https://github.com/heydemoura/EglantinePS
   1915   619 |             if (!handle) {
   1916   620 |                 return NvResult::BadValue;
   1917   621 |             }
-  1918   622 | 
+  1918   622 |
 - 1919       |             const DAddr base = nvmap.PinHandle(entry.handle, false);
 - 1920       |             const u64 source = static_cast<u64>(entry.handle_offset_big_pages)
 - 1921       |                                << vm.big_page_size_bits;
@@ -3565,12 +3565,12 @@ Source : [nvhost_as_gpu.cpp:589–633](https://github.com/heydemoura/EglantinePS
 +        623 |             DAddr base = nvmap.PinHandle(entry.handle, false);
 +        624 |             DAddr device_address{static_cast<DAddr>(
 +        625 |                 base + (static_cast<u64>(entry.handle_offset_big_pages) << vm.big_page_size_bits))};
-  1927   626 | 
+  1927   626 |
   1928   627 |             gmmu->Map(virtual_address, device_address, size,
   1929   628 |                       static_cast<Tegra::PTEKind>(entry.kind), use_big_pages);
   1930   629 |         }
   1931   630 |     }
-  1932   631 | 
+  1932   631 |
   1933   632 |     return NvResult::Success;
   1934   633 | }
 ```
@@ -3595,7 +3595,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
   1939   709 |               ", offset={:#x}",
   1940   710 |               params.flags, params.handle, params.buffer_offset, params.mapping_size,
   1941   711 |               params.offset);
-  1942   712 | 
+  1942   712 |
 - 1943       |     // A native PTE-kind remap must drain prior GPU work BEFORE entering the
 - 1944       |     // address-space critical section. The GPU worker may still query these
 - 1945       |     // page tables while WaitForIdle drains the queue.
@@ -3605,13 +3605,13 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 1949       |         (params.flags & MappingFlags::Remap) != MappingFlags::None;
 - 1950       |     if (native_remap_requested && system.IsPoweredOn() && !system.IsShuttingDown())
 - 1951       |         system.GPU().WaitForIdle();
-- 1952       | 
+- 1952       |
   1953   713 |     std::scoped_lock lock(mutex);
-  1954   714 | 
+  1954   714 |
   1955   715 |     if (!vm.initialised) {
   1956   716 |         return NvResult::BadValue;
   1957   717 |     }
-  1958   718 | 
+  1958   718 |
 - 1959       |     // A partially committed native sparse transaction has quarantined
 - 1960       |     // physical owners. Do not let an unrelated ioctl overwrite its PTEs.
 - 1961       |     const bool remap_native = m_native_process &&
@@ -3628,7 +3628,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 1972       |         // The fourth u32 in MAP_BUFFER_EX/EX2 is documented as
 - 1973       |         // reserved/inout, not a requested page size. Preserve it.
 - 1974       |     }
-- 1975       | 
+- 1975       |
   1976   719 |     // Remaps a subregion of an existing mapping to a different PA
   1977   720 |     if ((params.flags & MappingFlags::Remap) != MappingFlags::None) {
 - 1978       |         // These two ioctl fields are SIGNED; reject negative input before
@@ -3708,7 +3708,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
   2048   733 |             return NvResult::BadValue;
   2049   734 |         }
   2050   735 |     }
-  2051   736 | 
+  2051   736 |
   2052   737 |     auto handle{nvmap.GetHandle(params.handle)};
   2053   738 |     if (!handle) {
   2054   739 |         return NvResult::BadValue;
@@ -3723,7 +3723,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 2063       |         const auto* owner = container.GetSession(handle->session_id);
 - 2064       |         if (!handle->allocated || !owner || owner->process != m_native_process)
 - 2065       |             return NvResult::BadValue;
-  2066   741 | 
+  2066   741 |
 - 2067       |         // In the native ioctl the kind is a GA10F MMU kind, not an Eden
 - 2068       |         // Maxwell PTEKind ordinal. For example native generic kind 6 is
 - 2069       |         // NOT backend PTE kind 6 (Z16 MS16). The same translation already
@@ -3744,7 +3744,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 2084       |                 static_cast<u8>(Tegra::PTEKind::GENERIC_16BX2), candidate};
 - 2085       |         if (!native_kind) return NvResult::NotSupported;
 - 2086       |     }
-- 2087       | 
+- 2087       |
 - 2088       |     const u64 size{params.mapping_size ? params.mapping_size : handle->orig_size};
 - 2089       |     if (!NativeGpuAllocation::ContainsSubrange(handle->orig_size,
 - 2090       |                                                params.buffer_offset, size))
@@ -3779,7 +3779,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 2119       |     const DAddr device_address = pinned + params.buffer_offset;
 +        742 |     DAddr device_address = DAddr(nvmap.PinHandle(params.handle, false) + params.buffer_offset);
 +        743 |     u64 size{params.mapping_size ? params.mapping_size : handle->orig_size};
-  2120   744 | 
+  2120   744 |
   2121   745 |     bool big_page{[&]() {
   2122   746 |         if (Common::IsAligned(handle->align, vm.big_page_size)) {
   2123   747 |             return true;
@@ -3802,7 +3802,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 2139       |             return NvResult::BadValue;
 - 2140       |         }
 - 2141       |     }
-  2142   755 | 
+  2142   755 |
 - 2143       |     // Native NS2: all fallible owner and lookup allocations must complete
 - 2144       |     // BEFORE publishing GPU PTEs. The legacy NVDRV path below stays intact.
 - 2145       |     // Otherwise a failed map/offset-vector allocation can orphan an NVMap
@@ -3836,7 +3836,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 2173       |             nvmap.UnpinHandle(params.handle);
 - 2174       |             return NvResult::BadValue;
 - 2175       |         }
-- 2176       | 
+- 2176       |
 - 2177       |         u64 address{};
 - 2178       |         u32 allocated_page{};
 - 2179       |         u32 allocated_pages{};
@@ -3871,7 +3871,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 2208       |             owns_va = true;
 - 2209       |             address = static_cast<u64>(allocated_page) << page_bits;
 - 2210       |         }
-- 2211       | 
+- 2211       |
 - 2212       |         bool owner_inserted = false;
 - 2213       |         bool token_inserted = false;
 - 2214       |         bool allocation_indexed = false;
@@ -3882,7 +3882,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 2219       |             if (owns_va) allocator->Free(allocated_page, allocated_pages);
 - 2220       |             nvmap.UnpinHandle(params.handle);
 - 2221       |         };
-- 2222       | 
+- 2222       |
 - 2223       |         // The sparse batch table is a distinct physical owner from
 - 2224       |         // MapBufferEx. Never silently override its live PTE/pin by a fixed
 - 2225       |         // mapping which would survive the sparse table's later release.
@@ -3897,7 +3897,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 2234       |         }
 +        756 |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
 +        757 |         auto alloc{allocation_map.upper_bound(params.offset)};
-  2235   758 | 
+  2235   758 |
 - 2236       |         try {
 - 2237       |             if (fixed)
 - 2238       |                 fixed_alloc->second.mappings.reserve(fixed_alloc->second.mappings.size() + 1);
@@ -3929,7 +3929,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 2261       |             rollback();
 - 2262       |             return NvResult::InsufficientMemory;
 - 2263       |         }
-  2264   764 | 
+  2264   764 |
 - 2265       |         try {
 - 2266       |             // No unowned GMMU page can become visible: every mapping has a
 - 2267       |             // complete ledger and pin before this transaction commits.
@@ -3956,12 +3956,12 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 2288       |         // The caller's reserved/inout word is not the selected page size.
 - 2289       |         return NvResult::Success;
 - 2290       |     }
-- 2291       | 
+- 2291       |
 - 2292       |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
 - 2293       |         const auto alloc = fixed_alloc; // Validated before NvMap pin.
   2294   765 |         const bool use_big_pages = alloc->second.big_pages && big_page;
   2295   766 |         gmmu->Map(params.offset, device_address, size, static_cast<Tegra::PTEKind>(params.kind), use_big_pages);
-  2296   767 | 
+  2296   767 |
   2297   768 |         alloc->second.mappings.push_back(params.offset);
   2298   769 |         mapping_map.insert_or_assign(params.offset, Mapping(params.handle, device_address, params.offset, size, true, use_big_pages, alloc->second.sparse));
   2299   770 |     } else {
@@ -3969,7 +3969,7 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 - 2301       |         u32 page_size{big_page ? vm.big_page_size : VM::YUZU_PAGESIZE};
 +        772 |         u32 page_size{big_page ? vm.big_page_size : VM::LICHII_PAGESIZE};
   2302   773 |         u32 page_size_bits{big_page ? vm.big_page_size_bits : VM::PAGE_SIZE_BITS};
-  2303   774 | 
+  2303   774 |
 - 2304       |         params.offset = u64(allocator.Allocate(u32(Common::AlignUp(size, page_size) >> page_size_bits))) << page_size_bits;
 +        775 |         const u64 aligned_size{Common::AlignUp(size, page_size)};
 +        776 |         params.offset = u64(allocator.Allocate(u32(aligned_size >> page_size_bits))) << page_size_bits;
@@ -3994,9 +3994,9 @@ Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/
 +        792 |         gmmu->Map(params.offset, device_address, aligned_size, Tegra::PTEKind(params.kind), big_page);
 +        793 |         mapping_map.insert_or_assign(params.offset, Mapping(params.handle, device_address, params.offset, aligned_size, false, big_page, false));
   2312   794 |     }
-  2313   795 | 
+  2313   795 |
 - 2314       |     map_buffer_offsets.insert(params.offset);
-- 2315       | 
+- 2315       |
   2316   796 |     return NvResult::Success;
   2317   797 | }
 ```
@@ -4015,7 +4015,7 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
   1939   638 |               ", offset={:#x}",
   1940   639 |               params.flags, params.handle, params.buffer_offset, params.mapping_size,
   1941   640 |               params.offset);
-  1942   641 | 
+  1942   641 |
 - 1943       |     // A native PTE-kind remap must drain prior GPU work BEFORE entering the
 - 1944       |     // address-space critical section. The GPU worker may still query these
 - 1945       |     // page tables while WaitForIdle drains the queue.
@@ -4025,13 +4025,13 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
 - 1949       |         (params.flags & MappingFlags::Remap) != MappingFlags::None;
 - 1950       |     if (native_remap_requested && system.IsPoweredOn() && !system.IsShuttingDown())
 - 1951       |         system.GPU().WaitForIdle();
-- 1952       | 
+- 1952       |
   1953   642 |     std::scoped_lock lock(mutex);
-  1954   643 | 
+  1954   643 |
   1955   644 |     if (!vm.initialised) {
   1956   645 |         return NvResult::BadValue;
   1957   646 |     }
-  1958   647 | 
+  1958   647 |
 - 1959       |     // A partially committed native sparse transaction has quarantined
 - 1960       |     // physical owners. Do not let an unrelated ioctl overwrite its PTEs.
 - 1961       |     const bool remap_native = m_native_process &&
@@ -4048,7 +4048,7 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
 - 1972       |         // The fourth u32 in MAP_BUFFER_EX/EX2 is documented as
 - 1973       |         // reserved/inout, not a requested page size. Preserve it.
 - 1974       |     }
-- 1975       | 
+- 1975       |
   1976   648 |     // Remaps a subregion of an existing mapping to a different PA
   1977   649 |     if ((params.flags & MappingFlags::Remap) != MappingFlags::None) {
 - 1978       |         // These two ioctl fields are SIGNED; reject negative input before
@@ -4128,7 +4128,7 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
   2048   662 |             return NvResult::BadValue;
   2049   663 |         }
   2050   664 |     }
-  2051   665 | 
+  2051   665 |
   2052   666 |     auto handle{nvmap.GetHandle(params.handle)};
   2053   667 |     if (!handle) {
   2054   668 |         return NvResult::BadValue;
@@ -4143,7 +4143,7 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
 - 2063       |         const auto* owner = container.GetSession(handle->session_id);
 - 2064       |         if (!handle->allocated || !owner || owner->process != m_native_process)
 - 2065       |             return NvResult::BadValue;
-  2066   670 | 
+  2066   670 |
 - 2067       |         // In the native ioctl the kind is a GA10F MMU kind, not an Eden
 - 2068       |         // Maxwell PTEKind ordinal. For example native generic kind 6 is
 - 2069       |         // NOT backend PTE kind 6 (Z16 MS16). The same translation already
@@ -4164,7 +4164,7 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
 - 2084       |                 static_cast<u8>(Tegra::PTEKind::GENERIC_16BX2), candidate};
 - 2085       |         if (!native_kind) return NvResult::NotSupported;
 - 2086       |     }
-- 2087       | 
+- 2087       |
 - 2088       |     const u64 size{params.mapping_size ? params.mapping_size : handle->orig_size};
 - 2089       |     if (!NativeGpuAllocation::ContainsSubrange(handle->orig_size,
 - 2090       |                                                params.buffer_offset, size))
@@ -4199,7 +4199,7 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
 - 2119       |     const DAddr device_address = pinned + params.buffer_offset;
 +        671 |     DAddr device_address = DAddr(nvmap.PinHandle(params.handle, false) + params.buffer_offset);
 +        672 |     u64 size{params.mapping_size ? params.mapping_size : handle->orig_size};
-  2120   673 | 
+  2120   673 |
   2121   674 |     bool big_page{[&]() {
   2122   675 |         if (Common::IsAligned(handle->align, vm.big_page_size)) {
   2123   676 |             return true;
@@ -4221,7 +4221,7 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
 - 2139       |             return NvResult::BadValue;
 - 2140       |         }
 - 2141       |     }
-  2142   684 | 
+  2142   684 |
 - 2143       |     // Native NS2: all fallible owner and lookup allocations must complete
 - 2144       |     // BEFORE publishing GPU PTEs. The legacy NVDRV path below stays intact.
 - 2145       |     // Otherwise a failed map/offset-vector allocation can orphan an NVMap
@@ -4255,7 +4255,7 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
 - 2173       |             nvmap.UnpinHandle(params.handle);
 - 2174       |             return NvResult::BadValue;
 - 2175       |         }
-- 2176       | 
+- 2176       |
 - 2177       |         u64 address{};
 - 2178       |         u32 allocated_page{};
 - 2179       |         u32 allocated_pages{};
@@ -4290,7 +4290,7 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
 - 2208       |             owns_va = true;
 - 2209       |             address = static_cast<u64>(allocated_page) << page_bits;
 - 2210       |         }
-- 2211       | 
+- 2211       |
 - 2212       |         bool owner_inserted = false;
 - 2213       |         bool token_inserted = false;
 - 2214       |         bool allocation_indexed = false;
@@ -4301,7 +4301,7 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
 - 2219       |             if (owns_va) allocator->Free(allocated_page, allocated_pages);
 - 2220       |             nvmap.UnpinHandle(params.handle);
 - 2221       |         };
-- 2222       | 
+- 2222       |
 - 2223       |         // The sparse batch table is a distinct physical owner from
 - 2224       |         // MapBufferEx. Never silently override its live PTE/pin by a fixed
 - 2225       |         // mapping which would survive the sparse table's later release.
@@ -4316,7 +4316,7 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
 - 2234       |         }
 +        685 |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
 +        686 |         auto alloc{allocation_map.upper_bound(params.offset)};
-  2235   687 | 
+  2235   687 |
 - 2236       |         try {
 - 2237       |             if (fixed)
 - 2238       |                 fixed_alloc->second.mappings.reserve(fixed_alloc->second.mappings.size() + 1);
@@ -4348,7 +4348,7 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
 - 2261       |             rollback();
 - 2262       |             return NvResult::InsufficientMemory;
 - 2263       |         }
-  2264   693 | 
+  2264   693 |
 - 2265       |         try {
 - 2266       |             // No unowned GMMU page can become visible: every mapping has a
 - 2267       |             // complete ledger and pin before this transaction commits.
@@ -4375,19 +4375,19 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
 - 2288       |         // The caller's reserved/inout word is not the selected page size.
 - 2289       |         return NvResult::Success;
 - 2290       |     }
-- 2291       | 
+- 2291       |
 - 2292       |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
 - 2293       |         const auto alloc = fixed_alloc; // Validated before NvMap pin.
   2294   694 |         const bool use_big_pages = alloc->second.big_pages && big_page;
   2295   695 |         gmmu->Map(params.offset, device_address, size, static_cast<Tegra::PTEKind>(params.kind), use_big_pages);
-  2296   696 | 
+  2296   696 |
   2297   697 |         alloc->second.mappings.push_back(params.offset);
   2298   698 |         mapping_map.insert_or_assign(params.offset, Mapping(params.handle, device_address, params.offset, size, true, use_big_pages, alloc->second.sparse));
   2299   699 |     } else {
   2300   700 |         auto& allocator{big_page ? *vm.big_page_allocator : *vm.small_page_allocator};
   2301   701 |         u32 page_size{big_page ? vm.big_page_size : VM::YUZU_PAGESIZE};
   2302   702 |         u32 page_size_bits{big_page ? vm.big_page_size_bits : VM::PAGE_SIZE_BITS};
-  2303   703 | 
+  2303   703 |
   2304   704 |         params.offset = u64(allocator.Allocate(u32(Common::AlignUp(size, page_size) >> page_size_bits))) << page_size_bits;
   2305   705 |         if (!params.offset) {
 - 2306       |             nvmap.UnpinHandle(params.handle); // Allocation failed after NvMap pin.
@@ -4397,9 +4397,9 @@ Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS
   2310   709 |         gmmu->Map(params.offset, device_address, Common::AlignUp(size, page_size), Tegra::PTEKind(params.kind), big_page);
   2311   710 |         mapping_map.insert_or_assign(params.offset, Mapping(params.handle, device_address, params.offset, size, false, big_page, false));
   2312   711 |     }
-  2313   712 | 
+  2313   712 |
   2314   713 |     map_buffer_offsets.insert(params.offset);
-  2315   714 | 
+  2315   714 |
   2316   715 |     return NvResult::Success;
   2317   716 | }
 ```
@@ -4435,7 +4435,7 @@ Source : [nvhost_as_gpu.cpp:799–804](https://github.com/zortos293/Lichii/blob/
 - 2333       |         if (!vm.initialised) {
 - 2334       |             return NvResult::BadValue;
 - 2335       |         }
-- 2336       | 
+- 2336       |
 - 2337       |         auto const it = mapping_map.find(params.offset);
 - 2338       |         // A stale unmap token is never a valid mapping. In particular a
 - 2339       |         // FreeSpace/UnmapBuffer race must not dereference end() or free a
@@ -4471,7 +4471,7 @@ Source : [nvhost_as_gpu.cpp:799–804](https://github.com/zortos293/Lichii/blob/
 - 2369       |                 PoisonNativeAddressSpace();
 - 2370       |                 return NvResult::InsufficientMemory;
 - 2371       |             }
-- 2372       | 
+- 2372       |
 - 2373       |             if (mapping.fixed) {
 - 2374       |                 const auto owner = NativeGpuAllocation::FindContaining(
 - 2375       |                     allocation_map, static_cast<u64>(params.offset), mapping.size);
@@ -4503,7 +4503,7 @@ Source : [nvhost_as_gpu.cpp:799–804](https://github.com/zortos293/Lichii/blob/
 - 2401       |             allocator.Free(u32(mapping.offset >> page_size_bits),
 - 2402       |                            u32(rounded_size >> page_size_bits));
 - 2403       |         }
-- 2404       | 
+- 2404       |
 - 2405       |         // Sparse mappings shouldn't be fully unmapped, just returned to their sparse state
 - 2406       |         // Only FreeSpace can unmap them fully
 - 2407       |         if (mapping.sparse_alloc) {
@@ -4511,7 +4511,7 @@ Source : [nvhost_as_gpu.cpp:799–804](https://github.com/zortos293/Lichii/blob/
 - 2409       |         } else {
 - 2410       |             gmmu->Unmap(params.offset, mapping.size);
 - 2411       |         }
-- 2412       | 
+- 2412       |
 - 2413       |         // A fixed mapping may have been explicitly UnmapBuffer'd before
 - 2414       |         // FreeSpace. Retire its allocation ledger reference now so the
 - 2415       |         // later FreeSpace cannot try to unpin an already retired mapping.
@@ -4562,7 +4562,7 @@ Source : [nvhost_as_gpu.cpp:718–747](https://github.com/heydemoura/EglantinePS
   2333   722 |         if (!vm.initialised) {
   2334   723 |             return NvResult::BadValue;
   2335   724 |         }
-  2336   725 | 
+  2336   725 |
   2337   726 |         auto const it = mapping_map.find(params.offset);
 - 2338       |         // A stale unmap token is never a valid mapping. In particular a
 - 2339       |         // FreeSpace/UnmapBuffer race must not dereference end() or free a
@@ -4598,7 +4598,7 @@ Source : [nvhost_as_gpu.cpp:718–747](https://github.com/heydemoura/EglantinePS
 - 2369       |                 PoisonNativeAddressSpace();
 - 2370       |                 return NvResult::InsufficientMemory;
 - 2371       |             }
-- 2372       | 
+- 2372       |
 - 2373       |             if (mapping.fixed) {
 - 2374       |                 const auto owner = NativeGpuAllocation::FindContaining(
 - 2375       |                     allocation_map, static_cast<u64>(params.offset), mapping.size);
@@ -4631,7 +4631,7 @@ Source : [nvhost_as_gpu.cpp:718–747](https://github.com/heydemoura/EglantinePS
 - 2402       |                            u32(rounded_size >> page_size_bits));
 +        731 |             allocator.Free(u32(mapping.offset >> page_size_bits), u32(mapping.size >> page_size_bits));
   2403   732 |         }
-  2404   733 | 
+  2404   733 |
   2405   734 |         // Sparse mappings shouldn't be fully unmapped, just returned to their sparse state
   2406   735 |         // Only FreeSpace can unmap them fully
   2407   736 |         if (mapping.sparse_alloc) {
@@ -4639,7 +4639,7 @@ Source : [nvhost_as_gpu.cpp:718–747](https://github.com/heydemoura/EglantinePS
   2409   738 |         } else {
   2410   739 |             gmmu->Unmap(params.offset, mapping.size);
   2411   740 |         }
-  2412   741 | 
+  2412   741 |
 - 2413       |         // A fixed mapping may have been explicitly UnmapBuffer'd before
 - 2414       |         // FreeSpace. Retire its allocation ledger reference now so the
 - 2415       |         // later FreeSpace cannot try to unpin an already retired mapping.
@@ -4679,35 +4679,35 @@ Source : [nvmap.cpp:99–142](https://github.com/zortos293/Lichii/blob/0288882f3
 ```diff
    100    99 | NvResult nvmap::IocAlloc(IocAllocParams& params, DeviceFD fd) {
    101   100 |     LOG_DEBUG(Service_NVDRV, "called, addr={:X}", params.address);
-   102   101 | 
+   102   101 |
    103   102 |     if (!params.handle) {
    104   103 |         LOG_CRITICAL(Service_NVDRV, "Handle is 0");
    105   104 |         return NvResult::BadValue;
    106   105 |     }
-   107   106 | 
+   107   106 |
    108   107 |     if ((params.align - 1) & params.align) {
    109   108 |         LOG_CRITICAL(Service_NVDRV, "Incorrect alignment used, alignment={:08X}", params.align);
    110   109 |         return NvResult::BadValue;
    111   110 |     }
-   112   111 | 
+   112   111 |
    113   112 |     // Force page size alignment at a minimum
 -  114       |     if (params.align < YUZU_PAGESIZE) {
 -  115       |         params.align = YUZU_PAGESIZE;
 +        113 |     if (params.align < LICHII_PAGESIZE) {
 +        114 |         params.align = LICHII_PAGESIZE;
    116   115 |     }
-   117   116 | 
+   117   116 |
    118   117 |     auto handle_description{file.GetHandle(params.handle)};
    119   118 |     if (!handle_description) {
    120   119 |         LOG_CRITICAL(Service_NVDRV, "Object does not exist, handle={:08X}", params.handle);
    121   120 |         return NvResult::BadValue;
    122   121 |     }
-   123   122 | 
+   123   122 |
    124   123 |     if (handle_description->allocated) {
    125   124 |         LOG_CRITICAL(Service_NVDRV, "Object is already allocated, handle={:08X}", params.handle);
    126   125 |         return NvResult::InsufficientMemory;
    127   126 |     }
-   128   127 | 
+   128   127 |
 -  129       | #ifdef PS5_NATIVE
 -  130       |     // A zero CPU backing cannot be pinned into the guest process address space.
 -  131       |     // Do not report success with a handle whose pages do not exist: FC27's
@@ -4718,7 +4718,7 @@ Source : [nvmap.cpp:99–142](https://github.com/zortos293/Lichii/blob/0288882f3
 -  136       |         return NvResult::BadValue;
 -  137       |     }
 -  138       | #endif
--  139       | 
+-  139       |
 -  140       |     // Never manufacture an NVDRV session when the caller supplies a stale FD.
 -  141       |     // Verify ownership before Handle::Alloc mutates its allocated state.
 -  142       |     const auto session_it = sessions.find(fd);
@@ -4778,33 +4778,33 @@ Source : [nvmap.cpp:100–143](https://github.com/heydemoura/EglantinePS5/blob/7
 ```diff
    100   100 | NvResult nvmap::IocAlloc(IocAllocParams& params, DeviceFD fd) {
    101   101 |     LOG_DEBUG(Service_NVDRV, "called, addr={:X}", params.address);
-   102   102 | 
+   102   102 |
    103   103 |     if (!params.handle) {
    104   104 |         LOG_CRITICAL(Service_NVDRV, "Handle is 0");
    105   105 |         return NvResult::BadValue;
    106   106 |     }
-   107   107 | 
+   107   107 |
    108   108 |     if ((params.align - 1) & params.align) {
    109   109 |         LOG_CRITICAL(Service_NVDRV, "Incorrect alignment used, alignment={:08X}", params.align);
    110   110 |         return NvResult::BadValue;
    111   111 |     }
-   112   112 | 
+   112   112 |
    113   113 |     // Force page size alignment at a minimum
    114   114 |     if (params.align < YUZU_PAGESIZE) {
    115   115 |         params.align = YUZU_PAGESIZE;
    116   116 |     }
-   117   117 | 
+   117   117 |
    118   118 |     auto handle_description{file.GetHandle(params.handle)};
    119   119 |     if (!handle_description) {
    120   120 |         LOG_CRITICAL(Service_NVDRV, "Object does not exist, handle={:08X}", params.handle);
    121   121 |         return NvResult::BadValue;
    122   122 |     }
-   123   123 | 
+   123   123 |
    124   124 |     if (handle_description->allocated) {
    125   125 |         LOG_CRITICAL(Service_NVDRV, "Object is already allocated, handle={:08X}", params.handle);
    126   126 |         return NvResult::InsufficientMemory;
    127   127 |     }
-   128   128 | 
+   128   128 |
 -  129       | #ifdef PS5_NATIVE
 -  130       |     // A zero CPU backing cannot be pinned into the guest process address space.
 -  131       |     // Do not report success with a handle whose pages do not exist: FC27's
@@ -4815,7 +4815,7 @@ Source : [nvmap.cpp:100–143](https://github.com/heydemoura/EglantinePS5/blob/7
 -  136       |         return NvResult::BadValue;
 -  137       |     }
 -  138       | #endif
--  139       | 
+-  139       |
 -  140       |     // Never manufacture an NVDRV session when the caller supplies a stale FD.
 -  141       |     // Verify ownership before Handle::Alloc mutates its allocated state.
 -  142       |     const auto session_it = sessions.find(fd);
@@ -4881,7 +4881,7 @@ Source : [nvmap.cpp:164–189](https://github.com/zortos293/Lichii/blob/0288882f
 ```diff
    206   164 | NvResult nvmap::IocFromId(IocFromIdParams& params) {
    207   165 |     LOG_DEBUG(Service_NVDRV, "called, id:{}", params.id);
-   208   166 | 
+   208   166 |
    209   167 |     // Handles and IDs are always the same value in nvmap however IDs can be used globally given the
    210   168 |     // right permissions.
    211   169 |     // Since we don't plan on ever supporting multiprocess we can skip implementing handle refs and
@@ -4890,13 +4890,13 @@ Source : [nvmap.cpp:164–189](https://github.com/zortos293/Lichii/blob/0288882f
    214   172 |         LOG_CRITICAL(Service_NVDRV, "Zero Id is invalid!");
    215   173 |         return NvResult::BadValue;
    216   174 |     }
-   217   175 | 
+   217   175 |
    218   176 |     auto handle_description{file.GetHandle(params.id)};
    219   177 |     if (!handle_description) {
    220   178 |         LOG_CRITICAL(Service_NVDRV, "Unregistered handle!");
    221   179 |         return NvResult::BadValue;
    222   180 |     }
-   223   181 | 
+   223   181 |
    224   182 |     auto result = handle_description->Duplicate(false);
    225   183 |     if (result != NvResult::Success) {
    226   184 |         LOG_CRITICAL(Service_NVDRV, "Could not duplicate handle!");
@@ -4917,7 +4917,7 @@ Source : [nvmap.cpp:165–190](https://github.com/heydemoura/EglantinePS5/blob/7
 ```diff
    206   165 | NvResult nvmap::IocFromId(IocFromIdParams& params) {
    207   166 |     LOG_DEBUG(Service_NVDRV, "called, id:{}", params.id);
-   208   167 | 
+   208   167 |
    209   168 |     // Handles and IDs are always the same value in nvmap however IDs can be used globally given the
    210   169 |     // right permissions.
    211   170 |     // Since we don't plan on ever supporting multiprocess we can skip implementing handle refs and
@@ -4926,13 +4926,13 @@ Source : [nvmap.cpp:165–190](https://github.com/heydemoura/EglantinePS5/blob/7
    214   173 |         LOG_CRITICAL(Service_NVDRV, "Zero Id is invalid!");
    215   174 |         return NvResult::BadValue;
    216   175 |     }
-   217   176 | 
+   217   176 |
    218   177 |     auto handle_description{file.GetHandle(params.id)};
    219   178 |     if (!handle_description) {
    220   179 |         LOG_CRITICAL(Service_NVDRV, "Unregistered handle!");
    221   180 |         return NvResult::BadValue;
    222   181 |     }
-   223   182 | 
+   223   182 |
    224   183 |     auto result = handle_description->Duplicate(false);
    225   184 |     if (result != NvResult::Success) {
    226   185 |         LOG_CRITICAL(Service_NVDRV, "Could not duplicate handle!");
@@ -4959,12 +4959,12 @@ Source : [nvmap.cpp:236–260](https://github.com/zortos293/Lichii/blob/0288882f
 ```diff
    278   236 | NvResult nvmap::IocFree(IocFreeParams& params, DeviceFD fd) {
    279   237 |     LOG_DEBUG(Service_NVDRV, "called");
-   280   238 | 
+   280   238 |
    281   239 |     if (!params.handle) {
    282   240 |         LOG_CRITICAL(Service_NVDRV, "Handle null freed?");
    283   241 |         return NvResult::Success;
    284   242 |     }
-   285   243 | 
+   285   243 |
 -  286       |     const auto session_it = sessions.find(fd);
 -  287       |     if (session_it == sessions.end()) {
 -  288       |         return NvResult::BadValue;
@@ -4988,7 +4988,7 @@ Source : [nvmap.cpp:236–260](https://github.com/zortos293/Lichii/blob/0288882f
    305   255 |     } else {
    306   256 |         // This is possible when there's internal dups or other duplicates.
    307   257 |     }
-   308   258 | 
+   308   258 |
    309   259 |     return NvResult::Success;
    310   260 | }
 ```
@@ -5003,12 +5003,12 @@ Source : [nvmap.cpp:237–261](https://github.com/heydemoura/EglantinePS5/blob/7
 ```diff
    278   237 | NvResult nvmap::IocFree(IocFreeParams& params, DeviceFD fd) {
    279   238 |     LOG_DEBUG(Service_NVDRV, "called");
-   280   239 | 
+   280   239 |
    281   240 |     if (!params.handle) {
    282   241 |         LOG_CRITICAL(Service_NVDRV, "Handle null freed?");
    283   242 |         return NvResult::Success;
    284   243 |     }
-   285   244 | 
+   285   244 |
 -  286       |     const auto session_it = sessions.find(fd);
 -  287       |     if (session_it == sessions.end()) {
 -  288       |         return NvResult::BadValue;
@@ -5032,7 +5032,7 @@ Source : [nvmap.cpp:237–261](https://github.com/heydemoura/EglantinePS5/blob/7
    305   256 |     } else {
    306   257 |         // This is possible when there's internal dups or other duplicates.
    307   258 |     }
-   308   259 | 
+   308   259 |
    309   260 |     return NvResult::Success;
    310   261 | }
 ```
@@ -5054,24 +5054,24 @@ Source : [k_page_table_base.cpp:2181–2330](https://github.com/zortos293/Lichii
   2150  2181 | Result KPageTableBase::SetHeapSize(KProcessAddress* out, size_t size) {
   2151  2182 |     // Lock the physical memory mutex.
   2152  2183 |     KScopedLightLock map_phys_mem_lk(m_map_physical_memory_lock);
-  2153  2184 | 
+  2153  2184 |
   2154  2185 |     // Try to perform a reduction in heap, instead of an extension.
   2155  2186 |     KProcessAddress cur_address;
   2156  2187 |     size_t allocation_size;
   2157  2188 |     {
   2158  2189 |         // Lock the table.
   2159  2190 |         KScopedLightLock lk(m_general_lock);
-  2160  2191 | 
+  2160  2191 |
   2161  2192 |         // Validate that setting heap size is possible at all.
   2162  2193 |         R_UNLESS(!m_is_kernel, ResultOutOfMemory);
   2163  2194 |         R_UNLESS(size <= static_cast<size_t>(m_heap_region_end - m_heap_region_start),
   2164  2195 |                  ResultOutOfMemory);
   2165  2196 |         R_UNLESS(size <= m_max_heap_size, ResultOutOfMemory);
-  2166  2197 | 
+  2166  2197 |
   2167  2198 |         if (size < static_cast<size_t>(m_current_heap_end - m_heap_region_start)) {
   2168  2199 |             // The size being requested is less than the current size, so we need to free the end of
   2169  2200 |             // the heap.
-  2170  2201 | 
+  2170  2201 |
   2171  2202 |             // Validate memory state.
   2172  2203 |             size_t num_allocator_blocks;
   2173  2204 |             R_TRY(this->CheckMemoryState(
@@ -5079,28 +5079,28 @@ Source : [k_page_table_base.cpp:2181–2330](https://github.com/zortos293/Lichii
   2175  2206 |                 (m_current_heap_end - m_heap_region_start) - size, KMemoryState::All,
   2176  2207 |                 KMemoryState::Normal, KMemoryPermission::All, KMemoryPermission::UserReadWrite,
   2177  2208 |                 KMemoryAttribute::All, KMemoryAttribute::None));
-  2178  2209 | 
+  2178  2209 |
   2179  2210 |             // Create an update allocator.
   2180  2211 |             Result allocator_result;
   2181  2212 |             KMemoryBlockManagerUpdateAllocator allocator(std::addressof(allocator_result),
   2182  2213 |                                                          m_memory_block_slab_manager,
   2183  2214 |                                                          num_allocator_blocks);
   2184  2215 |             R_TRY(allocator_result);
-  2185  2216 | 
+  2185  2216 |
   2186  2217 |             // We're going to perform an update, so create a helper.
   2187  2218 |             KScopedPageTableUpdater updater(this);
-  2188  2219 | 
+  2188  2219 |
   2189  2220 |             // Unmap the end of the heap.
   2190  2221 |             const size_t num_pages = ((m_current_heap_end - m_heap_region_start) - size) / PageSize;
   2191  2222 |             const KPageProperties unmap_properties = {KMemoryPermission::None, false, false,
   2192  2223 |                                                       DisableMergeAttribute::None};
   2193  2224 |             R_TRY(this->Operate(updater.GetPageList(), m_heap_region_start + size, num_pages, 0,
   2194  2225 |                                 false, unmap_properties, OperationType::Unmap, false));
-  2195  2226 | 
+  2195  2226 |
   2196  2227 |             // Release the memory from the resource limit.
   2197  2228 |             m_resource_limit->Release(m_system.Kernel(), Svc::LimitableResource::PhysicalMemoryMax,
   2198  2229 |                                       num_pages * PageSize);
-  2199  2230 | 
+  2199  2230 |
   2200  2231 |             // Apply the memory block update.
   2201  2232 |             m_memory_block_manager.Update(std::addressof(allocator), m_heap_region_start + size,
   2202  2233 |                                           num_pages, KMemoryState::Free, KMemoryPermission::None,
@@ -5108,10 +5108,10 @@ Source : [k_page_table_base.cpp:2181–2330](https://github.com/zortos293/Lichii
   2204  2235 |                                           KMemoryBlockDisableMergeAttribute::None,
   2205  2236 |                                           size == 0 ? KMemoryBlockDisableMergeAttribute::Normal
   2206  2237 |                                                     : KMemoryBlockDisableMergeAttribute::None);
-  2207  2238 | 
+  2207  2238 |
   2208  2239 |             // Update the current heap end.
   2209  2240 |             m_current_heap_end = m_heap_region_start + size;
-  2210  2241 | 
+  2210  2241 |
   2211  2242 |             // Set the output.
   2212  2243 |             *out = m_heap_region_start;
   2213  2244 |             R_SUCCEED();
@@ -5126,53 +5126,53 @@ Source : [k_page_table_base.cpp:2181–2330](https://github.com/zortos293/Lichii
   2222  2253 |             allocation_size = size - (m_current_heap_end - m_heap_region_start);
   2223  2254 |         }
   2224  2255 |     }
-  2225  2256 | 
+  2225  2256 |
   2226  2257 |     // Reserve memory for the heap extension.
   2227  2258 |     KScopedResourceReservation memory_reservation(m_system.Kernel(),
   2228  2259 |         m_resource_limit, Svc::LimitableResource::PhysicalMemoryMax, allocation_size);
   2229  2260 |     R_UNLESS(memory_reservation.Succeeded(), ResultLimitReached);
-  2230  2261 | 
+  2230  2261 |
   2231  2262 |     // Allocate pages for the heap extension.
   2232  2263 |     KPageGroup pg(m_system.Kernel(), m_block_info_manager);
   2233  2264 |     R_TRY(m_system.Kernel().MemoryManager().AllocateAndOpen(std::addressof(pg), allocation_size / PageSize,
   2234  2265 |                                                    m_allocate_option));
-  2235  2266 | 
+  2235  2266 |
   2236  2267 |     // Close the opened pages when we're done with them.
   2237  2268 |     // If the mapping succeeds, each page will gain an extra reference, otherwise they will be freed
   2238  2269 |     // automatically.
   2239  2270 |     SCOPE_EXIT {
   2240  2271 |         pg.Close(m_system.Kernel());
   2241  2272 |     };
-  2242  2273 | 
+  2242  2273 |
   2243  2274 |     // Clear all the newly allocated pages.
   2244  2275 |     for (const auto& it : pg) {
   2245  2276 |         ClearBackingRegion(m_system, it.GetAddress(), it.GetSize(), m_heap_fill_value);
   2246  2277 |     }
-  2247  2278 | 
+  2247  2278 |
   2248  2279 |     // Map the pages.
   2249  2280 |     {
   2250  2281 |         // Lock the table.
   2251  2282 |         KScopedLightLock lk(m_general_lock);
-  2252  2283 | 
+  2252  2283 |
   2253  2284 |         // Ensure that the heap hasn't changed since we began executing.
   2254  2285 |         ASSERT(cur_address == m_current_heap_end);
-  2255  2286 | 
+  2255  2286 |
   2256  2287 |         // Check the memory state.
   2257  2288 |         size_t num_allocator_blocks;
   2258  2289 |         R_TRY(this->CheckMemoryState(std::addressof(num_allocator_blocks), m_current_heap_end,
   2259  2290 |                                      allocation_size, KMemoryState::All, KMemoryState::Free,
   2260  2291 |                                      KMemoryPermission::None, KMemoryPermission::None,
   2261  2292 |                                      KMemoryAttribute::None, KMemoryAttribute::None));
-  2262  2293 | 
+  2262  2293 |
   2263  2294 |         // Create an update allocator.
   2264  2295 |         Result allocator_result;
   2265  2296 |         KMemoryBlockManagerUpdateAllocator allocator(
   2266  2297 |             std::addressof(allocator_result), m_memory_block_slab_manager, num_allocator_blocks);
   2267  2298 |         R_TRY(allocator_result);
-  2268  2299 | 
+  2268  2299 |
   2269  2300 |         // We're going to perform an update, so create a helper.
   2270  2301 |         KScopedPageTableUpdater updater(this);
-  2271  2302 | 
+  2271  2302 |
   2272  2303 |         // Map the pages.
   2273  2304 |         const size_t num_pages = allocation_size / PageSize;
   2274  2305 |         const KPageProperties map_properties = {KMemoryPermission::UserReadWrite, false, false,
@@ -5181,10 +5181,10 @@ Source : [k_page_table_base.cpp:2181–2330](https://github.com/zortos293/Lichii
   2277  2308 |                                                     : DisableMergeAttribute::None};
   2278  2309 |         R_TRY(this->Operate(updater.GetPageList(), m_current_heap_end, num_pages, pg,
   2279  2310 |                             map_properties, OperationType::MapGroup, false));
-  2280  2311 | 
+  2280  2311 |
   2281  2312 |         // We succeeded, so commit our memory reservation.
   2282  2313 |         memory_reservation.Commit();
-  2283  2314 | 
+  2283  2314 |
   2284  2315 |         // Apply the memory block update.
   2285  2316 |         m_memory_block_manager.Update(
   2286  2317 |             std::addressof(allocator), m_current_heap_end, num_pages, KMemoryState::Normal,
@@ -5192,10 +5192,10 @@ Source : [k_page_table_base.cpp:2181–2330](https://github.com/zortos293/Lichii
   2288  2319 |             m_heap_region_start == m_current_heap_end ? KMemoryBlockDisableMergeAttribute::Normal
   2289  2320 |                                                       : KMemoryBlockDisableMergeAttribute::None,
   2290  2321 |             KMemoryBlockDisableMergeAttribute::None);
-  2291  2322 | 
+  2291  2322 |
   2292  2323 |         // Update the current heap end.
   2293  2324 |         m_current_heap_end = m_heap_region_start + size;
-  2294  2325 | 
+  2294  2325 |
   2295  2326 |         // Set the output.
   2296  2327 |         *out = m_heap_region_start;
   2297  2328 |         R_SUCCEED();
@@ -5214,24 +5214,24 @@ Source : [k_page_table_base.cpp:2249–2398](https://github.com/heydemoura/Eglan
   2150  2249 | Result KPageTableBase::SetHeapSize(KProcessAddress* out, size_t size) {
   2151  2250 |     // Lock the physical memory mutex.
   2152  2251 |     KScopedLightLock map_phys_mem_lk(m_map_physical_memory_lock);
-  2153  2252 | 
+  2153  2252 |
   2154  2253 |     // Try to perform a reduction in heap, instead of an extension.
   2155  2254 |     KProcessAddress cur_address;
   2156  2255 |     size_t allocation_size;
   2157  2256 |     {
   2158  2257 |         // Lock the table.
   2159  2258 |         KScopedLightLock lk(m_general_lock);
-  2160  2259 | 
+  2160  2259 |
   2161  2260 |         // Validate that setting heap size is possible at all.
   2162  2261 |         R_UNLESS(!m_is_kernel, ResultOutOfMemory);
   2163  2262 |         R_UNLESS(size <= static_cast<size_t>(m_heap_region_end - m_heap_region_start),
   2164  2263 |                  ResultOutOfMemory);
   2165  2264 |         R_UNLESS(size <= m_max_heap_size, ResultOutOfMemory);
-  2166  2265 | 
+  2166  2265 |
   2167  2266 |         if (size < static_cast<size_t>(m_current_heap_end - m_heap_region_start)) {
   2168  2267 |             // The size being requested is less than the current size, so we need to free the end of
   2169  2268 |             // the heap.
-  2170  2269 | 
+  2170  2269 |
   2171  2270 |             // Validate memory state.
   2172  2271 |             size_t num_allocator_blocks;
   2173  2272 |             R_TRY(this->CheckMemoryState(
@@ -5239,28 +5239,28 @@ Source : [k_page_table_base.cpp:2249–2398](https://github.com/heydemoura/Eglan
   2175  2274 |                 (m_current_heap_end - m_heap_region_start) - size, KMemoryState::All,
   2176  2275 |                 KMemoryState::Normal, KMemoryPermission::All, KMemoryPermission::UserReadWrite,
   2177  2276 |                 KMemoryAttribute::All, KMemoryAttribute::None));
-  2178  2277 | 
+  2178  2277 |
   2179  2278 |             // Create an update allocator.
   2180  2279 |             Result allocator_result;
   2181  2280 |             KMemoryBlockManagerUpdateAllocator allocator(std::addressof(allocator_result),
   2182  2281 |                                                          m_memory_block_slab_manager,
   2183  2282 |                                                          num_allocator_blocks);
   2184  2283 |             R_TRY(allocator_result);
-  2185  2284 | 
+  2185  2284 |
   2186  2285 |             // We're going to perform an update, so create a helper.
   2187  2286 |             KScopedPageTableUpdater updater(this);
-  2188  2287 | 
+  2188  2287 |
   2189  2288 |             // Unmap the end of the heap.
   2190  2289 |             const size_t num_pages = ((m_current_heap_end - m_heap_region_start) - size) / PageSize;
   2191  2290 |             const KPageProperties unmap_properties = {KMemoryPermission::None, false, false,
   2192  2291 |                                                       DisableMergeAttribute::None};
   2193  2292 |             R_TRY(this->Operate(updater.GetPageList(), m_heap_region_start + size, num_pages, 0,
   2194  2293 |                                 false, unmap_properties, OperationType::Unmap, false));
-  2195  2294 | 
+  2195  2294 |
   2196  2295 |             // Release the memory from the resource limit.
   2197  2296 |             m_resource_limit->Release(m_system.Kernel(), Svc::LimitableResource::PhysicalMemoryMax,
   2198  2297 |                                       num_pages * PageSize);
-  2199  2298 | 
+  2199  2298 |
   2200  2299 |             // Apply the memory block update.
   2201  2300 |             m_memory_block_manager.Update(std::addressof(allocator), m_heap_region_start + size,
   2202  2301 |                                           num_pages, KMemoryState::Free, KMemoryPermission::None,
@@ -5268,10 +5268,10 @@ Source : [k_page_table_base.cpp:2249–2398](https://github.com/heydemoura/Eglan
   2204  2303 |                                           KMemoryBlockDisableMergeAttribute::None,
   2205  2304 |                                           size == 0 ? KMemoryBlockDisableMergeAttribute::Normal
   2206  2305 |                                                     : KMemoryBlockDisableMergeAttribute::None);
-  2207  2306 | 
+  2207  2306 |
   2208  2307 |             // Update the current heap end.
   2209  2308 |             m_current_heap_end = m_heap_region_start + size;
-  2210  2309 | 
+  2210  2309 |
   2211  2310 |             // Set the output.
   2212  2311 |             *out = m_heap_region_start;
   2213  2312 |             R_SUCCEED();
@@ -5286,53 +5286,53 @@ Source : [k_page_table_base.cpp:2249–2398](https://github.com/heydemoura/Eglan
   2222  2321 |             allocation_size = size - (m_current_heap_end - m_heap_region_start);
   2223  2322 |         }
   2224  2323 |     }
-  2225  2324 | 
+  2225  2324 |
   2226  2325 |     // Reserve memory for the heap extension.
   2227  2326 |     KScopedResourceReservation memory_reservation(m_system.Kernel(),
   2228  2327 |         m_resource_limit, Svc::LimitableResource::PhysicalMemoryMax, allocation_size);
   2229  2328 |     R_UNLESS(memory_reservation.Succeeded(), ResultLimitReached);
-  2230  2329 | 
+  2230  2329 |
   2231  2330 |     // Allocate pages for the heap extension.
   2232  2331 |     KPageGroup pg(m_system.Kernel(), m_block_info_manager);
   2233  2332 |     R_TRY(m_system.Kernel().MemoryManager().AllocateAndOpen(std::addressof(pg), allocation_size / PageSize,
   2234  2333 |                                                    m_allocate_option));
-  2235  2334 | 
+  2235  2334 |
   2236  2335 |     // Close the opened pages when we're done with them.
   2237  2336 |     // If the mapping succeeds, each page will gain an extra reference, otherwise they will be freed
   2238  2337 |     // automatically.
   2239  2338 |     SCOPE_EXIT {
   2240  2339 |         pg.Close(m_system.Kernel());
   2241  2340 |     };
-  2242  2341 | 
+  2242  2341 |
   2243  2342 |     // Clear all the newly allocated pages.
   2244  2343 |     for (const auto& it : pg) {
   2245  2344 |         ClearBackingRegion(m_system, it.GetAddress(), it.GetSize(), m_heap_fill_value);
   2246  2345 |     }
-  2247  2346 | 
+  2247  2346 |
   2248  2347 |     // Map the pages.
   2249  2348 |     {
   2250  2349 |         // Lock the table.
   2251  2350 |         KScopedLightLock lk(m_general_lock);
-  2252  2351 | 
+  2252  2351 |
   2253  2352 |         // Ensure that the heap hasn't changed since we began executing.
   2254  2353 |         ASSERT(cur_address == m_current_heap_end);
-  2255  2354 | 
+  2255  2354 |
   2256  2355 |         // Check the memory state.
   2257  2356 |         size_t num_allocator_blocks;
   2258  2357 |         R_TRY(this->CheckMemoryState(std::addressof(num_allocator_blocks), m_current_heap_end,
   2259  2358 |                                      allocation_size, KMemoryState::All, KMemoryState::Free,
   2260  2359 |                                      KMemoryPermission::None, KMemoryPermission::None,
   2261  2360 |                                      KMemoryAttribute::None, KMemoryAttribute::None));
-  2262  2361 | 
+  2262  2361 |
   2263  2362 |         // Create an update allocator.
   2264  2363 |         Result allocator_result;
   2265  2364 |         KMemoryBlockManagerUpdateAllocator allocator(
   2266  2365 |             std::addressof(allocator_result), m_memory_block_slab_manager, num_allocator_blocks);
   2267  2366 |         R_TRY(allocator_result);
-  2268  2367 | 
+  2268  2367 |
   2269  2368 |         // We're going to perform an update, so create a helper.
   2270  2369 |         KScopedPageTableUpdater updater(this);
-  2271  2370 | 
+  2271  2370 |
   2272  2371 |         // Map the pages.
   2273  2372 |         const size_t num_pages = allocation_size / PageSize;
   2274  2373 |         const KPageProperties map_properties = {KMemoryPermission::UserReadWrite, false, false,
@@ -5341,10 +5341,10 @@ Source : [k_page_table_base.cpp:2249–2398](https://github.com/heydemoura/Eglan
   2277  2376 |                                                     : DisableMergeAttribute::None};
   2278  2377 |         R_TRY(this->Operate(updater.GetPageList(), m_current_heap_end, num_pages, pg,
   2279  2378 |                             map_properties, OperationType::MapGroup, false));
-  2280  2379 | 
+  2280  2379 |
   2281  2380 |         // We succeeded, so commit our memory reservation.
   2282  2381 |         memory_reservation.Commit();
-  2283  2382 | 
+  2283  2382 |
   2284  2383 |         // Apply the memory block update.
   2285  2384 |         m_memory_block_manager.Update(
   2286  2385 |             std::addressof(allocator), m_current_heap_end, num_pages, KMemoryState::Normal,
@@ -5352,10 +5352,10 @@ Source : [k_page_table_base.cpp:2249–2398](https://github.com/heydemoura/Eglan
   2288  2387 |             m_heap_region_start == m_current_heap_end ? KMemoryBlockDisableMergeAttribute::Normal
   2289  2388 |                                                       : KMemoryBlockDisableMergeAttribute::None,
   2290  2389 |             KMemoryBlockDisableMergeAttribute::None);
-  2291  2390 | 
+  2291  2390 |
   2292  2391 |         // Update the current heap end.
   2293  2392 |         m_current_heap_end = m_heap_region_start + size;
-  2294  2393 | 
+  2294  2393 |
   2295  2394 |         // Set the output.
   2296  2395 |         *out = m_heap_region_start;
   2297  2396 |         R_SUCCEED();
@@ -5379,7 +5379,7 @@ Source : [svc_physical_memory.cpp:17–36](https://github.com/zortos293/Lichii/b
 ```diff
     16    17 | Result SetHeapSize(Core::System& system, u64* out_address, u64 size) {
     17    18 |     LOG_TRACE(Kernel_SVC, "called, heap_size={:#x}", size);
-    18    19 | 
+    18    19 |
     19    20 |     // Validate size.
     20    21 |     R_UNLESS(Common::IsAligned(size, HeapSizeAlignment), ResultInvalidSize);
 -   21       |     // Keep the NS1 limit when the kernel intends 8 GiB, but admit NS2's
@@ -5388,13 +5388,13 @@ Source : [svc_physical_memory.cpp:17–36](https://github.com/zortos293/Lichii/b
     23    23 |     const size_t max_heap_size =
     24    24 |         (std::max)(MainMemorySizeMax, KSystemControl::Init::GetIntendedMemorySize());
     25    25 |     R_UNLESS(size < max_heap_size, ResultInvalidSize);
-    26    26 | 
+    26    26 |
     27    27 |     // Set the heap size.
     28    28 |     KProcessAddress address{};
     29    29 |     R_TRY(GetCurrentProcess(system.Kernel())
     30    30 |               .GetPageTable()
     31    31 |               .SetHeapSize(std::addressof(address), size));
-    32    32 | 
+    32    32 |
     33    33 |     // We succeeded.
     34    34 |     *out_address = GetInteger(address);
     35    35 |     R_SUCCEED();
@@ -5412,7 +5412,7 @@ Source : [svc_physical_memory.cpp:19–45](https://github.com/heydemoura/Eglanti
     16    19 | Result SetHeapSize(Core::System& system, u64* out_address, u64 size) {
 +         20 |     MemoryStats::Note(MemoryStats::SetHeapSize, size, true);
     17    21 |     LOG_TRACE(Kernel_SVC, "called, heap_size={:#x}", size);
-    18    22 | 
+    18    22 |
     19    23 |     // Validate size.
     20    24 |     R_UNLESS(Common::IsAligned(size, HeapSizeAlignment), ResultInvalidSize);
 -   21       |     // Keep the NS1 limit when the kernel intends 8 GiB, but admit NS2's
@@ -5421,13 +5421,13 @@ Source : [svc_physical_memory.cpp:19–45](https://github.com/heydemoura/Eglanti
     23    26 |     const size_t max_heap_size =
     24    27 |         (std::max)(MainMemorySizeMax, KSystemControl::Init::GetIntendedMemorySize());
     25    28 |     R_UNLESS(size < max_heap_size, ResultInvalidSize);
-    26    29 | 
+    26    29 |
     27    30 |     // Set the heap size.
     28    31 |     KProcessAddress address{};
     29    32 |     R_TRY(GetCurrentProcess(system.Kernel())
     30    33 |               .GetPageTable()
     31    34 |               .SetHeapSize(std::addressof(address), size));
-    32    35 | 
+    32    35 |
     33    36 |     // We succeeded.
     34    37 |     *out_address = GetInteger(address);
 +         38 |     MemoryStats::LastHeapSize().store(size, std::memory_order_relaxed);
@@ -5456,51 +5456,51 @@ Source : [svc_physical_memory.cpp:39–85](https://github.com/zortos293/Lichii/b
 ```diff
     39    39 | Result MapPhysicalMemory(Core::System& system, u64 addr, u64 size) {
     40    40 |     LOG_DEBUG(Kernel_SVC, "called, addr={:#016x}, size={:#x}", addr, size);
-    41    41 | 
+    41    41 |
 -   42       |     if (!Common::IsAligned(addr, Core::Memory::YUZU_PAGESIZE)) {
 +         42 |     if (!Common::IsAligned(addr, Core::Memory::LICHII_PAGESIZE)) {
     43    43 |         LOG_ERROR(Kernel_SVC, "Address is not aligned to 4KB, {:#016X}", addr);
     44    44 |         R_THROW(ResultInvalidAddress);
     45    45 |     }
-    46    46 | 
+    46    46 |
 -   47       |     if (!Common::IsAligned(size, Core::Memory::YUZU_PAGESIZE)) {
 +         47 |     if (!Common::IsAligned(size, Core::Memory::LICHII_PAGESIZE)) {
     48    48 |         LOG_ERROR(Kernel_SVC, "Size is not aligned to 4KB, {:#X}", size);
     49    49 |         R_THROW(ResultInvalidSize);
     50    50 |     }
-    51    51 | 
+    51    51 |
     52    52 |     if (size == 0) {
     53    53 |         LOG_ERROR(Kernel_SVC, "Size is zero");
     54    54 |         R_THROW(ResultInvalidSize);
     55    55 |     }
-    56    56 | 
+    56    56 |
     57    57 |     if (!(addr < addr + size)) {
     58    58 |         LOG_ERROR(Kernel_SVC, "Size causes 64-bit overflow of address");
     59    59 |         R_THROW(ResultInvalidMemoryRegion);
     60    60 |     }
-    61    61 | 
+    61    61 |
     62    62 |     KProcess* const current_process{GetCurrentProcessPointer(system.Kernel())};
     63    63 |     auto& page_table{current_process->GetPageTable()};
-    64    64 | 
+    64    64 |
     65    65 |     if (current_process->GetTotalSystemResourceSize() == 0) {
     66    66 |         LOG_ERROR(Kernel_SVC, "System Resource Size is zero");
     67    67 |         R_THROW(ResultInvalidState);
     68    68 |     }
-    69    69 | 
+    69    69 |
     70    70 |     if (!page_table.Contains(addr, size)) {
     71    71 |         LOG_ERROR(Kernel_SVC,
     72    72 |                   "Address is not within the address space, addr={:#016x}, size={:#016x}", addr,
     73    73 |                   size);
     74    74 |         R_THROW(ResultInvalidMemoryRegion);
     75    75 |     }
-    76    76 | 
+    76    76 |
     77    77 |     if (!page_table.IsInAliasRegion(addr, size)) {
     78    78 |         LOG_ERROR(Kernel_SVC,
     79    79 |                   "Address is not within the alias region, addr={:#016x}, size={:#016x}", addr,
     80    80 |                   size);
     81    81 |         R_THROW(ResultInvalidMemoryRegion);
     82    82 |     }
-    83    83 | 
+    83    83 |
     84    84 |     R_RETURN(page_table.MapPhysicalMemory(addr, size));
     85    85 | }
 ```
@@ -5516,49 +5516,49 @@ Source : [svc_physical_memory.cpp:48–95](https://github.com/heydemoura/Eglanti
     39    48 | Result MapPhysicalMemory(Core::System& system, u64 addr, u64 size) {
 +         49 |     MemoryStats::Note(MemoryStats::MapPhysicalMemory, size, true);
     40    50 |     LOG_DEBUG(Kernel_SVC, "called, addr={:#016x}, size={:#x}", addr, size);
-    41    51 | 
+    41    51 |
     42    52 |     if (!Common::IsAligned(addr, Core::Memory::YUZU_PAGESIZE)) {
     43    53 |         LOG_ERROR(Kernel_SVC, "Address is not aligned to 4KB, {:#016X}", addr);
     44    54 |         R_THROW(ResultInvalidAddress);
     45    55 |     }
-    46    56 | 
+    46    56 |
     47    57 |     if (!Common::IsAligned(size, Core::Memory::YUZU_PAGESIZE)) {
     48    58 |         LOG_ERROR(Kernel_SVC, "Size is not aligned to 4KB, {:#X}", size);
     49    59 |         R_THROW(ResultInvalidSize);
     50    60 |     }
-    51    61 | 
+    51    61 |
     52    62 |     if (size == 0) {
     53    63 |         LOG_ERROR(Kernel_SVC, "Size is zero");
     54    64 |         R_THROW(ResultInvalidSize);
     55    65 |     }
-    56    66 | 
+    56    66 |
     57    67 |     if (!(addr < addr + size)) {
     58    68 |         LOG_ERROR(Kernel_SVC, "Size causes 64-bit overflow of address");
     59    69 |         R_THROW(ResultInvalidMemoryRegion);
     60    70 |     }
-    61    71 | 
+    61    71 |
     62    72 |     KProcess* const current_process{GetCurrentProcessPointer(system.Kernel())};
     63    73 |     auto& page_table{current_process->GetPageTable()};
-    64    74 | 
+    64    74 |
     65    75 |     if (current_process->GetTotalSystemResourceSize() == 0) {
     66    76 |         LOG_ERROR(Kernel_SVC, "System Resource Size is zero");
     67    77 |         R_THROW(ResultInvalidState);
     68    78 |     }
-    69    79 | 
+    69    79 |
     70    80 |     if (!page_table.Contains(addr, size)) {
     71    81 |         LOG_ERROR(Kernel_SVC,
     72    82 |                   "Address is not within the address space, addr={:#016x}, size={:#016x}", addr,
     73    83 |                   size);
     74    84 |         R_THROW(ResultInvalidMemoryRegion);
     75    85 |     }
-    76    86 | 
+    76    86 |
     77    87 |     if (!page_table.IsInAliasRegion(addr, size)) {
     78    88 |         LOG_ERROR(Kernel_SVC,
     79    89 |                   "Address is not within the alias region, addr={:#016x}, size={:#016x}", addr,
     80    90 |                   size);
     81    91 |         R_THROW(ResultInvalidMemoryRegion);
     82    92 |     }
-    83    93 | 
+    83    93 |
     84    94 |     R_RETURN(page_table.MapPhysicalMemory(addr, size));
     85    95 | }
 ```
@@ -5579,51 +5579,51 @@ Source : [svc_physical_memory.cpp:88–134](https://github.com/zortos293/Lichii/
 ```diff
     88    88 | Result UnmapPhysicalMemory(Core::System& system, u64 addr, u64 size) {
     89    89 |     LOG_DEBUG(Kernel_SVC, "called, addr={:#016x}, size={:#x}", addr, size);
-    90    90 | 
+    90    90 |
 -   91       |     if (!Common::IsAligned(addr, Core::Memory::YUZU_PAGESIZE)) {
 +         91 |     if (!Common::IsAligned(addr, Core::Memory::LICHII_PAGESIZE)) {
     92    92 |         LOG_ERROR(Kernel_SVC, "Address is not aligned to 4KB, {:#016X}", addr);
     93    93 |         R_THROW(ResultInvalidAddress);
     94    94 |     }
-    95    95 | 
+    95    95 |
 -   96       |     if (!Common::IsAligned(size, Core::Memory::YUZU_PAGESIZE)) {
 +         96 |     if (!Common::IsAligned(size, Core::Memory::LICHII_PAGESIZE)) {
     97    97 |         LOG_ERROR(Kernel_SVC, "Size is not aligned to 4KB, {:#X}", size);
     98    98 |         R_THROW(ResultInvalidSize);
     99    99 |     }
-   100   100 | 
+   100   100 |
    101   101 |     if (size == 0) {
    102   102 |         LOG_ERROR(Kernel_SVC, "Size is zero");
    103   103 |         R_THROW(ResultInvalidSize);
    104   104 |     }
-   105   105 | 
+   105   105 |
    106   106 |     if (!(addr < addr + size)) {
    107   107 |         LOG_ERROR(Kernel_SVC, "Size causes 64-bit overflow of address");
    108   108 |         R_THROW(ResultInvalidMemoryRegion);
    109   109 |     }
-   110   110 | 
+   110   110 |
    111   111 |     KProcess* const current_process{GetCurrentProcessPointer(system.Kernel())};
    112   112 |     auto& page_table{current_process->GetPageTable()};
-   113   113 | 
+   113   113 |
    114   114 |     if (current_process->GetTotalSystemResourceSize() == 0) {
    115   115 |         LOG_ERROR(Kernel_SVC, "System Resource Size is zero");
    116   116 |         R_THROW(ResultInvalidState);
    117   117 |     }
-   118   118 | 
+   118   118 |
    119   119 |     if (!page_table.Contains(addr, size)) {
    120   120 |         LOG_ERROR(Kernel_SVC,
    121   121 |                   "Address is not within the address space, addr={:#016x}, size={:#016x}", addr,
    122   122 |                   size);
    123   123 |         R_THROW(ResultInvalidMemoryRegion);
    124   124 |     }
-   125   125 | 
+   125   125 |
    126   126 |     if (!page_table.IsInAliasRegion(addr, size)) {
    127   127 |         LOG_ERROR(Kernel_SVC,
    128   128 |                   "Address is not within the alias region, addr={:#016x}, size={:#016x}", addr,
    129   129 |                   size);
    130   130 |         R_THROW(ResultInvalidMemoryRegion);
    131   131 |     }
-   132   132 | 
+   132   132 |
    133   133 |     R_RETURN(page_table.UnmapPhysicalMemory(addr, size));
    134   134 | }
 ```
@@ -5639,49 +5639,49 @@ Source : [svc_physical_memory.cpp:98–145](https://github.com/heydemoura/Eglant
     88    98 | Result UnmapPhysicalMemory(Core::System& system, u64 addr, u64 size) {
 +         99 |     MemoryStats::Note(MemoryStats::UnmapPhysicalMemory, size, true);
     89   100 |     LOG_DEBUG(Kernel_SVC, "called, addr={:#016x}, size={:#x}", addr, size);
-    90   101 | 
+    90   101 |
     91   102 |     if (!Common::IsAligned(addr, Core::Memory::YUZU_PAGESIZE)) {
     92   103 |         LOG_ERROR(Kernel_SVC, "Address is not aligned to 4KB, {:#016X}", addr);
     93   104 |         R_THROW(ResultInvalidAddress);
     94   105 |     }
-    95   106 | 
+    95   106 |
     96   107 |     if (!Common::IsAligned(size, Core::Memory::YUZU_PAGESIZE)) {
     97   108 |         LOG_ERROR(Kernel_SVC, "Size is not aligned to 4KB, {:#X}", size);
     98   109 |         R_THROW(ResultInvalidSize);
     99   110 |     }
-   100   111 | 
+   100   111 |
    101   112 |     if (size == 0) {
    102   113 |         LOG_ERROR(Kernel_SVC, "Size is zero");
    103   114 |         R_THROW(ResultInvalidSize);
    104   115 |     }
-   105   116 | 
+   105   116 |
    106   117 |     if (!(addr < addr + size)) {
    107   118 |         LOG_ERROR(Kernel_SVC, "Size causes 64-bit overflow of address");
    108   119 |         R_THROW(ResultInvalidMemoryRegion);
    109   120 |     }
-   110   121 | 
+   110   121 |
    111   122 |     KProcess* const current_process{GetCurrentProcessPointer(system.Kernel())};
    112   123 |     auto& page_table{current_process->GetPageTable()};
-   113   124 | 
+   113   124 |
    114   125 |     if (current_process->GetTotalSystemResourceSize() == 0) {
    115   126 |         LOG_ERROR(Kernel_SVC, "System Resource Size is zero");
    116   127 |         R_THROW(ResultInvalidState);
    117   128 |     }
-   118   129 | 
+   118   129 |
    119   130 |     if (!page_table.Contains(addr, size)) {
    120   131 |         LOG_ERROR(Kernel_SVC,
    121   132 |                   "Address is not within the address space, addr={:#016x}, size={:#016x}", addr,
    122   133 |                   size);
    123   134 |         R_THROW(ResultInvalidMemoryRegion);
    124   135 |     }
-   125   136 | 
+   125   136 |
    126   137 |     if (!page_table.IsInAliasRegion(addr, size)) {
    127   138 |         LOG_ERROR(Kernel_SVC,
    128   139 |                   "Address is not within the alias region, addr={:#016x}, size={:#016x}", addr,
    129   140 |                   size);
    130   141 |         R_THROW(ResultInvalidMemoryRegion);
    131   142 |     }
-   132   143 | 
+   132   143 |
    133   144 |     R_RETURN(page_table.UnmapPhysicalMemory(addr, size));
    134   145 | }
 ```
@@ -7413,13 +7413,13 @@ Source : [texture_cache.h:1320–1799](https://github.com/zortos293/Lichii/blob/
 +       1786 |         }
 +       1787 |         uploaded_ranges.clear();
 +       1788 |     }
-+       1789 | 
++       1789 |
    520  1790 |     runtime.TickFrame();
 -  521       | #ifdef PS5_NATIVE
 -  522       |     runtime_tick.Stop();
 -  523       | #endif
    524  1791 |     ++frame_tick;
-   525  1792 | 
+   525  1792 |
    526  1793 |     if constexpr (IMPLEMENTS_ASYNC_DOWNLOADS) {
    527  1794 |         for (auto& buffer : async_buffers_death_ring) {
    528  1795 |             runtime.FreeDeferredStagingBuffer(buffer);
@@ -7793,13 +7793,13 @@ Source : [texture_cache.h:410–742](https://github.com/heydemoura/EglantinePS5/
 +        729 |         }
 +        730 |         uploaded_ranges.clear();
 +        731 |     }
-+        732 | 
++        732 |
    520   733 |     runtime.TickFrame();
 -  521       | #ifdef PS5_NATIVE
 -  522       |     runtime_tick.Stop();
 -  523       | #endif
    524   734 |     ++frame_tick;
-   525   735 | 
+   525   735 |
    526   736 |     if constexpr (IMPLEMENTS_ASYNC_DOWNLOADS) {
    527   737 |         for (auto& buffer : async_buffers_death_ring) {
    528   738 |             runtime.FreeDeferredStagingBuffer(buffer);
@@ -7930,7 +7930,7 @@ Source : [texture_cache.h:2636–2722](https://github.com/zortos293/Lichii/blob/
 +       2647 |                 WritebackRanges::AppendLanded(landed, download.cpu_addr, download.size,
 +       2648 |                                               download.tick, download.keep, download.keep_ticks);
   1357  2649 |     }
-- 1358       | 
+- 1358       |
 - 1359       |     boost::container::small_vector<ImageId, 16> images;
 - 1360       | #ifdef PS5_NATIVE
 - 1361       |     // DownloadMemory can fail after clearing GPU-dirty state but before guest
@@ -8043,7 +8043,7 @@ Source : [texture_cache.h:2636–2722](https://github.com/zortos293/Lichii/blob/
 +       2703 |             if (WriteBackImage(image, entry.copies, entry.map.mapped_span, keep)) {
 +       2704 |                 NoteFlushed(image);
   1435  2705 |     }
-- 1436       | 
+- 1436       |
 +       2706 |         }
 +       2707 |         pending.clear();
 +       2708 |         pending_bytes = 0;
@@ -8081,7 +8081,7 @@ Source : [texture_cache.h:1436–1498](https://github.com/heydemoura/EglantinePS
   1355  1439 |         if (Eden::Performance::vulkan_cost_enabled.load(std::memory_order_relaxed))
   1356  1440 |             cost_timer.emplace(Eden::Performance::vulkan_api[14]);
   1357  1441 |     }
-  1358  1442 | 
+  1358  1442 |
 +       1443 |     VideoCommon::Nx2Profile::Scope profile_scope{VideoCommon::Nx2Profile::Zone::TextureCache};
   1359  1444 |     boost::container::small_vector<ImageId, 16> images;
 - 1360       | #ifdef PS5_NATIVE
@@ -8185,7 +8185,7 @@ Source : [texture_cache.h:1436–1498](https://github.com/heydemoura/EglantinePS
 +       1488 |         if (!pending.empty() && pending_bytes + image.unswizzled_size_bytes > MaxBatchBytes) {
 +       1489 |             flush_pending();
   1435  1490 |     }
-- 1436       | 
+- 1436       |
 - 1437       |     for (const ImageId image_id : images) {
 - 1438       |         Image& image = slot_images[image_id];
   1439  1491 |         auto map = runtime.DownloadStagingBuffer(image.unswizzled_size_bytes);
@@ -8613,7 +8613,7 @@ Source : [texture_cache.h:3293–3353](https://github.com/zortos293/Lichii/blob/
 +       3316 |                 download_info.tick = image.modification_tick;
   1803  3317 |             }
   1804  3318 |         }
-  1805  3319 | 
+  1805  3319 |
   1806  3320 |         if (any_none_dma) {
 +       3321 |             if (NativeDrawDiagnostics() && total_size_bytes >= 64_MiB) {
 +       3322 |                 LOG_WARNING(HW_GPU, "Large image readback batch: bytes={}, entries={}, duplicates_removed={}, submitted_batches={}, retained_buffers={}",
@@ -8655,7 +8655,7 @@ Source : [texture_cache.h:3293–3353](https://github.com/zortos293/Lichii/blob/
 - 1827       |             staging_transferred = true;
 - 1828       | #endif
   1829  3346 |         }
-  1830  3347 | 
+  1830  3347 |
 - 1831       | #ifdef PS5_NATIVE
 - 1832       |         // Publish the buffers and their identifiers as one logical pair.
 - 1833       |         // A rejected second deque insertion must restore the first queue
@@ -8749,7 +8749,7 @@ Source : [texture_cache.h:2032–2090](https://github.com/heydemoura/EglantinePS
   1802  2053 |                 download_info.async_buffer_id = last_async_buffer_id;
   1803  2054 |             }
   1804  2055 |         }
-  1805  2056 | 
+  1805  2056 |
   1806  2057 |         if (any_none_dma) {
 +       2058 |             if (NativeDrawDiagnostics() && total_size_bytes >= 64_MiB) {
 +       2059 |                 LOG_WARNING(HW_GPU, "Large image readback batch: bytes={}, entries={}, duplicates_removed={}, submitted_batches={}, retained_buffers={}",
@@ -8791,7 +8791,7 @@ Source : [texture_cache.h:2032–2090](https://github.com/heydemoura/EglantinePS
 - 1827       |             staging_transferred = true;
 - 1828       | #endif
   1829  2083 |         }
-  1830  2084 | 
+  1830  2084 |
 - 1831       | #ifdef PS5_NATIVE
 - 1832       |         // Publish the buffers and their identifiers as one logical pair.
 - 1833       |         // A rejected second deque insertion must restore the first queue
@@ -8838,7 +8838,7 @@ Source : [texture_cache.h:3356–3457](https://github.com/zortos293/Lichii/blob/
 - 1860       |         if (Eden::Performance::vulkan_cost_enabled.load(std::memory_order_relaxed))
 - 1861       |             cost_timer.emplace(Eden::Performance::vulkan_api[15]);
 - 1862       |     }
-- 1863       | 
+- 1863       |
   1864  3357 |     if (committed_downloads.empty()) {
   1865  3358 |         return;
   1866  3359 |     }
@@ -9042,7 +9042,7 @@ Source : [texture_cache.h:2093–2178](https://github.com/heydemoura/EglantinePS
   1860  2096 |         if (Eden::Performance::vulkan_cost_enabled.load(std::memory_order_relaxed))
   1861  2097 |             cost_timer.emplace(Eden::Performance::vulkan_api[15]);
   1862  2098 |     }
-  1863  2099 | 
+  1863  2099 |
   1864  2100 |     if (committed_downloads.empty()) {
   1865  2101 |         return;
   1866  2102 |     }
@@ -9238,7 +9238,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 +       1289 |         cache_v2.reset();
 +       1290 |         pipeline_binaries.reset();
   1358  1291 |     }
-  1359  1292 | 
+  1359  1292 |
 +       1293 |     namespace StutterTrace = VideoCommon::StutterTrace;
 +       1294 |     const auto load_begin = std::chrono::steady_clock::now();
 +       1295 |     StutterTrace::BootMarker("shader_load_begin");
@@ -9249,13 +9249,13 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
   1364  1300 |         return;
   1365  1301 |     }
 - 1366       |     pipeline_cache_filename = base_dir / "vulkan.bin";
-- 1367       | 
+- 1367       |
 - 1368       |     if (use_vulkan_pipeline_cache) {
 - 1369       |         vulkan_pipeline_cache_filename = base_dir / "vulkan_pipelines.bin";
 - 1370       |         vulkan_pipeline_cache =
 - 1371       |             LoadVulkanPipelineCache(vulkan_pipeline_cache_filename, CACHE_VERSION);
 - 1372       |     }
-- 1373       | 
+- 1373       |
 - 1374       | #ifdef PS5_NATIVE
 - 1375       |     // ENCORE_PS5_CACHE_DIAG_BEGIN
 - 1376       |     // Once per game load only: separate a missing per-title environment log,
@@ -9293,7 +9293,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1408       |         return;
 - 1409       |     }
 - 1410       | #endif
-- 1411       | 
+- 1411       |
 - 1412       | #ifdef PS5_NATIVE
 - 1413       |     // FC27: the old fixed 32-entry PREFIX admitted 18 compute and only
 - 1414       |     // 14 graphics shaders from a 28.7 MiB cache. Thousands of newer records
@@ -9337,7 +9337,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1452       |         // ENCORE_PS5_CACHE_DIAG_END
 - 1453       |         std::unique_ptr<PipelineStatistics> statistics;
 - 1454       |     } state;
-- 1455       | 
+- 1455       |
 - 1456       |     if (device.IsKhrPipelineExecutablePropertiesEnabled()) {
 - 1457       |         state.statistics = std::make_unique<PipelineStatistics>(device);
 - 1458       |     }
@@ -9393,7 +9393,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1508       |         // ENCORE_PS5_CACHE_DIAG_END
 - 1509       |         ComputePipelineCacheKey key;
 - 1510       |         file.read(reinterpret_cast<char*>(&key), sizeof(key));
-- 1511       | 
+- 1511       |
 - 1512       |         schedule_prewarm(key, [this, key, env_ = std::move(env), &state, &callback]() mutable {
 - 1513       |             ShaderPools pools;
 - 1514       |             auto pipeline{CreateComputePipeline(pools, key, env_, state.statistics.get(), false)};
@@ -9417,7 +9417,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1532       |         // ENCORE_PS5_CACHE_DIAG_END
 - 1533       |         GraphicsPipelineCacheKey key;
 - 1534       |         file.read(reinterpret_cast<char*>(&key), sizeof(key));
-- 1535       | 
+- 1535       |
 - 1536       |         // Disk records are untrusted: the six guest programs include both
 - 1537       |         // VertexA and VertexB, even though Vulkan exposes five graphics stages.
 - 1538       |         size_t env_index = 0;
@@ -9431,7 +9431,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1546       |             ++env_index;
 - 1547       |         }
 - 1548       |         if (env_index == 0 || env_index != envs.size()) return;
-- 1549       | 
+- 1549       |
 - 1550       |         if ((key.state.extended_dynamic_state != 0) !=
 - 1551       |                 dynamic_features.has_extended_dynamic_state ||
 - 1552       |             (key.state.extended_dynamic_state_2 != 0) !=
@@ -9451,18 +9451,18 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1566       |                EdenAttributelessStaticKey(key.state)))) {
 - 1567       |             return;
 - 1568       |         }
-- 1569       | 
+- 1569       |
 - 1570       |         const bool key_requests_provoking_last = key.state.provoking_vertex_last != 0;
 - 1571       |         if (key_requests_provoking_last && !dynamic_features.has_provoking_vertex_last_mode) {
 - 1572       |             return;
 - 1573       |         }
-- 1574       | 
+- 1574       |
 - 1575       |         const bool key_uses_transform_feedback = key.state.xfb_enabled != 0;
 - 1576       |         if (key_uses_transform_feedback && key_requests_provoking_last &&
 - 1577       |             !dynamic_features.has_provoking_vertex_tf_preserve) {
 - 1578       |             return;
 - 1579       |         }
-- 1580       | 
+- 1580       |
 - 1581       |         schedule_prewarm(key, [this, key, envs_ = std::move(envs), &state, &callback]() mutable {
 - 1582       |             ShaderPools pools;
 - 1583       |             boost::container::static_vector<Shader::Environment*, Maxwell::MaxShaderProgram> env_ptrs;
@@ -9471,7 +9471,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1586       |             }
 - 1587       |             auto pipeline{CreateGraphicsPipeline(pools, key, MakeSpan(env_ptrs),
 - 1588       |                                                  state.statistics.get(), false)};
-- 1589       | 
+- 1589       |
 - 1590       |             std::scoped_lock lock{state.mutex};
 - 1591       |             // Leave a failed Vulkan build absent from the prewarm map,
 - 1592       |             // so the normal first-use path may try the key again.
@@ -9591,14 +9591,14 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 +       1356 |                                   CacheV2::TombstonePayload(CacheV2::RecordKind::Used));
   1655  1357 |     }
 - 1656       | #endif
-- 1657       | 
+- 1657       |
 - 1658       |     LOG_INFO(Render_Vulkan, "Total Pipeline Count: {}", state.total);
-- 1659       | 
+- 1659       |
 - 1660       |     std::unique_lock lock{state.mutex};
 - 1661       |     callback(VideoCore::LoadCallbackStage::Build, 0, state.total);
 - 1662       |     state.has_loaded = true;
 - 1663       |     lock.unlock();
-- 1664       | 
+- 1664       |
 - 1665       | #ifdef PS5_NATIVE
 - 1666       |     // A cancelled title-cache load must never stop the persistent shader
 - 1667       |     // compiler pool: StatefulThreadWorker::WaitForRequests(stop_token)
@@ -9643,7 +9643,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 +       1360 |                                              .count());
 +       1361 |     used_session_key = used_session_time ^ std::random_device{}();
 +       1362 |     used_pipelines_saved = std::chrono::steady_clock::now();
-  1704  1363 | 
+  1704  1363 |
 +       1364 |     namespace ShaderWarm = VideoCommon::ShaderWarm;
 +       1365 |     const bool precache =
 +       1366 |         ShaderWarm::PrecacheBeforeStart(
@@ -9658,12 +9658,12 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1710       |         last_cache_size.store(size, std::memory_order_relaxed);
 - 1711       |         last_flush = std::chrono::steady_clock::now();
 - 1712       |     }
-- 1713       | 
+- 1713       |
 - 1714       |     if (state.statistics) {
 - 1715       |         state.statistics->Report();
 - 1716       |     }
 - 1717       | }
-- 1718       | 
+- 1718       |
 - 1719       | void PipelineCache::QueueVulkanPipelineCacheFlush() {
 - 1720       |     if (!use_vulkan_pipeline_cache || vulkan_pipeline_cache_filename.empty()) {
 - 1721       |         return;
@@ -9731,7 +9731,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1783       |         LOG_WARNING(Render_Vulkan, "Deferred cache flush queue rejected: unknown exception");
 - 1784       |     }
 - 1785       | }
-- 1786       | 
+- 1786       |
 - 1787       | GraphicsPipeline* PipelineCache::CurrentGraphicsPipelineSlowPath() {
 - 1788       |     const auto [pair, is_new]{graphics_cache.try_emplace(graphics_key)};
 - 1789       |     auto& pipeline{pair->second};
@@ -9818,7 +9818,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1870       |     }
 - 1871       |     return BuiltPipeline(current_pipeline);
 - 1872       | }
-- 1873       | 
+- 1873       |
 - 1874       | GraphicsPipeline* PipelineCache::BuiltPipeline(GraphicsPipeline* pipeline) const noexcept {
 - 1875       |     if (pipeline->IsBuilt()) {
 - 1876       |         return pipeline;
@@ -9844,7 +9844,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1896       |     }
 - 1897       |     return nullptr;
 - 1898       | }
-- 1899       | 
+- 1899       |
 - 1900       | std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline(
 - 1901       |     ShaderPools& pools, const GraphicsPipelineCacheKey& key,
 - 1902       |     std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,
@@ -9869,10 +9869,10 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1921       | #endif
 - 1922       |     const bool uses_vertex_a{key.unique_hashes[0] != 0};
 - 1923       |     const bool uses_vertex_b{key.unique_hashes[1] != 0};
-- 1924       | 
+- 1924       |
 - 1925       |     // Layer passthrough generation for devices without VK_EXT_shader_viewport_index_layer
 - 1926       |     Shader::IR::Program* layer_source_program{};
-- 1927       | 
+- 1927       |
 - 1928       | #ifdef PS5_NATIVE
 - 1929       |     // Lichii's stage-parallel model adapted to Encore's active renderer:
 - 1930       |     // every stage owns its IR pools until SPIR-V emission has consumed the
@@ -9887,7 +9887,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1939       |     // joins them so EDEN_VULKAN_SHADER_MISS keeps the pre-parallel accounting.
 - 1940       |     std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>
 - 1941       |         parallel_stage_costs{};
-- 1942       | 
+- 1942       |
 - 1943       |     // Worker translation must never traverse the live guest GMMU. Snapshot
 - 1944       |     // every guest byte that CFG/IR may consult while still on the GPU owner:
 - 1945       |     // shader code is already copied by GetGraphicsEnvironments/SetCachedSize,
@@ -9912,12 +9912,12 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1964       |     for (auto& sizes : parallel_cbuf_sizes) {
 - 1965       |         sizes.fill(DisabledSnapshotCbuf);
 - 1966       |     }
-- 1967       | 
+- 1967       |
 - 1968       |     GPUVAddr snapshot_texture_base{};
 - 1969       |     u32 snapshot_texture_limit{};
 - 1970       |     bool snapshot_via_header_index{};
 - 1971       |     u32 snapshot_viewport_transform_state{};
-- 1972       | 
+- 1972       |
 - 1973       |     if (parallel_translate_stages) {
 - 1974       |         for (Shader::Environment* const env : envs) {
 - 1975       |             // HLE replacement lookup still belongs to Maxwell3D::replace_table.
@@ -9929,7 +9929,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 1981       |             }
 - 1982       |         }
 - 1983       |     }
-- 1984       | 
+- 1984       |
 - 1985       |     if (parallel_translate_stages) {
 - 1986       |         // Disk prewarm uses FileEnvironment and can run without a bound
 - 1987       |         // graphics channel. Only the live NS1 owner may read these registers.
@@ -9957,7 +9957,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2009       |             const size_t physical_stage = index <= 1 ? 0 : index - 1;
 - 2010       |             stage_needed[physical_stage] = true;
 - 2011       |         }
-- 2012       | 
+- 2012       |
 - 2013       |         for (size_t stage = 0; snapshot_ok && stage < Maxwell::MaxShaderStage; ++stage) {
 - 2014       |             if (!stage_needed[stage]) {
 - 2015       |                 continue;
@@ -9987,7 +9987,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2039       |                 }
 - 2040       |             }
 - 2041       |         }
-- 2042       | 
+- 2042       |
 - 2043       |         if (snapshot_ok) {
 - 2044       |             try {
 - 2045       |                 parallel_texture_snapshot.resize(
@@ -10021,7 +10021,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2073       |         }
 - 2074       |         parallel_translate_stages = snapshot_ok;
 - 2075       |     }
-- 2076       | 
+- 2076       |
 - 2077       |     if (parallel_translate_stages) try {
 - 2078       |         // QueueWork and pool allocation may throw after earlier tasks borrowed
 - 2079       |         // these locals. Drain before unwinding, without stopping persistent workers.
@@ -10155,7 +10155,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2207       |         throw ParallelGraphicsRetry{};
 - 2208       |     }
 - 2209       | #endif
-- 2210       | 
+- 2210       |
 - 2211       |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
 - 2212       |         const bool is_emulated_stage = layer_source_program != nullptr &&
 - 2213       |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
@@ -10170,7 +10170,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2222       |         }
 - 2223       |         Shader::Environment& env{*envs[env_index]};
 - 2224       |         ++env_index;
-- 2225       | 
+- 2225       |
 - 2226       | #ifdef PS5_NATIVE
 - 2227       |         if (parallel_translate_stages) {
 - 2228       |             if (!uses_vertex_a || index != 1) {
@@ -10202,7 +10202,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2254       |                 programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);
 - 2255       |             }
 - 2256       |         }
-- 2257       | 
+- 2257       |
 - 2258       |         // Avoid native subgroup shuffle for the known PositionXY fragment
 - 2259       |         // pattern on non-NVIDIA drivers. Desktop/mobile preserve Eden #4503's
 - 2260       |         // fail-closed skip. PS5 instead uses the newer upstream broadcast
@@ -10230,11 +10230,11 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2282       |             return nullptr;
 - 2283       | #endif
 - 2284       |         }
-- 2285       | 
+- 2285       |
 - 2286       |         if (Settings::values.dump_guest_shaders) {
 - 2287       |             env.Dump(hash, key.unique_hashes[index]);
 - 2288       |         }
-- 2289       | 
+- 2289       |
 - 2290       |         if (programs[index].info.requires_layer_emulation) {
 - 2291       |             layer_source_program = &programs[index];
 - 2292       |         }
@@ -10244,7 +10244,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2296       |     }
 - 2297       |     std::array<const Shader::Info*, Maxwell::MaxShaderStage> infos{};
 - 2298       |     std::array<vk::ShaderModule, Maxwell::MaxShaderStage> modules;
-- 2299       | 
+- 2299       |
 - 2300       |     const Shader::IR::Program* previous_stage{};
 - 2301       |     Shader::Backend::Bindings binding;
 - 2302       |     for (size_t index = uses_vertex_a && uses_vertex_b ? 1 : 0; index < Maxwell::MaxShaderProgram;
@@ -10255,11 +10255,11 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2307       |             continue;
 - 2308       |         }
 - 2309       |         UNIMPLEMENTED_IF(index == 0);
-- 2310       | 
+- 2310       |
 - 2311       |         Shader::IR::Program& program{programs[index]};
 - 2312       |         const size_t stage_index{index - 1};
 - 2313       |         infos[stage_index] = &program.info;
-- 2314       | 
+- 2314       |
 - 2315       |         const auto runtime_info{MakeRuntimeInfo(programs, key, program, previous_stage, device)};
 - 2316       |         ConvertLegacyToGeneric(program, runtime_info);
 - 2317       |         auto emit_profile = profile;
@@ -10269,7 +10269,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2321       |         const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(emit_profile, runtime_info, program, binding); }())};
 - 2322       |         device.SaveShader(code);
 - 2323       |         modules[stage_index] = ([&] { auto cost = Eden::Performance::VulkanTimer(23); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderModule, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return BuildShader(device, code); }());
-- 2324       | 
+- 2324       |
 - 2325       |         // Text log + .spv dump. Text log is gated by gpu_log_level != Off; .spv dump
 - 2326       |         // is independent and gated only by gpu_log_shader_dumps.
 - 2327       |         const bool should_log = GPU::Logging::IsActive();
@@ -10287,7 +10287,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2339       |                                               std::span<const u32>(code.data(), code.size()));
 - 2340       |             }
 - 2341       |         }
-- 2342       | 
+- 2342       |
 - 2343       |         if (device.HasDebuggingToolAttached()) {
 - 2344       |             const std::string name{fmt::format("Shader {:016x}", key.unique_hashes[index])};
 - 2345       |             modules[stage_index].SetObjectNameEXT(name.c_str());
@@ -10299,7 +10299,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2351       |         scheduler, buffer_cache, texture_cache, vulkan_pipeline_cache, &shader_notify, device,
 - 2352       |         descriptor_pool, guest_descriptor_queue, descriptor_buffer_ring, thread_worker, statistics,
 - 2353       |         render_pass_cache, key, std::move(modules), infos);
-- 2354       | 
+- 2354       |
 - 2355       | } catch (const Shader::Exception& exception) {
 - 2356       | #ifdef PS5_NATIVE
 - 2357       |     // Failed first-use shaders can be retried. Do not rebuild their CFGs or
@@ -10316,7 +10316,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2368       |         }
 - 2369       |         Shader::Environment& env{*envs[env_index]};
 - 2370       |         ++env_index;
-- 2371       | 
+- 2371       |
 - 2372       |         const u32 cfg_offset{static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
 - 2373       |         ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
 - 2374       |             ::Eden::Performance::CachePhase::ShaderCfg,
@@ -10355,7 +10355,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2407       |     return nullptr;
 - 2408       | }
 - 2409       | #endif
-- 2410       | 
+- 2410       |
 - 2411       | std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline() {
 - 2412       |     auto timer = Eden::Performance::VulkanTimer(17);
 - 2413       | #ifdef PS5_NATIVE
@@ -10508,7 +10508,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2560       |             ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
 - 2561       |         GetGraphicsEnvironments(environments, graphics_key.unique_hashes);
 - 2562       |     }
-- 2563       | 
+- 2563       |
 - 2564       |     ([&] { auto cost = Eden::Performance::VulkanTimer(19); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderPoolReset, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return main_pools.ReleaseContents(); }());
 - 2565       | #ifdef PS5_NATIVE
 - 2566       |     bool parallel_translate_stages{};
@@ -10600,7 +10600,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2652       |     QueueVulkanPipelineCacheFlush();
 - 2653       |     return pipeline;
 - 2654       | }
-- 2655       | 
+- 2655       |
 - 2656       | std::unique_ptr<ComputePipeline> PipelineCache::CreateComputePipeline(
 - 2657       |     const ComputePipelineCacheKey& key, const ShaderInfo* shader) {
 - 2658       |     auto timer = Eden::Performance::VulkanTimer(17);
@@ -10613,7 +10613,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2665       |     const auto& qmd{kepler_compute->launch_description};
 - 2666       |     ComputeEnvironment env{*kepler_compute, *gpu_memory, program_base, qmd.program_start};
 - 2667       |     env.SetCachedSize(shader->size_bytes);
-- 2668       | 
+- 2668       |
 - 2669       |     ([&] { auto cost = Eden::Performance::VulkanTimer(19); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderPoolReset, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return main_pools.ReleaseContents(); }());
 - 2670       |     auto pipeline{CreateComputePipeline(main_pools, key, env, nullptr, true)};
 - 2671       |     if (!pipeline || pipeline_cache_filename.empty()) {
@@ -10638,7 +10638,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2690       |     QueueVulkanPipelineCacheFlush();
 - 2691       |     return pipeline;
 - 2692       | }
-- 2693       | 
+- 2693       |
 - 2694       | std::unique_ptr<ComputePipeline> PipelineCache::CreateComputePipeline(
 - 2695       |     ShaderPools& pools, const ComputePipelineCacheKey& key, Shader::Environment& env,
 - 2696       |     PipelineStatistics* statistics, bool build_in_parallel) try {
@@ -10653,9 +10653,9 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2705       |         LOG_ERROR(Render_Vulkan, "Skipping {:#016x}", hash);
 - 2706       |         return nullptr;
 - 2707       |     }
-- 2708       | 
+- 2708       |
 - 2709       |     LOG_DEBUG(Render_Vulkan, "{:#016x}", hash);
-- 2710       | 
+- 2710       |
 - 2711       |     ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
 - 2712       |         ::Eden::Performance::CachePhase::ShaderCfg,
 - 2713       |         ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
@@ -10663,12 +10663,12 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2715       |         Shader::Maxwell::Flow::CFG cfg{env, pools.flow_block, env.StartAddress()};
 - 2716       |         cfg_cost.reset();
 - 2717       |         cfg_stage_cost.Stop();
-- 2718       | 
+- 2718       |
 - 2719       |     // Dump it before error.
 - 2720       |     if (Settings::values.dump_guest_shaders) {
 - 2721       |         env.Dump(hash, key.unique_hash);
 - 2722       |     }
-- 2723       | 
+- 2723       |
 - 2724       |     auto program{([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }())};
 - 2725       |     const VkDriverIdKHR driver_id = device.GetDriverID();
 - 2726       |     const bool needs_shared_mem_clamp =
@@ -10686,7 +10686,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2738       |     const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(profile, program); }())};
 - 2739       |     device.SaveShader(code);
 - 2740       |     vk::ShaderModule spv_module{([&] { auto cost = Eden::Performance::VulkanTimer(23); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderModule, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return BuildShader(device, code); }())};
-- 2741       | 
+- 2741       |
 - 2742       |     // Text log + .spv dump. Same split as the graphics path.
 - 2743       |     const bool should_log = GPU::Logging::IsActive();
 - 2744       |     const bool should_dump = Settings::values.gpu_log_shader_dumps.GetValue();
@@ -10702,7 +10702,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2754       |                                           std::span<const u32>(code.data(), code.size()));
 - 2755       |         }
 - 2756       |     }
-- 2757       | 
+- 2757       |
 - 2758       |     if (device.HasDebuggingToolAttached()) {
 - 2759       |         const auto name{fmt::format("Shader {:016x}", key.unique_hash)};
 - 2760       |         spv_module.SetObjectNameEXT(name.c_str());
@@ -10725,12 +10725,12 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2777       |                                              &shader_notify, program.info, std::move(spv_module),
 - 2778       |                                              key.unique_hash);
 - 2779       | #endif
-- 2780       | 
+- 2780       |
 - 2781       | } catch (const Shader::Exception& exception) {
 - 2782       |     LOG_ERROR(Render_Vulkan, "{}", exception.what());
 - 2783       |     return nullptr;
 - 2784       | }
-- 2785       | 
+- 2785       |
 - 2786       | void PipelineCache::SerializeVulkanPipelineCache(const std::filesystem::path& filename,
 - 2787       |                                                  const vk::PipelineCache& pipeline_cache,
 - 2788       |                                                  u32 cache_version) {
@@ -10749,7 +10749,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2801       |         file.open(staging, std::ios::binary | std::ios::trunc);
 - 2802       |         file.write(VULKAN_CACHE_MAGIC_NUMBER.data(), VULKAN_CACHE_MAGIC_NUMBER.size())
 - 2803       |             .write(reinterpret_cast<const char*>(&cache_version), sizeof(cache_version));
-- 2804       | 
+- 2804       |
 - 2805       |         size_t cache_size = 0;
 - 2806       |         std::vector<char> cache_data;
 - 2807       |         if (pipeline_cache) {
@@ -10804,7 +10804,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2856       |     }
 - 2857       | #endif
 - 2858       | }
-- 2859       | 
+- 2859       |
 - 2860       | vk::PipelineCache PipelineCache::LoadVulkanPipelineCache(const std::filesystem::path& filename,
 - 2861       |                                                          u32 expected_cache_version) {
 - 2862       |     const auto create_pipeline_cache = [this](size_t data_size, const void* data) {
@@ -10839,7 +10839,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2885       |         file.exceptions(std::ifstream::failbit);
 - 2886       |         const auto end{file.tellg()};
 - 2887       |         file.seekg(0, std::ios::beg);
-- 2888       | 
+- 2888       |
 - 2889       |         std::array<char, 8> magic_number;
 - 2890       |         u32 cache_version;
 - 2891       | #ifdef EDEN_NS2_PIPELINE_CACHE_GUARD
@@ -10871,7 +10871,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2917       |             }
 - 2918       |             return create_pipeline_cache(0, nullptr);
 - 2919       |         }
-- 2920       | 
+- 2920       |
 - 2921       |         static constexpr size_t header_size = magic_number.size() + sizeof(cache_version);
 - 2922       |         const size_t cache_size = static_cast<size_t>(end) - header_size;
 - 2923       | #ifdef PS5_NATIVE
@@ -10907,12 +10907,12 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 - 2944       |         std::vector<char> cache_data(cache_size);
 - 2945       | #endif
 - 2946       |         file.read(cache_data.data(), cache_size);
-- 2947       | 
+- 2947       |
 - 2948       |         LOG_INFO(Render_Vulkan,
 - 2949       |                  "Loaded Vulkan driver pipeline cache: ", Common::FS::PathToUTF8String(filename));
-- 2950       | 
+- 2950       |
 - 2951       |         return create_pipeline_cache(cache_size, cache_data.data());
-- 2952       | 
+- 2952       |
 - 2953       |     } catch (const std::ios_base::failure& e) {
 - 2954       |         LOG_ERROR(Common_Filesystem, "{}", e.what());
 - 2955       |         if (!Common::FS::RemoveFile(filename)) {
@@ -10922,7 +10922,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 +       1391 |         LOG_WARNING(Common_Filesystem, "Couldn't create {}",
 +       1392 |                     Common::FS::PathToUTF8String(boot_marker));
   2958  1393 |         }
-- 2959       | 
+- 2959       |
 - 2960       |         return create_pipeline_cache(0, nullptr);
 +       1394 |     LoadPipelinesV2(title_id, std::move(log_v2), stop_loading, callback, load_begin, precache,
 +       1395 |                     build_at_boot);
@@ -10930,7 +10930,7 @@ Source : [vk_pipeline_cache.cpp:1276–1399](https://github.com/zortos293/Lichii
 +       1397 |         Common::FS::RemoveFile(boot_marker);
   2961  1398 |     }
   2962  1399 | }
-- 2963       | 
+- 2963       |
 - 2964       | } // namespace Vulkan
 ```
 
@@ -10958,7 +10958,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 +       1147 |         cache_v2.reset();
 +       1148 |         pipeline_binaries.reset();
   1358  1149 |     }
-  1359  1150 | 
+  1359  1150 |
 +       1151 |     namespace StutterTrace = VideoCommon::StutterTrace;
 +       1152 |     const auto load_begin = std::chrono::steady_clock::now();
 +       1153 |     StutterTrace::BootMarker("shader_load_begin");
@@ -10969,13 +10969,13 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
   1364  1158 |         return;
   1365  1159 |     }
 - 1366       |     pipeline_cache_filename = base_dir / "vulkan.bin";
-- 1367       | 
+- 1367       |
 - 1368       |     if (use_vulkan_pipeline_cache) {
 - 1369       |         vulkan_pipeline_cache_filename = base_dir / "vulkan_pipelines.bin";
 - 1370       |         vulkan_pipeline_cache =
 - 1371       |             LoadVulkanPipelineCache(vulkan_pipeline_cache_filename, CACHE_VERSION);
 - 1372       |     }
-- 1373       | 
+- 1373       |
 - 1374       | #ifdef PS5_NATIVE
 - 1375       |     // ENCORE_PS5_CACHE_DIAG_BEGIN
 - 1376       |     // Once per game load only: separate a missing per-title environment log,
@@ -11013,7 +11013,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1408       |         return;
 - 1409       |     }
 - 1410       | #endif
-- 1411       | 
+- 1411       |
 - 1412       | #ifdef PS5_NATIVE
 - 1413       |     // FC27: the old fixed 32-entry PREFIX admitted 18 compute and only
 - 1414       |     // 14 graphics shaders from a 28.7 MiB cache. Thousands of newer records
@@ -11057,7 +11057,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1452       |         // ENCORE_PS5_CACHE_DIAG_END
 - 1453       |         std::unique_ptr<PipelineStatistics> statistics;
 - 1454       |     } state;
-- 1455       | 
+- 1455       |
 - 1456       |     if (device.IsKhrPipelineExecutablePropertiesEnabled()) {
 - 1457       |         state.statistics = std::make_unique<PipelineStatistics>(device);
 - 1458       |     }
@@ -11113,7 +11113,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1508       |         // ENCORE_PS5_CACHE_DIAG_END
 - 1509       |         ComputePipelineCacheKey key;
 - 1510       |         file.read(reinterpret_cast<char*>(&key), sizeof(key));
-- 1511       | 
+- 1511       |
 - 1512       |         schedule_prewarm(key, [this, key, env_ = std::move(env), &state, &callback]() mutable {
 - 1513       |             ShaderPools pools;
 - 1514       |             auto pipeline{CreateComputePipeline(pools, key, env_, state.statistics.get(), false)};
@@ -11137,7 +11137,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1532       |         // ENCORE_PS5_CACHE_DIAG_END
 - 1533       |         GraphicsPipelineCacheKey key;
 - 1534       |         file.read(reinterpret_cast<char*>(&key), sizeof(key));
-- 1535       | 
+- 1535       |
 - 1536       |         // Disk records are untrusted: the six guest programs include both
 - 1537       |         // VertexA and VertexB, even though Vulkan exposes five graphics stages.
 - 1538       |         size_t env_index = 0;
@@ -11151,7 +11151,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1546       |             ++env_index;
 - 1547       |         }
 - 1548       |         if (env_index == 0 || env_index != envs.size()) return;
-- 1549       | 
+- 1549       |
 - 1550       |         if ((key.state.extended_dynamic_state != 0) !=
 - 1551       |                 dynamic_features.has_extended_dynamic_state ||
 - 1552       |             (key.state.extended_dynamic_state_2 != 0) !=
@@ -11171,12 +11171,12 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1566       |                EdenAttributelessStaticKey(key.state)))) {
 - 1567       |             return;
 - 1568       |         }
-- 1569       | 
+- 1569       |
 - 1570       |         const bool key_requests_provoking_last = key.state.provoking_vertex_last != 0;
 - 1571       |         if (key_requests_provoking_last && !dynamic_features.has_provoking_vertex_last_mode) {
 - 1572       |             return;
 - 1573       |         }
-- 1574       | 
+- 1574       |
 - 1575       |         const bool key_uses_transform_feedback = key.state.xfb_enabled != 0;
 - 1576       |         if (key_uses_transform_feedback && key_requests_provoking_last &&
 - 1577       |             !dynamic_features.has_provoking_vertex_tf_preserve) {
@@ -11194,7 +11194,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 +       1170 |     } else if (migration.failed) {
 +       1171 |         LOG_WARNING(Render_Vulkan, "Couldn't start shader cache v2 from the older cache");
   1579  1172 |         }
-- 1580       | 
+- 1580       |
 - 1581       |         schedule_prewarm(key, [this, key, envs_ = std::move(envs), &state, &callback]() mutable {
 - 1582       |             ShaderPools pools;
 - 1583       |             boost::container::static_vector<Shader::Environment*, Maxwell::MaxShaderProgram> env_ptrs;
@@ -11230,7 +11230,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 +       1198 |                                              .count());
 +       1199 |     used_session_key = used_session_time ^ std::random_device{}();
 +       1200 |     used_pipelines_saved = std::chrono::steady_clock::now();
-  1589  1201 | 
+  1589  1201 |
 - 1590       |             std::scoped_lock lock{state.mutex};
 - 1591       |             // Leave a failed Vulkan build absent from the prewarm map,
 - 1592       |             // so the normal first-use path may try the key again.
@@ -11308,14 +11308,14 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 +       1211 |             {device.GetDriverVersion(), device.GetDeviceID(), CACHE_VERSION});
   1655  1212 |     }
 - 1656       | #endif
-- 1657       | 
+- 1657       |
 - 1658       |     LOG_INFO(Render_Vulkan, "Total Pipeline Count: {}", state.total);
-- 1659       | 
+- 1659       |
 - 1660       |     std::unique_lock lock{state.mutex};
 - 1661       |     callback(VideoCore::LoadCallbackStage::Build, 0, state.total);
 - 1662       |     state.has_loaded = true;
 - 1663       |     lock.unlock();
-- 1664       | 
+- 1664       |
 - 1665       | #ifdef PS5_NATIVE
 - 1666       |     // A cancelled title-cache load must never stop the persistent shader
 - 1667       |     // compiler pool: StatefulThreadWorker::WaitForRequests(stop_token)
@@ -11355,7 +11355,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1701       |                 state.total, unsigned(CACHE_VERSION));
 - 1702       |     // ENCORE_PS5_CACHE_DIAG_END
 - 1703       | #endif
-- 1704       | 
+- 1704       |
   1705  1213 |     if (use_vulkan_pipeline_cache) {
 - 1706       |         SerializeVulkanPipelineCache(vulkan_pipeline_cache_filename, vulkan_pipeline_cache,
 - 1707       |                                      CACHE_VERSION);
@@ -11364,12 +11364,12 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1710       |         last_cache_size.store(size, std::memory_order_relaxed);
 - 1711       |         last_flush = std::chrono::steady_clock::now();
 - 1712       |     }
-- 1713       | 
+- 1713       |
 - 1714       |     if (state.statistics) {
 - 1715       |         state.statistics->Report();
 - 1716       |     }
 - 1717       | }
-- 1718       | 
+- 1718       |
 - 1719       | void PipelineCache::QueueVulkanPipelineCacheFlush() {
 - 1720       |     if (!use_vulkan_pipeline_cache || vulkan_pipeline_cache_filename.empty()) {
 - 1721       |         return;
@@ -11437,7 +11437,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1783       |         LOG_WARNING(Render_Vulkan, "Deferred cache flush queue rejected: unknown exception");
 - 1784       |     }
 - 1785       | }
-- 1786       | 
+- 1786       |
 - 1787       | GraphicsPipeline* PipelineCache::CurrentGraphicsPipelineSlowPath() {
 - 1788       |     const auto [pair, is_new]{graphics_cache.try_emplace(graphics_key)};
 - 1789       |     auto& pipeline{pair->second};
@@ -11524,7 +11524,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1870       |     }
 - 1871       |     return BuiltPipeline(current_pipeline);
 - 1872       | }
-- 1873       | 
+- 1873       |
 - 1874       | GraphicsPipeline* PipelineCache::BuiltPipeline(GraphicsPipeline* pipeline) const noexcept {
 - 1875       |     if (pipeline->IsBuilt()) {
 - 1876       |         return pipeline;
@@ -11550,7 +11550,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1896       |     }
 - 1897       |     return nullptr;
 - 1898       | }
-- 1899       | 
+- 1899       |
 - 1900       | std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline(
 - 1901       |     ShaderPools& pools, const GraphicsPipelineCacheKey& key,
 - 1902       |     std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,
@@ -11575,10 +11575,10 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1921       | #endif
 - 1922       |     const bool uses_vertex_a{key.unique_hashes[0] != 0};
 - 1923       |     const bool uses_vertex_b{key.unique_hashes[1] != 0};
-- 1924       | 
+- 1924       |
 - 1925       |     // Layer passthrough generation for devices without VK_EXT_shader_viewport_index_layer
 - 1926       |     Shader::IR::Program* layer_source_program{};
-- 1927       | 
+- 1927       |
 - 1928       | #ifdef PS5_NATIVE
 - 1929       |     // Lichii's stage-parallel model adapted to Encore's active renderer:
 - 1930       |     // every stage owns its IR pools until SPIR-V emission has consumed the
@@ -11593,7 +11593,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1939       |     // joins them so EDEN_VULKAN_SHADER_MISS keeps the pre-parallel accounting.
 - 1940       |     std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>
 - 1941       |         parallel_stage_costs{};
-- 1942       | 
+- 1942       |
 - 1943       |     // Worker translation must never traverse the live guest GMMU. Snapshot
 - 1944       |     // every guest byte that CFG/IR may consult while still on the GPU owner:
 - 1945       |     // shader code is already copied by GetGraphicsEnvironments/SetCachedSize,
@@ -11618,12 +11618,12 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1964       |     for (auto& sizes : parallel_cbuf_sizes) {
 - 1965       |         sizes.fill(DisabledSnapshotCbuf);
 - 1966       |     }
-- 1967       | 
+- 1967       |
 - 1968       |     GPUVAddr snapshot_texture_base{};
 - 1969       |     u32 snapshot_texture_limit{};
 - 1970       |     bool snapshot_via_header_index{};
 - 1971       |     u32 snapshot_viewport_transform_state{};
-- 1972       | 
+- 1972       |
 - 1973       |     if (parallel_translate_stages) {
 - 1974       |         for (Shader::Environment* const env : envs) {
 - 1975       |             // HLE replacement lookup still belongs to Maxwell3D::replace_table.
@@ -11635,7 +11635,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 1981       |             }
 - 1982       |         }
 - 1983       |     }
-- 1984       | 
+- 1984       |
 - 1985       |     if (parallel_translate_stages) {
 - 1986       |         // Disk prewarm uses FileEnvironment and can run without a bound
 - 1987       |         // graphics channel. Only the live NS1 owner may read these registers.
@@ -11663,7 +11663,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2009       |             const size_t physical_stage = index <= 1 ? 0 : index - 1;
 - 2010       |             stage_needed[physical_stage] = true;
 - 2011       |         }
-- 2012       | 
+- 2012       |
 - 2013       |         for (size_t stage = 0; snapshot_ok && stage < Maxwell::MaxShaderStage; ++stage) {
 - 2014       |             if (!stage_needed[stage]) {
 - 2015       |                 continue;
@@ -11693,7 +11693,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2039       |                 }
 - 2040       |             }
 - 2041       |         }
-- 2042       | 
+- 2042       |
 - 2043       |         if (snapshot_ok) {
 - 2044       |             try {
 - 2045       |                 parallel_texture_snapshot.resize(
@@ -11727,7 +11727,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2073       |         }
 - 2074       |         parallel_translate_stages = snapshot_ok;
 - 2075       |     }
-- 2076       | 
+- 2076       |
 - 2077       |     if (parallel_translate_stages) try {
 - 2078       |         // QueueWork and pool allocation may throw after earlier tasks borrowed
 - 2079       |         // these locals. Drain before unwinding, without stopping persistent workers.
@@ -11861,7 +11861,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2207       |         throw ParallelGraphicsRetry{};
 - 2208       |     }
 - 2209       | #endif
-- 2210       | 
+- 2210       |
 - 2211       |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
 - 2212       |         const bool is_emulated_stage = layer_source_program != nullptr &&
 - 2213       |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
@@ -11876,7 +11876,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2222       |         }
 - 2223       |         Shader::Environment& env{*envs[env_index]};
 - 2224       |         ++env_index;
-- 2225       | 
+- 2225       |
 - 2226       | #ifdef PS5_NATIVE
 - 2227       |         if (parallel_translate_stages) {
 - 2228       |             if (!uses_vertex_a || index != 1) {
@@ -11908,7 +11908,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2254       |                 programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);
 - 2255       |             }
 - 2256       |         }
-- 2257       | 
+- 2257       |
 - 2258       |         // Avoid native subgroup shuffle for the known PositionXY fragment
 - 2259       |         // pattern on non-NVIDIA drivers. Desktop/mobile preserve Eden #4503's
 - 2260       |         // fail-closed skip. PS5 instead uses the newer upstream broadcast
@@ -11936,11 +11936,11 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2282       |             return nullptr;
 - 2283       | #endif
 - 2284       |         }
-- 2285       | 
+- 2285       |
 - 2286       |         if (Settings::values.dump_guest_shaders) {
 - 2287       |             env.Dump(hash, key.unique_hashes[index]);
 - 2288       |         }
-- 2289       | 
+- 2289       |
 - 2290       |         if (programs[index].info.requires_layer_emulation) {
 - 2291       |             layer_source_program = &programs[index];
 - 2292       |         }
@@ -11950,7 +11950,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2296       |     }
 - 2297       |     std::array<const Shader::Info*, Maxwell::MaxShaderStage> infos{};
 - 2298       |     std::array<vk::ShaderModule, Maxwell::MaxShaderStage> modules;
-- 2299       | 
+- 2299       |
 - 2300       |     const Shader::IR::Program* previous_stage{};
 - 2301       |     Shader::Backend::Bindings binding;
 - 2302       |     for (size_t index = uses_vertex_a && uses_vertex_b ? 1 : 0; index < Maxwell::MaxShaderProgram;
@@ -11961,11 +11961,11 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2307       |             continue;
 - 2308       |         }
 - 2309       |         UNIMPLEMENTED_IF(index == 0);
-- 2310       | 
+- 2310       |
 - 2311       |         Shader::IR::Program& program{programs[index]};
 - 2312       |         const size_t stage_index{index - 1};
 - 2313       |         infos[stage_index] = &program.info;
-- 2314       | 
+- 2314       |
 - 2315       |         const auto runtime_info{MakeRuntimeInfo(programs, key, program, previous_stage, device)};
 - 2316       |         ConvertLegacyToGeneric(program, runtime_info);
 - 2317       |         auto emit_profile = profile;
@@ -11975,7 +11975,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2321       |         const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(emit_profile, runtime_info, program, binding); }())};
 - 2322       |         device.SaveShader(code);
 - 2323       |         modules[stage_index] = ([&] { auto cost = Eden::Performance::VulkanTimer(23); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderModule, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return BuildShader(device, code); }());
-- 2324       | 
+- 2324       |
 - 2325       |         // Text log + .spv dump. Text log is gated by gpu_log_level != Off; .spv dump
 - 2326       |         // is independent and gated only by gpu_log_shader_dumps.
 - 2327       |         const bool should_log = GPU::Logging::IsActive();
@@ -11993,7 +11993,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2339       |                                               std::span<const u32>(code.data(), code.size()));
 - 2340       |             }
 - 2341       |         }
-- 2342       | 
+- 2342       |
 - 2343       |         if (device.HasDebuggingToolAttached()) {
 - 2344       |             const std::string name{fmt::format("Shader {:016x}", key.unique_hashes[index])};
 - 2345       |             modules[stage_index].SetObjectNameEXT(name.c_str());
@@ -12005,7 +12005,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2351       |         scheduler, buffer_cache, texture_cache, vulkan_pipeline_cache, &shader_notify, device,
 - 2352       |         descriptor_pool, guest_descriptor_queue, descriptor_buffer_ring, thread_worker, statistics,
 - 2353       |         render_pass_cache, key, std::move(modules), infos);
-- 2354       | 
+- 2354       |
 - 2355       | } catch (const Shader::Exception& exception) {
 - 2356       | #ifdef PS5_NATIVE
 - 2357       |     // Failed first-use shaders can be retried. Do not rebuild their CFGs or
@@ -12022,7 +12022,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2368       |         }
 - 2369       |         Shader::Environment& env{*envs[env_index]};
 - 2370       |         ++env_index;
-- 2371       | 
+- 2371       |
 - 2372       |         const u32 cfg_offset{static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
 - 2373       |         ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
 - 2374       |             ::Eden::Performance::CachePhase::ShaderCfg,
@@ -12061,7 +12061,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2407       |     return nullptr;
 - 2408       | }
 - 2409       | #endif
-- 2410       | 
+- 2410       |
 - 2411       | std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline() {
 - 2412       |     auto timer = Eden::Performance::VulkanTimer(17);
 - 2413       | #ifdef PS5_NATIVE
@@ -12214,7 +12214,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2560       |             ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
 - 2561       |         GetGraphicsEnvironments(environments, graphics_key.unique_hashes);
 - 2562       |     }
-- 2563       | 
+- 2563       |
 - 2564       |     ([&] { auto cost = Eden::Performance::VulkanTimer(19); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderPoolReset, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return main_pools.ReleaseContents(); }());
 - 2565       | #ifdef PS5_NATIVE
 - 2566       |     bool parallel_translate_stages{};
@@ -12306,7 +12306,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2652       |     QueueVulkanPipelineCacheFlush();
 - 2653       |     return pipeline;
 - 2654       | }
-- 2655       | 
+- 2655       |
 - 2656       | std::unique_ptr<ComputePipeline> PipelineCache::CreateComputePipeline(
 - 2657       |     const ComputePipelineCacheKey& key, const ShaderInfo* shader) {
 - 2658       |     auto timer = Eden::Performance::VulkanTimer(17);
@@ -12319,7 +12319,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2665       |     const auto& qmd{kepler_compute->launch_description};
 - 2666       |     ComputeEnvironment env{*kepler_compute, *gpu_memory, program_base, qmd.program_start};
 - 2667       |     env.SetCachedSize(shader->size_bytes);
-- 2668       | 
+- 2668       |
 - 2669       |     ([&] { auto cost = Eden::Performance::VulkanTimer(19); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderPoolReset, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return main_pools.ReleaseContents(); }());
 - 2670       |     auto pipeline{CreateComputePipeline(main_pools, key, env, nullptr, true)};
 - 2671       |     if (!pipeline || pipeline_cache_filename.empty()) {
@@ -12344,7 +12344,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2690       |     QueueVulkanPipelineCacheFlush();
 - 2691       |     return pipeline;
 - 2692       | }
-- 2693       | 
+- 2693       |
 - 2694       | std::unique_ptr<ComputePipeline> PipelineCache::CreateComputePipeline(
 - 2695       |     ShaderPools& pools, const ComputePipelineCacheKey& key, Shader::Environment& env,
 - 2696       |     PipelineStatistics* statistics, bool build_in_parallel) try {
@@ -12359,9 +12359,9 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2705       |         LOG_ERROR(Render_Vulkan, "Skipping {:#016x}", hash);
 - 2706       |         return nullptr;
 - 2707       |     }
-- 2708       | 
+- 2708       |
 - 2709       |     LOG_DEBUG(Render_Vulkan, "{:#016x}", hash);
-- 2710       | 
+- 2710       |
 - 2711       |     ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
 - 2712       |         ::Eden::Performance::CachePhase::ShaderCfg,
 - 2713       |         ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};
@@ -12369,12 +12369,12 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2715       |         Shader::Maxwell::Flow::CFG cfg{env, pools.flow_block, env.StartAddress()};
 - 2716       |         cfg_cost.reset();
 - 2717       |         cfg_stage_cost.Stop();
-- 2718       | 
+- 2718       |
 - 2719       |     // Dump it before error.
 - 2720       |     if (Settings::values.dump_guest_shaders) {
 - 2721       |         env.Dump(hash, key.unique_hash);
 - 2722       |     }
-- 2723       | 
+- 2723       |
 - 2724       |     auto program{([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }())};
 - 2725       |     const VkDriverIdKHR driver_id = device.GetDriverID();
 - 2726       |     const bool needs_shared_mem_clamp =
@@ -12392,7 +12392,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2738       |     const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(profile, program); }())};
 - 2739       |     device.SaveShader(code);
 - 2740       |     vk::ShaderModule spv_module{([&] { auto cost = Eden::Performance::VulkanTimer(23); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderModule, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return BuildShader(device, code); }())};
-- 2741       | 
+- 2741       |
 - 2742       |     // Text log + .spv dump. Same split as the graphics path.
 - 2743       |     const bool should_log = GPU::Logging::IsActive();
 - 2744       |     const bool should_dump = Settings::values.gpu_log_shader_dumps.GetValue();
@@ -12408,7 +12408,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2754       |                                           std::span<const u32>(code.data(), code.size()));
 - 2755       |         }
 - 2756       |     }
-- 2757       | 
+- 2757       |
 - 2758       |     if (device.HasDebuggingToolAttached()) {
 - 2759       |         const auto name{fmt::format("Shader {:016x}", key.unique_hash)};
 - 2760       |         spv_module.SetObjectNameEXT(name.c_str());
@@ -12431,12 +12431,12 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2777       |                                              &shader_notify, program.info, std::move(spv_module),
 - 2778       |                                              key.unique_hash);
 - 2779       | #endif
-- 2780       | 
+- 2780       |
 - 2781       | } catch (const Shader::Exception& exception) {
 - 2782       |     LOG_ERROR(Render_Vulkan, "{}", exception.what());
 - 2783       |     return nullptr;
 - 2784       | }
-- 2785       | 
+- 2785       |
 - 2786       | void PipelineCache::SerializeVulkanPipelineCache(const std::filesystem::path& filename,
 - 2787       |                                                  const vk::PipelineCache& pipeline_cache,
 - 2788       |                                                  u32 cache_version) {
@@ -12455,7 +12455,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2801       |         file.open(staging, std::ios::binary | std::ios::trunc);
 - 2802       |         file.write(VULKAN_CACHE_MAGIC_NUMBER.data(), VULKAN_CACHE_MAGIC_NUMBER.size())
 - 2803       |             .write(reinterpret_cast<const char*>(&cache_version), sizeof(cache_version));
-- 2804       | 
+- 2804       |
 - 2805       |         size_t cache_size = 0;
 - 2806       |         std::vector<char> cache_data;
 - 2807       |         if (pipeline_cache) {
@@ -12510,7 +12510,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2856       |     }
 - 2857       | #endif
 - 2858       | }
-- 2859       | 
+- 2859       |
 - 2860       | vk::PipelineCache PipelineCache::LoadVulkanPipelineCache(const std::filesystem::path& filename,
 - 2861       |                                                          u32 expected_cache_version) {
 - 2862       |     const auto create_pipeline_cache = [this](size_t data_size, const void* data) {
@@ -12545,7 +12545,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2885       |         file.exceptions(std::ifstream::failbit);
 - 2886       |         const auto end{file.tellg()};
 - 2887       |         file.seekg(0, std::ios::beg);
-- 2888       | 
+- 2888       |
 - 2889       |         std::array<char, 8> magic_number;
 - 2890       |         u32 cache_version;
 - 2891       | #ifdef EDEN_NS2_PIPELINE_CACHE_GUARD
@@ -12577,7 +12577,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2917       |             }
 - 2918       |             return create_pipeline_cache(0, nullptr);
 - 2919       |         }
-- 2920       | 
+- 2920       |
 - 2921       |         static constexpr size_t header_size = magic_number.size() + sizeof(cache_version);
 - 2922       |         const size_t cache_size = static_cast<size_t>(end) - header_size;
 - 2923       | #ifdef PS5_NATIVE
@@ -12604,12 +12604,12 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2944       |         std::vector<char> cache_data(cache_size);
 - 2945       | #endif
 - 2946       |         file.read(cache_data.data(), cache_size);
-- 2947       | 
+- 2947       |
 - 2948       |         LOG_INFO(Render_Vulkan,
 - 2949       |                  "Loaded Vulkan driver pipeline cache: ", Common::FS::PathToUTF8String(filename));
-- 2950       | 
+- 2950       |
 - 2951       |         return create_pipeline_cache(cache_size, cache_data.data());
-- 2952       | 
+- 2952       |
 - 2953       |     } catch (const std::ios_base::failure& e) {
 - 2954       |         LOG_ERROR(Common_Filesystem, "{}", e.what());
 - 2955       |         if (!Common::FS::RemoveFile(filename)) {
@@ -12617,7 +12617,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 - 2957       |                       Common::FS::PathToUTF8String(filename));
 +       1221 |                         "Couldn't copy the older driver pipeline cache; this one starts empty");
   2958  1222 |         }
-- 2959       | 
+- 2959       |
 - 2960       |         return create_pipeline_cache(0, nullptr);
 +       1223 |         vulkan_pipeline_cache =
 +       1224 |             LoadVulkanPipelineCache(vulkan_pipeline_cache_filename, CACHE_VERSION);
@@ -12625,7 +12625,7 @@ Source : [vk_pipeline_cache.cpp:1134–1228](https://github.com/heydemoura/Eglan
 +       1226 |     LoadPipelinesV2(title_id, std::move(log_v2), stop_loading, callback, load_begin, precache,
 +       1227 |                     std::move(precached_pipelines));
   2962  1228 | }
-- 2963       | 
+- 2963       |
 - 2964       | } // namespace Vulkan
 ```
 
@@ -12870,10 +12870,10 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 - 1921       | #endif
   1922  2928 |     const bool uses_vertex_a{key.unique_hashes[0] != 0};
   1923  2929 |     const bool uses_vertex_b{key.unique_hashes[1] != 0};
-  1924  2930 | 
+  1924  2930 |
   1925  2931 |     // Layer passthrough generation for devices without VK_EXT_shader_viewport_index_layer
   1926  2932 |     Shader::IR::Program* layer_source_program{};
-- 1927       | 
+- 1927       |
 - 1928       | #ifdef PS5_NATIVE
 - 1929       |     // Lichii's stage-parallel model adapted to Encore's active renderer:
 - 1930       |     // every stage owns its IR pools until SPIR-V emission has consumed the
@@ -12889,7 +12889,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 - 1940       |     std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>
 - 1941       |         parallel_stage_costs{};
 +       2933 |     bool mesh_unsupported{};
-  1942  2934 | 
+  1942  2934 |
 - 1943       |     // Worker translation must never traverse the live guest GMMU. Snapshot
 - 1944       |     // every guest byte that CFG/IR may consult while still on the GPU owner:
 - 1945       |     // shader code is already copied by GetGraphicsEnvironments/SetCachedSize,
@@ -12922,12 +12922,12 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 +       2941 |                                                           *layer_source_program, topology);
 +       2942 |             continue;
   1966  2943 |     }
-- 1967       | 
+- 1967       |
 - 1968       |     GPUVAddr snapshot_texture_base{};
 - 1969       |     u32 snapshot_texture_limit{};
 - 1970       |     bool snapshot_via_header_index{};
 - 1971       |     u32 snapshot_viewport_transform_state{};
-- 1972       | 
+- 1972       |
 - 1973       |     if (parallel_translate_stages) {
 - 1974       |         for (Shader::Environment* const env : envs) {
 - 1975       |             // HLE replacement lookup still belongs to Maxwell3D::replace_table.
@@ -12951,7 +12951,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
   1982  2956 |         }
 +       2957 |             return nullptr;
   1983  2958 |     }
-- 1984       | 
+- 1984       |
 - 1985       |     if (parallel_translate_stages) {
 - 1986       |         // Disk prewarm uses FileEnvironment and can run without a bound
 - 1987       |         // graphics channel. Only the live NS1 owner may read these registers.
@@ -12993,7 +12993,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 - 2010       |             stage_needed[physical_stage] = true;
 +       2973 |             mesh_unsupported = true;
   2011  2974 |         }
-  2012  2975 | 
+  2012  2975 |
 - 2013       |         for (size_t stage = 0; snapshot_ok && stage < Maxwell::MaxShaderStage; ++stage) {
 - 2014       |             if (!stage_needed[stage]) {
 - 2015       |                 continue;
@@ -13027,7 +13027,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 - 2024       |                     snapshot_bytes > MaxShaderSnapshotBytes - cbuf.size) {
 - 2025       |                     snapshot_ok = false;
 - 2026       |                     break;
-+       2997 | 
++       2997 |
 +       2998 |         if (device.GetDriverID() != VK_DRIVER_ID_NVIDIA_PROPRIETARY && Shader::Optimization::HasBrokenPattern(programs[index])) {
 +       2999 |             LOG_WARNING(Render_Vulkan, "0x{:016x}: Skipping shader with known issues", key.unique_hashes[index]);
 +       3000 |             return nullptr;
@@ -13036,7 +13036,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 - 2029       |                 snapshot_bytes += cbuf.size;
 - 2030       |                 if (cbuf.size == 0) {
 - 2031       |                     continue;
-+       3002 | 
++       3002 |
 +       3003 |         if (Settings::values.dump_guest_shaders) {
 +       3004 |             env.Dump(hash, key.unique_hashes[index]);
   2032  3005 |                 }
@@ -13046,7 +13046,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 - 2036       |                     !gpu_memory->IsFullyMappedRange(cbuf.address, cbuf.size)) {
 - 2037       |                     snapshot_ok = false;
 - 2038       |                     break;
-+       3006 | 
++       3006 |
 +       3007 |         if (programs[index].info.requires_layer_emulation) {
 +       3008 |             layer_source_program = &programs[index];
   2039  3009 |                 }
@@ -13063,7 +13063,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 +       3020 |             if (key.unique_hashes[index] != 0 || is_emulated_stage) {
 +       3021 |                 stages[num_stages++] = &programs[index];
   2041  3022 |         }
-- 2042       | 
+- 2042       |
 - 2043       |         if (snapshot_ok) {
 - 2044       |             try {
 - 2045       |                 parallel_texture_snapshot.resize(
@@ -13133,7 +13133,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 +       3063 |             if (Shader::IR::IsGeneric(attribute)) {
 +       3064 |                 vertex_generics.set(Shader::IR::GenericAttributeIndex(attribute));
   2075  3065 |     }
-- 2076       | 
+- 2076       |
 - 2077       |     if (parallel_translate_stages) try {
 - 2078       |         // QueueWork and pool allocation may throw after earlier tasks borrowed
 - 2079       |         // these locals. Drain before unwinding, without stopping persistent workers.
@@ -13364,7 +13364,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 +       3180 |                 mesh_emulation->position_lines[attribute - position_x] = line;
   2208  3181 |     }
 - 2209       | #endif
-- 2210       | 
+- 2210       |
 - 2211       |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
 - 2212       |         const bool is_emulated_stage = layer_source_program != nullptr &&
 - 2213       |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
@@ -13386,7 +13386,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
   2222  3191 |         }
 - 2223       |         Shader::Environment& env{*envs[env_index]};
 - 2224       |         ++env_index;
-- 2225       | 
+- 2225       |
 - 2226       | #ifdef PS5_NATIVE
 - 2227       |         if (parallel_translate_stages) {
 - 2228       |             if (!uses_vertex_a || index != 1) {
@@ -13442,7 +13442,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 +       3217 |             } else if (programs[index].stage == Shader::Stage::TessellationEval) {
 +       3218 |                 evaluation = &programs[index];
   2256  3219 |         }
-- 2257       | 
+- 2257       |
 - 2258       |         // Avoid native subgroup shuffle for the known PositionXY fragment
 - 2259       |         // pattern on non-NVIDIA drivers. Desktop/mobile preserve Eden #4503's
 - 2260       |         // fail-closed skip. PS5 instead uses the newer upstream broadcast
@@ -13486,11 +13486,11 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
   2282  3238 |             return nullptr;
 - 2283       | #endif
   2284  3239 |         }
-- 2285       | 
+- 2285       |
 - 2286       |         if (Settings::values.dump_guest_shaders) {
 - 2287       |             env.Dump(hash, key.unique_hashes[index]);
   2288  3240 |         }
-- 2289       | 
+- 2289       |
 - 2290       |         if (programs[index].info.requires_layer_emulation) {
 - 2291       |             layer_source_program = &programs[index];
   2292  3241 |         }
@@ -13528,7 +13528,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 +       3270 |     std::array<std::vector<u32>, Maxwell::MaxShaderStage> stage_spirv;
 +       3271 |     std::array<std::optional<Shader::RuntimeInfo>, Maxwell::MaxShaderStage> deferred_runtime_infos;
 +       3272 |     std::array<std::vector<u32>, Maxwell::MaxShaderStage> reference_spirv;
-  2299  3273 | 
+  2299  3273 |
   2300  3274 |     const Shader::IR::Program* previous_stage{};
   2301  3275 |     Shader::Backend::Bindings binding;
   2302  3276 |     for (size_t index = uses_vertex_a && uses_vertex_b ? 1 : 0; index < Maxwell::MaxShaderProgram;
@@ -13539,7 +13539,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
   2307  3281 |             continue;
   2308  3282 |         }
   2309  3283 |         UNIMPLEMENTED_IF(index == 0);
-  2310  3284 | 
+  2310  3284 |
   2311  3285 |         Shader::IR::Program& program{programs[index]};
   2312  3286 |         const size_t stage_index{index - 1};
   2313  3287 |         infos[stage_index] = &program.info;
@@ -13548,7 +13548,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 +       3290 |             *t_dropped_unmapped_pointer_word = true;
 +       3291 |             return nullptr;
 +       3292 |         }
-  2314  3293 | 
+  2314  3293 |
 - 2315       |         const auto runtime_info{MakeRuntimeInfo(programs, key, program, previous_stage, device)};
 +       3294 |         if (program.is_geometry_passthrough && previous_stage != nullptr &&
 +       3295 |             !host_info.support_geometry_shader_passthrough) {
@@ -13590,7 +13590,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 - 2321       |         const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(emit_profile, runtime_info, program, binding); }())};
 - 2322       |         device.SaveShader(code);
 - 2323       |         modules[stage_index] = ([&] { auto cost = Eden::Performance::VulkanTimer(23); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderModule, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return BuildShader(device, code); }());
-- 2324       | 
+- 2324       |
 - 2325       |         // Text log + .spv dump. Text log is gated by gpu_log_level != Off; .spv dump
 - 2326       |         // is independent and gated only by gpu_log_shader_dumps.
 - 2327       |         const bool should_log = GPU::Logging::IsActive();
@@ -13622,7 +13622,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 +       3341 |                            static_cast<std::streamsize>(code.size() * sizeof(u32)));
   2340  3342 |             }
   2341  3343 |         }
-- 2342       | 
+- 2342       |
 - 2343       |         if (device.HasDebuggingToolAttached()) {
 - 2344       |             const std::string name{fmt::format("Shader {:016x}", key.unique_hashes[index])};
 - 2345       |             modules[stage_index].SetObjectNameEXT(name.c_str());
@@ -13700,7 +13700,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
 +       3410 |         std::move(mesh_emulation));
 +       3411 |     pipeline->SetMappedPointers(std::move(mapped_pointers));
 +       3412 |     return pipeline;
-  2354  3413 | 
+  2354  3413 |
   2355  3414 | } catch (const Shader::Exception& exception) {
 - 2356       | #ifdef PS5_NATIVE
 - 2357       |     // Failed first-use shaders can be retried. Do not rebuild their CFGs or
@@ -13717,7 +13717,7 @@ Source : [vk_pipeline_cache.cpp:2882–3435](https://github.com/zortos293/Lichii
   2368  3420 |         }
   2369  3421 |         Shader::Environment& env{*envs[env_index]};
   2370  3422 |         ++env_index;
-  2371  3423 | 
+  2371  3423 |
   2372  3424 |         const u32 cfg_offset{static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
 - 2373       |         ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
 - 2374       |             ::Eden::Performance::CachePhase::ShaderCfg,
@@ -13819,10 +13819,10 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 - 1921       | #endif
   1922  2455 |     const bool uses_vertex_a{key.unique_hashes[0] != 0};
   1923  2456 |     const bool uses_vertex_b{key.unique_hashes[1] != 0};
-  1924  2457 | 
+  1924  2457 |
   1925  2458 |     // Layer passthrough generation for devices without VK_EXT_shader_viewport_index_layer
   1926  2459 |     Shader::IR::Program* layer_source_program{};
-- 1927       | 
+- 1927       |
 - 1928       | #ifdef PS5_NATIVE
 - 1929       |     // Lichii's stage-parallel model adapted to Encore's active renderer:
 - 1930       |     // every stage owns its IR pools until SPIR-V emission has consumed the
@@ -13837,7 +13837,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 - 1939       |     // joins them so EDEN_VULKAN_SHADER_MISS keeps the pre-parallel accounting.
 - 1940       |     std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>
 - 1941       |         parallel_stage_costs{};
-- 1942       | 
+- 1942       |
 - 1943       |     // Worker translation must never traverse the live guest GMMU. Snapshot
 - 1944       |     // every guest byte that CFG/IR may consult while still on the GPU owner:
 - 1945       |     // shader code is already copied by GetGraphicsEnvironments/SetCachedSize,
@@ -13862,12 +13862,12 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 - 1964       |     for (auto& sizes : parallel_cbuf_sizes) {
 - 1965       |         sizes.fill(DisabledSnapshotCbuf);
 - 1966       |     }
-- 1967       | 
+- 1967       |
 - 1968       |     GPUVAddr snapshot_texture_base{};
 - 1969       |     u32 snapshot_texture_limit{};
 - 1970       |     bool snapshot_via_header_index{};
 - 1971       |     u32 snapshot_viewport_transform_state{};
-- 1972       | 
+- 1972       |
 - 1973       |     if (parallel_translate_stages) {
 - 1974       |         for (Shader::Environment* const env : envs) {
 - 1975       |             // HLE replacement lookup still belongs to Maxwell3D::replace_table.
@@ -13880,7 +13880,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 - 1982       |         }
 - 1983       |     }
 +       2460 |     bool mesh_unsupported{};
-  1984  2461 | 
+  1984  2461 |
 - 1985       |     if (parallel_translate_stages) {
 - 1986       |         // Disk prewarm uses FileEnvironment and can run without a bound
 - 1987       |         // graphics channel. Only the live NS1 owner may read these registers.
@@ -13914,7 +13914,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 - 2009       |             const size_t physical_stage = index <= 1 ? 0 : index - 1;
 - 2010       |             stage_needed[physical_stage] = true;
 - 2011       |         }
-- 2012       | 
+- 2012       |
 - 2013       |         for (size_t stage = 0; snapshot_ok && stage < Maxwell::MaxShaderStage; ++stage) {
 - 2014       |             if (!stage_needed[stage]) {
 +       2471 |         if (key.unique_hashes[index] == 0) {
@@ -13967,7 +13967,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 - 2038       |                     break;
 +       2500 |             mesh_unsupported = true;
   2039  2501 |                 }
-+       2502 | 
++       2502 |
 +       2503 |         const auto translate = [&] {
 +       2504 |             if (translated[index]) {
 +       2505 |                 return translated[index]->Take();
@@ -13991,7 +13991,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 +       2523 |             // one stage.
 +       2524 |             Shader::Optimization::LimitSampledTextureArrays(programs[index], host_info);
   2041  2525 |         }
-  2042  2526 | 
+  2042  2526 |
 - 2043       |         if (snapshot_ok) {
 - 2044       |             try {
 - 2045       |                 parallel_texture_snapshot.resize(
@@ -14014,7 +14014,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 - 2059       |                         const u32 bytes = parallel_cbuf_sizes[stage][bank];
 - 2060       |                         if (bytes == DisabledSnapshotCbuf || bytes == 0) {
 - 2061       |                             continue;
-+       2531 | 
++       2531 |
 +       2532 |         if (Settings::values.dump_guest_shaders) {
 +       2533 |             env.Dump(hash, key.unique_hashes[index]);
   2062  2534 |                         }
@@ -14023,7 +14023,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 - 2065       |                         gpu_memory->ReadBlock(cbufs[bank].address, storage.data(),
 - 2066       |                                               storage.size());
 - 2067       |                         parallel_cbuf_ptrs[stage][bank] = storage.data();
-+       2535 | 
++       2535 |
 +       2536 |         if (programs[index].info.requires_layer_emulation) {
 +       2537 |             layer_source_program = &programs[index];
   2068  2538 |                     }
@@ -14047,7 +14047,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 +       2553 |         Shader::Optimization::LimitPipelineSampledTextureArrays(
 +       2554 |             std::span{stages.data(), num_stages}, host_info);
   2075  2555 |     }
-- 2076       | 
+- 2076       |
 - 2077       |     if (parallel_translate_stages) try {
 - 2078       |         // QueueWork and pool allocation may throw after earlier tasks borrowed
 - 2079       |         // these locals. Drain before unwinding, without stopping persistent workers.
@@ -14287,7 +14287,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 +       2678 |                      mesh_emulation->payload_stride, reads.empty() ? " none" : reads);
   2208  2679 |     }
 - 2209       | #endif
-- 2210       | 
+- 2210       |
 - 2211       |     for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {
 - 2212       |         const bool is_emulated_stage = layer_source_program != nullptr &&
 - 2213       |                                        index == static_cast<u32>(Maxwell::ShaderType::Geometry);
@@ -14308,7 +14308,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
   2222  2689 |         }
 - 2223       |         Shader::Environment& env{*envs[env_index]};
 - 2224       |         ++env_index;
-- 2225       | 
+- 2225       |
 - 2226       | #ifdef PS5_NATIVE
 - 2227       |         if (parallel_translate_stages) {
 - 2228       |             if (!uses_vertex_a || index != 1) {
@@ -14344,7 +14344,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 +       2693 |                 evaluation = &programs[index];
   2255  2694 |             }
   2256  2695 |         }
-- 2257       | 
+- 2257       |
 - 2258       |         // Avoid native subgroup shuffle for the known PositionXY fragment
 - 2259       |         // pattern on non-NVIDIA drivers. Desktop/mobile preserve Eden #4503's
 - 2260       |         // fail-closed skip. PS5 instead uses the newer upstream broadcast
@@ -14387,11 +14387,11 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
   2282  2713 |             return nullptr;
 - 2283       | #endif
   2284  2714 |         }
-- 2285       | 
+- 2285       |
 - 2286       |         if (Settings::values.dump_guest_shaders) {
 - 2287       |             env.Dump(hash, key.unique_hashes[index]);
   2288  2715 |         }
-- 2289       | 
+- 2289       |
 - 2290       |         if (programs[index].info.requires_layer_emulation) {
 - 2291       |             layer_source_program = &programs[index];
   2292  2716 |         }
@@ -14429,7 +14429,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
   2298  2748 |     std::array<vk::ShaderModule, Maxwell::MaxShaderStage> modules;
 +       2749 |     std::array<std::optional<Shader::RuntimeInfo>, Maxwell::MaxShaderStage> deferred_runtime_infos;
 +       2750 |     std::array<std::vector<u32>, Maxwell::MaxShaderStage> reference_spirv;
-  2299  2751 | 
+  2299  2751 |
   2300  2752 |     const Shader::IR::Program* previous_stage{};
   2301  2753 |     Shader::Backend::Bindings binding;
   2302  2754 |     for (size_t index = uses_vertex_a && uses_vertex_b ? 1 : 0; index < Maxwell::MaxShaderProgram;
@@ -14440,11 +14440,11 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
   2307  2759 |             continue;
   2308  2760 |         }
   2309  2761 |         UNIMPLEMENTED_IF(index == 0);
-  2310  2762 | 
+  2310  2762 |
   2311  2763 |         Shader::IR::Program& program{programs[index]};
   2312  2764 |         const size_t stage_index{index - 1};
   2313  2765 |         infos[stage_index] = &program.info;
-  2314  2766 | 
+  2314  2766 |
 - 2315       |         const auto runtime_info{MakeRuntimeInfo(programs, key, program, previous_stage, device)};
 +       2767 |         auto runtime_info{MakeRuntimeInfo(programs, key, program, previous_stage, device)};
 +       2768 |         if (mesh_emulation && (program.stage == Shader::Stage::Mesh ||
@@ -14472,7 +14472,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 - 2321       |         const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(emit_profile, runtime_info, program, binding); }())};
 - 2322       |         device.SaveShader(code);
 - 2323       |         modules[stage_index] = ([&] { auto cost = Eden::Performance::VulkanTimer(23); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderModule, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return BuildShader(device, code); }());
-- 2324       | 
+- 2324       |
 - 2325       |         // Text log + .spv dump. Text log is gated by gpu_log_level != Off; .spv dump
 - 2326       |         // is independent and gated only by gpu_log_shader_dumps.
 - 2327       |         const bool should_log = GPU::Logging::IsActive();
@@ -14504,7 +14504,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 +       2800 |             if (VideoCommon::Nx2Perf::Verify()) {
 +       2801 |                 reference_spirv[stage_index] = ([&] { auto cost = Eden::Performance::VulkanTimer(22); return EmitSPIRV(profile, runtime_info, program, binding); }());
   2341  2802 |         }
-- 2342       | 
+- 2342       |
 - 2343       |         if (device.HasDebuggingToolAttached()) {
 - 2344       |             const std::string name{fmt::format("Shader {:016x}", key.unique_hashes[index])};
 - 2345       |             modules[stage_index].SetObjectNameEXT(name.c_str());
@@ -14576,7 +14576,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
 +       2863 |         std::move(mesh_emulation));
 +       2864 |     pipeline->SetMappedPointers(std::move(mapped_pointers));
 +       2865 |     return pipeline;
-  2354  2866 | 
+  2354  2866 |
   2355  2867 | } catch (const Shader::Exception& exception) {
 - 2356       | #ifdef PS5_NATIVE
 - 2357       |     // Failed first-use shaders can be retried. Do not rebuild their CFGs or
@@ -14593,7 +14593,7 @@ Source : [vk_pipeline_cache.cpp:2409–2890](https://github.com/heydemoura/Eglan
   2368  2873 |         }
   2369  2874 |         Shader::Environment& env{*envs[env_index]};
   2370  2875 |         ++env_index;
-  2371  2876 | 
+  2371  2876 |
   2372  2877 |         const u32 cfg_offset{static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};
 - 2373       |         ::Eden::Performance::CachePhaseTimer cfg_stage_cost{
 - 2374       |             ::Eden::Performance::CachePhase::ShaderCfg,
@@ -15582,7 +15582,7 @@ Cette annexe complète les diffs Encore↔Lichii↔Eglantine avec des contrats e
   213 |         u32 count;
   214 |     } NX_PACKED in = { *layout, 1 };
   215 |     u64 size = 0;
-  216 | 
+  216 |
   217 |     Result rc = tipcDispatchInOut(&g_gsvSrv, 435, in, size);
   218 |     if (R_SUCCEEDED(rc) && out_size) *out_size = size;
   219 |     return rc;
@@ -15603,7 +15603,7 @@ Cette annexe complète les diffs Encore↔Lichii↔Eglantine avec des contrats e
   227 |         u64 size;
   228 |     } NX_PACKED in = { type, size };
   229 |     u32 memory_id = 0;
-  230 | 
+  230 |
   231 |     Result rc = tipcDispatchInOut(&g_gsvSrv, 111, in, memory_id);
   232 |     if (R_SUCCEEDED(rc) && out_memory_id) *out_memory_id = memory_id;
   233 |     return rc;
@@ -15633,7 +15633,7 @@ Cette annexe complète les diffs Encore↔Lichii↔Eglantine avec des contrats e
   248 |         .gpu_memory_handle = gpu_memory_handle,
   249 |         .offset = offset,
   250 |     };
-  251 | 
+  251 |
   252 |     return tipcDispatchIn(&g_gsvSrv, 423, in);
   253 | }
 ```
@@ -15653,7 +15653,7 @@ Cette annexe complète les diffs Encore↔Lichii↔Eglantine avec des contrats e
   261 |         u32 memory_id;
   262 |     } NX_PACKED in = { *layout, 1, memory_id };
   263 |     u32 image_id = 0;
-  264 | 
+  264 |
   265 |     Result rc = tipcDispatchInOut(&g_gsvSrv, 429, in, image_id);
   266 |     if (R_SUCCEEDED(rc) && out_image_id) *out_image_id = image_id;
   267 |     return rc;
@@ -15673,7 +15673,7 @@ Cette annexe complète les diffs Encore↔Lichii↔Eglantine avec des contrats e
   272 |         u32 image_id;
   273 |         u32 count;
   274 |     } in = { image_id, count };
-  275 | 
+  275 |
   276 |     return tipcDispatchIn(&g_gsvSrv, 315, in);
   277 | }
 ```
@@ -15744,7 +15744,7 @@ Cette annexe complète les diffs Encore↔Lichii↔Eglantine avec des contrats e
   593 |         u8 mode;
   594 |         u8 pad[3];
   595 |     } NX_PACKED out = {};
-  596 | 
+  596 |
   597 |     Result rc = tipcDispatchInOut(&s->s, 103, in, out);
   598 |     if (R_SUCCEEDED(rc) && out_value) *out_value = out.value;
   599 |     if (R_SUCCEEDED(rc) && out_mode) *out_mode = out.mode;
@@ -15767,7 +15767,7 @@ Cette annexe complète les diffs Encore↔Lichii↔Eglantine avec des contrats e
   619 |         u64 target;
   620 |         u32 mode;
   621 |     } NX_PACKED in = { slot, ~producer_id, target, mode };
-  622 | 
+  622 |
   623 |     return tipcDispatchIn(&s->s, 201, in);
   624 | }
 ```
@@ -15799,19 +15799,19 @@ Cette annexe complète les diffs Encore↔Lichii↔Eglantine avec des contrats e
   639 |     memcpy(&token, sync->data, sizeof(token));
   640 |     memcpy(&target, sync->data + 8, sizeof(target));
   641 |     const u8 comparison = sync->data[4];
-  642 | 
+  642 |
   643 |     if (!token && !comparison && !target) {
   644 |         *out_reached = true;
   645 |         return 0;
   646 |     }
   647 |     if (comparison > 1)
   648 |         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-  649 | 
+  649 |
   650 |     u64 counter = 0;
   651 |     Result rc = gsvSyncReadCounter(s, ~token, &counter, NULL);
   652 |     if (R_FAILED(rc))
   653 |         return rc;
-  654 | 
+  654 |
   655 |     if (counter == UINT64_MAX)
   656 |         *out_reached = true;
   657 |     else if (comparison == 1)
@@ -15841,7 +15841,7 @@ Points de contrat : producteur inversé pour 103/201, cible u64, comparaison nat
    50 | {
    51 |    if (out == NULL)
    52 |       return NVKMD_NVGPU_NATIVE_INVALID_ARGUMENT;
-   53 | 
+   53 |
    54 |    /* Decode into a temporary value. Thus all input is read before out is
    55 |     * written, even when the buffers overlap. Every failure clears the
    56 |     * previous output observation.
@@ -15912,23 +15912,23 @@ Points de contrat : producteur inversé pour 103/201, cible u64, comparaison nat
   140 | {
   141 |    if (chars == NULL)
   142 |       return NVKMD_NVGPU_NATIVE_PROFILE_INVALID;
-  143 | 
+  143 |
   144 |    /* Compare each field separately. ORing or masking unknown inputs can
   145 |     * produce a false 17e. */
   146 |    if (chars->arch != NATIVE_SELECTED_Q00_ARCH ||
   147 |        chars->impl != NATIVE_SELECTED_Q04_IMPL)
   148 |       return NVKMD_NVGPU_NATIVE_PROFILE_UNSUPPORTED;
-  149 | 
+  149 |
   150 |    uint32_t enabled_gpcs = 0;
   151 |    for (uint32_t mask = chars->gpc_mask; mask != 0; mask &= mask - 1)
   152 |       enabled_gpcs++;
-  153 | 
+  153 |
   154 |    if (chars->revision >= NATIVE_REVISION_EXCLUSIVE_LIMIT ||
   155 |        chars->gpc_count == 0 ||
   156 |        chars->gpc_count != chars->gpc_count_copy ||
   157 |        chars->gpc_count != enabled_gpcs || chars->tpc_per_gpc == 0)
   158 |       return NVKMD_NVGPU_NATIVE_PROFILE_INVALID;
-  159 | 
+  159 |
   160 |    /* Narrow recognition of saved scalar/class inputs, not a universal 17e
   161 |     * profile. Conditional class suppression and other revisions need their
   162 |     * own validation. Do not normalize C76F to C56F.
@@ -15948,7 +15948,7 @@ Points de contrat : producteur inversé pour 103/201, cible u64, comparaison nat
   176 |        chars->class_inline != NATIVE_SELECTED_Q68_CLASS_INLINE ||
   177 |        chars->class_copy != NATIVE_SELECTED_Q6C_CLASS_COPY)
   178 |       return NVKMD_NVGPU_NATIVE_PROFILE_UNSUPPORTED;
-  179 | 
+  179 |
   180 |    /* Even the observed values have no confirmed native NAK, cache, memory or
   181 |     * engine contract. Never fall back to the GM20B or Mesa defaults.
   182 |     */
@@ -15982,7 +15982,7 @@ OunceVK lit notamment big_page_size_raw, compression_page_size_raw, pde_coverage
    60 |    if (submit->self || submit->attempted ||
    61 |        !nvkmd_nvgpu_gpu_endpoint_valid(endpoint))
    62 |       return NVKMD_NVGPU_SUBMIT_STATE;
-   63 | 
+   63 |
    64 |    submit->self = submit;
    65 |    submit->attempted = true;
    66 |    submit->generation = endpoint->generation;
@@ -15990,20 +15990,20 @@ OunceVK lit notamment big_page_size_raw, compression_page_size_raw, pde_coverage
    68 |       if (!encode_entry(submit->entry + 8 * i, &entries[i], span_flags))
    69 |          return NVKMD_NVGPU_SUBMIT_ENTRY;
    70 |    }
-   71 | 
+   71 |
    72 |    /* Control: +8 entry count, +12 flags. The service returns the producer
    73 |     * ID at +16 and its target at +20. */
    74 |    memset(submit->control, 0, sizeof(submit->control));
    75 |    write_le32(submit->control + 8, entry_count);
    76 |    write_le32(submit->control + 12, submit_flags);
-   77 | 
+   77 |
    78 |    __asm__ volatile("dsb sy" ::: "memory");
    79 |    submit->send_started = true;
    80 |    submit->result = nvIoctl2(endpoint->gpu_fd, SUBMIT_IOCTL, submit->control,
    81 |                              submit->entry, (size_t)entry_count * 8);
    82 |    if (R_FAILED(submit->result))
    83 |       return NVKMD_NVGPU_SUBMIT_REPLY;
-   84 | 
+   84 |
    85 |    const uint32_t returned_count = read_le32(submit->control + 8);
    86 |    const uint32_t returned_flags = read_le32(submit->control + 12);
    87 |    const uint32_t returned_id = read_le32(submit->control + 16);
@@ -16085,7 +16085,7 @@ Pour comparaison, propriétaire Encore déjà étudié : [encore-active/ns2-runt
    24 | void nvn_event_publish(volatile uint32_t *word, unsigned mode, uint32_t value);
    25 | void nvn_event_publish_gpu(volatile uint32_t *word, unsigned mode, uint32_t value, uint64_t fence);
    26 | void nvn_queue_gpu_progress(void);
-   27 | 
+   27 |
 ```
 
 La première ligne du header distingue explicitement la completion de queue invitée d'un fence physique Metal. Cela va dans le même sens conceptuel que la séparation nécessaire chez Encore entre commande acceptée, travail GPU soumis et producteur/syncpoint atteint. L'implémentation n'est pas transposable : nxnative rejoue NVN vers Metal et n'émule pas notre GPFIFO Ampere sur Vulkan PS5.
@@ -16665,16 +16665,16 @@ Source : [k_page_table_base.cpp:483-497](https://github.com/zortos293/Lichii/blo
    447   483 | Result KPageTableBase::FinalizeProcess() {
    448   484 |     // Only process tables should be finalized.
    449   485 |     ASSERT(!this->IsKernel());
-   450   486 | 
+   450   486 |
    451   487 |     // NOTE: Here Nintendo calls an unknown OnFinalize function.
    452   488 |     // this->OnFinalize();
-   453   489 | 
+   453   489 |
    454   490 |     // NOTE: Here Nintendo calls a second unknown OnFinalize function.
    455   491 |     // this->OnFinalize2();
-   456   492 | 
+   456   492 |
    457   493 |     // NOTE: Here Nintendo does a page table walk to discover heap pages to free.
    458   494 |     // We will use the block manager finalization below to free them.
-   459   495 | 
+   459   495 |
    460   496 |     R_SUCCEED();
    461   497 | }
 ```
@@ -16690,16 +16690,16 @@ Source : [k_page_table_base.cpp:495-509](https://github.com/heydemoura/Eglantine
    447   495 | Result KPageTableBase::FinalizeProcess() {
    448   496 |     // Only process tables should be finalized.
    449   497 |     ASSERT(!this->IsKernel());
-   450   498 | 
+   450   498 |
    451   499 |     // NOTE: Here Nintendo calls an unknown OnFinalize function.
    452   500 |     // this->OnFinalize();
-   453   501 | 
+   453   501 |
    454   502 |     // NOTE: Here Nintendo calls a second unknown OnFinalize function.
    455   503 |     // this->OnFinalize2();
-   456   504 | 
+   456   504 |
    457   505 |     // NOTE: Here Nintendo does a page table walk to discover heap pages to free.
    458   506 |     // We will use the block manager finalization below to free them.
-   459   507 | 
+   459   507 |
    460   508 |     R_SUCCEED();
    461   509 | }
 ```
@@ -16721,52 +16721,52 @@ Source : [k_process.cpp:131-191](https://github.com/zortos293/Lichii/blob/028888
    130   131 | void KProcess::Finalize(KernelCore& kernel) {
    131   132 |     // Delete the process local region.
    132   133 |     this->DeleteThreadLocalRegion(kernel, m_plr_address);
-   133   134 | 
+   133   134 |
    134   135 |     // Get the used memory size.
    135   136 |     const size_t used_memory_size = this->GetUsedNonSystemUserPhysicalMemorySize(kernel);
-   136   137 | 
+   136   137 |
    137   138 |     // Finalize the page table.
    138   139 |     m_page_table.Finalize();
-   139   140 | 
+   139   140 |
    140   141 |     // Finish using our system resource.
    141   142 |     if (m_system_resource) {
    142   143 |         if (m_system_resource->IsSecureResource()) {
    143   144 |             // Finalize optimized memory. If memory wasn't optimized, this is a no-op.
    144   145 |             kernel.MemoryManager().FinalizeOptimizedMemory(this->GetId(), m_memory_pool);
    145   146 |         }
-   146   147 | 
+   146   147 |
    147   148 |         m_system_resource->Close(kernel);
    148   149 |         m_system_resource = nullptr;
    149   150 |     }
-   150   151 | 
+   150   151 |
    151   152 |     // Free all shared memory infos.
    152   153 |     {
    153   154 |         auto it = m_shared_memory_list.begin();
    154   155 |         while (it != m_shared_memory_list.end()) {
    155   156 |             KSharedMemoryInfo* info = std::addressof(*it);
    156   157 |             KSharedMemory* shmem = info->GetSharedMemory();
-   157   158 | 
+   157   158 |
    158   159 |             while (!info->Close()) {
    159   160 |                 shmem->Close(kernel);
    160   161 |             }
    161   162 |             shmem->Close(kernel);
-   162   163 | 
+   162   163 |
    163   164 |             it = m_shared_memory_list.erase(it);
    164   165 |             KSharedMemoryInfo::Free(kernel, info);
    165   166 |         }
    166   167 |     }
-   167   168 | 
+   167   168 |
    168   169 |     // Our thread local page list must be empty at this point.
    169   170 |     ASSERT(m_partially_used_tlp_tree.empty());
    170   171 |     ASSERT(m_fully_used_tlp_tree.empty());
-   171   172 | 
+   171   172 |
    172   173 |     // Release memory to the resource limit.
    173   174 |     if (m_resource_limit != nullptr) {
    174   175 |         ASSERT(used_memory_size >= m_memory_release_hint);
    175   176 |         m_resource_limit->Release(kernel, Svc::LimitableResource::PhysicalMemoryMax, used_memory_size, used_memory_size - m_memory_release_hint);
    176   177 |         m_resource_limit->Close(kernel);
    177   178 |     }
-   178   179 | 
+   178   179 |
    179   180 |     // Clear expensive resources, as the destructor is not called for guest objects.
    180   181 |     for (auto& interface : m_arm_interfaces) {
    181   182 |         interface.reset();
@@ -16775,7 +16775,7 @@ Source : [k_process.cpp:131-191](https://github.com/zortos293/Lichii/blob/028888
 +        185 |     m_memory.ReleaseHypervisor();
 +        186 | #endif
    183   187 |     m_exclusive_monitor.reset();
-   184   188 | 
+   184   188 |
    185   189 |     // Perform inherited finalization.
    186   190 |     KSynchronizationObject::Finalize(kernel);
    187   191 | }
@@ -16806,10 +16806,10 @@ Source : [k_process.cpp:134-233](https://github.com/heydemoura/EglantinePS5/blob
 +        148 |     eden_mark("local_region");
 +        149 | #else // PS5
 +        150 | #endif // PS5
-   133   151 | 
+   133   151 |
    134   152 |     // Get the used memory size.
    135   153 |     const size_t used_memory_size = this->GetUsedNonSystemUserPhysicalMemorySize(kernel);
-   136   154 | 
+   136   154 |
    137   155 |     // Finalize the page table.
 +        156 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
 +        157 |     eden_mark("used_memory_size");
@@ -16820,18 +16820,18 @@ Source : [k_process.cpp:134-233](https://github.com/heydemoura/EglantinePS5/blob
 +        162 |     eden_mark("page_table");
 +        163 | #else // PS5
 +        164 | #endif // PS5
-   139   165 | 
+   139   165 |
    140   166 |     // Finish using our system resource.
    141   167 |     if (m_system_resource) {
    142   168 |         if (m_system_resource->IsSecureResource()) {
    143   169 |             // Finalize optimized memory. If memory wasn't optimized, this is a no-op.
    144   170 |             kernel.MemoryManager().FinalizeOptimizedMemory(this->GetId(), m_memory_pool);
    145   171 |         }
-   146   172 | 
+   146   172 |
    147   173 |         m_system_resource->Close(kernel);
    148   174 |         m_system_resource = nullptr;
    149   175 |     }
-   150   176 | 
+   150   176 |
 +        177 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
 +        178 |     eden_mark("system_resource");
 +        179 | #else // PS5
@@ -16842,17 +16842,17 @@ Source : [k_process.cpp:134-233](https://github.com/heydemoura/EglantinePS5/blob
    154   184 |         while (it != m_shared_memory_list.end()) {
    155   185 |             KSharedMemoryInfo* info = std::addressof(*it);
    156   186 |             KSharedMemory* shmem = info->GetSharedMemory();
-   157   187 | 
+   157   187 |
    158   188 |             while (!info->Close()) {
    159   189 |                 shmem->Close(kernel);
    160   190 |             }
    161   191 |             shmem->Close(kernel);
-   162   192 | 
+   162   192 |
    163   193 |             it = m_shared_memory_list.erase(it);
    164   194 |             KSharedMemoryInfo::Free(kernel, info);
    165   195 |         }
    166   196 |     }
-   167   197 | 
+   167   197 |
 +        198 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
 +        199 |     eden_mark("shared_memory");
 +        200 | #else // PS5
@@ -16860,14 +16860,14 @@ Source : [k_process.cpp:134-233](https://github.com/heydemoura/EglantinePS5/blob
    168   202 |     // Our thread local page list must be empty at this point.
    169   203 |     ASSERT(m_partially_used_tlp_tree.empty());
    170   204 |     ASSERT(m_fully_used_tlp_tree.empty());
-   171   205 | 
+   171   205 |
    172   206 |     // Release memory to the resource limit.
    173   207 |     if (m_resource_limit != nullptr) {
    174   208 |         ASSERT(used_memory_size >= m_memory_release_hint);
    175   209 |         m_resource_limit->Release(kernel, Svc::LimitableResource::PhysicalMemoryMax, used_memory_size, used_memory_size - m_memory_release_hint);
    176   210 |         m_resource_limit->Close(kernel);
    177   211 |     }
-   178   212 | 
+   178   212 |
 +        213 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
 +        214 |     eden_mark("resource_limit");
 +        215 | #else // PS5
@@ -16885,7 +16885,7 @@ Source : [k_process.cpp:134-233](https://github.com/heydemoura/EglantinePS5/blob
 +        227 |     eden_mark("exclusive_monitor");
 +        228 | #else // PS5
 +        229 | #endif // PS5
-   184   230 | 
+   184   230 |
    185   231 |     // Perform inherited finalization.
    186   232 |     KSynchronizationObject::Finalize(kernel);
    187   233 | }
@@ -16955,9 +16955,9 @@ Source : [buffer_queue_producer.cpp:40-63](https://github.com/zortos293/Lichii/b
 ```diff
    115    40 | Status BufferQueueProducer::RequestBuffer(s32 slot, std::shared_ptr<GraphicBuffer>* buf) {
    116    41 |     LOG_DEBUG(Service_Nvnflinger, "slot {}", slot);
-   117    42 | 
+   117    42 |
    118    43 |     std::scoped_lock lock{core->mutex};
-   119    44 | 
+   119    44 |
    120    45 |     if (core->is_abandoned) {
    121    46 |         LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
    122    47 |         return Status::NoInit;
@@ -16971,10 +16971,10 @@ Source : [buffer_queue_producer.cpp:40-63](https://github.com/zortos293/Lichii/b
    130    55 |                   slots[slot].buffer_state);
    131    56 |         return Status::BadValue;
    132    57 |     }
-   133    58 | 
+   133    58 |
    134    59 |     slots[slot].request_buffer_called = true;
    135    60 |     *buf = slots[slot].graphic_buffer;
-   136    61 | 
+   136    61 |
    137    62 |     return Status::NoError;
    138    63 | }
 ```
@@ -16989,9 +16989,9 @@ Source : [buffer_queue_producer.cpp:46-69](https://github.com/heydemoura/Eglanti
 ```diff
    115    46 | Status BufferQueueProducer::RequestBuffer(s32 slot, std::shared_ptr<GraphicBuffer>* buf) {
    116    47 |     LOG_DEBUG(Service_Nvnflinger, "slot {}", slot);
-   117    48 | 
+   117    48 |
    118    49 |     std::scoped_lock lock{core->mutex};
-   119    50 | 
+   119    50 |
    120    51 |     if (core->is_abandoned) {
    121    52 |         LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
    122    53 |         return Status::NoInit;
@@ -17005,10 +17005,10 @@ Source : [buffer_queue_producer.cpp:46-69](https://github.com/heydemoura/Eglanti
    130    61 |                   slots[slot].buffer_state);
    131    62 |         return Status::BadValue;
    132    63 |     }
-   133    64 | 
+   133    64 |
    134    65 |     slots[slot].request_buffer_called = true;
    135    66 |     *buf = slots[slot].graphic_buffer;
-   136    67 | 
+   136    67 |
    137    68 |     return Status::NoError;
    138    69 | }
 ```
@@ -17033,26 +17033,26 @@ Source : [buffer_queue_producer.cpp:229-321](https://github.com/zortos293/Lichii
    317   230 |                                           u32 height, PixelFormat format, u32 usage) {
    318   231 |     LOG_DEBUG(Service_Nvnflinger, "async={} w={} h={} format={}, usage={}",
    319   232 |               async ? "true" : "false", width, height, format, usage);
-   320   233 | 
+   320   233 |
    321   234 |     if ((width != 0 && height == 0) || (width == 0 && height != 0)) {
    322   235 |         LOG_ERROR(Service_Nvnflinger, "invalid size: w={} h={}", width, height);
    323   236 |         return Status::BadValue;
    324   237 |     }
-   325   238 | 
+   325   238 |
    326   239 |     Status return_flags = Status::NoError;
    327   240 |     bool attached_by_consumer = false;
 -  328       |     u64 returned_frame_number{};
    329   241 |     {
    330   242 |         std::unique_lock lock{core->mutex};
    331   243 |         core->WaitWhileAllocatingLocked();
-   332   244 | 
+   332   244 |
    333   245 |         if (format == PixelFormat::NoFormat) {
    334   246 |             format = core->default_buffer_format;
    335   247 |         }
-   336   248 | 
+   336   248 |
    337   249 |         // Enable the usage bits the consumer requested
    338   250 |         usage |= core->consumer_usage_bit;
-   339   251 | 
+   339   251 |
    340   252 |         s32 found{};
 -  341       | #ifdef EDEN_NVNF_DEQUEUE_PROFILE
 -  342       |         const auto dequeue_start = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) ? ::Eden::Performance::NowNs() : 0;
@@ -17064,25 +17064,25 @@ Source : [buffer_queue_producer.cpp:229-321](https://github.com/zortos293/Lichii
    348   254 |         if (status != Status::NoError) {
    349   255 |             return status;
    350   256 |         }
-   351   257 | 
+   351   257 |
    352   258 |         // This should not happen
    353   259 |         if (found == BufferQueueCore::INVALID_BUFFER_SLOT) {
    354   260 |             LOG_ERROR(Service_Nvnflinger, "no available buffer slots");
    355   261 |             return Status::Busy;
    356   262 |         }
-   357   263 | 
+   357   263 |
    358   264 |         *out_slot = found;
-   359   265 | 
+   359   265 |
    360   266 |         attached_by_consumer = slots[found].attached_by_consumer;
-   361   267 | 
+   361   267 |
    362   268 |         const bool use_default_size = !width && !height;
    363   269 |         if (use_default_size) {
    364   270 |             width = core->default_width;
    365   271 |             height = core->default_height;
    366   272 |         }
-   367   273 | 
+   367   273 |
    368   274 |         slots[found].buffer_state = BufferState::Dequeued;
-   369   275 | 
+   369   275 |
    370   276 |         const std::shared_ptr<GraphicBuffer>& buffer(slots[found].graphic_buffer);
    371   277 |         if ((buffer == nullptr) || (buffer->Width() != width) || (buffer->Height() != height) ||
    372   278 |             (buffer->Format() != format) || ((buffer->Usage() & usage) != usage)) {
@@ -17090,47 +17090,47 @@ Source : [buffer_queue_producer.cpp:229-321](https://github.com/zortos293/Lichii
    374   280 |             slots[found].graphic_buffer = nullptr;
    375   281 |             slots[found].request_buffer_called = false;
    376   282 |             slots[found].fence = Fence::NoFence();
-   377   283 | 
+   377   283 |
    378   284 |             return_flags |= Status::BufferNeedsReallocation;
    379   285 |         }
-   380   286 | 
+   380   286 |
    381   287 |         *out_fence = slots[found].fence;
    382   288 |         slots[found].fence = Fence::NoFence();
 -  383       |         // Snapshot the slot metadata while the queue mutex is still owned.
 -  384       |         returned_frame_number = slots[found].frame_number;
    385   289 |     }
-   386   290 | 
+   386   290 |
    387   291 |     if ((return_flags & Status::BufferNeedsReallocation) != Status::None) {
    388   292 |         LOG_DEBUG(Service_Nvnflinger, "allocating a new buffer for slot {}", *out_slot);
-   389   293 | 
+   389   293 |
    390   294 |         auto graphic_buffer = std::make_shared<GraphicBuffer>(width, height, format, usage);
    391   295 |         if (graphic_buffer == nullptr) {
    392   296 |             LOG_ERROR(Service_Nvnflinger, "creating GraphicBuffer failed");
    393   297 |             return Status::NoMemory;
    394   298 |         }
-   395   299 | 
+   395   299 |
    396   300 |         {
    397   301 |             std::scoped_lock lock{core->mutex};
-   398   302 | 
+   398   302 |
    399   303 |             if (core->is_abandoned) {
    400   304 |                 LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
    401   305 |                 return Status::NoInit;
    402   306 |             }
-   403   307 | 
+   403   307 |
    404   308 |             slots[*out_slot].frame_number = UINT32_MAX;
 -  405       |             returned_frame_number = UINT32_MAX;
    406   309 |             slots[*out_slot].graphic_buffer = graphic_buffer;
    407   310 |         }
    408   311 |     }
-   409   312 | 
+   409   312 |
    410   313 |     if (attached_by_consumer) {
    411   314 |         return_flags |= Status::BufferNeedsReallocation;
    412   315 |     }
-   413   316 | 
+   413   316 |
    414   317 |     LOG_DEBUG(Service_Nvnflinger, "returning slot={} frame={}, flags={}", *out_slot,
 -  415       |               returned_frame_number, return_flags);
 +        318 |               slots[*out_slot].frame_number, return_flags);
-   416   319 | 
+   416   319 |
    417   320 |     return return_flags;
    418   321 | }
 ```
@@ -17147,26 +17147,26 @@ Source : [buffer_queue_producer.cpp:235-335](https://github.com/heydemoura/Eglan
    317   236 |                                           u32 height, PixelFormat format, u32 usage) {
    318   237 |     LOG_DEBUG(Service_Nvnflinger, "async={} w={} h={} format={}, usage={}",
    319   238 |               async ? "true" : "false", width, height, format, usage);
-   320   239 | 
+   320   239 |
    321   240 |     if ((width != 0 && height == 0) || (width == 0 && height != 0)) {
    322   241 |         LOG_ERROR(Service_Nvnflinger, "invalid size: w={} h={}", width, height);
    323   242 |         return Status::BadValue;
    324   243 |     }
-   325   244 | 
+   325   244 |
    326   245 |     Status return_flags = Status::NoError;
    327   246 |     bool attached_by_consumer = false;
 -  328       |     u64 returned_frame_number{};
    329   247 |     {
    330   248 |         std::unique_lock lock{core->mutex};
    331   249 |         core->WaitWhileAllocatingLocked();
-   332   250 | 
+   332   250 |
    333   251 |         if (format == PixelFormat::NoFormat) {
    334   252 |             format = core->default_buffer_format;
    335   253 |         }
-   336   254 | 
+   336   254 |
    337   255 |         // Enable the usage bits the consumer requested
    338   256 |         usage |= core->consumer_usage_bit;
-   339   257 | 
+   339   257 |
    340   258 |         s32 found{};
 -  341       | #ifdef EDEN_NVNF_DEQUEUE_PROFILE
 -  342       |         const auto dequeue_start = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) ? ::Eden::Performance::NowNs() : 0;
@@ -17186,25 +17186,25 @@ Source : [buffer_queue_producer.cpp:235-335](https://github.com/heydemoura/Eglan
    348   268 |         if (status != Status::NoError) {
    349   269 |             return status;
    350   270 |         }
-   351   271 | 
+   351   271 |
    352   272 |         // This should not happen
    353   273 |         if (found == BufferQueueCore::INVALID_BUFFER_SLOT) {
    354   274 |             LOG_ERROR(Service_Nvnflinger, "no available buffer slots");
    355   275 |             return Status::Busy;
    356   276 |         }
-   357   277 | 
+   357   277 |
    358   278 |         *out_slot = found;
-   359   279 | 
+   359   279 |
    360   280 |         attached_by_consumer = slots[found].attached_by_consumer;
-   361   281 | 
+   361   281 |
    362   282 |         const bool use_default_size = !width && !height;
    363   283 |         if (use_default_size) {
    364   284 |             width = core->default_width;
    365   285 |             height = core->default_height;
    366   286 |         }
-   367   287 | 
+   367   287 |
    368   288 |         slots[found].buffer_state = BufferState::Dequeued;
-   369   289 | 
+   369   289 |
    370   290 |         const std::shared_ptr<GraphicBuffer>& buffer(slots[found].graphic_buffer);
    371   291 |         if ((buffer == nullptr) || (buffer->Width() != width) || (buffer->Height() != height) ||
    372   292 |             (buffer->Format() != format) || ((buffer->Usage() & usage) != usage)) {
@@ -17212,47 +17212,47 @@ Source : [buffer_queue_producer.cpp:235-335](https://github.com/heydemoura/Eglan
    374   294 |             slots[found].graphic_buffer = nullptr;
    375   295 |             slots[found].request_buffer_called = false;
    376   296 |             slots[found].fence = Fence::NoFence();
-   377   297 | 
+   377   297 |
    378   298 |             return_flags |= Status::BufferNeedsReallocation;
    379   299 |         }
-   380   300 | 
+   380   300 |
    381   301 |         *out_fence = slots[found].fence;
    382   302 |         slots[found].fence = Fence::NoFence();
 -  383       |         // Snapshot the slot metadata while the queue mutex is still owned.
 -  384       |         returned_frame_number = slots[found].frame_number;
    385   303 |     }
-   386   304 | 
+   386   304 |
    387   305 |     if ((return_flags & Status::BufferNeedsReallocation) != Status::None) {
    388   306 |         LOG_DEBUG(Service_Nvnflinger, "allocating a new buffer for slot {}", *out_slot);
-   389   307 | 
+   389   307 |
    390   308 |         auto graphic_buffer = std::make_shared<GraphicBuffer>(width, height, format, usage);
    391   309 |         if (graphic_buffer == nullptr) {
    392   310 |             LOG_ERROR(Service_Nvnflinger, "creating GraphicBuffer failed");
    393   311 |             return Status::NoMemory;
    394   312 |         }
-   395   313 | 
+   395   313 |
    396   314 |         {
    397   315 |             std::scoped_lock lock{core->mutex};
-   398   316 | 
+   398   316 |
    399   317 |             if (core->is_abandoned) {
    400   318 |                 LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
    401   319 |                 return Status::NoInit;
    402   320 |             }
-   403   321 | 
+   403   321 |
    404   322 |             slots[*out_slot].frame_number = UINT32_MAX;
 -  405       |             returned_frame_number = UINT32_MAX;
    406   323 |             slots[*out_slot].graphic_buffer = graphic_buffer;
    407   324 |         }
    408   325 |     }
-   409   326 | 
+   409   326 |
    410   327 |     if (attached_by_consumer) {
    411   328 |         return_flags |= Status::BufferNeedsReallocation;
    412   329 |     }
-   413   330 | 
+   413   330 |
    414   331 |     LOG_DEBUG(Service_Nvnflinger, "returning slot={} frame={}, flags={}", *out_slot,
 -  415       |               returned_frame_number, return_flags);
 +        332 |               slots[*out_slot].frame_number, return_flags);
-   416   333 | 
+   416   333 |
    417   334 |     return return_flags;
    418   335 | }
 ```
@@ -17281,9 +17281,9 @@ Source : [buffer_queue_producer.cpp:434-551](https://github.com/zortos293/Lichii
    547   441 |     bool async{};
    548   442 |     s32 swap_interval{};
    549   443 |     Fence fence{};
-   550   444 | 
+   550   444 |
    551   445 |     input.Deflate(&timestamp, &is_auto_timestamp, &crop, &scaling_mode, &transform, &sticky_transform_, &async, &swap_interval, &fence);
-   552   446 | 
+   552   446 |
    553   447 |     switch (scaling_mode) {
    554   448 |     case NativeWindowScalingMode::Freeze:
    555   449 |     case NativeWindowScalingMode::ScaleToWindow:
@@ -17295,22 +17295,22 @@ Source : [buffer_queue_producer.cpp:434-551](https://github.com/zortos293/Lichii
    561   455 |         LOG_ERROR(Service_Nvnflinger, "unknown scaling mode {}", scaling_mode);
    562   456 |         return Status::BadValue;
    563   457 |     }
-   564   458 | 
+   564   458 |
    565   459 |     BufferItem item;
    566   460 |     std::shared_ptr<IConsumerListener> listener_available;
    567   461 |     std::shared_ptr<IConsumerListener> listener_replaced;
 -  568       |     bool recycled_queued_slot = false;
-   569   462 | 
+   569   462 |
    570   463 |     {
    571   464 |         std::scoped_lock lock{core->mutex};
-   572   465 | 
+   572   465 |
    573   466 |         if (core->is_abandoned) {
    574   467 |             LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
    575   468 |             return Status::NoInit;
    576   469 |         }
-   577   470 | 
+   577   470 |
    578   471 |         const s32 max_buffer_count = core->GetMaxBufferCountLocked(async);
-   579   472 | 
+   579   472 |
    580   473 |         if (slot < 0 || slot >= max_buffer_count) {
    581   474 |             LOG_ERROR(Service_Nvnflinger, "slot {} out of range [0, {})", slot, max_buffer_count);
    582   475 |             return Status::BadValue;
@@ -17323,7 +17323,7 @@ Source : [buffer_queue_producer.cpp:434-551](https://github.com/zortos293/Lichii
    589   482 |             LOG_ERROR(Service_Nvnflinger, "slot {} was queued without request", slot);
    590   483 |             return Status::BadValue;
    591   484 |         }
-   592   485 | 
+   592   485 |
 -  593       |         // History is normally disabled: avoid unconditional wall-clock work.
 -  594       |         const bool record_buffer_history = Settings::values.enable_buffer_history.GetValue();
    595   486 |         ++core->frame_counter;
@@ -17334,7 +17334,7 @@ Source : [buffer_queue_producer.cpp:434-551](https://github.com/zortos293/Lichii
 -  600       |                                             ? Common::g_wall_clock.GetTimeNS().count() : 0;
 +        490 |         slots[slot].presentation_time = Common::g_wall_clock.GetTimeNS().count();
    601   491 |         slots[slot].fence = fence;
-   602   492 | 
+   602   492 |
    603   493 |         item.slot = slot;
    604   494 |         item.graphic_buffer = slots[slot].graphic_buffer;
    605   495 |         item.frame_number = core->frame_counter;
@@ -17348,9 +17348,9 @@ Source : [buffer_queue_producer.cpp:434-551](https://github.com/zortos293/Lichii
    613   503 |         item.is_droppable = core->dequeue_buffer_cannot_block || async;
    614   504 |         item.swap_interval = swap_interval;
    615   505 |         item.acquire_called = slots[slot].acquire_called;
-   616   506 | 
+   616   506 |
    617   507 |         sticky_transform = sticky_transform_;
-   618   508 | 
+   618   508 |
    619   509 |         if (core->queue.empty()) {
    620   510 |             core->queue.push_back(item);
    621   511 |             listener_available = core->consumer_listener;
@@ -17365,7 +17365,7 @@ Source : [buffer_queue_producer.cpp:434-551](https://github.com/zortos293/Lichii
    629   518 |                 }
    630   519 |                 slots[front->slot].frame_number = 0;
    631   520 |             }
-   632   521 | 
+   632   521 |
    633   522 |             if (front->is_droppable) {
    634   523 |                 *front = item;
    635   524 |                 listener_replaced = core->consumer_listener;
@@ -17374,18 +17374,18 @@ Source : [buffer_queue_producer.cpp:434-551](https://github.com/zortos293/Lichii
    638   527 |                 listener_available = core->consumer_listener;
    639   528 |             }
    640   529 |         }
-   641   530 | 
+   641   530 |
 -  642       |         if (record_buffer_history) {
 +        531 |         if (Settings::values.enable_buffer_history.GetValue()) {
    643   532 |             core->PushHistory(core->frame_counter, slots[slot].queue_time, slots[slot].presentation_time, BufferState::Queued);
    644   533 |         }
-   645   534 | 
+   645   534 |
    646   535 |         core->buffer_has_been_queued = true;
    647   536 |         core->SignalDequeueCondition();
-   648   537 | 
+   648   537 |
    649   538 |         output->Inflate(core->default_width, core->default_height, core->transform_hint, static_cast<u32>(core->queue.size()));
    650   539 |     }
-   651   540 | 
+   651   540 |
 -  652       |     if (recycled_queued_slot) {
 -  653       |         // KEvent::Signal takes the guest scheduler lock. Never acquire it
 -  654       |         // while holding the BufferQueue mutex: an unblocked guest may
@@ -17394,7 +17394,7 @@ Source : [buffer_queue_producer.cpp:434-551](https://github.com/zortos293/Lichii
 -  657       |     }
 +        541 |     item.graphic_buffer.reset();
 +        542 |     item.slot = BufferItem::INVALID_BUFFER_SLOT;
-   658   543 | 
+   658   543 |
 -  659       |     // Notify consumers with the actual queued item: keep its buffer and slot
 -  660       |     // alive until the callback completes, outside the BufferQueue mutex.
    661   544 |     if (listener_available) {
@@ -17402,7 +17402,7 @@ Source : [buffer_queue_producer.cpp:434-551](https://github.com/zortos293/Lichii
    663   546 |     } else if (listener_replaced) {
    664   547 |         listener_replaced->OnFrameReplaced(item);
    665   548 |     }
-   666   549 | 
+   666   549 |
    667   550 |     return Status::NoError;
    668   551 | }
 ```
@@ -17425,10 +17425,10 @@ Source : [buffer_queue_producer.cpp:448-566](https://github.com/heydemoura/Eglan
    547   455 |     bool async{};
    548   456 |     s32 swap_interval{};
    549   457 |     Fence fence{};
-   550   458 | 
+   550   458 |
    551   459 |     input.Deflate(&timestamp, &is_auto_timestamp, &crop, &scaling_mode, &transform, &sticky_transform_, &async, &swap_interval, &fence);
 +        460 |     ::Eden::GuestClock::FrameQueued(swap_interval);
-   552   461 | 
+   552   461 |
    553   462 |     switch (scaling_mode) {
    554   463 |     case NativeWindowScalingMode::Freeze:
    555   464 |     case NativeWindowScalingMode::ScaleToWindow:
@@ -17440,22 +17440,22 @@ Source : [buffer_queue_producer.cpp:448-566](https://github.com/heydemoura/Eglan
    561   470 |         LOG_ERROR(Service_Nvnflinger, "unknown scaling mode {}", scaling_mode);
    562   471 |         return Status::BadValue;
    563   472 |     }
-   564   473 | 
+   564   473 |
    565   474 |     BufferItem item;
    566   475 |     std::shared_ptr<IConsumerListener> listener_available;
    567   476 |     std::shared_ptr<IConsumerListener> listener_replaced;
 -  568       |     bool recycled_queued_slot = false;
-   569   477 | 
+   569   477 |
    570   478 |     {
    571   479 |         std::scoped_lock lock{core->mutex};
-   572   480 | 
+   572   480 |
    573   481 |         if (core->is_abandoned) {
    574   482 |             LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
    575   483 |             return Status::NoInit;
    576   484 |         }
-   577   485 | 
+   577   485 |
    578   486 |         const s32 max_buffer_count = core->GetMaxBufferCountLocked(async);
-   579   487 | 
+   579   487 |
    580   488 |         if (slot < 0 || slot >= max_buffer_count) {
    581   489 |             LOG_ERROR(Service_Nvnflinger, "slot {} out of range [0, {})", slot, max_buffer_count);
    582   490 |             return Status::BadValue;
@@ -17468,7 +17468,7 @@ Source : [buffer_queue_producer.cpp:448-566](https://github.com/heydemoura/Eglan
    589   497 |             LOG_ERROR(Service_Nvnflinger, "slot {} was queued without request", slot);
    590   498 |             return Status::BadValue;
    591   499 |         }
-   592   500 | 
+   592   500 |
 -  593       |         // History is normally disabled: avoid unconditional wall-clock work.
 -  594       |         const bool record_buffer_history = Settings::values.enable_buffer_history.GetValue();
    595   501 |         ++core->frame_counter;
@@ -17479,7 +17479,7 @@ Source : [buffer_queue_producer.cpp:448-566](https://github.com/heydemoura/Eglan
 -  600       |                                             ? Common::g_wall_clock.GetTimeNS().count() : 0;
 +        505 |         slots[slot].presentation_time = Common::g_wall_clock.GetTimeNS().count();
    601   506 |         slots[slot].fence = fence;
-   602   507 | 
+   602   507 |
    603   508 |         item.slot = slot;
    604   509 |         item.graphic_buffer = slots[slot].graphic_buffer;
    605   510 |         item.frame_number = core->frame_counter;
@@ -17493,9 +17493,9 @@ Source : [buffer_queue_producer.cpp:448-566](https://github.com/heydemoura/Eglan
    613   518 |         item.is_droppable = core->dequeue_buffer_cannot_block || async;
    614   519 |         item.swap_interval = swap_interval;
    615   520 |         item.acquire_called = slots[slot].acquire_called;
-   616   521 | 
+   616   521 |
    617   522 |         sticky_transform = sticky_transform_;
-   618   523 | 
+   618   523 |
    619   524 |         if (core->queue.empty()) {
    620   525 |             core->queue.push_back(item);
    621   526 |             listener_available = core->consumer_listener;
@@ -17510,7 +17510,7 @@ Source : [buffer_queue_producer.cpp:448-566](https://github.com/heydemoura/Eglan
    629   533 |                 }
    630   534 |                 slots[front->slot].frame_number = 0;
    631   535 |             }
-   632   536 | 
+   632   536 |
    633   537 |             if (front->is_droppable) {
    634   538 |                 *front = item;
    635   539 |                 listener_replaced = core->consumer_listener;
@@ -17519,18 +17519,18 @@ Source : [buffer_queue_producer.cpp:448-566](https://github.com/heydemoura/Eglan
    638   542 |                 listener_available = core->consumer_listener;
    639   543 |             }
    640   544 |         }
-   641   545 | 
+   641   545 |
 -  642       |         if (record_buffer_history) {
 +        546 |         if (Settings::values.enable_buffer_history.GetValue()) {
    643   547 |             core->PushHistory(core->frame_counter, slots[slot].queue_time, slots[slot].presentation_time, BufferState::Queued);
    644   548 |         }
-   645   549 | 
+   645   549 |
    646   550 |         core->buffer_has_been_queued = true;
    647   551 |         core->SignalDequeueCondition();
-   648   552 | 
+   648   552 |
    649   553 |         output->Inflate(core->default_width, core->default_height, core->transform_hint, static_cast<u32>(core->queue.size()));
    650   554 |     }
-   651   555 | 
+   651   555 |
 -  652       |     if (recycled_queued_slot) {
 -  653       |         // KEvent::Signal takes the guest scheduler lock. Never acquire it
 -  654       |         // while holding the BufferQueue mutex: an unblocked guest may
@@ -17539,7 +17539,7 @@ Source : [buffer_queue_producer.cpp:448-566](https://github.com/heydemoura/Eglan
 -  657       |     }
 +        556 |     item.graphic_buffer.reset();
 +        557 |     item.slot = BufferItem::INVALID_BUFFER_SLOT;
-   658   558 | 
+   658   558 |
 -  659       |     // Notify consumers with the actual queued item: keep its buffer and slot
 -  660       |     // alive until the callback completes, outside the BufferQueue mutex.
    661   559 |     if (listener_available) {
@@ -17547,7 +17547,7 @@ Source : [buffer_queue_producer.cpp:448-566](https://github.com/heydemoura/Eglan
    663   561 |     } else if (listener_replaced) {
    664   562 |         listener_replaced->OnFrameReplaced(item);
    665   563 |     }
-   666   564 | 
+   666   564 |
    667   565 |     return Status::NoError;
    668   566 | }
 ```
@@ -17568,15 +17568,15 @@ Source : [buffer_queue_producer.cpp:553-579](https://github.com/zortos293/Lichii
 ```diff
    670   553 | void BufferQueueProducer::CancelBuffer(s32 slot, const Fence& fence) {
    671   554 |     LOG_DEBUG(Service_Nvnflinger, "slot {}", slot);
-   672   555 | 
+   672   555 |
 -  673       |     std::unique_lock lock{core->mutex};
 +        556 |     std::scoped_lock lock{core->mutex};
-   674   557 | 
+   674   557 |
    675   558 |     if (core->is_abandoned) {
    676   559 |         LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
    677   560 |         return;
    678   561 |     }
-   679   562 | 
+   679   562 |
    680   563 |     if (slot < 0 || slot >= BufferQueueDefs::NUM_BUFFER_SLOTS) {
    681   564 |         LOG_ERROR(Service_Nvnflinger, "slot index {} out of range [0, {})", slot,
    682   565 |                   BufferQueueDefs::NUM_BUFFER_SLOTS);
@@ -17586,11 +17586,11 @@ Source : [buffer_queue_producer.cpp:553-579](https://github.com/zortos293/Lichii
    686   569 |                   slots[slot].buffer_state);
    687   570 |         return;
    688   571 |     }
-   689   572 | 
+   689   572 |
    690   573 |     slots[slot].buffer_state = BufferState::Free;
    691   574 |     slots[slot].frame_number = 0;
    692   575 |     slots[slot].fence = fence;
-   693   576 | 
+   693   576 |
    694   577 |     core->SignalDequeueCondition();
 -  695       |     lock.unlock();
    696   578 |     buffer_wait_event->Signal(service_context.kernel);
@@ -17607,15 +17607,15 @@ Source : [buffer_queue_producer.cpp:568-594](https://github.com/heydemoura/Eglan
 ```diff
    670   568 | void BufferQueueProducer::CancelBuffer(s32 slot, const Fence& fence) {
    671   569 |     LOG_DEBUG(Service_Nvnflinger, "slot {}", slot);
-   672   570 | 
+   672   570 |
 -  673       |     std::unique_lock lock{core->mutex};
 +        571 |     std::scoped_lock lock{core->mutex};
-   674   572 | 
+   674   572 |
    675   573 |     if (core->is_abandoned) {
    676   574 |         LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
    677   575 |         return;
    678   576 |     }
-   679   577 | 
+   679   577 |
    680   578 |     if (slot < 0 || slot >= BufferQueueDefs::NUM_BUFFER_SLOTS) {
    681   579 |         LOG_ERROR(Service_Nvnflinger, "slot index {} out of range [0, {})", slot,
    682   580 |                   BufferQueueDefs::NUM_BUFFER_SLOTS);
@@ -17625,11 +17625,11 @@ Source : [buffer_queue_producer.cpp:568-594](https://github.com/heydemoura/Eglan
    686   584 |                   slots[slot].buffer_state);
    687   585 |         return;
    688   586 |     }
-   689   587 | 
+   689   587 |
    690   588 |     slots[slot].buffer_state = BufferState::Free;
    691   589 |     slots[slot].frame_number = 0;
    692   590 |     slots[slot].fence = fence;
-   693   591 | 
+   693   591 |
    694   592 |     core->SignalDequeueCondition();
 -  695       |     lock.unlock();
    696   593 |     buffer_wait_event->Signal(service_context.kernel);
@@ -17656,35 +17656,35 @@ Source : [buffer_queue_consumer.cpp:24-116](https://github.com/zortos293/Lichii/
 -   28       |     bool dropped_queued_frames = false;
 -   29       |     bool freed_tracked_slot = false;
 +         26 |     std::scoped_lock lock{core->mutex};
-    30    27 | 
+    30    27 |
     31    28 |     // Check that the consumer doesn't currently have the maximum number of buffers acquired.
     32    29 |     const s32 num_acquired_buffers{
     33    30 |         static_cast<s32>(std::count_if(slots.begin(), slots.end(), [](const auto& slot) {
     34    31 |             return slot.buffer_state == BufferState::Acquired;
     35    32 |         }))};
-    36    33 | 
+    36    33 |
     37    34 |     if (num_acquired_buffers >= core->max_acquired_buffer_count + 1) {
     38    35 |         LOG_ERROR(Service_Nvnflinger, "max acquired buffer count reached: {} (max {})",
     39    36 |                   num_acquired_buffers, core->max_acquired_buffer_count);
     40    37 |         return Status::InvalidOperation;
     41    38 |     }
-    42    39 | 
+    42    39 |
     43    40 |     // Check if the queue is empty.
     44    41 |     if (core->queue.empty()) {
     45    42 |         return Status::NoBufferAvailable;
     46    43 |     }
-    47    44 | 
+    47    44 |
     48    45 |     auto front(core->queue.begin());
-    49    46 | 
+    49    46 |
     50    47 |     // If expected_present is specified, we may not want to return a buffer yet.
     51    48 |     if (expected_present.count() != 0) {
     52    49 |         constexpr auto MAX_REASONABLE_NSEC = 1000000000LL; // 1 second
-    53    50 | 
+    53    50 |
     54    51 |         // The expected_present argument indicates when the buffer is expected to be presented
     55    52 |         // on-screen.
     56    53 |         while (core->queue.size() > 1 && !core->queue[0].is_auto_timestamp) {
     57    54 |             const auto& buffer_item{core->queue[1]};
-    58    55 | 
+    58    55 |
     59    56 |             // If entry[1] is timely, drop entry[0] (and repeat).
     60    57 |             const auto desired_present = buffer_item.timestamp;
     61    58 |             if (desired_present < expected_present.count() - MAX_REASONABLE_NSEC ||
@@ -17694,21 +17694,21 @@ Source : [buffer_queue_consumer.cpp:24-116](https://github.com/zortos293/Lichii/
     65    62 |                           expected_present.count());
     66    63 |                 break;
     67    64 |             }
-    68    65 | 
+    68    65 |
     69    66 |             LOG_DEBUG(Service_Nvnflinger, "drop desire={} expect={} size={}", desired_present,
     70    67 |                       expected_present.count(), core->queue.size());
-    71    68 | 
+    71    68 |
     72    69 |             if (core->StillTracking(*front)) {
     73    70 |                 // Front buffer is still in mSlots, so mark the slot as free
     74    71 |                 slots[front->slot].buffer_state = BufferState::Free;
 -   75       |                 freed_tracked_slot = true;
     76    72 |             }
-    77    73 | 
+    77    73 |
     78    74 |             core->queue.erase(front);
 -   79       |             dropped_queued_frames = true;
     80    75 |             front = core->queue.begin();
     81    76 |         }
-    82    77 | 
+    82    77 |
     83    78 |         // See if the front buffer is ready to be acquired.
     84    79 |         const auto desired_present = front->timestamp;
     85    80 |         if (desired_present > expected_present.count() &&
@@ -17728,31 +17728,31 @@ Source : [buffer_queue_consumer.cpp:24-116](https://github.com/zortos293/Lichii/
 -   99       |             }
    100    84 |             return Status::PresentLater;
    101    85 |         }
-   102    86 | 
+   102    86 |
    103    87 |         LOG_DEBUG(Service_Nvnflinger, "accept desire={} expect={}", desired_present,
    104    88 |                   expected_present.count());
    105    89 |     }
-   106    90 | 
+   106    90 |
    107    91 |     const auto slot = front->slot;
    108    92 |     *out_buffer = *front;
-   109    93 | 
+   109    93 |
    110    94 |     LOG_DEBUG(Service_Nvnflinger, "acquiring slot={}", slot);
-   111    95 | 
+   111    95 |
    112    96 |     // If the front buffer is still being tracked, update its slot state
    113    97 |     if (core->StillTracking(*front)) {
    114    98 |         slots[slot].acquire_called = true;
    115    99 |         slots[slot].needs_cleanup_on_release = false;
    116   100 |         slots[slot].buffer_state = BufferState::Acquired;
    117   101 |     }
-   118   102 | 
+   118   102 |
    119   103 |     // If the buffer has previously been acquired by the consumer, set graphic_buffer to nullptr to
    120   104 |     // avoid unnecessarily remapping this buffer on the consumer side.
    121   105 |     if (out_buffer->acquire_called) {
    122   106 |         out_buffer->graphic_buffer = nullptr;
    123   107 |     }
-   124   108 | 
+   124   108 |
    125   109 |     core->queue.erase(front);
-   126   110 | 
+   126   110 |
 -  127       |     // We might have freed a slot while dropping old buffers, or the producer
 -  128       |     // may be blocked waiting for the number of queued buffers to decrease.
 +        111 |     // We might have freed a slot while dropping old buffers, or the producer  may be blocked
@@ -17765,7 +17765,7 @@ Source : [buffer_queue_consumer.cpp:24-116](https://github.com/zortos293/Lichii/
 -  134       |         lock.unlock();
 -  135       |         if (listener) listener->OnBufferReleased();
 -  136       |     }
-   137   114 | 
+   137   114 |
    138   115 |     return Status::NoError;
    139   116 | }
 ```
@@ -17784,35 +17784,35 @@ Source : [buffer_queue_consumer.cpp:25-117](https://github.com/heydemoura/Eglant
 -   28       |     bool dropped_queued_frames = false;
 -   29       |     bool freed_tracked_slot = false;
 +         27 |     std::scoped_lock lock{core->mutex};
-    30    28 | 
+    30    28 |
     31    29 |     // Check that the consumer doesn't currently have the maximum number of buffers acquired.
     32    30 |     const s32 num_acquired_buffers{
     33    31 |         static_cast<s32>(std::count_if(slots.begin(), slots.end(), [](const auto& slot) {
     34    32 |             return slot.buffer_state == BufferState::Acquired;
     35    33 |         }))};
-    36    34 | 
+    36    34 |
     37    35 |     if (num_acquired_buffers >= core->max_acquired_buffer_count + 1) {
     38    36 |         LOG_ERROR(Service_Nvnflinger, "max acquired buffer count reached: {} (max {})",
     39    37 |                   num_acquired_buffers, core->max_acquired_buffer_count);
     40    38 |         return Status::InvalidOperation;
     41    39 |     }
-    42    40 | 
+    42    40 |
     43    41 |     // Check if the queue is empty.
     44    42 |     if (core->queue.empty()) {
     45    43 |         return Status::NoBufferAvailable;
     46    44 |     }
-    47    45 | 
+    47    45 |
     48    46 |     auto front(core->queue.begin());
-    49    47 | 
+    49    47 |
     50    48 |     // If expected_present is specified, we may not want to return a buffer yet.
     51    49 |     if (expected_present.count() != 0) {
     52    50 |         constexpr auto MAX_REASONABLE_NSEC = 1000000000LL; // 1 second
-    53    51 | 
+    53    51 |
     54    52 |         // The expected_present argument indicates when the buffer is expected to be presented
     55    53 |         // on-screen.
     56    54 |         while (core->queue.size() > 1 && !core->queue[0].is_auto_timestamp) {
     57    55 |             const auto& buffer_item{core->queue[1]};
-    58    56 | 
+    58    56 |
     59    57 |             // If entry[1] is timely, drop entry[0] (and repeat).
     60    58 |             const auto desired_present = buffer_item.timestamp;
     61    59 |             if (desired_present < expected_present.count() - MAX_REASONABLE_NSEC ||
@@ -17822,21 +17822,21 @@ Source : [buffer_queue_consumer.cpp:25-117](https://github.com/heydemoura/Eglant
     65    63 |                           expected_present.count());
     66    64 |                 break;
     67    65 |             }
-    68    66 | 
+    68    66 |
     69    67 |             LOG_DEBUG(Service_Nvnflinger, "drop desire={} expect={} size={}", desired_present,
     70    68 |                       expected_present.count(), core->queue.size());
-    71    69 | 
+    71    69 |
     72    70 |             if (core->StillTracking(*front)) {
     73    71 |                 // Front buffer is still in mSlots, so mark the slot as free
     74    72 |                 slots[front->slot].buffer_state = BufferState::Free;
 -   75       |                 freed_tracked_slot = true;
     76    73 |             }
-    77    74 | 
+    77    74 |
     78    75 |             core->queue.erase(front);
 -   79       |             dropped_queued_frames = true;
     80    76 |             front = core->queue.begin();
     81    77 |         }
-    82    78 | 
+    82    78 |
     83    79 |         // See if the front buffer is ready to be acquired.
     84    80 |         const auto desired_present = front->timestamp;
     85    81 |         if (desired_present > expected_present.count() &&
@@ -17856,31 +17856,31 @@ Source : [buffer_queue_consumer.cpp:25-117](https://github.com/heydemoura/Eglant
 -   99       |             }
    100    85 |             return Status::PresentLater;
    101    86 |         }
-   102    87 | 
+   102    87 |
    103    88 |         LOG_DEBUG(Service_Nvnflinger, "accept desire={} expect={}", desired_present,
    104    89 |                   expected_present.count());
    105    90 |     }
-   106    91 | 
+   106    91 |
    107    92 |     const auto slot = front->slot;
    108    93 |     *out_buffer = *front;
-   109    94 | 
+   109    94 |
    110    95 |     LOG_DEBUG(Service_Nvnflinger, "acquiring slot={}", slot);
-   111    96 | 
+   111    96 |
    112    97 |     // If the front buffer is still being tracked, update its slot state
    113    98 |     if (core->StillTracking(*front)) {
    114    99 |         slots[slot].acquire_called = true;
    115   100 |         slots[slot].needs_cleanup_on_release = false;
    116   101 |         slots[slot].buffer_state = BufferState::Acquired;
    117   102 |     }
-   118   103 | 
+   118   103 |
    119   104 |     // If the buffer has previously been acquired by the consumer, set graphic_buffer to nullptr to
    120   105 |     // avoid unnecessarily remapping this buffer on the consumer side.
    121   106 |     if (out_buffer->acquire_called) {
    122   107 |         out_buffer->graphic_buffer = nullptr;
    123   108 |     }
-   124   109 | 
+   124   109 |
    125   110 |     core->queue.erase(front);
-   126   111 | 
+   126   111 |
 -  127       |     // We might have freed a slot while dropping old buffers, or the producer
 -  128       |     // may be blocked waiting for the number of queued buffers to decrease.
 +        112 |     // We might have freed a slot while dropping old buffers, or the producer  may be blocked
@@ -17893,7 +17893,7 @@ Source : [buffer_queue_consumer.cpp:25-117](https://github.com/heydemoura/Eglant
 -  134       |         lock.unlock();
 -  135       |         if (listener) listener->OnBufferReleased();
 -  136       |     }
-   137   115 | 
+   137   115 |
    138   116 |     return Status::NoError;
    139   117 | }
 ```
@@ -17917,17 +17917,17 @@ Source : [buffer_queue_consumer.cpp:118-177](https://github.com/zortos293/Lichii
    143   120 |         LOG_ERROR(Service_Nvnflinger, "slot {} out of range", slot);
    144   121 |         return Status::BadValue;
    145   122 |     }
-   146   123 | 
+   146   123 |
    147   124 |     std::shared_ptr<IProducerListener> listener;
    148   125 |     {
    149   126 |         std::scoped_lock lock{core->mutex};
-   150   127 | 
+   150   127 |
    151   128 |         // If the frame number has changed because the buffer has been reallocated, we can ignore
    152   129 |         // this ReleaseBuffer for the old buffer.
    153   130 |         if (frame_number != slots[slot].frame_number) {
    154   131 |             return Status::StaleBufferSlot;
    155   132 |         }
-   156   133 | 
+   156   133 |
    157   134 |         // Make sure this buffer hasn't been queued while acquired by the consumer.
    158   135 |         auto current(core->queue.begin());
    159   136 |         while (current != core->queue.end()) {
@@ -17938,16 +17938,16 @@ Source : [buffer_queue_consumer.cpp:118-177](https://github.com/zortos293/Lichii
    164   141 |             }
    165   142 |             ++current;
    166   143 |         }
-   167   144 | 
+   167   144 |
    168   145 |         if (slots[slot].buffer_state == BufferState::Acquired) {
    169   146 |             // TODO: for now, avoid resetting the fence, so that when we next return this
    170   147 |             // slot to the producer, it can wait for its own fence to pass. We should fix this
    171   148 |             // by properly waiting for the fence in the BufferItemConsumer.
    172   149 |             // slots[slot].fence = release_fence;
    173   150 |             slots[slot].buffer_state = BufferState::Free;
-   174   151 | 
+   174   151 |
    175   152 |             listener = core->connected_producer_listener;
-   176   153 | 
+   176   153 |
    177   154 |             LOG_DEBUG(Service_Nvnflinger, "releasing slot {}", slot);
    178   155 |         } else if (slots[slot].needs_cleanup_on_release) {
    179   156 |             LOG_DEBUG(Service_Nvnflinger, "releasing a stale buffer slot {} (state = {})", slot,
@@ -17958,18 +17958,18 @@ Source : [buffer_queue_consumer.cpp:118-177](https://github.com/zortos293/Lichii
    184   161 |             LOG_ERROR(Service_Nvnflinger,
    185   162 |                       "attempted to release buffer slot {} but its state was {}", slot,
    186   163 |                       slots[slot].buffer_state);
-   187   164 | 
+   187   164 |
    188   165 |             return Status::BadValue;
    189   166 |         }
-   190   167 | 
+   190   167 |
    191   168 |         core->SignalDequeueCondition();
    192   169 |     }
-   193   170 | 
+   193   170 |
    194   171 |     // Call back without lock held
    195   172 |     if (listener != nullptr) {
    196   173 |         listener->OnBufferReleased();
    197   174 |     }
-   198   175 | 
+   198   175 |
    199   176 |     return Status::NoError;
    200   177 | }
 ```
@@ -17987,17 +17987,17 @@ Source : [buffer_queue_consumer.cpp:119-178](https://github.com/heydemoura/Eglan
    143   121 |         LOG_ERROR(Service_Nvnflinger, "slot {} out of range", slot);
    144   122 |         return Status::BadValue;
    145   123 |     }
-   146   124 | 
+   146   124 |
    147   125 |     std::shared_ptr<IProducerListener> listener;
    148   126 |     {
    149   127 |         std::scoped_lock lock{core->mutex};
-   150   128 | 
+   150   128 |
    151   129 |         // If the frame number has changed because the buffer has been reallocated, we can ignore
    152   130 |         // this ReleaseBuffer for the old buffer.
    153   131 |         if (frame_number != slots[slot].frame_number) {
    154   132 |             return Status::StaleBufferSlot;
    155   133 |         }
-   156   134 | 
+   156   134 |
    157   135 |         // Make sure this buffer hasn't been queued while acquired by the consumer.
    158   136 |         auto current(core->queue.begin());
    159   137 |         while (current != core->queue.end()) {
@@ -18008,16 +18008,16 @@ Source : [buffer_queue_consumer.cpp:119-178](https://github.com/heydemoura/Eglan
    164   142 |             }
    165   143 |             ++current;
    166   144 |         }
-   167   145 | 
+   167   145 |
    168   146 |         if (slots[slot].buffer_state == BufferState::Acquired) {
    169   147 |             // TODO: for now, avoid resetting the fence, so that when we next return this
    170   148 |             // slot to the producer, it can wait for its own fence to pass. We should fix this
    171   149 |             // by properly waiting for the fence in the BufferItemConsumer.
    172   150 |             // slots[slot].fence = release_fence;
    173   151 |             slots[slot].buffer_state = BufferState::Free;
-   174   152 | 
+   174   152 |
    175   153 |             listener = core->connected_producer_listener;
-   176   154 | 
+   176   154 |
    177   155 |             LOG_DEBUG(Service_Nvnflinger, "releasing slot {}", slot);
    178   156 |         } else if (slots[slot].needs_cleanup_on_release) {
    179   157 |             LOG_DEBUG(Service_Nvnflinger, "releasing a stale buffer slot {} (state = {})", slot,
@@ -18028,18 +18028,18 @@ Source : [buffer_queue_consumer.cpp:119-178](https://github.com/heydemoura/Eglan
    184   162 |             LOG_ERROR(Service_Nvnflinger,
    185   163 |                       "attempted to release buffer slot {} but its state was {}", slot,
    186   164 |                       slots[slot].buffer_state);
-   187   165 | 
+   187   165 |
    188   166 |             return Status::BadValue;
    189   167 |         }
-   190   168 | 
+   190   168 |
    191   169 |         core->SignalDequeueCondition();
    192   170 |     }
-   193   171 | 
+   193   171 |
    194   172 |     // Call back without lock held
    195   173 |     if (listener != nullptr) {
    196   174 |         listener->OnBufferReleased();
    197   175 |     }
-   198   176 | 
+   198   176 |
    199   177 |     return Status::NoError;
    200   178 | }
 ```
@@ -18064,13 +18064,13 @@ Source : [hardware_composer.cpp:222-236](https://github.com/zortos293/Lichii/blo
    210   225 |     if (status != android::Status::NoError) {
    211   226 |         return false;
    212   227 |     }
-   213   228 | 
+   213   228 |
    214   229 |     // We succeeded, so set the new release frame info.
    215   230 |     const s32 swap_interval = layer.is_overlay ? 1 : NormalizeSwapInterval(nullptr, framebuffer.item.swap_interval);
    216   231 |     framebuffer.release_frame_number = m_frame_number + swap_interval;
    217   232 |     framebuffer.last_acquire_frame = m_frame_number;
    218   233 |     framebuffer.is_acquired = true;
-   219   234 | 
+   219   234 |
    220   235 |     return true;
    221   236 | }
 ```
@@ -18089,13 +18089,13 @@ Source : [hardware_composer.cpp:215-229](https://github.com/heydemoura/Eglantine
    210   218 |     if (status != android::Status::NoError) {
    211   219 |         return false;
    212   220 |     }
-   213   221 | 
+   213   221 |
    214   222 |     // We succeeded, so set the new release frame info.
    215   223 |     const s32 swap_interval = layer.is_overlay ? 1 : NormalizeSwapInterval(nullptr, framebuffer.item.swap_interval);
    216   224 |     framebuffer.release_frame_number = m_frame_number + swap_interval;
    217   225 |     framebuffer.last_acquire_frame = m_frame_number;
    218   226 |     framebuffer.is_acquired = true;
-   219   227 | 
+   219   227 |
    220   228 |     return true;
    221   229 | }
 ```
@@ -18119,16 +18119,16 @@ Source : [hardware_composer.cpp:185-203](https://github.com/zortos293/Lichii/blo
    172   187 |         if (!framebuffer.is_acquired) {
    173   188 |             continue;
    174   189 |         }
-   175   190 | 
+   175   190 |
    176   191 |         const auto layer = display.stack.FindLayer(layer_id);
    177   192 |         if (!layer) {
    178   193 |             continue;
    179   194 |         }
-   180   195 | 
+   180   195 |
    181   196 |         if (!layer->is_overlay && framebuffer.release_frame_number > m_frame_number) {
    182   197 |             continue;
    183   198 |         }
-   184   199 | 
+   184   199 |
    185   200 |         layer->buffer_item_consumer->ReleaseBuffer(framebuffer.item, android::Fence::NoFence());
    186   201 |         framebuffer.is_acquired = false;
    187   202 |     }
@@ -18148,16 +18148,16 @@ Source : [hardware_composer.cpp:178-196](https://github.com/heydemoura/Eglantine
    172   180 |         if (!framebuffer.is_acquired) {
    173   181 |             continue;
    174   182 |         }
-   175   183 | 
+   175   183 |
    176   184 |         const auto layer = display.stack.FindLayer(layer_id);
    177   185 |         if (!layer) {
    178   186 |             continue;
    179   187 |         }
-   180   188 | 
+   180   188 |
    181   189 |         if (!layer->is_overlay && framebuffer.release_frame_number > m_frame_number) {
    182   190 |             continue;
    183   191 |         }
-   184   192 | 
+   184   192 |
    185   193 |         layer->buffer_item_consumer->ReleaseBuffer(framebuffer.item, android::Fence::NoFence());
    186   194 |         framebuffer.is_acquired = false;
    187   195 |     }
@@ -18652,7 +18652,7 @@ Source : [puller.cpp:566-817](https://github.com/heydemoura/EglantinePS5/blob/75
    634   583 |         regs.acquire_source = false;
    635   584 |     }
    636   585 | }
-+        586 | 
++        586 |
 +        587 | // Ampere SEM_EXECUTE (method 0x1B): operation in bits 2:0 on the semaphore at
 +        588 | // SEM_ADDR_HI:SEM_ADDR_LO (methods 0x18/0x17) with payload SEM_PAYLOAD_LO (0x19).
 +        589 | void Puller::ProcessSemaphoreExecute(DmaPusher& dma_pusher, u32 argument) {
@@ -18690,7 +18690,7 @@ Source : [puller.cpp:566-817](https://github.com/heydemoura/EglantinePS5/blob/75
 +        621 |         }
 +        622 |     }
 +        623 | }
-+        624 | 
++        624 |
 +        625 | /// Calls a GPU puller method.
 +        626 | void Puller::CallPullerMethod(DmaPusher& dma_pusher, const MethodCall& method_call) {
 +        627 |     static const bool nx2_trace = std::getenv("EDEN_NX2_PULLER_TRACE") != nullptr;
@@ -18700,7 +18700,7 @@ Source : [puller.cpp:566-817](https://github.com/heydemoura/EglantinePS5/blob/75
 +        631 |     }
 +        632 |     regs.reg_array[method_call.method] = method_call.argument;
 +        633 |     const auto method = static_cast<BufferMethods>(method_call.method);
-+        634 | 
++        634 |
 +        635 |     switch (method) {
 +        636 |     case BufferMethods::BindObject: {
 +        637 |         ProcessBindMethod(dma_pusher, method_call);
@@ -18776,13 +18776,13 @@ Source : [puller.cpp:566-817](https://github.com/heydemoura/EglantinePS5/blob/75
 +        707 |         break;
 +        708 |     }
 +        709 | }
-+        710 | 
++        710 |
 +        711 | /// Calls a GPU engine method.
 +        712 | static bool Nx2MethodTrace() {
 +        713 |     static const bool trace = std::getenv("EDEN_NX2_METHOD_TRACE") != nullptr;
 +        714 |     return trace;
 +        715 | }
-+        716 | 
++        716 |
 +        717 | void Puller::CallEngineMethod(DmaPusher& dma_pusher, const MethodCall& method_call) {
 +        718 |     const EngineID engine = bound_engines[method_call.subchannel];
 +        719 |     if (Nx2MethodTrace()) {
@@ -18814,7 +18814,7 @@ Source : [puller.cpp:566-817](https://github.com/heydemoura/EglantinePS5/blob/75
 +        745 |         break;
 +        746 |     }
 +        747 | }
-+        748 | 
++        748 |
 +        749 | /// Calls a GPU engine multivalue method.
 +        750 | void Puller::CallEngineMultiMethod(DmaPusher& dma_pusher, u32 method, u32 subchannel, const u32* base_start, u32 amount, u32 methods_pending) {
 +        751 |     const EngineID engine = bound_engines[subchannel];
@@ -18846,19 +18846,19 @@ Source : [puller.cpp:566-817](https://github.com/heydemoura/EglantinePS5/blob/75
 +        777 |         break;
 +        778 |     }
 +        779 | }
-+        780 | 
++        780 |
 +        781 | /// Calls a GPU method.
 +        782 | void Puller::CallMethod(DmaPusher& dma_pusher, const MethodCall& method_call) {
 +        783 |     LOG_TRACE(HW_GPU, "Processing method {:08X} on subchannel {}", method_call.method, method_call.subchannel);
 +        784 |     ASSERT(method_call.subchannel < bound_engines.size());
-+        785 | 
++        785 |
 +        786 |     if (ExecuteMethodOnEngine(dma_pusher, method_call.method)) {
 +        787 |         CallEngineMethod(dma_pusher, method_call);
 +        788 |     } else {
 +        789 |         CallPullerMethod(dma_pusher, method_call);
 +        790 |     }
 +        791 | }
-+        792 | 
++        792 |
 +        793 | /// Calls a GPU multivalue method.
 +        794 | void Puller::CallMultiMethod(DmaPusher& dma_pusher, u32 method, u32 subchannel, const u32* base_start, u32 amount, u32 methods_pending) {
 +        795 |     LOG_TRACE(HW_GPU, "Processing method {:08X} on subchannel {}", method, subchannel);
@@ -18876,13 +18876,13 @@ Source : [puller.cpp:566-817](https://github.com/heydemoura/EglantinePS5/blob/75
 +        807 |         }
 +        808 |     }
 +        809 | }
-+        810 | 
++        810 |
 +        811 | /// Determines where the method should be executed.
 +        812 | [[nodiscard]] bool Puller::ExecuteMethodOnEngine(DmaPusher& dma_pusher, u32 method) {
 +        813 |     const auto buffer_method = BufferMethods(method);
 +        814 |     return buffer_method >= BufferMethods::NonPullerMethods;
 +        815 | }
-+        816 | 
++        816 |
 +        817 | } // namespace Tegra::Engines
 ```
 
@@ -19176,7 +19176,7 @@ Aucun symbole homonyme n'a été trouvé dans les TUs Lichii/Eglantine examinés
    62 |     if (dma_pushbuffer.empty()) return true;
    63 |     auto& pending = dma_pushbuffer.front().native_syncpoint_wait;
    64 |     if (!pending) return true;
-   65 | 
+   65 |
    66 |     // Only the authenticated channel's admitted wait can park this list.
    67 |     // Recheck the source reservation around the live counter read: an ID
    68 |     // recycled by another channel must not satisfy an old dependency.
@@ -19185,7 +19185,7 @@ Aucun symbole homonyme n'a été trouvé dans les TUs Lichii/Eglantine examinés
    71 |         !pending->lease->load(std::memory_order_acquire)) {
    72 |         FailNativeSubmission("Native GPFIFO syncpoint wait owner retired");
    73 |     }
-   74 | 
+   74 |
    75 |     // The guest counter can advance when commands are merely enqueued.
    76 |     // Only the Host1x HOST counter is incremented after real fence
    77 |     // retirement. Poll nonblocking, so other channels can submit work.
@@ -19286,4 +19286,3 @@ Une différence de ligne n'est pas un bug démontré. Une identité de ligne n'e
 - 🟢 **Contrôlé le 26/11/2026 — VI2 229 :** correctif runtime vendor [`9de08e4f`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/9de08e4f4bbb903e25f330dde7b8185e19e078a1) : publication du producteur seulement après `Connect`/`SetBufferCount`/`OpenLayer`/visibilité réussis, plus acceptation du succès `ReleaseAllBuffers` de `AttachBuffer`. Aucun test console de ces corrections ; ne pas réinterpréter les anciens diffs comme reflétant ce nouveau code.
 - 🟢 **Contrôlé le 26/11/2026 — chaîne native GPFIFO :** `SubmitGPFIFOBase1` copie les descripteurs (`CommandListHeader`, 8 octets), puis `GPU::PushGPUEntries` transmet la liste au thread GPU. `Scheduler::Push` la transmet à `DmaPusher`, dont `Step` relit les mots GPU à l'exécution via `SafeRead` et attend les fences entre listes natives. La branche native **ne réalise pas un snapshot systématique des mots GPU au submit**. Reste à prouver sur PS5 la visibilité des écritures GPU avant lecture, la durée de vie des mappings et la progression du producteur Pokopia ; ne pas qualifier P0-07 de résolu.
 - **Qualification CI encore ouverte le 26/11 :** Fast Gate, qualification mémoire R457, graphe FC27/P0 et contrôle d'empreintes source échouent au moins partiellement ; trois chemins refusent le SHA vendor pourtant aligné car hors liste de révisions examinées. `device_memory_manager.inc` a le même blob `8acbdfe9` dans les vendors `465d7e9c` et `9de08e4f` : l'écart d'empreinte du Fast Gate est antérieur au correctif VI2. Aucune gate affaiblie. Aucun build PS5 ni validation console de ce lot.
-

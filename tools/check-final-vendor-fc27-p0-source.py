@@ -1654,6 +1654,14 @@ if actual_vendor_pin in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e12
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
 
 def reviewed_blob(relative, expected):
+    if gitlink_vendor_pin == "57be62ed6bcc872a850676f92f55de92ace7a290":
+        current_fc27 = {
+            "encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "30e7c389851a5a0f2b6369c35a313f93a0fc6826",
+            "encore-active/eden-core/overrides/usage-tracker/video_core/buffer_cache/usage_tracker.h": "60ff6c212708684b2444e4ce6a969a1c27994e39",
+            "tests/ps5_buffer_usage_granularity_host.py": "72cd74292b8459a99d053be6d791e5187f1c3e71",
+        }
+        if relative in current_fc27:
+            return current_fc27[relative]
     if actual_vendor_pin == nov26_pin and relative in nov26_blobs:
         return nov26_blobs[relative]
     if actual_vendor_pin in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", nov26_pin}:
@@ -3037,7 +3045,37 @@ if actual_vendor_pin in {"19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5
         assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()==digest, (
             "NS2 shutdown successor graph drift", relative)
     REVIEWED_PINS.add(actual_vendor_pin)
+# Current FC27 BufferCache successor: authenticate the complete vendor tree,
+# every changed FC27 blob, and the NS2 teardown owners inherited from 8d3.
+if actual_vendor_pin == "57be62ed6bcc872a850676f92f55de92ace7a290":
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"],
+                                   text=True).strip() == "3cf3eed31484ffc23cd18229b983e07500cecce6"
+    for relative, digest in {
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "4e4a1f23d89a7ace963a9249afa47a592cb4eb6e",
+        "encore-active/eden-core/src/video_core/dma_pusher.cpp": "76eb30a7e58f17852069a05e2c12cd3c6521967f",
+        "tests/ns2_gpu_identity_mapping_source.py": "787b18b8c9b2841874ceaea911947e533b59e198",
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146",
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
+        "encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee",
+        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
+        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
+        "encore-active/eden-core/overrides/core/device_memory_manager.inc": "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4",
+        "encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "30e7c389851a5a0f2b6369c35a313f93a0fc6826",
+        "encore-active/eden-core/overrides/usage-tracker/video_core/buffer_cache/usage_tracker.h": "60ff6c212708684b2444e4ce6a969a1c27994e39",
+        "tests/ps5_buffer_usage_granularity_host.py": "72cd74292b8459a99d053be6d791e5187f1c3e71",
+    }.items():
+        raw=(V/relative).read_bytes()
+        actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert actual==digest, ("FC27 BufferCache successor graph drift", relative, actual)
+    REVIEWED_PINS.add(actual_vendor_pin)
 assert actual_vendor_pin==checked and actual_vendor_pin in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
+if actual_vendor_pin == "57be62ed6bcc872a850676f92f55de92ace7a290":
+    # Historical receipts below describe the unchanged 8d3 owner graph.
+    # Keep gitlink_vendor_pin at NEW so reviewed_blob maps the three FC27 deltas.
+    actual_vendor_pin = "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"
+    selected = "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"
+    shipping_vendor_pin = "8d3eaa4874ab0fa65a022913148acada1ea9c2fe"
 # The 3a97 successor's four changed blobs were sealed above. From this point
 # replay the predecessor's exact historical receipt graph for all unaffected
 # owners; otherwise reviewed_blob() sees the successor SHA and misses c74's

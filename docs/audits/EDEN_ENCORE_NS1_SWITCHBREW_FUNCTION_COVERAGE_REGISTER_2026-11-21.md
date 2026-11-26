@@ -4674,3 +4674,19 @@ Les trois AMBIGU historiques `acc:su` cmd0/1/2 sont désormais rattachés sans a
 **3 lignes AMBIGU quittent le pool : nouveau compteur global = 75 lignes ouvertes.**
 
 Gitlink vendor repinné sur `5bdf4cef1f47b00beda4e6597fd3d2222de0a305`. Aucun build PS5 ni validation console.
+
+
+### 2026-11-26 — ES objets opaques fail-closed : palier global 72
+
+Base : **75 lignes ouvertes**.
+
+Les trois AMBIGU historiques du service eTicket principal sont désormais résolus :
+- SwitchBrew rattache bien cmd1003 au service `es` et documente un retour `EsAsyncValue` depuis HOS 6 ;
+- cmd2000 (HOS 6+) et cmd2001 (HOS 9+) retournent chacun un `EsSubinterface2000` ;
+- les interfaces enfants restent elles-mêmes opaques/non documentées et Encore ne possède pas le backend Horizon/eTicket permettant de les reproduire correctement.
+
+Vendor `e823d1cae61b893688e66809c8d2dbe682ebda53` raccorde donc cmd1003/2000/2001 à `RejectUnavailableTicketManagement` au lieu de laisser des pointeurs `nullptr`. Aucun objet asynchrone ou sous-interface fictive n'est créé.
+
+**3 lignes AMBIGU quittent le pool : nouveau compteur global = 72 lignes ouvertes.**
+
+Gitlink vendor repinné sur `e823d1cae61b893688e66809c8d2dbe682ebda53`. Aucun build PS5 ni validation console.

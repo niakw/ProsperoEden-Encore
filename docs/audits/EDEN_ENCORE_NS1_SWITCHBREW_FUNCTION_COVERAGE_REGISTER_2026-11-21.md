@@ -4930,4 +4930,19 @@ Le manifeste shipping est synchronisé pour `system_display_service.cpp` (SHA-25
 **2 lignes PARTIEL quittent le pool : nouveau compteur global = 38 lignes ouvertes.**
 
 Aucun build PS5 ni validation console revendiqué.
+### 2026-11-26 — NS shell-event pop fail-closed : 38 → 37
+
+Base précédente : **38 lignes ouvertes**.
+
+Vendor **`39d0130160d28b7b18197b6f2c7e499f6ac1c5ec`** ferme le PARTIEL `IApplicationManagerInterface` cmd301 `PopApplicationShellEventInfo` :
+- auparavant, Encore retournait systématiquement `event_info_type=0`, `application_id=0` et `ResultSuccess` alors qu'aucune file d'événements shell n'existe ;
+- cmd301 est désormais routé vers `RejectUnavailablePlatformCommand` et renvoie explicitement `ResultNotSupported` ;
+- cmd300 `GetApplicationShellEvent` reste inchangé et continue d'exposer son event passif ;
+- les vrais chemins cmd302–307 launch/terminate applets restent inchangés et aucun type d'événement Horizon n'est inventé.
+
+Le manifeste shipping est synchronisé pour `application_manager_interface.cpp` (SHA-256 `bd5e7ca8036d711d00cbae8fe3e1106e55b06096d7770ef918689a7e3ab455d3`, 111 919 octets).
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 37 lignes ouvertes.**
+
+Aucun build PS5 ni validation console revendiqué.
 

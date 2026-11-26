@@ -2927,7 +2927,7 @@ checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True
 # host real-owner CI is green; these source hashes are not PS5 validation.
 if actual_vendor_pin in {"eace7e056485299e7252c506433a1429a4475051", "05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de"}:
     native_fence_blobs = {
-    "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "23725030557268e6593c9e5f64cb063730b77787",
+    "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "12e85a9030d386d046d33bf818d3af0dc6c936f3" if actual_vendor_pin == "240550925b0ef097c24c3035c063bdceadd872de" else "23725030557268e6593c9e5f64cb063730b77787",
     "encore-active/eden-backports/src/video_core/fence_manager.h": "fa30c9a0c0a26c39af5174983fc7b4f63062a991",
     "encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "5cbd0d0f3482c5811b5b700fee55faf8a89b9f61",
     "encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "0d22781acbc4e0f32424beb6b0f494b6aa2b034f",

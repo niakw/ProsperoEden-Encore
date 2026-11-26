@@ -412,7 +412,7 @@ for path,expected in (
     # This vendor successor changes only native fence/manifest/FC27 witness;
     # its sparse DeviceMemory owner is byte-identical to the checked 95467b3a
     # predecessor, confirmed again by exact Git blob before accepting.
-    if pinned == "05bf05a8dca75b3e12871ec886a810310cdf43d6" and (
+    if pinned in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de"} and (
         path == "vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc"
     ):
         expected = "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4"

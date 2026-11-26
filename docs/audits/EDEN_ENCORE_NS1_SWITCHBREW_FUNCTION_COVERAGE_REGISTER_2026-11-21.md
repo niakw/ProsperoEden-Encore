@@ -5548,3 +5548,9 @@ Le zéro historique n'est PAS une preuve de qualification runtime exhaustive. Le
 🟢 **26/11/2026 — Recalcul des 18 sentinelles du graphe IPC final PS5.** Après la reprise des propriétaires `main`, le parseur `tools/ns1/active_ipc_source_inventory.py` a été rejoué conceptuellement sur les mêmes regex `FunctionInfo` / lignes de handlers pour les 18 propriétaires figés. Quatre compteurs évoluent uniquement parce que les propriétaires `main` sélectionnés exposent davantage de commandes : `application_proxy.cpp` passe de `(1,11,0)` à `(1,15,0)`, `application_proxy_service.cpp` de `(1,2,0)` à `(1,3,0)`, `gpu_session.cpp` de `(1,12,0)` à `(1,21,0)`, `graphics_supervisor.cpp` de `(4,140,0)` à `(5,185,0)`. Les 14 autres sentinelles restent inchangées et les quatre nouveaux états ont toujours `0` handler `nullptr`.
 
 **Portée :** mise à jour d'un oracle de source rendu obsolète par le rattrapage `main`, pas une implémentation IPC nouvelle ni une validation console. Gitlink vendor inchangé. Aucune fusion vers `main`, aucun build PS5 manuel.
+
+### 2026-11-26 — Rattrapage main → NS1 : repin vendor après réconciliation Host1x/GSV/IPC
+
+🟢 **26/11/2026 — Couple repinné après priorité main.** Le vendor NS1 `d5ef3f58690b65bf95a20f1e8d41045a21035581` contient le rattrapage des 138 chemins non chevauchés, les réconciliations AOC/Application/HID/SelfController avec priorité au `main`, le propriétaire C7C0/GSV courant et le témoin Host1x remis sur le contrat `main` actuel (`IncrementGuest → IncrementHost → miroir natif`). Le runtime Host1x source/header reste byte-identique à `main`; seul son ancien témoin NS1 a été remplacé.
+
+🟢 **26/11/2026 — Dernier delta moteur main repris.** Le commit documentaire `42d06e8f` est repris par ses deux blobs exacts dans les comparatifs runtime existants. Aucun merge parent, aucune modification de `main`, aucun build PS5 manuel.

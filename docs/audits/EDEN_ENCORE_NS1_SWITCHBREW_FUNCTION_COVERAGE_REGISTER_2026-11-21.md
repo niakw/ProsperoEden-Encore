@@ -4754,3 +4754,15 @@ Ces cinq lignes sont supprimées uniquement comme **anciens contrats de catalogu
 **5 lignes ABI-DIFF quittent le pool : nouveau compteur global = 56 lignes ouvertes.**
 
 Aucun patch C++ runtime, changement de gitlink, build PS5 ou validation console dans cette étape.
+
+### 2026-11-26 — CAPS session + NOTIF HOS23 requalifiés : palier global 53
+
+Base : **56 lignes ouvertes**.
+
+Trois lignes quittent le pool :
+- CAPS `IAlbumControlSession` cmd2001 `OpenAlbumMovieReadStream` et cmd2002 `CloseAlbumMovieReadStream` : le vendor actif `7ce2ff553b8ee272612b66b10537716f3d2f1330` expose déjà `OpenControlSession` cmd60001, retourne un objet `IAlbumControlSession` concret et y enregistre cmd2001/2002 (ainsi que les autres commandes movie-read/write HOS23) vers un rejet explicite `ResultNotSupported` faute de backend movie. Les anciennes ABI-DIFF provenaient du propriétaire parent `caps:c`, pas de la sous-interface active ;
+- NOTIF cmd1510 : les dumps HOS22.5/HOS23 nomment `GetNotificationPresentationSetting`; l'owner actif expose exactement ce nom et son handler. L'ancien libellé `GetPresentationSetting` est historique.
+
+**3 lignes ABI-DIFF quittent le pool : nouveau compteur global = 53 lignes ouvertes.**
+
+Aucun nouveau patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.

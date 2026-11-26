@@ -33,7 +33,7 @@ assert wait.index("scheduler.Finish();") < wait.index("present_manager.WaitPrese
 assert "VkExtent2D layer_window_size{};" in header
 assert "F07 C04 append-only presentation layers without device idle" in generator
 assert blit.count("    if (!rebuild_layers && !retire_excess_layers &&") == 1
-assert blit.index("    if (resource_update_required) {\n        WaitIdle(device);") < blit.index(
+assert blit.index("    if (resource_update_required || presentation_recreate_required) {\n        WaitIdle(device);") < blit.index(
     "    if (!rebuild_layers && !retire_excess_layers &&"
 )
 start = blit.index("    // Presentation layers live in std::list:")
@@ -48,7 +48,7 @@ assert "else if (rebuild_layers || retire_excess_layers)" in block
 assert "output_sensitive && output_size_changed" in block
 assert "layer_window_size = window_size;" in block
 assert "if (!layers.empty())" not in block
-assert "if (!resource_update_required && !layers.empty())" in block
+assert "if (!resource_update_required && !presentation_recreate_required && !layers.empty())" in block
 assert block.count("WaitIdle(device);") == 1
 assert "#else\n    if (layers.size() != framebuffers.size()) {" in block
 assert block.rstrip().endswith("#endif")
@@ -94,7 +94,7 @@ struct Screen {
     unsigned idle_calls{};
     void WaitIdle(const Device&) {++idle_calls;}
     void Apply(std::size_t n, [[maybe_unused]] bool resource_update_required,
-               unsigned width=1280, unsigned height=720) {
+               unsigned width=1280, unsigned height=720, [[maybe_unused]] bool presentation_recreate_required=false) {
         std::vector<int> framebuffers(n);
         const WindowSize window_size{width,height};
 __ACTUAL_DECISION__
@@ -211,3 +211,81 @@ with tempfile.TemporaryDirectory(prefix="f07-c04-layer-growth-") as d:
             assert "F07_C04_LAYER_GROWTH_PASS" in result.stdout
             print("F07_C04_LAYER_GROWTH_PASS native="+str(int(native)),opt)
 print("F07_C04_NO_GPU_OR_CONSOLE_FRAME_PROOF")
+
+# Exercise the exact per-slot/global resource decision, independently of Vulkan.
+slot_decision = blit.split("    bool resource_update_required = false;",1)[1].split("    const VkExtent2D window_size",1)[0]
+slot_decision = "    bool resource_update_required = false;" + slot_decision
+present_header = (ROOT / "headless/vk_present_manager_r08.h").read_text()
+present_cpp = (ROOT / "headless/vulkan_present_manager_ps5.cpp").read_text()
+assert "VkFormat image_view_format{VK_FORMAT_UNDEFINED};" in present_header
+recreate = present_cpp.split("void PresentManager::RecreateFrame(",1)[1].split("void PresentManager::WaitPresent()",1)[0]
+assert recreate.index("frame->framebuffer = dld.CreateFramebuffer(") < recreate.index("frame->image_view_format = image_view_format;")
+slot_code = r"""
+#include <cassert>
+#include <cstddef>
+using VkFormat = int;
+struct Device {};
+struct Layout { unsigned width, height; };
+struct Frame { unsigned width{}, height{}; VkFormat image_format{}, image_view_format{}; };
+struct Filters { int mode{}; int get_scaling_filter() const { return mode; } };
+struct Adapt { int GetRenderPass() const { return 1; } };
+struct PresentManager {
+    unsigned recreated{};
+    VkFormat image_format{1};
+    VkFormat SwapchainImageFormat() const { return image_format; }
+    void RecreateFrame(Frame* frame, unsigned w, unsigned h, VkFormat format, int) {
+        ++recreated; *frame = {w,h,image_format,format};
+    }
+};
+struct Screen {
+    Adapt adapt{};
+    Adapt* window_adapt{};
+    Filters filters{};
+    int scaling_filter{};
+    std::size_t image_count{3}, image_index{2};
+    VkFormat swapchain_view_format{};
+    PresentManager present_manager{};
+    unsigned drains{}, rebuilds{};
+    void WaitIdle(const Device&) { ++drains; }
+    void SetWindowAdaptPass(const Device&) {
+        window_adapt=&adapt; scaling_filter=filters.mode; ++rebuilds;
+    }
+    void Draw(const Device& device, Frame* frame, const Layout& layout,
+              std::size_t current_swapchain_image_count, VkFormat current_swapchain_view_format) {
+__SLOT_DECISION__
+    }
+};
+int main() {
+    Device device;
+    Screen s;
+    Frame slots[3]{};
+    for (auto& f : slots) s.Draw(device,&f,{1280,720},3,1);
+    assert(s.rebuilds==1 && s.present_manager.recreated==3 && s.drains==3);
+    s.image_index=2;
+    for (auto& f : slots) s.Draw(device,&f,{1920,1080},3,1);
+    assert(s.rebuilds==1 && s.present_manager.recreated==6 && s.drains==6);
+    assert(s.image_index==2);
+    for (auto& f : slots) s.Draw(device,&f,{1920,1080},3,2);
+    assert(s.rebuilds==2 && s.present_manager.recreated==9 && s.drains==9);
+    for (const auto& f : slots) assert(f.image_view_format==2);
+    for (auto& f : slots) s.Draw(device,&f,{1920,1080},3,2);
+    assert(s.rebuilds==2 && s.present_manager.recreated==9 && s.drains==9);
+    s.present_manager.image_format=3;
+    for (auto& f : slots) s.Draw(device,&f,{1920,1080},3,2);
+    assert(s.rebuilds==2 && s.present_manager.recreated==12 && s.drains==12);
+    for (const auto& f : slots) assert(f.image_format==3);
+    s.filters.mode=1;
+    s.Draw(device,&slots[0],{1920,1080},3,2);
+    assert(s.rebuilds==3 && s.present_manager.recreated==12 && s.drains==13);
+    s.Draw(device,&slots[0],{1920,1080},4,2);
+    assert(s.rebuilds==4 && s.present_manager.recreated==12 && s.drains==14);
+}
+""".replace("__SLOT_DECISION__",slot_decision)
+with tempfile.TemporaryDirectory(prefix="f07-present-slot-") as d:
+    source=Path(d)/"slot.cpp"; source.write_text(slot_code)
+    for opt in ("-O0","-O2"):
+        executable=Path(d)/("slot"+opt)
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=undefined","-fno-sanitize-recover=all",str(source),"-o",str(executable)],check=True,timeout=60)
+        subprocess.run([str(executable)],check=True,timeout=20)
+        print("F07_PRESENT_SLOT_RESOURCE_PASS",opt)

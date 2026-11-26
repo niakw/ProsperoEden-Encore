@@ -284,6 +284,7 @@ void PresentManager::RecreateFrame(Frame* frame, u32 width, u32 height, VkFormat
                                    VkRenderPass rd) {
     auto& dld = device.GetLogical();
 
+    const VkFormat image_format = SwapchainImageFormat();
     frame->width = width;
     frame->height = height;
 
@@ -298,7 +299,7 @@ void PresentManager::RecreateFrame(Frame* frame, u32 width, u32 height, VkFormat
         .pNext = nullptr,
         .flags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT | VK_IMAGE_CREATE_EXTENDED_USAGE_BIT,
         .imageType = VK_IMAGE_TYPE_2D,
-        .format = swapchain.GetImageFormat(),
+        .format = image_format,
         .extent =
             {
                 .width = width,
@@ -348,7 +349,7 @@ void PresentManager::RecreateFrame(Frame* frame, u32 width, u32 height, VkFormat
             .flags = 0,
             .image = *frame->image,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = swapchain.GetImageFormat(),
+            .format = image_format,
             .components =
                 {
                     .r = VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -379,6 +380,8 @@ void PresentManager::RecreateFrame(Frame* frame, u32 width, u32 height, VkFormat
         .height = height,
         .layers = 1,
     });
+    frame->image_format = image_format;
+    frame->image_view_format = image_view_format;
 }
 
 void PresentManager::WaitPresent() {

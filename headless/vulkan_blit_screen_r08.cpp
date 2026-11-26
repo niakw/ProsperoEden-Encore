@@ -108,7 +108,9 @@ void BlitScreen::RetireLoadingArtwork() {
 
 void BlitScreen::PrepareFrame(const Device& device, Frame* frame,
                               const Layout::FramebufferLayout& layout) {
-    if (!window_adapt || (frame->width == layout.width && frame->height == layout.height)) {
+    if (!window_adapt || (frame->width == layout.width && frame->height == layout.height &&
+                          frame->image_format == present_manager.SwapchainImageFormat() &&
+                          frame->image_view_format == swapchain_view_format)) {
         return;
     }
 
@@ -123,7 +125,10 @@ void BlitScreen::DrawToFrame(const Device& device, RasterizerVulkan& rasterizer,
                              size_t current_swapchain_image_count,
                              VkFormat current_swapchain_view_format, bool draw_hud) {
     bool resource_update_required = false;
-    bool presentation_recreate_required = false;
+    const bool presentation_recreate_required =
+        layout.width != frame->width || layout.height != frame->height ||
+        frame->image_format != present_manager.SwapchainImageFormat() ||
+        frame->image_view_format != current_swapchain_view_format;
 
     if (!window_adapt || scaling_filter != filters.get_scaling_filter()) {
         resource_update_required = true;
@@ -134,23 +139,24 @@ void BlitScreen::DrawToFrame(const Device& device, RasterizerVulkan& rasterizer,
         image_count = current_swapchain_image_count;
     }
 
-    if (swapchain_view_format != current_swapchain_view_format ||
-        layout.width != frame->width || layout.height != frame->height) {
+    if (swapchain_view_format != current_swapchain_view_format) {
         resource_update_required = true;
-        presentation_recreate_required = true;
         swapchain_view_format = current_swapchain_view_format;
     }
 
-    if (resource_update_required) {
+    // Each acquired frame owns its extent and view format. Updating one
+    // slot does not invalidate shared filters, descriptors or HUD layers.
+    // Retain the existing GPU drain for real resource destruction.
+    if (resource_update_required || presentation_recreate_required) {
         WaitIdle(device);
+    }
+    if (resource_update_required) {
         SetWindowAdaptPass(device);
-
-        if (presentation_recreate_required) {
-            present_manager.RecreateFrame(frame, layout.width, layout.height, swapchain_view_format,
-                                          window_adapt->GetRenderPass());
-        }
-
         image_index = 0;
+    }
+    if (presentation_recreate_required) {
+        present_manager.RecreateFrame(frame, layout.width, layout.height, swapchain_view_format,
+                                      window_adapt->GetRenderPass());
     }
 
     const VkExtent2D window_size{
@@ -196,7 +202,7 @@ void BlitScreen::DrawToFrame(const Device& device, RasterizerVulkan& rasterizer,
     } else if (rebuild_layers || retire_excess_layers) {
         // Only true layout changes or over-budget retirement can destroy
         // resources still captured by queued Vulkan command buffers.
-        if (!resource_update_required && !layers.empty()) {
+        if (!resource_update_required && !presentation_recreate_required && !layers.empty()) {
             WaitIdle(device);
         }
         layers.clear();

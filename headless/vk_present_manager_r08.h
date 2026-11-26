@@ -31,6 +31,8 @@ struct Frame {
     u32 width;
     u32 height;
     u32 index;
+    VkFormat image_format{VK_FORMAT_UNDEFINED};
+    VkFormat image_view_format{VK_FORMAT_UNDEFINED};
     vk::Image image;
     vk::ImageView image_view;
     vk::ImageView storage_view;
@@ -69,6 +71,8 @@ public:
         // instead of stalling the real game or missing a usable resource.
         for (auto it = free_queue.begin(); it != free_queue.end(); ++it) {
             Frame* frame = *it;
+            if (frame->image_format != SwapchainImageFormat() ||
+                frame->image_view_format != SwapchainImageViewFormat()) continue;
             if (frame->present_done.GetStatus() != VK_SUCCESS) continue;
             free_queue.erase(it);
             return frame;

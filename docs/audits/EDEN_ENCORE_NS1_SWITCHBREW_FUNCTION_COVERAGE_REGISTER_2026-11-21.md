@@ -5451,3 +5451,11 @@ Ce zéro signifie uniquement : **aucune identité du pool historique NULL/STUB/P
 
 Aucun build natif PS5 ni résultat console n'est revendiqué par cette clôture. Le couple runtime a été repinné par moteur `c5adbefb9c4d69d9655ed190cb1fda7c6ebc7e28` → vendor `bccaa7d11fe8f46d0a48a08bafd8b9e92b08657f`. Les gates de ce pin sont vertes : X8D24 `45868713603` et provenance vendor `45868713609`.
 
+### 2026-11-26 — Contre-revue P0 : événement launchable corrigé, qualification de fusion suspendue
+
+🟢 26/11/2026 — Contrat contrôlé sur libnx `nx/source/services/applet.c` : `_appletHolderCreate` attend cmd9 (`eventWait(..., UINT64_MAX)`) AVANT `CreateLibraryApplet` cmd0. `KReadableEvent::Initialize` initialise le signal à false. Le changement vendor `152a9f11` déplaçait le premier signal après création : attente circulaire sur le premier appel. Régression statique démontrée, impact console non mesuré.
+
+Vendor `02f6a897e100eadc1849cdacd3510ff450a6bab2` restaure le signal de disponibilité historique dans les deux propriétaires `eden-backports` et `ns2-runtime/self_controller`, sans réintroduire de changement d'ABI. Reçu actif backport SHA-256 `d9750ad7e97afac68ec098ce8c71ed8ba001b2b2319d95afb21b7c39315957e5`, 22 909 octets. Le modèle Encore ne simule pas encore la contention d'admission applet. Pas de nouvelle soustraction comptable.
+
+Le zéro historique n'est PAS une preuve de qualification runtime exhaustive. Le run provenance `45868713609` rapporte 6 768 slots physiques, 49 NULL (41 ES, 8 FSP), et `firmware_reachability=NOT_PROVEN`. Les changements succès → erreur générique dans AM, les transactions FSP et les overlays communs NS2 doivent faire l'objet d'une contre-revue fonctionnelle avant intégration. Les deux branches ont divergé. Le nouveau couple n'est pas encore qualifié CI/PS5. Aucun merge vers main sans accord explicite de l'utilisateur ; aucun build natif déclenché.
+

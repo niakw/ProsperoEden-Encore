@@ -141,6 +141,7 @@ ContentSet::ContentSet(std::shared_ptr<Mount> mount,
         return;
     const auto aoc_base = nacp_aoc_base_id.value_or(
         *active_base + FileSys::AOC_TITLE_ID_OFFSET);
+    addon_base_id_ = aoc_base;
 
     // Select DLC from the declared AoC base, never by blindly treating every
     // title with a similar high prefix as belonging to the application.

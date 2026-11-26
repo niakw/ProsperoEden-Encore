@@ -279,6 +279,7 @@ jobs:
           # Run independent host checks to completion and retain every failure.
           # No failure is waived; the aggregate remains mandatory and fail-closed.
           set -uxo pipefail
+          set +e  # Actions may start bash with -e; aggregate errors explicitly.
           audit_failed=0
           trap 'rc=$?; echo "::error::Audit failed (exit $rc): $BASH_COMMAND"; audit_failed=1' ERR
           python3 -B tools/check-ci-neutral-labels.py

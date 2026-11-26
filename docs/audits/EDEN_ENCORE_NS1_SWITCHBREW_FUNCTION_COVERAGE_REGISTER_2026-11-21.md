@@ -4610,3 +4610,20 @@ Le fait que les setters associés ne pilotent pas encore toute la sélection/arb
 **2 lignes PARTIEL quittent le pool : nouveau compteur global = 83 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console.
+
+
+### 2026-11-26 — FSP cache index requalifié : palier global 82
+
+Base : **83 lignes ouvertes**.
+
+Le PARTIEL historique `fsp-srv` cmd34 `GetCacheStorageSize` reposait sur une limitation « index 0 uniquement ». Elle n'existe plus dans l'owner actif :
+- l'ABI accepte l'index et renvoie les deux tailles data/journal ;
+- Encore valide désormais tout index `0..0xFFFF` ;
+- `GetCacheStorageDirectoryName(program_id, index)` distingue l'index 0 et encode explicitement les autres en suffixe `_XXXX` ;
+- le handler ouvre le répertoire correspondant et relit le vrai `.yuzu_save_size` pour retourner `normal` et `journal`.
+
+La limitation historique sur les index multiples est donc obsolète. Les autres lignes FSP ExtraData/reader restent ouvertes lorsque l'identité SdUser, l'intégrité/hash-salt ou les métadonnées ExtraData ne sont pas réellement reproduites.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 82 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console.

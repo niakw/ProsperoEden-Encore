@@ -4792,3 +4792,17 @@ L'ABI-DIFF historique `INewsService` cmd30500 est requalifié contre le dump HOS
 **1 ligne ABI-DIFF quitte le pool : nouveau compteur global = 50 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+
+### 2026-11-26 — debug-handle SVC fail-closed : palier global 48
+
+Base : **50 lignes ouvertes**.
+
+Vendor `f439f76906f1267a172fc72df82f4b1dbb1ea52d` ferme les deux PARTIEL SVC dus au debugger non implémenté :
+- `svcGetProcessId` (0x24) conserve les chemins process/thread réels ; un objet d'un autre type ne déclenche plus `UNIMPLEMENTED_MSG`, mais retourne `ResultInvalidHandle`. Horizon accepte également un `Handle<Debug>` sur ce SVC, mais Encore n'expose aucun objet debug ;
+- `svcGetThreadList` (0x66) conserve le chemin `InvalidHandle` utilisé par Encore pour le processus courant ; tout handle debugger, impossible à produire dans ce runtime, retourne désormais `ResultInvalidHandle` au lieu de traverser `UNIMPLEMENTED_IF` puis d'énumérer silencieusement le mauvais processus.
+
+Cette correction élimine deux chemins host-side `UNIMPLEMENTED` sans inventer de debugger et sans modifier les listes process/thread ordinaires.
+
+**2 lignes PARTIEL quittent le pool : nouveau compteur global = 48 lignes ouvertes.**
+
+Gitlink vendor repinné sur `f439f76906f1267a172fc72df82f4b1dbb1ea52d`. Aucun build PS5 ni validation console.

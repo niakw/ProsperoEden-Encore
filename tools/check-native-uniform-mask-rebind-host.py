@@ -37,6 +37,7 @@ using UniformBufferSizes = Mask;
 struct TrackingMask {
     Mask value{};
     unsigned stores{};
+    bool operator==(const Mask& other) const { return value == other; }
     bool operator!=(const Mask& other) const { return value != other; }
     TrackingMask& operator=(const Mask& other) { value=other; ++stores; return *this; }
 };

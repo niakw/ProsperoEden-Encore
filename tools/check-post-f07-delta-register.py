@@ -218,6 +218,10 @@ for entry in entries:
                 # Nov26 exact successor: resets artwork-change flags and
                 # publishes the current case spine from the selected title.
                 "98ff90169756e3f521f6a9d4828ec4c20f8b75a7",
+                # Nov26 launcher-only descendants c3efb8e9..e2c37916:
+                # exact current service blob, with the frozen pre-launcher
+                # e0080f38 source verified below (never rewrite its bytes).
+                "5751870dbc3b410f9f1e6573af10459720ebccfd",
             }:
                 service_audit_source = subprocess.check_output(
                     ["git", "show",

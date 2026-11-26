@@ -3050,9 +3050,15 @@ launcher_service_successor = (
         # Nov26 selected title's Spine path and refreshed artwork metadata:
         # exact successor independently reverse-qualified by R457 preflight.
         "98ff90169756e3f521f6a9d4828ec4c20f8b75a7",
+        # Exact Nov26 launcher media/synopsis descendant; no core runtime
+        # owner changed relative to the reviewed c3efb8e9 source.
+        "5751870dbc3b410f9f1e6573af10459720ebccfd",
     }
 )
-if launcher_service_successor and actual_service_blob == "98ff90169756e3f521f6a9d4828ec4c20f8b75a7":
+if launcher_service_successor and actual_service_blob in {
+    "98ff90169756e3f521f6a9d4828ec4c20f8b75a7",
+    "5751870dbc3b410f9f1e6573af10459720ebccfd",
+}:
     r457_check = (ROOT/"tools/check-post-f07-delta-register.py").read_text()
     assert '"98ff90169756e3f521f6a9d4828ec4c20f8b75a7"' in r457_check
     # The independent R457 check reconstructs and authenticates the original

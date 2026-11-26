@@ -4331,3 +4331,21 @@ Aucun nouveau patch C++, changement de gitlink, build PS5 ou validation console 
 Le palier précédent **104** est annulé : les dix lignes PSM cmd2/3/4, 5/6, 8/9, 10/11 et 14 avaient **déjà été retirées** au palier `171 → 161` (« requalification PSM invité »). Leur relecture reste valide techniquement, mais ne constitue pas dix fermetures nouvelles.
 
 **Compteur global corrigé : 114 lignes ouvertes.** Aucun changement runtime ni gitlink dans cette correction. Les prochains décréments doivent être vérifiés contre l'historique des paliers afin d'éviter tout double comptage.
+
+
+### 2026-11-26 — NFC/NFP raw operations fail-closed : palier global 111
+
+Base corrigée : **114 lignes ouvertes**.
+
+Vendor `a911924beb0d8adf35e3ca40c29b3b5f6b6136e4`, finalisé par `6eb9ce055566750abd07e0fcfdf9beb22881dac1`, supprime trois faux succès sur des backends absents :
+- `nfc:user` cmd1300 `SendCommandByPassThrough` ;
+- `nfc:sys` cmd1300 `SendCommandByPassThrough` ;
+- `nfp:dbg` cmd206 `WriteNtf`.
+
+Le raw NFC pass-through fabriquait un octet de sortie et `ResultSuccess` alors que `NfcDevice::SendCommandByPassThrough` n'a aucune implémentation. `WriteNtf` atteignait de même un `NfcDevice::WriteNtf` sans écriture réelle. Les trois chemins retournent désormais explicitement `IPC::ResultNotSupported`, sans affecter les chemins Mifare/Amiibo fonctionnels.
+
+`nfp:dbg::BreakTag` reste ouvert : `BreakType::Normal` est réellement implémenté via `FlushWithBreak`, mais les deux autres variantes restent non prises en charge.
+
+**3 lignes PARTIEL quittent le pool. Nouveau compteur global : 111 lignes ouvertes.**
+
+Gitlink repinné sur `6eb9ce055566750abd07e0fcfdf9beb22881dac1`. Aucun build PS5 ni validation console revendiqués.

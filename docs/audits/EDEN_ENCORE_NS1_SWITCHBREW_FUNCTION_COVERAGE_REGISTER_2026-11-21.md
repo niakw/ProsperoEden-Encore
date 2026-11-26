@@ -4852,3 +4852,19 @@ Le reliquat FSP cmd57/cmd58/cmd59/cmd66 était maintenu PARTIEL parce que les sa
 Le même candidat corrige la provenance du vendor : `sources/eden` SPL/audrec est revenu au miroir exact `eden-emulator/mirror@5f142c7926d0c7fcbbd0ce30794d72f638a43b2a`, la sémantique audrec NS1 reste dans `encore-active/eden-backports`, et les hashes des overlays HID/NIM/NS/VI/OMM revus sont synchronisés. Les unités SPL, audrec et FSP sont bien sélectionnées par le CMake actif.
 
 **Compteur global de revue : 44 lignes ouvertes.** Ce décrément qualifie les quatre lignes cmd57/58/59/66 sur preuve statique/runtime active ; il ne constitue pas une validation PS5. CI hôte, build natif et console restent des niveaux de preuve séparés.
+### 2026-11-26 — NIFM IRequest revision qualifiée : 44 → 43
+
+Base précédente : **44 lignes ouvertes**.
+
+Le PARTIEL `IRequest` cmd18 `SetRequirementByRevision` est requalifié sur le propriétaire NIFM actif :
+- l'ABI HOS23/SwIPC est un unique `u32 revision`, sans sortie ;
+- Encore consomme exactement ce `u32`, le conserve sous `state_lock` dans `requirement_revision` puis retourne `ResultSuccess` ;
+- cmd20 `GetRevision`, déjà qualifié, relit exactement le même état sous le même verrou ;
+- libnx utilise cette valeur comme révision NIFM pour le WifiWebAuthApplet, et les runtimes recomp indépendants consultés acceptent cmd18 sans effet réseau additionnel démontrable.
+
+Le motif historique « la révision n'est pas raccordée à tout l'arbitrage réseau » ne constitue donc pas une divergence propre à ce setter : son état observable et son round-trip HOS sont déjà représentés. `SetAcceptableNetworkTypeFlag` cmd40 reste ouvert séparément, car son effet de filtrage des types réseau n'est toujours pas démontré dans Encore.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 43 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+

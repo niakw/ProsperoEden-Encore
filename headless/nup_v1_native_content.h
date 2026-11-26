@@ -42,6 +42,8 @@ public:
     // Directory handles only. Registration into the shared AoC provider
     // is deliberately deferred; no addon is folded into effective RomFS.
     const std::vector<AddOnDirectory>& AddOns() const { return addons_; }
+    // Only set after caller and package-family admission.
+    std::optional<std::uint64_t> AddOnBaseId() const { return addon_base_id_; }
     // Explicit addon-only RomFS binary for a future AoC provider.
     // Base/update packages are rejected, never merged into CreateRomFS().
     FileSys::VirtualFile CreateAddOnRomFS(std::size_t package_index) const;
@@ -49,6 +51,7 @@ public:
 private:
     std::shared_ptr<Mount> mount_;
     std::vector<AddOnDirectory> addons_;
+    std::optional<std::uint64_t> addon_base_id_;
 };
 
 } // namespace Eden::NupV1::Native

@@ -4412,3 +4412,19 @@ Aucun nouveau backend NFC, aucune écriture synthétique et aucun changement du 
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 107 lignes ouvertes.**
 
 Gitlink vendor attendu : `ace1fe766114a97ff78b4401c65120fe1c4d3863`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — AM save-data permission fail-closed : palier global 106
+
+Base : **107 lignes ouvertes**.
+
+Requalification de `IApplicationAccessor::HasSaveDataAccessPermission` (cmd170) sur l'owner shipping actuel `encore-active/eden-backports/src/core/hle/service/am/service/application_accessor.cpp` :
+- le titre courant obtient l'accès à son propre save (`application_id == m_applet->program_id`) ;
+- toute demande cross-title est refusée tant qu'Encore ne possède pas de modèle ACL inter-title qualifié ;
+- le refus par défaut est la politique de sécurité correcte : l'absence de base ACL ne doit jamais élargir les droits de l'invité.
+
+La limitation historique « ACL inter-title non modélisées » ne rend donc plus la commande PARTIELLE : le contrat de permission reste déterministe et fail-closed.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 106 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette requalification.

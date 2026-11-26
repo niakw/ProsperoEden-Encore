@@ -395,6 +395,13 @@ for path,expected in (
     ("vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc",
      "852a0272696c7ce182bc05aee92bc7cbb195446b" if selected in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"} else ("8acbdfe9ac970d24fecd334ca7b943f6bcd958f4" if pinned in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "daf493ce6e863397ec44bfae467c4f7533570477")),
 ):
+    # This vendor successor changes only native fence/manifest/FC27 witness;
+    # its sparse DeviceMemory owner is byte-identical to the checked 95467b3a
+    # predecessor, confirmed again by exact Git blob before accepting.
+    if pinned == "05bf05a8dca75b3e12871ec886a810310cdf43d6" and (
+        path == "vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc"
+    ):
+        expected = "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4"
     assert gitblob(path)==expected,("Unexpected sparse kernel source owner",path)
 
 if selected in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"}:

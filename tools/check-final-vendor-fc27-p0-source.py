@@ -2957,7 +2957,7 @@ if actual_vendor_pin in {"eace7e056485299e7252c506433a1429a4475051", "05bf05a8dc
         # native-fence owner receipts above.
         successors = {
             "encore-active/eden-backports/manifest.json": "23f949939b00aefc4c42a855f94c1f1830a3a140",
-            "tests/fc27_deferred_page_protection_host.py": "dc1c4539a0ba8b7a9f433b8dbd9ccd859a895f9",
+            "tests/fc27_deferred_page_protection_host.py": "dc1c4539a0ba8b7a9f433b8dbd9ccd859a895f9f",
         }
         for relative, expected in successors.items():
             raw = (V / relative).read_bytes()

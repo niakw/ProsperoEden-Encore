@@ -297,9 +297,26 @@ def main()->int:
         'NativeTipcReplyWords(ctx, {static_cast<u32>(written), 0, 0});',
     ):
         assert witness in timestamps, "VI2 53 lost its bounded timestamp response: " + witness
+    # The current selected VI2 implements 107/301/354 with real, bounded
+    # display-capability replies. Keep every other unexplained ID fail-closed.
+    reviewed_vi2_capabilities = {
+        107: ("QueryDisplayModeCapability", "GetDisplayModeCapability"),
+        301: ("SetRefreshRateCapability", "SetDisplayRefreshRateCapability"),
+        354: ("QueryRefreshRateBits", "GetDisplayRefreshRateBits"),
+    }
+    for command, (handler, name) in reviewed_vi2_capabilities.items():
+        assert f'{{{command},&IVi2Session::{handler},"{name}"}}' in text
+    capability_reply = text.split('void QueryDisplayModeCapability(HLERequestContext& ctx) {', 1)[1].split(
+        'void QueryHdrStatus(HLERequestContext& ctx) {', 1)[0]
+    for token in ('ValidateDisplayStatus(ctx, 107)',
+                  'ValidateDisplayStatus(ctx, 354)',
+                  'IsDefaultVi2RefreshRateSelection(',
+                  'm_display && m_vi ? ResultSuccess : Kernel::ResultInvalidState',
+                  'GraphicsSupervisorProtocol::Vi2SupportedRateBits'):
+        assert token in capability_reply, ("VI2 rate capability regression", token)
     vi2_unknown = (
-        13, 107, 108, 113, 230, 231, 232, 301, 302,
-        353, 354, 355, 356, 358, 359,
+        13, 108, 113, 230, 231, 232, 302,
+        353, 355, 356, 358, 359,
     )
     for command in vi2_unknown:
         assert ('{'+str(command)+',&IVi2Session::Unsupported,"Unknown'+str(command)+'"}') in text, (

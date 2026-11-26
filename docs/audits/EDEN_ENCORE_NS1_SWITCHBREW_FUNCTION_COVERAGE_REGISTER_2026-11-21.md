@@ -4428,3 +4428,22 @@ La limitation historique « ACL inter-title non modélisées » ne rend donc plu
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 106 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette requalification.
+
+
+### 2026-11-26 — NCM RightsId cache conforme au contrat : palier global 105
+
+Base : **106 lignes ouvertes**.
+
+Vendor `54e031bb4a27a01b97b11e3b566425260929355d` complète `IContentStorage` cmd27 `GetRightsIdFromPlaceHolderIdWithCache` en suivant le comportement d'Atmosphère `ContentStorageImpl` :
+- lookup prioritaire par `cache_content_id` ;
+- au miss, lecture du placeholder réel et extraction `RightsId + key_generation` ;
+- stockage du résultat pour les appels suivants ;
+- cache borné par `StorageId + ContentId`, comme un cache propre à chaque ContentStorage, pour éviter toute collision entre storages ;
+- `ncm` cmd13 `InvalidateRightsIdCache` vide réellement le cache ;
+- les `ContentAttributes` non nuls, que le VFS Encore ne sait pas encore interpréter, restent fail-closed avec `IPC::ResultNotSupported` au lieu d'un succès fictif.
+
+La ligne n'est donc plus seulement « résultat exact sans optimisation cache » : le chemin cache fait désormais partie du comportement observable et est réellement représenté.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 105 lignes ouvertes.**
+
+Gitlink vendor attendu : `54e031bb4a27a01b97b11e3b566425260929355d`. Aucun build PS5 ni validation console revendiqués.

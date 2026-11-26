@@ -16920,3 +16920,1238 @@ Encore : symbole homonyme absent/non extrait dans le propriétaire actif ; diff�
 Le watchdog de fermeture ne permet pas, à lui seul, de choisir entre GPU worker, fence, NVDRV, VI2 ou KProcess. Cette annexe ferme la chaîne de propriétaires afin qu'un futur stack/wait existant puisse être relié à la bonne étape sans ajouter d'instrumentation par défaut.
 
 **Couverture ajoutée :** 3 fonctions directement comparables, 5 comparaisons, 358 lignes-source parcourues, 2 symbole(s) homonyme(s) absent(s)/non extrait(s). Aucun fix.
+
+## Annexe X — nvnflinger : BufferQueue producteur/consumer et acquisition compositeur
+
+Cette annexe complète VI2 229 jusqu'au compositeur. Elle est importante parce qu'un paquet VI2 peut être accepté alors que la première image n'atteint jamais le consumer/compositeur. Les propriétaires comparés sont les fichiers `encore-active/eden-core` réellement sélectionnés, pas les copies historiques.
+
+### P0-V05 · BufferQueueProducer::RequestBuffer
+
+Résolution du GraphicBuffer du slot. Pertinent à VI2 : un slot valide doit référencer le bon NVMap/backing et conserver la durée de vie attendue.
+
+Encore : [buffer_queue_producer.cpp:115-138](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L115-L138) — 24 lignes.
+
+<details>
+<summary>Lichii — 40-63 : 24 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [buffer_queue_producer.cpp:40-63](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L40-L63).
+
+```diff
+   115    40 | Status BufferQueueProducer::RequestBuffer(s32 slot, std::shared_ptr<GraphicBuffer>* buf) {
+   116    41 |     LOG_DEBUG(Service_Nvnflinger, "slot {}", slot);
+   117    42 | 
+   118    43 |     std::scoped_lock lock{core->mutex};
+   119    44 | 
+   120    45 |     if (core->is_abandoned) {
+   121    46 |         LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
+   122    47 |         return Status::NoInit;
+   123    48 |     }
+   124    49 |     if (slot < 0 || slot >= BufferQueueDefs::NUM_BUFFER_SLOTS) {
+   125    50 |         LOG_ERROR(Service_Nvnflinger, "slot index {} out of range [0, {})", slot,
+   126    51 |                   BufferQueueDefs::NUM_BUFFER_SLOTS);
+   127    52 |         return Status::BadValue;
+   128    53 |     } else if (slots[slot].buffer_state != BufferState::Dequeued) {
+   129    54 |         LOG_ERROR(Service_Nvnflinger, "slot {} is not owned by the producer (state = {})", slot,
+   130    55 |                   slots[slot].buffer_state);
+   131    56 |         return Status::BadValue;
+   132    57 |     }
+   133    58 | 
+   134    59 |     slots[slot].request_buffer_called = true;
+   135    60 |     *buf = slots[slot].graphic_buffer;
+   136    61 | 
+   137    62 |     return Status::NoError;
+   138    63 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 46-69 : 24 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [buffer_queue_producer.cpp:46-69](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L46-L69).
+
+```diff
+   115    46 | Status BufferQueueProducer::RequestBuffer(s32 slot, std::shared_ptr<GraphicBuffer>* buf) {
+   116    47 |     LOG_DEBUG(Service_Nvnflinger, "slot {}", slot);
+   117    48 | 
+   118    49 |     std::scoped_lock lock{core->mutex};
+   119    50 | 
+   120    51 |     if (core->is_abandoned) {
+   121    52 |         LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
+   122    53 |         return Status::NoInit;
+   123    54 |     }
+   124    55 |     if (slot < 0 || slot >= BufferQueueDefs::NUM_BUFFER_SLOTS) {
+   125    56 |         LOG_ERROR(Service_Nvnflinger, "slot index {} out of range [0, {})", slot,
+   126    57 |                   BufferQueueDefs::NUM_BUFFER_SLOTS);
+   127    58 |         return Status::BadValue;
+   128    59 |     } else if (slots[slot].buffer_state != BufferState::Dequeued) {
+   129    60 |         LOG_ERROR(Service_Nvnflinger, "slot {} is not owned by the producer (state = {})", slot,
+   130    61 |                   slots[slot].buffer_state);
+   131    62 |         return Status::BadValue;
+   132    63 |     }
+   133    64 | 
+   134    65 |     slots[slot].request_buffer_called = true;
+   135    66 |     *buf = slots[slot].graphic_buffer;
+   136    67 | 
+   137    68 |     return Status::NoError;
+   138    69 | }
+```
+
+</details>
+
+### P0-V06 · BufferQueueProducer::DequeueBuffer
+
+Allocation/sélection d'un slot producteur et fence de réutilisation. Les différences de wait et d'état du slot peuvent affecter première frame, pacing et fermeture.
+
+Encore : [buffer_queue_producer.cpp:316-418](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L316-L418) — 103 lignes.
+
+<details>
+<summary>Lichii — 229-321 : 92 alignées, 11 propres Encore, 1 propres upstream</summary>
+
+Source : [buffer_queue_producer.cpp:229-321](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L229-L321).
+
+```diff
+   316   229 | Status BufferQueueProducer::DequeueBuffer(s32* out_slot, Fence* out_fence, bool async, u32 width,
+   317   230 |                                           u32 height, PixelFormat format, u32 usage) {
+   318   231 |     LOG_DEBUG(Service_Nvnflinger, "async={} w={} h={} format={}, usage={}",
+   319   232 |               async ? "true" : "false", width, height, format, usage);
+   320   233 | 
+   321   234 |     if ((width != 0 && height == 0) || (width == 0 && height != 0)) {
+   322   235 |         LOG_ERROR(Service_Nvnflinger, "invalid size: w={} h={}", width, height);
+   323   236 |         return Status::BadValue;
+   324   237 |     }
+   325   238 | 
+   326   239 |     Status return_flags = Status::NoError;
+   327   240 |     bool attached_by_consumer = false;
+-  328       |     u64 returned_frame_number{};
+   329   241 |     {
+   330   242 |         std::unique_lock lock{core->mutex};
+   331   243 |         core->WaitWhileAllocatingLocked();
+   332   244 | 
+   333   245 |         if (format == PixelFormat::NoFormat) {
+   334   246 |             format = core->default_buffer_format;
+   335   247 |         }
+   336   248 | 
+   337   249 |         // Enable the usage bits the consumer requested
+   338   250 |         usage |= core->consumer_usage_bit;
+   339   251 | 
+   340   252 |         s32 found{};
+-  341       | #ifdef EDEN_NVNF_DEQUEUE_PROFILE
+-  342       |         const auto dequeue_start = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) ? ::Eden::Performance::NowNs() : 0;
+-  343       | #endif
+   344   253 |         Status status = WaitForFreeSlotThenRelock(async, &found, &return_flags, lock);
+-  345       | #ifdef EDEN_NVNF_DEQUEUE_PROFILE
+-  346       |         if (dequeue_start) ::Eden::Performance::AddSince(::Eden::Performance::guest_dequeue_wait, dequeue_start);
+-  347       | #endif
+   348   254 |         if (status != Status::NoError) {
+   349   255 |             return status;
+   350   256 |         }
+   351   257 | 
+   352   258 |         // This should not happen
+   353   259 |         if (found == BufferQueueCore::INVALID_BUFFER_SLOT) {
+   354   260 |             LOG_ERROR(Service_Nvnflinger, "no available buffer slots");
+   355   261 |             return Status::Busy;
+   356   262 |         }
+   357   263 | 
+   358   264 |         *out_slot = found;
+   359   265 | 
+   360   266 |         attached_by_consumer = slots[found].attached_by_consumer;
+   361   267 | 
+   362   268 |         const bool use_default_size = !width && !height;
+   363   269 |         if (use_default_size) {
+   364   270 |             width = core->default_width;
+   365   271 |             height = core->default_height;
+   366   272 |         }
+   367   273 | 
+   368   274 |         slots[found].buffer_state = BufferState::Dequeued;
+   369   275 | 
+   370   276 |         const std::shared_ptr<GraphicBuffer>& buffer(slots[found].graphic_buffer);
+   371   277 |         if ((buffer == nullptr) || (buffer->Width() != width) || (buffer->Height() != height) ||
+   372   278 |             (buffer->Format() != format) || ((buffer->Usage() & usage) != usage)) {
+   373   279 |             slots[found].acquire_called = false;
+   374   280 |             slots[found].graphic_buffer = nullptr;
+   375   281 |             slots[found].request_buffer_called = false;
+   376   282 |             slots[found].fence = Fence::NoFence();
+   377   283 | 
+   378   284 |             return_flags |= Status::BufferNeedsReallocation;
+   379   285 |         }
+   380   286 | 
+   381   287 |         *out_fence = slots[found].fence;
+   382   288 |         slots[found].fence = Fence::NoFence();
+-  383       |         // Snapshot the slot metadata while the queue mutex is still owned.
+-  384       |         returned_frame_number = slots[found].frame_number;
+   385   289 |     }
+   386   290 | 
+   387   291 |     if ((return_flags & Status::BufferNeedsReallocation) != Status::None) {
+   388   292 |         LOG_DEBUG(Service_Nvnflinger, "allocating a new buffer for slot {}", *out_slot);
+   389   293 | 
+   390   294 |         auto graphic_buffer = std::make_shared<GraphicBuffer>(width, height, format, usage);
+   391   295 |         if (graphic_buffer == nullptr) {
+   392   296 |             LOG_ERROR(Service_Nvnflinger, "creating GraphicBuffer failed");
+   393   297 |             return Status::NoMemory;
+   394   298 |         }
+   395   299 | 
+   396   300 |         {
+   397   301 |             std::scoped_lock lock{core->mutex};
+   398   302 | 
+   399   303 |             if (core->is_abandoned) {
+   400   304 |                 LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
+   401   305 |                 return Status::NoInit;
+   402   306 |             }
+   403   307 | 
+   404   308 |             slots[*out_slot].frame_number = UINT32_MAX;
+-  405       |             returned_frame_number = UINT32_MAX;
+   406   309 |             slots[*out_slot].graphic_buffer = graphic_buffer;
+   407   310 |         }
+   408   311 |     }
+   409   312 | 
+   410   313 |     if (attached_by_consumer) {
+   411   314 |         return_flags |= Status::BufferNeedsReallocation;
+   412   315 |     }
+   413   316 | 
+   414   317 |     LOG_DEBUG(Service_Nvnflinger, "returning slot={} frame={}, flags={}", *out_slot,
+-  415       |               returned_frame_number, return_flags);
++        318 |               slots[*out_slot].frame_number, return_flags);
+   416   319 | 
+   417   320 |     return return_flags;
+   418   321 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 235-335 : 92 alignées, 11 propres Encore, 9 propres upstream</summary>
+
+Source : [buffer_queue_producer.cpp:235-335](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L235-L335).
+
+```diff
+   316   235 | Status BufferQueueProducer::DequeueBuffer(s32* out_slot, Fence* out_fence, bool async, u32 width,
+   317   236 |                                           u32 height, PixelFormat format, u32 usage) {
+   318   237 |     LOG_DEBUG(Service_Nvnflinger, "async={} w={} h={} format={}, usage={}",
+   319   238 |               async ? "true" : "false", width, height, format, usage);
+   320   239 | 
+   321   240 |     if ((width != 0 && height == 0) || (width == 0 && height != 0)) {
+   322   241 |         LOG_ERROR(Service_Nvnflinger, "invalid size: w={} h={}", width, height);
+   323   242 |         return Status::BadValue;
+   324   243 |     }
+   325   244 | 
+   326   245 |     Status return_flags = Status::NoError;
+   327   246 |     bool attached_by_consumer = false;
+-  328       |     u64 returned_frame_number{};
+   329   247 |     {
+   330   248 |         std::unique_lock lock{core->mutex};
+   331   249 |         core->WaitWhileAllocatingLocked();
+   332   250 | 
+   333   251 |         if (format == PixelFormat::NoFormat) {
+   334   252 |             format = core->default_buffer_format;
+   335   253 |         }
+   336   254 | 
+   337   255 |         // Enable the usage bits the consumer requested
+   338   256 |         usage |= core->consumer_usage_bit;
+   339   257 | 
+   340   258 |         s32 found{};
+-  341       | #ifdef EDEN_NVNF_DEQUEUE_PROFILE
+-  342       |         const auto dequeue_start = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) ? ::Eden::Performance::NowNs() : 0;
+-  343       | #endif
++        259 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
++        260 |         const auto dequeue_start = ::Eden::Performance::NowNs();
++        261 | #else // PS5
++        262 | #endif // PS5
+   344   263 |         Status status = WaitForFreeSlotThenRelock(async, &found, &return_flags, lock);
+-  345       | #ifdef EDEN_NVNF_DEQUEUE_PROFILE
+-  346       |         if (dequeue_start) ::Eden::Performance::AddSince(::Eden::Performance::guest_dequeue_wait, dequeue_start);
+-  347       | #endif
++        264 | #if defined(EDEN_DEV_PROFILE) // PS5 development build
++        265 |         ::Eden::Performance::AddSince(::Eden::Performance::guest_dequeue_wait, dequeue_start);
++        266 | #else // PS5
++        267 | #endif // PS5
+   348   268 |         if (status != Status::NoError) {
+   349   269 |             return status;
+   350   270 |         }
+   351   271 | 
+   352   272 |         // This should not happen
+   353   273 |         if (found == BufferQueueCore::INVALID_BUFFER_SLOT) {
+   354   274 |             LOG_ERROR(Service_Nvnflinger, "no available buffer slots");
+   355   275 |             return Status::Busy;
+   356   276 |         }
+   357   277 | 
+   358   278 |         *out_slot = found;
+   359   279 | 
+   360   280 |         attached_by_consumer = slots[found].attached_by_consumer;
+   361   281 | 
+   362   282 |         const bool use_default_size = !width && !height;
+   363   283 |         if (use_default_size) {
+   364   284 |             width = core->default_width;
+   365   285 |             height = core->default_height;
+   366   286 |         }
+   367   287 | 
+   368   288 |         slots[found].buffer_state = BufferState::Dequeued;
+   369   289 | 
+   370   290 |         const std::shared_ptr<GraphicBuffer>& buffer(slots[found].graphic_buffer);
+   371   291 |         if ((buffer == nullptr) || (buffer->Width() != width) || (buffer->Height() != height) ||
+   372   292 |             (buffer->Format() != format) || ((buffer->Usage() & usage) != usage)) {
+   373   293 |             slots[found].acquire_called = false;
+   374   294 |             slots[found].graphic_buffer = nullptr;
+   375   295 |             slots[found].request_buffer_called = false;
+   376   296 |             slots[found].fence = Fence::NoFence();
+   377   297 | 
+   378   298 |             return_flags |= Status::BufferNeedsReallocation;
+   379   299 |         }
+   380   300 | 
+   381   301 |         *out_fence = slots[found].fence;
+   382   302 |         slots[found].fence = Fence::NoFence();
+-  383       |         // Snapshot the slot metadata while the queue mutex is still owned.
+-  384       |         returned_frame_number = slots[found].frame_number;
+   385   303 |     }
+   386   304 | 
+   387   305 |     if ((return_flags & Status::BufferNeedsReallocation) != Status::None) {
+   388   306 |         LOG_DEBUG(Service_Nvnflinger, "allocating a new buffer for slot {}", *out_slot);
+   389   307 | 
+   390   308 |         auto graphic_buffer = std::make_shared<GraphicBuffer>(width, height, format, usage);
+   391   309 |         if (graphic_buffer == nullptr) {
+   392   310 |             LOG_ERROR(Service_Nvnflinger, "creating GraphicBuffer failed");
+   393   311 |             return Status::NoMemory;
+   394   312 |         }
+   395   313 | 
+   396   314 |         {
+   397   315 |             std::scoped_lock lock{core->mutex};
+   398   316 | 
+   399   317 |             if (core->is_abandoned) {
+   400   318 |                 LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
+   401   319 |                 return Status::NoInit;
+   402   320 |             }
+   403   321 | 
+   404   322 |             slots[*out_slot].frame_number = UINT32_MAX;
+-  405       |             returned_frame_number = UINT32_MAX;
+   406   323 |             slots[*out_slot].graphic_buffer = graphic_buffer;
+   407   324 |         }
+   408   325 |     }
+   409   326 | 
+   410   327 |     if (attached_by_consumer) {
+   411   328 |         return_flags |= Status::BufferNeedsReallocation;
+   412   329 |     }
+   413   330 | 
+   414   331 |     LOG_DEBUG(Service_Nvnflinger, "returning slot={} frame={}, flags={}", *out_slot,
+-  415       |               returned_frame_number, return_flags);
++        332 |               slots[*out_slot].frame_number, return_flags);
+   416   333 | 
+   417   334 |     return return_flags;
+   418   335 | }
+```
+
+</details>
+
+### P0-V07 · BufferQueueProducer::QueueBuffer
+
+Frontière critique de VI2 229 vers le compositeur. Comparer validation du slot, crop/transform, frame number, fence, callback et signalement. Une réponse succès ne suffit pas si le consumer ne peut pas acquérir le même buffer.
+
+Encore : [buffer_queue_producer.cpp:540-668](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L540-L668) — 129 lignes.
+
+<details>
+<summary>Lichii — 434-551 : 113 alignées, 16 propres Encore, 5 propres upstream</summary>
+
+Source : [buffer_queue_producer.cpp:434-551](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L434-L551).
+
+```diff
+   540   434 | Status BufferQueueProducer::QueueBuffer(s32 slot, const QueueBufferInput& input, QueueBufferOutput* output) {
+   541   435 |     s64 timestamp{};
+   542   436 |     bool is_auto_timestamp{};
+   543   437 |     Common::Rectangle<s32> crop;
+   544   438 |     NativeWindowScalingMode scaling_mode{};
+   545   439 |     NativeWindowTransform transform;
+   546   440 |     u32 sticky_transform_{};
+   547   441 |     bool async{};
+   548   442 |     s32 swap_interval{};
+   549   443 |     Fence fence{};
+   550   444 | 
+   551   445 |     input.Deflate(&timestamp, &is_auto_timestamp, &crop, &scaling_mode, &transform, &sticky_transform_, &async, &swap_interval, &fence);
+   552   446 | 
+   553   447 |     switch (scaling_mode) {
+   554   448 |     case NativeWindowScalingMode::Freeze:
+   555   449 |     case NativeWindowScalingMode::ScaleToWindow:
+   556   450 |     case NativeWindowScalingMode::ScaleCrop:
+   557   451 |     case NativeWindowScalingMode::NoScaleCrop:
+   558   452 |     case NativeWindowScalingMode::PreserveAspectRatio:
+   559   453 |         break;
+   560   454 |     default:
+   561   455 |         LOG_ERROR(Service_Nvnflinger, "unknown scaling mode {}", scaling_mode);
+   562   456 |         return Status::BadValue;
+   563   457 |     }
+   564   458 | 
+   565   459 |     BufferItem item;
+   566   460 |     std::shared_ptr<IConsumerListener> listener_available;
+   567   461 |     std::shared_ptr<IConsumerListener> listener_replaced;
+-  568       |     bool recycled_queued_slot = false;
+   569   462 | 
+   570   463 |     {
+   571   464 |         std::scoped_lock lock{core->mutex};
+   572   465 | 
+   573   466 |         if (core->is_abandoned) {
+   574   467 |             LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
+   575   468 |             return Status::NoInit;
+   576   469 |         }
+   577   470 | 
+   578   471 |         const s32 max_buffer_count = core->GetMaxBufferCountLocked(async);
+   579   472 | 
+   580   473 |         if (slot < 0 || slot >= max_buffer_count) {
+   581   474 |             LOG_ERROR(Service_Nvnflinger, "slot {} out of range [0, {})", slot, max_buffer_count);
+   582   475 |             return Status::BadValue;
+   583   476 |         }
+   584   477 |         if (slots[slot].buffer_state != BufferState::Dequeued) {
+   585   478 |             LOG_ERROR(Service_Nvnflinger, "slot {} is not owned by producer", slot);
+   586   479 |             return Status::BadValue;
+   587   480 |         }
+   588   481 |         if (!slots[slot].request_buffer_called) {
+   589   482 |             LOG_ERROR(Service_Nvnflinger, "slot {} was queued without request", slot);
+   590   483 |             return Status::BadValue;
+   591   484 |         }
+   592   485 | 
+-  593       |         // History is normally disabled: avoid unconditional wall-clock work.
+-  594       |         const bool record_buffer_history = Settings::values.enable_buffer_history.GetValue();
+   595   486 |         ++core->frame_counter;
+   596   487 |         slots[slot].buffer_state = BufferState::Queued;
+   597   488 |         slots[slot].frame_number = core->frame_counter;
+   598   489 |         slots[slot].queue_time = timestamp;
+-  599       |         slots[slot].presentation_time = record_buffer_history
+-  600       |                                             ? Common::g_wall_clock.GetTimeNS().count() : 0;
++        490 |         slots[slot].presentation_time = Common::g_wall_clock.GetTimeNS().count();
+   601   491 |         slots[slot].fence = fence;
+   602   492 | 
+   603   493 |         item.slot = slot;
+   604   494 |         item.graphic_buffer = slots[slot].graphic_buffer;
+   605   495 |         item.frame_number = core->frame_counter;
+   606   496 |         item.timestamp = timestamp;
+   607   497 |         item.is_auto_timestamp = is_auto_timestamp;
+   608   498 |         item.crop = crop;
+   609   499 |         item.transform = transform & ~NativeWindowTransform::InverseDisplay;
+   610   500 |         item.transform_to_display_inverse = (transform & NativeWindowTransform::InverseDisplay) != NativeWindowTransform::None;
+   611   501 |         item.scaling_mode = static_cast<u32>(scaling_mode);
+   612   502 |         item.fence = fence;
+   613   503 |         item.is_droppable = core->dequeue_buffer_cannot_block || async;
+   614   504 |         item.swap_interval = swap_interval;
+   615   505 |         item.acquire_called = slots[slot].acquire_called;
+   616   506 | 
+   617   507 |         sticky_transform = sticky_transform_;
+   618   508 | 
+   619   509 |         if (core->queue.empty()) {
+   620   510 |             core->queue.push_back(item);
+   621   511 |             listener_available = core->consumer_listener;
+   622   512 |         } else {
+   623   513 |             auto front = core->queue.begin();
+   624   514 |             if (front->is_droppable && core->StillTracking(*front)) {
+   625   515 |                 slots[front->slot].buffer_state = BufferState::Free;
+-  626       |                 recycled_queued_slot = true;
+-  627       |                 if (record_buffer_history) {
++        516 |                 if (Settings::values.enable_buffer_history.GetValue()) {
+   628   517 |                     core->UpdateHistory(front->frame_number, BufferState::Free);
+   629   518 |                 }
+   630   519 |                 slots[front->slot].frame_number = 0;
+   631   520 |             }
+   632   521 | 
+   633   522 |             if (front->is_droppable) {
+   634   523 |                 *front = item;
+   635   524 |                 listener_replaced = core->consumer_listener;
+   636   525 |             } else {
+   637   526 |                 core->queue.push_back(item);
+   638   527 |                 listener_available = core->consumer_listener;
+   639   528 |             }
+   640   529 |         }
+   641   530 | 
+-  642       |         if (record_buffer_history) {
++        531 |         if (Settings::values.enable_buffer_history.GetValue()) {
+   643   532 |             core->PushHistory(core->frame_counter, slots[slot].queue_time, slots[slot].presentation_time, BufferState::Queued);
+   644   533 |         }
+   645   534 | 
+   646   535 |         core->buffer_has_been_queued = true;
+   647   536 |         core->SignalDequeueCondition();
+   648   537 | 
+   649   538 |         output->Inflate(core->default_width, core->default_height, core->transform_hint, static_cast<u32>(core->queue.size()));
+   650   539 |     }
+   651   540 | 
+-  652       |     if (recycled_queued_slot) {
+-  653       |         // KEvent::Signal takes the guest scheduler lock. Never acquire it
+-  654       |         // while holding the BufferQueue mutex: an unblocked guest may
+-  655       |         // reenter Binder/BufferQueue and reverse that lock order.
+-  656       |         buffer_wait_event->Signal(service_context.kernel);
+-  657       |     }
++        541 |     item.graphic_buffer.reset();
++        542 |     item.slot = BufferItem::INVALID_BUFFER_SLOT;
+   658   543 | 
+-  659       |     // Notify consumers with the actual queued item: keep its buffer and slot
+-  660       |     // alive until the callback completes, outside the BufferQueue mutex.
+   661   544 |     if (listener_available) {
+   662   545 |         listener_available->OnFrameAvailable(item);
+   663   546 |     } else if (listener_replaced) {
+   664   547 |         listener_replaced->OnFrameReplaced(item);
+   665   548 |     }
+   666   549 | 
+   667   550 |     return Status::NoError;
+   668   551 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 448-566 : 113 alignées, 16 propres Encore, 6 propres upstream</summary>
+
+Source : [buffer_queue_producer.cpp:448-566](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L448-L566).
+
+```diff
+   540   448 | Status BufferQueueProducer::QueueBuffer(s32 slot, const QueueBufferInput& input, QueueBufferOutput* output) {
+   541   449 |     s64 timestamp{};
+   542   450 |     bool is_auto_timestamp{};
+   543   451 |     Common::Rectangle<s32> crop;
+   544   452 |     NativeWindowScalingMode scaling_mode{};
+   545   453 |     NativeWindowTransform transform;
+   546   454 |     u32 sticky_transform_{};
+   547   455 |     bool async{};
+   548   456 |     s32 swap_interval{};
+   549   457 |     Fence fence{};
+   550   458 | 
+   551   459 |     input.Deflate(&timestamp, &is_auto_timestamp, &crop, &scaling_mode, &transform, &sticky_transform_, &async, &swap_interval, &fence);
++        460 |     ::Eden::GuestClock::FrameQueued(swap_interval);
+   552   461 | 
+   553   462 |     switch (scaling_mode) {
+   554   463 |     case NativeWindowScalingMode::Freeze:
+   555   464 |     case NativeWindowScalingMode::ScaleToWindow:
+   556   465 |     case NativeWindowScalingMode::ScaleCrop:
+   557   466 |     case NativeWindowScalingMode::NoScaleCrop:
+   558   467 |     case NativeWindowScalingMode::PreserveAspectRatio:
+   559   468 |         break;
+   560   469 |     default:
+   561   470 |         LOG_ERROR(Service_Nvnflinger, "unknown scaling mode {}", scaling_mode);
+   562   471 |         return Status::BadValue;
+   563   472 |     }
+   564   473 | 
+   565   474 |     BufferItem item;
+   566   475 |     std::shared_ptr<IConsumerListener> listener_available;
+   567   476 |     std::shared_ptr<IConsumerListener> listener_replaced;
+-  568       |     bool recycled_queued_slot = false;
+   569   477 | 
+   570   478 |     {
+   571   479 |         std::scoped_lock lock{core->mutex};
+   572   480 | 
+   573   481 |         if (core->is_abandoned) {
+   574   482 |             LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
+   575   483 |             return Status::NoInit;
+   576   484 |         }
+   577   485 | 
+   578   486 |         const s32 max_buffer_count = core->GetMaxBufferCountLocked(async);
+   579   487 | 
+   580   488 |         if (slot < 0 || slot >= max_buffer_count) {
+   581   489 |             LOG_ERROR(Service_Nvnflinger, "slot {} out of range [0, {})", slot, max_buffer_count);
+   582   490 |             return Status::BadValue;
+   583   491 |         }
+   584   492 |         if (slots[slot].buffer_state != BufferState::Dequeued) {
+   585   493 |             LOG_ERROR(Service_Nvnflinger, "slot {} is not owned by producer", slot);
+   586   494 |             return Status::BadValue;
+   587   495 |         }
+   588   496 |         if (!slots[slot].request_buffer_called) {
+   589   497 |             LOG_ERROR(Service_Nvnflinger, "slot {} was queued without request", slot);
+   590   498 |             return Status::BadValue;
+   591   499 |         }
+   592   500 | 
+-  593       |         // History is normally disabled: avoid unconditional wall-clock work.
+-  594       |         const bool record_buffer_history = Settings::values.enable_buffer_history.GetValue();
+   595   501 |         ++core->frame_counter;
+   596   502 |         slots[slot].buffer_state = BufferState::Queued;
+   597   503 |         slots[slot].frame_number = core->frame_counter;
+   598   504 |         slots[slot].queue_time = timestamp;
+-  599       |         slots[slot].presentation_time = record_buffer_history
+-  600       |                                             ? Common::g_wall_clock.GetTimeNS().count() : 0;
++        505 |         slots[slot].presentation_time = Common::g_wall_clock.GetTimeNS().count();
+   601   506 |         slots[slot].fence = fence;
+   602   507 | 
+   603   508 |         item.slot = slot;
+   604   509 |         item.graphic_buffer = slots[slot].graphic_buffer;
+   605   510 |         item.frame_number = core->frame_counter;
+   606   511 |         item.timestamp = timestamp;
+   607   512 |         item.is_auto_timestamp = is_auto_timestamp;
+   608   513 |         item.crop = crop;
+   609   514 |         item.transform = transform & ~NativeWindowTransform::InverseDisplay;
+   610   515 |         item.transform_to_display_inverse = (transform & NativeWindowTransform::InverseDisplay) != NativeWindowTransform::None;
+   611   516 |         item.scaling_mode = static_cast<u32>(scaling_mode);
+   612   517 |         item.fence = fence;
+   613   518 |         item.is_droppable = core->dequeue_buffer_cannot_block || async;
+   614   519 |         item.swap_interval = swap_interval;
+   615   520 |         item.acquire_called = slots[slot].acquire_called;
+   616   521 | 
+   617   522 |         sticky_transform = sticky_transform_;
+   618   523 | 
+   619   524 |         if (core->queue.empty()) {
+   620   525 |             core->queue.push_back(item);
+   621   526 |             listener_available = core->consumer_listener;
+   622   527 |         } else {
+   623   528 |             auto front = core->queue.begin();
+   624   529 |             if (front->is_droppable && core->StillTracking(*front)) {
+   625   530 |                 slots[front->slot].buffer_state = BufferState::Free;
+-  626       |                 recycled_queued_slot = true;
+-  627       |                 if (record_buffer_history) {
++        531 |                 if (Settings::values.enable_buffer_history.GetValue()) {
+   628   532 |                     core->UpdateHistory(front->frame_number, BufferState::Free);
+   629   533 |                 }
+   630   534 |                 slots[front->slot].frame_number = 0;
+   631   535 |             }
+   632   536 | 
+   633   537 |             if (front->is_droppable) {
+   634   538 |                 *front = item;
+   635   539 |                 listener_replaced = core->consumer_listener;
+   636   540 |             } else {
+   637   541 |                 core->queue.push_back(item);
+   638   542 |                 listener_available = core->consumer_listener;
+   639   543 |             }
+   640   544 |         }
+   641   545 | 
+-  642       |         if (record_buffer_history) {
++        546 |         if (Settings::values.enable_buffer_history.GetValue()) {
+   643   547 |             core->PushHistory(core->frame_counter, slots[slot].queue_time, slots[slot].presentation_time, BufferState::Queued);
+   644   548 |         }
+   645   549 | 
+   646   550 |         core->buffer_has_been_queued = true;
+   647   551 |         core->SignalDequeueCondition();
+   648   552 | 
+   649   553 |         output->Inflate(core->default_width, core->default_height, core->transform_hint, static_cast<u32>(core->queue.size()));
+   650   554 |     }
+   651   555 | 
+-  652       |     if (recycled_queued_slot) {
+-  653       |         // KEvent::Signal takes the guest scheduler lock. Never acquire it
+-  654       |         // while holding the BufferQueue mutex: an unblocked guest may
+-  655       |         // reenter Binder/BufferQueue and reverse that lock order.
+-  656       |         buffer_wait_event->Signal(service_context.kernel);
+-  657       |     }
++        556 |     item.graphic_buffer.reset();
++        557 |     item.slot = BufferItem::INVALID_BUFFER_SLOT;
+   658   558 | 
+-  659       |     // Notify consumers with the actual queued item: keep its buffer and slot
+-  660       |     // alive until the callback completes, outside the BufferQueue mutex.
+   661   559 |     if (listener_available) {
+   662   560 |         listener_available->OnFrameAvailable(item);
+   663   561 |     } else if (listener_replaced) {
+   664   562 |         listener_replaced->OnFrameReplaced(item);
+   665   563 |     }
+   666   564 | 
+   667   565 |     return Status::NoError;
+   668   566 | }
+```
+
+</details>
+
+### P0-V08 · BufferQueueProducer::CancelBuffer
+
+Chemin d'annulation symétrique de dequeue. Important au teardown ou en cas d'échec avant QueueBuffer.
+
+Encore : [buffer_queue_producer.cpp:670-697](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L670-L697) — 28 lignes.
+
+<details>
+<summary>Lichii — 553-579 : 26 alignées, 2 propres Encore, 1 propres upstream</summary>
+
+Source : [buffer_queue_producer.cpp:553-579](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L553-L579).
+
+```diff
+   670   553 | void BufferQueueProducer::CancelBuffer(s32 slot, const Fence& fence) {
+   671   554 |     LOG_DEBUG(Service_Nvnflinger, "slot {}", slot);
+   672   555 | 
+-  673       |     std::unique_lock lock{core->mutex};
++        556 |     std::scoped_lock lock{core->mutex};
+   674   557 | 
+   675   558 |     if (core->is_abandoned) {
+   676   559 |         LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
+   677   560 |         return;
+   678   561 |     }
+   679   562 | 
+   680   563 |     if (slot < 0 || slot >= BufferQueueDefs::NUM_BUFFER_SLOTS) {
+   681   564 |         LOG_ERROR(Service_Nvnflinger, "slot index {} out of range [0, {})", slot,
+   682   565 |                   BufferQueueDefs::NUM_BUFFER_SLOTS);
+   683   566 |         return;
+   684   567 |     } else if (slots[slot].buffer_state != BufferState::Dequeued) {
+   685   568 |         LOG_ERROR(Service_Nvnflinger, "slot {} is not owned by the producer (state = {})", slot,
+   686   569 |                   slots[slot].buffer_state);
+   687   570 |         return;
+   688   571 |     }
+   689   572 | 
+   690   573 |     slots[slot].buffer_state = BufferState::Free;
+   691   574 |     slots[slot].frame_number = 0;
+   692   575 |     slots[slot].fence = fence;
+   693   576 | 
+   694   577 |     core->SignalDequeueCondition();
+-  695       |     lock.unlock();
+   696   578 |     buffer_wait_event->Signal(service_context.kernel);
+   697   579 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 568-594 : 26 alignées, 2 propres Encore, 1 propres upstream</summary>
+
+Source : [buffer_queue_producer.cpp:568-594](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp#L568-L594).
+
+```diff
+   670   568 | void BufferQueueProducer::CancelBuffer(s32 slot, const Fence& fence) {
+   671   569 |     LOG_DEBUG(Service_Nvnflinger, "slot {}", slot);
+   672   570 | 
+-  673       |     std::unique_lock lock{core->mutex};
++        571 |     std::scoped_lock lock{core->mutex};
+   674   572 | 
+   675   573 |     if (core->is_abandoned) {
+   676   574 |         LOG_ERROR(Service_Nvnflinger, "BufferQueue has been abandoned");
+   677   575 |         return;
+   678   576 |     }
+   679   577 | 
+   680   578 |     if (slot < 0 || slot >= BufferQueueDefs::NUM_BUFFER_SLOTS) {
+   681   579 |         LOG_ERROR(Service_Nvnflinger, "slot index {} out of range [0, {})", slot,
+   682   580 |                   BufferQueueDefs::NUM_BUFFER_SLOTS);
+   683   581 |         return;
+   684   582 |     } else if (slots[slot].buffer_state != BufferState::Dequeued) {
+   685   583 |         LOG_ERROR(Service_Nvnflinger, "slot {} is not owned by the producer (state = {})", slot,
+   686   584 |                   slots[slot].buffer_state);
+   687   585 |         return;
+   688   586 |     }
+   689   587 | 
+   690   588 |     slots[slot].buffer_state = BufferState::Free;
+   691   589 |     slots[slot].frame_number = 0;
+   692   590 |     slots[slot].fence = fence;
+   693   591 | 
+   694   592 |     core->SignalDequeueCondition();
+-  695       |     lock.unlock();
+   696   593 |     buffer_wait_event->Signal(service_context.kernel);
+   697   594 | }
+```
+
+</details>
+
+### P0-V09 · BufferQueueConsumer::AcquireBuffer
+
+Passage producteur→consumer. Vérifier ordre de queue, expectedPresent, fence et transition de slot ; c'est la preuve logicielle la plus proche avant HardwareComposer.
+
+Encore : [buffer_queue_consumer.cpp:25-139](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp#L25-L139) — 115 lignes.
+
+<details>
+<summary>Lichii — 24-116 : 90 alignées, 25 propres Encore, 3 propres upstream</summary>
+
+Source : [buffer_queue_consumer.cpp:24-116](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp#L24-L116).
+
+```diff
+    25    24 | Status BufferQueueConsumer::AcquireBuffer(BufferItem* out_buffer,
+    26    25 |                                           std::chrono::nanoseconds expected_present) {
+-   27       |     std::unique_lock lock{core->mutex};
+-   28       |     bool dropped_queued_frames = false;
+-   29       |     bool freed_tracked_slot = false;
++         26 |     std::scoped_lock lock{core->mutex};
+    30    27 | 
+    31    28 |     // Check that the consumer doesn't currently have the maximum number of buffers acquired.
+    32    29 |     const s32 num_acquired_buffers{
+    33    30 |         static_cast<s32>(std::count_if(slots.begin(), slots.end(), [](const auto& slot) {
+    34    31 |             return slot.buffer_state == BufferState::Acquired;
+    35    32 |         }))};
+    36    33 | 
+    37    34 |     if (num_acquired_buffers >= core->max_acquired_buffer_count + 1) {
+    38    35 |         LOG_ERROR(Service_Nvnflinger, "max acquired buffer count reached: {} (max {})",
+    39    36 |                   num_acquired_buffers, core->max_acquired_buffer_count);
+    40    37 |         return Status::InvalidOperation;
+    41    38 |     }
+    42    39 | 
+    43    40 |     // Check if the queue is empty.
+    44    41 |     if (core->queue.empty()) {
+    45    42 |         return Status::NoBufferAvailable;
+    46    43 |     }
+    47    44 | 
+    48    45 |     auto front(core->queue.begin());
+    49    46 | 
+    50    47 |     // If expected_present is specified, we may not want to return a buffer yet.
+    51    48 |     if (expected_present.count() != 0) {
+    52    49 |         constexpr auto MAX_REASONABLE_NSEC = 1000000000LL; // 1 second
+    53    50 | 
+    54    51 |         // The expected_present argument indicates when the buffer is expected to be presented
+    55    52 |         // on-screen.
+    56    53 |         while (core->queue.size() > 1 && !core->queue[0].is_auto_timestamp) {
+    57    54 |             const auto& buffer_item{core->queue[1]};
+    58    55 | 
+    59    56 |             // If entry[1] is timely, drop entry[0] (and repeat).
+    60    57 |             const auto desired_present = buffer_item.timestamp;
+    61    58 |             if (desired_present < expected_present.count() - MAX_REASONABLE_NSEC ||
+    62    59 |                 desired_present > expected_present.count()) {
+    63    60 |                 // This buffer is set to display in the near future, or desired_present is garbage.
+    64    61 |                 LOG_DEBUG(Service_Nvnflinger, "nodrop desire={} expect={}", desired_present,
+    65    62 |                           expected_present.count());
+    66    63 |                 break;
+    67    64 |             }
+    68    65 | 
+    69    66 |             LOG_DEBUG(Service_Nvnflinger, "drop desire={} expect={} size={}", desired_present,
+    70    67 |                       expected_present.count(), core->queue.size());
+    71    68 | 
+    72    69 |             if (core->StillTracking(*front)) {
+    73    70 |                 // Front buffer is still in mSlots, so mark the slot as free
+    74    71 |                 slots[front->slot].buffer_state = BufferState::Free;
+-   75       |                 freed_tracked_slot = true;
+    76    72 |             }
+    77    73 | 
+    78    74 |             core->queue.erase(front);
+-   79       |             dropped_queued_frames = true;
+    80    75 |             front = core->queue.begin();
+    81    76 |         }
+    82    77 | 
+    83    78 |         // See if the front buffer is ready to be acquired.
+    84    79 |         const auto desired_present = front->timestamp;
+    85    80 |         if (desired_present > expected_present.count() &&
+    86    81 |             desired_present < expected_present.count() + MAX_REASONABLE_NSEC) {
+    87    82 |             LOG_DEBUG(Service_Nvnflinger, "defer desire={} expect={}", desired_present,
+    88    83 |                       expected_present.count());
+-   89       |             if (dropped_queued_frames) {
+-   90       |                 // Even without an acquired frame, discarded entries can make
+-   91       |                 // producer progress. Wake both host dequeuers and guest Binder
+-   92       |                 // waiters. Never invoke a callback while core->mutex is held.
+-   93       |                 core->SignalDequeueCondition();
+-   94       |                 if (freed_tracked_slot) {
+-   95       |                     const auto listener = core->connected_producer_listener;
+-   96       |                     lock.unlock();
+-   97       |                     if (listener) listener->OnBufferReleased();
+-   98       |                 }
+-   99       |             }
+   100    84 |             return Status::PresentLater;
+   101    85 |         }
+   102    86 | 
+   103    87 |         LOG_DEBUG(Service_Nvnflinger, "accept desire={} expect={}", desired_present,
+   104    88 |                   expected_present.count());
+   105    89 |     }
+   106    90 | 
+   107    91 |     const auto slot = front->slot;
+   108    92 |     *out_buffer = *front;
+   109    93 | 
+   110    94 |     LOG_DEBUG(Service_Nvnflinger, "acquiring slot={}", slot);
+   111    95 | 
+   112    96 |     // If the front buffer is still being tracked, update its slot state
+   113    97 |     if (core->StillTracking(*front)) {
+   114    98 |         slots[slot].acquire_called = true;
+   115    99 |         slots[slot].needs_cleanup_on_release = false;
+   116   100 |         slots[slot].buffer_state = BufferState::Acquired;
+   117   101 |     }
+   118   102 | 
+   119   103 |     // If the buffer has previously been acquired by the consumer, set graphic_buffer to nullptr to
+   120   104 |     // avoid unnecessarily remapping this buffer on the consumer side.
+   121   105 |     if (out_buffer->acquire_called) {
+   122   106 |         out_buffer->graphic_buffer = nullptr;
+   123   107 |     }
+   124   108 | 
+   125   109 |     core->queue.erase(front);
+   126   110 | 
+-  127       |     // We might have freed a slot while dropping old buffers, or the producer
+-  128       |     // may be blocked waiting for the number of queued buffers to decrease.
++        111 |     // We might have freed a slot while dropping old buffers, or the producer  may be blocked
++        112 |     // waiting for the number of buffers in the queue to decrease.
+   129   113 |     core->SignalDequeueCondition();
+-  130       |     if (freed_tracked_slot) {
+-  131       |         // Only a freed tracked slot creates a guest producer-availability transition.
+-  132       |         // The host condition is insufficient for the guest's Binder wait handle.
+-  133       |         const auto listener = core->connected_producer_listener;
+-  134       |         lock.unlock();
+-  135       |         if (listener) listener->OnBufferReleased();
+-  136       |     }
+   137   114 | 
+   138   115 |     return Status::NoError;
+   139   116 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 25-117 : 90 alignées, 25 propres Encore, 3 propres upstream</summary>
+
+Source : [buffer_queue_consumer.cpp:25-117](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp#L25-L117).
+
+```diff
+    25    25 | Status BufferQueueConsumer::AcquireBuffer(BufferItem* out_buffer,
+    26    26 |                                           std::chrono::nanoseconds expected_present) {
+-   27       |     std::unique_lock lock{core->mutex};
+-   28       |     bool dropped_queued_frames = false;
+-   29       |     bool freed_tracked_slot = false;
++         27 |     std::scoped_lock lock{core->mutex};
+    30    28 | 
+    31    29 |     // Check that the consumer doesn't currently have the maximum number of buffers acquired.
+    32    30 |     const s32 num_acquired_buffers{
+    33    31 |         static_cast<s32>(std::count_if(slots.begin(), slots.end(), [](const auto& slot) {
+    34    32 |             return slot.buffer_state == BufferState::Acquired;
+    35    33 |         }))};
+    36    34 | 
+    37    35 |     if (num_acquired_buffers >= core->max_acquired_buffer_count + 1) {
+    38    36 |         LOG_ERROR(Service_Nvnflinger, "max acquired buffer count reached: {} (max {})",
+    39    37 |                   num_acquired_buffers, core->max_acquired_buffer_count);
+    40    38 |         return Status::InvalidOperation;
+    41    39 |     }
+    42    40 | 
+    43    41 |     // Check if the queue is empty.
+    44    42 |     if (core->queue.empty()) {
+    45    43 |         return Status::NoBufferAvailable;
+    46    44 |     }
+    47    45 | 
+    48    46 |     auto front(core->queue.begin());
+    49    47 | 
+    50    48 |     // If expected_present is specified, we may not want to return a buffer yet.
+    51    49 |     if (expected_present.count() != 0) {
+    52    50 |         constexpr auto MAX_REASONABLE_NSEC = 1000000000LL; // 1 second
+    53    51 | 
+    54    52 |         // The expected_present argument indicates when the buffer is expected to be presented
+    55    53 |         // on-screen.
+    56    54 |         while (core->queue.size() > 1 && !core->queue[0].is_auto_timestamp) {
+    57    55 |             const auto& buffer_item{core->queue[1]};
+    58    56 | 
+    59    57 |             // If entry[1] is timely, drop entry[0] (and repeat).
+    60    58 |             const auto desired_present = buffer_item.timestamp;
+    61    59 |             if (desired_present < expected_present.count() - MAX_REASONABLE_NSEC ||
+    62    60 |                 desired_present > expected_present.count()) {
+    63    61 |                 // This buffer is set to display in the near future, or desired_present is garbage.
+    64    62 |                 LOG_DEBUG(Service_Nvnflinger, "nodrop desire={} expect={}", desired_present,
+    65    63 |                           expected_present.count());
+    66    64 |                 break;
+    67    65 |             }
+    68    66 | 
+    69    67 |             LOG_DEBUG(Service_Nvnflinger, "drop desire={} expect={} size={}", desired_present,
+    70    68 |                       expected_present.count(), core->queue.size());
+    71    69 | 
+    72    70 |             if (core->StillTracking(*front)) {
+    73    71 |                 // Front buffer is still in mSlots, so mark the slot as free
+    74    72 |                 slots[front->slot].buffer_state = BufferState::Free;
+-   75       |                 freed_tracked_slot = true;
+    76    73 |             }
+    77    74 | 
+    78    75 |             core->queue.erase(front);
+-   79       |             dropped_queued_frames = true;
+    80    76 |             front = core->queue.begin();
+    81    77 |         }
+    82    78 | 
+    83    79 |         // See if the front buffer is ready to be acquired.
+    84    80 |         const auto desired_present = front->timestamp;
+    85    81 |         if (desired_present > expected_present.count() &&
+    86    82 |             desired_present < expected_present.count() + MAX_REASONABLE_NSEC) {
+    87    83 |             LOG_DEBUG(Service_Nvnflinger, "defer desire={} expect={}", desired_present,
+    88    84 |                       expected_present.count());
+-   89       |             if (dropped_queued_frames) {
+-   90       |                 // Even without an acquired frame, discarded entries can make
+-   91       |                 // producer progress. Wake both host dequeuers and guest Binder
+-   92       |                 // waiters. Never invoke a callback while core->mutex is held.
+-   93       |                 core->SignalDequeueCondition();
+-   94       |                 if (freed_tracked_slot) {
+-   95       |                     const auto listener = core->connected_producer_listener;
+-   96       |                     lock.unlock();
+-   97       |                     if (listener) listener->OnBufferReleased();
+-   98       |                 }
+-   99       |             }
+   100    85 |             return Status::PresentLater;
+   101    86 |         }
+   102    87 | 
+   103    88 |         LOG_DEBUG(Service_Nvnflinger, "accept desire={} expect={}", desired_present,
+   104    89 |                   expected_present.count());
+   105    90 |     }
+   106    91 | 
+   107    92 |     const auto slot = front->slot;
+   108    93 |     *out_buffer = *front;
+   109    94 | 
+   110    95 |     LOG_DEBUG(Service_Nvnflinger, "acquiring slot={}", slot);
+   111    96 | 
+   112    97 |     // If the front buffer is still being tracked, update its slot state
+   113    98 |     if (core->StillTracking(*front)) {
+   114    99 |         slots[slot].acquire_called = true;
+   115   100 |         slots[slot].needs_cleanup_on_release = false;
+   116   101 |         slots[slot].buffer_state = BufferState::Acquired;
+   117   102 |     }
+   118   103 | 
+   119   104 |     // If the buffer has previously been acquired by the consumer, set graphic_buffer to nullptr to
+   120   105 |     // avoid unnecessarily remapping this buffer on the consumer side.
+   121   106 |     if (out_buffer->acquire_called) {
+   122   107 |         out_buffer->graphic_buffer = nullptr;
+   123   108 |     }
+   124   109 | 
+   125   110 |     core->queue.erase(front);
+   126   111 | 
+-  127       |     // We might have freed a slot while dropping old buffers, or the producer
+-  128       |     // may be blocked waiting for the number of queued buffers to decrease.
++        112 |     // We might have freed a slot while dropping old buffers, or the producer  may be blocked
++        113 |     // waiting for the number of buffers in the queue to decrease.
+   129   114 |     core->SignalDequeueCondition();
+-  130       |     if (freed_tracked_slot) {
+-  131       |         // Only a freed tracked slot creates a guest producer-availability transition.
+-  132       |         // The host condition is insufficient for the guest's Binder wait handle.
+-  133       |         const auto listener = core->connected_producer_listener;
+-  134       |         lock.unlock();
+-  135       |         if (listener) listener->OnBufferReleased();
+-  136       |     }
+   137   115 | 
+   138   116 |     return Status::NoError;
+   139   117 | }
+```
+
+</details>
+
+### P0-V10 · BufferQueueConsumer::ReleaseBuffer
+
+Retour du slot au producteur après composition. Une release manquante ou hors ordre peut bloquer les frames suivantes ou la fermeture.
+
+Encore : [buffer_queue_consumer.cpp:141-200](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp#L141-L200) — 60 lignes.
+
+<details>
+<summary>Lichii — 118-177 : 60 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [buffer_queue_consumer.cpp:118-177](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp#L118-L177).
+
+```diff
+   141   118 | Status BufferQueueConsumer::ReleaseBuffer(s32 slot, u64 frame_number, const Fence& release_fence) {
+   142   119 |     if (slot < 0 || slot >= BufferQueueDefs::NUM_BUFFER_SLOTS) {
+   143   120 |         LOG_ERROR(Service_Nvnflinger, "slot {} out of range", slot);
+   144   121 |         return Status::BadValue;
+   145   122 |     }
+   146   123 | 
+   147   124 |     std::shared_ptr<IProducerListener> listener;
+   148   125 |     {
+   149   126 |         std::scoped_lock lock{core->mutex};
+   150   127 | 
+   151   128 |         // If the frame number has changed because the buffer has been reallocated, we can ignore
+   152   129 |         // this ReleaseBuffer for the old buffer.
+   153   130 |         if (frame_number != slots[slot].frame_number) {
+   154   131 |             return Status::StaleBufferSlot;
+   155   132 |         }
+   156   133 | 
+   157   134 |         // Make sure this buffer hasn't been queued while acquired by the consumer.
+   158   135 |         auto current(core->queue.begin());
+   159   136 |         while (current != core->queue.end()) {
+   160   137 |             if (current->slot == slot) {
+   161   138 |                 LOG_ERROR(Service_Nvnflinger, "buffer slot {} pending release is currently queued",
+   162   139 |                           slot);
+   163   140 |                 return Status::BadValue;
+   164   141 |             }
+   165   142 |             ++current;
+   166   143 |         }
+   167   144 | 
+   168   145 |         if (slots[slot].buffer_state == BufferState::Acquired) {
+   169   146 |             // TODO: for now, avoid resetting the fence, so that when we next return this
+   170   147 |             // slot to the producer, it can wait for its own fence to pass. We should fix this
+   171   148 |             // by properly waiting for the fence in the BufferItemConsumer.
+   172   149 |             // slots[slot].fence = release_fence;
+   173   150 |             slots[slot].buffer_state = BufferState::Free;
+   174   151 | 
+   175   152 |             listener = core->connected_producer_listener;
+   176   153 | 
+   177   154 |             LOG_DEBUG(Service_Nvnflinger, "releasing slot {}", slot);
+   178   155 |         } else if (slots[slot].needs_cleanup_on_release) {
+   179   156 |             LOG_DEBUG(Service_Nvnflinger, "releasing a stale buffer slot {} (state = {})", slot,
+   180   157 |                       slots[slot].buffer_state);
+   181   158 |             slots[slot].needs_cleanup_on_release = false;
+   182   159 |             return Status::StaleBufferSlot;
+   183   160 |         } else {
+   184   161 |             LOG_ERROR(Service_Nvnflinger,
+   185   162 |                       "attempted to release buffer slot {} but its state was {}", slot,
+   186   163 |                       slots[slot].buffer_state);
+   187   164 | 
+   188   165 |             return Status::BadValue;
+   189   166 |         }
+   190   167 | 
+   191   168 |         core->SignalDequeueCondition();
+   192   169 |     }
+   193   170 | 
+   194   171 |     // Call back without lock held
+   195   172 |     if (listener != nullptr) {
+   196   173 |         listener->OnBufferReleased();
+   197   174 |     }
+   198   175 | 
+   199   176 |     return Status::NoError;
+   200   177 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 119-178 : 60 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [buffer_queue_consumer.cpp:119-178](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp#L119-L178).
+
+```diff
+   141   119 | Status BufferQueueConsumer::ReleaseBuffer(s32 slot, u64 frame_number, const Fence& release_fence) {
+   142   120 |     if (slot < 0 || slot >= BufferQueueDefs::NUM_BUFFER_SLOTS) {
+   143   121 |         LOG_ERROR(Service_Nvnflinger, "slot {} out of range", slot);
+   144   122 |         return Status::BadValue;
+   145   123 |     }
+   146   124 | 
+   147   125 |     std::shared_ptr<IProducerListener> listener;
+   148   126 |     {
+   149   127 |         std::scoped_lock lock{core->mutex};
+   150   128 | 
+   151   129 |         // If the frame number has changed because the buffer has been reallocated, we can ignore
+   152   130 |         // this ReleaseBuffer for the old buffer.
+   153   131 |         if (frame_number != slots[slot].frame_number) {
+   154   132 |             return Status::StaleBufferSlot;
+   155   133 |         }
+   156   134 | 
+   157   135 |         // Make sure this buffer hasn't been queued while acquired by the consumer.
+   158   136 |         auto current(core->queue.begin());
+   159   137 |         while (current != core->queue.end()) {
+   160   138 |             if (current->slot == slot) {
+   161   139 |                 LOG_ERROR(Service_Nvnflinger, "buffer slot {} pending release is currently queued",
+   162   140 |                           slot);
+   163   141 |                 return Status::BadValue;
+   164   142 |             }
+   165   143 |             ++current;
+   166   144 |         }
+   167   145 | 
+   168   146 |         if (slots[slot].buffer_state == BufferState::Acquired) {
+   169   147 |             // TODO: for now, avoid resetting the fence, so that when we next return this
+   170   148 |             // slot to the producer, it can wait for its own fence to pass. We should fix this
+   171   149 |             // by properly waiting for the fence in the BufferItemConsumer.
+   172   150 |             // slots[slot].fence = release_fence;
+   173   151 |             slots[slot].buffer_state = BufferState::Free;
+   174   152 | 
+   175   153 |             listener = core->connected_producer_listener;
+   176   154 | 
+   177   155 |             LOG_DEBUG(Service_Nvnflinger, "releasing slot {}", slot);
+   178   156 |         } else if (slots[slot].needs_cleanup_on_release) {
+   179   157 |             LOG_DEBUG(Service_Nvnflinger, "releasing a stale buffer slot {} (state = {})", slot,
+   180   158 |                       slots[slot].buffer_state);
+   181   159 |             slots[slot].needs_cleanup_on_release = false;
+   182   160 |             return Status::StaleBufferSlot;
+   183   161 |         } else {
+   184   162 |             LOG_ERROR(Service_Nvnflinger,
+   185   163 |                       "attempted to release buffer slot {} but its state was {}", slot,
+   186   164 |                       slots[slot].buffer_state);
+   187   165 | 
+   188   166 |             return Status::BadValue;
+   189   167 |         }
+   190   168 | 
+   191   169 |         core->SignalDequeueCondition();
+   192   170 |     }
+   193   171 | 
+   194   172 |     // Call back without lock held
+   195   173 |     if (listener != nullptr) {
+   196   174 |         listener->OnBufferReleased();
+   197   175 |     }
+   198   176 | 
+   199   177 |     return Status::NoError;
+   200   178 | }
+```
+
+</details>
+
+### P0-V11 · HardwareComposer::TryAcquireFramebufferLocked
+
+Acquisition finale du framebuffer côté compositeur. Si VI2 QueueBuffer réussit mais cette fonction échoue ou ne voit aucun buffer, la première frame reste absente sans que GSV soit nécessairement en cause.
+
+Encore : [hardware_composer.cpp:207-221](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/service/nvnflinger/hardware_composer.cpp#L207-L221) — 15 lignes.
+
+<details>
+<summary>Lichii — 222-236 : 15 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [hardware_composer.cpp:222-236](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvnflinger/hardware_composer.cpp#L222-L236).
+
+```diff
+   207   222 | bool HardwareComposer::TryAcquireFramebufferLocked(Layer& layer, Framebuffer& framebuffer) {
+   208   223 |     // Attempt the update.
+   209   224 |     const auto status = layer.buffer_item_consumer->AcquireBuffer(&framebuffer.item, {}, false);
+   210   225 |     if (status != android::Status::NoError) {
+   211   226 |         return false;
+   212   227 |     }
+   213   228 | 
+   214   229 |     // We succeeded, so set the new release frame info.
+   215   230 |     const s32 swap_interval = layer.is_overlay ? 1 : NormalizeSwapInterval(nullptr, framebuffer.item.swap_interval);
+   216   231 |     framebuffer.release_frame_number = m_frame_number + swap_interval;
+   217   232 |     framebuffer.last_acquire_frame = m_frame_number;
+   218   233 |     framebuffer.is_acquired = true;
+   219   234 | 
+   220   235 |     return true;
+   221   236 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 215-229 : 15 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [hardware_composer.cpp:215-229](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvnflinger/hardware_composer.cpp#L215-L229).
+
+```diff
+   207   215 | bool HardwareComposer::TryAcquireFramebufferLocked(Layer& layer, Framebuffer& framebuffer) {
+   208   216 |     // Attempt the update.
+   209   217 |     const auto status = layer.buffer_item_consumer->AcquireBuffer(&framebuffer.item, {}, false);
+   210   218 |     if (status != android::Status::NoError) {
+   211   219 |         return false;
+   212   220 |     }
+   213   221 | 
+   214   222 |     // We succeeded, so set the new release frame info.
+   215   223 |     const s32 swap_interval = layer.is_overlay ? 1 : NormalizeSwapInterval(nullptr, framebuffer.item.swap_interval);
+   216   224 |     framebuffer.release_frame_number = m_frame_number + swap_interval;
+   217   225 |     framebuffer.last_acquire_frame = m_frame_number;
+   218   226 |     framebuffer.is_acquired = true;
+   219   227 | 
+   220   228 |     return true;
+   221   229 | }
+```
+
+</details>
+
+### P0-V12 · HardwareComposer::ReleaseFramebuffersLocked
+
+Libération des framebuffers conservés. À relier au shutdown et au recyclage des slots, sans réduire arbitrairement la durée de vie.
+
+Encore : [hardware_composer.cpp:170-188](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/service/nvnflinger/hardware_composer.cpp#L170-L188) — 19 lignes.
+
+<details>
+<summary>Lichii — 185-203 : 19 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [hardware_composer.cpp:185-203](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvnflinger/hardware_composer.cpp#L185-L203).
+
+```diff
+   170   185 | void HardwareComposer::ReleaseFramebuffersLocked(Display& display) {
+   171   186 |     for (auto& [layer_id, framebuffer] : m_framebuffers) {
+   172   187 |         if (!framebuffer.is_acquired) {
+   173   188 |             continue;
+   174   189 |         }
+   175   190 | 
+   176   191 |         const auto layer = display.stack.FindLayer(layer_id);
+   177   192 |         if (!layer) {
+   178   193 |             continue;
+   179   194 |         }
+   180   195 | 
+   181   196 |         if (!layer->is_overlay && framebuffer.release_frame_number > m_frame_number) {
+   182   197 |             continue;
+   183   198 |         }
+   184   199 | 
+   185   200 |         layer->buffer_item_consumer->ReleaseBuffer(framebuffer.item, android::Fence::NoFence());
+   186   201 |         framebuffer.is_acquired = false;
+   187   202 |     }
+   188   203 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 178-196 : 19 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [hardware_composer.cpp:178-196](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvnflinger/hardware_composer.cpp#L178-L196).
+
+```diff
+   170   178 | void HardwareComposer::ReleaseFramebuffersLocked(Display& display) {
+   171   179 |     for (auto& [layer_id, framebuffer] : m_framebuffers) {
+   172   180 |         if (!framebuffer.is_acquired) {
+   173   181 |             continue;
+   174   182 |         }
+   175   183 | 
+   176   184 |         const auto layer = display.stack.FindLayer(layer_id);
+   177   185 |         if (!layer) {
+   178   186 |             continue;
+   179   187 |         }
+   180   188 | 
+   181   189 |         if (!layer->is_overlay && framebuffer.release_frame_number > m_frame_number) {
+   182   190 |             continue;
+   183   191 |         }
+   184   192 | 
+   185   193 |         layer->buffer_item_consumer->ReleaseBuffer(framebuffer.item, android::Fence::NoFence());
+   186   194 |         framebuffer.is_acquired = false;
+   187   195 |     }
+   188   196 | }
+```
+
+</details>
+
+### Chaîne de première frame désormais couverte
+
+`GSV image/backing → VI2 PresentClientBuffer → Request/Dequeue/QueueBuffer → AcquireBuffer → HardwareComposer → release`.
+
+Le document permet maintenant de localiser un écart sur chaque frontière sans conclure que « VI2 fonctionne » uniquement parce que la commande 229 renvoie succès. La validation finale reste une frame PS5 réellement présentée.
+
+**Couverture ajoutée :** 8 fonctions, 16 comparaisons, 1893 lignes-source parcourues ; 878 alignées, 108 propres Encore, 29 propres upstream. Aucun fix.

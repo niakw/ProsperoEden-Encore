@@ -33,6 +33,11 @@ if pin in {"93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec
 
 def gitblob(data: bytes)->str:
     return hashlib.sha1(b"blob "+str(len(data)).encode()+b"\0"+data).hexdigest()
+# New vendor pins can keep the exact already-reviewed SM header. Authenticate
+# its bytes, not an ever-growing list of unrelated vendor commit IDs.
+# Every other SM blob still fails the digest assertion below.
+if gitblob((root/paths["sm"]).read_bytes()) == "7069439e66a6f28ffa56229e08906a21222e2801":
+    expected["sm"] = "7069439e66a6f28ffa56229e08906a21222e2801"
 # Historical pre-pressure-rollback source: 26ae49088a528c4cf27712f639948604de2260d4.
 # Reviewed delta at new SHA: the two unprotected invalidate_entire_cache=true
 # writes on low JIT code-space and bad_alloc now use ClearCache(), which

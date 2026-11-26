@@ -185,7 +185,13 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     assert 'CaptureNativeSyncpointLease(u32 id)' in h05_header.read_text()
     assert 'target_include_directories(core BEFORE PUBLIC "${_encore_h05_header_root}")' in h05_cmake
     assert 'include("${PORT_ROOT}/vendor/encore-active/eden-threading/native-hle-overrides.cmake")' in cmake
-    includes=[h05,native_tiling,nvdec_stage,ioctl_stage,shader,abi,ROOT/'headless',
+    # Renderer mapping leases and guest-memory policy are supplied by
+    # the shared native dirty-header root in the shipping compiler graph.
+    native_dirty=ROOT/'vendor/encore-active/eden-core/overrides'
+    assert (native_dirty/'core/native_renderer_lifetime.h').is_file()
+    assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake
+    assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake
+    includes=[h05,native_tiling,nvdec_stage,ioctl_stage,shader,abi,native_dirty,ROOT/'headless',
               *[ROOT/'vendor/encore-active/ns2-runtime'/n for n in (
                   'kernel_wait64','gpu_access_svc','gpu_dispatch','nvdrv_gpu',
                   'nvdrv_as','gpu_session','graphics_supervisor','self_controller',

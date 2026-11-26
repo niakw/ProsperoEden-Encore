@@ -5090,4 +5090,19 @@ Ces deux commandes suivent donc le même modèle HLE que les politiques IRequest
 **2 lignes PARTIEL quittent le pool : nouveau compteur global = 14 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+### 2026-11-26 — AM separable recording layer fail-closed : 14 → 13
+
+Base précédente : **14 lignes ouvertes**.
+
+Vendor **`9d37ee36c4857556d973fb97dee54bbbce93522b`** ferme le PARTIEL `ISelfController` cmd44 `CreateManagedDisplaySeparableLayer` :
+- auparavant, `DisplayLayerManager::CreateManagedDisplaySeparableLayer` créait seulement un managed layer normal, forçait `recording_layer_id=0` puis retournait succès ;
+- cmd45 `SetManagedDisplayLayerSeparationMode` et cmd46 `SetRecordingLayerCompositionEnabled` étaient déjà fail-closed précisément parce qu'aucun backend recording-layer séparé n'est matérialisé ;
+- cmd44 renvoie désormais explicitement `ResultUnknown` avant toute création de layer, au lieu de publier un couple de sorties incohérent ;
+- cmd40 `CreateManagedDisplayLayer` reste inchangé et conserve le vrai chemin de layer principal ; aucun changement du compositor, du z-order ou du filtrage Vulkan n'est introduit.
+
+Le manifeste shipping est synchronisé pour `self_controller.cpp` (SHA-256 `91e8368dd68d590756ff22c295be330e2a99c1c382525b75a79c38a4e37cc86d`, 22 547 octets).
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 13 lignes ouvertes.**
+
+Aucun build PS5 ni validation console revendiqué.
 

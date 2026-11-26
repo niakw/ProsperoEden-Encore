@@ -4286,3 +4286,23 @@ Ce comportement suit Atmosphère `ContentLocationResolverImpl` : redirection pri
 **2 lignes PARTIEL quittent le pool. Nouveau compteur global : 119 lignes ouvertes.**
 
 Gitlink repinné sur `25111bacd0aa9e7746e6e6534fcd4865b189f251`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — PCTL play timer HOS23 : palier global 114
+
+Base : **119 lignes ouvertes** au moteur `c4e90f57b90ad25bc42394c9cf18c34056111732` / vendor `25111bacd0aa9e7746e6e6534fcd4865b189f251`.
+
+Vendor `f26e81dcf7f0d67de46bc098520e5cc6078fda3e`, finalisé par `de705230a87dfe20bfe796a3e2ebfc9ea76d256c`, ferme les cinq PARTIEL `StartPlayTimer`, `StopPlayTimer`, `IsPlayTimerEnabled`, `GetPlayTimerRemainingTime` et `IsRestrictedByPlayTimer` :
+- ABI cmd1454 corrigée de `s32` vers `u64 nn::TimeSpanType` en nanosecondes ;
+- layout HOS21+ 0x44 décodé selon le reverse fw22.5 : mode daily/weekly, Sunday..Saturday et `limitTime` u16 en minutes ;
+- jour courant obtenu depuis `time:u` + timezone invité, pas depuis l'horloge locale PS5 ;
+- countdown accumulé avec `steady_clock`, Start/Stop réels durant la session et budget nul = restriction immédiate ;
+- séparation entre timer configuré et countdown en cours ; `SetPlayTimerSettingsForDebug` re-dérive l'enabled à partir des règles et remet le compteur à zéro ;
+- en mode forced-termination, les requêtes qui constatent l'expiration signalent le vrai `request_suspension_event` déjà exposé par cmd1457 ;
+- cmd1459 est synchronisé avec le même état mais conserve son ABI HOS23 0x18, confirmée par les dumps IPC.
+
+Références : `tailiang2008/NX-Pctl-Manager@7cfbe45d7206ea26e6123cdf811a8cad643a42cf` (reverse fw22.5 + layout 0x44) et dumps HOS23 `borntohonk/Switch-Ghidra-Guides`. La persistance inter-redémarrages du sysmodule pctl n'est pas revendiquée ; le contrat IPC/runtime de la session est désormais cohérent.
+
+**5 lignes PARTIEL quittent le pool. Nouveau compteur global : 114 lignes ouvertes.**
+
+Gitlink repinné sur `de705230a87dfe20bfe796a3e2ebfc9ea76d256c`. Aucun build PS5 ni validation console revendiqués.

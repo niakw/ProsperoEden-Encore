@@ -153,6 +153,17 @@ retire_branch = ('            } else if (auto* retire = std::get_if<RetireChanne
                  '                retire->action();\n')
 assert untraced.count(retire_branch) == 1
 untraced = untraced.replace(retire_branch, '', 1)
+# Replay only the GPU completion lock split on the historical audit copy.
+# The real selected method is compiled by the FIFO saturation witness.
+notify_current = """                // The producer may hold write_lock while the FIFO is full.
+                // Never acquire it here: only this separate completion mutex
+                // participates in the wait/notify handshake.
+                std::scoped_lock lk{state.completion_lock};"""
+notify_old = """                // We have to lock the write_lock to ensure that the condition_variable wait not get a
+                // race between the check and the lock itself.
+                std::scoped_lock lk{state.write_lock};"""
+assert untraced.count(notify_current) == 1
+untraced = untraced.replace(notify_current, notify_old, 1)
 assert body in untraced, 'GPU worker semantics changed beyond reviewed dispatch-boundary retirement and startup wait'
 
 assert 'stop_source.get_token()' in worker and 'thread.get_stop_token()' not in worker

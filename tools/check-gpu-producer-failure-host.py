@@ -17,7 +17,7 @@ def method(source):
 for s in (quiet, dev):
     assert s.count('#include "gpu_failure.h"') == 2
     m = method(s)
-    assert "const bool completed = state.cv.wait(lk, stop_source.get_token()" in m
+    assert "const bool completed = state.cv.wait(completion_lk, completion_token" in m
     assert m.count("Eden::PeekGpuFailure()") == 2
     assert m.count("std::rethrow_exception(failure);") == 2
     assert m.count("return state.signaled_fence.load(std::memory_order_acquire);") == 2
@@ -51,6 +51,7 @@ struct CommandQueue {
 struct ThreadManager {
     struct {
         std::mutex write_lock;
+        std::mutex completion_lock;
         CommandQueue queue;
         u64 last_fence{};
         std::atomic<u64> signaled_fence{};
@@ -75,7 +76,7 @@ int main() {
     });
     await_enqueue(normal.state.queue, 1);
     normal.state.signaled_fence.store(1, std::memory_order_release);
-    normal.state.cv.notify_all();
+    { std::scoped_lock guard{normal.state.completion_lock}; normal.state.cv.notify_all(); }
     completed.join();
     assert(normal_result.load() == 1);
 

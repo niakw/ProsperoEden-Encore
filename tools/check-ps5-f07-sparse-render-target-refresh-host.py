@@ -28,7 +28,11 @@ def clean(source):
     section=source[source.index(start):source.index(end,source.index(start))]
     return section[section.index("    if (!flags[Dirty::RenderTargets]) {"):]
 original=clean(backports)
-updated=clean(native)
+shadow=clean(native)
+selected=(root/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+updated=clean(selected)
+assert updated == shadow, "selected native sparse render-target owner drift"
+assert "#include <bit>" in selected
 assert "std::countr_zero(active_colors)" in updated
 assert "std::countr_zero(active_colors)" not in original
 assert updated.count("PrepareImageView(color_buffer_id, true, is_clear && IsFullClear(color_buffer_id));")==2

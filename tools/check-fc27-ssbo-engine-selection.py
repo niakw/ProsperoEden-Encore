@@ -65,612 +65,48 @@ expected.add("fcd62408fdbc33af01a4caebc8fd44c8500b628f")
 expected.add("b6b9e98e0dd16c4702f21f2e0b5e322126abeecb")
 # PS5 FC27 cached-pipeline warm admission expands without touching SSBO source.
 expected.add("dbef23055897b1649f83c20cf7a0516e64f3d5cd")
-# NS1 secondary audit: GPIO/IPC, NCM placeholder cache and FSP fail-closed
-# only. The GPU-53 blobs below remain checked byte-for-byte.
-expected.add("fe5a389ac04fa3c26c1756fc18e73a962e196da4")
-# NS1 FSP source remains reviewed; only its existing backport manifest digest is repaired.
-expected.add("e329e52f7de79302bfcc1b658431777501d5edd9")
-# NS1 secondary CAPS tables and NCM cacheless rights-ID invalidation; GPU-53 owners unchanged.
-expected.add("ff0822695ec03ac7d9d2c75b4703adf12eec544f")
-# NS1 NCM content-storage helpers; GPU-53 owners remain unchanged.
-expected.add("c3dc80c83d468e04c794b3d7d36bc1316b342bd4")
-# NCM capacity/lifecycle follow-up; GPU source owners unchanged.
-expected.add("60bd03e6e5ad083ee050887028fa33d514a3050e")
-# NCM read/revert handlers; GPU source owners unchanged.
-expected.add("488475c8c3867af07892a7f53cc6e15a54d09542")
-# ContentMetaDatabase CNMT lookups; GPU owners unchanged.
-expected.add("8d1d9eac331b2b8db218617edff7aa4425503a95")
-# CNMT extended metadata + full ContentMetaDatabase query coverage; GPU owners unchanged.
-expected.add("22e47d3b88d669048a4460b0e8b0a9d315f4ca22")
-# NCM path commands now fail closed instead of leaking host VFS paths.
-expected.add("b9e23460efcf82c3f3e86de303f9a27568004b24")
-# IRS explicit no-ops and telemetry/news fallbacks; GPU source owners unchanged.
-expected.add("569c8e2ae6fe3dfaecb578be4c104381329f53df")
-expected.add("229ebbc5b25776604c061ebdb93ca31330fa5745")
-# FSP cmd203 patch-data + cache-only save reader; concurrent HID/BCAT retained.
-expected.add("8e387b641aa5c227db2d14d06b0457a91be043fc")
-# FSP cache-size semantics + fail-closed unresolved save extension.
-expected.add("e2da4886884f9dec2c6753db1de6e1048cfa095b")
-# Friend offline ABI fixes, Palma classification, and mm:u reply fix.
-expected.add("51e5cbde026b62038ac7f3b2845d3d00d95eeff6")
-# BLE/hidbus, erpt, and active pctl backport follow-ups; GPU source owners unchanged.
-expected.add("45ea626b6579cfa3eaabf56f6ca362e77e34f346")
-expected.add("6bb62bfe4b830511f219e6cb0e50ced131a4b170")
-expected.add("61e8993c8057ca9536f8997185118d072130497f")
-# Stable hardware fallback state (BTM/LBL/PSM/TS); GPU source owners unchanged.
-expected.add("4936c5528e0641e2176fc77a376cfb8d2da2d1b5")
-# Persisted platform-region and synchronous NTC semantics; GPU source owners unchanged.
-expected.add("be7f995c13675eeb3af8c1addac536876ed1e90b")
-# FSP save filtering + immutable read-only filesystem; unrelated GPU owners unchanged.
-expected.add("c3c3b6d23925dbe287e5a239663b9a04db6a0d21")
-# Host-directory SaveDataExtraData validation; GPU owners unchanged.
-expected.add("61ab696e00da26fca41e899323acb480e1770d15")
-# FSP SD capability + NS installed-record/event/update policy; GPU owners unchanged.
-expected.add("a691b5535f9c69539b466a926359d805d734acce")
-# Host-directory synchronous commit + bounded multi-commit participant tracking.
-expected.add("f6deaab8efa7a0c86e70d816a66792d7ce1811c3")
-# NS1 NS vulnerability policy + FSP program-index registry/access-log ABI.
-expected.add("ad27e09c7135c3c92ef0202b58ee35423fe74300")
-# NS lifecycle state + game-card query + false-stub cleanup.
-expected.add("4483c6a35526d9dc8fc77c70b140ff2358d76dc9")
-# AM launchable-event ordering + stateful applet handlers.
-expected.add("6fc24667f81ce27d07979ad25c0e4743e331f7d0")
-# Main-applet identity/storage + inactive NS update policy.
-expected.add("1b5b609d3022c5a54a4e3c72613435491c7f9e24")
-# Home-button lifecycle + inactive HID firmware/Npad policies.
-expected.add("2faf00b1d44881bdaebb24e27ecf08938eb83144")
-# Active IApplicationAccessor lifecycle queries + child/display state.
-expected.add("dff1bdb769d9d92738ff424aa3f0fe24f92016a2")
-# NIFM IRequest state machine + legacy scan ABI.
-expected.add("76de6f60e3a3e3982bac17ca45b34fa646388a89")
-# NIFM ClientId/request accounting + legacy AP + library-applet creator NULLs.
-expected.add("50f086881d16f4c6fb89e710ee1e4c6ce6336a04")
-# Common applet terminate/Home state + out-of-focus lifecycle suspension.
-expected.add("c8b1acd969db74a8250c49bf84dd480e5cd4f7c4")
-# Active overlay out-of-focus fix + applet performance + NS application records.
-expected.add("6f797482091484fcf3c926ed287ee4afd7618598")
-# Stateful firmware/keyboard applet + NS active-header provenance fix.
-expected.add("aea996472c7c7146795f3bbbb9e04e9bc0895a47")
-# NULL recheck: self-header receipt + System NAND query + NIFM default IP state.
-expected.add("40596a94e35789a57e9ee8236e0e6c4362cd1765")
-# NULL recheck: NS terminate-result + NIFM control-state bindings.
-expected.add("bc3d538f2c413489b2d881259b57a4c44b6698f9")
-# NULL recheck: NS language conversion + desired-language selection.
-expected.add("0897a295624827e95d9248d85ea8274e75584693")
-# NULL recheck: GameCard state + FSP data storage / aggregate save reader.
-expected.add("a7c2afb34048ff001b9ff80aad4ec6aa32aff703")
-# NULL recheck: Horizon-official applet stubs + NIFM sleep/wake no-ops.
-expected.add("36100c1740ad18d53949761846f21ffeb8a0f472")
-# NULL recheck: real library-applet ExtraStorage channel.
-expected.add("ebc5a68a9b5ac4316aa8c7ba3f6bebeab5817e5c")
-# NULL recheck: NIFM exclusive-client/network-type policy state.
-expected.add("05784b605535c987e1619c9b28e36f7752ba735b")
-# NULL recheck: Friend Invitation / Notification storage channels.
-expected.add("d1e41151f5e23b1ff2653c937b04ff5e344e29b0")
-# NULL recheck: applet-bound IStorage channel.
-expected.add("b217369d3f01b2958eae58815f190080a8b77296")
-# NS1 persistent system-settings pairs.
-expected.add("694becfbf6a27cecb907d8be5b0315c269654fa7")
-# NS1 persisted PTM, RTC, calibration, USB system settings.
-expected.add("9aa3b2568b3f74bd124f3923e88116a52c1c589a")
-# NS1 extra persisted settings and theme policies.
-expected.add("407b42a985c1d8558a516d41d5c03a216f4da433")
-# NS1 RTC repair and hearing safeguard state; all other vendor shader blobs remain pinned.
-expected.add("b0228bfc2c634ee3b7c61bec56d513b1c4673601")
-# NS1 six-axis calibration settings only; exact tree below.
-expected.add("0aa309cfbc3489073cc5586b5745be41c2d23e19")
-# NS1 typed ThemeId state; checked against the exact reviewed vendor tree below.
-expected.add("b84e58810ccd509acfbd00a8dda6ada8c0dcdabc")
-# NS1 ThemeId ABI correction: aligned u64[16] payload, verified vendor tree.
-expected.add("c8688e83435eb085285a18b581cea39b701ad266")
-# NS1 persisted repair/discovery/theme-key settings, exact reviewed tree.
-expected.add("33858387c023030896e649c84e1df806a3352889")
-# NS1 BLE/account persisted arrays, exact reviewed tree.
-expected.add("3b564c2d141b94fecc78e3f68753e00aea009180")
-# NS1 persisted EDID/SSL-host/HostFS settings, exact reviewed tree.
-expected.add("29b1cb6de394dc0ecc168481a8059e8f70a1b92d")
-# NS1 BacklightSettingsEx raw persisted 0x2c block, exact reviewed tree.
-expected.add("131cb5828f196fcd46f78a217eec43953e0bd083")
-# NS1 Bluetooth/NX controller persisted arrays, exact reviewed tree.
-expected.add("032e41924a3d82f654ebbab15601eb609dbf4fcf")
-# NS1 NetworkSettings + SSL host count fix, exact reviewed tree.
-expected.add("3d97ca836c8825fedfc23de76a0c3295a93469fb")
-# NS1 location-resolver manager child objects, exact reviewed tree.
-expected.add("682f74ead16c33caff0da4d9e89d025a4cb85ea5")
-# NS1 NCM cache verification and lifecycle semantics, exact reviewed tree.
-expected.add("67db89c1195d79ee731fc783088ec38083804050")
-# NS1 pre-provisioned NCM create contracts, exact reviewed tree.
-expected.add("400974b505e47e85952469aeceb959bbbee41948")
-# NS1 SSL connection state getters; exact reviewed vendor tree.
-expected.add("6b477c04581797bc3a5677c6c849b297f3a4587f")
-# NS1 persistent ButtonConfig commands 189-200, exact reviewed tree.
-expected.add("5fdfa239cb6e148abac1ef2d6393b8950132bc2b")
-# NS1 legacy BacklightSettings bridge, exact reviewed tree.
-expected.add("9a5401c93d9c87bc0fcb3f955f35bd54744046a4")
-# NS1 Terra flag mapped to persisted PlatformRegion, exact reviewed tree.
-expected.add("bb450eb2e61d2e28856c5beb9fcc6fa1afc8adab")
-# NS1 FSP SD-card accessibility policy, exact reviewed tree.
-expected.add("be00691dcb6abbf888cc00a4a5dcbf10b377fac5")
-# NS1 PCTL PIN storage/change event, exact reviewed tree.
-expected.add("6f487f76b88c2ca12f81c189fddcc2a8f083c74c")
-# NS1 PCTL unlock/restricted-session/unlinked event state, exact reviewed tree.
-expected.add("6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e")
-# NS1 NCM cleanup/FS-content activation, exact reviewed tree.
-expected.add("1a2a614892cde741adb10ba7dfc23dfee4d8ff06")
-# NS1 PCTL custom restrictions + HOS23 PDM surface cleanup, exact reviewed tree.
-expected.add("70829977dbe1e534887c4baa2ddd6c9a1252acc5")
-# NS1 set:sys AudioVolume persisted device mapping, exact reviewed tree.
-expected.add("73fea5e303c074b8c8d16d096f4245f8cfa5c15c")
-# NS1 inert telemetry/fatal dirty-flag events, exact reviewed tree.
-expected.add("d833c0f790973b53be9abf24df8d328377557494")
-# NS1 HOS23 removal of set:sys firmware digest, exact reviewed tree.
-expected.add("c1b7768aa16f8a731de420783cd1e31ca2f58104")
-# NS1 HOS23 AHID service removal, exact reviewed tree.
-expected.add("d6b9b3ff6dc8ffc8898fcc286569e6fc77750277")
-# NS1 HOS23 removal of legacy acc:u0/u1 registrations, exact reviewed tree.
-expected.add("b4297d22a50b391540e3b89f9c9a5afd1f9f1985")
-# NS1 account-service exposure correction + refreshed exact backport manifest.
-expected.add("1de640e1e347314a7cc95a7854414ca2d1ad53ce")
-# NS1 persistent Account thumbnails + exact refreshed active backport manifests.
-expected.add("2990b313b00f739b7a8863e3b3d896aede75f712")
-# NS1 offline Friend contracts on exact reviewed vendor tree.
-expected.add("f5ae5e2073add91752d510195a6f2d9f454b92de")
-# NS1 stateful registered location resolver, exact reviewed vendor tree.
-expected.add("0e261f9ce092ade8243443175ffc3b977772616c")
-# NS1 AddOnContent resolver storage state, exact reviewed vendor tree.
-expected.add("da41c660c92a9d8cfddeac29ec30e2148203aa27")
-# NS1 normal LocationResolver redirection state, exact reviewed tree.
-expected.add("9b1c483eea8e013f1907ede3c235fe7a8216a6b6")
-# NS1 PCTL default rating organization state + refreshed active backport manifest.
-expected.add("909c764d244ac0cd80ec2930085dbf672504ff84")
-# NS1 PCTL stateful FreeCommunication list + refreshed active backport manifest.
-expected.add("0baa3af3f57d883be26587f11ab7bc586e4f79d5")
-# NS1 explicit APM guest-overclock policy; no host clock mutation.
-expected.add("cff675360f1985a856a91f587565c79b79567818")
-# NS1 local NIFM policy commands + refreshed active backport manifest.
-expected.add("f918ebdbae5c375ab2eb5887031f26d14bec5976")
-# NS1 CAPS shim-version compatibility hints made explicit no-ops.
-expected.add("7dfbe3cc1409cc4b5f3bba145ba7fd4134cf271f")
-# NS1 NIFM profile UUID preservation/removal and corrected request ABI.
-expected.add("d1524eb55acb905c694a46cdb1333e32c0e4bdbf")
-# NS1 set:sys wireless certification reads the real PRODINFOF calibration file.
-expected.add("822662c72f38324e1f6eb56eeb4e0f55f3bc45d0")
-# NS1 set:cal non-secret CAL0 fields, exact reviewed vendor tree.
-expected.add("8b62686225121d894e40e7853083f636ac344c3c")
-# NS1 set:cal additional non-secret CAL0 hardware fields.
-expected.add("5e77bf80aacb96088b281487525e5c73d7884d22")
-# NS1 Friend offline detail/relationship outputs, exact reviewed vendor tree.
-expected.add("a12fa5d6eec6350470374088e011bc93684e5763")
-# NS1 Friend offline profile/key/url reads, exact reviewed vendor tree.
-expected.add("b5bdec17c65914db77f8dac4a6eb4f740c8bb1f0")
-# NS1 Friend offline image/NNID/catalog reads, exact reviewed vendor tree.
-expected.add("e15f20df4dd3765b1c3df3ee3fcfc4ab3e155590")
-# NS1 Friend daemon session + offline info refresh, exact reviewed vendor tree.
-expected.add("c1ae766d44a4871387232eefdeefd47a2dc00ff0")
-# NS1 Friend V1 offline lists reconciled to exact SwIPC ABI.
-expected.add("de2daec43b71d2f13e00b154f96e39770c4bd8c9")
-# NS1 Friend empty-state clears are explicit idempotent no-ops.
-expected.add("ab4f28f4d8f3b118c1d64d2f6744598860c388b6")
-# NS1 Friend HOS19/20+ offline list/availability handlers.
-expected.add("8e8e29be0c571686ca9852b6a968d440e20cd88e")
-# NS1 Friend modern profile getters plus HOS23 catalogue requalification.
-expected.add("4ce41124344107322445092db240e74fa824dbc6")
-# NS1 FSP program mounts, save free-space and hash-salt path.
-expected.add("fca87f6aed972e9326a1b2e616649c9cbd884ee6")
-# NS1 FSP integrity receipts refreshed after runtime changes.
-expected.add("209549e1e3cb877e70e88ffc3001880af01ba9ad")
-# NS1 Friend modern aliases proven against Lichii ABI routing.
-expected.add("170c613138dfa7d8740459239f2ee9cb54a936b1")
-# NS1 FSP DeleteCacheStorage deletes the real per-program cache slot.
-expected.add("3234390c8fa29100b3d64b637ed1abf822e6b223")
-# NS1 FSP filtered save-data reader enumerates all matching real saves.
-expected.add("9f4f9bef141c33a3bce353f68cf5b58bd94603e5")
-# NS1 FSP masked ExtraData write validates real save target.
-expected.add("8a721e38520792fdc1e0f474ec2ef07d7c16a665")
-# NS1 NIFM IRequest preserves HOS23 0x24-byte Requirement state.
-expected.add("62660c058f2a76353dba6bc208f165857460000e")
-# NS1 NIFM persistent requests preserve OnHold across connectivity loss.
-expected.add("2a7dfec8c6e31b4ba004501a666a4836443d3787")
-# NS1 native SSL system contexts now return real IPC objects and CreateConnectionEx.
-expected.add("d449cce2968bd306801b4ecbb5f3756134a540ae")
-# NS1 NIFM IRequest policy state and socket registration.
-expected.add("1e7f7911c5601714733c53e3b5b73a15ec44c9b7")
-# NS1 NIFM live connection notification and WoWLAN delay state.
-expected.add("0e9652b4f19ca998fe7d60d34460bd4bbdb1be30")
-# NS1 PSM host-backed power state and HOS17 charge-info ABI fix.
-expected.add("5f7e92ebb9600809d81ee6fbb898c7011b95c719")
-# NS1 audctl target/default/master-volume state on maintained eden-core owner.
-expected.add("c67f77d5b33e71ca70621ab4637f559a420d998d")
-# NS1 audctl persistent output/headphone modes.
-expected.add("d23a6e5bbb235f4b277e523baeac668330eb5982")
-# NS1 FSP cmd606 returns the real Program NCA RightsId.
-expected.add("83acc5124b1cdb62ba4b65ed8607968c832757a4")
-# NS1 FSP transient external title-key overlay.
-expected.add("0d4246090dac222c344cb3bed912728c56d79c7b")
-# NS1 legacy BTM radio commands share set:sys state.
-expected.add("0fcec5e76502b0def90d946bffdc29ff3e19000f")
-expected.add("a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc")
-expected.add("f20f6736b79259cb325f6a44b7b994749e458bec")
-expected.add("ecb8ae0e177cf5ac2015b26bff722f70a147f6cd")
-expected.add("81cf89d58b0b4081ea3e276668368040a6a75355")
-expected.add("2f294bbfaa54440eaf9dafe9cabd2c104ba3a439")
-# NS1 HLE-only follow-ups + BLE/NSD; retain exact vendor tree and GPU source checks.
-expected.add("5c16e26b1c6ff11145e47a0e7a810eb76d0541a4")
-# NS1 HID manifest-only digest repair; keep the exact reviewed tree guard.
-expected.add("67f68874018169305ebdd44ea06dd32855cb3667")
-# NS1 NPNS correct user token owner; GPU sources unchanged.
-expected.add("dd88a95f547dd1fa7f7a2536a41846d73203b213")
-# NS1 NPNS ListenTo 64-bit IPC ABI; no GPU source change.
-expected.add("c6e0b135e0aa565fe596298971c7e38add0ca3d3")
-# NS1 NS overlay repair and NX audio notification rejection; GPU sources unchanged.
-expected.add("ffb2182af7f137179cd2f68792d4b00c2a54cef5")
-# HID guest virtual keyboard lock state and shared IPC ABI; GPU sources unchanged.
-expected.add("be709442d734683ffd9725c7035a932a73bf5c87")
-# NS1 PM manifest provenance repair; GPU sources unchanged.
-expected.add("4534ccde306a715d0fe61698be23522ac5b2d44e")
-# NS1 AM owner transfer; exact reviewed tree, GPU source checks unchanged.
-expected.add("fd43ea21e70e2f16a76d7723b4578813cb28468c")
-# NS1 AM legacy errors and CPU boost cancellation; GPU source checks unchanged.
-expected.add("bdb10101b495c52d14a4afe17a30d52fcbcf32d6")
-# NS1 VI layer stack mask update; exact reviewed tree.
-expected.add("15b31ec775aea551bd126188c8e6e03987474bd2")
-# NS1 BTM offline IPC batch; exact reviewed tree.
-expected.add("18c93c2e711cc8477156176f051874f8473497ef")
-# NS1 BTM legacy offline kernel events; exact reviewed tree.
-expected.add("4bf2174fa0aa6649efad1130a8b69a127a69f83b")
-# NS1 BGTC and NS lifecycle queries; exact reviewed tree.
-expected.add("9bddf300fbfe814a48f57adc5dee6197afd34ad9")
-# NS1 HID seven-axis transfer-memory lifetime; exact reviewed tree.
-expected.add("b1a597f87c6de6f473cc533a0668f4d7d27ee092")
-# NS1 LDN monitor lifecycle; exact reviewed tree.
-expected.add("8597725202341eb5bf2086977c4d7d60b89e976b")
-# NS1 AM play statistics runtime batch; exact reviewed tree.
-expected.add("d12a06afee1436debb6d691cc098513daed0cd24")
-# NS1 audio active-device/input-event contracts; exact reviewed tree.
-expected.add("fe95e74d1c59f5a064ee81d98d630446bddd508d")
-# NS1 nvdrv GetStatus ABI/init contract; exact reviewed tree.
-expected.add("f828515505b9dcc6b5571d45815c6bca1ce62a9a")
-# NS1 SSL interface-version HLE no-op; exact reviewed tree.
-expected.add("1a42d4aed7974212294424c370f9e4e9e47ff08a")
-# NS1 AM capture pool reads/copies; exact reviewed tree.
-expected.add("99879eef9fb743cf2757b2d76f765487db70e337")
-# NS1 I2C fail-closed hardware-session batch; exact reviewed tree.
-expected.add("3b25cbfba01518d17cf27e4869db986c70d70b82")
-# NS1 HID console six-axis sampling lifecycle; exact reviewed tree.
-expected.add("a68dd1eb50cc71bffe385baaa54da5dddb0926aa")
-# NS1 AM visible-error frontend routing; exact reviewed tree.
-expected.add("a0c5a3beb7ab54a67a6d463002ab94e6d838f435")
-# NS1 PDM HOS23 play-statistics ABI and persisted values; exact reviewed tree.
-expected.add("175b4f2d6c9511f01aee10757a6255d84d16aab0")
-# NS1 async ErrorContext output contract; exact reviewed tree.
-expected.add("05646df19d6ec2db27c54ebff88fa2db9775d409")
-# NS1 AM rights-environment fail-closed contract; exact reviewed tree.
-expected.add("9248992c51c0c446e47e6cdb03e407d20c2a69dd")
-# NS1 SSL PKI and NIFM event lifetime; GPU source and receipt unchanged.
-expected.add("b2c0a25ec04f0e90668bf1d1a4b85948aa844c52")
-# NS1 indexed application cache storage; exact reviewed source tree below.
-expected.add("670673aff581924cc430d600f07ebfeea5559e07")
-# NS1 SPL general service: real RSA expmod + shared boot reason state.
-expected.add("594eacbef099b3f97f7975e19b5b64d57910ae77")
-# NS1 NS read-only application record: real FS DataCorrupted classification.
-expected.add("25d561a0fd182584da68d53bca65f5ec6dbee3c8")
-# NS1 NPNS local state + HOS23 system ListenToByName ABI.
-expected.add("b882a41e0b35a91051fb362cdf2082175d433748")
-# NS1 maintained NVDEC owner retains SET_SUBMIT_TIMEOUT state.
-expected.add("a11b70417f1c981580a86bf5391b4a24fe0890e9")
-# NS1 AM save-data maxima now come from NACP, including cmd35.
-expected.add("afac75c2d5e4e494335bbc48f18cbf8a9a3e17a3")
-# NS1 LBL guest backlight state: applied brightness + explicit host-noop fade.
-expected.add("c24bcfa3fb9da644d31689ae4d16f2745f240227")
-# NS1 AM HDCP state is shared with CommonStateGetter and transition event.
-expected.add("67219c2d7f5b88e3c20f148fbfab7c9bba3f087c")
-# NS1 NIFM request policy: explicit no-op setters + applet-not-required result.
-expected.add("100be854211d10cb02b96e8f0059e1d924fa09c3")
-# NS1 AM ApproveToDisplay now publishes visibility through WindowSystem.
-expected.add("0837393bd5c8c3c48f5681dea1ac1dba76a6d6c8")
-expected.add("dab56d88cbbe166575546fff3346feb4727afbf4")
-expected.add("94c61421e27d837e28b7331690305a72baad4d93")
-expected.add("65cffbdeed0bf25fe1bf5b840450a426e1f3b255")
-expected.add("4ee2d58ce739af8e91d78794d6859b4662f8cb86")
-expected.add("301c0bda4d9e5d81320361ea5ca24ab5a8cffcd2")
-# NS1 HID UniquePad: connected emulated slots + 64-bit count ABI.
-expected.add("aa6c39c16c8229d322869a70e7be7a71e1237d5b")
-expected.add("69e90bc940df1cfefcd9e3f6d0d7b5a5d7984413")
-expected.add("945a4a0a9c4b535fa509f1ffed992d41632ddab7")
-expected.add("08f3042aecf16bf086d5463c55c1c9a150603d0f")
-expected.add("d2e93fb0fa67548d2ae500f1bde6c19c941ecb7a")
-expected.add("b57ce2770c82aef425bc34e2fed2492f63adfe4d")
-expected.add("95089b809f5eb4d3621eaddec92638e8c82f7fa4")
-expected.add("3260a2ecf296b08d923e2cfe1205689b652cb9f1")
-expected.add("1bd95def9ee03b841171924716280f6d5ccb3a09")
-expected.add("54f03c30bac3ebd4d1b3bb04ab2df298bc565a87")
-expected.add("3ae8cda53774da47ad69bdb4f91ef2434acf1fb5")
-expected.add("695b49c4255c816f8212d2c8a17fe81daa6e4a77")
-expected.add("e7137658964ed0ed011be58939a71519fb543b9a")
-expected.add("ab5fa3bd3d8e4e2a90b43379d40760203c7520da")
-expected.add("9ff0457f18f3d06771f450a665f75c454dae2f61")
-expected.add("f48a197733474dd1b12400eec775a88e9f89828f")
-expected.add("230caf1fd48d5f03c9dbdab77178a12c6738a65e")
-expected.add("b6d141e0398d673ad115f76c67a86fa3908e3395")
-expected.add("beb364e21f1942527a1321684d37ae07acfc5191")
-expected.add("5842c124617c80cf26cc4efe5a9e53f968661d38")
-expected.add("10432c439e6c591685634a3a42d341aaa419e87c")
-expected.add("5fb4bec2cda9b8307a115b18d97f91cc8f095730")
-expected.add("72810dae5e9dc201060381b134eadccd209c347c")
-expected.add("616154a4bd8f224d0d881c9bc38cea3ffaabd3b8")
-expected.add("cc1c05ca9dd3597690c0d2adc3f97ef2e5f32543")
-expected.add("65fc254db8d34830d01329b39658a711af792286")
-expected.add("85b37ea44ef1ca0d8c3c001ee4186aa42bd051d5")
-expected.add("ea322a8365ee7190757a7389c8538971e467b9a6")
-expected.add("114aafbd10411faa65d0194775fd93f4a358fc21")
-expected.add("a6c0444213541f747a85bd7936b1f5046ca0023f")
-expected.add("3c0eec8055735d537ca4cc59c57961ddc049caf5")
-expected.add("1c35f384381a9ef52e3d8055186f3e30f7495bde")
-expected.add("6693426e3aca6318b7305a001205c14f216d9658")
-expected.add("5fa1a189b96500929514986a86d2926fe2ff9f5c")
-expected.add("694561edac085c49be40022a574d9e6481bb5448")
-expected.add("61637939907bcc513b7869936144ad083e712856")
-expected.add("b6d4bdf90dbce6fe685a09a578e064a77f6293c7")
-expected.add("aea632e0144cb4721a6469300fbdfda7d8d2f3eb")
-expected.add("0ca719fa2b0c93e5cd77ec2e181f588bef34bc65")
-expected.add("aaf3aaed779d10df89128073a9a3b304a69422a6")
-expected.add("80f4972be4e5bf4a16247a8393ccbf0420bfd96c")
-expected.add("eedfedbd8513a047ba393d48287c37dd196566cd")
-expected.add("b322c48fce30b49df1d49bfae041535bd60bb307")
-expected.add("43ccd9f0ad4d9563ed7a2cd9a4d36a29322ee48c")
-expected.add("1bf7529e72295266f92beb180ae602ec9a954db4")
-expected.add("224bac056b368bf4edf3f0575de187d40d4edb76")
-expected.add("6a593a4466bf9b98220dfc0139239ae5d52c5437")
-expected.add("8aeb5a99bc36d5a01a1cd409bb24d8bed990ab05")
-expected.add("829c7964df4ea7dd6e16cb666e139561d920f737")
-expected.add("f1e8c0b32320e6c08dd662b9e5f5d1ac71808226")
-expected.add("a12ddefce7725faeeb98495ceb8ccb8cf3cd5f8f")
-expected.add("001fea6ade91e82ec360e5bb2197f130680d6d6a")
-expected.add("a06bccfd645add1c7d06063f5abfa8e1ba525c04")
-expected.add("a520a7e9c054b25f02dfb2d0887bca127cb871ef")
-expected.add("21bf94d43f07fcf66b37a6be82fb16b1099adaff")
-expected.add("76b7356cbc63eae67ff7e73a66fc655ce1896b6d")
-expected.add("d1b05d1e94eed35bc6d35f5f9db5d99156f4e5b5")
-expected.add("72b6186f2d1248a332d580b7727e6161a930ca09")
-expected.add("c9e6af612c60b047ed43de57d2465fe18b8df7cf")
-expected.add("285b0c8646cfc8d7331ca63758c4d34161460bac")
-expected.add("64fe70db980b3f60dd9fce1175a13f0ce3435b52")
-expected.add("2493221582e7a41528c53546bed61180035fec4e")
-expected.add("2c0ff436b2798f6c028b504b56d15a158794aa40")
-expected.add("8f2137659278d52c71825939501b7aad466edc3e")
-expected.add("b162bfe9925eba2e1a11a4bee4acad1218a62876")
-expected.add("993a5e9ae75aa37f92527cc99d2d26bdcae54dfb")
-expected.add("d1b965f49a76649392576551be724c0ee642d809")
-expected.add("ef32954266481977a0c9c5eef2ff52f637fa45bb")
-expected.add("3a1bbc0ffb3e3b8b4472997fb2f45e05908ee5de")
-expected.add("5a0460f5a51a239ed0a9d9db806cb8bae88f645d")
-expected.add("1f2e5c4d2a5243d850b855969474786e281d08d2")
-expected.add("a64bcf8c38473234474aca49b4013ed3617e0dec")
-expected.add("dc460d59824f532705781f8df8e72d951ebbd446")
-expected.add("95313ec1089b64f884abe3106eb2996ff74a5f90")
-expected.add("9b2333d972bca1fd03814d58fcc7ae9f4834820e")
-expected.add("fb8384b5673beeeed268ee38fa021421ac51061f")
-expected.add("6e2212b52d96463d74d17e90e260e372eee7aa80")
-expected.add("c2063ba7d1a8acc7596fff3bbde994e9de9bb4be")
-expected.add("6bcf1cb61b190766a459334ee462fb74f978e5f2")
-expected.add("506bcfd7c74cf131029abeba02a3e37e793dd8c7")
-expected.add("fc4894a72071fcabf7ad7363d5783f6c0d0bf609")
-expected.add("4915afc7bebe87da64c5eeb64843a24727a887dd")
-expected.add("04f219188c2c187e5bda6e462d871e5a9ff0b841")
-expected.add("8b0b3b8b8622bb00f72b411ae324446ccaf22935")
-expected.add("11bdd31265db39c90a67b92c923e97bd9960968c")
-expected.add("683af96eb36362e89c0e0faecfa49cd9e6ab8059")
-expected.add("8d14c398fd604733cfcc05d4dcd1d612ee53a921")
-expected.add("4df98ff0a70343fca54c12146303ac84e0337546")
-expected.add("f8e15a9c11ed569facf06edce7ca1b77c9c1fd3d")
-expected.add("f9856b407eebd3533ea4687089849887c769240b")
-expected.add("7ea2306eee8d69671336252a2018697b98f46112")
-expected.add("aca5aba40ab556d32a2ae9aec25c2fbd6f783f00")
-expected.add("518176771ae50589313b7dc5955fe118f9f2c0d1")
-expected.add("1c1f244beddb9e1620830a352e6b4c0adb9424f9")
-expected.add("0e5f7b03f26bae7f950e9293d632b6bd7b80d280")
-expected.add("ee53db178e3bb04fb41792602d5d47e68b3f0b21")
-expected.add("727d6de6ab259ce3103f5f244985fb1632e1202b")
-expected.add("b3f8efa1d434a1d5d1568302f83ed18d4e33e9f1")
-expected.add("69c1c7adda95aaa854f311011a50552d3036ebd8")
-expected.add("f5a1d9b7e439084203d901bfddd4371d2fe33718")
-expected.add("e964a6879a29531bcad73ac219225fb065ee2d81")
-expected.add("cf2237b8d710536a5c75ce1e36b62eeccb2e6c53")
-expected.add("535e1ee030ff343554f5c8b194f3b869a00b6894")
-expected.add("3411fc67c3c5bce5947fb5561c43ea44bb53e377")
-expected.add("34c62dbcf8d5b1ffedc4931b447fd52077866625")
-expected.add("157de42f41e8574d699da4a077c93b314ab7e293")
-expected.add("ad021a102fbb7edeadb5356c098b8625f5f8d44f")
-expected.add("8b8227178f5e8062d95e7692e087d7fb0ac37abb")
-expected.add("202667f02b0ebe909bf0e5c93af15f8966fc5814")
-expected.add("84a8db4464e4989a067779b86605905e0f52ca52")
-expected.add("b57110e18a26f3a4e518765a02726579866d02c4")
-expected.add("9aeb0c4c87c3776318378084eb1803f627b0d694")
-expected.add("f1c2e246ffbfa0327ad49aeff10d6541cffefe87")
-expected.add("2a1baf9350e04b1d973c7f751e59098b192dccdc")
-expected.add("4a68cca38b2622d2250931b74ac524a7fe580d2d")
-expected.add("3aea5d5402fb282cc7f3691dc468063f88eace78")
-expected.add("7a0047acd3329a10ae4162ec7feff4e6a32bc1aa")
-expected.add("107de63757c661e3084fcd7acc4c3c1fabca536e")
-expected.add("c499a3118340dc899091f9c98a2d03da584fceda")
-expected.add("f1d3c7f2cfc23836b1fe4020ba989b440da0fe62")
-expected.add("a1ae39a3ef6e56c88d47a6425a26ad71cf40f502")
-expected.add("5db9e6dd27b777b28867a1add277e3fba2c0d821")
-expected.add("7cbc3897ac97ddcd0c2bb3915e56a09e6e589d1e")
-expected.add("a1d47a90e418d3bd12e20f6151bcb31a34d0c594")
-expected.add("1452e213198f1dfbf508fe37fd1b548d6186ca2c")
-expected.add("d461fda9a65f10e409ec50eb6b92396990bbac9c")
-expected.add("4751b7f1fec2920f77913706423b0abe5b6e51c8")
-expected.add("21df36e8ef5963b50765cbafb9428a744940c419")
-expected.add("50009086f7a428c11ff75f4cbac9567a8bcb8df5")
-expected.add("94ae95f0a556ff8b79cb54e9cb1c9bc8b05ec8b2")
-# NS1 SPL/ES/SSL only: compare 94ae95f0..7b314d26 preserves every GPU-53 owner.
-expected.add("7b314d266f958768ec311dd21cac5f1836af1b8a")
-# SPL module .cpp/.h are now selected by the content-addressed overlay manifest.
-expected.add("918ea63bfa46e5e9020672547b5632a9bcf979f4")
-# HLE-only dual-runtime reconciliation; GPU-53 owners are byte-identical.
-expected.add("60fd2bde523a8b4c21bd1613e14ac9781f368f68")
-# HLE-only SSL/HID/audctl coverage; GPU-53 owners remain byte-identical.
-expected.add("9deb12b4b53c82d426a938cf25486014664595f4")
-# HLE-only audctl state/owner reconciliation; GPU owners unchanged.
-expected.add("37ac6d1253b47e6ae7fdc8724e806c47d52ad6ab")
-# HLE-only audio-device/manual-renderer completion; GPU owners unchanged.
-expected.add("f4ed96b315893772761626bfbc4888e1dea89b7a")
-# HLE-only VI/audctl/IRS completion; GPU owners remain byte-identical.
-expected.add("611ad385f58616daa987415daf160f2ededd9136")
-# HLE-only NVDRV service-table correction; GPU owners remain byte-identical.
-expected.add("88e5a7cd6c3979f2aa887eae2757f606bf9206d6")
-# HLE-only bounded IStorage write/resize completion; GPU owners unchanged.
-expected.add("f314e762a3a44e0a860496c6ca49c9e5d5d50f0f")
-# HID-bus lifecycle and publication correction; GPU owners unchanged.
-expected.add("ce8e61b92958321bab3cc530ed7b27474b8e4c08")
-# Font bounds and truncated-archive protection; GPU sources unchanged.
-expected.add("657774c538584ffda9823958b29918e8d8dff00d")
-# NS1 VI display query handlers; no shader/GPU ownership change.
-expected.add("29c1065d976f19904a350a7d8379781646f62acc")
-# NS1 query playtime bounds and VI docked resolution; GPU sources unchanged.
-expected.add("05d914feda6f54b156b6ba5071dc192dfa573fcc")
-# Restore pinned Eden upstream pristine; only native font overlay retains safety fix.
-expected.add("75c3d67fce026e950996564b4438ade27aa3bf56")
-# NS1 selected font archive bounds, pinned upstream left immutable.
-expected.add("e95b972268dd97a751ca1d17d5ce8dd66f341d23")
-# NS1 application-manager local shell/NACP/game-card/DLC queries; GPU unchanged.
-expected.add("fd3bd4a49f7abf33c931488e5cf4ab20f5ea30cb")
-# VI Z-order bounds and logical mode advertisement; GPU sources unchanged.
-expected.add("6e456fa0c4c41264fb63d243fce69ee593045c17")
-# ES known entitlement commands fail closed; GPU owners unchanged.
-expected.add("e9338beb1d40fffebaa584e441a37d10cb52ef03")
-# Shared AM command 37 returns a persistent unsignaled full-license event.
-expected.add("36a0674e88e21ea6deadd7ef5954debdd46b5153")
-# NS1 real installed occupied sizes + cmd11 dispatch; GPU owners unchanged.
-expected.add("200a7314743635cb75a12c8b1d84f14f4dfb79bc")
-# Typed NAND/SD cache successor for exact occupied-size accounting.
-expected.add("6c9a4289e41750a601cf7b00b62c4b75bc89458c")
-# HOS23 known stage/gamecard/update/ticket surfaces fail closed, no fake success.
-expected.add("f7c081801f289d1a0bf28d75d3087dff936c123b")
-# Content-management cmd600 counts installed base/patch/AOC with exact header overlay.
-expected.add("6cf023efacc66bec42c550d33c333abbf535f1ee")
-# NS1 cmd2101 exposes the real raw applet terminate result.
-expected.add("188089998554cb6af5257169241a0915c32414b9")
-# NS1 cmd93 derives main program index from the live ProgramId.
-expected.add("d439433a58d1650c4c6c5992a2a20b515acb2f08")
-# NS1 cmd601 lists active base/patch/AOC metadata from real content providers.
-expected.add("be8c49a3b2325f16255b860591598b431789dc4b")
-# Remove duplicate physical NS command 916; preserve the real HOS23 command.
-expected.add("5e238dba6209205f2346d45e88715bc48dd5d85d")
-# NS1 cmd17 lists real 0x18 content storage records from active providers.
-expected.add("c28bd3b6ce01c0953942ad0c36073f77f7120464")
-# NS1 ApplicationManager cmd601 delegates to the maintained ContentManagement owner.
-expected.add("b0d6d8f381979e1f88e635eb8f069ae5f7268c1d")
-# NS1 cmd22 terminates the real live main-application process after base-title validation.
-expected.add("836e9ead21f301e32376a5fdf1ec4b5ae5aa837e")
-# NS1 cmd97 derives program index from the FW19+ 0x80 launch-info application id.
-expected.add("78473e5d2086cc917ba2b0ce8bc66be83e003ca1")
-# NS1 cmd307 terminates the tracked overlay applet after exact ProgramId validation.
-expected.add("ca44337f515634f66234ce87ac6c2e18743dbfe8")
-# NS1 cmd305 terminates only the supported QLaunch system applet by real KProcess.
-expected.add("c5998cf44d33e9fa5b24663ead2a68bdaea9e5a7")
-# Eight HOS23 surfaces without Encore backends fail closed; no fake success.
-expected.add("b0021d01ea32a71c1407d8d2c95499ffb046c96c")
-# PS5 has no NS auto-delete worker: report disabled/non-deletable policy.
-expected.add("9ea395d37ddf611ab9e6db3b8ece1b2262a0c558")
-# Correct HOS launch-info layout and implement pre-launch command 95.
-expected.add("896eb1b9c564ecd121208357c5bcd2a6b35923fe")
-# XCD rail MCU/NFC owner: 21 physical Switch-only commands fail closed on PS5.
-expected.add("8a9212a0ddbc80f57bd4feb2795108f9ae0503af")
-# NVGEM control/core-dump diagnostics fail closed; nvdrv IOCTL GPU path untouched.
-expected.add("2c9690d8cc6343633cf779bc3304934d170e00c8")
-# Native IStorage header declares the existing write and resize handlers.
-expected.add("eba62e2324e63851243b26e0da865e66bf11a4a3")
-# Keep the exact NS1 storage short-read result contract in the shipping owner.
-expected.add("898d238b7f06a6fbc4fd4dc7c285d36a008bba29")
-# Native storage flush now uses the same synchronous VFS compatibility contract as IFile.
-expected.add("1aa3b47242cef99c900ffa64260a8fad8ac276a1")
-# NS1 ns:am2 cmd94 launches the validated HOS19 application info through AM process creation.
-expected.add("ecb52e6dd3e5ded07b159392f4c61f297acc7ab1")
-# Legacy application launch, content-meta rights listing, and retail VI underscan behavior.
-expected.add("91c72f913f37b790b502cd54391d767c14989c06")
-# Correct exact SHA-256 manifest receipts for the same runtime lot.
-expected.add("4c54780c5074cd16b1f3fd3d9a4427b57b310fc9")
-# NS1 HOS16 registered content path -> OpenFileSystemWithId ABI/runtime chain.
-expected.add("a24d52f67fcb4a6752160c84ecc64463236dd11f")
-# NS1 FS registered-NCA RightsId/KeyGeneration path handlers.
-expected.add("5723eee587535a451876022d2ee778543a96811a")
-# NS1 HOS19 document content path and modern ES title-key dispatch.
-expected.add("6a93a98f89668eb7cfa922b95ce1e61c3c9b9975")
-# NS1 fsp-srv cmd618 HOS17+ resolves ProgramId from the registered NCA path.
-expected.add("d7def10ac2a98e049b4f63742029b5a48a09be9d")
-# NS1 ns:am2 cmd2523 HOS17+ resolves installed ProgramId for ApplicationId.
-expected.add("b43718e6fa68c8b8e4dba9f7cdc6f7c6042fff31")
-# NS1 HOS19 ApplicationLaunchInfo uses PatchId at +0x08 and ProgramIndex for program selection.
-expected.add("69b015faa0e3facd9ffae2d125707885c114d42d")
-# NS1 audren cmd11 manual frame execution with serialized ADSP render cycles.
-expected.add("2d52c2d96f8c5bcc46b64d30645e4bf9293b54a2")
-# NS1 NS cmd23 validates installed application content paths on active owners.
-expected.add("448369f80ba0a1ff1206923c58272f80bb4d77a1")
-# NS1 HOS19 launch-info ABI plus one-shot AcquireApplicationLaunchInfo state.
-expected.add("4b6f2d8522c454e2cc2094c190fa9fa092b7a0ac")
-# NS1 HOS23 audio renderer async-pool control and audctl monaural state.
-expected.add("bd49b44b186d23b796be439d83eb65d5592442dc")
-# NS1 fsp-srv cmd206 opens registered RomFS data storage from content path.
-expected.add("e63e40f79cd5367e3f57e82c7abb5e4c79cba1d9")
-# NS1 fsp-srv fixes cmd201 ABI and exposes HOS23 batch-read open commands 210-213.
-expected.add("4a02de151d83434379e93da230cbb9d65fd2e62b")
-# NS1 HOS23 IStorageForBatchRead including cmd10 offset-array reads.
-expected.add("0165684b3dd57afcdeeefdc1d0cd40840badfb04")
-# NS1 HOS23 fsp-srv cmd207 data filesystem by DataId.
-expected.add("5a77ddebcb6e25931bb87b1d51af0a7f8f73c5ae")
-# NS1 NCM content-path commands honor the wire enum and patch-first fallback.
-expected.add("e04b7e7fa6dc7203c8f446afa297478c05e63cec")
-# NS1 HOS19 launch metadata restores PatchId/ContentMetaType and launch flags 0xB.
-expected.add("4ac1092192d134b854a8ca3433fcb7423165a15a")
-# NS1 remaining-owner completeness: small NS rejects + firmware-correct legacy HID.
-expected.add("d54b59f6c04a6d5688515b1ebf3f97b3dda19d95")
-# NS1 closes legacy hidbus cmd13 and audrec:a applet control owner.
-expected.add("8baf6c5b03781f0fcb51b8f5baefb9ce150273c7")
-# NS1 vi:m fatal-only commands fail closed; normal display service remains live.
-expected.add("897604419597945523e3f48d9eec9782595f1dd2")
-# NS1 AM audio cmd5 HOS20+ remains semantically unknown and fails closed.
-expected.add("a5a3bc6585003cced0a4ba93e50294ac8f122acb")
-# NS1 IStorage cmd5 now implements the HOS4+ OperateRange contract.
-expected.add("b93a550f6d2ac0758107d2de4bcf925df7499d62")
-# NS1 shared AM final override restores nineteen already-reviewed maintained handlers.
-expected.add("8931f1bd333f72e1e7ce524ee4f35a25877fe9cc")
-# NS1 shared AM removes stale STUB labels from three already-qualified handlers.
-expected.add("b2207c34c19663d0f29caac09bd91ab91ff4a1ec")
-# NS1 OLSC closes the seven remaining fake-success cloud-transfer stubs.
-expected.add("7085b8d98183ce91abc8580dffea16d8d0204495")
-# NS1 NGC reclassifies every remaining stub marker into explicit HOS23 policy.
-expected.add("4a807c671559cce9f4adfefc44c002332ed8001d")
-# NS1 HID system wires controller color/interface/battery state and qualifies PS5-only policies.
-expected.add("0d8d6e58d1cc787ca511d496457dfa1fa0d3c400")
-# NS1 PCTL/AM successor closes stateful false stubs while retaining unresolved semantics explicitly.
-expected.add("84e5dd00770b17298fe812e2090d5069b8b0d474")
-# NS1 audctl aligns the selected HOS23 server ABI, real target-device state, and explicit unknown-command policy.
-expected.add("d08ff8c2bfa943406105fe50e8291daf3dfe2e22")
-# NS1 application-functions aligns HOS23 cmd34/220/310 reachability and exit semantics.
-expected.add("26cc89f3d2a6142b2469cb1f265b8c132a3f774b")
-# NS1 pm:shell implements process-event IPC and explicitly rejects unsupported program launch.
-expected.add("7e64241138a0c7adeb00fb36f4f93389842474be")
-# NS1 content-management matches the 23.0.1 server surface, including cmd58, with unnamed commands fail-closed.
-expected.add("faab647277675f52c5a7fa4fafa630c4066aeec9")
-# NS1 application-manager reconciles the full NS 23.0.1 server surface: legacy removed, current unnamed ABI fail-closed, named debt retained.
-expected.add("50097537a9471daf6fe54f98125ff9e365b3696f")
-# NS1 application-manager implements library/overlay applet process launch and termination on the maintained AM runtime.
-expected.add("6cfd578a71dbf105ee535397462f0d6e1c2c355d")
-# NS1 audctl closes the HOS23 surface and rejects command IDs removed before HOS23.
-expected.add("80b1065197a6b1c62f73cdc37d2a6ce726fb2f1d")
-# NS1 application-manager qualification queries report the unavailable transition backend truthfully.
-expected.add("58941bd5ae4fbeffb8db473c90961d32e2861e19")
-# NS1 AM/VI indirect-layer successor fixes caller PID/ARUID ABI and removes fake consumer handles.
-expected.add("861672dc08b5e876b2761d934a63d05de01676e0")
-# NS1 library-applet successor fixes HOS20/22 unknown-command ABI and avoids unsignalled placeholder events.
-expected.add("976606bc55bdb97dc8bb0d04dc6e98a3caa69b84")
-# NS1 VI successor removes false stubs, initializes HOS21 cmd2103 deterministically and keeps indirect-image backend explicitly partial.
-expected.add("402f3cf63702eb8d9ab9b5663c7ac07d360ef544")
-# NS1 IRS/NPad successor wires irs:sys/500 to the active ARUID and makes processor stop/suspend lifecycle observable.
-expected.add("7be1675e767f5b41e1462dade2b8900ccf7e0706")
-if selected in {"7b314d266f958768ec311dd21cac5f1836af1b8a", "918ea63bfa46e5e9020672547b5632a9bcf979f4", "60fd2bde523a8b4c21bd1613e14ac9781f368f68", "9deb12b4b53c82d426a938cf25486014664595f4", "37ac6d1253b47e6ae7fdc8724e806c47d52ad6ab", "f4ed96b315893772761626bfbc4888e1dea89b7a", "611ad385f58616daa987415daf160f2ededd9136", "88e5a7cd6c3979f2aa887eae2757f606bf9206d6", "f314e762a3a44e0a860496c6ca49c9e5d5d50f0f", "ce8e61b92958321bab3cc530ed7b27474b8e4c08", "657774c538584ffda9823958b29918e8d8dff00d", "29c1065d976f19904a350a7d8379781646f62acc", "05d914feda6f54b156b6ba5071dc192dfa573fcc", "75c3d67fce026e950996564b4438ade27aa3bf56", "e95b972268dd97a751ca1d17d5ce8dd66f341d23", "fd3bd4a49f7abf33c931488e5cf4ab20f5ea30cb", "6e456fa0c4c41264fb63d243fce69ee593045c17", "e9338beb1d40fffebaa584e441a37d10cb52ef03", "36a0674e88e21ea6deadd7ef5954debdd46b5153", "200a7314743635cb75a12c8b1d84f14f4dfb79bc", "6c9a4289e41750a601cf7b00b62c4b75bc89458c", "f7c081801f289d1a0bf28d75d3087dff936c123b", "6cf023efacc66bec42c550d33c333abbf535f1ee", "188089998554cb6af5257169241a0915c32414b9", "d439433a58d1650c4c6c5992a2a20b515acb2f08", "be8c49a3b2325f16255b860591598b431789dc4b", "5e238dba6209205f2346d45e88715bc48dd5d85d", "c28bd3b6ce01c0953942ad0c36073f77f7120464", "b0d6d8f381979e1f88e635eb8f069ae5f7268c1d", "836e9ead21f301e32376a5fdf1ec4b5ae5aa837e", "78473e5d2086cc917ba2b0ce8bc66be83e003ca1", "ca44337f515634f66234ce87ac6c2e18743dbfe8", "c5998cf44d33e9fa5b24663ead2a68bdaea9e5a7", "b0021d01ea32a71c1407d8d2c95499ffb046c96c", "9ea395d37ddf611ab9e6db3b8ece1b2262a0c558", "896eb1b9c564ecd121208357c5bcd2a6b35923fe", "8a9212a0ddbc80f57bd4feb2795108f9ae0503af", "2c9690d8cc6343633cf779bc3304934d170e00c8", "eba62e2324e63851243b26e0da865e66bf11a4a3", "898d238b7f06a6fbc4fd4dc7c285d36a008bba29", "1aa3b47242cef99c900ffa64260a8fad8ac276a1", "ecb52e6dd3e5ded07b159392f4c61f297acc7ab1", "91c72f913f37b790b502cd54391d767c14989c06", "4c54780c5074cd16b1f3fd3d9a4427b57b310fc9", "a24d52f67fcb4a6752160c84ecc64463236dd11f", "5723eee587535a451876022d2ee778543a96811a", "6a93a98f89668eb7cfa922b95ce1e61c3c9b9975", "d7def10ac2a98e049b4f63742029b5a48a09be9d", "b43718e6fa68c8b8e4dba9f7cdc6f7c6042fff31", "69b015faa0e3facd9ffae2d125707885c114d42d", "2d52c2d96f8c5bcc46b64d30645e4bf9293b54a2", "448369f80ba0a1ff1206923c58272f80bb4d77a1", "4b6f2d8522c454e2cc2094c190fa9fa092b7a0ac", "bd49b44b186d23b796be439d83eb65d5592442dc", "e63e40f79cd5367e3f57e82c7abb5e4c79cba1d9", "4a02de151d83434379e93da230cbb9d65fd2e62b", "0165684b3dd57afcdeeefdc1d0cd40840badfb04", "5a77ddebcb6e25931bb87b1d51af0a7f8f73c5ae", "e04b7e7fa6dc7203c8f446afa297478c05e63cec", "4ac1092192d134b854a8ca3433fcb7423165a15a", "d54b59f6c04a6d5688515b1ebf3f97b3dda19d95", "8baf6c5b03781f0fcb51b8f5baefb9ce150273c7", "897604419597945523e3f48d9eec9782595f1dd2", "a5a3bc6585003cced0a4ba93e50294ac8f122acb", "b93a550f6d2ac0758107d2de4bcf925df7499d62", "8931f1bd333f72e1e7ce524ee4f35a25877fe9cc", "b2207c34c19663d0f29caac09bd91ab91ff4a1ec", "7085b8d98183ce91abc8580dffea16d8d0204495", "4a807c671559cce9f4adfefc44c002332ed8001d", "0d8d6e58d1cc787ca511d496457dfa1fa0d3c400", "84e5dd00770b17298fe812e2090d5069b8b0d474", "d08ff8c2bfa943406105fe50e8291daf3dfe2e22", "26cc89f3d2a6142b2469cb1f265b8c132a3f774b", "7e64241138a0c7adeb00fb36f4f93389842474be", "faab647277675f52c5a7fa4fafa630c4066aeec9", "50097537a9471daf6fe54f98125ff9e365b3696f", "6cfd578a71dbf105ee535397462f0d6e1c2c355d", "80b1065197a6b1c62f73cdc37d2a6ce726fb2f1d", "58941bd5ae4fbeffb8db473c90961d32e2861e19", "861672dc08b5e876b2761d934a63d05de01676e0", "976606bc55bdb97dc8bb0d04dc6e98a3caa69b84", "402f3cf63702eb8d9ab9b5663c7ac07d360ef544", "7be1675e767f5b41e1462dade2b8900ccf7e0706"} or selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd", "fe5a389ac04fa3c26c1756fc18e73a962e196da4", "e329e52f7de79302bfcc1b658431777501d5edd9", "ff0822695ec03ac7d9d2c75b4703adf12eec544f", "c3dc80c83d468e04c794b3d7d36bc1316b342bd4", "60bd03e6e5ad083ee050887028fa33d514a3050e", "488475c8c3867af07892a7f53cc6e15a54d09542", "8d1d9eac331b2b8db218617edff7aa4425503a95", "22e47d3b88d669048a4460b0e8b0a9d315f4ca22", "b9e23460efcf82c3f3e86de303f9a27568004b24", "569c8e2ae6fe3dfaecb578be4c104381329f53df", "229ebbc5b25776604c061ebdb93ca31330fa5745", "8e387b641aa5c227db2d14d06b0457a91be043fc", "e2da4886884f9dec2c6753db1de6e1048cfa095b", "51e5cbde026b62038ac7f3b2845d3d00d95eeff6", "45ea626b6579cfa3eaabf56f6ca362e77e34f346", "6bb62bfe4b830511f219e6cb0e50ced131a4b170", "61e8993c8057ca9536f8997185118d072130497f", "4936c5528e0641e2176fc77a376cfb8d2da2d1b5", "be7f995c13675eeb3af8c1addac536876ed1e90b", "c3c3b6d23925dbe287e5a239663b9a04db6a0d21", "61ab696e00da26fca41e899323acb480e1770d15", "a691b5535f9c69539b466a926359d805d734acce", "f6deaab8efa7a0c86e70d816a66792d7ce1811c3", "ad27e09c7135c3c92ef0202b58ee35423fe74300", "4483c6a35526d9dc8fc77c70b140ff2358d76dc9", "6fc24667f81ce27d07979ad25c0e4743e331f7d0", "1b5b609d3022c5a54a4e3c72613435491c7f9e24", "2faf00b1d44881bdaebb24e27ecf08938eb83144", "dff1bdb769d9d92738ff424aa3f0fe24f92016a2", "76de6f60e3a3e3982bac17ca45b34fa646388a89", "50f086881d16f4c6fb89e710ee1e4c6ce6336a04", "c8b1acd969db74a8250c49bf84dd480e5cd4f7c4", "6f797482091484fcf3c926ed287ee4afd7618598", "aea996472c7c7146795f3bbbb9e04e9bc0895a47", "40596a94e35789a57e9ee8236e0e6c4362cd1765", "bc3d538f2c413489b2d881259b57a4c44b6698f9", "0897a295624827e95d9248d85ea8274e75584693", "a7c2afb34048ff001b9ff80aad4ec6aa32aff703", "36100c1740ad18d53949761846f21ffeb8a0f472", "ebc5a68a9b5ac4316aa8c7ba3f6bebeab5817e5c", "05784b605535c987e1619c9b28e36f7752ba735b", "d1e41151f5e23b1ff2653c937b04ff5e344e29b0", "b217369d3f01b2958eae58815f190080a8b77296", "694becfbf6a27cecb907d8be5b0315c269654fa7", "9aa3b2568b3f74bd124f3923e88116a52c1c589a", "407b42a985c1d8558a516d41d5c03a216f4da433", "b0228bfc2c634ee3b7c61bec56d513b1c4673601", "0aa309cfbc3489073cc5586b5745be41c2d23e19", "b84e58810ccd509acfbd00a8dda6ada8c0dcdabc", "c8688e83435eb085285a18b581cea39b701ad266", "33858387c023030896e649c84e1df806a3352889", "3b564c2d141b94fecc78e3f68753e00aea009180", "29b1cb6de394dc0ecc168481a8059e8f70a1b92d", "131cb5828f196fcd46f78a217eec43953e0bd083", "032e41924a3d82f654ebbab15601eb609dbf4fcf", "3d97ca836c8825fedfc23de76a0c3295a93469fb", "682f74ead16c33caff0da4d9e89d025a4cb85ea5", "67db89c1195d79ee731fc783088ec38083804050", "400974b505e47e85952469aeceb959bbbee41948", "6b477c04581797bc3a5677c6c849b297f3a4587f", "5fdfa239cb6e148abac1ef2d6393b8950132bc2b", "9a5401c93d9c87bc0fcb3f955f35bd54744046a4", "bb450eb2e61d2e28856c5beb9fcc6fa1afc8adab", "be00691dcb6abbf888cc00a4a5dcbf10b377fac5", "6f487f76b88c2ca12f81c189fddcc2a8f083c74c", "6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e", "1a2a614892cde741adb10ba7dfc23dfee4d8ff06", "70829977dbe1e534887c4baa2ddd6c9a1252acc5", "73fea5e303c074b8c8d16d096f4245f8cfa5c15c", "d833c0f790973b53be9abf24df8d328377557494", "c1b7768aa16f8a731de420783cd1e31ca2f58104", "d6b9b3ff6dc8ffc8898fcc286569e6fc77750277", "b4297d22a50b391540e3b89f9c9a5afd1f9f1985", "1de640e1e347314a7cc95a7854414ca2d1ad53ce", "2990b313b00f739b7a8863e3b3d896aede75f712", "f5ae5e2073add91752d510195a6f2d9f454b92de", "0e261f9ce092ade8243443175ffc3b977772616c", "da41c660c92a9d8cfddeac29ec30e2148203aa27", "9b1c483eea8e013f1907ede3c235fe7a8216a6b6", "909c764d244ac0cd80ec2930085dbf672504ff84", "0baa3af3f57d883be26587f11ab7bc586e4f79d5", "cff675360f1985a856a91f587565c79b79567818", "f918ebdbae5c375ab2eb5887031f26d14bec5976", "7dfbe3cc1409cc4b5f3bba145ba7fd4134cf271f", "d1524eb55acb905c694a46cdb1333e32c0e4bdbf", "822662c72f38324e1f6eb56eeb4e0f55f3bc45d0", "8b62686225121d894e40e7853083f636ac344c3c", "5e77bf80aacb96088b281487525e5c73d7884d22", "a12fa5d6eec6350470374088e011bc93684e5763", "b5bdec17c65914db77f8dac4a6eb4f740c8bb1f0", "e15f20df4dd3765b1c3df3ee3fcfc4ab3e155590", "c1ae766d44a4871387232eefdeefd47a2dc00ff0", "de2daec43b71d2f13e00b154f96e39770c4bd8c9", "ab4f28f4d8f3b118c1d64d2f6744598860c388b6", "8e8e29be0c571686ca9852b6a968d440e20cd88e", "4ce41124344107322445092db240e74fa824dbc6", "fca87f6aed972e9326a1b2e616649c9cbd884ee6", "209549e1e3cb877e70e88ffc3001880af01ba9ad", "170c613138dfa7d8740459239f2ee9cb54a936b1", "3234390c8fa29100b3d64b637ed1abf822e6b223", "9f4f9bef141c33a3bce353f68cf5b58bd94603e5", "8a721e38520792fdc1e0f474ec2ef07d7c16a665", "62660c058f2a76353dba6bc208f165857460000e", "2a7dfec8c6e31b4ba004501a666a4836443d3787", "d449cce2968bd306801b4ecbb5f3756134a540ae", "1e7f7911c5601714733c53e3b5b73a15ec44c9b7", "0e9652b4f19ca998fe7d60d34460bd4bbdb1be30", "5f7e92ebb9600809d81ee6fbb898c7011b95c719", "c67f77d5b33e71ca70621ab4637f559a420d998d", "d23a6e5bbb235f4b277e523baeac668330eb5982", "83acc5124b1cdb62ba4b65ed8607968c832757a4", "0d4246090dac222c344cb3bed912728c56d79c7b", "0fcec5e76502b0def90d946bffdc29ff3e19000f", "a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc", "f20f6736b79259cb325f6a44b7b994749e458bec", "ecb8ae0e177cf5ac2015b26bff722f70a147f6cd", "81cf89d58b0b4081ea3e276668368040a6a75355", "2f294bbfaa54440eaf9dafe9cabd2c104ba3a439" ,"5c16e26b1c6ff11145e47a0e7a810eb76d0541a4", "67f68874018169305ebdd44ea06dd32855cb3667", "dd88a95f547dd1fa7f7a2536a41846d73203b213", "c6e0b135e0aa565fe596298971c7e38add0ca3d3", "ffb2182af7f137179cd2f68792d4b00c2a54cef5", "be709442d734683ffd9725c7035a932a73bf5c87", "4534ccde306a715d0fe61698be23522ac5b2d44e", "fd43ea21e70e2f16a76d7723b4578813cb28468c", "bdb10101b495c52d14a4afe17a30d52fcbcf32d6", "15b31ec775aea551bd126188c8e6e03987474bd2", "18c93c2e711cc8477156176f051874f8473497ef", "4bf2174fa0aa6649efad1130a8b69a127a69f83b", "9bddf300fbfe814a48f57adc5dee6197afd34ad9", "b1a597f87c6de6f473cc533a0668f4d7d27ee092", "8597725202341eb5bf2086977c4d7d60b89e976b", "d12a06afee1436debb6d691cc098513daed0cd24", "fe95e74d1c59f5a064ee81d98d630446bddd508d", "f828515505b9dcc6b5571d45815c6bca1ce62a9a", "1a42d4aed7974212294424c370f9e4e9e47ff08a", "99879eef9fb743cf2757b2d76f765487db70e337", "3b25cbfba01518d17cf27e4869db986c70d70b82", "a68dd1eb50cc71bffe385baaa54da5dddb0926aa", "a0c5a3beb7ab54a67a6d463002ab94e6d838f435", "175b4f2d6c9511f01aee10757a6255d84d16aab0", "05646df19d6ec2db27c54ebff88fa2db9775d409", "9248992c51c0c446e47e6cdb03e407d20c2a69dd", "b2c0a25ec04f0e90668bf1d1a4b85948aa844c52", "670673aff581924cc430d600f07ebfeea5559e07", "594eacbef099b3f97f7975e19b5b64d57910ae77", "25d561a0fd182584da68d53bca65f5ec6dbee3c8", "b882a41e0b35a91051fb362cdf2082175d433748", "a11b70417f1c981580a86bf5391b4a24fe0890e9", "afac75c2d5e4e494335bbc48f18cbf8a9a3e17a3", "c24bcfa3fb9da644d31689ae4d16f2745f240227", "67219c2d7f5b88e3c20f148fbfab7c9bba3f087c", "100be854211d10cb02b96e8f0059e1d924fa09c3", "0837393bd5c8c3c48f5681dea1ac1dba76a6d6c8", "dab56d88cbbe166575546fff3346feb4727afbf4", "94c61421e27d837e28b7331690305a72baad4d93", "65cffbdeed0bf25fe1bf5b840450a426e1f3b255", "4ee2d58ce739af8e91d78794d6859b4662f8cb86", "301c0bda4d9e5d81320361ea5ca24ab5a8cffcd2", "aa6c39c16c8229d322869a70e7be7a71e1237d5b", "69e90bc940df1cfefcd9e3f6d0d7b5a5d7984413", "945a4a0a9c4b535fa509f1ffed992d41632ddab7", "08f3042aecf16bf086d5463c55c1c9a150603d0f", "d2e93fb0fa67548d2ae500f1bde6c19c941ecb7a", "b57ce2770c82aef425bc34e2fed2492f63adfe4d", "95089b809f5eb4d3621eaddec92638e8c82f7fa4", "3260a2ecf296b08d923e2cfe1205689b652cb9f1", "1bd95def9ee03b841171924716280f6d5ccb3a09", "54f03c30bac3ebd4d1b3bb04ab2df298bc565a87", "3ae8cda53774da47ad69bdb4f91ef2434acf1fb5", "695b49c4255c816f8212d2c8a17fe81daa6e4a77", "e7137658964ed0ed011be58939a71519fb543b9a", "ab5fa3bd3d8e4e2a90b43379d40760203c7520da", "9ff0457f18f3d06771f450a665f75c454dae2f61", "f48a197733474dd1b12400eec775a88e9f89828f", "230caf1fd48d5f03c9dbdab77178a12c6738a65e", "b6d141e0398d673ad115f76c67a86fa3908e3395", "beb364e21f1942527a1321684d37ae07acfc5191", "5842c124617c80cf26cc4efe5a9e53f968661d38", "10432c439e6c591685634a3a42d341aaa419e87c", "5fb4bec2cda9b8307a115b18d97f91cc8f095730", "72810dae5e9dc201060381b134eadccd209c347c", "616154a4bd8f224d0d881c9bc38cea3ffaabd3b8", "cc1c05ca9dd3597690c0d2adc3f97ef2e5f32543", "65fc254db8d34830d01329b39658a711af792286", "85b37ea44ef1ca0d8c3c001ee4186aa42bd051d5", "ea322a8365ee7190757a7389c8538971e467b9a6", "114aafbd10411faa65d0194775fd93f4a358fc21", "a6c0444213541f747a85bd7936b1f5046ca0023f", "3c0eec8055735d537ca4cc59c57961ddc049caf5", "1c35f384381a9ef52e3d8055186f3e30f7495bde", "6693426e3aca6318b7305a001205c14f216d9658", "5fa1a189b96500929514986a86d2926fe2ff9f5c", "694561edac085c49be40022a574d9e6481bb5448", "61637939907bcc513b7869936144ad083e712856", "b6d4bdf90dbce6fe685a09a578e064a77f6293c7", "aea632e0144cb4721a6469300fbdfda7d8d2f3eb", "0ca719fa2b0c93e5cd77ec2e181f588bef34bc65", "aaf3aaed779d10df89128073a9a3b304a69422a6", "80f4972be4e5bf4a16247a8393ccbf0420bfd96c", "eedfedbd8513a047ba393d48287c37dd196566cd", "b322c48fce30b49df1d49bfae041535bd60bb307", "43ccd9f0ad4d9563ed7a2cd9a4d36a29322ee48c", "1bf7529e72295266f92beb180ae602ec9a954db4", "224bac056b368bf4edf3f0575de187d40d4edb76", "6a593a4466bf9b98220dfc0139239ae5d52c5437", "8aeb5a99bc36d5a01a1cd409bb24d8bed990ab05", "829c7964df4ea7dd6e16cb666e139561d920f737", "f1e8c0b32320e6c08dd662b9e5f5d1ac71808226", "a12ddefce7725faeeb98495ceb8ccb8cf3cd5f8f", "001fea6ade91e82ec360e5bb2197f130680d6d6a", "a06bccfd645add1c7d06063f5abfa8e1ba525c04", "a520a7e9c054b25f02dfb2d0887bca127cb871ef", "21bf94d43f07fcf66b37a6be82fb16b1099adaff", "76b7356cbc63eae67ff7e73a66fc655ce1896b6d", "d1b05d1e94eed35bc6d35f5f9db5d99156f4e5b5", "72b6186f2d1248a332d580b7727e6161a930ca09", "c9e6af612c60b047ed43de57d2465fe18b8df7cf", "285b0c8646cfc8d7331ca63758c4d34161460bac", "64fe70db980b3f60dd9fce1175a13f0ce3435b52", "2493221582e7a41528c53546bed61180035fec4e", "2c0ff436b2798f6c028b504b56d15a158794aa40", "8f2137659278d52c71825939501b7aad466edc3e", "b162bfe9925eba2e1a11a4bee4acad1218a62876", "993a5e9ae75aa37f92527cc99d2d26bdcae54dfb", "d1b965f49a76649392576551be724c0ee642d809", "ef32954266481977a0c9c5eef2ff52f637fa45bb", "3a1bbc0ffb3e3b8b4472997fb2f45e05908ee5de", "5a0460f5a51a239ed0a9d9db806cb8bae88f645d", "1f2e5c4d2a5243d850b855969474786e281d08d2", "a64bcf8c38473234474aca49b4013ed3617e0dec", "dc460d59824f532705781f8df8e72d951ebbd446", "95313ec1089b64f884abe3106eb2996ff74a5f90", "9b2333d972bca1fd03814d58fcc7ae9f4834820e", "fb8384b5673beeeed268ee38fa021421ac51061f", "6e2212b52d96463d74d17e90e260e372eee7aa80", "c2063ba7d1a8acc7596fff3bbde994e9de9bb4be", "6bcf1cb61b190766a459334ee462fb74f978e5f2", "506bcfd7c74cf131029abeba02a3e37e793dd8c7", "fc4894a72071fcabf7ad7363d5783f6c0d0bf609", "4915afc7bebe87da64c5eeb64843a24727a887dd", "04f219188c2c187e5bda6e462d871e5a9ff0b841", "8b0b3b8b8622bb00f72b411ae324446ccaf22935", "11bdd31265db39c90a67b92c923e97bd9960968c", "683af96eb36362e89c0e0faecfa49cd9e6ab8059", "8d14c398fd604733cfcc05d4dcd1d612ee53a921", "4df98ff0a70343fca54c12146303ac84e0337546", "f8e15a9c11ed569facf06edce7ca1b77c9c1fd3d", "f9856b407eebd3533ea4687089849887c769240b", "7ea2306eee8d69671336252a2018697b98f46112", "aca5aba40ab556d32a2ae9aec25c2fbd6f783f00", "518176771ae50589313b7dc5955fe118f9f2c0d1", "1c1f244beddb9e1620830a352e6b4c0adb9424f9", "0e5f7b03f26bae7f950e9293d632b6bd7b80d280", "ee53db178e3bb04fb41792602d5d47e68b3f0b21", "727d6de6ab259ce3103f5f244985fb1632e1202b", "b3f8efa1d434a1d5d1568302f83ed18d4e33e9f1", "69c1c7adda95aaa854f311011a50552d3036ebd8", "f5a1d9b7e439084203d901bfddd4371d2fe33718", "e964a6879a29531bcad73ac219225fb065ee2d81", "cf2237b8d710536a5c75ce1e36b62eeccb2e6c53", "535e1ee030ff343554f5c8b194f3b869a00b6894", "3411fc67c3c5bce5947fb5561c43ea44bb53e377", "34c62dbcf8d5b1ffedc4931b447fd52077866625"}:
+# Exact NS2 SelfController and NUP/IPC successors preserve FC27 shader/SSBO owners.
+expected.add("dc526f06d277dfa0a4afa48b4cf8b3153ebe7267")
+expected.add("87964d15e91b6b6523c88682e5ca017f6e1a808b")
+expected.add("ae6f59a9865a3f4f178c4d836a3e04c93cceb69a")
+expected.add("f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0")
+expected.add("d22b7066410c627230f9bfa8b3b5be8baff4fcdf")
+expected.add("f4f5d53596879960b19a3701bbd2272ef1f3c634")
+# Subsequent NX2-only supervisor, VI2, content and account source deltas do
+# not change FC27's SSBO shader graph. The immutable blobs are verified below.
+expected.add("2873d15edcc36e52fe1d7163684b9f78976200bf")
+expected.add("ee20b5a00e4fd96c02b5d12d6f4eaabee8623bf3")
+# New vendor revision only changes GPU-session HLE table and NIFM comma:
+# the SSBO shader owner blobs and CMake source graph are sealed below.
+expected.add("716e069f212b89b6fd13af56b0677343cf41ba07")
+# Test-only vendor successor: active runtime blobs remain byte-identical.
+expected.add("6c15ec8d1143eb1ae3092a2b984f0bc5bfcc364b")
+# GPU-time fail-closed successor leaves FC27 shader owners byte-identical.
+expected.add("93c3dd6c86627e91999f965c45c05cd8e50e17eb")
+expected.add("eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb")
+expected.add("93da3b707ef147385380eb0690e0d93fc8e907ad")
+expected.add("a6240909b823492d9ff20070c09387a732d83007")
+# FC27+NS2 shutdown/trace successor: the complete active SSBO and CMake blobs
+# remain byte-sealed below; this pinned vendor was verified against a62409.
+expected.add("0390980a5752808dfba7b8edaa7d113cc4e4e6eb")
+# Lichii/Eglantine AM window one-shot and LM NS2/NS1 split change no sealed SSBO source.
+# Verify shader/BFS owner blobs and CMake selections below before allowing this pin.
+expected.add("273680a5b33bff15c9ca12685cfadb2aa15ff9f1")
+expected.add("84b9975726092a32d1cb2aa714b96e4f5f85d7c4")
+expected.add("84ec89ce112b83603b2095a9f6bb785f8e999ef6")
+expected.add("97fa38381d9ce23b63b3bf3751615dc254ab3634")
+expected.add("b099bd7cbefaa1a35d6626d4fd3161afcefa1b48")
+expected.add("bfdf39014db15f237a16d4a50e6cdfd68bdd87b8")
+expected.add("4626d87be155c0b42904610323098c1205515450")
+expected.add("c32704e63844449b1c18a03deb2cd92939999b90")
+expected.add("fab5ebbfda09ebd3fc414b3127e135c66025ccb8")
+expected.add("acb42e2a2b18fee17673d07e06b2f29709de2fb5")
+expected.add("99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3")
+expected.add("04e252186aa42bacde0899e0c9224035c83a6b0d")
+expected.add("44f5b75bc93bcea146ad6fba3ac294405ae8709b")
+expected.add("70789b12dea4d72ce9e7f054c5b6f552ec488f5d")
+expected.add("9db97fb12db1a390d6b2410f0c18333aa31e37da")
+if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd", "dc526f06d277dfa0a4afa48b4cf8b3153ebe7267", "87964d15e91b6b6523c88682e5ca017f6e1a808b", "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a", "f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf", "f4f5d53596879960b19a3701bbd2272ef1f3c634"}:
     reviewed_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip()
@@ -762,280 +198,177 @@ if selected in {"7b314d266f958768ec311dd21cac5f1836af1b8a", "918ea63bfa46e5e9020
         "95343060f948601930f2e62b919da0789f0830bb": "efa6548c57f7823d4e8b2c975944c6846b765ff3",
         "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af": "64179fcce4962f9b2b7c738504a6fa0e00b2b292",
         "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c": "3f7f1523cef730ad153bf658fbb3567222d6e956",
-        "150a3a79ca103061f73a9a50ca8f463a3b4712f3": "39fb9a3efe65f67115dfcdebe39a55334a702f2d",
-        "fcd62408fdbc33af01a4caebc8fd44c8500b628f": "8447712e2cecf661910fd1a32613f0b844ceaeb0",
-        "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb": "067c72d30a71a79faefd1ad14876e2a46f02755c",
-        "dbef23055897b1649f83c20cf7a0516e64f3d5cd": "9e28e5b83cf9c0f4086a33d6838904353a8fd541",
-        "fe5a389ac04fa3c26c1756fc18e73a962e196da4": "d30f26b0ea1bd88ee9c326d7d46aaf5ebc2fbce9",
-        "e329e52f7de79302bfcc1b658431777501d5edd9": "c8e22a89d88275ddd57a556bf0e4e715e133f473",
-        "ff0822695ec03ac7d9d2c75b4703adf12eec544f": "39d199d468eeae1494a3942bbf13c1fffa05e948",
-        "c3dc80c83d468e04c794b3d7d36bc1316b342bd4": "ec21773d1511a78da2bc3056ffc2b48b2971da7e",
-        "60bd03e6e5ad083ee050887028fa33d514a3050e": "68f85f8f6c1d0cae8c56fde1cb8a2e8c1a03a087",
-        "488475c8c3867af07892a7f53cc6e15a54d09542": "c46a26583a3bcdb672f9a8adfd25b66da592d66c",
-        "8d1d9eac331b2b8db218617edff7aa4425503a95": "bbbc72a4967fb0192996d8f4ccc577e254c40acc",
-        "22e47d3b88d669048a4460b0e8b0a9d315f4ca22": "80f98ebd869bb4db01c7de0fbc4dd302c9cc5a49",
-        "b9e23460efcf82c3f3e86de303f9a27568004b24": "edde367d50df7d016bbd0a0d36fad550e4c1e3c3",
-        "569c8e2ae6fe3dfaecb578be4c104381329f53df": "837bf41ef8f54530a06f3da8fbe1b372bbdf61e6",
-        "229ebbc5b25776604c061ebdb93ca31330fa5745": "84142bbf8d1c4fc947dbaf0887fc43542349b318",
-        "8e387b641aa5c227db2d14d06b0457a91be043fc": "94c9d09b3a1d47d9a0c10bd20a8b271862556eb6",
-        "e2da4886884f9dec2c6753db1de6e1048cfa095b": "d1971e7a571833820a29c83257c661a21c036b39",
-        "51e5cbde026b62038ac7f3b2845d3d00d95eeff6": "caf1395b6cc5504ca2c0711394f125dc66a05f88",
-        "45ea626b6579cfa3eaabf56f6ca362e77e34f346": "5ef05afacc24cef4cb3e413211743b8883afc70c",
-        "6bb62bfe4b830511f219e6cb0e50ced131a4b170": "eab5bd486d56590745c0a0e2454d9d90cacf4a8b",
-        "61e8993c8057ca9536f8997185118d072130497f": "1d02e7fb6925dfa4dddf943c42a3e8583db83671",
-        "4936c5528e0641e2176fc77a376cfb8d2da2d1b5": "4cf0ae3a76996c35c517be900561d5c09cd17023",
-        "be7f995c13675eeb3af8c1addac536876ed1e90b": "054f6943d2456d3287b925cc50f35355dc2f3c08",
-        "c3c3b6d23925dbe287e5a239663b9a04db6a0d21": "92f3fb7fdecc94c4691265f955d54165deb65991",
-        "61ab696e00da26fca41e899323acb480e1770d15": "fc9c49905f9a4d3a10a077d74aaf66a5c7152f54",
-        "a691b5535f9c69539b466a926359d805d734acce": "dfe1ef22dacebde8a6b110f9e006318e1d77f466",
-        "f6deaab8efa7a0c86e70d816a66792d7ce1811c3": "0a2a081d41bc7400a25ff833b08d085826345478",
-        "ad27e09c7135c3c92ef0202b58ee35423fe74300": "e6ddae9ffeaca9bc0319e056b7fd38ffb35eb056",
-        "4483c6a35526d9dc8fc77c70b140ff2358d76dc9": "7ac58de8cc59a33b21de52fae13371d4f85801fa",
-        "6fc24667f81ce27d07979ad25c0e4743e331f7d0": "28da2f872d33edf2ad11947991a0cf6c4e592475",
-        "1b5b609d3022c5a54a4e3c72613435491c7f9e24": "a7c6437660846d69a4b049de5641561bd08b96cb",
-        "2faf00b1d44881bdaebb24e27ecf08938eb83144": "18e76d6b282831c59c343950fac922d0130d1e09",
-        "dff1bdb769d9d92738ff424aa3f0fe24f92016a2": "8cc006223327f14da5664476491da0ea364fabf6",
-        "76de6f60e3a3e3982bac17ca45b34fa646388a89": "5508124e6fbc16279e5870434b331154cb7f62b6",
-        "50f086881d16f4c6fb89e710ee1e4c6ce6336a04": "4f015ccf16419403354a03463a79edb4856b501f",
-        "c8b1acd969db74a8250c49bf84dd480e5cd4f7c4": "30ada5ee51cd74e474250c3132e7a48eb82f3b1d",
-        "6f797482091484fcf3c926ed287ee4afd7618598": "12879f10b2d866ba5b4536e62bedfcc0c28bb34e",
-        "aea996472c7c7146795f3bbbb9e04e9bc0895a47": "b3b59fda00af67a52aa5bf5b8125df90ae312c26",
-        "40596a94e35789a57e9ee8236e0e6c4362cd1765": "b6631a93395622feea9f86abdbb0b79dd6c4993d",
-        "bc3d538f2c413489b2d881259b57a4c44b6698f9": "8307e210806b858beea5f87c49434685fe93831d",
-        "0897a295624827e95d9248d85ea8274e75584693": "06e36212834c87b6d464f5349bf26851e336362f",
-        "a7c2afb34048ff001b9ff80aad4ec6aa32aff703": "9b7cefd10652c20bdd3c0a62599e42e35e40c568",
-        "36100c1740ad18d53949761846f21ffeb8a0f472": "c9042596bcfece3250e1574ab44061c182ff54ee",
-        "ebc5a68a9b5ac4316aa8c7ba3f6bebeab5817e5c": "7a96cbc2af79a866e194c28fa33e438d9c897712",
-        "05784b605535c987e1619c9b28e36f7752ba735b": "7502d3834222f5e3b35e4cb13f48d2755ab79bfe",
-        "d1e41151f5e23b1ff2653c937b04ff5e344e29b0": "34dbfc91c0b5b086ef220eaee856627e37ac20e3",
-        "b217369d3f01b2958eae58815f190080a8b77296": "d788055b10aa228029f24699acd653609c972baa",
-        "694becfbf6a27cecb907d8be5b0315c269654fa7": "ba9035d2e9289d05d89a611c19477b91f3243d1f",
-        "9aa3b2568b3f74bd124f3923e88116a52c1c589a": "fbd04c1ab3bc6858e873e48fb6c32c17db7a335e",
-        "407b42a985c1d8558a516d41d5c03a216f4da433": "d49fdafca026f9a973a84ad42cf0981a0ead8b10",
-        "b0228bfc2c634ee3b7c61bec56d513b1c4673601": "1375ddf53289af9de4d2e9cc34f03ffe3940ed30",
-        "0aa309cfbc3489073cc5586b5745be41c2d23e19": "77e74e92fbfeb95d6c43628f5805937065611b9a",
-        "b84e58810ccd509acfbd00a8dda6ada8c0dcdabc": "1dfe1ab8ff6006a263a72409f6232ee64f692cca",
-        "c8688e83435eb085285a18b581cea39b701ad266": "79a660baca78426c374467f7e2b725824a260665",
-        "33858387c023030896e649c84e1df806a3352889": "8bfc545041776e2c88592fb5561020aaed20fc82",
-        "3b564c2d141b94fecc78e3f68753e00aea009180": "46f035e4e6a40dee8cb751651f9c4f2c0a307a8b",
-        "29b1cb6de394dc0ecc168481a8059e8f70a1b92d": "449492017d849f1669f327d9ca8dd06b6f78daf0",
-        "131cb5828f196fcd46f78a217eec43953e0bd083": "e193ac362ae443d8e96fb575fd199df38aea83be",
-        "032e41924a3d82f654ebbab15601eb609dbf4fcf": "e1e916b5e51b17b542eea5010889dacc850077fb",
-        "3d97ca836c8825fedfc23de76a0c3295a93469fb": "1971dc01df3359a0dc74df18be6ef1e90d60937b",
-        "682f74ead16c33caff0da4d9e89d025a4cb85ea5": "51965f0e80d8c18df8c5f829276daed7089ca0e1",
-        "67db89c1195d79ee731fc783088ec38083804050": "a477fa09a667ba6144e31aaf59921386067ce4ee",
-        "400974b505e47e85952469aeceb959bbbee41948": "6fda5c117836e91b18c76796121f9e58b4fe17a0",
-        "6b477c04581797bc3a5677c6c849b297f3a4587f": "9f16c143a040213aa2429acbceaf5b2250ce5b30",
-        "5fdfa239cb6e148abac1ef2d6393b8950132bc2b": "dbfc5e1a0e5ff72834206bb4cbe066ce1ab85246",
-        "9a5401c93d9c87bc0fcb3f955f35bd54744046a4": "e4da559826dccca47deb8d35a4fdfb0882404733",
-        "bb450eb2e61d2e28856c5beb9fcc6fa1afc8adab": "8b5f9570428f539fb4a414659eb2afefc5c9fe70",
-        "be00691dcb6abbf888cc00a4a5dcbf10b377fac5": "982c71474dbabaa0b4829af66c5c6c59847004ec",
-        "6f487f76b88c2ca12f81c189fddcc2a8f083c74c": "34ca4655b3822ed3ba9d47622d4399bae9f3ff3b",
-        "6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e": "f24749580d8cf74dfacee33dd11ebce7836c8629",
-        "1a2a614892cde741adb10ba7dfc23dfee4d8ff06": "e6e631075d5e4ffbd8895fcfc6741363ae4b2bf8",
-        "70829977dbe1e534887c4baa2ddd6c9a1252acc5": "7dc7ba8a5ecbc75cf37f2f54efeb0cdbd04f24f8",
-        "73fea5e303c074b8c8d16d096f4245f8cfa5c15c": "e016ea5e3aa9d92d3477a258487745658420c425",
-        "d833c0f790973b53be9abf24df8d328377557494": "53e0136353a64f4cfaa86e24541d634764d8e318",
-        "c1b7768aa16f8a731de420783cd1e31ca2f58104": "ae8748e568d9ad38d40e32ae95bb342a3a08daa6",
-        "d6b9b3ff6dc8ffc8898fcc286569e6fc77750277": "dad2460f1464a2a98122be21d9389d579af75a94",
-        "b4297d22a50b391540e3b89f9c9a5afd1f9f1985": "c192126108c3780633116955500f3f25c406c825",
-        "1de640e1e347314a7cc95a7854414ca2d1ad53ce": "c9b36db79d19295a5454c6c054f728151320990c",
-        "2990b313b00f739b7a8863e3b3d896aede75f712": "a2c8c7999086be1afad86466c4f9a5c867671ff7",
-        "f5ae5e2073add91752d510195a6f2d9f454b92de": "c4eb1151a2007ff263b547be5d09fce431064c97",
-        "0e261f9ce092ade8243443175ffc3b977772616c": "8dd9abffeab8f3e2c75ec39806570881c7d30b12",
-        "da41c660c92a9d8cfddeac29ec30e2148203aa27": "bfcb971ca0c7c6fdff2fb5732b594c1259c14e2d",
-        "9b1c483eea8e013f1907ede3c235fe7a8216a6b6": "bfd2db62ed954aefa1c6b50ee7ea4e48db7f6f08",
-        "909c764d244ac0cd80ec2930085dbf672504ff84": "d95cd18c5a0156428f8e09be246a4bcca13b3cdc",
-        "0baa3af3f57d883be26587f11ab7bc586e4f79d5": "6ea443768cb417cace310e087f52b4250d14f3a2",
-        "cff675360f1985a856a91f587565c79b79567818": "1ca6e84c217e6a85bf9a686e378f05192b44c68c",
-        "f918ebdbae5c375ab2eb5887031f26d14bec5976": "c52752f61475b9ac2e2e4e7ff2374106b989ced0",
-        "7dfbe3cc1409cc4b5f3bba145ba7fd4134cf271f": "4a8902e36b4c0d429b0bf1071fedc8f7f85c0109",
-        "d1524eb55acb905c694a46cdb1333e32c0e4bdbf": "b4b65ea5bffc675c996d4e8eae4b7dc530a6ea53",
-        "822662c72f38324e1f6eb56eeb4e0f55f3bc45d0": "7a9fe224d54a0c73e014a0e6f32f0229dfbb2dce",
-        "8b62686225121d894e40e7853083f636ac344c3c": "b52c35e5b39352a3a86c44c45f0ee17892fbb066",
-        "5e77bf80aacb96088b281487525e5c73d7884d22": "94d3a154d9b897032cc75da54b62fb33a870e89a",
-        "a12fa5d6eec6350470374088e011bc93684e5763": "855c15d239a1cd44547a3cda8de29cace9bee328",
-        "b5bdec17c65914db77f8dac4a6eb4f740c8bb1f0": "ee52c1bb868bc0e1bf28566bb7bae0c9a314c768",
-        "e15f20df4dd3765b1c3df3ee3fcfc4ab3e155590": "ef8803c118f902adac0ed1edd6aa914371317ad6",
-        "c1ae766d44a4871387232eefdeefd47a2dc00ff0": "b20ef68916315f21a52e2b76b637f3bd9b04d717",
-        "de2daec43b71d2f13e00b154f96e39770c4bd8c9": "5b4f442159c08643686b78fc5dd82146c4141f2a",
-        "ab4f28f4d8f3b118c1d64d2f6744598860c388b6": "ee3b73db16643181b54d520d98cf2cb0fbc60533",
-        "8e8e29be0c571686ca9852b6a968d440e20cd88e": "6e41aa672a4f4098b982204ad00c8060b2e846dc",
-        "4ce41124344107322445092db240e74fa824dbc6": "620e78545ee2775dbdfa0716fff9a64f789a3812",
-        "fca87f6aed972e9326a1b2e616649c9cbd884ee6": "31ae4572584d1216be8bdc81a446a6f8110e94dc",
-        "209549e1e3cb877e70e88ffc3001880af01ba9ad": "44d0ee931f0bdf865b787cd33dbc10611185ecfe",
-        "170c613138dfa7d8740459239f2ee9cb54a936b1": "006b451ddc375575b35ec37778356243273f01e5",
-        "3234390c8fa29100b3d64b637ed1abf822e6b223": "24772de52fe6c3837ff71231e2121b5bcebd47a0",
-        "9f4f9bef141c33a3bce353f68cf5b58bd94603e5": "bf9097bdaf82c025fc15f2a4cd9e1541adbdb152",
-        "8a721e38520792fdc1e0f474ec2ef07d7c16a665": "72e68b086fb0911c6211d0550c753f87feb3f966",
-        "62660c058f2a76353dba6bc208f165857460000e": "1b4a906b11137ad31c9b45a3063e70d6686a0eeb",
-        "2a7dfec8c6e31b4ba004501a666a4836443d3787": "463636f6351a0b366b0e226fc88e3f0ad91f0f1b",
-        "d449cce2968bd306801b4ecbb5f3756134a540ae": "cb9fd5e6168e4134898c5e9b4516a5c9f55a1c53",
-        "1e7f7911c5601714733c53e3b5b73a15ec44c9b7": "f7cdef676a8b47790971e20c2b6ba03e0d66cb81",
-        "0e9652b4f19ca998fe7d60d34460bd4bbdb1be30": "d8fcbce6d134cdcd8716060d7817c94cf5f89df7",
-        "5f7e92ebb9600809d81ee6fbb898c7011b95c719": "faf1ab63c88c0c408b42c74735e2072d90818c84",
-        "c67f77d5b33e71ca70621ab4637f559a420d998d": "9e60f3bc7e6a85b5f6c5fb6d4ce79ece460be73e",
-        "d23a6e5bbb235f4b277e523baeac668330eb5982": "3c893de47856e787abf50ca4b0b86429b243225b",
-        "83acc5124b1cdb62ba4b65ed8607968c832757a4": "b7bf7c18140e7af806bccb2aab1ee99733a09937",
-        "0d4246090dac222c344cb3bed912728c56d79c7b": "181d4d1a18dedf20c4e28fb4c1a48a8fde2be1d9",
-        "0fcec5e76502b0def90d946bffdc29ff3e19000f": "562294e7a9742631cdaab84d2924f6454486a4a3",
-        "a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc": "f53f4750d84de2bbb941984508a885241e7e6f41",
-        "f20f6736b79259cb325f6a44b7b994749e458bec": "c467583c2cc4dd86e59461792c31a0d43f6f82cc",
-        "ecb8ae0e177cf5ac2015b26bff722f70a147f6cd": "f54da66c6c41185383dcf9df07f0211aee96df5c",
-        "81cf89d58b0b4081ea3e276668368040a6a75355": "147ec9af95f283aad866c61ed853cb76be98c270",
-        "2f294bbfaa54440eaf9dafe9cabd2c104ba3a439": "0675e1f32d05e13c3ae0c8bbf0c20d841be03ecf",
-        "5c16e26b1c6ff11145e47a0e7a810eb76d0541a4": "843f4bdabbe807edb1679c68fee31e4849394604",
-        "67f68874018169305ebdd44ea06dd32855cb3667": "662d7b45bcac38f5f6ce03ab767d123deae1b44a",
-        "dd88a95f547dd1fa7f7a2536a41846d73203b213": "7297f02ef7cc81efdb3ff9a5cb810f8f3a272c97",
-        "c6e0b135e0aa565fe596298971c7e38add0ca3d3": "dfad655b555a171b732226b843657830686140ec",
-        "ffb2182af7f137179cd2f68792d4b00c2a54cef5": "9ba87635a1f63500e41f2a919116e670b586853c",
-        "be709442d734683ffd9725c7035a932a73bf5c87": "f8d52386be5394d8c0e38ae36be3425aa15fbbb3",
-        "4534ccde306a715d0fe61698be23522ac5b2d44e": "eb3a012c82a899a84b2c880c6c36d9720c580f76",
-        "fd43ea21e70e2f16a76d7723b4578813cb28468c": "e5957ed4b34177996fa5128497723beea14c0638",
-        "bdb10101b495c52d14a4afe17a30d52fcbcf32d6": "c71a3257d1502deb656a18eb10447beb3ccf8c76",
-        "15b31ec775aea551bd126188c8e6e03987474bd2": "ec3b523351afadd87211d06003622e25a4ade230",
-        "18c93c2e711cc8477156176f051874f8473497ef": "e8da916fb10c23d84a0a97ef80b82033a676a13d",
-        "4bf2174fa0aa6649efad1130a8b69a127a69f83b": "94e016679149bb468786379c2a9287a9ab90df9e",
-        "9bddf300fbfe814a48f57adc5dee6197afd34ad9": "27bd7434ba71529fdc6d460f9685a1330c4fdacb",
-        "b1a597f87c6de6f473cc533a0668f4d7d27ee092": "cc6b646340864a099f50b2c79820a7d4e0f64934",
-        "8597725202341eb5bf2086977c4d7d60b89e976b": "2cdac7bf33faae8d08b557bc51bc6b19723cfac6",
-        "d12a06afee1436debb6d691cc098513daed0cd24": "97c9df2b20e787e263265f951c77f45cb21d0748",
-        "fe95e74d1c59f5a064ee81d98d630446bddd508d": "b64f12072c06ae36463c3d5a5705d64ff1b88ffc",
-        "f828515505b9dcc6b5571d45815c6bca1ce62a9a": "eb80d6d52a058ef73d86f9c40ab5ae740beebf2f",
-        "1a42d4aed7974212294424c370f9e4e9e47ff08a": "49a709167175824731fc121c5e05eca4be27ba41",
-        "99879eef9fb743cf2757b2d76f765487db70e337": "14376bc19cc2b7a7ab94f28b4ed81382094b5954",
-        "3b25cbfba01518d17cf27e4869db986c70d70b82": "f4ca8d88acc88ac46dad3f4b4ace6c0fc643bab6",
-        "a68dd1eb50cc71bffe385baaa54da5dddb0926aa": "17d40397c66925a304776c545ccb9509fefa6fb8",
-        "a0c5a3beb7ab54a67a6d463002ab94e6d838f435": "c4d6d7d1a107143b39ebaa38139e0169f470dd6b",
-        "175b4f2d6c9511f01aee10757a6255d84d16aab0": "b19f6a65bdee666df6bd59a1691574200568c538",
-        "05646df19d6ec2db27c54ebff88fa2db9775d409": "d2c90ee3b0a0b60cad03ed8bfb9c434c31243464",
-        "9248992c51c0c446e47e6cdb03e407d20c2a69dd": "247415d930f7fccb14b51c22b6ae2128fbad70ec",
-        "b2c0a25ec04f0e90668bf1d1a4b85948aa844c52": "413984847db7974d648ae1e0c170c0394e422676",
-        "670673aff581924cc430d600f07ebfeea5559e07": "8c8bd0f82127872cc89bbff3cc5e5afc9aaea031",
-        "594eacbef099b3f97f7975e19b5b64d57910ae77": "9da3bf26d82d360f75972482e33cf9dbbb67878e",
-        "25d561a0fd182584da68d53bca65f5ec6dbee3c8": "3fd49f5abb77fe59eb8bc7f128663532fbea5824",
-        "b882a41e0b35a91051fb362cdf2082175d433748": "a69f0624939699f8f407f5f8f75ad5a149c04574",
-        "a11b70417f1c981580a86bf5391b4a24fe0890e9": "04fc2d52c10f340a98a5184c352e9cd6ab2e779d",
-        "afac75c2d5e4e494335bbc48f18cbf8a9a3e17a3": "a5e87e7f4539436f64628bedea087a02b198f40f",
-        "c24bcfa3fb9da644d31689ae4d16f2745f240227": "0744fd9e1969f2f6001b95c52bf4a980d4b7223b",
-        "67219c2d7f5b88e3c20f148fbfab7c9bba3f087c": "68d49f0a19d5ef2bd4d3c772a2b7caeb9ba9e8a9",
-        "100be854211d10cb02b96e8f0059e1d924fa09c3": "f54d37d854efbb377e915d21780f3422059c1a8a",
-        "0837393bd5c8c3c48f5681dea1ac1dba76a6d6c8": "33fef214ac58418a9778851ff08769fe45d22e60",
-        "dab56d88cbbe166575546fff3346feb4727afbf4": "c9c1ab05488df66de87c7b5f14e36f34c9452a06",
-        "94c61421e27d837e28b7331690305a72baad4d93": "99d70d203eb482eb1747b15b1bfc79ccb3302cb8",
-        "65cffbdeed0bf25fe1bf5b840450a426e1f3b255": "69db10d6012453532201640c652fa9ff66a60240",
-        "4ee2d58ce739af8e91d78794d6859b4662f8cb86": "6de36772e5143943cd6cb78672bab6507c54a326",
-        "301c0bda4d9e5d81320361ea5ca24ab5a8cffcd2": "a5604ef1859adc790744d9743bf88046e1690e74",
-        "aa6c39c16c8229d322869a70e7be7a71e1237d5b": "59cef88c8a6f8a5cc5501e8956fa82354ed29cb1",
-        "69e90bc940df1cfefcd9e3f6d0d7b5a5d7984413": "e2df7b684e2c59c36b2808f3a54a068092d0052a",
-        "945a4a0a9c4b535fa509f1ffed992d41632ddab7": "72f19137323e0107754a956c1db3a97fb2108330",
-        "08f3042aecf16bf086d5463c55c1c9a150603d0f": "eca369629eca554e10e47b59dc856aea0f088118",
-        "d2e93fb0fa67548d2ae500f1bde6c19c941ecb7a": "047f2bac6232529939df7d39d9dc277275efa95a",
-        "b57ce2770c82aef425bc34e2fed2492f63adfe4d": "aa6507b08000e0adb240496e5ce12629edddda66",
-        "95089b809f5eb4d3621eaddec92638e8c82f7fa4": "932de326214bb5577984b70aa14034a8454ce36a",
-        "3260a2ecf296b08d923e2cfe1205689b652cb9f1": "6b87ffc686c700c0d0bb3b77ca1e1d97dbfd1ccd",
-        "1bd95def9ee03b841171924716280f6d5ccb3a09": "09f8509f6867ec3716f6096b5e1c686f32a8a2d9",
-        "54f03c30bac3ebd4d1b3bb04ab2df298bc565a87": "16cca46351104437e0ec91be899a3c0d7583faae",
-        "3ae8cda53774da47ad69bdb4f91ef2434acf1fb5": "17b8a3ac46e5607ed41fa867ef95212bdb2114d8",
-        "695b49c4255c816f8212d2c8a17fe81daa6e4a77": "846c705822dc999ae91ba3cc8969c726ccf7b878",
-        "e7137658964ed0ed011be58939a71519fb543b9a": "30da2608fdefa47c293ddaf34d137d566b64b6a9",
-        "ab5fa3bd3d8e4e2a90b43379d40760203c7520da": "bdf139bdb2e8b2ab38f24a3bde41955ba4d4af99",
-        "9ff0457f18f3d06771f450a665f75c454dae2f61": "5f77432e5f9479c678c56b1a4aee4a732bed2743",
-        "f48a197733474dd1b12400eec775a88e9f89828f": "4bcd14a3fd3360675fba3cc89e8ae1fcf89a1f06",
-        "230caf1fd48d5f03c9dbdab77178a12c6738a65e": "236d745e425c15964100fe3c7cb5f9d1dbbfb45d",
-        "b6d141e0398d673ad115f76c67a86fa3908e3395": "7d1a7feb9ff0cc10e6d4d1140eb5bc1004a47dc0",
-        "beb364e21f1942527a1321684d37ae07acfc5191": "91c5ff3e873e9a38b1fbb1b86659196d75d55eba",
-        "5842c124617c80cf26cc4efe5a9e53f968661d38": "b79656fc83bb6e7d6c54872895d9e341c115261c",
-        "10432c439e6c591685634a3a42d341aaa419e87c": "028d86b20b67cb5ed277d7f2691419acdccccd1a",
-        "5fb4bec2cda9b8307a115b18d97f91cc8f095730": "3523faf7f107e1f2a456113e8eb909e17e4e573c",
-        "72810dae5e9dc201060381b134eadccd209c347c": "f34c812ab0f2df852a8a2cb5634be5a6fb686d03",
-        "616154a4bd8f224d0d881c9bc38cea3ffaabd3b8": "d654e7f4b01e4da891fdd0072d542094eff1a1c8",
-        "cc1c05ca9dd3597690c0d2adc3f97ef2e5f32543": "2fb8385e71a043f97e4f24e951344a1cd0d9ed5b",
-        "65fc254db8d34830d01329b39658a711af792286": "780c29dfc4dc7218ce7398aa1aca3ae4ec535e88",
-        "85b37ea44ef1ca0d8c3c001ee4186aa42bd051d5": "dd2e63db9da538a726f3267f6748daa448d19ac6",
-        "ea322a8365ee7190757a7389c8538971e467b9a6": "1729ab835d101818e43b84e416a35ea6b21f711d",
-        "114aafbd10411faa65d0194775fd93f4a358fc21": "272d60fe8210f937b2afbf9f3fbfff81aec80f84",
-        "a6c0444213541f747a85bd7936b1f5046ca0023f": "0b7804a02bb0dd66a68024393ca57dd28ea40422",
-        "3c0eec8055735d537ca4cc59c57961ddc049caf5": "38b41d0ffcf0a19be007c73db0074fda1bb5f72f",
-        "1c35f384381a9ef52e3d8055186f3e30f7495bde": "d60f1513d0e8c4c970fd3388281ce45e87677509",
-        "6693426e3aca6318b7305a001205c14f216d9658": "a190fb97ce8ef393ea7382a3357add0ff0d69fa0",
-        "5fa1a189b96500929514986a86d2926fe2ff9f5c": "b60660342a0b3281a3676cb0535e46f3b511ad06",
-        "694561edac085c49be40022a574d9e6481bb5448": "1c2995e7f2dc443346a5d5954dd4591d6bac4364",
-        "61637939907bcc513b7869936144ad083e712856": "7021afa88dfa3dd4bf24a64c24122d929428ea3d",
-        "b6d4bdf90dbce6fe685a09a578e064a77f6293c7": "053aefb96fb98bcfd1a31c39a25dd9d860126ea8",
-        "aea632e0144cb4721a6469300fbdfda7d8d2f3eb": "f6e45be6aee7ea690d3ff536f273d05880f121d3",
-        "0ca719fa2b0c93e5cd77ec2e181f588bef34bc65": "e584e7e4f8881d4cdd1f34c03dc2fbf92e6dd085",
-        "aaf3aaed779d10df89128073a9a3b304a69422a6": "c28aaac0917fa6c4a88fc6bc83861a37b48232e3",
-        "80f4972be4e5bf4a16247a8393ccbf0420bfd96c": "9a323105726ff49d20732c8ee2c0e669209eb3c0",
-        "eedfedbd8513a047ba393d48287c37dd196566cd": "8f1964a7ffb664843e9b6ca0c13ae14ea57d1859",
-        "b322c48fce30b49df1d49bfae041535bd60bb307": "4228c4679f84924ee72513f832858e5bd55a1e24",
-        "43ccd9f0ad4d9563ed7a2cd9a4d36a29322ee48c": "0dd1d59f2079ae2fb9a85cce2050c873cf4eaffd",
-        "1bf7529e72295266f92beb180ae602ec9a954db4": "8f4723a5cf7a494bdfcd1fbe1b005f150e494bab",
-        "224bac056b368bf4edf3f0575de187d40d4edb76": "a9f6f46a9b2cd2a92c7c4afe1bb429258ed62678",
-        "6a593a4466bf9b98220dfc0139239ae5d52c5437": "795303c86a90d8bd30d42f0c900788bbad0c77f6",
-        "8aeb5a99bc36d5a01a1cd409bb24d8bed990ab05": "f1de8a6ad42394726eb0a7d617db8e80ed10e40d",
-        "829c7964df4ea7dd6e16cb666e139561d920f737": "f6cb7671445a96aea4219339c82687249bf6c55b",
-        "f1e8c0b32320e6c08dd662b9e5f5d1ac71808226": "7693cb0d757bb0baafa21aad2a48cc92be073879",
-        "a12ddefce7725faeeb98495ceb8ccb8cf3cd5f8f": "5fa9abbd9d0e4e2fbed2650ac8dd62234119c6ba",
-        "001fea6ade91e82ec360e5bb2197f130680d6d6a": "9299ef59b76b8c3ee6abe4b3516ba2b2276990ae",
-        "a06bccfd645add1c7d06063f5abfa8e1ba525c04": "e3eb80698a9cbd31714458536af1661e031a991f",
-        "a520a7e9c054b25f02dfb2d0887bca127cb871ef": "6b36e1a7cb541b189ecbc4b3b8b9365de121afd5",
-        "21bf94d43f07fcf66b37a6be82fb16b1099adaff": "41761e9e75201826aee403115b2cf21af83a92d2",
-        "76b7356cbc63eae67ff7e73a66fc655ce1896b6d": "8a524572a69a0a56fd51f2780c32f5c92ab1fd06",
-        "d1b05d1e94eed35bc6d35f5f9db5d99156f4e5b5": "528675121d7a71d65d6b9f98e45ef8912197dd3e",
-        "72b6186f2d1248a332d580b7727e6161a930ca09": "8a681ff7cf8b4eadae1b34669c5a20e738a98d2c",
-        "c9e6af612c60b047ed43de57d2465fe18b8df7cf": "198530ee8ee07677aa9e333be71cf810b6b0c3e1",
-        "285b0c8646cfc8d7331ca63758c4d34161460bac": "0ad54c8c7c65c7ada3c8457c30a3306ee6006abf",
-        "64fe70db980b3f60dd9fce1175a13f0ce3435b52": "afb8e76b784a95cc622b587eb63007e4453d4c1b",
-        "2493221582e7a41528c53546bed61180035fec4e": "13bd6cedd6714433f1f0acdcb27296b8021a5d55",
-        "2c0ff436b2798f6c028b504b56d15a158794aa40": "c0cd9e97a5acb5a9b3f94ce5ec018394140df70e",
-        "8f2137659278d52c71825939501b7aad466edc3e": "a799aa9226d5590cd66cb2b618f70ef0b49ba31c",
-        "b162bfe9925eba2e1a11a4bee4acad1218a62876": "39d9eafd427685b0d2355a3c4db8d157ec550d61",
-        "993a5e9ae75aa37f92527cc99d2d26bdcae54dfb": "1d716467679132d3d0f10bd0c1c9f3b48e3cc103",
-        "d1b965f49a76649392576551be724c0ee642d809": "854d53d140855be6a4c15a0e385d233707c777b8",
-        "ef32954266481977a0c9c5eef2ff52f637fa45bb": "20ae0ca419b04a37e11ff4f6fe4341da7fde5658",
-        "3a1bbc0ffb3e3b8b4472997fb2f45e05908ee5de": "d310d65e0eea0fe9bf7615749da81df14ab72d73",
-        "5a0460f5a51a239ed0a9d9db806cb8bae88f645d": "195091341c22be3aef98b71a962c67ae6a0bfeac",
-        "1f2e5c4d2a5243d850b855969474786e281d08d2": "7336993a5473b3617629aefabd9ea6ffec67c444",
-        "a64bcf8c38473234474aca49b4013ed3617e0dec": "daa7a14f82668be14a54bc5360dd6846f272506a",
-        "dc460d59824f532705781f8df8e72d951ebbd446": "dab560a49f46024bf2a4b63b4a9c8ed855ddb11a",
-        "95313ec1089b64f884abe3106eb2996ff74a5f90": "dadbea07be796c3c32b9976d022b4db6013c8215",
-        "9b2333d972bca1fd03814d58fcc7ae9f4834820e": "d602aea3551da2de430f3107a017f7d0c3bce597",
-        "fb8384b5673beeeed268ee38fa021421ac51061f": "7fedb2712c826361f81e47bc91397b39c3f34f4a",
-        "6e2212b52d96463d74d17e90e260e372eee7aa80": "868c0f0a999454750f3fbe28c97559bae259fd94",
-        "c2063ba7d1a8acc7596fff3bbde994e9de9bb4be": "7ea4a35cd38ce8917571be3aec0cbce25e2cdabf",
-        "6bcf1cb61b190766a459334ee462fb74f978e5f2": "107aaa858bc41ac5dde7e5a4f12753ef706c5c6e",
-        "506bcfd7c74cf131029abeba02a3e37e793dd8c7": "3a0d7f330c7de8cfe55a82c41aa75324afc3376e",
-        "fc4894a72071fcabf7ad7363d5783f6c0d0bf609": "573a93f12f75abe89c3717d5218e3fd990673336",
-        "4915afc7bebe87da64c5eeb64843a24727a887dd": "583222478d661bdf71dd577c3481ce98a718f45e",
-        "04f219188c2c187e5bda6e462d871e5a9ff0b841": "f2076f9e0aa167d25439251a4c3ba61be166e7f2",
-        "8b0b3b8b8622bb00f72b411ae324446ccaf22935": "33857a76c812e389a6ffed2f735a3a40a5b8630e",
-        "11bdd31265db39c90a67b92c923e97bd9960968c": "16f2dc070f4d2bd764d312dccbdc8db71951ea44",
-        "683af96eb36362e89c0e0faecfa49cd9e6ab8059": "5a4bc4ad9d0def0c8aad25f7a4db82c2aba09504",
-        "8d14c398fd604733cfcc05d4dcd1d612ee53a921": "5626b00cc5d3be56be5905c633977f2594f8cbaf",
-        "4df98ff0a70343fca54c12146303ac84e0337546": "f72a9553af69dc4f600dacd664b19b3e44c9935a",
-        "f8e15a9c11ed569facf06edce7ca1b77c9c1fd3d": "19ff8d77cf82cc7424ba8f2b1da90a10b15e04c3",
-        "f9856b407eebd3533ea4687089849887c769240b": "e30487c99edb021e189d973a84c6285bea032be1",
-        "7ea2306eee8d69671336252a2018697b98f46112": "62d0f29046caf5346ec5c26e1531d60ed6a89265",
-        "aca5aba40ab556d32a2ae9aec25c2fbd6f783f00": "f8c74d5c7c07a9e1eb7a4d2a41c76cac38f5a9d3",
-        "518176771ae50589313b7dc5955fe118f9f2c0d1": "36a676e02b79ccfe12f9d0dd55beeea16b6d64ff",
-        "1c1f244beddb9e1620830a352e6b4c0adb9424f9": "55859e6bccf14afec48b17a5354729da229f68b6",
-        "0e5f7b03f26bae7f950e9293d632b6bd7b80d280": "54bf93fb13947af1c95180a08cb86b820723476e",
-        "ee53db178e3bb04fb41792602d5d47e68b3f0b21": "c4ff9b197aa3c10a2387bee35457982d499f4cdd",
-        "727d6de6ab259ce3103f5f244985fb1632e1202b": "65e92fa5deaf52b8e5053b56e7a5c326ad8276bc",
-        "b3f8efa1d434a1d5d1568302f83ed18d4e33e9f1": "6de98fe0c6f9926c1a5540442ad6a76072cf7a11",
-        "69c1c7adda95aaa854f311011a50552d3036ebd8": "3d10f01a90ad2cdc4a67da4dca91e8434fe361d4",
-        "f5a1d9b7e439084203d901bfddd4371d2fe33718": "471a191c4c9e113ca6e1416f910ef12092a0d696",
-        "e964a6879a29531bcad73ac219225fb065ee2d81": "b70b8ad6e7613cf651f9361b16b2985a995e9f4f",
-        "cf2237b8d710536a5c75ce1e36b62eeccb2e6c53": "160e4b16bd1af1538ab9e20b0a46882d62e97545",
-        "535e1ee030ff343554f5c8b194f3b869a00b6894": "1a892ee0dc61931c24a92396d2d41c249cb638ea",
-        "3411fc67c3c5bce5947fb5561c43ea44bb53e377": "60e8107ba9818aa9236f26625604024098319162",
-        "34c62dbcf8d5b1ffedc4931b447fd52077866625": "95bb316622368b88ab46f73a038c158deac92d90",
+            "150a3a79ca103061f73a9a50ca8f463a3b4712f3": "39fb9a3efe65f67115dfcdebe39a55334a702f2d",
+            "fcd62408fdbc33af01a4caebc8fd44c8500b628f": "8447712e2cecf661910fd1a32613f0b844ceaeb0",
+            "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb": "067c72d30a71a79faefd1ad14876e2a46f02755c",
+            "dbef23055897b1649f83c20cf7a0516e64f3d5cd": "9e28e5b83cf9c0f4086a33d6838904353a8fd541",
+            "dc526f06d277dfa0a4afa48b4cf8b3153ebe7267": "e21b2c70c00c50fc7d682150cb62e87fe856306c",
+            "87964d15e91b6b6523c88682e5ca017f6e1a808b": "c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab",
+            "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a": "e125210acec0eaef51c6c038d200cc9c12981ace",
+            "f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0": "68acadcd14d23135fd02df0a0e508c668917168c",
+            "d22b7066410c627230f9bfa8b3b5be8baff4fcdf": "805d74f7ccf0ddf060782615d2bd94bb8d26b412",
+            "f4f5d53596879960b19a3701bbd2272ef1f3c634": "e1e3fa4878d6203a51c7aa6ec93e09f81a175cdf",
     }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
-# Historical reviewed pins retain the tree attestation above. New vendor revisions
-# must match the exact engine gitlink and pass the maintained-source/blob checks
-# below; requiring every future SHA in this historical list blocked valid pins.
-assert selected==gitlink,(selected,gitlink)
+expected.add("60fa67b98286bd84bd591987c5690ae9b15bda3f")
+expected.add("bf981e9d39d4a908d0d5b6f8407cca814c609bdb")
+expected.add("8026fcca228d0feda62ffd9625e16ee0429d621e")
+expected.add("887bf44af34999e8b6c5b63dc7c01c6c13b82c8f")
+expected.add("1a928783cce2c2692d8fe9fd958400a2de060bbf")
+expected.add("9632ac089f8b2d89a6856a42e8fb55206cdba1fa")
+if selected in {"b5c6f089a6aecd321d08a40238f3cd502f505b26", "dc9f5f95b1f784bb358d6480e53de7247d61d777", "a441295022b23834f8531c54d2b0965f84023278", "7c5d5220dd4df4a531418458ab623ef86c41348c", "44540549ee9a65eb8078e271f43ccded0e8e984f", "d63d82dfb9c2afbacac4c9dc1491f743fb083d52", "d634b381d85dae30492dd6291fc4e6e96143f363", "692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b"}:
+    # AM lifetime successor changes no shader or sparse kernel owner.
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == ("67917388ba3308bacfa3e8da6fff9d83c4efb713" if selected == "3522d8578fbcd7b46d2a439d5d718dfb570beb7b" else "3a996079e9de76e0c3d8bd2e595e6c83dadd6ce0" if selected == "166e473e120a86a6edcd32a975ffe19b45ffdd42" else "6743fed9174ee7e3451afbbad230dca6c2e4203c" if selected == "692e9819a7a1f1b818bf3739c72d8e5252cae661" else "a51ee73257c13fce70cbaf5d3e26c62010abf2e9" if selected == "d634b381d85dae30492dd6291fc4e6e96143f363" else "290d8c51e8ab40dd56651d50483abe42e11fa404" if selected == "d63d82dfb9c2afbacac4c9dc1491f743fb083d52" else "86d6068c438cc36ffd01513fc178d2590fb010cb" if selected == "44540549ee9a65eb8078e271f43ccded0e8e984f" else "9ff41b47bfe30a9cef86a5ab7c584c0094f586bf" if selected == "7c5d5220dd4df4a531418458ab623ef86c41348c" else "d53129478299aded8cb8d7432751b43fa74594b9" if selected == "a441295022b23834f8531c54d2b0965f84023278" else "1660883553006cfca7e80465ad5521b4c2ca33b1" if selected == "dc9f5f95b1f784bb358d6480e53de7247d61d777" else "668fb8effa6963be062d780e3bd145a5233d6b7e")
+    expected.add(selected)
+if selected in {"1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26", "dc9f5f95b1f784bb358d6480e53de7247d61d777", "a441295022b23834f8531c54d2b0965f84023278", "7c5d5220dd4df4a531418458ab623ef86c41348c", "44540549ee9a65eb8078e271f43ccded0e8e984f", "d63d82dfb9c2afbacac4c9dc1491f743fb083d52", "d634b381d85dae30492dd6291fc4e6e96143f363", "692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b"}:
+    assert blob(V/"tests/ns1_r23_18_tir_host.py") == ("9ec2e122bee4c7ef3a0889fbf5e8202ae9516339" if selected in {"d63d82dfb9c2afbacac4c9dc1491f743fb083d52", "d634b381d85dae30492dd6291fc4e6e96143f363", "692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b"} else "005280fde5bbd862d64a4def0d17d90a35bbe5e9"), (
+        "Vendor host-only TextureCache TIR witness drift")
+if selected == "042204fde8e5b74aa5048c6213a8af4450d26fe5":
+    # Direct successor of 3522d8578fbcd7b46d2a439d5d718dfb570beb7b; only GSV/Worker NS2 files changed.
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "08ff1d3ef45b03cbe3396079bcb91fa5dce4f160"
+    expected.add(selected)
+if selected in {"294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e"}:
+    # Exact NS2-only successor. FC27 source hashes below are unchanged.
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == ("6861e052a9824450c7eeaa91b53334c153ca9865" if selected == "7e137d362f9679125726ef4876355a09d788795e" else "a21aa2b63cfb9cae4dd9ba386982c3bd57a7ef1f" if selected == "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb" else "50ba35725b57b59cae76a67c7c1d4ba6ad894e2f")
+    expected.add(selected)
+if selected in {"973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf"}:
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == (
+        "b82ce9bb3b543bf85d535bdfdfb6d725fe88be56" if selected == "3abd88bc1a3c334f53f345998b72e9cf8ae87abf" else "8e42496a1f01a94cc6b17f57eee6ebdff2698ff6" if selected == "101eae5edb76fefc40b039009eb35bbaaae99386" else "a6451d095d44e8b9968635320d3bba34d5722fa5" if selected == "d8155325107dbbb1f8ef44f75553595fe4c8ec8c" else "ba3ad593fb37ac3dc62f2c8b6064328c55cabb3b" if selected == "881f6fb23c818ecfc387d2b134e1cd7328fc5995" else "77add4864dbadc2c2246c339b215c3d79b40a549" if selected == "4c51642038c4a3cc04c0f8f0b8267b17aafd4045" else
+        "a27660a134453d2895e23d5c56ac64e6f12d9960" if selected == "38e19d4be0d99bbba35558af2c0620cd9b46f12e" else
+        "57a6ef072ad018954d493cb9064b5c722a5af827" if selected == "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc" else
+        "6ecf485d48b3c29c5e058de99a09c5c495cd537d" if selected == "6b8fd06606f12be187f73e8809e56a49864794f9" else
+        "1d991da378f711312faf34125f1d4cfe1378bcaa")
+    expected.add(selected)
+if selected == "06705357e48b33d837b1f97dbb1c3979cb3d7c31":
+    # NS2 GPU lifecycle/VA successors only; admit the exact reviewed tree,
+    # then retain all immutable FC27 shader/CMake blob checks below.
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "8bd2b8d1378cefffaf0f4e397289ba62ef009112"
+    expected.add(selected)
+if selected == "cd5ce4dabef1d32e0441d22dccdee358ebf23287":
+    # Exact NS2-only queued-GPFIFO/H:17 successor plus source-guard alignment. Authenticate the complete
+    # vendor tree; the immutable FC27 shader/CMake hashes below remain the
+    # actual proof that this successor does not alter FC27 source ownership.
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89"
+    expected.add(selected)
+if selected == "a8f327c972bd2f84f6e6f9432c96c4a948963073":
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "747569d1bafefc23fb235e1929bda0f5c0d48de3"
+    assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == ("7db0462ad24aa4c6356ce4efa0086b356f171be6" if selected in {"628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "d70e660ad2c48ae0d8a4268d8e051ac0dee8fb23", "6d4e256d2ce11c531f33c3be3d604cb9a884538b", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd"} else "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9")
+    expected.add(selected)
+if selected in {"ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "d70e660ad2c48ae0d8a4268d8e051ac0dee8fb23", "6d4e256d2ce11c531f33c3be3d604cb9a884538b", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd"}:
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == ("c245ee471877e0b0cd77e046bb23b2cf032cf3cd" if selected == "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd" else "d7ac5724fd94d7ee2372e5e2b6e3e3fadbd5d9b7" if selected == "bde537edf37e1f21e483993ca8582f44ff0f5555" else "0eadff0bbeec17fdb1e03ae91834e8ecd0bb7248" if selected == "720bdb0e81c57462338be480cecae13f2e205110" else "20d32728d579b01df5d731a9e86c9442536a1b8b" if selected == "6d4e256d2ce11c531f33c3be3d604cb9a884538b" else "aa9558de1ff14de0d4164bb5171148d5ce1271db" if selected == "d70e660ad2c48ae0d8a4268d8e051ac0dee8fb23" else "8baf67946db717dd0874fd9b4d36a98bdfa0d40a" if selected == "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16" else "16a2e58aa284c80c02c9a2b93ce11eae0252a6f1" if selected == "47f91da1f0179652eecbff150e09a4ddb6122157" else "8fc8d52290178f06a9f9494ecfd9a1444a3d5159" if selected == "f4a90f02ad5383998d08b45cca534d1b73b166c1" else "5bd3d6f913c3ad0de482a63497d24db22e243a10" if selected == "dc47b157c607c739b43f67aecbf36448507b9557" else "7a56b74c79bd0108bcc983d1cc4ed1f0c412a558" if selected == "22a5ccda624de9c42f5c772f39844242621c9289" else "9ad0d1f255dce3e4666e2e5f1f2fdf61c793e89f" if selected == "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a" else "740dd8bbf66056a85eaf1b28c23bc961580b32b5" if selected == "d254110d5551a246530a3665995e876e752e7565" else "9bf33aa551c37b0c88866181f5a6446a524c691b" if selected == "db9c5e6725264412218c3cabdb1d284e6dcb8a5f" else "0ae03c3481903ac2b1b5faacc8d1daa834a0574e" if selected == "df6a83b4ad06a689674e111a793995663a8d4eb3" else "f188b7c9f89ab2e11ab049c7fff9fb6e6d4c743a" if selected == "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6" else "3133bf53a7d2080e946bfa105957bd1dde1984c3" if selected == "096761112103fac069b56a22c77f07492001e26e" else "d7a1ccb7d3e7379d166932b32d0624a4536b790d" if selected == "be9e46213070e5cb57a7dbd8a184ffb480106b4f" else "ba5a2aca13ad0f9f24f42d79b4ce92b18d8fd900" if selected == "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4" else "79a4614d3390ac925cb870ea36fbaf2c4bed1f58" if selected == "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015" else "2b56aa5ceb7aeafb0d1e729c47cb10338bf799f4" if selected == "da339b1393d1386bc6af667d243e97860a40d096" else "453b5b1de56f24c6c910bf54949d7970842477cf" if selected == "f337bb8c0484fef5b9a2d763b9775566ff797eef" else "48aed811a8c087443c182aec68ce848fb4b9c897" if selected == "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189" else "9b37d2fa9f4a01b222539218182be12e738ff2fa" if selected == "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d" else "daad0337726ebd845b59ff9c86ce11de8173c599" if selected == "b3458252ec923444b3add94ff50a4a76e2bc4570" else "a1bc0bb572bdec28995c80be66bd6a6d796fb10f" if selected == "d40e212b2c8124225ff8d6adc06f459955e42a6a" else "72633c97a3ad4f2659ec7f45e9e504ab039f549b" if selected == "2ecccebce83cd169f1820d9c4674698f6353fa48" else "0d60046b2708b582c9344108c35e5ca18bc6de40" if selected == "1949a57c930d3ebd32bdd93093763ae22681a4a4" else "2c722077f49013766b80b561ecf446562450faa5" if selected == "84d3b0398ae7db1618899815bc1f98894453fbf6" else "79254f62ba6a12bcdcda9024953ba10e6b84706a" if selected == "b92d4183cec69e65216162cf61e451eff643caa0" else "34b43b1a3d669be0482aca97a28f988516df615c" if selected == "6affc4ad869a3eaab9d1bed1e65de8872d93363b" else "b300d82e0aa31c9ddde01703bdf446579ce4e0c2" if selected in {"4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b"} else "c6eea7dfe0603bfccb44da9b82c95ca1429761fe" if selected in {"b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0"} else "f98956d2a6ce68c6af51bf5e8b53b7516b02bd2e" if selected in {"191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557"} else "48f75fca37a128f9425cc3484d22ab994a1a17a8" if selected in {"628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561"} else "c54279c46295cc71d27c74af213dcacff0d08810" if selected == "1b5256d72072e05a62fb734bc9ef790fc81c1573" else "7ab98eb5286021a9e070397ef6673f61934cf5e0" if selected == "752b92033610b294a36254d5747c317aca51c1d5" else "af3fb89c9c6bb96c19bd2e099273019840536267")
+    assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == ("7db0462ad24aa4c6356ce4efa0086b356f171be6" if selected in {"628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "d70e660ad2c48ae0d8a4268d8e051ac0dee8fb23", "6d4e256d2ce11c531f33c3be3d604cb9a884538b", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd"} else "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9")
+    expected.add(selected)
+# The successor changes only SM shutdown lifetime, not the already-byte-pinned SSBO owners.
+if selected == "6d9fc80860ea4324b68b433492ad15e34c35a81d":
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "0ee1ae75649352ed8ddc79271202af9afca258b2"
+    assert blob(V/"encore-active/eden-core/src/core/hle/service/sm/sm.cpp") == "2ef914e3f1b24442e1fa0130d5f8175111e7d316"
+    expected.add(selected)
+# Keep FC27's shader SSBO owner proof intact: authenticate the new
+# vendor tree and only its exact Vulkan prewarm successor.
+if selected == "ea4d39d5c9bd17074292b8c6f229c53954f8e21e":
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "e87b8613fed706ae8f09ee50200c737812ade91c"
+    assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == ("61450e8b8c5e76a59660649ed13941eb50e089cb" if selected in {"a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "44b0edc24e847d4cbcd47de0ed86241787bda38a")
+    assert blob(V/"encore-active/eden-core/src/common/multi_level_page_table.cpp") == "6dd69f4b09aebc0eb7250975d35b34393e9f5516"
+    assert blob(V/"encore-active/eden-core/src/video_core/memory_manager.cpp") == ("60446449c26a68b6e2b665148a8045612beb49ef" if selected in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86")
+    expected.add(selected)
+# NS2 queue-semaphore + BCAT successor. The complete vendor tree and all
+# seven changed objects are sealed here; the FC27 runtime owners remain exact.
+if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea": "62a3bdbad43931dd19494fc24cb57bf5389211b8", "68cf19e736158b815629ea74a494c5536706dbc2": "c1a6951364c337e8012a6cfb46f31f305271231e", "b9dae898866d290d5ce1b15838492854680dc6d6": "cbb2c60a9bcc11478c4a420b2d03106a58fdcb20", "7130ede3236e2726f3f1b4718b0618240805e9bc": "c518f70d7e3b1e15495af73ccbd1bf29efb91e27", "203736df06915c10d379a67f52c8614c7010d733": "35c8a1e26f95dd48bdacb4f4a32f1ead48a9beee", "637edccbbf9dc403008192eaf04b14615b0500e2": "c4b3a2e07d89caea7327a00dd8b107f12e12166e", "0fa6924891050f7cea9b196dff0a760ad154993d": "6663837e6e411e6954e9934caec368ef045873ea", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9": "09ed906f5be3ba79636e6f9330fcca5c902825c4", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb": "722d3f6d8dc6d6d28e76e63162e70eefc34a56f9", "ad713526cb573d2051a945badfd3bea71b39565b": "08a445432d32483ed51eaad72055059142b236f4", "a44d4ecb17d9388f7428d7e56d21685054b38d99": "e3c172c6e1dd8c482392e7d3831359e8e59dfa25", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9": "540b44b21d777c5af0465f6694c1aa593f4faab5", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0": "0a3833e1bea8f0823881eeef1247eacdc422b9ed", "a383ab6f52da989c2c5cd756e62165f0763e8e72": "7771963a0d941a488a8e6caf9e594e6721dbc0d3", "002593960561e38ec74de982cde70e98c6070fd4": "3154d29ec8f33c2434c6482e814d03a8b9f4b2cf", "aece4f82a123a7bd1f4046237a82a0faecbee450": "e43ce45702c00d968a5306b898aad47399d1a9f2", "45952eb648e7eb3502b517c06b3032edd3a9035a": "e331d0bf6fdde57991f78d2c02e1c33c01c1736a", "1dac2565be0161e12c1f9f50613013acd5c6df4b": "f70e6e75738feab1511e9e143b101080c7ef3c81", "96c58f5e2edc6e91813e0b2d67b2699ff2785622": "8c825080c95845b892b8069293348e99ef1c800b", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23": "26568a0771490228e4d8158e7121cd2523d7b24b", "435d508cdff3059001dc65cb9980d009ab8d6796": "67ada267d9bf30f7ca89714dc0dc68f037f14223", "ca3fddeadc37eb1df96d00e5e1506299bef83d82": "5b44c10dee1d3be632c5dc00924b2c9b2a1981b2", "f104b06916cf231504ff7f4919cd4a491e526668": "20da9bdb4ec925b40013e884162f46c67a00a5cf", "105187759ed6b9d4ef1254d999fe4ca7263ad664": "ec485e28ce2f79dcb0f039d765a6abaaa0088aad", "a82e561698e07f666be4c85973dc4304c0e37030": "16adf94840cb5bebae483fdca5ecd84774415ce6", "806252e96253489c18d11551bf2dcfd668502719": "dcf463b5cd23ca8fa4c7899c5efd8c8f75f5b869", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d": "5f4fbae3ea1e296e6b0ce842bb414b6bdc70d5c7", "9de08e4f4bbb903e25f330dde7b8185e19e078a1": "5b4e01583d0687ba41e7a428668ee84c8b58c91e", "95467b3a42f208667ef8e06e6794f8a23dc2340d": "626ba6d69bdca7c46ca6729556a185cc1ccbb615"}[selected]
+    if selected in {"7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+        assert blob(V/"encore-active/eden-core/src/core/hle/kernel/k_page_table_base.cpp") == "a2d6d658ae391e0acd64e68d495c00333e2032ca"
+    if selected == "68cf19e736158b815629ea74a494c5536706dbc2":
+        assert blob(V/"tests/ns2_gpu_identity_mapping_source.py") == "3a9a1679bc2795cf08863370403b2bc4ad89a553"
+    elif selected in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+        assert blob(V/"tests/ns2_gpu_identity_mapping_source.py") == ("e3fd286527e6c3ad7eca371a2d82b9b46837e9e4" if selected in {"435d508cdff3059001dc65cb9980d009ab8d6796", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "68c27deb4544d414cb7339fc4d093cabe8e61a47" if selected == "7f1d859a758e4061ecdc6b5d98bc1356a578fa23" else "cd96c85a45833525a1849b4ae1519e27e5b51913" if selected == "96c58f5e2edc6e91813e0b2d67b2699ff2785622" else "82ffabe603b97922195fcc08a0436077fd2b5eab" if selected == "1dac2565be0161e12c1f9f50613013acd5c6df4b" else "63291835bc54248fca84422d03ad01b91eb1637a" if selected in {"002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "e7c379db1f5d938e5c51a497451f20db142d5394" if selected == "a383ab6f52da989c2c5cd756e62165f0763e8e72" else "4818d6bf9c03e1e64e88af9fa0a91f2f94dd4c39" if selected in {"93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0"} else "3fa08a66de50756376be6905fee407e122868db3" if selected == "a44d4ecb17d9388f7428d7e56d21685054b38d99" else "9755354e5a49f50f75f1f04894686f7838f80ea8")
+        if selected in {"93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+            assert blob(V/"encore-active/eden-core/src/video_core/gpu_gl_native.cpp") == ("9347e606050ac450a1f98e3f5f462ccc982dc808" if selected in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "7720e5a347817e67c0a964d3a80644b01b99d733")
+        assert blob(V/"encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h") == "6e1d185f086969caef3dded1a4b383c34a4d8657"
+    for relative, digest in {
+        "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/backend/backend.h":
+            "8c93a3d6aef8a45f85cb9c2344e3427daff4d131",
+        "encore-active/eden-core/overrides/bcat/core/hle/service/bcat/service_creator.h":
+            "de582d12ef1025735a741817ac4e365f59789809",
+        "encore-active/eden-core/src/core/hle/service/bcat/delivery_cache_storage_service.cpp":
+            "9f98f2da3f865da69399467133436e64e4e4d67b",
+        "encore-active/eden-core/src/core/hle/service/bcat/service_creator.cpp":
+            "1635bc091413a2f118b166216f91410b6338686d",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
+            "576a9d697da398aa6f42901b1764aa7574155411",
+        "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+            ("770290b8bbc610eb5fc5724b17211ba39dc9caa5" if selected in {"435d508cdff3059001dc65cb9980d009ab8d6796", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "065a9d1fbc2a5a2a397f8a0c448374f304c3fc64" if selected == "7f1d859a758e4061ecdc6b5d98bc1356a578fa23" else "0cb6fa9e2fca1252a74556b217cbbd08f8b86fa1" if selected == "96c58f5e2edc6e91813e0b2d67b2699ff2785622" else "51b3917310e5b29de1948695042596220fd23ee3" if selected == "1dac2565be0161e12c1f9f50613013acd5c6df4b" else "ebcb3c4de5e1406f98c1b3959aba90e1a4c3b813" if selected in {"a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "b1be989fb564a1c9ef269470ca5897af4491c9c2" if selected in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "9c35b43bc4f61d67395897fb63fce57419bc3331"),
+        "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h":
+            "a22b96c04f6f06aef36c36857dcf124521ca2cb7",
+    }.items():
+        assert blob(V / relative) == digest, relative
+    assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == ("61450e8b8c5e76a59660649ed13941eb50e089cb" if selected in {"a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "44b0edc24e847d4cbcd47de0ed86241787bda38a")
+    assert blob(V/"encore-active/eden-core/src/common/multi_level_page_table.cpp") == "87eed0b2319c719d27332c8e24f97a73e496f108"
+    assert blob(V/"encore-active/eden-core/src/video_core/memory_manager.cpp") == ("60446449c26a68b6e2b665148a8045612beb49ef" if selected in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "c0ba367f8c4452a5c49015ae0fe201ae7a7bdb86")
+    assert blob(ROOT/"src/memory_pages.cpp") == "e90dd13badd48257c25db6317cc523f97b92e1e6"
+    assert blob(V/"tests/fc27_xmad_pointer_fold_host.py") == ("1a87bf825ddd9a18ccd947651fa7848cbb6f4158" if selected in {"a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "2456b50bfecf8e25b2f725cff59f823abf3f4e3d")
+    assert blob(V/"tests/fc27_dynamic_texture_static_sampler_host.py") == ("80e92cbf003422c1c6af65c0317bde600e7563c0" if selected in {"a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "dbf70f23a25cc97d2425f968fb536a92ceaec84e")
+    assert blob(V/"tests/ns1_r23_35_attribute_handle.py") == ("8b2089e3ea3ab4bb48e8e359613147bc31892cc5" if selected in {"a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "5ee069608e164e0f97a5c38f8c9345823250bbb9")
+    expected.add(selected)
+# Native GPU sparse table commits now expose a recoverable OOM.
+# Verify exact selected tree, shader, GPU table and engine allocator owner.
+if selected in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
+    expected_tree = "45e1f9d536403dfcb2136ff653bae2e07ba85fd4" if selected == "29b91308ba1fc69978cd2cc39222fe7dc59b668c" else "b7548392480ec7bb16aafdcbb330a60834270d09" if selected == "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed" else "ea890f123433198c30141f9320dd10090d80ecdc"
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == expected_tree
+    assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == ("61450e8b8c5e76a59660649ed13941eb50e089cb" if selected in {"a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "44b0edc24e847d4cbcd47de0ed86241787bda38a")
+    assert blob(V/"encore-active/eden-core/src/common/multi_level_page_table.cpp") == "87eed0b2319c719d27332c8e24f97a73e496f108"
+    assert blob(ROOT/"src/memory_pages.cpp") == "e90dd13badd48257c25db6317cc523f97b92e1e6"
+    if selected in {"3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c"}:
+        assert blob(V/"tests/fc27_xmad_pointer_fold_host.py") == "2456b50bfecf8e25b2f725cff59f823abf3f4e3d"
+    if selected == "29b91308ba1fc69978cd2cc39222fe7dc59b668c":
+        assert blob(V/"tests/fc27_dynamic_texture_static_sampler_host.py") == "dbf70f23a25cc97d2425f968fb536a92ceaec84e"
+        assert blob(V/"tests/ns1_r23_35_attribute_handle.py") == "5ee069608e164e0f97a5c38f8c9345823250bbb9"
+    expected.add(selected)
+
+# Exact VI2-only successor; unchanged GPU owners retain historical receipts.
+if selected == "9de08e4f4bbb903e25f330dde7b8185e19e078a1":
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "5b4e01583d0687ba41e7a428668ee84c8b58c91e"
+    assert blob(V/"encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp") == "f32b7be9445f1888298fd7162c8126b8c0421f02"
+# 26/11/2026: exact VI2 212-before-251 successor; no unrelated GPU changes.
+if selected == "95467b3a42f208667ef8e06e6794f8a23dc2340d":
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "626ba6d69bdca7c46ca6729556a185cc1ccbb615"
+    assert blob(V/"encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp") == "e10e0d333c3b0b6615f9c311c85fb3217134fe6a"
+# Exact 26/11 native semaphore-retirement successor. It changes no
+# Maxwell SPIR-V/SSBO owner; authenticate the complete vendor Git tree,
+# the PS5 rasterizer and the actual maintained shader owners before allowing
+# the historical source-parity check to run unchanged below.
+if selected == "05bf05a8dca75b3e12871ec886a810310cdf43d6":
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "fce8c6e09f27364904886bfbdfca299fbc3e0780"
+    for relative, receipt in {
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
+            "23725030557268e6593c9e5f64cb063730b77787",
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp":
+            "ff8ad79ef203456063dbd848eab3ea575628edfc",
+        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h":
+            "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
+        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp":
+            "602d45b4d2ad872b138d62ce05f379b5e1103602",
+    }.items():
+        assert blob(V/relative) == receipt, ("FC27 SSBO exact vendor source drift", relative)
+    expected.add(selected)
+if selected == "240550925b0ef097c24c3035c063bdceadd872de":
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "e40237d089b0a45f77d68ae281821c1a85ce9ca8"
+    for relative, digest in {
+                "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "2bacc8ebdc1c09cd96a7c83d26f57035619f622c",
+                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "634f7a6fc5d27e13b39360c2d28ec961c4f36236",
+                "tests/ns2_gpu_identity_mapping_source.py": "63339d64588f34597f081102d8f1a77ed861971e"
+        }.items():
+        assert blob(V / relative) == digest, ("GSV image-only SSBO successor drift",relative)
+    expected.add(selected)
+assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"
 active=V/"encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp"

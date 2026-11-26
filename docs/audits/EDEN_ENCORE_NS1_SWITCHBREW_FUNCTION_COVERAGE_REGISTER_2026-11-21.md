@@ -5049,4 +5049,17 @@ Le PARTIEL historique `IGeneralService` cmd43 `SetWowlDelayedWakeTime(s32)` est 
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 20 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+### 2026-11-26 — AM licence/capture qualifiés : 20 → 18
+
+Base précédente : **20 lignes ouvertes**.
+
+Deux PARTIEL historiques de `IApplicationFunctions` quittent le pool sur le propriétaire final PS5 partagé `encore-active/ns2-runtime/am` :
+- cmd37 `GetLimitedApplicationLicenseUpgradableEvent` retourne un vrai `KReadableEvent`. Le même owner expose une licence normale/complète, aucun backend de limited-license/dynamic-rights ne peut produire une transition d'upgrade et la gate native vérifie explicitement l'événement persistant non signalé ;
+- cmd320 `GetScreenShotAndContinuousRecordingInitiallyEnabled` retourne les deux booléens depuis `screenshot_permission` et l'état réel `game_play_recording_supported + game_play_recording_state` sous verrou.
+
+Le SDK reconstruit `nn::oe` confirme pour cmd320 l'appel d'initialisation avec exactement deux booléens `screenshot` / `recording`; plusieurs implémentations indépendantes exposent la même signature. Le motif historique « ABI non documentée publiquement » est donc levé.
+
+**2 lignes PARTIEL quittent le pool : nouveau compteur global = 18 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
 

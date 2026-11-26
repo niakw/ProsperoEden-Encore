@@ -122,6 +122,9 @@ ContentSet::ContentSet(std::shared_ptr<Mount> mount,
                     !metadata.IsSwitch2() || metadata.GetTitleID() != *caller_program_id)
                     return;
             }
+            // The verified cross-platform executable retains the NS1
+            // application family for explicit Switch 2 upgrade packs.
+            edition_upgrade_base_ = *active_base;
         } else {
             active_base = requested;
         }
@@ -209,9 +212,31 @@ FileSys::VirtualDir ContentSet::ExeFS() const {
 
 }
 
-FileSys::VirtualFile ContentSet::CreateRomFS() const {
+FileSys::VirtualFile ContentSet::CreateRomFS(bool allow_upgrade_pack) const {
     if (!mount_) return {};
     auto directory = mount_->Effective(ContentView::RomFS);
+    // Lichii FindUpgradePack/ReadRomFS: an Edition's marked upgrade
+    // content is part of the application RomFS, not just an independently
+    // mountable DLC. Require the validated NS1 family and explicit marker;
+    // ordinary DLC and native NS2 titles must not alter the main RomFS.
+    if (allow_upgrade_pack && edition_upgrade_base_ && addon_base_id_ &&
+        directory && *edition_upgrade_base_ <=
+            std::numeric_limits<std::uint64_t>::max() - FileSys::AOC_TITLE_ID_OFFSET &&
+        *addon_base_id_ == *edition_upgrade_base_ + FileSys::AOC_TITLE_ID_OFFSET) {
+        const AddOnDirectory* upgrade = nullptr;
+        for (const auto& addon : addons_) {
+            const auto system_dir = addon.romfs->GetSubdirectory("System");
+            if (!system_dir || !system_dir->GetFile("AoCUpgradeVersion.txt"))
+                continue;
+            if (!upgrade || addon.version > upgrade->version)
+                upgrade = &addon;
+        }
+        if (upgrade) {
+            directory = FileSys::LayeredVfsDirectory::MakeLayeredDirectory(
+                {upgrade->romfs, std::move(directory)}, "romfs");
+            if (!directory) return {};
+        }
+    }
     // The native program1 tree overlays, rather than replaces, the regular
     // update RomFS. The existing read-only layered VFS merges shared nested
     // directories and gives program1 files precedence (Lichii ReadRomFS).

@@ -3943,3 +3943,22 @@ Les cinq autres NULL physiques SystemDisplay non matérialisés dans le catalogu
 Arithmétique : **250 - 25 - 4 = 221**. Depuis le recalcul 631 : **410 lignes sorties du pool**.
 
 Le gitlink moteur est repinné sur le vendor **`4b849800dba674e945c69097a883b149c20271b9`**. Aucun build PS5 ni validation console revendiqués dans cette étape.
+
+
+### 2026-11-26 — FSP loader/program-registry : palier global 214
+
+Base : **221 lignes ouvertes** au moteur `377194c0c88e58bb70dbc3780c0ba3682b40af31` / gitlink vendor `4b849800dba674e945c69097a883b149c20271b9`.
+
+Le lot vendor `ff529bc4` puis corrections ABI `79a9e5cb` / **`f4cba5fab9559a61386a018e0b10acc38c119e0a`** traite les services FSP secondaires sans inventer de backend :
+- `fsp:ldr` : `OpenCodeFileSystem` consomme désormais son ABI et échoue explicitement avec `ResultTargetNotFound` tant qu'aucun CodeFS backend n'est disponible ; `IsArchivedProgram` renvoie l'état local non archivé ; `SetCurrentProcess` conserve le PID ;
+- `fsp:pr` : les mutations de registre programme non modélisées échouent avec `ResultNotSupported`, tandis que `SetCurrentProcess` et `SetEnabledProgramVerification` conservent réellement leur état local.
+
+Les signatures CMIF de `fsp:ldr` ont été alignées sur l'upstream Citron avant repin. Aucune ouverture de filesystem réelle n'est remplacée par un succès fictif.
+
+**7 lignes historiques du pool** sont ainsi closes : 4 lignes rattachées au propriétaire `fsp_ldr.cpp` et 3 lignes `fsp_pr.cpp`.
+
+**Nouveau compteur global : 214 lignes ouvertes.**
+
+Arithmétique : **221 - 7 = 214**. Depuis le recalcul 631 : **417 lignes sorties du pool**.
+
+Le gitlink moteur est repinné sur le vendor **`f4cba5fab9559a61386a018e0b10acc38c119e0a`**. Aucun build PS5 ni validation console n'est revendiqué.

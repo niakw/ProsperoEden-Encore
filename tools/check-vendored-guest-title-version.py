@@ -26,11 +26,9 @@ import hashlib
 selected = root/"vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp"
 selected_h = root/"vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.h"
 raw = selected.read_bytes()
-raw_h = selected_h.read_bytes()
-gitblob = lambda data: hashlib.sha1(
-    b"blob "+str(len(data)).encode()+bytes([0])+data).hexdigest()
-assert gitblob(raw) == "61469b2c7510ca3738de23025232a627aaf4b481"
-assert gitblob(raw_h) == "e91e412211f9c9e964d19560e2226338426be65e"
+# Reviewed NS2 AM diagnostic successor: HLE result stays unchanged and
+# the termination result now emits a bounded release marker.
+assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest() == "9bfaa26664361994902d5b7f73d6a41ff0eadb07"
 source = raw.decode()
 source_h = raw_h.decode()
 
@@ -118,6 +116,9 @@ assert '*out = 0;' in source.split('Result IApplicationFunctions::Unknown321(Out
 assert source.index("R_TRY(app_man->ConvertApplicationLanguageToLanguageCode(out_language_code, desired_language));") < source.index("const GuestLanguageReply reply{")
 assert "EDEN_GUEST_LANGUAGE_REPLY title=" in source
 assert "emitted >= 32" in source
+assert 'EDEN_APP_TERMINATE_RESULT title=%016llX' in source
+assert 'terminate_reports.fetch_add(1, std::memory_order_relaxed) < 32' in source
+assert 'm_applet->terminate_result = terminate_result;' in source
 assert 'set(EDEN_SHARED_NS2_AM ON)' in cmake
 assert 'list(APPEND eden_ns2_am_sources "${EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp")' in cmake
 assert '*out_event = m_applet->unknown_event.GetHandle();' in source

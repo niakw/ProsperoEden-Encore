@@ -4643,3 +4643,19 @@ Le motif historique « mêmes limites que cmd142 » est donc obsolète depuis la
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 81 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console.
+
+
+### 2026-11-26 — VI résolution/modes d'affichage requalifiés : palier global 78
+
+Base : **81 lignes ouvertes**.
+
+Lot VI sur le propriétaire actif :
+- vendor `d7b956dab1027876f62cfa7d9af6912ab4f4990c` corrige `IApplicationDisplayService` cmd1102 `GetDisplayResolution` : HOS23/libnx confirment le propriétaire et l'ABI `display_id -> s64 width, s64 height`; Encore ne force plus 1280x720 et retourne désormais la résolution virtuelle dockée/portable cohérente avec les autres services VI ;
+- cmd3000 `ListDisplayModes` est requalifié : le backend d'émulation expose volontairement un mode virtuel unique, avec dimensions dockées/portables et fréquence d'affichage 60 Hz ;
+- cmd3200 `GetDisplayMode` retourne le même mode virtuel courant. Le commentaire historique « 60 Hz incorrect pour un jeu 30 FPS » ne constitue pas une divergence : cadence de rendu du titre et fréquence du display sont distinctes.
+
+Les dumps HOS23 confirment cmd3000 (liste de `DisplayMode`) et cmd3200 (structure 0x10), et une implémentation indépendante récente emploie également un mode virtuel 60 Hz ; EglantinePS5 applique le même principe. Les cmd8250/8252 shared-layer restent ouverts : leurs transitions restent des succès sans état explicite tandis que close/disconnect sont encore unsupported.
+
+**3 lignes quittent le pool : nouveau compteur global = 78 lignes ouvertes.**
+
+Gitlink vendor repinné sur `d7b956dab1027876f62cfa7d9af6912ab4f4990c`. Aucun build PS5 ni validation console.

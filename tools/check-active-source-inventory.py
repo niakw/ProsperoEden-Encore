@@ -193,6 +193,27 @@ def collected_batch_lock_predecessor(relative, data):
 # The strict native completion ABI adds only these reviewed blocks. Reconstruct
 # the immutable predecessor on an audit copy, never on the compiled source.
 def strict_completion_predecessor(relative, data):
+    # NS2 C797/C7C0 strict-fence ABI is a reviewed additive Vulkan change.
+    # Authenticate the complete shipping owner before removing ONLY that ABI
+    # method on the historical-source copy, never in compiled runtime.
+    current = hashlib.sha1(
+        b"blob " + str(len(data)).encode() + bytes([0]) + data
+    ).hexdigest()
+    if relative == "eden-vulkan/vulkan_rasterizer.cpp" and current == "ff8ad79ef203456063dbd848eab3ea575628edfc":
+        native_release = (
+            b"bool RasterizerVulkan::SignalNativeFence(std::function<void()>&& func) {\n"
+            b"    fence_manager.SignalNativeFence(std::move(func));\n"
+            b"    return true;\n"
+            b"}\n"
+        )
+        assert data.count(native_release) == 1
+        data = data.replace(native_release, b"", 1)
+        current = hashlib.sha1(
+            b"blob " + str(len(data)).encode() + bytes([0]) + data
+        ).hexdigest()
+        assert current == "39b2ed67e51937aecad666de4113ce792d32132d", (
+            "Native strict-fence source rollback drift", current
+        )
     data, current = attribute_index_batch_predecessor(relative, data)
     data, current = collected_batch_preflight_predecessor(relative, data)
     data, current = collected_batch_lock_predecessor(relative, data)

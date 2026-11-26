@@ -287,7 +287,7 @@ Result IAddOnContentManager::CheckAddOnContentMountStatus() {
 
 Result IAddOnContentManager::CreateEcPurchasedEventManager(
     OutInterface<IPurchaseEventManager> out_interface) {
-    LOG_DEBUG(Service_AOC, "called");
+    LOG_WARNING(Service_AOC, "(STUBBED) called");
 
     *out_interface = std::make_shared<IPurchaseEventManager>(system);
 
@@ -296,7 +296,7 @@ Result IAddOnContentManager::CreateEcPurchasedEventManager(
 
 Result IAddOnContentManager::CreatePermanentEcPurchasedEventManager(
     OutInterface<IPurchaseEventManager> out_interface) {
-    LOG_DEBUG(Service_AOC, "called");
+    LOG_WARNING(Service_AOC, "(STUBBED) called");
 
     *out_interface = std::make_shared<IPurchaseEventManager>(system);
 

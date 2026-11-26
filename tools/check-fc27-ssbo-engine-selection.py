@@ -368,12 +368,13 @@ if selected == "240550925b0ef097c24c3035c063bdceadd872de":
         }.items():
         assert blob(V / relative) == digest, ("GSV image-only SSBO successor drift",relative)
     expected.add(selected)
-if selected in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "85eed6cf298c30c8e79d826c5a66788586bc041a", "69882965841d52186e76bbdf5d27e275628f6ebc", "871813bea5c2421d8f0e4099987190419b3e4cbc"}:
+if selected in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "85eed6cf298c30c8e79d826c5a66788586bc041a", "69882965841d52186e76bbdf5d27e275628f6ebc", "871813bea5c2421d8f0e4099987190419b3e4cbc", "2a982eae9c9f56cb186b9fc19a9c8bb3c5a17deb"}:
     expected_vi2_tree = {
         "52b6582953b9b6c986f3fb9ebeea4b707cd50aab": "d56f1f3efcbe283d018b411289f36bd398905408",
         "85eed6cf298c30c8e79d826c5a66788586bc041a": "69b093785fa296aa12f6366c89e6131aaec63f7b",
         "69882965841d52186e76bbdf5d27e275628f6ebc": "6dda7600c9ce04684388d2c3e41042d1f7cd3f20",
         "871813bea5c2421d8f0e4099987190419b3e4cbc": "800c6107b52e2f1d1e2d1f300230b523150bcfd7",
+        "2a982eae9c9f56cb186b9fc19a9c8bb3c5a17deb": "e28f7ca334e66c854427b4bc9ebef0b54d21ec3f",
     }[selected]
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"],
                                    text=True).strip() == expected_vi2_tree

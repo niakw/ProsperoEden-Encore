@@ -16123,3 +16123,509 @@ Cette politique sert seulement de référence comportementale : limite de régio
 Aucun de ces apports ne change un statut ouvert en résolu. Ils servent à réduire l'espace des hypothèses avant un futur correctif runtime.
 
 **Couverture ajoutée :** 329 lignes externes reproduites avec provenance, plus le lien vers le propriétaire Encore correspondant. Aucun fichier hors Markdown n'est modifié.
+
+## Annexe VIII — shutdown / durée de vie GPU, NVDRV et VI2
+
+Les derniers tests console ont montré une fermeture qui dépasse le watchdog pour DK et Pokopia. Cette annexe compare les propriétaires de teardown sans changer leur comportement. Le but est de distinguer : retrait d'un handle, arrêt du worker, drainage du GPU, destruction VI2 et destruction du processus.
+
+### P0-X01 · nvhost_gpu::OnClose
+
+Fermeture du channel NVDRV GPU. Encore possède davantage d'état natif/session que les forks ; le diff permet de voir ce qui doit être retiré avant destruction du processus. Une fermeture forcée par watchdog peut venir d'un travail bloqué ailleurs : OnClose n'est pas automatiquement la cause.
+
+Encore : [nvhost_gpu.cpp:368-393](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp#L368-L393) — 26 lignes.
+
+<details>
+<summary>Lichii — 162-164 : 3 alignées, 23 propres Encore, 0 propres upstream</summary>
+
+Source : [nvhost_gpu.cpp:162-164](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp#L162-L164).
+
+```diff
+   368   162 | void nvhost_gpu::OnClose(DeviceFD fd) {
+-  369       |     const std::scoped_lock lock{channel_mutex};
+-  370       |     if (UsesNativeAbi(fd)) {
+-  371       |         native_channel_enabled = false;
+-  372       |         native_gpfifo_configured = false;
+-  373       |     }
+-  374       |     native_generations.erase(fd);
+   375   163 |     sessions.erase(fd);
+-  376       |     // One shared ChannelState backs this nvhost-gpu device owner. Do not
+-  377       |     // retire it while another guest FD still references the same device.
+-  378       |     // Once the final FD closes, release Maxwell/NS1 (and native NS2) state
+-  379       |     // before a later title can allocate another channel in this PS5 process.
+-  380       |     if (sessions.empty() && channel_state &&
+-  381       |         system.IsPoweredOn() && !system.IsShuttingDown()) {
+-  382       |         try {
+-  383       |             system.GPU().ReleaseChannel(*channel_state);
+-  384       |         } catch (...) {
+-  385       | #ifdef PS5_NATIVE
+-  386       |             // Module::Close erases the FD only after OnClose returns. Do not
+-  387       |             // strand the device when a failed GPU worker makes the sync wait
+-  388       |             // throw; latch the failure and let the normal erase/destructor run.
+-  389       |             ::Eden::RecordGpuFailure(std::current_exception());
+-  390       | #endif
+   391   164 |         }
+-  392       |     }
+-  393       | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 155-157 : 3 alignées, 23 propres Encore, 0 propres upstream</summary>
+
+Source : [nvhost_gpu.cpp:155-157](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp#L155-L157).
+
+```diff
+   368   155 | void nvhost_gpu::OnClose(DeviceFD fd) {
+-  369       |     const std::scoped_lock lock{channel_mutex};
+-  370       |     if (UsesNativeAbi(fd)) {
+-  371       |         native_channel_enabled = false;
+-  372       |         native_gpfifo_configured = false;
+-  373       |     }
+-  374       |     native_generations.erase(fd);
+   375   156 |     sessions.erase(fd);
+-  376       |     // One shared ChannelState backs this nvhost-gpu device owner. Do not
+-  377       |     // retire it while another guest FD still references the same device.
+-  378       |     // Once the final FD closes, release Maxwell/NS1 (and native NS2) state
+-  379       |     // before a later title can allocate another channel in this PS5 process.
+-  380       |     if (sessions.empty() && channel_state &&
+-  381       |         system.IsPoweredOn() && !system.IsShuttingDown()) {
+-  382       |         try {
+-  383       |             system.GPU().ReleaseChannel(*channel_state);
+-  384       |         } catch (...) {
+-  385       | #ifdef PS5_NATIVE
+-  386       |             // Module::Close erases the FD only after OnClose returns. Do not
+-  387       |             // strand the device when a failed GPU worker makes the sync wait
+-  388       |             // throw; latch the failure and let the normal erase/destructor run.
+-  389       |             ::Eden::RecordGpuFailure(std::current_exception());
+-  390       | #endif
+   391   157 |         }
+-  392       |     }
+-  393       | }
+```
+
+</details>
+
+### P0-X02 · nvhost_as_gpu::OnClose
+
+Le contraste est net : les forks ont un OnClose très léger, alors qu'Encore doit retirer binding natif, mappings et epoch. Ces différences sont nécessaires à l'architecture PS5 mais doivent rester symétriques avec Import/Map/Remap.
+
+Encore : [nvhost_as_gpu.cpp:367-369](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L367-L369) — 3 lignes.
+
+<details>
+<summary>Lichii — 458-458 : 0 alignées, 3 propres Encore, 1 propres upstream</summary>
+
+Source : [nvhost_as_gpu.cpp:458-458](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L458-L458).
+
+```diff
+-  367       | void nvhost_as_gpu::OnClose(DeviceFD fd) {
+-  368       |     ReleaseNativeVmBinding();
+-  369       | }
++        458 | void nvhost_as_gpu::OnClose(DeviceFD fd) {}
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 387-387 : 0 alignées, 3 propres Encore, 1 propres upstream</summary>
+
+Source : [nvhost_as_gpu.cpp:387-387](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L387-L387).
+
+```diff
+-  367       | void nvhost_as_gpu::OnClose(DeviceFD fd) {
+-  368       |     ReleaseNativeVmBinding();
+-  369       | }
++        387 | void nvhost_as_gpu::OnClose(DeviceFD fd) {}
+```
+
+</details>
+
+### P0-X03 · GPU Impl::NotifyShutdown
+
+Ordre d'arrêt du worker GPU et du renderer. À distinguer du simple wrapper GPU::NotifyShutdown. Un deadlock de fermeture peut venir d'une attente join/queue/fence qui dépend d'un producteur déjà arrêté.
+
+Encore : [gpu_vulkan.cpp:300-304](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/video_core/gpu_vulkan.cpp#L300-L304) — 5 lignes.
+
+<details>
+<summary>Lichii — 295-313 : 5 alignées, 0 propres Encore, 14 propres upstream</summary>
+
+Source : [gpu.cpp:295-313](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/gpu.cpp#L295-L313).
+
+```diff
+   300   295 |     void NotifyShutdown() {
++        296 |         gpu_thread.NotifyShutdown();
++        297 |         // Ends a recording while guest memory and the SMMU it holds references in still exist.
++        298 |         VideoCommon::GpuTrace::OnGpuShutdown();
++        299 |         {
++        300 |             // The GPU threads stopped: no sync operation runs anymore. Guest threads still run
++        301 |             // until the kernel suspends them, and one waiting for a read's flush (OnCPURead)
++        302 |             // would wait forever, in host code where the kernel cannot suspend it
++        303 |             // (KernelCore::SuspendEmulation then waits for it forever). Drop the requests, which
++        304 |             // may refer to their waiters' frames, and release the waiters.
++        305 |             std::scoped_lock requests_lock{sync_request_mutex};
++        306 |             sync_requests.clear();
++        307 |             sync_requests_dropped = true;
++        308 |         }
++        309 |         sync_request_cv.notify_all();
+   301   310 |         std::unique_lock lk{sync_mutex};
+   302   311 |         shutting_down.store(true, std::memory_order::relaxed);
+   303   312 |         sync_cv.notify_all();
+   304   313 |     }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 321-337 : 5 alignées, 0 propres Encore, 12 propres upstream</summary>
+
+Source : [gpu.cpp:321-337](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/gpu.cpp#L321-L337).
+
+```diff
+   300   321 |     void NotifyShutdown() {
++        322 |         gpu_thread.NotifyShutdown();
++        323 |         {
++        324 |             // The GPU threads stopped: no sync operation runs anymore. Guest threads still run
++        325 |             // until the kernel suspends them, and one waiting for a read's flush (OnCPURead)
++        326 |             // would wait forever, in host code where the kernel cannot suspend it
++        327 |             // (KernelCore::SuspendEmulation then waits for it forever). Drop the requests, which
++        328 |             // may refer to their waiters' frames, and release the waiters.
++        329 |             std::scoped_lock requests_lock{sync_request_mutex};
++        330 |             sync_requests.clear();
++        331 |             sync_requests_dropped = true;
++        332 |         }
++        333 |         sync_request_cv.notify_all();
+   301   334 |         std::unique_lock lk{sync_mutex};
+   302   335 |         shutting_down.store(true, std::memory_order::relaxed);
+   303   336 |         sync_cv.notify_all();
+   304   337 |     }
+```
+
+</details>
+
+### P0-X04 · session GSV principale — destructeur
+
+Homologue comportemental : libération des sessions worker, memory registrations, VM et objets de présentation. Le nom de classe diffère. Le diff sert à vérifier l'ordre de teardown, pas à imposer l'ordre desktop.
+
+Encore : [graphics_supervisor.cpp:1680-1773](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp#L1680-L1773) — 94 lignes.
+
+<details>
+<summary>Lichii — 4443-4455 : 5 alignées, 89 propres Encore, 8 propres upstream</summary>
+
+Source : [nx2_gsv.h:4443-4455](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nx2_gsv.h#L4443-L4455).
+
+```diff
+- 1680       | IGraphicsSupervisor::~IGraphicsSupervisor() {
+- 1681       |     if (m_syncpt) m_syncpt->Shutdown();
+- 1682       |     m_syncpt.reset();
+- 1683       |     // Video GMMU mappings and their NVMap pins can outlive the last
+- 1684       |     // supervisor reference. Retire prior GPU readers BEFORE the native
+- 1685       |     // memory mutex and before any of those pins are dropped. During system
+- 1686       |     // shutdown the GPU worker has already been stopped.
+- 1687       |     if (m_native_module && system.IsPoweredOn() && !system.IsShuttingDown())
+- 1688       |         system.GPU().WaitForIdle();
+- 1689       |     // Release the real NVMap backing and page-table locks before the native
+- 1690       |     // NVDRV session and the application KProcess lose their final owner.
+- 1691       |     const std::scoped_lock lock{m_native_memory_mutex};
+- 1692       |     if (m_native_module) {
+- 1693       |         auto& nvmap = m_native_module->GetContainer().GetNvMapFile();
+- 1694       |         // The GMMU VA owner outlives the mapping until it is retired.
+- 1695       |         for (const auto& [key, mapping] : m_video_mappings) {
+- 1696       |             if (mapping.address_space)
+- 1697       |                 mapping.address_space->UnmapNative4K(mapping.address, mapping.size);
+- 1698       |         }
+- 1699       |         m_video_mappings.clear();
+- 1700       |         for (const auto& [first, pool] : m_video_pools.Records()) {
+- 1701       |             nvmap.UnpinHandle(pool.backing);
+- 1702       |             nvmap.FreeHandle(pool.backing, true);
+- 1703       |         }
+- 1704       |         // Retire internal image duplicates before their underlying NVMap
+- 1705       |         // allocations; otherwise the backing remains busy at shutdown.
+- 1706       |         for (const auto& [image_id, image] : m_native_images.Records())
+- 1707       |             nvmap.FreeHandle(image.backing, true);
+- 1708       |         // Release unborrowed children before dropping their parent's pin.
+- 1709       |         // Retry parents after child release: a parent may itself be an owned
+- 1710       |         // native-memory allocation that was busy on the first pass.
+- 1711       |         std::vector<u32> freed;
+- 1712       |         const auto release = [&](u32 id) {
+- 1713       |             auto handle = nvmap.GetHandle(id);
+- 1714       |             if (!handle) return;
+- 1715       |             {
+- 1716       |                 const std::scoped_lock handle_lock{handle->mutex};
+- 1717       |                 if (handle->dupes != 1 || handle->internal_dupes != 0 ||
+- 1718       |                     handle->pins != 0) return;
+- 1719       |             }
+- 1720       |             handle.reset();
+- 1721       |             const auto info = nvmap.FreeHandle(id, false);
+- 1722       |             if (!info || !info->can_unlock) return;
+- 1723       |             freed.push_back(id);
+- 1724       |             if (const auto transfer = m_native_transfer_backings.find(id);
+- 1725       |                 transfer != m_native_transfer_backings.end()) {
+- 1726       |                 // The TransferMemory object, not DeviceShared, owns page
+- 1727       |                 // stability for TIPC 113. Retire NVMap first, then release
+- 1728       |                 // the retained kernel object so its own lock can unwind.
+- 1729       |                 transfer->second->Close(kernel);
+- 1730       |                 m_native_transfer_backings.erase(transfer);
+- 1731       |             } else if (info->address != 0) {
+- 1732       |                 const auto status = m_process->GetPageTable().UnlockForDeviceAddressSpace(
+- 1733       |                     info->address, info->size);
+- 1734       |                 if (status.IsError())
+- 1735       |                     LOG_ERROR(Service_AM, "NS2 native supervisor teardown unlock failed: {:#x}",
+- 1736       |                               status.raw);
+- 1737       |             }
+- 1738       |         };
+- 1739       |         const auto ids = m_native_memory.OwnedIds();
+- 1740       |         for (const u32 id : ids) release(id);
+- 1741       |         for (const auto& [child, parent] : m_native_parents) {
+- 1742       |             if (std::find(freed.begin(), freed.end(), child) == freed.end()) {
+- 1743       |                 // A live external child retains its parent pin. Never revoke
+- 1744       |                 // another GPU owner just to make shutdown appear successful.
+- 1745       |                 continue;
+- 1746       |             }
+- 1747       |             nvmap.UnpinHandle(parent);
+- 1748       |             nvmap.FreeHandle(parent, true);
+- 1749       |         }
+- 1750       |         for (const u32 id : ids) {
+- 1751       |             if (std::find(freed.begin(), freed.end(), id) == freed.end())
+- 1752       |                 release(id);
++       4443 |     ~INx2GraphicsSystemSession() override {
++       4444 |         if (m_syncpt_memory != nullptr) {
++       4445 |             system.Host1x().GetSyncpointManager().SetGuestMirror({});
+  1753  4446 |         }
+- 1754       |         if (m_native_memory_session)
+- 1755       |             m_native_module->GetContainer().CloseSession(
+- 1756       |                 Nvidia::NvCore::SessionId{*m_native_memory_session});
++       4447 |         if (m_syncpt_poll) {
++       4448 |             system.CoreTiming().UnscheduleEvent(m_syncpt_poll);
+  1757  4449 |     }
+- 1758       |     // If an externally referenced NVMap could not be retired above, keep its
+- 1759       |     // TransferMemory ref deliberately open. Closing it here could unlock
+- 1760       |     // physical pages while that external GPU owner still references them.
+- 1761       |     for (const auto& [id, transfer] : m_native_transfer_backings) {
+- 1762       |         (void)transfer;
+- 1763       |         LOG_ERROR(Service_AM,
+- 1764       |                   "NS2 native TransferMemory backing quarantined at shutdown: {}", id);
++       4450 |         for (auto* event : m_syncpt_events) {
++       4451 |             if (event != nullptr) {
++       4452 |                 m_context.CloseEvent(event);
+  1765  4453 |     }
+- 1766       |     m_native_transfer_backings.clear();
+- 1767       |     if (m_bootstrap_transfer_memory) {
+- 1768       |         m_bootstrap_transfer_memory->Close(kernel);
+- 1769       |         m_bootstrap_transfer_memory = nullptr;
+- 1770       |         m_bootstrap_transfer_memory_size = 0;
+  1771  4454 |     }
+- 1772       |     m_process->Close(kernel);
+  1773  4455 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 3601-3610 : 4 alignées, 90 propres Encore, 6 propres upstream</summary>
+
+Source : [nx2_gsv.h:3601-3610](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nx2_gsv.h#L3601-L3610).
+
+```diff
+- 1680       | IGraphicsSupervisor::~IGraphicsSupervisor() {
+- 1681       |     if (m_syncpt) m_syncpt->Shutdown();
+- 1682       |     m_syncpt.reset();
+- 1683       |     // Video GMMU mappings and their NVMap pins can outlive the last
+- 1684       |     // supervisor reference. Retire prior GPU readers BEFORE the native
+- 1685       |     // memory mutex and before any of those pins are dropped. During system
+- 1686       |     // shutdown the GPU worker has already been stopped.
+- 1687       |     if (m_native_module && system.IsPoweredOn() && !system.IsShuttingDown())
+- 1688       |         system.GPU().WaitForIdle();
+- 1689       |     // Release the real NVMap backing and page-table locks before the native
+- 1690       |     // NVDRV session and the application KProcess lose their final owner.
+- 1691       |     const std::scoped_lock lock{m_native_memory_mutex};
+- 1692       |     if (m_native_module) {
+- 1693       |         auto& nvmap = m_native_module->GetContainer().GetNvMapFile();
+- 1694       |         // The GMMU VA owner outlives the mapping until it is retired.
+- 1695       |         for (const auto& [key, mapping] : m_video_mappings) {
+- 1696       |             if (mapping.address_space)
+- 1697       |                 mapping.address_space->UnmapNative4K(mapping.address, mapping.size);
+- 1698       |         }
+- 1699       |         m_video_mappings.clear();
+- 1700       |         for (const auto& [first, pool] : m_video_pools.Records()) {
+- 1701       |             nvmap.UnpinHandle(pool.backing);
+- 1702       |             nvmap.FreeHandle(pool.backing, true);
+- 1703       |         }
+- 1704       |         // Retire internal image duplicates before their underlying NVMap
+- 1705       |         // allocations; otherwise the backing remains busy at shutdown.
+- 1706       |         for (const auto& [image_id, image] : m_native_images.Records())
+- 1707       |             nvmap.FreeHandle(image.backing, true);
+- 1708       |         // Release unborrowed children before dropping their parent's pin.
+- 1709       |         // Retry parents after child release: a parent may itself be an owned
+- 1710       |         // native-memory allocation that was busy on the first pass.
+- 1711       |         std::vector<u32> freed;
+- 1712       |         const auto release = [&](u32 id) {
+- 1713       |             auto handle = nvmap.GetHandle(id);
+- 1714       |             if (!handle) return;
+- 1715       |             {
+- 1716       |                 const std::scoped_lock handle_lock{handle->mutex};
+- 1717       |                 if (handle->dupes != 1 || handle->internal_dupes != 0 ||
+- 1718       |                     handle->pins != 0) return;
+- 1719       |             }
+- 1720       |             handle.reset();
+- 1721       |             const auto info = nvmap.FreeHandle(id, false);
+- 1722       |             if (!info || !info->can_unlock) return;
+- 1723       |             freed.push_back(id);
+- 1724       |             if (const auto transfer = m_native_transfer_backings.find(id);
+- 1725       |                 transfer != m_native_transfer_backings.end()) {
+- 1726       |                 // The TransferMemory object, not DeviceShared, owns page
+- 1727       |                 // stability for TIPC 113. Retire NVMap first, then release
+- 1728       |                 // the retained kernel object so its own lock can unwind.
+- 1729       |                 transfer->second->Close(kernel);
+- 1730       |                 m_native_transfer_backings.erase(transfer);
+- 1731       |             } else if (info->address != 0) {
+- 1732       |                 const auto status = m_process->GetPageTable().UnlockForDeviceAddressSpace(
+- 1733       |                     info->address, info->size);
+- 1734       |                 if (status.IsError())
+- 1735       |                     LOG_ERROR(Service_AM, "NS2 native supervisor teardown unlock failed: {:#x}",
+- 1736       |                               status.raw);
+- 1737       |             }
+- 1738       |         };
+- 1739       |         const auto ids = m_native_memory.OwnedIds();
+- 1740       |         for (const u32 id : ids) release(id);
+- 1741       |         for (const auto& [child, parent] : m_native_parents) {
+- 1742       |             if (std::find(freed.begin(), freed.end(), child) == freed.end()) {
+- 1743       |                 // A live external child retains its parent pin. Never revoke
+- 1744       |                 // another GPU owner just to make shutdown appear successful.
+- 1745       |                 continue;
+- 1746       |             }
+- 1747       |             nvmap.UnpinHandle(parent);
+- 1748       |             nvmap.FreeHandle(parent, true);
+- 1749       |         }
+- 1750       |         for (const u32 id : ids) {
+- 1751       |             if (std::find(freed.begin(), freed.end(), id) == freed.end())
+- 1752       |                 release(id);
+- 1753       |         }
+- 1754       |         if (m_native_memory_session)
+- 1755       |             m_native_module->GetContainer().CloseSession(
+- 1756       |                 Nvidia::NvCore::SessionId{*m_native_memory_session});
++       3601 |     ~INx2GraphicsSystemSession() override {
++       3602 |         if (m_syncpt_poll) {
++       3603 |             system.CoreTiming().UnscheduleEvent(m_syncpt_poll);
+  1757  3604 |     }
+- 1758       |     // If an externally referenced NVMap could not be retired above, keep its
+- 1759       |     // TransferMemory ref deliberately open. Closing it here could unlock
+- 1760       |     // physical pages while that external GPU owner still references them.
+- 1761       |     for (const auto& [id, transfer] : m_native_transfer_backings) {
+- 1762       |         (void)transfer;
+- 1763       |         LOG_ERROR(Service_AM,
+- 1764       |                   "NS2 native TransferMemory backing quarantined at shutdown: {}", id);
++       3605 |         for (auto* event : m_syncpt_events) {
++       3606 |             if (event != nullptr) {
++       3607 |                 m_context.CloseEvent(event);
+  1765  3608 |     }
+- 1766       |     m_native_transfer_backings.clear();
+- 1767       |     if (m_bootstrap_transfer_memory) {
+- 1768       |         m_bootstrap_transfer_memory->Close(kernel);
+- 1769       |         m_bootstrap_transfer_memory = nullptr;
+- 1770       |         m_bootstrap_transfer_memory_size = 0;
+  1771  3609 |     }
+- 1772       |     m_process->Close(kernel);
+  1773  3610 | }
+```
+
+</details>
+
+### P0-X05 · session VI2 — destructeur
+
+Détruit couches/display, événements et états de présentation. Directement pertinent à la fermeture DK/Pokopia, mais seul un wait réellement bloqué permettra de désigner le propriétaire causal.
+
+Encore : [graphics_supervisor.cpp:694-710](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp#L694-L710) — 17 lignes.
+
+<details>
+<summary>Lichii — 2049-2073 : 5 alignées, 12 propres Encore, 20 propres upstream</summary>
+
+Source : [nx2_gsv.h:2049-2073](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nx2_gsv.h#L2049-L2073).
+
+```diff
+-  694       |     ~IVi2Session() override {
+-  695       |         if (m_vsync_timer) system.CoreTiming().UnscheduleEvent(m_vsync_timer);
+-  696       |         // The CoreTiming callback may have entered on another worker before
+-  697       |         // UnscheduleEvent returned: do not close kernel events it can see.
++       2049 |     ~INx2Vi2Session() override {
++       2050 |         // Wake waits on outstanding releases before their syncpoint returns to nvdrv.
++       2051 |         m_releases.reset();
++       2052 |         // The display stops starting frames for this session's events; other sessions keep
++       2053 |         // theirs.
++       2054 |         VideoCore::HostVsync::RemoveListener(m_vsync.get());
++       2055 |         // A service fiber can be discarded during shutdown without unwinding its stack.
++       2056 |         // Remove or join its callback before closing the session-owned event.
++       2057 |         m_frame_wait_action.reset();
++       2058 |         m_context.CloseEvent(m_frame_wait_event);
++       2059 |         // The vsync callback may be running on the HostTiming thread: empty its event list under
++       2060 |         // its lock first (it holds the state, not this session), then close the events.
+   698  2061 |         {
+-  699       |             const std::scoped_lock lock{m_vsync->mutex};
++       2062 |             std::scoped_lock lk{m_vsync->mutex};
+   700  2063 |             m_vsync->events.clear();
+   701  2064 |         }
+-  702       |         for (auto* event : m_vsync_events) m_context.CloseEvent(event);
+-  703       |         if (m_poll) system.CoreTiming().UnscheduleEvent(m_poll);
+-  704       |         if (m_vi) {
+-  705       |             for (auto& c:m_clients)
+-  706       |                 if (c.layer) m_vi->GetContainer()->DestroyManagedLayer(*c.layer);
+-  707       |             if (m_display) m_vi->CloseDisplay(*m_display);
++       2065 |         if (m_vsync_timer) {
++       2066 |             system.CoreTiming().UnscheduleEvent(m_vsync_timer);
+   708  2067 |         }
+-  709       |         m_context.CloseEvent(m_event);
++       2068 |         for (auto* event : m_events) {
++       2069 |             m_context.CloseEvent(event);
+   710  2070 |     }
++       2071 |         // The interval belonged to this session's presents (PresentInterval).
++       2072 |         Tegra::g_nx2_guest_frame_interval_ns.store(0, std::memory_order_relaxed);
++       2073 |     }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 1799-1812 : 5 alignées, 12 propres Encore, 9 propres upstream</summary>
+
+Source : [nx2_gsv.h:1799-1812](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nx2_gsv.h#L1799-L1812).
+
+```diff
+-  694       |     ~IVi2Session() override {
+-  695       |         if (m_vsync_timer) system.CoreTiming().UnscheduleEvent(m_vsync_timer);
+-  696       |         // The CoreTiming callback may have entered on another worker before
+-  697       |         // UnscheduleEvent returned: do not close kernel events it can see.
++       1799 |     ~INx2Vi2Session() override {
++       1800 |         // The vsync callback may be running on the HostTiming thread: empty its event list under
++       1801 |         // its lock first (it holds the state, not this session), then close the events.
+   698  1802 |         {
+-  699       |             const std::scoped_lock lock{m_vsync->mutex};
++       1803 |             std::scoped_lock lk{m_vsync->mutex};
+   700  1804 |             m_vsync->events.clear();
+   701  1805 |         }
+-  702       |         for (auto* event : m_vsync_events) m_context.CloseEvent(event);
+-  703       |         if (m_poll) system.CoreTiming().UnscheduleEvent(m_poll);
+-  704       |         if (m_vi) {
+-  705       |             for (auto& c:m_clients)
+-  706       |                 if (c.layer) m_vi->GetContainer()->DestroyManagedLayer(*c.layer);
+-  707       |             if (m_display) m_vi->CloseDisplay(*m_display);
++       1806 |         if (m_vsync_timer) {
++       1807 |             system.CoreTiming().UnscheduleEvent(m_vsync_timer);
+   708  1808 |         }
+-  709       |         m_context.CloseEvent(m_event);
++       1809 |         for (auto* event : m_events) {
++       1810 |             m_context.CloseEvent(event);
+   710  1811 |     }
++       1812 |     }
+```
+
+</details>
+
+### Ordre de diagnostic à conserver pour un shutdown bloqué
+
+1. Identifier le thread qui n'a pas quitté et sa primitive d'attente réelle.
+2. Vérifier si le producteur/fence attendu peut encore progresser après NotifyShutdown.
+3. Vérifier la symétrie NVDRV : channel → AS binding → mappings/NVMap → session.
+4. Vérifier seulement ensuite VI2/layer/display et le KProcess.
+
+Cet ordre est documentaire : il ne rajoute aucune instrumentation. Les traces existantes doivent être exploitées avant d'en ajouter.
+
+**Couverture ajoutée :** 5 fonctions, 10 comparaisons, 396 lignes-source parcourues ; 0 homologue(s) absent(s)/non extrait(s). Aucun fix runtime.

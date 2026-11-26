@@ -124,10 +124,10 @@ int main(){
     require(!P::IsSupportedDisplaySession(0) &&
             !P::IsSupportedDisplaySession(0x300050000ULL),
             "GSV 305 rejects unknown display session versions");
-    // VI2 103-106 are device capability queries, not TitleID exceptions:
+    // VI2 103-107 and 354 are device capability queries, not TitleID exceptions:
     // enforce packet words and the real default display name before reply.
     constexpr u64 default_display = 0x00746c7561666564ULL;
-    for (u32 command : {103U, 104U, 105U, 106U}) {
+    for (u32 command : {103U, 104U, 105U, 106U, 107U, 354U}) {
         require(P::IsDefaultVi2DisplayQuery(command + 16, 2,
                                             default_display, command),
                 "VI2 default display capability request admitted");
@@ -140,8 +140,16 @@ int main(){
                 "VI2 wrong arity, name or header rejected");
     }
     require(!P::IsDefaultVi2DisplayQuery(0x77, 2, default_display, 102) &&
-            !P::IsDefaultVi2DisplayQuery(0x7b, 2, default_display, 107),
+            !P::IsDefaultVi2DisplayQuery(0x7c, 2, default_display, 108),
             "VI2 unknown request IDs stay closed");
+    require(P::Vi2SupportedRateBits == 1 && P::Vi2SdrOutputFormat == 1,
+            "VI2 advertises only the fixed 60Hz SDR mode");
+    require(P::IsDefaultVi2RefreshRateSelection(317, 6, default_display, 2) &&
+            P::IsDefaultVi2RefreshRateSelection(317, 6, default_display, 1ULL << 63) &&
+            !P::IsDefaultVi2RefreshRateSelection(317, 5, default_display, 2) &&
+            !P::IsDefaultVi2RefreshRateSelection(317, 6, 0, 2) &&
+            !P::IsDefaultVi2RefreshRateSelection(317, 6, default_display, 4),
+            "VI2 selection validates known capability bits, display and arity");
     // Native event 31 and duplicate 32 share an indexed VSync source.
     // 32 carries one copied kernel handle before the slot word.
     const std::array<u32,3> vi2Event31{16+31,1,3};

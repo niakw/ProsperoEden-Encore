@@ -14,7 +14,7 @@ root = Path(__file__).resolve().parents[1]
 cache = (root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
 generator = (root/"tools/prepare-vulkan-port.py").read_text()
 raster = (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-layer = (root/"vendor/encore-active/eden-vulkan/vulkan_present_layer.cpp").read_text()
+layer = (root/"headless/vulkan_present_layer_r24.cpp").read_text()
 fast = (root/".github/workflows/encore-core-fast-gate.yml").read_text()
 full = (root/".github/workflows/encore-core-preflight.yml").read_text()
 
@@ -51,6 +51,7 @@ assert loop.index("if (image.cpu_addr != cpu_addr)") < loop.index("ImageFlagBits
 assert loop.index("ImageFlagBits::IsDecoding") < loop.index("if (image.image_view_ids.empty())")
 assert "valid_image_ids.push_back(map.image_id);" in loop
 assert "return GetImageViewForFramebuffer(freshest_id);" in selection
+assert selection.index("VideoCore::Surface::IsViewCompatible(") < selection.index("return GetImageViewForFramebuffer(freshest_id);")
 assert "std::ranges::max_element(valid_image_ids" in selection  # desktop untouched
 for label in (
     "F07 P0.4 accelerated present rejects remapped or CPU-dirty framebuffer",
@@ -103,8 +104,21 @@ struct ImageBase {
     unsigned flags{};
     std::vector<int> image_view_ids;
     std::uint64_t modification_tick{};
+    struct { int format{1}; } info;
+};
+namespace VideoCore::Surface {
+bool IsViewCompatible(int a,int b,bool broken,bool native_bgr) {
+    return a==b || (!broken && native_bgr && ((a==1 && b==2) || (a==2 && b==1)));
+}
+}
+struct MockRuntime {
+    bool broken{}, bgr{true};
+    bool HasBrokenTextureViewFormats() const { return broken; }
+    bool HasNativeBgr() const { return bgr; }
 };
 struct Selector {
+    int view_format{1};
+    MockRuntime runtime;
     std::unordered_map<int,ImageMapView> slot_map_views;
     std::unordered_map<int,ImageBase> slot_images;
     std::vector<ImageMapId> image_map_ids;
@@ -123,7 +137,7 @@ int main() {
     constexpr DAddr guest = 0x9000;
     for(int i=1;i<=8;++i) {
         c.slot_map_views[i]={i};
-        c.slot_images[i]={guest,0,{i},static_cast<std::uint64_t>(i)};
+        c.slot_images[i]={guest,0,{i},static_cast<std::uint64_t>(i),{1}};
         c.image_map_ids.push_back(i);
     }
     c.slot_images[8].cpu_addr=guest+4096;
@@ -166,6 +180,21 @@ int main() {
     assert((c.Run(guest)==std::vector<int>{2}));
     c.image_map_ids={3,2};
     assert((c.Run(guest)==std::vector<int>{3}));
+    // A newer incompatible alias cannot create a view or promote stale pixels.
+    c.image_map_ids={2,3};
+    c.slot_images[2].modification_tick=101;
+    c.slot_images[2].info.format=3;
+    assert(c.Run(guest).empty());
+    c.slot_images[2].info.format=2;
+    assert((c.Run(guest)==std::vector<int>{2}));
+    c.runtime.bgr=false;
+    assert(c.Run(guest).empty());
+    c.runtime.bgr=true;
+    c.runtime.broken=true;
+    assert(c.Run(guest).empty());
+    c.runtime.broken=false;
+    c.slot_images[2].info.format=1;
+    assert((c.Run(guest)==std::vector<int>{2}));
     // More than the old inline capacity: bounded O(1) selection state.
     c.image_map_ids={1,2,3,4,5,6,7};
     for(int i=1;i<=7;++i) {

@@ -7484,3 +7484,11 @@ apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
     "    prewarm_drain.joined = true;\n#else\n    workers.WaitForRequests(stop_loading);",
     "    prewarm_drain.joined = true;\n    // Propagate the original failure on the loading owner, not std::terminate\n    // on a worker. Never advertise a partial failed cache as a successful load.\n    if (state.worker_error) std::rethrow_exception(state.worker_error);\n#else\n    workers.WaitForRequests(stop_loading);",
     "generated prefix prewarm worker exception handoff")
+
+
+# Native display: preserve freshness while rejecting incompatible image views.
+apply_reviewed_delta(
+    "vulkan-cache/video_core/texture_cache/texture_cache.h",
+    "    if (freshest_found) [[likely]] {\n        return GetImageViewForFramebuffer(freshest_id);\n    }",
+    "    if (freshest_found) [[likely]] {\n        // A newer incompatible alias must not create an invalid Vulkan view,\n        // nor silently promote an older compatible image. Preserve the raw\n        // framebuffer fallback when the freshest candidate cannot be viewed.\n        if (!VideoCore::Surface::IsViewCompatible(\n                slot_images[freshest_id].info.format, view_format,\n                runtime.HasBrokenTextureViewFormats(), runtime.HasNativeBgr())) {\n            return {};\n        }\n        return GetImageViewForFramebuffer(freshest_id);\n    }",
+    "native framebuffer view format compatibility")

@@ -7,7 +7,7 @@ rendering, link the console app, or authorize the runtime release flags.
 from pathlib import Path
 import os, subprocess, shutil, sys, tempfile
 r=Path(__file__).resolve().parents[2];deps=r/'vendor/sources/eden-cpm';sdk15=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk');sdk26=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk');env=os.environ.copy();env['SDKROOT']=str(sdk15)
-inc=['vendor/encore-active/eden-core/overrides/native-tiling','vendor/encore-active/ns2-runtime/kernel_wait64','vendor/encore-active/ns2-runtime/gpu_access_svc','vendor/encore-active/ns2-runtime/gpu_dispatch','vendor/encore-active/ns2-runtime/nvdrv_gpu','vendor/encore-active/ns2-runtime/nvdrv_as','vendor/encore-active/ns2-runtime/gpu_session','vendor/encore-active/ns2-runtime/graphics_supervisor','vendor/encore-active/ns2-runtime/video_decoder','vendor/encore-active/ns2-runtime/self_controller','vendor/encore-active/ns2-runtime/hle','vendor/encore-active/ns2-runtime/nvdrv','vendor/encore-active/ns2-runtime/ampere','vendor/encore-active/ns2-helpers/include','vendor/sources/eden/src','vendor/sources/fmt/include','vendor/sources/eden/src/dynarmic/src']
+inc=['vendor/encore-active/eden-sync/overrides/h05-syncpoint','vendor/encore-active/eden-core/overrides/native-tiling','vendor/encore-active/ns2-runtime/kernel_wait64','vendor/encore-active/ns2-runtime/gpu_access_svc','vendor/encore-active/ns2-runtime/gpu_dispatch','vendor/encore-active/ns2-runtime/nvdrv_gpu','vendor/encore-active/ns2-runtime/nvdrv_as','vendor/encore-active/ns2-runtime/gpu_session','vendor/encore-active/ns2-runtime/graphics_supervisor','vendor/encore-active/ns2-runtime/video_decoder','vendor/encore-active/ns2-runtime/self_controller','vendor/encore-active/ns2-runtime/hle','vendor/encore-active/ns2-runtime/nvdrv','vendor/encore-active/ns2-runtime/ampere','vendor/encore-active/ns2-helpers/include','vendor/sources/eden/src','vendor/sources/fmt/include','vendor/sources/eden/src/dynarmic/src']
 # Match the one maintained IOCTL header staged into the native CMake include
 # overlay. The pinned Eden header lacks the InputCapacity template signature.
 ioctl=r/'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
@@ -16,6 +16,18 @@ ioctl_temp=tempfile.TemporaryDirectory(prefix='encore-ioctl-')
 ioctl_dest=Path(ioctl_temp.name)/'core/hle/service/nvdrv/devices/ioctl_serialization.h'
 ioctl_dest.parent.mkdir(parents=True,exist_ok=True)
 shutil.copyfile(ioctl,ioctl_dest)
+# R457's compiled Host1x ABI is materialized by native CMake as a narrow
+# one-header include root. The generic h05-syncpoint path does not contain
+# the GSV's 64-bit guest-action API; syntax-check the selected shipping header.
+syncpoint=r/'vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h'
+assert syncpoint.is_file()
+syncpoint_text=syncpoint.read_text()
+for name in ('GetNativeGuestSyncpointValue', 'RegisterNativeGuestAction',
+             'DeregisterNativeGuestAction'):
+    assert name in syncpoint_text, name
+syncpoint_dest=Path(ioctl_temp.name)/'video_core/host1x/syncpoint_manager.h'
+syncpoint_dest.parent.mkdir(parents=True,exist_ok=True)
+shutil.copyfile(syncpoint,syncpoint_dest)
 inc=[Path(ioctl_temp.name),*[r/i for i in inc],*list((deps/'boost/boost-1.90.0/libs').glob('*/include'))]
 # The PS5 native NVDRV/AM owners instantiate a large C++20 template graph.
 # Ubuntu's Clang 18 frontend has repeatedly crashed while parsing it, even
@@ -38,6 +50,8 @@ assert flags[0] and all((r/i).exists() for i in [
     'vendor/encore-active/ns2-runtime/video_decoder']), 'Expected pinned NS2 source owners missing'
 cmake=(r/'headless/CMakeLists.txt').read_text()
 assert 'configure_file("${EDEN_MAINTAINED_IOCTL}"' in cmake
+assert 'configure_file("${EDEN_MAINTAINED_HOST1X_HEADER}"' in cmake
+assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}")' in cmake
 # This syntax gate must select the same MemoryManager public header as the
 # shipping PS5 graph. The NS2 NVDRV owner calls the syncpoint shim API
 # unconditionally, while pinned Eden does not expose that combined shim/tiling ABI.
@@ -132,6 +146,43 @@ native_gpfifo_owners = [
     r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp',
     r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp',
 ]
+# Exact production receipt for the NVN2 split-method continuation fix.
+# The actual source TU is compiled below with PS5_NATIVE and the shipping
+# native DmaPusher ABI; these source seals prevent a same-pin semantic drift.
+import hashlib
+dma_owner = native_gpfifo_owners[0]
+dma_header = r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h'
+def git_blob(path):
+    raw=path.read_bytes()
+    return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+# Reviewed fence parking / AS revocation / H17 successors through d13311b3.
+assert git_blob(dma_owner) == '861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c'
+assert git_blob(dma_header) == '4cb9f79deeb56ab7397c6209939c94dffbb7575b'
+dma_text=dma_owner.read_text()
+dma_header_text=dma_header.read_text()
+for token in (
+    'native_channel && command_resume_offset == 0',
+    'header.addr != split_method_end',
+    'header.size != dma_state.method_count',
+    'SplitResumesLater(command_list, dma_pushbuffer_subindex + 1)',
+    'ResolveSplitMethod(header.addr, park_call)',
+    'split_method_end = header.addr + static_cast<GPUVAddr>(header.size) * sizeof(u32)',
+    'parked_methods.clear();',
+    'require_native_submission_lease();',
+    'NativeGpuChannelRegistry::Instance().ReportFault(&channel_state);',
+    'FailNativeSubmission("Native GPFIFO address-space lease retired");',
+):
+    assert token in dma_text, ('NS2 split GPFIFO owner drift',token)
+for token in (
+    'struct ParkedMethod {',
+    'static constexpr std::size_t MaxParkedMethods = 16;',
+    'std::vector<ParkedMethod> parked_methods;',
+    'GPUVAddr split_method_end{};',
+    'std::shared_ptr<const std::atomic<bool>> native_submission_lease;',
+):
+    assert token in dma_header_text, ('NS2 split GPFIFO ABI drift',token)
+assert dma_text.count('ResolveSplitMethod(') == 2
+assert dma_text.count('SplitResumesLater(') == 2
 for owner in native_gpfifo_owners:
     assert owner.is_file(), owner
     built = subprocess.run(native_flags + [str(owner)], capture_output=True,

@@ -36,6 +36,9 @@ TARGETS = (
 # These former generated units are now selected directly from maintained C++.
 # Keep checking the actual sources instead of nonexistent historical outputs.
 MAINTAINED_CORE_TARGETS = (
+    # The native Module owner is selected from the current vendor, not a
+    # potentially stale upstream build-cache copy.
+    "vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp",
     # Real PS5 kernel compilation of the process-aware cache SVC replacement.
     "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_cache.cpp",
     "vendor/encore-active/eden-core/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp",
@@ -90,8 +93,6 @@ NATIVE_GRAPHICS_TARGETS = (
 )
 PINNED_CACHE_TARGETS = (
     "video_core/host1x/gpu_device_memory_manager.cpp",
-    # Native NVDRV Module consumes the shared nvdevice virtual ABI.
-    "core/hle/service/nvdrv/nvdrv.cpp",
     # First real native compiler failures in build #10 (881/1870). Keep
     # both source-owned ABI consumers inside the cheap PS5 syntax preflight.
     "video_core/renderer_vulkan/vk_turbo_mode.cpp",

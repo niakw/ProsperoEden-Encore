@@ -19,7 +19,50 @@ def selected_sha(value):
     import hashlib
     raw = value.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-integrated_dma = selected_sha(native) == "0c186d79194135a5d0b300c3a8a6fb0aa503810b"
+integrated_dma = selected_sha(native) in {
+    "0c186d79194135a5d0b300c3a8a6fb0aa503810b",
+    "df2ced96bc384af23e0529f8ab72eba8000a0995",
+    "cb40e4c0de66f8f9d5f6126e6cf898fabacd8805",
+    "a2979cc01cdd7679e71af373d187d08302355b9b",
+    "3eb6d0462cde2cdcef613b2bf89d74574c18ea01",
+    "d083d3298b3fb11373d7a7fc164a42ba92bdb2b5",
+    "1fe0b4f25d6f4bbd24406e2f929868151d32c133",
+}
+if selected_sha(native) == "cb40e4c0de66f8f9d5f6126e6cf898fabacd8805":
+    import re
+    calls = re.findall(r"(?m)^\s*(?:Unswizzle|Swizzle)Subrect\([\s\S]*?\);", native)
+    assert len(calls) == 9 and all(c.count("memory_manager.UsesNativeTiling()") == 1 for c in calls)
+    assert "const u64 aligned_depth =" in native and "dst_size != dst_size_wide" in native
+if selected_sha(native) in {
+    "a2979cc01cdd7679e71af373d187d08302355b9b",
+    "3eb6d0462cde2cdcef613b2bf89d74574c18ea01",
+    "d083d3298b3fb11373d7a7fc164a42ba92bdb2b5",
+    "1fe0b4f25d6f4bbd24406e2f929868151d32c133",
+}:
+    # Exact reviewed GOB3D successors use the same authenticated
+    # source decoder; the new per-side Z arguments are not present in
+    # historical Eden, so never replay them as an old patch hunk.
+    import re
+    calls = re.findall(r"(?m)^\s*(?:Unswizzle|Swizzle)Subrect\([\s\S]*?\);", native)
+    assert len(calls) == 9 and all(c.count("memory_manager.UsesNativeTiling()") == 1 for c in calls)
+    z_calls = sum(bool(re.search(r"memory_manager\.UsesNativeTiling\(\),\s*(?:regs\.)?(?:src|dst)(?:_params)?\.layer", c)) for c in calls)
+    expected_z = {
+        "a2979cc01cdd7679e71af373d187d08302355b9b": 4,
+        "3eb6d0462cde2cdcef613b2bf89d74574c18ea01": 6,
+        "d083d3298b3fb11373d7a7fc164a42ba92bdb2b5": 9,
+        "1fe0b4f25d6f4bbd24406e2f929868151d32c133": 9,
+    }[selected_sha(native)]
+    # Remapped B0B5 reads layers through regs.src/dst_params;
+    # the six other DMA paths use local source/destination parameter aliases.
+    assert z_calls == expected_z, (z_calls, expected_z)
+    assert "MAX_SOFTWARE_TILED_DMA_BYTES" in native
+    assert "const u64 aligned_depth =" in native
+    assert "std::vector<u8> tiled_dst" in native
+if selected_sha(native) == "df2ced96bc384af23e0529f8ab72eba8000a0995":
+    assert "const u64 aligned_depth =" in native
+    assert "const u64 source_rows =" in native
+    assert "dst_size != dst_size_wide" in native
+    assert "regs.dst_params.block_size.depth > 5" in native
 if integrated_dma:
     helper_begin = "// Signed 2D pitch geometry and device-address overlap are shared by"
     helper_end = "} // namespace\n\nMaxwellDMA::MaxwellDMA"
@@ -340,6 +383,11 @@ if integrated_dma:
     assert "width > (~u32{0}) / rows" in selected_numeric
     assert "const u64 delta = magnitude * (rows - 1);" in selected_numeric
     assert "bytes > MAX_ADDRESS - base - delta" in selected_numeric
+    if selected_sha(native) == "1fe0b4f25d6f4bbd24406e2f929868151d32c133":
+        begin = native.index("constexpr bool DmaVolumeLinearRows(")
+        end = native.index("// MemoryManager::CopyBlock is an individual-row transfer", begin)
+        assert begin < end and "return true;" in native[begin:end]
+        selected_numeric += native[begin:end]
     cpp = """
 #include <cassert>
 #include <cstdint>
@@ -369,6 +417,36 @@ int main() {
     assert(!PitchDmaEnvelope(mx - 10, 16, 2, 8, begin, end));
 }
 """.replace("__SELECTED_NUMERIC__", selected_numeric)
+    if selected_sha(native) == "1fe0b4f25d6f4bbd24406e2f929868151d32c133":
+        cpp = cpp.replace("int main() {", """int main() {
+    u64 rows{};
+    for (u32 h = 0; h <= 9; ++h)
+      for (u32 d = 0; d <= 7; ++d)
+        for (u32 z = 0; z <= d + 1; ++z)
+          for (u32 y = 0; y <= h + 1; ++y)
+            for (u32 n = 0; n <= 65; ++n) {
+              const bool got = DmaVolumeLinearRows(h, d, z, y, n, rows);
+              u64 consumed = 0, expected_rows = 0;
+              if (h && d && z < d && y < h && n) {
+                for (u32 slice = z; slice < d && consumed < n; ++slice) {
+                  const u64 available = static_cast<u64>(h) - y;
+                  const u64 pending = static_cast<u64>(n) - consumed;
+                  const u64 take = pending < available ? pending : available;
+                  consumed += take;
+                  expected_rows = static_cast<u64>(slice - z) * h + take;
+                }
+              }
+              const bool valid = h && d && z < d && y < h && n && consumed == n;
+              assert(got == valid && rows == (valid ? expected_rows : 0));
+            }
+    assert(DmaVolumeLinearRows(8, 4, 1, 3, 9, rows) && rows == 12);
+    assert(DmaVolumeLinearRows(8, 4, 1, 3, 11, rows) && rows == 17);
+    assert(!DmaVolumeLinearRows(8, 4, 1, 3, 16, rows) && rows == 0);
+    const u32 max32 = (std::numeric_limits<u32>::max)();
+    assert(DmaVolumeLinearRows(max32, max32, 0, 0, max32, rows) && rows == max32);
+    assert(DmaVolumeLinearRows(max32, max32, max32 - 1, max32 - 1, 1, rows) && rows == 1);
+    assert(!DmaVolumeLinearRows(max32, max32, max32 - 1, max32 - 1, 2, rows));
+""", 1)
     clang = shutil.which("clang++-18") or shutil.which("clang++")
     assert clang
     with tempfile.TemporaryDirectory(prefix="encore-selected-dma-extent-") as td:

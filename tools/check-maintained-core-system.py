@@ -210,19 +210,34 @@ for native in (False, True):
         assert ("::Eden::ReportStep" in actual) == native
 
 # The release PS5 graph replaces core_native with the NS2-capable derivative.
+# The current successor has accumulated reviewed NUP/process tracing and the
+# FC27 shutdown lifetime fixes after the original GPU-teardown snapshot. Seal
+# the exact shipping blob here (also independently sealed by active-source,
+# R457 sparse and final FC27/P0 provenance gates) and verify the live lifetime
+# order directly rather than replaying an incomplete historical reverse chain.
 ns2 = (root / "vendor/encore-active/ns2-runtime/process/core/core.cpp").read_text()
-assert git_blob(ns2) == "0110907a727b5d0ed15286298f851b59b30f1eb6", (
-    "reviewed GPU teardown source drift")
-ns2_before_gpu_teardown = reverse_gpu_teardown(reverse_nvdrv_exit_lifetime(ns2))
-assert git_blob(ns2_before_gpu_teardown) == "13146ad60fb374f188eae1940ebaa0eff034bb56"
-ns2_before_1932 = reverse_1932(ns2_before_gpu_teardown)
-assert git_blob(ns2_before_1932) == "7e3159eb648e92cca3543cfd01bcfd26a0caa135"
-assert git_blob(reverse_1952(ns2_before_1932, True)) == "ac37dcd3d33373d6f5189dc4963f3dfbce898391"
+# 20d278d9: release SM GPU factories before Services while kernel lives.
+assert git_blob(ns2) == "0f854ca3eab4dd0435d6ac58d401f8359301c168", (
+    "reviewed current NS2 Core source drift")
 ns2_shutdown = ns2.split("    void ShutdownMainProcess() {", 1)[1].split(
     "\n    bool IsShuttingDown()", 1)[0]
 assert ns2_shutdown.count("cheat_engine.reset();") == 1
 assert ns2_shutdown.index("cheat_engine.reset();") < ns2_shutdown.index(
     "core_timing.SyncPause(false);")
+shutdown_order = (
+    "gpu_core.reset();",
+    "service_manager->Close();",
+    "kernel.CloseServices();",
+    "service_manager->ReleaseRegisteredHandlersForShutdown();",
+    "services.reset();",
+    "kernel.ShutdownCores();",
+    "service_manager.reset();",
+    "fs_controller.Reset();",
+    "kernel.Shutdown();",
+)
+shutdown_positions = [ns2_shutdown.index(needle) for needle in shutdown_order]
+assert shutdown_positions == sorted(shutdown_positions), (
+    "current NS2 GPU/NVDRV/SM/kernel teardown order drift", shutdown_positions)
 # Native dual-NPDM uses this maintained NS2 Core owner intentionally.
 # Verify the exact conditional selection, not the pre-NS2 G14 exclusion.
 ns2_selected_core = """if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)

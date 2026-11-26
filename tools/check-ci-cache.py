@@ -8,6 +8,12 @@ workflow = (root / ".github/workflows/build-040-zbic.yml").read_text()
 linker = (root / "tools/ci/link-sibling-deps.sh").read_text()
 build = (root / "tools/build-headless-native.sh").read_text()
 deps = (root / "tools/deps.py").read_text()
+makefile = (root / "Makefile").read_text()
+deps_target = makefile.split("deps:", 1)[1].split("\n\n", 1)[0]
+assert "tools/deps.py fetch" in deps_target
+assert "tools/deps.py verify" in deps_target
+assert deps_target.index("tools/deps.py fetch") < deps_target.index("tools/deps.py verify")
+assert "release dependency verification failed" in deps
 
 for path in (
     "../ps5-native-app-boilerplate",
@@ -70,7 +76,7 @@ native_group = workflow.split("concurrency:", 1)[1].split("jobs:", 1)[0]
 assert "github.ref == 'refs/heads/main'" in native_group
 assert "github.event_name == 'push'" in native_group
 assert "!startsWith(github.event.head_commit.message || '', '[full-build]')" in native_group
-assert "!startsWith(github.event.head_commit.message || '', '[resume-stage:37728435816]')" in native_group
+assert "!startsWith(github.event.head_commit.message || '', '[resume-stage:45087056642]')" in native_group
 assert "'skip-only' || 'build-capable'" in native_group
 assert "cancel-in-progress: true" in native_group
 # Preserve existing one-at-a-time build-capable behavior for explicitly
@@ -95,6 +101,23 @@ for name in (
 ):
     assert name in linker
 assert '.deps/repos' in linker
+
+# The native build must not reuse a tracked-dirty OpenGL checkout from a
+# previous runner cache as though it were our immutable upstream source.
+# Guard ONLY the Actions-owned cache path; preserve the old checkout and
+# rehydrate from the pinned vendor pack rather than resetting local work.
+for required in (
+    'if [[ "${GITHUB_ACTIONS:-}" == "true" && "$store" == "$root/.deps/repos" ]]; then',
+    'git -C "$cached_opengl" status --porcelain --untracked-files=no',
+    'pinned_opengl=$(python3 - "$root/tools/deps.json"',
+    'vendor/objects/opengl-source/chunks.json',
+    'quarantine=$(mktemp -d "${RUNNER_TEMP:?}/encore-opengl-cache-XXXXXX")',
+    'mv -- "$cached_opengl" "$quarantine/ps5-opengl-review"',
+):
+    assert required in linker, ("Pinned CI OpenGL cache recovery guard missing", required)
+assert "git reset --hard" not in linker
+assert "git clean -fd" not in linker
+
 
 assert "fork-source-stamps.json" in build
 assert "sha256(path.read_bytes())" in build
@@ -153,7 +176,11 @@ assert "Restore historical staged artifact if no checkpoint exists" in workflow
 assert "steps.restore_stage.outputs.cache-hit != 'true'" in workflow
 assert "encore-internal-stage-v1-${{ runner.os }}-${{ github.run_id }}" in workflow
 assert "encore-internal-stage-v1-${{ runner.os }}-${{ env.RESUME_STAGE_RUN_ID }}" in workflow
+assert workflow.index("Save compiled stage recovery checkpoint") < workflow.index("Validate freshly built staged app")
 assert workflow.index("Validate freshly built staged app") < workflow.index("Save internal stage checkpoint")
+assert "encore-compiled-stage-v1-${{ runner.os }}-${{ github.run_id }}" in workflow
+assert 'test "$EXACT_CACHE_HIT" = true' in workflow
+assert "EDEN_CACHED_NATIVE_RECOVERY_BINARY_IDENTICAL" in workflow
 assert workflow.index("Save internal stage checkpoint") < workflow.index("Assemble release files")
 assert workflow.index("Upload FTP-ready title folder") < workflow.index("Validate actual downloadable FTP ZIP root")
 assert "name: Eden-Encore-PS5-FTP-PPSA99008" in workflow

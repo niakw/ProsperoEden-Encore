@@ -509,7 +509,9 @@ def main()->int:
     image_create = text.split('void IGraphicsSupervisor::CreateNativeImage(', 1)[1].split(
         'void IGraphicsSupervisor::ConfigureNativeWindowImagePool(', 1)[0]
     assert 'catch (const std::bad_alloc&)' in image_create
-    assert 'const u32 count = packet[18];' in image_create
+    # Reviewed 429 ABI: count=0 requests one image, matching Lichii/Eglantine.
+    assert 'const u32 count = std::max<u32>(packet[18], 1);' in image_create
+    assert 'const auto requirements = ::Service::AM::CalculateNativeImageRequirements(preferences, count);' in image_create
     assert 'm_next_image_id += count;' in image_create
     assert 'duplicated < count' in image_create and 'while (duplicated != 0)' in image_create
     assert 'packet[3] == 1' not in image_create

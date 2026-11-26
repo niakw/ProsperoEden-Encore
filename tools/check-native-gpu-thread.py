@@ -51,6 +51,17 @@ native_pending_wait = """            if (scheduler.HasPendingNativeChannels()) {
             } else {
                 state.queue.PopWait(next, stop_token);
             }"""
+# The native build requires both renderers; the common GPU owner is selected by the GL branch.
+cmake = (root / "headless/CMakeLists.txt").read_text()
+assert 'set(EDEN_MAINTAINED_G21_GPU "${EDEN_G21_GPU_ROOT}/gpu_gl_native.cpp")' in cmake
+owner = (root / "vendor/encore-active/eden-core/src/video_core/gpu_gl_native.cpp").read_text()
+release = owner.split("void ReleaseChannel(Control::ChannelState& to_release) {", 1)[1].split("/// Binds a renderer", 1)[0]
+assert "gpu_thread.RetireChannelAtBoundary(" in release
+assert "scheduler.RetireChannel(owner.get());" in release
+assert "RequestSyncOperation(" not in release and "WaitForSyncOperation(" not in release
+assert release.index("scheduler.RetireChannel(owner.get());") < release.index("std::scoped_lock lock{channel_mutex};")
+assert "last_sync_fence.load(std::memory_order_acquire)" in owner
+assert "std::make_shared<std::vector<u8>>()" in owner
 if sys.argv[1:] == ['--source-only']:
     # Validate the maintained compiled worker without requiring a PS5 SDK,
     # generated cache or host C++ compilation.
@@ -137,7 +148,23 @@ assert untraced.count(progress_marker) == 1
 untraced = untraced.replace(progress_marker, '            state.signaled_fence.store(next.fence);')
 assert untraced.count('        unsigned completed_gpu_commands = 0;\n') == 1
 untraced = untraced.replace('        unsigned completed_gpu_commands = 0;\n', '')
-assert body in untraced, 'GPU worker semantics changed beyond dispatch markers and startup animation wait'
+retire_branch = ('            } else if (auto* retire = std::get_if<RetireChannelCommand>(&next.data)) {\n'
+                 '                // Unlike TickWork from a draw, this is outside all dispatch leases.\n'
+                 '                retire->action();\n')
+assert untraced.count(retire_branch) == 1
+untraced = untraced.replace(retire_branch, '', 1)
+# Replay only the GPU completion lock split on the historical audit copy.
+# The real selected method is compiled by the FIFO saturation witness.
+notify_current = """                // The producer may hold write_lock while the FIFO is full.
+                // Never acquire it here: only this separate completion mutex
+                // participates in the wait/notify handshake.
+                std::scoped_lock lk{state.completion_lock};"""
+notify_old = """                // We have to lock the write_lock to ensure that the condition_variable wait not get a
+                // race between the check and the lock itself.
+                std::scoped_lock lk{state.write_lock};"""
+assert untraced.count(notify_current) == 1
+untraced = untraced.replace(notify_current, notify_old, 1)
+assert body in untraced, 'GPU worker semantics changed beyond reviewed dispatch-boundary retirement and startup wait'
 
 assert 'stop_source.get_token()' in worker and 'thread.get_stop_token()' not in worker
 assert 'ThreadManager::~ThreadManager() { Stop(); }' in worker
@@ -339,3 +366,12 @@ with tempfile.TemporaryDirectory(prefix='eden-gpu-thread-') as folder:
     failed = subprocess.run([str(temp / 'check'), 'throw'], capture_output=True, text=True, timeout=15)
     assert failed.returncode == 0 and '[ProsperoEden] GPU worker: injected worker failure' in failed.stderr
 print('Native GPU stack, stop/wake/join, creation failures and blocked-command teardown ordering/rejection PASS')
+
+# Native channel retirement must use a distinct worker FIFO command: a draw's
+# TickWork may execute inside the scheduler's shared epoch/execution leases.
+owner = (root / "vendor/encore-active/eden-core/src/video_core/gpu_vulkan.cpp").read_text()
+release = owner.split("void ReleaseChannel(Control::ChannelState& to_release) {", 1)[1].split("/// Binds a renderer", 1)[0]
+assert "gpu_thread.RetireChannelAtBoundary(" in release
+assert "scheduler.RetireChannel(owner.get());" in release
+assert "RequestSyncOperation(" not in release and "WaitForSyncOperation(" not in release
+assert release.index("scheduler.RetireChannel(owner.get());") < release.index("std::scoped_lock lock{channel_mutex};")

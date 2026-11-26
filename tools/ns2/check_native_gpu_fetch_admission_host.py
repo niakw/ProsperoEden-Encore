@@ -37,13 +37,27 @@ for name in ('dma_pusher.cpp','dma_pusher_dev.cpp'):
     assert '#ifdef PS5_NATIVE' in step
     assert 'NativeGpfifoFetchMapped(' in step
     assert 'memory_manager.IsFullyMappedRange(addr, bytes)' in step
-    assert 'throw std::runtime_error("Native GPFIFO command unmapped at GPU fetch")' in step
+    # Shipping dma_pusher.cpp reports the native fault and rethrows through
+    # FailNativeSubmission; the dev-only variant retains a direct throw.
+    # Neither may silently return false and publish an unexecuted GPU fence.
+    fatal = 'Native GPFIFO command unmapped at GPU fetch'
+    if name == 'dma_pusher.cpp':
+        fatal_call = f'FailNativeSubmission("{fatal}");'
+        helper_body = source.split(
+            '[[noreturn]] void DmaPusher::FailNativeSubmission(const char* message) {', 1
+        )[1].split('\n}', 1)[0]
+        assert 'NativeGpuChannelRegistry::Instance().ReportFault(&channel_state);' in helper_body
+        assert 'std::rethrow_exception(error);' in helper_body
+        assert 'throw std::runtime_error(message);' in helper_body
+    else:
+        fatal_call = f'throw std::runtime_error("{fatal}");'
+    assert fatal_call in step
     assert 'return false;' in step.split('NativeGpfifoFetchMapped(',1)[1].split('if (subchannels[dma_state.subchannel]',1)[0]
     fetch=step.index('NativeGpfifoFetchMapped(')
     assert step.index('dma_state.dma_get = header.addr;') < fetch
     assert fetch < step.index('memory_manager.IsMemoryDirty(') < step.index('ProcessCommands(headers);')
     assert step.index('if (signal_sync && !synced)') < fetch
-    assert step.index('throw std::runtime_error(') < step.index('ProcessCommands(headers);')
+    assert step.index(fatal_call) < step.index('ProcessCommands(headers);')
     assert 'signal_sync = explicit_sync && user_sync;' in step
     assert 'NativeGpuChannelRegistry::Instance().IsNative(' in step
     assert 'if (header.size > 0) {' in step
@@ -160,7 +174,24 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     ioctl_target=ioctl_stage/'core/hle/service/nvdrv/devices/ioctl_serialization.h'
     ioctl_target.parent.mkdir(parents=True,exist_ok=True)
     shutil.copyfile(ioctl_owner,ioctl_target)
-    includes=[native_tiling,nvdec_stage,ioctl_stage,shader,abi,ROOT/'headless',
+    # Native core's vendor/eden-threading CMake stages the H05 NVDRV
+    # SyncpointManager ABI BEFORE pinned Eden. Include the same root in this
+    # real-TU compilation witness, otherwise GCC sees the obsolete upstream
+    # header and reports CaptureNativeSyncpointLease as undeclared.
+    h05=ROOT/'vendor/encore-active/eden-sync/overrides/h05-syncpoint'
+    h05_header=h05/'core/hle/service/nvdrv/core/syncpoint_manager.h'
+    h05_cmake=(ROOT/'vendor/encore-active/eden-threading/native-hle-overrides.cmake').read_text()
+    assert h05_header.is_file()
+    assert 'CaptureNativeSyncpointLease(u32 id)' in h05_header.read_text()
+    assert 'target_include_directories(core BEFORE PUBLIC "${_encore_h05_header_root}")' in h05_cmake
+    assert 'include("${PORT_ROOT}/vendor/encore-active/eden-threading/native-hle-overrides.cmake")' in cmake
+    # Renderer mapping leases and guest-memory policy are supplied by
+    # the shared native dirty-header root in the shipping compiler graph.
+    native_dirty=ROOT/'vendor/encore-active/eden-core/overrides'
+    assert (native_dirty/'core/native_renderer_lifetime.h').is_file()
+    assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake
+    assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake
+    includes=[h05,native_tiling,nvdec_stage,ioctl_stage,shader,abi,native_dirty,ROOT/'headless',
               *[ROOT/'vendor/encore-active/ns2-runtime'/n for n in (
                   'kernel_wait64','gpu_access_svc','gpu_dispatch','nvdrv_gpu',
                   'nvdrv_as','gpu_session','graphics_supervisor','self_controller',

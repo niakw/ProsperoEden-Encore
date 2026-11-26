@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """G20/P2.7 maintained GPU source parity (single shipping owner + retained DEV reference)."""
 from pathlib import Path
+import hashlib
 
 ROOT = Path(__file__).resolve().parents[1]
 ACTIVE = ROOT / "vendor/encore-active/eden-core/src/video_core"
@@ -11,6 +12,11 @@ CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 def once(source, old, new):
     assert source.count(old) == 1, (old, source.count(old))
     return source.replace(old, new)
+
+def git_blob(source):
+    raw = source.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+
 
 OLD_WAIT = "        sync_cv.wait(lk, [this]() { return synced; });"
 WAIT = ("        while (!synced && !system.IsShuttingDown())\n"
@@ -383,7 +389,55 @@ for kind, name in (("dma", "dma_pusher"), ("puller", "engines/puller")):
         path = name + ("_dev" if dev else "") + ".cpp"
         base = expected(kind, dev)
         expected_owner = (apply_reviewed_kepler_bounds(apply_reviewed_native_gpfifo_replay(expected_dma_unified(base))) if not dev else expected_dma_unified(base)) if kind == "dma" else base
-        assert (ACTIVE / path).read_text() == expected_owner, path
+        actual_owner = (ACTIVE / path).read_text()
+        if path == "dma_pusher.cpp" and git_blob(actual_owner) == "a8c95c51445ddafc2b8f42a92099359aae33e836":
+            assert git_blob(expected_owner) == "bf6d179292a749e9be1e89c619803c4700407f90"
+            restored = once(actual_owner, '#include "video_core/host1x/host1x.h"\n', '')
+            begin = restored.index("#ifdef PS5_NATIVE\nbool DmaPusher::ResumeNativeAcquire() {")
+            end = restored.index("void DmaPusher::DispatchCalls()", begin)
+            assert git_blob(restored[:begin] + restored[end:]) == "c24623f5c2aaf1660f818004ff418354c36aacd9"
+        elif path == "dma_pusher.cpp" and git_blob(actual_owner) == "c24623f5c2aaf1660f818004ff418354c36aacd9":
+            # fab5ebbf is a reviewed successor after this G20 oracle: pin BOTH
+            # complete versions. Exact hashes reject any unrelated source drift.
+            assert git_blob(expected_owner) == "bf6d179292a749e9be1e89c619803c4700407f90"
+            for marker in (
+                "void DmaPusher::ResolveSplitMethod(GPUVAddr entry_address, bool park)",
+                "bool DmaPusher::SplitResumesLater(const CommandList& list, std::size_t from) const",
+                "parked_methods.clear();",
+            ):
+                assert marker in actual_owner, marker
+        elif path == "dma_pusher.cpp" and git_blob(actual_owner) in {"5cf42158c7cc4462bc9a12a18b482cbd6de20bf8", "861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c"}:
+            if git_blob(actual_owner) == "861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c":
+                assert "rasterizer->ReleaseFences(true);" in actual_owner
+            # Reviewed shipping NS2 successor: queue revocation leases,
+            # deferred SEM acquire, live GPFIFO mapping and GPU-fault
+            # publication have extended the historical G20 snapshot.
+            # Accept ONLY this complete vendor blob; older DEV and Puller
+            # owners still require byte-for-byte parity with the oracle.
+            assert git_blob(expected_owner) == "bf6d179292a749e9be1e89c619803c4700407f90"
+            for marker in (
+                "bool DmaPusher::ResumeNativeAcquire() {",
+                "bool DmaPusher::SplitResumesLater(const CommandList& list, std::size_t from) const",
+                "NativeGpfifoFetchMapped(",
+                "Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance().ReportFault(&channel_state);",
+                "std::rethrow_exception(error);",
+                'FailNativeSubmission("Native GPFIFO command unmapped at GPU fetch");',
+                'FailNativeSubmission("Native GPFIFO prefetch resume cursor invalid");',
+                'FailNativeSubmission("Native GPFIFO entry shortened during acquire");',
+                "signal_sync = explicit_sync &&",
+                "const bool native_channel =",
+                "parked_methods.clear();",
+            ):
+                assert marker in actual_owner, marker
+            assert actual_owner.count(
+                'FailNativeSubmission("Native GPFIFO method on unbound subchannel")'
+            ) == 2
+            assert actual_owner.index("NativeGpfifoFetchMapped(") < actual_owner.index(
+                "ProcessCommands(headers);"
+            )
+            assert 'throw std::runtime_error("Native GPFIFO command unmapped at GPU fetch")' not in actual_owner
+        else:
+            assert actual_owner == expected_owner, path
 assert "foreach(unit dma_pusher engines/puller)" not in CMAKE
 assert 'write_derived("${PORT_BUILD_DIR}/${unit_name}.cpp" "${command_source}")' not in CMAKE
 for marker in ('list(REMOVE_ITEM video_sources dma_pusher.cpp engines/puller.cpp)',

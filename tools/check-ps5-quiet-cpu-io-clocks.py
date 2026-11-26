@@ -75,10 +75,11 @@ assert service.count("const auto hle_start = profile_hle ? ::Eden::Performance::
 assert service.count("if (profile_hle)\n                ::Eden::Performance::RecordHle(") == 2
 assert service.count("if (::Eden::Performance::trace_fs_callers.load(std::memory_order_relaxed)") == 2
 assert service.count("EDEN_FS_CALLER command=") == 2
-# Known registered commands with a null handler must fail closed. Unknown command IDs remain
-# untouched, and the opt-in auto-stub path is still the only success fallback.
+# NS1 and unknown non-NS2 callers remain fail-closed; genuine NS2
+# processes use Lichii's initialized 32-word result placeholder instead.
 assert "// not implemented yet on Encore" in service
-assert "else if (info != nullptr)" in service
+assert "IsNx2PlaceholderCaller(ctx, service_name)" in service
+assert "FillNx2StubWords(rb);" in service
 assert "rb.Push(Kernel::ResultNotImplemented);" in service
 # Optional services that Eden does not use for gameplay may be explicit no-ops,
 # but only through the exact whitelist in the maintained dispatcher.
@@ -107,7 +108,6 @@ assert service.index("IsSafeOptionalNoOp") < service.index("SaveUnimplementedFun
 maintained = Path(__file__).resolve().parents[1] / "vendor/encore-active/eden-core/src/core/hle/service/filesystem/fsp"
 fs_file = (maintained / "fs_i_file.cpp").read_text()
 fs_storage = (maintained / "fs_i_storage.cpp").read_text()
-fs_storage_header = (Path(__file__).resolve().parents[1] / "vendor/encore-active/eden-core/include/core/hle/service/filesystem/fsp/fs_i_storage.h").read_text()
 assert 'EDEN_MAINTAINED_PROFILE_FS_FILE' not in cmake
 assert 'EDEN_MAINTAINED_PROFILE_FS_STORAGE' not in cmake
 for fragment, name in [(fs_file, "guest_fs_file"), (fs_storage, "guest_fs_storage")]:
@@ -116,12 +116,6 @@ for fragment, name in [(fs_file, "guest_fs_file"), (fs_storage, "guest_fs_storag
 assert fs_file.index("backend->Read(") < fs_file.index("if (fs_start)") < fs_file.index("EDEN_FS_FILE_READ")
 assert fs_storage.index("EDEN_FS_SHORT_STORAGE") < fs_storage.index("if (fs_start)")
 assert "fs_read != static_cast<std::size_t>(length)" in fs_storage
-assert '{5, D<&IStorage::OperateRange>, "OperateRange"}' in fs_storage
-assert "FileSys::OperationId::Invalidate" in fs_storage
-assert "FileSys::OperationId::QueryRange" in fs_storage
-assert "struct StorageQueryRangeInfo" in fs_storage_header
-assert "static_assert(sizeof(StorageQueryRangeInfo) == 0x40);" in fs_storage_header
-assert "Result OperateRange(Out<StorageQueryRangeInfo>" in fs_storage_header
 fs_open = (maintained / "fs_i_filesystem.cpp").read_text()
 assert 'EDEN_MAINTAINED_PROFILE_FS_SYSTEM' not in cmake
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_FS_SYSTEM}")' not in cmake

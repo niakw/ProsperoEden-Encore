@@ -5570,3 +5570,9 @@ Le zéro historique n'est PAS une preuve de qualification runtime exhaustive. Le
 🟢 **26/11/2026 — Adaptations NS1 non conflictuelles conservées.** `window_system.cpp` a été vérifié comme superset strict du fichier main : toutes les 537 lignes main sont présentes dans le même ordre, avec seulement le filtrage NS1 du message Capture en supplément ; il conserve aussi le correctif main `m_exit_sent`. Le manifeste backports n'a aucun conflit de valeur : 254 entrées sont NS1-only et l'unique entrée changée par les deux côtés est identique. Il reste donc intact.
 
 **Statut :** aucune fusion vers main, aucun merge parent, aucun build PS5 manuel. Le gitlink moteur est repinné sur ce vendor adapté ; les conflits moteur (CMake/oracles/doc) restent à reprendre.
+
+### 2026-11-26 — Rattrapage main → NS1 : lot moteur source-checks/docs
+
+🟢 **26/11/2026 — 20 fichiers repris byte-for-byte depuis main `9db3675fe59d38fe837b7c9861157deda435a7a1`.** Les propriétaires runtime vérifiés par ces checks sont déjà synchronisés avec main côté vendor ; leurs anciens oracles NS1 n'ont donc plus à reconstruire des états intermédiaires. Sont repris notamment les reçus DMA, Core shutdown, Guest GPU sync, native source syntax, F07 prewarm, cache diagnostics, G21 shutdown et les checks NS2 GPU/sparse, ainsi que les trackers/documentation déjà modifiés par main.
+
+**Non touchés dans ce lot :** `headless/CMakeLists.txt` et `r23_self_controller_240_ps5.h` sont des supersets vérifiés de main ; les gros oracles dépendants du gitlink (`check-active-source-inventory`, `check-eden-optimization-coverage`, `check-fc27-ssbo-engine-selection`, `check-final-vendor-fc27-p0-source`, `check-vendored-vulkan-fork`, `check-vendor-consolidation-debt`) et les installateurs d'overlays restent à adapter explicitement au vendor NS1 `dd84b96b`.

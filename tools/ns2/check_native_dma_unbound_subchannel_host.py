@@ -79,6 +79,13 @@ public:
     std::array<Engine*,8> subchannels{};
     std::array<u32,8> subchannel_type{};
     u32 channel_state{};
+    unsigned native_faults{};
+    // Host fixture for the shipping fatal path. The real runtime owner is
+    // checked separately for registry fault reporting and rethrow.
+    [[noreturn]] void FailNativeSubmission(const char* message) {
+        ++native_faults;
+        throw std::runtime_error(message);
+    }
     void CallMethod(u32 argument);
     void CallMultiMethod(const u32* start, u32 num_methods);
 };
@@ -106,6 +113,8 @@ int main() {
     try { dma.CallMultiMethod(words,2); }
     catch (const std::runtime_error&) { ++retired; }
     assert(retired==2 && errors==4);
+    // Shipping PS5 owner reports both faults; DEV-only source throws directly.
+    assert(dma.native_faults == __EXPECTED_NATIVE_FAULTS__);
     native.native=false; // same source still preserves the Maxwell path.
 #endif
     Engine engine;
@@ -140,7 +149,17 @@ def source_methods(name: str) -> str:
     methods = START + methods
     assert methods.count('if (!subchannel) {') == 2, name
     assert methods.count('LOG_ERROR(HW_GPU, "GPFIFO method {:#x} on unbound subchannel {}"') == 2, name
-    assert methods.count('throw std::runtime_error("Native GPFIFO method on unbound subchannel")') == 2, name
+    fatal = ('FailNativeSubmission("Native GPFIFO method on unbound subchannel")'
+             if name == 'dma_pusher.cpp'
+             else 'throw std::runtime_error("Native GPFIFO method on unbound subchannel")')
+    assert methods.count(fatal) == 2, name
+    if name == 'dma_pusher.cpp':
+        helper = source.split(
+            '[[noreturn]] void DmaPusher::FailNativeSubmission(const char* message) {', 1
+        )[1].split('\n}', 1)[0]
+        assert 'NativeGpuChannelRegistry::Instance().ReportFault(&channel_state);' in helper
+        assert 'std::rethrow_exception(error);' in helper
+        assert 'throw std::runtime_error(message);' in helper
     assert methods.count('subchannel->ConsumeSink(system);') == 2, name
     return methods
 
@@ -156,7 +175,14 @@ def main() -> None:
         portions = methods.split('if (!subchannel) {')
         assert len(portions) == 3
         return tuple(port.split('            return;\n        }', 1)[0] for port in portions[1:])
-    assert guards(normal) == guards(dev), 'Normal and DEV unbound DMA guards diverged'
+    # Both variants share the precise branch and reject the same guest input;
+    # the shipping owner additionally reports the fault to the native channel
+    # registry before throwing. Normalize ONLY this reviewed fatal call.
+    assert tuple(
+        guard.replace('FailNativeSubmission("Native GPFIFO method on unbound subchannel")',
+                      'throw std::runtime_error("Native GPFIFO method on unbound subchannel")')
+        for guard in guards(normal)
+    ) == guards(dev), 'Normal and DEV unbound DMA guards diverged'
     assert normal.count('IsKeplerRegisterMethodValid(') == 2
     assert 'IsKeplerRegisterMethodValid(' not in dev
     compilers = [p for p in (shutil.which('clang++'), shutil.which('g++')) if p]
@@ -168,7 +194,9 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix='encore-native-unbound-') as temp:
         test_src = Path(temp) / 'test.cpp'
         for owner_name, methods in (('normal', normal), ('dev', dev)):
-            test_src.write_text(cpp.replace('__REAL_METHODS__', methods))
+            expected_faults = '2' if owner_name == 'normal' else '0'
+            test_src.write_text(cpp.replace('__REAL_METHODS__', methods).replace(
+                '__EXPECTED_NATIVE_FAULTS__', expected_faults))
             for compiler in dict.fromkeys(compilers):
                 for opt in (0, 2):
                     for ps5 in (False, True):

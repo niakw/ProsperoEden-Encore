@@ -190,6 +190,33 @@ def replay()->None:
                 'Unexpected replay successor',rel)
             generated=(stage/rel).read_bytes()
             current=(ACTIVE/rel).read_bytes()
+            if rel=='src/core/hle/service/ngc/ngc.cpp':
+                # The STPL patch now replays AFTER the fixture's R23 NGC
+                # successor. Prove the shipping guard and both historical
+                # layers independently, without accepting an arbitrary
+                # regenerated source or copying the maintained tree.
+                stpl_guard=(b'#if !defined(EDEN_NATIVE_SHARED_NS2_STPL_OWNER)\n'
+                    b'        server_manager->RegisterNamedService("stpl:u", '
+                    b'std::make_shared<IUserService>(system), 4);\n'
+                    b'#endif\n')
+                stpl_original=(b'        server_manager->RegisterNamedService("stpl:u", '
+                    b'std::make_shared<IUserService>(system), 4);\n')
+                assert current.count(stpl_guard)==1, 'Missing/duplicate NGC STPL ownership guard'
+                assert generated==current, 'Shipping NGC differs from exact post-R23/STPL replay'
+                historical=current.replace(stpl_guard,stpl_original,1)
+                assert len(historical)==entry['after_bytes'] and sha(historical)==entry['after_sha256'], (
+                    'NGC STPL inverse differs from reviewed R23 successor',rel)
+                assert spec['entries'][rel]['active']==sha(current)
+                prior=historical.decode('utf-8')
+                for hunk in reversed(entry['hunks']):
+                    assert prior.count(hunk['after'])==1, (
+                        'FW23/R23 exact reverse span moved',rel)
+                    prior=prior.replace(hunk['after'],hunk['before'],1)
+                before=prior.encode('utf-8')
+                assert len(before)==entry['before_bytes'] and sha(before)==entry['before_sha256'], (
+                    'NGC R23 predecessor not derivable from frozen patch replay',rel)
+                observed[rel]=spec['entries'][rel]
+                continue
             assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
                 'Historical FW23 patch replay drift',rel)
             assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (

@@ -963,8 +963,33 @@ SYNC_CPP=V/"encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"
 SYNC_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h"
 CTRL_CPP=V/"encore-active/eden-core/src/video_core/host1x/control.cpp"
 CTRL_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/control.h"
-assert blob(SYNC_CPP)=="abe89b570a18508123a5c14c49cf5a43935f620c"
+sync_blob=blob(SYNC_CPP)
+assert sync_blob in {"eb5e2ea63652f020b6e14497080ba3339a9c983c", "59ac07af5eab89e78b7089d1db58918f2506aafe", "abe89b570a18508123a5c14c49cf5a43935f620c"}
 SYNC_SOURCE=SYNC_CPP.read_text()
+sync_receipt_source=SYNC_SOURCE
+if sync_blob=="abe89b570a18508123a5c14c49cf5a43935f620c":
+    # Reverse the strict host-completion delta on the audit copy only.
+    # The stop-aware wait below is still extracted from the current owner.
+    for newer,older in (
+        ("    // Legacy guest/max-like progress is visible as soon as the command\n    // processor reaches the increment. Native NS2 completion must not be\n    // published here: the Vulkan work preceding this increment may still be\n    // in flight, and OunceVK treats an reached producer counter with a stale\n    // GPU marker as a fatal completion mismatch.\n    Increment(syncpoints_guest[id], wait_guest_cv, guest_action_storage[id]);", "    Increment(syncpoints_guest[id], wait_guest_cv, guest_action_storage[id], id);"),
+        ("    // The host counter retires only behind the renderer fence. Drive the\n    // native 64-bit producer count, transfer-memory mirror and GSV actions\n    // from this completed value so producer target + GPU marker stay ordered.\n    Increment(syncpoints_host[id], wait_host_cv, host_action_storage[id], id);", "    Increment(syncpoints_host[id], wait_host_cv, host_action_storage[id]);"),
+    ):
+        assert sync_receipt_source.count(newer)==1
+        sync_receipt_source=sync_receipt_source.replace(newer,older,1)
+    raw=sync_receipt_source.encode()
+    assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()=="59ac07af5eab89e78b7089d1db58918f2506aafe"
+    sync_blob="59ac07af5eab89e78b7089d1db58918f2506aafe"
+if sync_blob == "59ac07af5eab89e78b7089d1db58918f2506aafe":
+    # Reverse only the native NS2 counter/queue delta on the audit copy.
+    # Execute the current selected stop-aware WaitHost below.
+    native_added="SyncpointManager::ActionHandle SyncpointManager::RegisterNativeGuestAction(\n    u32 id, u64 target, bool wide, std::function<void()>&& action) {\n    if (id >= NUM_MAX_SYNCPOINTS) return {};\n    {\n        std::scoped_lock lk(guard);\n        if (!IsNativeGuestActionReady(native_guest_counts[id].load(std::memory_order_relaxed),\n                                      target, wide)) {\n            do { ++last_action_id; } while (last_action_id == 0);\n            auto& entry = native_guest_actions[id].emplace_back(0, last_action_id, std::move(action));\n            entry.native_target = target;\n            entry.native_wide = wide;\n            return entry.id;\n        }\n    }\n    action();\n    return {};\n}\n\nvoid SyncpointManager::DeregisterNativeGuestAction(u32 id, const ActionHandle& handle) {\n    if (id < NUM_MAX_SYNCPOINTS) DeregisterAction(native_guest_actions[id], handle);\n}\n\n"
+    native_increment="void SyncpointManager::Increment(std::atomic<u32>& syncpoint, std::condition_variable& wait_cv,\n                                 std::list<RegisteredAction>& action_storage,\n                                 std::optional<u32> mirrored_id) {\n    std::unique_lock lk(guard);\n    u64 native_value{};\n    if (mirrored_id) {\n        native_value = native_guest_counts[*mirrored_id].load(std::memory_order_relaxed) + 1;\n        if (guest_mirror) guest_mirror(*mirrored_id, native_value);\n    }\n    const u32 new_value{syncpoint.fetch_add(1, std::memory_order_acq_rel) + 1};\n    if (mirrored_id)\n        native_guest_counts[*mirrored_id].store(native_value, std::memory_order_release);\n    wait_cv.notify_all();\n    auto end = action_storage.begin();\n    while (end != action_storage.end() && end->expected_value <= new_value) ++end;\n    if (end == action_storage.begin() &&\n        (!mirrored_id || native_guest_actions[*mirrored_id].empty())) return;\n\n    DueActions due;\n    due.pending.splice(due.pending.end(), action_storage, action_storage.begin(), end);\n    if (mirrored_id) {\n        auto& native = native_guest_actions[*mirrored_id];\n        for (auto it = native.begin(); it != native.end();) {\n            auto candidate = it++;\n            if (IsNativeGuestActionReady(native_value, candidate->native_target,\n                                         candidate->native_wide))\n                due.pending.splice(due.pending.end(), native, candidate);\n        }\n    }\n    if (due.pending.empty()) return;\n"
+    legacy_increment="void SyncpointManager::Increment(std::atomic<u32>& syncpoint, std::condition_variable& wait_cv,\n                                 std::list<RegisteredAction>& action_storage,\n                                 std::optional<u32> mirrored_id) {\n    std::unique_lock lk(guard);\n    if (mirrored_id && guest_mirror) {\n        guest_mirror(*mirrored_id, syncpoint.load(std::memory_order_relaxed) + 1);\n    }\n    const u32 new_value{syncpoint.fetch_add(1, std::memory_order_acq_rel) + 1};\n    wait_cv.notify_all();\n    auto end = action_storage.begin();\n    while (end != action_storage.end() && end->expected_value <= new_value) ++end;\n    if (end == action_storage.begin()) return;\n\n    DueActions due;\n    due.pending.splice(due.pending.end(), action_storage, action_storage.begin(), end);\n"
+    assert sync_receipt_source.count(native_added)==1
+    assert sync_receipt_source.count(native_increment)==1
+    sync_receipt_source=sync_receipt_source.replace(native_added,"",1).replace(native_increment,legacy_increment,1)
+    raw=sync_receipt_source.encode()
+    assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()=="eb5e2ea63652f020b6e14497080ba3339a9c983c"
 _sync_new='''        lk.unlock();
         try {
             action();
@@ -989,12 +1014,12 @@ _sync_old='''        lk.unlock();
         lk.lock();
         due.running = 0;
         action_done_cv.notify_all();'''
-assert SYNC_SOURCE.count(_sync_new)==1
-_sync_prior=SYNC_SOURCE.replace(_sync_new,_sync_old,1).encode()
+assert sync_receipt_source.count(_sync_new)==1
+_sync_prior=sync_receipt_source.replace(_sync_new,_sync_old,1).encode()
 assert hashlib.sha1(b"blob "+str(len(_sync_prior)).encode()+bytes([0])+_sync_prior).hexdigest()==\
        "103ed91c68bae0238f2a2ce181e3e292845c19c1"
 print("NS1_HOST1X_THROWING_ACTION_EXACT_REVERSE_PASS prior_blob=103ed91c running_cleanup=1")
-assert blob(SYNC_HDR)=="4f45e7ca10bef7fadf94b4d08a310dea953e7315"
+assert blob(SYNC_HDR)==("a62b9a9e8019c2df085fc9d393fcbd4207cd78d7" if sync_blob=="59ac07af5eab89e78b7089d1db58918f2506aafe" else "4f45e7ca10bef7fadf94b4d08a310dea953e7315")
 assert blob(CTRL_CPP)=="fcbf4e092f054724b9fd4731c8dfec9917cea27a"
 assert blob(CTRL_HDR)=="fc1c4e3d47bdcf8ef282da02410940432051fcca"
 SYNC_HEADER=SYNC_HDR.read_text()

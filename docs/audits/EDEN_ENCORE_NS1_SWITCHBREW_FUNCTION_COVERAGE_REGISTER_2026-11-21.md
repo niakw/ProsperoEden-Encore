@@ -4990,4 +4990,19 @@ Le motif du 22/11 (« filtre partiel du cache courant ») n'est donc plus valabl
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 33 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
+### 2026-11-26 — FSP reader global requalifié : 33 → 32
+
+Base précédente : **33 lignes ouvertes**.
+
+Le PARTIEL historique `fsp-srv` cmd60 `OpenSaveDataInfoReader` est requalifié sur le modèle de stockage effectivement disponible dans Encore :
+- le reader global parcourt `System`, `User` et `Temporary`, les trois backings distincts représentés par `SaveDataFactory` ;
+- `SdUser` est volontairement fusionné sur le backing `User`, donc il n'existe pas de second arbre de saves à omettre ;
+- `SdSystem`, `ProperSystem` et `SafeMode` n'ont pas de backing distinct dans Encore et ne peuvent donc contenir aucune entrée que ce reader manquerait ;
+- `FindAllSaves(User)` inclut aussi les caches, tandis que les lots récents ont ajouté les index cache multiples, les `SaveDataId` persistants et l'ExtraData persistante.
+
+L'ancienne qualification « agrégation partielle System/User/Temporary » décrivait l'écart de représentation des espaces Horizon, pas une omission d'entrées dans le modèle de stockage shipping actuel.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 32 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
 

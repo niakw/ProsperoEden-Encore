@@ -4915,4 +4915,19 @@ Provenance : source Eden conservée immutable (`hid_server.cpp` upstream SHA-256
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 40 lignes ouvertes.**
 
 Aucun support physique Palma n'est revendiqué ; seul le faux succès et le crash/assert guest-contrôlable sont éliminés. Aucun build PS5 ni validation console revendiqué.
+### 2026-11-26 — VI shared-layer fail-closed : 40 → 38
+
+Base précédente : **40 lignes ouvertes**.
+
+Vendor **`b7dfe198236403cae82cd7743f808c877aebfb1a`** ferme les deux PARTIEL `ISystemDisplayService` cmd8250 `OpenSharedLayer` et cmd8252 `ConnectSharedLayer` :
+- auparavant, les deux commandes retournaient `ResultSuccess` sans créer ni publier aucun état shared-layer ;
+- cmd8251 `CloseSharedLayer` et cmd8253 `DisconnectSharedLayer` étaient déjà explicitement `ResultNotSupported`, ce qui rendait le lifecycle incohérent ;
+- cmd8250/cmd8252 utilisent désormais le même rejet `RejectUnsupportedSystemDisplayCommand`, sans fabriquer de layer ouvert/connecté ;
+- cmd8225 et cmd8254–8258 ne sont pas redirigés : le vrai `SharedBufferManager` reste utilisé pour handle, acquire, present, event et cancel.
+
+Le manifeste shipping est synchronisé pour `system_display_service.cpp` (SHA-256 `b3bd470493a05fc06d4caa8208e59bb3055407fa7038170d2039fcf376bdc46a`, 12 025 octets).
+
+**2 lignes PARTIEL quittent le pool : nouveau compteur global = 38 lignes ouvertes.**
+
+Aucun build PS5 ni validation console revendiqué.
 

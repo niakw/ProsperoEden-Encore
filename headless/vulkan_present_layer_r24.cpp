@@ -141,7 +141,7 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
     };
 
     if (!use_accelerated) {
-        UpdateRawImage(framebuffer, image_index);
+        UpdateRawImage(rasterizer, framebuffer, image_index);
     }
 
     VkImage source_image = texture_info ? texture_info->image : *raw_images[image_index];
@@ -617,7 +617,8 @@ void Layer::UpdateDescriptorSet(const Device& device, VkImageView image_view, Vk
     device.GetLogical().UpdateDescriptorSets(std::array{sampler_write}, {});
 }
 
-void Layer::UpdateRawImage(const Tegra::FramebufferConfig& framebuffer, size_t image_index) {
+void Layer::UpdateRawImage([[maybe_unused]] RasterizerVulkan& rasterizer,
+                           const Tegra::FramebufferConfig& framebuffer, size_t image_index) {
     const std::span<u8> mapped_span = buffer.Mapped();
 
 #ifndef PS5_NATIVE
@@ -651,15 +652,33 @@ void Layer::UpdateRawImage(const Tegra::FramebufferConfig& framebuffer, size_t i
     if (host_ptr) {
         const u64 tiled_size{Tegra::Texture::CalculateSize(
             true, bytes_per_pixel, framebuffer.stride, framebuffer.height, 1, block_height_log2, 0)};
+        // The raw fallback must observe GPU-owned bytes before unswizzling.
+        // GetPointer only proves the first page, not the complete tiled span.
+        std::vector<u8> fragmented_source;
+        const u8* source = device_memory.GetSpan(framebuffer_addr, tiled_size);
+        if (source) {
+            rasterizer.FlushRegion(framebuffer_addr, tiled_size);
+            source = device_memory.GetSpan(framebuffer_addr, tiled_size);
+        }
+        if (!source) {
+            // ReadBlock flushes both GPU caches and walks the actual mappings.
+            // No extra full-frame CPU copy on the contiguous fast path.
+            fragmented_source.resize(tiled_size);
+            device_memory.ReadBlock(framebuffer_addr, fragmented_source.data(), tiled_size);
+            source = fragmented_source.data();
+        }
+        Tegra::Texture::UnswizzleTexture(
+            linear_span, std::span(source, tiled_size),
+            bytes_per_pixel, framebuffer.width, framebuffer.height, 1, block_height_log2, 0);
 #else
     const u64 tiled_size{Tegra::Texture::CalculateSize(
         true, bytes_per_pixel, framebuffer.stride, framebuffer.height, 1, block_height_log2, 0)};
     const std::span<u8> linear_span = mapped_span.subspan(image_offset, linear_size);
     if (host_ptr) {
-#endif
         Tegra::Texture::UnswizzleTexture(
             linear_span, std::span(host_ptr, tiled_size),
             bytes_per_pixel, framebuffer.width, framebuffer.height, 1, block_height_log2, 0);
+#endif
     } else {
         // Never upload stale staging bytes if the guest framebuffer is missing.
         std::fill(linear_span.begin(), linear_span.end(), u8{0});

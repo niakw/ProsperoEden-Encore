@@ -72,7 +72,7 @@ assert "F07 P0.4 present flushes remaps before inspecting image cache" in genera
 draw_texture=raster.split("void RasterizerVulkan::DrawTexture() {",1)[1].split("void RasterizerVulkan::Clear(",1)[0]
 assert draw_texture.index("gpu_memory->FlushCaching();") < draw_texture.index("std::scoped_lock l{texture_cache.mutex};")
 assert "return {};" in raster.split("RasterizerVulkan::AccelerateDisplay(",1)[1].split("query_cache.NotifySegment",1)[0]
-assert "if (!use_accelerated) {\n        UpdateRawImage(framebuffer, image_index);" in layer
+assert "if (!use_accelerated) {\n        UpdateRawImage(rasterizer, framebuffer, image_index);" in layer
 for wf in (fast,full):
     assert "python3 -B tools/check-ps5-present-framebuffer-freshness-host.py" in wf
 
@@ -387,3 +387,68 @@ with tempfile.TemporaryDirectory(prefix="encore-c04-display-handle-") as d:
             assert result.returncode==0,(opt,native,result.stderr)
             assert "F07_C04_DISPLAY_NULL_HANDLE_FALLBACK_PASS" in result.stdout
             print("F07_C04_DISPLAY_NULL_HANDLE_FALLBACK_PASS",opt,"native",int(native))
+
+
+# Exercise the actual selected R24 raw-source fragment with separate CPU/GPU
+# bytes and fragmented or remapped device pages. No Vulkan driver is mocked as
+# a successful PS5 submission: this checks only the read-before-unswizzle policy.
+raw_start = layer.index("        // The raw fallback must observe GPU-owned bytes")
+raw_end = layer.index("        Tegra::Texture::UnswizzleTexture(", raw_start)
+raw_fragment = layer[raw_start:raw_end]
+raw_cpp = r'''
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cstdint>
+#include <vector>
+using u8=std::uint8_t;
+using u64=std::uint64_t;
+using DAddr=u64;
+struct Memory {
+    std::array<u8,8> cpu{},gpu{};
+    bool mapped=true,contiguous=true,remap_on_flush=false;
+    int flushes=0,reads=0,spans=0;
+    const u8* GetSpan(DAddr,u64 n) {
+        ++spans;
+        return mapped&&contiguous&&n==cpu.size()?cpu.data():nullptr;
+    }
+    void Flush() {++flushes;cpu=gpu;if(remap_on_flush)contiguous=false;}
+    void ReadBlock(DAddr,void* out,u64 n) {
+        ++reads;Flush();assert(n==cpu.size());
+        if(mapped)std::copy(cpu.begin(),cpu.end(),static_cast<u8*>(out));
+        else std::fill_n(static_cast<u8*>(out),n,0);
+    }
+};
+struct Rasterizer {Memory& mem;void FlushRegion(DAddr,u64){mem.Flush();}};
+void Raw(Memory& device_memory,Rasterizer& rasterizer,std::array<u8,8>& result){
+    const DAddr framebuffer_addr=0x1000;
+    const u64 tiled_size=8;
+    if(device_memory.mapped){
+__SOURCE__
+        std::copy_n(source,tiled_size,result.begin());
+    }else{result.fill(0);}
+}
+int main(){
+    for(int n=0;n<256;++n)for(bool mapped:{false,true})
+    for(bool contiguous:{false,true})for(bool remap:{false,true}){
+        Memory mem;mem.mapped=mapped;mem.contiguous=contiguous;mem.remap_on_flush=remap;
+        mem.cpu.fill(0x55);mem.gpu.fill(static_cast<u8>(n));
+        Rasterizer r{mem};std::array<u8,8> result;result.fill(0xff);Raw(mem,r,result);
+        for(auto b:result)assert(b==(mapped?static_cast<u8>(n):0));
+        if(!mapped)assert(mem.flushes==0&&mem.reads==0&&mem.spans==0);
+        else if(contiguous&&!remap)assert(mem.flushes==1&&mem.reads==0&&mem.spans==2);
+        else if(!contiguous)assert(mem.flushes==1&&mem.reads==1&&mem.spans==1);
+        else assert(mem.flushes==2&&mem.reads==1&&mem.spans==2);
+    }
+}
+'''.replace("__SOURCE__", raw_fragment)
+with tempfile.TemporaryDirectory(prefix="encore-f07-raw-read-") as d:
+    src=Path(d)/"raw.cpp"
+    src.write_text(raw_cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(d)/("raw"+opt[1:])
+        subprocess.run(["c++","-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=undefined","-fno-sanitize-recover=all",
+                        str(src),"-o",str(exe)],check=True,timeout=60)
+        subprocess.run([str(exe)],check=True,timeout=20)
+        print("F07_RAW_FRAMEBUFFER_READBACK_PASS",opt,"cases=2048")

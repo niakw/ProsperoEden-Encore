@@ -963,7 +963,7 @@ SYNC_CPP=V/"encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"
 SYNC_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h"
 CTRL_CPP=V/"encore-active/eden-core/src/video_core/host1x/control.cpp"
 CTRL_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/control.h"
-assert blob(SYNC_CPP)=="6b09b35a07aabfff0d79df4f098e4f5ea6f5631d"
+assert blob(SYNC_CPP)=="abe89b570a18508123a5c14c49cf5a43935f620c"
 SYNC_SOURCE=SYNC_CPP.read_text()
 _sync_new='''        lk.unlock();
         try {

@@ -5534,3 +5534,11 @@ Le zéro historique n'est PAS une preuve de qualification runtime exhaustive. Le
 🟢 **26/11/2026 — Trois-voies moteur.** Base `452fd7fe999757377175ab1eae1bb431877d1ccf`, main `9fba986ab0e97d8263569d129b52dc3f026e4497`, NS1 `201becb010db840ccad2bd596e617caf253685fe`. 258 chemins modifiés/ajoutés par main ont encore exactement le blob de base côté NS1 et sont repris byte-for-byte depuis main ; `headless/prosperoeden/ui/box-art-fallback.tsv`, supprimé uniquement par main, est supprimé également sur NS1. Aucun de ces 259 chemins ne contient une modification NS1 à préserver.
 
 **Après ce lot (instantané `9fba986a`) :** seuls les chemins réellement modifiés des deux côtés nécessitent une résolution ; les chemins NS1-only restent intacts. Aucun merge parent, aucune fusion vers main, aucun build PS5 manuel.
+
+### 2026-11-26 — Rattrapage main → NS1 — vendor snapshot 05bf05a8
+
+🟢 **26/11/2026 — Trois-voies vendor terminée pour le snapshot `05bf05a8dca75b3e12871ec886a810310cdf43d6`.** Base `224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c`. 138 chemins modifiés uniquement par main ont été repris byte-for-byte. Les 10 chemins modifiés des deux côtés ont été conciliés avec **priorité main sur chaque zone commune** : manifeste backports, WindowSystem, AOC, BSD, SSL, ApplicationFunctions, HID et SelfController. Les ajouts NS1 hors conflit restent présents.
+
+🟢 **26/11/2026 — Contrats sensibles après résolution.** AOC/BSD/SSL utilisent les tables IPC actuelles de main ; ApplicationFunctions utilise la table main et le témoin `SetTerminateResult` main tout en gardant les corps NS1 hors conflit ; HID utilise la table main et les handlers vibration 213/214 de main ; SelfController utilise les mappings main 2100/2200/2300/2400-2402 et son stub de réponse Nx2. Le gitlink moteur est repinné sur le vendor NS1 adapté `0322089faa332160d1707656d35ba02d8f81871a`, jamais sur vendor/main directement.
+
+**Statut :** rattrapage vendor terminé pour ce snapshot, mais pas encore validation PS5. Les chevauchements moteur restent à résoudre contre le main courant. Aucun merge vers main, aucun build PS5 manuel.

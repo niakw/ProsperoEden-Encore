@@ -32,13 +32,22 @@ Les conclusions de ce document sont donc rattachées au couple :
 
 > **Encore moteur `64e1a743` + vendor `9de08e4f`**
 
+🟢 **2026-11-26 — contrôle de continuité après commits concurrents :** `main` a avancé à
+`96ff6a6c208765e15d4da8cc2923e4cf156c4a42`, avec gitlink vendor toujours
+`9de08e4f4bbb903e25f330dde7b8185e19e078a1`. Les trois sélecteurs de build
+comparés n'ont pas dérivé : `headless/CMakeLists.txt` = `036767a2...`,
+`headless/gpu_native_observability.cmake` = `21372135...`,
+`headless/vulkan.cmake` = `a597985b...`. Les conclusions runtime ci-dessous
+restent donc applicables au HEAD contrôlé ; le déplacement de HEAD ne vaut pas
+nouvelle validation console.
+
 ## 0.2 Révisions upstream réellement lues
 
 | Dépôt | Branche / SHA comparé | Rôle |
 |---|---|---|
 | **Lichii** | `nx2@0288882f36692a94b56fa85177abdad0ec8be59d` | référence émulation NS2 principale |
 | **EglantinePS5** | `main@75a552ff945521eb31adf34f34ccb73a003809dc` | référence PS5 + arbre Eglantine embarqué |
-| **nxnative** | `main@96f1f0766344ed01b54dab8b61a6d2758985aafc` | oracle indépendant ciblé pour codec/audio/SDK NS2 |
+| **nxnative** | `main@35fea5c2ee781689ff224e614a8da71867a571bf` | oracle indépendant ciblé pour codec/audio/SDK NS2 ; `dm/host/hle_codec_video.c` reste blob `9b57466f...` |
 | **Eden vendor source** | inclus dans `9de08e4f` | baseline NS1 et propriétaires non remplacés |
 
 🟢 **2026-11-26 — contrôle des HEAD upstream effectué.**
@@ -228,6 +237,25 @@ Encore **ne détruit pas l'identité de classe Ampere** :
 
 Cette divergence est volontaire et permet à Encore de ne pas appliquer aveuglément des méthodes Maxwell lorsque les sémantiques Ampere diffèrent.
 
+## 4.2.1 Classe 0 : sémantique d'unbind/no-op différente
+
+🟢 **2026-11-26 — cas `SET_OBJECT class 0` contrôlé explicitement.**
+
+Lichii et Eglantine ont un cas dédié dans `ProcessBindMethod` : lorsqu'un canal
+NS2/Ampere reçoit la classe `0`, ils journalisent l'unbind et **retournent sans
+faire tomber le canal**.
+
+Encore n'a pas ce cas spécial dans le propriétaire natif. Après retrait des
+owners Ampere précédents, la classe `0` tombe dans le `default` ; sur un canal
+natif, Encore retire le pointeur de subchannel puis appelle
+`FailNativeSubmission("Native GPFIFO SET_OBJECT class unsupported")`.
+
+**DIVERGENCE DE CONTRAT CONFIRMÉE — candidat P0 conditionnel.** Elle n'est pas
+déclarée fautive sans trace : si un log montre `EDEN_NS2_GPU_BIND ... cls=0000`
+ou un rejet `SET_OBJECT class unsupported` immédiatement avant le freeze,
+ce point devient une cible directe. En l'absence de cette signature, il ne faut
+pas modifier la politique de bind uniquement pour copier l'upstream.
+
 ## 4.3 C797 : `CallNative3D`
 
 Encore possède une fonction absente de Lichii/Eglantine :
@@ -287,6 +315,13 @@ Leur `ProcessSemaphoreExecute` :
 - Encore modélise une vraie attente et interdit un faux succès.
 
 Cela **ne signifie pas** qu'Encore doit copier le « continue » upstream : cela pourrait masquer une synchronisation réellement manquante et produire corruption/fences contrefaites. En revanche, si un jeu reste figé sur un `pending_native_acquire`, il faut immédiatement rechercher **le producteur attendu, l'adresse et la valeur de release**.
+
+**Précision importante :** Lichii/Eglantine possèdent bien un
+`pending_acquire` / `ResumeAcquire` pour l'autre chemin de sémaphore
+(`ProcessSemaphoreTriggerMethod`). Cette présence ne contredit pas le diff
+ci-dessus : la divergence documentée ici est spécifique au
+**`ProcessSemaphoreExecute` Ampere**, qui continue après comparaison non
+satisfaite dans les deux upstreams contrôlés.
 
 ## 4.7 Conclusion R-02
 
@@ -521,7 +556,7 @@ Lichii/Eglantine ont un registre decoder/native-image plus direct et une convent
 
 ## 7.6 Référence indépendante nxnative
 
-🟢 **2026-11-26 — nxnative `96f1f076` recontrôlé après changement de HEAD.**
+🟢 **2026-11-26 — nxnative `35fea5c2` recontrôlé après changement de HEAD ; `dm/host/hle_codec_video.c` reste exactement le blob `9b57466fd2a029c856c77d9a9cff7ced3aa1b28c`.**
 
 `dm/host/hle_codec_video.c` blob `9b57466fd2a029c856c77d9a9cff7ced3aa1b28c` documente, à partir d'un SDK NS2 observé, la séquence :
 
@@ -852,6 +887,7 @@ Cette section sépare les différences réellement trouvées des simples zones o
 | D-06 | `aud:u` cmd1/2 : managers privés Encore vs managers enregistrés Lichii/Eglantine | durée de vie audio | buffers/session se bloquent après ouverture |
 | D-07 | AM cmd40 : vraie interface performance Encore vs stub générique upstream | HLE AM | commande interne incompatible observée |
 | D-08 | pipeline/cache Maxwell : politiques prebuild/eviction/rebuild différentes | performance P1 | hash/scène FC27 montre le stall dans ce chemin |
+| D-09 | `SET_OBJECT class 0` : toléré/no-op d'unbind upstream, faute native Encore | GPU P0 conditionnel | log `cls=0000` / rejet SET_OBJECT juste avant le blocage |
 
 Aucune ligne de cette table ne signifie « bug résolu » ni « bug démontré sur PS5 ».
 
@@ -897,12 +933,13 @@ Pour les quatre titres NS2 actuellement sans première frame stable, l'ordre n'e
 | Date | Zone | Contrôle réellement réalisé | Révisions |
 |---|---|---|---|
 | 🟢 2026-11-26 | BASE | HEAD moteur, gitlink vendor, vendor/main | moteur `64e1a743`, vendor `9de08e4f` |
+| 🟢 2026-11-26 | CONTINUITÉ | HEAD moteur après commits concurrents + blobs sélecteurs inchangés | moteur `96ff6a6c`, vendor `9de08e4f` |
 | 🟢 2026-11-26 | SOURCES | CMake/overlays GPU, Fermi2D, Vulkan, audio R23 | moteur `64e1a743` |
 | 🟢 2026-11-26 | R-01 | CDMA, Control, NVDEC, VIC | vendor `9de08e4f`, Lichii `0288882f`, Eglantine `75a552ff` |
 | 🟢 2026-11-26 | R-02 | bind C797/C7C0/C7B5, dispatch, sémaphores | mêmes SHAs |
 | 🟢 2026-11-26 | R-03 | Fermi2D, software blitter, surface formats | mêmes SHAs |
 | 🟢 2026-11-26 | R-04 | KThread, KScheduler, WaitSynchronization | mêmes SHAs |
-| 🟢 2026-11-26 | R-05 | 991/911/912 + layout + nxnative codec protocol | + nxnative `96f1f076` |
+| 🟢 2026-11-26 | R-05 | 991/911/912 + layout + nxnative codec protocol | + nxnative `35fea5c2` (oracle codec blob inchangé) |
 | 🟢 2026-11-26 | R-06 | audio owner final, aud:u, managers + référence nxnative | mêmes SHAs |
 | 🟢 2026-11-26 | R-07 | LM/NIFM/ACC/SM/AM tables + graphics scale ABI | mêmes SHAs |
 | 🟢 2026-11-26 | R-08 | pipeline cache, slow path, translation Maxwell | mêmes SHAs |
@@ -933,9 +970,10 @@ Priorité conditionnelle la plus élevée :
 
 1. **GSV 991/911 layout decoder** si ces commandes apparaissent dans les logs.
 2. **Ampere semaphore / C797 / C7C0** si le dernier progrès GPU se situe là.
-3. **`aud:u` cmd0 ou manager privé** si la chaîne audio intervient avant le blocage.
-4. **format non nul inconnu en blit** si une ressource fautive le montre.
-5. **pipeline/shader FC27** uniquement par hash/scène.
+3. **SET_OBJECT class 0 / `cls=0000`** si le dernier bind natif est rejeté ; vérifier d'abord si le titre demandait réellement un unbind.
+4. **`aud:u` cmd0 ou manager privé** si la chaîne audio intervient avant le blocage.
+5. **format non nul inconnu en blit** si une ressource fautive le montre.
+6. **pipeline/shader FC27** uniquement par hash/scène.
 
 ## D — Travail périphérique
 

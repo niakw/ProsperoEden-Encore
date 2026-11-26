@@ -3177,6 +3177,43 @@ launcher_consolidation_active_paths = set()
 for path, (current_blob, predecessor_blob) in launcher_consolidation_predecessors.items():
     assert path in drift_index, ("Missing launcher consolidation owner", path)
     actual = drift_index[path]["actual"]
+    # Current launcher adds only independently reviewed owner successors.
+    # Reconstruct their Nov25 predecessors on audit COPIES and compare every
+    # resulting Git blob before using the immutable consolidation receipts.
+    if path == "headless/prosperoeden/pe/ui/services.hpp" and actual == "bceca5c51f0755533f2915bdb7720aff89a3a302":
+        source = (ROOT/path).read_text()
+        spine = "    std::string box_spine{}; // worker-resolved path for exact texture invalidation\n"
+        assert source.count(spine) == 1
+        previous = source.replace(spine, "", 1).encode()
+        original = hashlib.sha1(
+            b"blob " + str(len(previous)).encode() + b"\0" + previous).hexdigest()
+        assert original == "534adb20bded1d44bc057bacc36dce2d93be770d", ("Spine predecessor drift", original)
+        actual = original
+    if path == "headless/prosperoeden/pe/ui/home.cpp" and actual == "96902efa0600d8669511022410e192f2e2866cfb":
+        source = (ROOT/path).read_text()
+        current_banner = """    // Keep retrying the banner while the screenshot fallback is visible.
+    const Cover banner_picture = prefs_.show_game_background &&
+            case_media::BackgroundAllowed(hero_banner)
+        ? c.textures.cover(hero_banner, 1920.0f) : Cover{};
+    const std::string hero_artwork =
+        banner_picture.texture != 0 ? hero_banner :
+        case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};
+"""
+        previous_banner = """    const std::string hero_artwork =
+        case_media::BackgroundAllowed(hero_banner) && !c.textures.known_missing(hero_banner)
+            ? hero_banner
+            : case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};
+"""
+        current_picture = """        const Cover hero_picture = hero_artwork == hero_banner
+            ? banner_picture : c.textures.cover(hero_artwork, 1920.0f);"""
+        previous_picture = "        const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f);"
+        assert source.count(current_banner) == 1 and source.count(current_picture) == 1
+        previous = source.replace(current_banner, previous_banner, 1).replace(
+            current_picture, previous_picture, 1).encode()
+        original = hashlib.sha1(
+            b"blob " + str(len(previous)).encode() + b"\0" + previous).hexdigest()
+        assert original == "0536ef9acf649865cb8c9d1220ef89f329d3960d", ("Banner predecessor drift", original)
+        actual = original
     if actual == current_blob or actual in launcher_loading_successors.get(path, set()):
         drift_index[path]["actual"] = predecessor_blob
         launcher_consolidation_active_paths.add(path)

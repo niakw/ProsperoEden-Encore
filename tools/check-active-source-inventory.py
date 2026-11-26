@@ -3285,6 +3285,28 @@ post_f07_gpu_wait_receipts = {
     "headless/vk_rasterizer_shutdown_ps5.h": "07e18cab8a8df1c862903d9e99a521797dd7cf3e",
     "headless/vk_buffer_cache_shutdown_ps5.cpp": "fb55d7b30e95afbe567d41ebcd4b89229d6447b0",
 }
+# Selected R08 and forced-fence owners are already sealed in F07.
+# Share that exact two-file successor dictionary rather than copy SHA pins.
+if shipping_vendor == "806252e96253489c18d11551bf2dcfd668502719":
+    import ast
+    f07_ast = ast.parse((root/"tools/check-eden-optimization-coverage.py").read_text())
+    wait_updates = [
+        ast.literal_eval(node.args[0])
+        for node in ast.walk(f07_ast)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "post_f07_gpu_wait_owners"
+        and node.func.attr == "update"
+        and len(node.args) == 1 and isinstance(node.args[0], ast.Dict)
+    ]
+    assert len(wait_updates) == 1
+    assert set(wait_updates[0]) == {
+        "headless/fence_manager_ps5.h",
+        "headless/vulkan_present_manager_ps5.cpp",
+    }
+    assert set(wait_updates[0]).issubset(post_f07_gpu_wait_receipts)
+    post_f07_gpu_wait_receipts.update(wait_updates[0])
 post_f07_gpu_wait_owners = set(post_f07_gpu_wait_receipts)
 for path, blob in post_f07_gpu_wait_receipts.items():
     assert subprocess.check_output(["git", "hash-object", path], cwd=root,

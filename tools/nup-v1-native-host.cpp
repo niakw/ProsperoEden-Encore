@@ -182,6 +182,15 @@ int main(int argc, char** argv) {
     assert(Read(edition_exefs->GetFile("main")) == "native-main");
     assert(Read(edition_exefs->GetFile("main.npdm")) == "switch2-npdm");
     assert(Read(edition.CreateRomFS()) == "state.bin=native-state\n");
+    // The selected 04-platform NPDM must retain the 01-platform
+    // standalone-update AoC family, but only with the verified program ID.
+    Eden::NupV1::Native::ContentSet scoped_edition{
+        edition_mount, 0x0400123400000001ULL};
+    assert(scoped_edition.AddOns().size() == 1);
+    assert(Read(scoped_edition.CreateAddOnRomFS(1)) == "bonus.bin=edition-addon\n");
+    Eden::NupV1::Native::ContentSet foreign_edition{
+        edition_mount, 0x0400123400002001ULL};
+    assert(foreign_edition.AddOns().empty());
     const auto native_package_root = edition_mount->PackageRoot(0);
     const auto native_program = native_package_root->GetSubdirectory("program1");
     const auto native_romfs = native_program->GetSubdirectory("romfs");

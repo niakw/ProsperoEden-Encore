@@ -417,4 +417,11 @@ def embedded_edition_fixture() -> bytes:
             "program1/romfs/state.bin": b"native-state",
             "program1/romfs/assets/native.bin": b"native-assets",
         },
+    }, {
+        "title_id": 0x0100123400001000,
+        "version": 2,
+        "kind": 2,
+        "files": {
+            "romfs/bonus.bin": b"edition-addon",
+        },
     }])

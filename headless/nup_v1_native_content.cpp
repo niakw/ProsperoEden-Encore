@@ -19,6 +19,7 @@ namespace {
 struct EmbeddedSwitch2Program {
     FileSys::VirtualDir exefs;
     FileSys::VirtualDir romfs;
+    std::uint64_t program_id{};
 };
 
 // Lichii SelectProgram: a standalone Switch 1 update NUP may carry a Switch
@@ -55,7 +56,7 @@ std::optional<EmbeddedSwitch2Program> FindEmbeddedSwitch2Program(const Mount& mo
         !metadata.IsSwitch2() || metadata.GetTitleID() != expected_id)
         return std::nullopt;
     return EmbeddedSwitch2Program{
-        exefs, program1->GetSubdirectory("romfs")};
+        exefs, program1->GetSubdirectory("romfs"), expected_id};
 }
 } // namespace
 
@@ -86,8 +87,16 @@ ContentSet::ContentSet(std::shared_ptr<Mount> mount,
 
     if (caller_program_id) {
         const auto requested = FileSys::GetBaseTitleID(*caller_program_id);
-        if (active_base && *active_base != requested) return;
-        active_base = requested;
+        if (active_base && *active_base != requested) {
+            // A verified program1 runs with a 04-platform program ID but its
+            // standalone update and AoC content belong to the 01-platform
+            // family. Retain that family only after the exact embedded NPDM
+            // was authenticated; never grant unrelated callers DLC access.
+            const auto embedded = FindEmbeddedSwitch2Program(*mount_);
+            if (!embedded || embedded->program_id != *caller_program_id) return;
+        } else {
+            active_base = requested;
+        }
     }
     // Add-on-only archives carry no owning executable title: callers must
     // supply the program identity instead of seeing cross-title content.

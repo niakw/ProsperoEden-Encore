@@ -2912,7 +2912,47 @@ for e in entries:
     assert hashlib.sha256(active.read_bytes()).hexdigest()==record["active"]
     assert active.stat().st_size==record["bytes"]
     assert e["shipping_upstream_sha256"]==record["upstream"]
-    if (selected_nov26_vendor or actual_buffer_hotpath_pin) and e["shipping_relpath"] == "src/video_core/fence_manager.h":
+    # Seal the 26/11 shipping backport graph exactly, not by silently treating
+    # the frozen historical F07 register as today's 84-file vendor snapshot.
+    # The full eden-backports Git subtree b11ce08a... and every physical
+    # file/manifest SHA have already been checked above. Only these TEN
+    # differences from the immutable 78-file F07 source receipts are admitted.
+    if vendor_head in {
+            "b62f36238ca154a0e6ada2be9c65ffb0b5981d97",
+            "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
+        assert tree_sha == "b11ce08a796fc2cec7b16972245a2ab3e69245f0"
+        current_source_changes = {
+        "src/common/net/net.cpp": ("b359ea24cf97759de4e5599334a266190ae19ad480639c2400bdfc72d54bebc2", 9974,
+            "9d3d56b9fa6b4a47097aa32c18b42e8839c547915d3af19aa37830dd75ac5da8", 11862),
+        "src/core/device_memory_manager.h": ("4f762c2d5560c9988c8842a8b461acb42e52c154cb8d4fc69e35248be1c82bc9", 11309,
+            "87ac22b80a44c637d01f031bb26ab573a000baba5b522269c1f6f2cd4e9ba17a", 11442),
+        "src/core/hle/kernel/svc_types.h": ("d7160d1d89405a168a681cf3d261cd4e8089e786f2edb2041d7f932383458ac1", 14184,
+            "fe9c75c0a63cf3b5519de3790230e8828780dcd1988e023bc75dc5760d96cafd", 14838),
+        "src/core/hle/kernel/svc/svc_info.cpp": ("b118f5e32d2dd711e9815bc85c94e0d10f7d0351a678c772b6d3535de3b4a317", 13479,
+            "c93ecde553212fd4b74858fb6e30aa99524b659ef909048f1325ca0cfc6a7849", 15845),
+        "src/core/hle/service/filesystem/fsp/fsp_srv.cpp": ("14a61732f3a2a8092d2abf452e6929b8eb4e61c0cfc64d1dbe2d23e62cbd7740", 28654,
+            "17446c9eb530d62dded19cd174c876be4730a4f845e3fa891d40f45dfd606a60", 28814),
+        "src/core/hle/service/ngc/ngc.cpp": ("b9cf8214632e08bff84017434bebe544b33b9405fea59259037df7775fb9a557", 5938,
+            "fad7126ec2ed9b9bdfd7ea302fbd90b195eb7707280d48d1087f18f3cd4d5379", 10490),
+        "src/core/hle/service/ns/application_manager_interface.cpp": ("ee52174d4d317d7a2f931ffd4192b1eb49321fc7e266c808e99e5739da694e97", 44323,
+            "763fc78e61b64ef26649a375225dcc395ab971c0b654f8b2e94b3bb0edcd4ff5", 48191),
+        "src/core/hle/service/ns/application_manager_interface.h": ("63db35276eed6a82a2f6bc0ad05dd75e2d481fb947c8ab839587853d45e29a33", 5373,
+            "9e58227eb0aa757c801a9b5fbd46cf6679fe97d2a615aa87e0d6993865eda400", 6279),
+        "src/core/hle/service/ro/ro.cpp": ("a457293e406bcc2c6d0173857abb00b2ac32b7922239df28e815bec98809945c", 22178,
+            "e591846716403aa481d27422e4c6bb1e0871910f0da1599e02c20e29f18f9f43", 23931),
+        "src/video_core/fence_manager.h": ("012cc72932c34fcc82090791d5a4c8c8d64c34966e69948bb4cf6c7b23349c97", 9151,
+            "364fcbdd6584502fb7613c8cbce0d9069832f9289b9913ad021756413cbf5920", 11568),
+        }
+        delta = current_source_changes.get(e["shipping_relpath"])
+        if delta is None:
+            assert (e["shipping_active_sha256"], e["shipping_bytes"]) == (
+                record["active"], record["bytes"]), ("F07 unchanged source drift", e["path"])
+        else:
+            assert (e["shipping_active_sha256"], e["shipping_bytes"]) == delta[:2], (
+                "F07 historical source changed", e["path"])
+            assert (record["active"], record["bytes"]) == delta[2:], (
+                "F07 exact shipping successor changed", e["path"])
+    elif (selected_nov26_vendor or actual_buffer_hotpath_pin) and e["shipping_relpath"] == "src/video_core/fence_manager.h":
         assert (e["shipping_active_sha256"], e["shipping_bytes"]) == ("012cc72932c34fcc82090791d5a4c8c8d64c34966e69948bb4cf6c7b23349c97", 9151)
         assert (record["active"], record["bytes"]) == ("71e095bcfbd1666a7c46b8ffab8ad4357b895bdef1eb8c1fb69992cd8836c6b3", 10589)
     elif (vendor_head in {"01c942171fea39c1f7cf31d13ab36895aebb593a",

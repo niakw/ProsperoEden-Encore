@@ -4188,3 +4188,14 @@ Le propriétaire actif `IGlobalStateController` expose déjà cmd2 `StartSleepSe
 Pour Encore, la PS5 hôte ne doit pas être mise en veille par un titre Switch ; le no-op réussi de cmd2 est donc une politique HLE volontaire, pas un backend manquant.
 
 **1 ligne PARTIEL quitte le pool. Nouveau compteur global : 136 lignes ouvertes.**
+
+
+### 2026-11-26 — health-warning virtualisé : palier global 135
+
+Base : **136 lignes ouvertes**.
+
+`IOverlayFunctions::SetHealthWarningShowingState` est requalifié : Encore n'expose volontairement aucun overlay de warning Horizon sur l'hôte PS5, `IsHealthWarningRequired` retourne donc `false`, et le passage `showing=false` signale le vrai `health_warning_disappeared_system_event` attendu par les waiters invités.
+
+Cette politique est cohérente et observable côté invité ; l'absence d'une UI physique PS5 n'est pas un backend manquant.
+
+**1 ligne PARTIEL quitte le pool. Nouveau compteur global : 135 lignes ouvertes.**

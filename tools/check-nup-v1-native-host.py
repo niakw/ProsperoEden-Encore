@@ -135,9 +135,12 @@ def main():
              str(short_nacp), str(valid_compressed),
              str(overlong_compressed), str(partial_compressed),
              str(oversized_icon), str(large_raw), str(edition), str(paired_edition), str(native_only_edition)],
-            check=True, capture_output=True, text=True)
+            check=False, capture_output=True, text=True)
+        # Preserve the fail-closed exit but expose the C++ assertion that
+        # selected the aborting fixture; CalledProcessError previously hid it.
         print(completed.stdout, end="")
         print(completed.stderr, end="", file=sys.stderr)
+        completed.check_returncode()
         expected_identity = (
             "EDEN_NUP_CONTENT_ID npdm=0100123400000000 "
             "package=0100123400000800 kind=1 version=3 "

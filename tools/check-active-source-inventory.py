@@ -42,9 +42,15 @@ if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"
 # historical F07 baseline. Preserve prior classifications for unchanged owners.
 shipping_vendor = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
-if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
+if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1"}:
     assert subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"],
-                                   text=True).strip() == ("3b10204a86ef1e189052c2d068e195b4ac997539" if shipping_vendor == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a" if shipping_vendor == "b62f36238ca154a0e6ada2be9c65ffb0b5981d97" else "d56f1f3efcbe283d018b411289f36bd398905408")
+                                   text=True).strip() == {
+        "52b6582953b9b6c986f3fb9ebeea4b707cd50aab": "d56f1f3efcbe283d018b411289f36bd398905408",
+        "b62f36238ca154a0e6ada2be9c65ffb0b5981d97": "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a",
+        "0506a211d82c880a49053c2ecb1b3129523dcbb0": "3b10204a86ef1e189052c2d068e195b4ac997539",
+        "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8": "6cabcba90de3515962623cd53d44667e0c6df04a",
+        "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce",
+    }[shipping_vendor]
     for relative, digest in {
         "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146",
         "encore-active/eden-core/overrides/core/device_memory_manager.inc": "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4",
@@ -59,7 +65,18 @@ if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca1
         }.items():
             assert subprocess.check_output(["git", "hash-object", str(root/"vendor"/relative)],
                                            text=True).strip() == digest, ("Native class-zero source inventory drift", relative)
-    if shipping_vendor == "0506a211d82c880a49053c2ecb1b3129523dcbb0":
+    if shipping_vendor in {"19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1"}:
+        for relative, digest in {
+            "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
+            "encore-active/eden-core/src/video_core/dma_pusher.cpp": "ca642b98443901eee4f88b02850237f3eda623c8",
+            "tests/ns2_gpu_identity_mapping_source.py":
+                ("dfe5b9d594d3e5f161872a18e227afe6f02a436d"
+                 if shipping_vendor == "e5ad6cebf5572d7045de9e48f4308cc2621eede1"
+                 else "8340a1f3403bb57debbabcd193170034a30282a1"),
+        }.items():
+            assert subprocess.check_output(["git", "hash-object", str(root/"vendor"/relative)],
+                                           text=True).strip() == digest, ("Native shutdown source inventory drift", relative)
+    if shipping_vendor in {"0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1"}:
         assert subprocess.check_output(["git", "hash-object",
             str(root/"vendor"/"encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h")], text=True).strip() == "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee"
     # Only replay FC27/native-GPU receipts against the unchanged owner graph.

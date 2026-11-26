@@ -176,7 +176,11 @@ assert "Restore historical staged artifact if no checkpoint exists" in workflow
 assert "steps.restore_stage.outputs.cache-hit != 'true'" in workflow
 assert "encore-internal-stage-v1-${{ runner.os }}-${{ github.run_id }}" in workflow
 assert "encore-internal-stage-v1-${{ runner.os }}-${{ env.RESUME_STAGE_RUN_ID }}" in workflow
+assert workflow.index("Save compiled stage recovery checkpoint") < workflow.index("Validate freshly built staged app")
 assert workflow.index("Validate freshly built staged app") < workflow.index("Save internal stage checkpoint")
+assert "encore-compiled-stage-v1-${{ runner.os }}-${{ github.run_id }}" in workflow
+assert 'test "$EXACT_CACHE_HIT" = true' in workflow
+assert "EDEN_CACHED_NATIVE_RECOVERY_BINARY_IDENTICAL" in workflow
 assert workflow.index("Save internal stage checkpoint") < workflow.index("Assemble release files")
 assert workflow.index("Upload FTP-ready title folder") < workflow.index("Validate actual downloadable FTP ZIP root")
 assert "name: Eden-Encore-PS5-FTP-PPSA99008" in workflow

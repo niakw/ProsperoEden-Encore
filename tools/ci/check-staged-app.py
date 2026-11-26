@@ -152,7 +152,14 @@ assert (
     and "recent.hero = !nlib.hero.empty() ? nlib.hero : !recent.screenshot.empty() ? recent.screenshot : CachedGamesDbHero(recent.title_id, second_generation);" in normalized_nlib
 ), "Recent-game hero must prefer Nlib banner, then Nlib screenshot, then GamesDB"
 assert "hero_recent->hero" in home_source, "recent-game Nlib hero is not consumed by Home"
-assert "hero_artwork = !hero_banner.empty() ? hero_banner : hero_screenshot" in home_source, "Home hero fallback no longer prefers Nlib banner over screenshot"
+# The reviewed case-media policy refuses physical covers and failed banners.
+normalized_home = " ".join(home_source.split())
+assert (
+    "const std::string hero_artwork = case_media::BackgroundAllowed(hero_banner) "
+    "&& !c.textures.known_missing(hero_banner) ? hero_banner : "
+    "case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};"
+    in normalized_home
+), "Home hero fallback must prefer a usable Nlib banner, then a valid screenshot"
 assert "hero_description;" in home_source and "hero_intro" not in home_source, "Home must use Nlib long description only"
 assert "game->screenshots" in library_source, "Nlib screenshots are not used by Library"
 assert "VIEW ALL GAMES" not in home_source, "removed Home pseudo-link returned"

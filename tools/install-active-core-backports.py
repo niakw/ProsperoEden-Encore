@@ -86,7 +86,8 @@ SM_SOURCE_OWNER = "src/core/hle/service/sm/sm.cpp"
 SM_SHIPPING_SOURCE = ROOT / "vendor/encore-active/eden-backports" / SM_SOURCE_OWNER
 SM_SHIPPING_GIT_BLOB = "c75c5437dfae5176d25a9994ff8aa7164d8b6713"
 SM_SHUTDOWN_PREVIOUS_GIT_BLOB = "494ee50d2880a491b07c2b981193df1a686c696a"
-SM_SHUTDOWN_GIT_BLOB = "34c7c85f1476a3ba819ad20b8a4f8150cca86e16"
+SM_FACTORY_RETIREMENT_GIT_BLOB = "34c7c85f1476a3ba819ad20b8a4f8150cca86e16"
+SM_SHUTDOWN_GIT_BLOB = "2ef914e3f1b24442e1fa0130d5f8175111e7d316"
 SM_HEADER_OWNER = "src/core/hle/service/sm/sm.h"
 SM_HEADER_PREVIOUS_GIT_BLOB = "afaad1b58658c9fe7807756410b7f1a82d0e3c7d"
 SM_HEADER_GIT_BLOB = "7069439e66a6f28ffa56229e08906a21222e2801"
@@ -125,6 +126,25 @@ def preserve_known_owned_cache_source(destination: Path, target: Path, digest: s
     print(f"EDEN_KNOWN_STALE_A64_PRESERVED sha256={digest}", flush=True)
 
 
+def normalize_sm_factory_retirement(data: bytes) -> bytes:
+    """Replay the exact NVDRV-last successor (6d9fc808) for provenance only."""
+    if git_blob_sha1(data) == SM_FACTORY_RETIREMENT_GIT_BLOB:
+        return data
+    if git_blob_sha1(data) != SM_SHUTDOWN_GIT_BLOB:
+        raise RuntimeError("Shutdown SM owner drift")
+    header = b"#include <array>\n"
+    successor = "void ServiceManager::ReleaseRegisteredHandlersForShutdown() {\n    // Closing/waking host service waiters and joining their work happens first.\n    // Keep SM itself and its kernel-owned ports alive until process shutdown,\n    // but retire factories (NVDRV included) while KProcess/Host1x still exist.\n    decltype(registered_services) retired;\n    {\n        std::unique_lock l{lock};\n        if (!closing || service_waiters != 0) {\n            LOG_ERROR(Service_SM, \"Refusing to retire service handlers before SM close\");\n            return;\n        }\n        retired.swap(registered_services);\n    }\n    // GPU supervisor / worker factories may hold an AS shared_ptr after its\n    // originating NVDRV FD closes. nvhost_as_gpu references Module::Container\n    // and NvMap: destroying NVDRV first leaves those references dangling, and\n    // later AS retirement tries to lock an already-destroyed mutex. Retire all\n    // other service factories before the three NVDRV aliases. Service loops\n    // are already joined and the kernel/Host1x remain alive. Moving the\n    // std::function owners costs no allocations and keeps this out of SM's lock.\n    std::array<SessionRequestHandlerFactory, 3> nvdrv_keepers{};\n    for (auto& [name, factory] : retired) {\n        if (name == \"nvdrv\") {\n            nvdrv_keepers[0] = std::move(factory);\n        } else if (name == \"nvdrv:a\") {\n            nvdrv_keepers[1] = std::move(factory);\n        } else if (name == \"nvdrv:s\") {\n            nvdrv_keepers[2] = std::move(factory);\n        }\n    }\n    retired.clear();\n    // Only now may NVDRV's module close its NvMap/Container and their mutexes.\n    for (auto& factory : nvdrv_keepers) {\n        factory = {};\n    }\n}\n\n"
+    predecessor = "void ServiceManager::ReleaseRegisteredHandlersForShutdown() {\n    // Closing/waking host service waiters and joining their work happens first.\n    // Keep SM itself and its kernel-owned ports alive until process shutdown,\n    // but retire factories (NVDRV included) while KProcess/Host1x still exist.\n    decltype(registered_services) retired;\n    {\n        std::unique_lock l{lock};\n        if (!closing || service_waiters != 0) {\n            LOG_ERROR(Service_SM, \"Refusing to retire service handlers before SM close\");\n            return;\n        }\n        retired.swap(registered_services);\n    }\n    // A factory may own an NVDRV handler -> module -> nvhost_as_gpu. The latter\n    // calls KProcess::Close and must never run after ShutdownCores. Destroy\n    // OUTSIDE SM's lock because final release can re-enter service cleanup.\n    retired.clear();\n}\n\n"
+    successor_bytes = successor.encode("utf-8")
+    predecessor_bytes = predecessor.encode("utf-8")
+    if data.count(header) != 1 or data.count(successor_bytes) != 1:
+        raise RuntimeError("SM NVDRV-last successor shape drift")
+    restored = data.replace(header, b"", 1).replace(successor_bytes, predecessor_bytes, 1)
+    if git_blob_sha1(restored) != SM_FACTORY_RETIREMENT_GIT_BLOB:
+        raise RuntimeError("SM NVDRV-last successor modified unrelated source")
+    return restored
+
+
 def stage_selected_sm_source(destination: Path, *, check: bool) -> bool:
     """Keep the shutdown-aware SM header and implementation under one owner."""
     target = destination / SM_SOURCE_OWNER
@@ -138,17 +158,16 @@ def stage_selected_sm_source(destination: Path, *, check: bool) -> bool:
     predecessor_bytes = predecessor.read_bytes()
     if git_blob_sha1(predecessor_bytes) != SM_SHIPPING_GIT_BLOB:
         raise RuntimeError("Shipping SM predecessor drift")
-    if git_blob_sha1(maintained_bytes) != SM_SHUTDOWN_GIT_BLOB:
-        raise RuntimeError("Shutdown SM owner drift")
+    historical = normalize_sm_factory_retirement(maintained_bytes)
     # The current SM factory-retirement owner is an exact successor of the
     # reviewed close/wait implementation. Seal its unchanged predecessor too.
     begin = b"void ServiceManager::ReleaseRegisteredHandlersForShutdown() {\n"
     end = b"ServiceManager::~ServiceManager() {"
-    if maintained_bytes.count(begin) != 1 or maintained_bytes.count(end) != 1:
+    if historical.count(begin) != 1 or historical.count(end) != 1:
         raise RuntimeError("SM handler retirement source shape drift")
-    first = maintained_bytes.index(begin)
-    last = maintained_bytes.index(end, first)
-    if git_blob_sha1(maintained_bytes[:first] + maintained_bytes[last:]) != SM_SHUTDOWN_PREVIOUS_GIT_BLOB:
+    first = historical.index(begin)
+    last = historical.index(end, first)
+    if git_blob_sha1(historical[:first] + historical[last:]) != SM_SHUTDOWN_PREVIOUS_GIT_BLOB:
         raise RuntimeError("SM handler retirement changed unrelated source")
     current = target.read_bytes()
     if current == maintained_bytes:
@@ -158,7 +177,8 @@ def stage_selected_sm_source(destination: Path, *, check: bool) -> bool:
             f"Active SM source check found predecessor: current={git_blob_sha1(current)} "
             f"active={SM_SHUTDOWN_GIT_BLOB}"
         )
-    if current != predecessor_bytes and git_blob_sha1(current) != SM_SHUTDOWN_PREVIOUS_GIT_BLOB:
+    if current != predecessor_bytes and git_blob_sha1(current) not in (
+            SM_SHUTDOWN_PREVIOUS_GIT_BLOB, SM_FACTORY_RETIREMENT_GIT_BLOB):
         raise RuntimeError(
             f"Refusing unknown staged SM source: current={git_blob_sha1(current)} "
             f"shipping={SM_SHIPPING_GIT_BLOB}"
@@ -421,15 +441,30 @@ def main() -> None:
             assert git_blob_sha1(previous_header) == SM_HEADER_PREVIOUS_GIT_BLOB
             header_target.write_bytes(previous_header)
             body = sm_target.read_bytes()
-            first = body.index(b"void ServiceManager::ReleaseRegisteredHandlersForShutdown() {\n")
-            last = body.index(b"ServiceManager::~ServiceManager() {", first)
-            previous_body = body[:first] + body[last:]
+            factory_body = normalize_sm_factory_retirement(body)
+            first = factory_body.index(b"void ServiceManager::ReleaseRegisteredHandlersForShutdown() {\n")
+            last = factory_body.index(b"ServiceManager::~ServiceManager() {", first)
+            previous_body = factory_body[:first] + factory_body[last:]
             assert git_blob_sha1(previous_body) == SM_SHUTDOWN_PREVIOUS_GIT_BLOB
             sm_target.write_bytes(previous_body)
             stage_source(destination, expected, check=False)
             stage_source(destination, expected, check=True)
             assert header_target.read_bytes() == header
             assert sm_target.read_bytes() == body
+            # A cache from the immediately preceding factory-retirement revision
+            # is also admissible; --check must reject it without rewriting it.
+            if factory_body != body:
+                sm_target.write_bytes(factory_body)
+                try:
+                    stage_source(destination, expected, check=True)
+                except RuntimeError as error:
+                    assert "Active SM source check found predecessor" in str(error)
+                else:
+                    raise AssertionError("Stale SM factory owner passed --check")
+                assert sm_target.read_bytes() == factory_body
+                stage_source(destination, expected, check=False)
+                stage_source(destination, expected, check=True)
+                assert sm_target.read_bytes() == body
             # Unknown source bytes must still fail closed.
             sm_target.write_bytes(body + b"\n// unreviewed staging drift\n")
             try:

@@ -5554,3 +5554,7 @@ Le zéro historique n'est PAS une preuve de qualification runtime exhaustive. Le
 🟢 **26/11/2026 — Couple repinné après priorité main.** Le vendor NS1 `d5ef3f58690b65bf95a20f1e8d41045a21035581` contient le rattrapage des 138 chemins non chevauchés, les réconciliations AOC/Application/HID/SelfController avec priorité au `main`, le propriétaire C7C0/GSV courant et le témoin Host1x remis sur le contrat `main` actuel (`IncrementGuest → IncrementHost → miroir natif`). Le runtime Host1x source/header reste byte-identique à `main`; seul son ancien témoin NS1 a été remplacé.
 
 🟢 **26/11/2026 — Dernier delta moteur main repris.** Le commit documentaire `42d06e8f` est repris par ses deux blobs exacts dans les comparatifs runtime existants. Aucun merge parent, aucune modification de `main`, aucun build PS5 manuel.
+
+### 2026-11-26 — Sentinelles IPC après rattrapage main
+
+🟢 **26/11/2026 — Recalcul sur les propriétaires finaux réellement sélectionnés.** Après priorité `main` sur les tables IPC natives, les contrats physiques deviennent `ApplicationFunctions=(1,74,0)`, `SelfController=(1,66,0)` et `HID=(1,234,0)`. AOC reste `(1,22,0)`, SSL `(5,75,0)`, BSD `(3,63,0)`. Mise à jour limitée à l'inventaire de source NS1 ; aucun C++ runtime modifié.

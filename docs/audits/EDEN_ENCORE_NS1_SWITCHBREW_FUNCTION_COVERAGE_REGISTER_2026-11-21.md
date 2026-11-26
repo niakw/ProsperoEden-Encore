@@ -5209,3 +5209,24 @@ Le PARTIEL historique `hid:sys` cmd321 `GetUniquePadsFromNpad` est requalifié s
 - la copie est bornée par la capacité réelle du buffer et la réponse expose le nombre d'entrées effectivement écrites.
 
 L'ancien statut PARTIEL du snapshot précédait cette matérialisation des IDs UniquePad. **1 ligne quitte le pool : nouveau plancher = 34 / 4 853.** Aucun patch C++, nouveau gitlink, build natif PS5 ou validation console dans cette requalification.
+
+### 2026-11-26 — AM movie-resource fail-closed : 34 → 32 minimum
+
+Base précédente : **34 lignes ouvertes au minimum**.
+
+Les deux PARTIEL historiques `ILibraryAppletSelfAccessor` cmd101 `ReserveResourceForMovieOperation` et cmd102 `UnreserveResourceForMovieOperation` sont fermés sur le propriétaire PS5 actif.
+
+**Cause :**
+- libnx confirme que les deux commandes sont des appels sans entrée/sortie, HOS5+, exclusivement liés au chemin `CreateGameMovieTrimmer` ; la réservation doit être effectuée avant l'ouverture du trimmer ;
+- Encore rejette déjà cmd100 `CreateGameMovieTrimmer` parce qu'aucun backend GRC `IGameMovieTrimmer` / encodeur-trimmer n'est disponible ;
+- malgré cela, cmd101/cmd102 retournaient encore `Success` et ne faisaient que basculer `Applet::game_movie_resource_reserved`, un état sans consommateur dans le runtime shipping. Ce succès annonçait donc une réservation/libération qui ne pouvait produire aucun effet.
+
+**Correctif runtime :**
+- vendor `57c61b4ee9a36b7d7945c5d8a85b36e22cda8912` : cmd101/cmd102 ne publient plus de faux succès et retournent explicitement `ResultUnknown` tant que le MovieTrimmer est indisponible ;
+- vendor manifeste `75402f9c77e5a8f7a222a5f94835f5c0296c7349` : owner actif `library_applet_self_accessor.cpp` SHA-256 `7f04fa775cf828f6093851ff1559185dccc0bb21d3a4c316bf84a520241ccdf3`, **21 940 octets** ;
+- moteur/gitlink `8e89250a86fefe688f98cfd0c90530b6bdcff430` épingle exactement ce vendor ;
+- CMake shipping sélectionne bien `hle/service/am/service/library_applet_self_accessor.cpp`.
+
+Aucun chemin screenshot/capture normal, compositor, GPU ou gameplay n'est modifié. Cette politique suit le même fail-closed déjà retenu pour cmd100 : fonctionnalité movie absente = erreur invitée explicite, jamais réservation factice.
+
+**2 lignes PARTIEL quittent le pool : nouveau plancher = 32 / 4 853.** Ce compteur reste un plancher de revue corrigé, pas un nombre de bugs fonctionnels prouvés. Au moment de cette entrée, le nouveau pin doit encore recevoir ses propres verdicts CI ; aucun build PS5 ni test console n'est revendiqué.

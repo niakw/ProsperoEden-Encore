@@ -54,22 +54,33 @@ AddOnIndex::AddOnIndex(std::shared_ptr<Mount> mount,
                        std::optional<std::uint64_t> nacp_aoc_base_id) {
     if (!mount || !caller_program_id) return;
     owner_base_id_ = FileSys::GetBaseTitleID(caller_program_id);
-    // Never grant a caller an add-on family from a base/update of another
-    // application. Add-on-only packages require the explicit caller scope.
+    // ContentSet validates the exact selected NPDM for the NS1-to-NS2
+    // Edition mapping and admits the AoC family (including a trusted NACP
+    // override). Do not reject that mapping with a second platform check
+    // or recompute its default AoC base from the 04-platform caller.
+    auto content = std::make_unique<ContentSet>(
+        mount, caller_program_id, nacp_aoc_base_id);
+    const auto admitted_base = content->AddOnBaseId();
+    if (!admitted_base) {
+        owner_base_id_ = 0;
+        return;
+    }
+    constexpr std::uint64_t PlatformMask = 0xFF00000000000000ULL;
+    constexpr std::uint64_t LowTitleMask = ~PlatformMask;
     for (const auto& pkg : mount->Packages()) {
-        if (pkg.kind != 2 &&
-            FileSys::GetBaseTitleID(pkg.title_id) != owner_base_id_) {
+        if (pkg.kind == 2) continue;
+        const auto package_base = FileSys::GetBaseTitleID(pkg.title_id);
+        if (package_base == owner_base_id_) continue;
+        // Only the verified NS2 Edition may cross the platform boundary.
+        if ((owner_base_id_ & PlatformMask) != 0x0400000000000000ULL ||
+            (package_base & PlatformMask) != 0x0100000000000000ULL ||
+            (package_base & LowTitleMask) != (owner_base_id_ & LowTitleMask)) {
             owner_base_id_ = 0;
             return;
         }
     }
-    if (nacp_aoc_base_id &&
-        (*nacp_aoc_base_id & FileSys::AOC_TITLE_ID_MASK))
-        return;
-    aoc_base_id_ = nacp_aoc_base_id.value_or(
-        owner_base_id_ + FileSys::AOC_TITLE_ID_OFFSET);
-    content_ = std::make_unique<ContentSet>(
-        std::move(mount), caller_program_id, nacp_aoc_base_id);
+    aoc_base_id_ = admitted_base;
+    content_ = std::move(content);
     for (const auto& addon : content_->AddOns()) {
         if (addon.title_id < *aoc_base_id_ ||
             addon.title_id - *aoc_base_id_ > FileSys::AOC_TITLE_ID_MASK)

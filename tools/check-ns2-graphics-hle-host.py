@@ -133,7 +133,9 @@ def main()->int:
         'class IVi2Session final : public ServiceFramework<IVi2Session>',
         '{229,&IVi2Session::Present,"PresentClientBuffer"}',
         'GetService<VI::IManagerRootService>("vi:m",true)',
-        'CreateManagedLayer(&layer,*c->display,m_aruid)',
+        'CreateManagedLayer(',
+        '&layer,*m_display,m_aruid)',
+        '&layer,*c->display,m_aruid)',
         'GetPresentImage(p[5])',
         'GetLayerProducerHandle(',
         'std::make_shared<android::GraphicBuffer>(',
@@ -167,6 +169,19 @@ def main()->int:
         'pref[6]==1&&outw<=width&&outh<=height',
     ):
         assert evidence in text, "VI2 compositor must preserve real queue/fence owner: " + evidence
+    # VI2 201 -> 212 -> 251 is observed in the MKW boot trace. A
+    # registered client can query availability before display binding; the
+    # real compositor layer is created by the bind, and reused on rebind.
+    vi2_bind = text.split('void Bind(HLERequestContext& ctx) {',1)[1].split(
+        'void Unbind(HLERequestContext& ctx) {',1)[0]
+    vi2_avail = text.split('void Availability(HLERequestContext& ctx) {',1)[1].split(
+        'void OutputLevels(HLERequestContext& ctx) {',1)[0]
+    assert 'if(c->layer){' in vi2_bind
+    assert 'c->layer=layer;' in vi2_bind and 'c->display=m_display;' in vi2_bind
+    assert 'CreateManagedLayer(' in vi2_bind
+    assert 'Client* c=Find(W(p,2));result=Kernel::ResultNotFound;' in vi2_avail
+    assert 'if(c){' in vi2_avail and 'if(c&&c->display&&m_vi)' not in vi2_avail
+    assert 'mask=c->available;' in vi2_avail
     # New source reflects actual upstream unsigned u32 ABI. Keep the same
     # fail-closed ordering: bound the four-element array BEFORE reading any
     # per-slot syncpoint and retain queued GPU backing while work is pending.

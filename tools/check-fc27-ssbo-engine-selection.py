@@ -279,6 +279,20 @@ if selected in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a490
     }.items():
         assert blob(V / relative) == digest, ("Native unbind SSBO source drift", relative)
     expected.add(selected)
+if selected == "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8":
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"],
+                                   text=True).strip() == "6cabcba90de3515962623cd53d44667e0c6df04a"
+    for relative, digest in {
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
+        "encore-active/eden-core/src/video_core/dma_pusher.cpp": "ca642b98443901eee4f88b02850237f3eda623c8",
+        "tests/ns2_gpu_identity_mapping_source.py": "8340a1f3403bb57debbabcd193170034a30282a1",
+        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
+        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
+        "encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee",
+    }.items():
+        assert blob(V/relative)==digest, ("NS2 shutdown SSBO owner drift", relative)
+    expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"

@@ -201,6 +201,14 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     strict_hdr_delta="#ifdef PS5_NATIVE\n    bool SignalNativeSyncPoint(u32 value) override;\n#endif\n"
     strict_hdr_name='include/video_core/renderer_vulkan/vk_rasterizer.h'
     strict_hdr=expected[strict_hdr_name].read_text()
+    # 26/11 exact C797/C7C0 Vulkan retire ABI successor: prove the full
+    # shipping header blob and remove ONLY the new native-fence declaration
+    # from this audit copy, preserving the earlier NS2 syncpoint receipt.
+    if _ns1_read_blob(strict_hdr)=="0d22781acbc4e0f32424beb6b0f494b6aa2b034f":
+        native_fence_decl="    bool SignalNativeFence(std::function<void()>&& func) override;\n"
+        assert strict_hdr.count(native_fence_decl)==1
+        strict_hdr=strict_hdr.replace(native_fence_decl,"",1)
+        assert _ns1_read_blob(strict_hdr)=="8bd6f2a4e489aa608fc4420d2ff5847b7c12e165"
     if _ns1_read_blob(strict_hdr)=="8bd6f2a4e489aa608fc4420d2ff5847b7c12e165":
         assert strict_hdr.count(strict_hdr_delta)==1
         strict_hdr=strict_hdr.replace(strict_hdr_delta,"",1)
@@ -216,6 +224,19 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         source_path=root/'vendor'/relative
         source=source_path.read_text()
         if relative.endswith("eden-vulkan/vulkan_rasterizer.cpp"):
+            # Normalize only the exact newly selected native fence wrapper
+            # before the immutable NS1 readback/FC27 replay chain. The guest
+            # path and page-protection methods must remain byte-identical.
+            if _ns1_read_blob(source)=="ff8ad79ef203456063dbd848eab3ea575628edfc":
+                native_fence_method=(
+                    "bool RasterizerVulkan::SignalNativeFence(std::function<void()>&& func) {\n"
+                    "    fence_manager.SignalNativeFence(std::move(func));\n"
+                    "    return true;\n"
+                    "}\n"
+                )
+                assert source.count(native_fence_method)==1
+                source=source.replace(native_fence_method,"",1)
+                assert _ns1_read_blob(source)=="39b2ed67e51937aecad666de4113ce792d32132d"
             # Prove the two corrected call-site deltas on an audit copy,
             # then reuse the pre-integration readback and Vulkan receipts.
             source=reverse_attribute_index_batch_successor(source)

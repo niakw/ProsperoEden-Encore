@@ -224,6 +224,26 @@ if selected == "9de08e4f4bbb903e25f330dde7b8185e19e078a1":
 if selected == "95467b3a42f208667ef8e06e6794f8a23dc2340d":
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "626ba6d69bdca7c46ca6729556a185cc1ccbb615"
     assert blob(V/"encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp") == "e10e0d333c3b0b6615f9c311c85fb3217134fe6a"
+# Exact 26/11 native semaphore-retirement successor. It changes no
+# Maxwell SPIR-V/SSBO owner; authenticate the complete vendor Git tree,
+# the PS5 rasterizer and the actual maintained shader owners before allowing
+# the historical source-parity check to run unchanged below.
+if selected == "05bf05a8dca75b3e12871ec886a810310cdf43d6":
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "fce8c6e09f27364904886bfbdfca299fbc3e0780"
+    for relative, receipt in {
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
+            "23725030557268e6593c9e5f64cb063730b77787",
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp":
+            "ff8ad79ef203456063dbd848eab3ea575628edfc",
+        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h":
+            "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
+        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp":
+            "602d45b4d2ad872b138d62ce05f379b5e1103602",
+    }.items():
+        assert blob(V/relative) == receipt, ("FC27 SSBO exact vendor source drift", relative)
+    expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"

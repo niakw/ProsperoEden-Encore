@@ -5348,3 +5348,19 @@ Correctif vendor **`de1eaf25f4ce36f033640f4869ace7bf7a7d6dca`**. Reçus actifs :
 Ces deux identités étaient les **2 STUB** demeurés ouverts après le recalcul conservateur et n'avaient pas été soustraites dans les paliers ultérieurs. **2 lignes quittent donc le pool : nouveau plancher = 20 / 4 853.**
 
 Aucun build natif PS5 ni validation console n'est revendiqué. La qualification CI du nouveau pin doit être vérifiée séparément.
+
+
+### 2026-11-26 — Deux dernières AMBIGU historiques résolues : 20 → 18 minimum
+
+Base précédente : **20 lignes ouvertes au minimum**.
+
+Les deux lignes AMBIGU historiques qui n'avaient pas encore reçu de fermeture explicite sont désambiguïsées sans changement C++ :
+
+- `hwopus` cmd0 `Initialize` : libnx utilise historiquement le helper privé `_hwopusInitialize`, mais celui-ci envoie bien **cmd0 au service manager `hwopus`**, avec paramètres sample-rate/channel-count, TransferMemory et objet décodeur en sortie. Le propriétaire Encore actif enregistre le même slot comme `IHardwareOpusDecoderManager::OpenHardwareOpusDecoder` et initialise ensuite l'objet `IHardwareOpusDecoder`. L'ancien conflit manager/décodeur provenait donc du nom du wrapper, pas d'un contrat IPC concurrent.
+- NEWS cmd0 `Get` : le slot appartient aux objets enfants `INewlyArrivedEventHolder` / `IOverwriteEventHolder`, créés par `IServiceCreator`, et non directement aux services racine `news:a/news:c/news:m/news:p/news:v`. Les deux owners Encore actifs enregistrent cmd0 `Get` et retournent le `KReadableEvent` détenu. Les interfaces générées indépendantes Supercell/Anchor et les implémentations Lichii/Eglantine confirment le même objet enfant et le même handle copy en sortie.
+
+Les 9 AMBIGU historiques sont ainsi toutes rattachées : ACC cmd0/1/2, ES cmd1003/2000/2001, VI cmd1102 avaient déjà été fermées ; ces deux lignes complètent la désambiguïsation.
+
+**2 lignes quittent le pool : nouveau plancher = 18 / 4 853.**
+
+Aucun patch runtime, changement de gitlink, build natif PS5 ou validation console dans cette étape.

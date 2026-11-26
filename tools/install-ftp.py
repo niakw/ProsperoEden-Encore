@@ -66,6 +66,18 @@ def main(argv):
                 pass
             client.rename(f'{target}.partial', target)
             print(f'copied {relative}', flush=True)
+    # Optional metadata synchronization gets an independent connection.
+    # A provider/FTP failure must not contaminate executable verification.
+    if os.environ.get("NIAK_DEEPL_API_KEY", "").strip():
+        try:
+            translator = runpy.run_path(str(pathlib.Path(__file__).parent / "launcher/translate-overviews.py"))
+            index = app / "ui/box-art-index.tsv"
+            if index.is_file():
+                with connect(host, port) as metadata_client:
+                    count = translator["sync"](metadata_client, index.read_text(encoding="utf-8"))
+                print(f"Synchronized {count} requested game descriptions.")
+        except ftplib.all_errors + (ValueError, RuntimeError):
+            print("Optional description synchronization unavailable; original text retained.")
     with connect(host, port) as client:
         # First verify the complete install inventory by size. This catches partial folder copies
         # (notably ui/lang/*.po): a build can be valid while a manual FTP transfer silently omits
@@ -101,15 +113,6 @@ def main(argv):
                 sys.exit(f'Could not verify language catalog {relative}: {error}')
             if digest.hexdigest() != hashlib.sha256(local.read_bytes()).hexdigest():
                 sys.exit(f'{relative} differs on the console after the copy')
-
-        # Reuse the owner's existing opt-in private DeepL configuration.
-        # Only queued, source-matched synopsis requests are synchronized.
-        if os.environ.get("NIAK_DEEPL_API_KEY", "").strip():
-            translator = runpy.run_path(str(pathlib.Path(__file__).parent / "launcher/translate-overviews.py"))
-            index = app / "ui/box-art-index.tsv"
-            if index.is_file():
-                count = translator["sync"](client, index.read_text(encoding="utf-8"))
-                print(f"Synchronized {count} requested game descriptions.")
 
         try:
             client.sendcmd('SELF')  # raw transfers of executables, where supported

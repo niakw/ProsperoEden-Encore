@@ -17,7 +17,7 @@ import urllib.request
 
 REMOTE = "/data/prosperoeden/covers"
 MAX_JSON = 8192
-REQUEST = re.compile(r"synopsis-[0-9A-F]{16}-ns[12]-([A-Za-z]{2}(?:-[A-Za-z]{2,4})?)\.request\.json")
+REQUEST = re.compile(r"synopsis-[0-9A-F]{16}-ns[12]-([A-Za-z]{2}(?:-[A-Za-z0-9]{2,4})?)\.request\.json")
 TARGETS = {
     "fr": "FR", "fr-CA": "FR", "de": "DE", "it": "IT", "es": "ES",
     "es-419": "ES", "pt": "PT-PT", "pt-BR": "PT-BR", "nl": "NL",
@@ -78,8 +78,13 @@ def translate(text, target, key, fetch=urllib.request.urlopen):
         data = response.read(65537)
     if len(data) > 65536:
         return ""
-    translations = json.loads(data).get("translations", [])
-    if len(translations) != 1 or not isinstance(translations[0].get("text"), str):
+    payload = json.loads(data)
+    if not isinstance(payload, dict):
+        return ""
+    translations = payload.get("translations", [])
+    if (not isinstance(translations, list) or len(translations) != 1
+            or not isinstance(translations[0], dict)
+            or not isinstance(translations[0].get("text"), str)):
         return ""
     return short_overview(translations[0]["text"])
 
@@ -99,9 +104,6 @@ def sync(client, index, key=None, fetch=urllib.request.urlopen):
         match = REQUEST.fullmatch(name)
         if not match or match.group(1) not in TARGETS:
             continue
-        examined += 1
-        if examined > 100:
-            break
         request_path = REMOTE + "/" + name
         request = read_json(client, request_path)
         source, identity, locale = (request.get(k) for k in ("source", "key", "locale"))
@@ -113,6 +115,11 @@ def sync(client, index, key=None, fetch=urllib.request.urlopen):
         cached = read_json(client, output)
         if all(cached.get(k) == request.get(k) for k in ("source", "key", "locale")) and cached.get("translation"):
             continue
+        # Cached entries do not consume the request budget or starve later
+        # titles. At most 25 actual translation attempts per synchronization.
+        examined += 1
+        if examined > 25:
+            break
         try:
             translated = translate(source, TARGETS[locale], key, fetch)
             if not translated:
@@ -162,6 +169,7 @@ def self_test():
         calls.append(req)
         return io.BytesIO(json.dumps({"translations": [{"text": "Un résumé traduit."}]}).encode())
     index = "# synopsis\t" + ident + "\t" + source + "\n"
+    assert REQUEST.fullmatch("synopsis-0400000000001000-ns2-es-419.request.json")
     assert sync(client, index, key="", fetch=fetch) == 0 and not calls
     assert sync(client, index, key="test:fx", fetch=fetch) == 1
     assert sync(client, index, key="test:fx", fetch=fetch) == 0 and len(calls) == 1

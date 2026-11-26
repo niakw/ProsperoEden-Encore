@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile inactive NUP adapter against exact pinned vendor VFS headers (host only).
+"""Compile native NUP FileSys/VFS adapters against pinned vendor headers (host only).
 
 Only the native file, RomFS and loader API headers are fetched at the gitlink SHA.
 This is a C++ ABI/source-signature preflight, NOT a full vendor/core/PS5 build.
@@ -102,8 +102,11 @@ def main() -> None:
             str(ROOT / "headless/nup_v1_native_vfs.cpp"),
             str(ROOT / "headless/nup_v1_native_content.cpp"),
             str(ROOT / "headless/nup_v1_native_aoc.cpp"),
-            str(ROOT / "headless/nup_v1_native_loader.cpp"),
-            str(ROOT / "headless/nup_v1_loader_route.cpp"),
+            # The real AppLoader requires the complete core, kernel, service
+            # and FS build graph. It is compiled in the separate native
+            # profile; the existing executable NUP host fixture covers its
+            # selected code path against the host ABI. This pinned-header
+            # check qualifies the changed VFS/ContentSet owners directly.
         ], check=True)
     print(f"NUP native adapter compiles against pinned vendor VFS headers {pinned[:12]}")
 

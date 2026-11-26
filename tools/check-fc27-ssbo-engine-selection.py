@@ -266,15 +266,16 @@ if selected == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab":
     }.items():
         assert blob(V / relative) == digest, ("VI2 successor SSBO source drift",relative)
     expected.add(selected)
-if selected == "b62f36238ca154a0e6ada2be9c65ffb0b5981d97":
+if selected in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"],
-                                   text=True).strip() == "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a"
+                                   text=True).strip() == ("3b10204a86ef1e189052c2d068e195b4ac997539" if selected == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a")
     for relative, digest in {
         "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "abd6757c20b4b7629f0d6e179999c2d6091a2825",
         "tests/ns2_gpu_identity_mapping_source.py": "23be79dbe84fc2f51a2db1fa741f6fd3c7e28daf",
         "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
         "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
+        **({"encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee"} if selected == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else {}),
     }.items():
         assert blob(V / relative) == digest, ("Native unbind SSBO source drift", relative)
     expected.add(selected)

@@ -42,9 +42,9 @@ if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"
 # historical F07 baseline. Preserve prior classifications for unchanged owners.
 shipping_vendor = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
-if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97"}:
+if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
     assert subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"],
-                                   text=True).strip() == ("7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a" if shipping_vendor == "b62f36238ca154a0e6ada2be9c65ffb0b5981d97" else "d56f1f3efcbe283d018b411289f36bd398905408")
+                                   text=True).strip() == ("3b10204a86ef1e189052c2d068e195b4ac997539" if shipping_vendor == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a" if shipping_vendor == "b62f36238ca154a0e6ada2be9c65ffb0b5981d97" else "d56f1f3efcbe283d018b411289f36bd398905408")
     for relative, digest in {
         "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146",
         "encore-active/eden-core/overrides/core/device_memory_manager.inc": "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4",
@@ -52,13 +52,16 @@ if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca1
     }.items():
         assert subprocess.check_output(["git", "hash-object", str(root/"vendor"/relative)],
                                        text=True).strip() == digest, ("VI2 inventory drift",relative)
-    if shipping_vendor == "b62f36238ca154a0e6ada2be9c65ffb0b5981d97":
+    if shipping_vendor in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
         for relative, digest in {
             "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "abd6757c20b4b7629f0d6e179999c2d6091a2825",
             "tests/ns2_gpu_identity_mapping_source.py": "23be79dbe84fc2f51a2db1fa741f6fd3c7e28daf",
         }.items():
             assert subprocess.check_output(["git", "hash-object", str(root/"vendor"/relative)],
                                            text=True).strip() == digest, ("Native class-zero source inventory drift", relative)
+    if shipping_vendor == "0506a211d82c880a49053c2ecb1b3129523dcbb0":
+        assert subprocess.check_output(["git", "hash-object",
+            str(root/"vendor"/"encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h")], text=True).strip() == "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee"
     # Only replay FC27/native-GPU receipts against the unchanged owner graph.
     shipping_vendor = "240550925b0ef097c24c3035c063bdceadd872de"
 stabilization_trees = {
@@ -2029,7 +2032,10 @@ if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f3
         # keep the other eleven and all full-blob assertions unchanged.
         assert subprocess.check_output(
             ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
-            text=True).strip() == ("7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a" if subprocess.check_output(
+            text=True).strip() == ("3b10204a86ef1e189052c2d068e195b4ac997539" if subprocess.check_output(
+                ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
+            ).strip() == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else
+                "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a" if subprocess.check_output(
                 ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
             ).strip() == "b62f36238ca154a0e6ada2be9c65ffb0b5981d97" else
                 "d56f1f3efcbe283d018b411289f36bd398905408" if subprocess.check_output(
@@ -3047,7 +3053,7 @@ assert shipping == shipping_cpp | build_recipes, (
 # 50-item oracle for historical trees; authenticate both new SHA256 names.
 shipping_receipt_count = 50
 if subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"],
-                           text=True).strip() in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97"}:
+                           text=True).strip() in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
     assert subprocess.check_output([
         "git", "hash-object", str(active / "eden-backports/manifest.json")
     ], text=True).strip() == "da4e380ecb78a12fdbb3bb12ac29d88f3a6eb0df"

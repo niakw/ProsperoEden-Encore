@@ -3003,14 +3003,15 @@ if actual_vendor_pin == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab":
     REVIEWED_PINS.add(actual_vendor_pin)
 # Exact native Ampere class-0 unbind: one runtime Puller and one witness changed.
 # All other vendor owners remain pinned by full tree and later source receipts.
-if actual_vendor_pin == "b62f36238ca154a0e6ada2be9c65ffb0b5981d97":
+if actual_vendor_pin in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"],
-                                   text=True).strip() == "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a"
+                                   text=True).strip() == ("3b10204a86ef1e189052c2d068e195b4ac997539" if actual_vendor_pin == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a")
     for relative, digest in {
         "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "abd6757c20b4b7629f0d6e179999c2d6091a2825",
         "tests/ns2_gpu_identity_mapping_source.py": "23be79dbe84fc2f51a2db1fa741f6fd3c7e28daf",
         "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
+        **({"encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee"} if actual_vendor_pin == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else {}),
     }.items():
         raw = (V / relative).read_bytes()
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == digest, ("Native class-zero vendor graph drift", relative)

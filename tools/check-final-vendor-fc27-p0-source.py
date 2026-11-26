@@ -112,6 +112,8 @@ REVIEWED_PINS.add("4354add020afac574198f63d87167f3022bff9c6")
 REVIEWED_PINS.add("82634fc0f2b2c7ffab2dbb50e658b20f911dbd16")
 REVIEWED_PINS.add("720bdb0e81c57462338be480cecae13f2e205110")
 REVIEWED_PINS.add("bde537edf37e1f21e483993ca8582f44ff0f5555")
+# The exact VI2 successor is authenticated by nov26_trees and nov26_blobs.
+REVIEWED_PINS.add("9de08e4f4bbb903e25f330dde7b8185e19e078a1")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 # The exact 26 Nov successor has 18 changed tracked files relative to
 # the previously admitted 45952eb6 profile. Verify the COMPLETE current tree and
@@ -123,6 +125,7 @@ selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text
 nov26_trees = {
     "806252e96253489c18d11551bf2dcfd668502719": "dcf463b5cd23ca8fa4c7899c5efd8c8f75f5b869",
     "465d7e9c82f364dcde05354d67ec1b5bf5e2682d": "5f4fbae3ea1e296e6b0ce842bb414b6bdc70d5c7",
+    "9de08e4f4bbb903e25f330dde7b8185e19e078a1": "5b4e01583d0687ba41e7a428668ee84c8b58c91e",
 }
 nov26_pin = selected if selected in nov26_trees else "806252e96253489c18d11551bf2dcfd668502719"
 nov26_parent = "45952eb648e7eb3502b517c06b3032edd3a9035a"
@@ -151,6 +154,13 @@ if selected == "465d7e9c82f364dcde05354d67ec1b5bf5e2682d":
         "encore-active/eden-core/src/dynarmic/backend/x64/block_of_code_native.cpp": "409a136a9ea77cfab1b9f53fe1d1a5132b469a98",
         "encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp": "9a34c1c8272a07f2dcecf172b310723ad2125643",
         "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "40d54f4022b5ae24de33737f8bbf8234a4a58016",
+        "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "84217f9b62f64e9a48305c29cae7f320f5332d19",
+    })
+if selected == "9de08e4f4bbb903e25f330dde7b8185e19e078a1":
+    nov26_blobs.update({
+        "encore-active/eden-core/src/dynarmic/backend/x64/block_of_code_native.cpp": "409a136a9ea77cfab1b9f53fe1d1a5132b469a98",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp": "9a34c1c8272a07f2dcecf172b310723ad2125643",
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "f32b7be9445f1888298fd7162c8126b8c0421f02",
         "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "84217f9b62f64e9a48305c29cae7f320f5332d19",
     })
 if selected == nov26_pin:

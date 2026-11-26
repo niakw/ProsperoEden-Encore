@@ -316,7 +316,7 @@ struct Guest {
     static constexpr bool can_async_check=true;
     std::function<void()> pending;
     std::promise<void> queued;
-    void SignalFence(std::function<void()> cb) { pending=std::move(cb); queued.set_value(); }
+    void SignalFence(std::function<void()> cb, bool force) { assert(force); pending=std::move(cb); queued.set_value(); }
     template<bool> void TryReleasePendingFences() {}
 INJECT_GUEST
 };
@@ -601,3 +601,11 @@ assert "bool SignalNativeSyncPoint(u32 value) override;" in (ROOT/"headless/vk_r
 assert 'configure_file("${EDEN_PORT_DIR}/vk_rasterizer_shutdown_ps5.h"' in cmake
 assert 'configure_file("${EDEN_PORT_DIR}/fence_manager_ps5.h"' in cmake
 print("NS2_STRICT_NATIVE_COMPLETION_SELECTED_SHUTDOWN_OVERLAYS_PASS")
+
+# Forced retirement is neither a policy-selected immediate callback nor a cache-only fence.
+forced_signal = fences.split("    void SignalFence(std::function<void()>&& func, bool force_retirement",1)[1].split("\n    void SignalSyncPoint(",1)[0]
+assert "const bool delay_fence = force_retirement ||" in forced_signal
+assert "CreateFence(!force_retirement && !should_flush)" in forced_signal
+assert "SignalFence(std::move(func), true);" in guest_wait
+assert "if ((force_wait || ShouldWait()) && !IsFenceSignaled(current_fence))" in fences
+print("ENCORE_FORCED_FENCE_RETIREMENT_POLICY_SOURCE_PASS")

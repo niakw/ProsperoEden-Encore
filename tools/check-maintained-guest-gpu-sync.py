@@ -406,7 +406,9 @@ for kind, name in (("dma", "dma_pusher"), ("puller", "engines/puller")):
                 "parked_methods.clear();",
             ):
                 assert marker in actual_owner, marker
-        elif path == "dma_pusher.cpp" and git_blob(actual_owner) == "5cf42158c7cc4462bc9a12a18b482cbd6de20bf8":
+        elif path == "dma_pusher.cpp" and git_blob(actual_owner) in {"5cf42158c7cc4462bc9a12a18b482cbd6de20bf8", "861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c"}:
+            if git_blob(actual_owner) == "861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c":
+                assert "rasterizer->ReleaseFences(true);" in actual_owner
             # Reviewed shipping NS2 successor: queue revocation leases,
             # deferred SEM acquire, live GPFIFO mapping and GPU-fault
             # publication have extended the historical G20 snapshot.

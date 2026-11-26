@@ -76,14 +76,18 @@ public:
         uncommitted_operations.emplace_back(std::move(func));
     }
 
-    void SignalFence(std::function<void()>&& func) {
-        const bool delay_fence = Settings::IsGPUFenceBehaviorDefault() ? Settings::IsGPULevelHigh() : Settings::IsGPUFenceBehaviorBalanced() || Settings::IsGPUFenceBehaviorAccurate();
+    void SignalFence(std::function<void()>&& func, bool force_retirement = false) {
+        // A forced drain is an actual host retirement point, independent
+        // of the optional early guest-fence policy used for ordinary work.
+        const bool delay_fence = force_retirement ||
+            (Settings::IsGPUFenceBehaviorDefault() ? Settings::IsGPULevelHigh() :
+             Settings::IsGPUFenceBehaviorBalanced() || Settings::IsGPUFenceBehaviorAccurate());
         const bool should_flush = ShouldFlush();
         if constexpr (!can_async_check) {
             TryReleasePendingFences<false>();
         }
         CommitAsyncFlushes();
-        TFence new_fence = CreateFence(!should_flush);
+        TFence new_fence = CreateFence(!force_retirement && !should_flush);
         std::unique_lock queue_lock{guard, std::defer_lock};
         if constexpr (can_async_check) queue_lock.lock();
         try {
@@ -178,7 +182,7 @@ public:
                 state->finished = true;
                 state->cv.notify_all();
             });
-            SignalFence(std::move(func));
+            SignalFence(std::move(func), true);
             std::unique_lock lk(state->mutex);
             while (!state->finished) {
                 if (auto failure = ::Eden::PeekGpuFailure()) std::rethrow_exception(failure);
@@ -245,7 +249,7 @@ private:
     void TryReleasePendingFences() {
         while (!fences.empty()) {
             TFence& current_fence = fences.front();
-            if (ShouldWait() && !IsFenceSignaled(current_fence)) {
+            if ((force_wait || ShouldWait()) && !IsFenceSignaled(current_fence)) {
                 if constexpr (force_wait) {
                     WaitFence(current_fence);
                 } else {

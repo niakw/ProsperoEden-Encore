@@ -2600,3 +2600,3084 @@ Source : [vk_rasterizer.cpp:3146–3178](https://github.com/heydemoura/Eglantine
 </details>
 
 **Couverture cumulée :** 14 fonctions, 28 comparaisons directes, 2447 lignes-source parcourues (répétitions incluses). Ni couverture exhaustive du GPU ni preuve console.
+
+## Annexe III — GMMU / NVMap / mémoire physique et heap
+
+Cette annexe compare le chemin **invité → NVDRV address space/NVMap → KPageTable/SVC**. Elle ne modifie aucun propriétaire runtime. Les lignes sont celles des SHAs figés en tête du document. Les fonctions Encore nettement plus longues contiennent des propriétaires PS5/sparse absents des forks : la métrique de diff sert à localiser les écarts, pas à recommander le code le plus court.
+
+### P0-M01 · AS-GPU AllocateSpace
+
+Comparer réservation VA, alignement, big-page et bookkeeping. Encore contient en plus les chemins natifs PS5 4K/sparse ; l'écart de taille est donc attendu et doit être lu par invariants plutôt que par similarité brute.
+
+Encore : [nvhost_as_gpu.cpp:1445–1701](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L1445-L1701) — 257 lignes.
+
+<details>
+<summary>Lichii — 554–605 : 48 alignées, 209 propres Encore, 4 propres upstream</summary>
+
+Source : [nvhost_as_gpu.cpp:554–605](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L554-L605).
+
+```diff
+  1445   554 | NvResult nvhost_as_gpu::AllocateSpace(IoctlAllocSpace& params) {
+  1446   555 |     LOG_DEBUG(Service_NVDRV, "called, pages={:X}, page_size={:X}, flags={:X}", params.pages,
+  1447   556 |               params.page_size, params.flags);
+  1448   557 | 
+  1449   558 |     std::scoped_lock lock(mutex);
+  1450   559 | 
+- 1451       |     if (native_sparse_poisoned && m_native_process &&
+- 1452       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process))
+- 1453       |         return NvResult::InvalidState;
+  1454   560 |     if (!vm.initialised) {
+  1455   561 |         return NvResult::BadValue;
+  1456   562 |     }
+  1457   563 | 
+- 1458       |     if (params.page_size != VM::YUZU_PAGESIZE && params.page_size != vm.big_page_size) {
+- 1459       |         return NvResult::BadValue;
+- 1460       |     }
+- 1461       | 
+- 1462       |     // Native GA10F can reserve sparse 4-KiB GPU VA without backing physical
+- 1463       |     // pages. The original Maxwell ioctl below deliberately keeps its legacy
+- 1464       |     // unsupported-small-sparse contract; never select this path by Title ID.
+- 1465       |     const bool small_sparse =
+- 1466       |         params.page_size == VM::YUZU_PAGESIZE &&
+- 1467       |         ((params.flags & MappingFlags::Sparse) != MappingFlags::None);
+- 1468       |     if (small_sparse && m_native_process &&
+- 1469       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process)) {
+- 1470       |         if (!gmmu || !vm.small_page_allocator || params.pages == 0)
+- 1471       |             return NvResult::BadValue;
+- 1472       |         constexpr u32 allowed_flags =
+- 1473       |             static_cast<u32>(MappingFlags::Fixed) | static_cast<u32>(MappingFlags::Sparse);
+- 1474       |         if ((static_cast<u32>(params.flags) & ~allowed_flags) != 0)
+- 1475       |             return NvResult::BadValue;
+- 1476       | 
+- 1477       |         // All VA arithmetic is 64-bit; the actual allocator stores 4K page
+- 1478       |         // numbers in u32. A reservation never commits pages or pins NVMap.
+- 1479       |         auto& allocator = *vm.small_page_allocator;
+- 1480       |         const u64 first_va = static_cast<u64>(allocator.GetVAStart()) << VM::PAGE_SIZE_BITS;
+- 1481       |         const u64 limit_va = static_cast<u64>(allocator.GetVALimit()) << VM::PAGE_SIZE_BITS;
+- 1482       |         const u64 size = static_cast<u64>(params.pages) * VM::YUZU_PAGESIZE;
+- 1483       |         if (size > limit_va - first_va)
+- 1484       |             return NvResult::InsufficientMemory;
+- 1485       |         const bool fixed = (params.flags & MappingFlags::Fixed) != MappingFlags::None;
+- 1486       |         u64 address = fixed ? static_cast<u64>(params.offset) : 0;
+- 1487       |         if (fixed) {
+- 1488       |             if (address < first_va || address >= limit_va ||
+- 1489       |                 (address & (VM::YUZU_PAGESIZE - 1)) != 0 ||
+- 1490       |                 size > limit_va - address)
+- 1491       |                 return NvResult::BadValue;
+- 1492       |             // FlatAllocator::AllocateFixed does not reject an overlapping
+- 1493       |             // reservation itself. An alias must not steal another guest VA,
+- 1494       |             // including existing fixed maps from MapBufferEx.
+- 1495       |             const auto reserved = allocation_map.lower_bound(address);
+- 1496       |             if ((reserved != allocation_map.end() &&
+- 1497       |                  reserved->first < address + size) ||
+- 1498       |                 (reserved != allocation_map.begin() &&
+- 1499       |                  std::prev(reserved)->second.size >
+- 1500       |                      address - std::prev(reserved)->first))
+- 1501       |                 return NvResult::BadValue;
+- 1502       |             const auto mapped = mapping_map.lower_bound(address);
+- 1503       |             if ((mapped != mapping_map.end() &&
+- 1504       |                  mapped->first < address + size) ||
+- 1505       |                 (mapped != mapping_map.begin() &&
+- 1506       |                  std::prev(mapped)->second.size >
+- 1507       |                      address - std::prev(mapped)->first))
+- 1508       |                 return NvResult::BadValue;
+- 1509       |         }
+- 1510       | 
+- 1511       |         u32 first_page{};
+- 1512       |         bool reserved_pages = false;
+- 1513       |         bool tracked = false;
+- 1514       |         try {
+- 1515       |             if (fixed) {
+- 1516       |                 first_page = static_cast<u32>(address >> VM::PAGE_SIZE_BITS);
+- 1517       |                 allocator.AllocateFixed(first_page, params.pages);
+- 1518       |             } else {
+- 1519       |                 first_page = allocator.Allocate(params.pages);
+- 1520       |                 if (!first_page)
+- 1521       |                     return NvResult::InsufficientMemory;
+- 1522       |                 address = static_cast<u64>(first_page) << VM::PAGE_SIZE_BITS;
+- 1523       |             }
+- 1524       |             reserved_pages = true;
+- 1525       |             const auto [it, inserted] = allocation_map.try_emplace(
+- 1526       |                 address, Allocation{{}, size, VM::YUZU_PAGESIZE, true, false});
+- 1527       |             if (!inserted) {
+- 1528       |                 allocator.Free(first_page, params.pages);
+- 1529       |                 return NvResult::BadValue;
+- 1530       |             }
+- 1531       |             tracked = true;
+- 1532       |             // The last operation only marks GMMU pages Reserved, not
+- 1533       |             // Mapped. A later fixed MapBufferEx/worker sparse remap is
+- 1534       |             // responsible for real backing and the corresponding fence.
+- 1535       |             try {
+- 1536       |                 gmmu->MapSparse(address, size, false);
+- 1537       |             } catch (const std::bad_alloc&) {
+- 1538       |                 // The page-table operation may have partially reserved VA.
+- 1539       |                 // Only release its ledger after undoing those GPU PTEs.
+- 1540       |                 try {
+- 1541       |                     gmmu->Unmap(address, size);
+- 1542       |                 } catch (const std::bad_alloc&) {
+- 1543       |                     // GMMU rollback failed after a partial MapSparse.
+- 1544       |                     // Retain VA ownership and quarantine all further native
+- 1545       |                     // mutations; an untracked live PTE must not be reused.
+- 1546       |                     PoisonNativeAddressSpace();
+- 1547       |                     return NvResult::InvalidState;
+- 1548       |                 }
+- 1549       |                 allocation_map.erase(address);
+- 1550       |                 allocator.Free(first_page, params.pages);
+- 1551       |                 return NvResult::InsufficientMemory;
+- 1552       |             }
+- 1553       |         } catch (const std::bad_alloc&) {
+- 1554       |             if (tracked) allocation_map.erase(address);
+- 1555       |             if (reserved_pages) allocator.Free(first_page, params.pages);
+- 1556       |             return NvResult::InsufficientMemory;
+- 1557       |         }
+- 1558       |         params.offset = address;
+- 1559       |         return NvResult::Success;
+- 1560       |     }
+- 1561       | 
+- 1562       |     // NS2 regular 4K/big-page and big-page sparse reservations must not
+- 1563       |     // publish a guest VA without a live owner in allocation_map. The
+- 1564       |     // already-admitted native 4K sparse branch above is unchanged.
+- 1565       |     // Legacy Maxwell follows its original path below.
+- 1566       |     if (m_native_process &&
+- 1567       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process)) {
+- 1568       |         constexpr u32 allowed_flags =
+- 1569       |             static_cast<u32>(MappingFlags::Fixed) | static_cast<u32>(MappingFlags::Sparse);
+- 1570       |         // The VA allocator counts 4K or negotiated big-page units.
+- 1571       |         // An arbitrary page_size would reserve N small pages but publish
+- 1572       |         // N*page_size bytes of GPU VA, aliasing an adjacent reservation.
+- 1573       |         // Validate the exact page class BEFORE any allocator/GMMU change.
+- 1574       |         if (!gmmu || !vm.small_page_allocator || !vm.big_page_allocator ||
+- 1575       |             !params.pages ||
+- 1576       |             (params.page_size != VM::YUZU_PAGESIZE &&
+- 1577       |              params.page_size != vm.big_page_size) ||
+- 1578       |             (static_cast<u32>(params.flags) & ~allowed_flags))
+- 1579       |             return NvResult::BadValue;
+- 1580       |         const bool big = params.page_size == vm.big_page_size;
+- 1581       |         const bool fixed = (params.flags & MappingFlags::Fixed) != MappingFlags::None;
+- 1582       |         const bool sparse = (params.flags & MappingFlags::Sparse) != MappingFlags::None;
+- 1583       |         const u32 shift = big ? vm.big_page_size_bits : VM::PAGE_SIZE_BITS;
+- 1584       |         auto& allocator = big ? *vm.big_page_allocator : *vm.small_page_allocator;
+- 1585       |         const u64 min_va = static_cast<u64>(allocator.GetVAStart()) << shift;
+- 1586       |         const u64 max_va = static_cast<u64>(allocator.GetVALimit()) << shift;
+- 1587       |         const u64 size = static_cast<u64>(params.pages) * params.page_size;
+- 1588       |         if (min_va >= max_va || !size || size > max_va - min_va)
+- 1589       |             return NvResult::InsufficientMemory;
+- 1590       | 
+- 1591       |         u64 address = fixed ? static_cast<u64>(params.offset) : 0;
+- 1592       |         u32 start_page = 0;
+- 1593       |         if (fixed) {
+- 1594       |             if (address < min_va || address >= max_va ||
+- 1595       |                 (address & (params.page_size - 1)) ||
+- 1596       |                 size > max_va - address)
+- 1597       |                 return NvResult::BadValue;
+- 1598       |             const auto next_allocation = allocation_map.lower_bound(address);
+- 1599       |             if ((next_allocation != allocation_map.end() &&
+- 1600       |                  next_allocation->first < address + size) ||
+- 1601       |                 (next_allocation != allocation_map.begin() &&
+- 1602       |                  std::prev(next_allocation)->second.size >
+- 1603       |                      address - std::prev(next_allocation)->first))
+- 1604       |                 return NvResult::BadValue;
+- 1605       |             const auto next_mapping = mapping_map.lower_bound(address);
+- 1606       |             if ((next_mapping != mapping_map.end() &&
+- 1607       |                  next_mapping->first < address + size) ||
+- 1608       |                 (next_mapping != mapping_map.begin() &&
+- 1609       |                  std::prev(next_mapping)->second.size >
+- 1610       |                      address - std::prev(next_mapping)->first))
+- 1611       |                 return NvResult::BadValue;
+- 1612       |             start_page = static_cast<u32>(address >> shift);
+- 1613       |         }
+- 1614       | 
+- 1615       |         bool reserved = false;
+- 1616       |         try {
+- 1617       |             if (fixed) {
+- 1618       |                 allocator.AllocateFixed(start_page, params.pages);
+- 1619       |             } else {
+- 1620       |                 start_page = allocator.Allocate(params.pages);
+- 1621       |                 if (!start_page) return NvResult::InsufficientMemory;
+- 1622       |                 address = static_cast<u64>(start_page) << shift;
+- 1623       |             }
+- 1624       |             reserved = true;
+- 1625       |             const auto [entry, inserted] = allocation_map.try_emplace(
+- 1626       |                 address, Allocation{{}, size, params.page_size, sparse, big});
+- 1627       |             (void)entry;
+- 1628       |             if (!inserted) {
+- 1629       |                 allocator.Free(start_page, params.pages);
++        564 |     if (params.page_size != VM::LICHII_PAGESIZE && params.page_size != vm.big_page_size) {
+  1630   565 |                 return NvResult::BadValue;
+  1631   566 |             }
+- 1632       |         } catch (const std::bad_alloc&) {
+- 1633       |             if (reserved) {
+- 1634       |                 allocation_map.erase(address);
+- 1635       |                 allocator.Free(start_page, params.pages);
+- 1636       |             }
+- 1637       |             return NvResult::InsufficientMemory;
+- 1638       |         }
+- 1639       |         if (sparse) {
+- 1640       |             try {
+- 1641       |                 gmmu->MapSparse(address, size, big);
+- 1642       |             } catch (const std::bad_alloc&) {
+- 1643       |                 // MapSparse may already have touched PTEs. Retain the
+- 1644       |                 // reservation if the rollback itself cannot complete:
+- 1645       |                 // freeing potentially live GPU VA would be unsafe.
+- 1646       |                 try {
+- 1647       |                     gmmu->Unmap(address, size);
+- 1648       |                 } catch (const std::bad_alloc&) {
+- 1649       |                     // The GMMU might still contain some reserved PTEs.
+- 1650       |                     // Do not let a later ioctl overwrite these stale pages
+- 1651       |                     // or release their owning VA on a second failed unwind.
+- 1652       |                     PoisonNativeAddressSpace();
+- 1653       |                     return NvResult::InvalidState;
+- 1654       |                 }
+- 1655       |                 allocation_map.erase(address);
+- 1656       |                 allocator.Free(start_page, params.pages);
+- 1657       |                 return NvResult::InsufficientMemory;
+- 1658       |             }
+- 1659       |         }
+- 1660       |         params.offset = address;
+- 1661       |         return NvResult::Success;
+- 1662       |     }
+  1663   567 | 
+  1664   568 |     if (params.page_size != vm.big_page_size &&
+  1665   569 |         ((params.flags & MappingFlags::Sparse) != MappingFlags::None)) {
+  1666   570 |         UNIMPLEMENTED_MSG("Sparse small pages are not implemented!");
+  1667   571 |         return NvResult::NotImplemented;
+  1668   572 |     }
+  1669   573 | 
+- 1670       |     const u32 page_size_bits{params.page_size == VM::YUZU_PAGESIZE ? VM::PAGE_SIZE_BITS
++        574 |     const u32 page_size_bits{params.page_size == VM::LICHII_PAGESIZE ? VM::PAGE_SIZE_BITS
+  1671   575 |                                                                    : vm.big_page_size_bits};
+  1672   576 | 
+- 1673       |     auto& allocator{params.page_size == VM::YUZU_PAGESIZE ? *vm.small_page_allocator
++        577 |     auto& allocator{params.page_size == VM::LICHII_PAGESIZE ? *vm.small_page_allocator
+  1674   578 |                                                           : *vm.big_page_allocator};
+  1675   579 | 
+  1676   580 |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
+  1677   581 |         allocator.AllocateFixed(static_cast<u32>(params.offset >> page_size_bits), params.pages);
+  1678   582 |     } else {
+  1679   583 |         params.offset = static_cast<u64>(allocator.Allocate(params.pages)) << page_size_bits;
+  1680   584 |         if (!params.offset) {
+  1681   585 |             ASSERT_MSG(false, "Failed to allocate free space in the GPU AS!");
+  1682   586 |             return NvResult::InsufficientMemory;
+  1683   587 |         }
+  1684   588 |     }
+  1685   589 | 
+  1686   590 |     u64 size{static_cast<u64>(params.pages) * params.page_size};
+  1687   591 | 
+  1688   592 |     if ((params.flags & MappingFlags::Sparse) != MappingFlags::None) {
+  1689   593 |         gmmu->MapSparse(params.offset, size);
+  1690   594 |     }
+  1691   595 | 
+  1692   596 |     allocation_map[params.offset] = {
+  1693   597 |         .mappings{},
+  1694   598 |         .size = size,
+  1695   599 |         .page_size = params.page_size,
+  1696   600 |         .sparse = (params.flags & MappingFlags::Sparse) != MappingFlags::None,
+- 1697       |         .big_pages = params.page_size != VM::YUZU_PAGESIZE,
++        601 |         .big_pages = params.page_size != VM::LICHII_PAGESIZE,
+  1698   602 |     };
+  1699   603 | 
+  1700   604 |     return NvResult::Success;
+  1701   605 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 483–534 : 52 alignées, 205 propres Encore, 0 propres upstream</summary>
+
+Source : [nvhost_as_gpu.cpp:483–534](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L483-L534).
+
+```diff
+  1445   483 | NvResult nvhost_as_gpu::AllocateSpace(IoctlAllocSpace& params) {
+  1446   484 |     LOG_DEBUG(Service_NVDRV, "called, pages={:X}, page_size={:X}, flags={:X}", params.pages,
+  1447   485 |               params.page_size, params.flags);
+  1448   486 | 
+  1449   487 |     std::scoped_lock lock(mutex);
+  1450   488 | 
+- 1451       |     if (native_sparse_poisoned && m_native_process &&
+- 1452       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process))
+- 1453       |         return NvResult::InvalidState;
+  1454   489 |     if (!vm.initialised) {
+  1455   490 |         return NvResult::BadValue;
+  1456   491 |     }
+  1457   492 | 
+  1458   493 |     if (params.page_size != VM::YUZU_PAGESIZE && params.page_size != vm.big_page_size) {
+  1459   494 |         return NvResult::BadValue;
+  1460   495 |     }
+  1461   496 | 
+- 1462       |     // Native GA10F can reserve sparse 4-KiB GPU VA without backing physical
+- 1463       |     // pages. The original Maxwell ioctl below deliberately keeps its legacy
+- 1464       |     // unsupported-small-sparse contract; never select this path by Title ID.
+- 1465       |     const bool small_sparse =
+- 1466       |         params.page_size == VM::YUZU_PAGESIZE &&
+- 1467       |         ((params.flags & MappingFlags::Sparse) != MappingFlags::None);
+- 1468       |     if (small_sparse && m_native_process &&
+- 1469       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process)) {
+- 1470       |         if (!gmmu || !vm.small_page_allocator || params.pages == 0)
+- 1471       |             return NvResult::BadValue;
+- 1472       |         constexpr u32 allowed_flags =
+- 1473       |             static_cast<u32>(MappingFlags::Fixed) | static_cast<u32>(MappingFlags::Sparse);
+- 1474       |         if ((static_cast<u32>(params.flags) & ~allowed_flags) != 0)
+- 1475       |             return NvResult::BadValue;
+- 1476       | 
+- 1477       |         // All VA arithmetic is 64-bit; the actual allocator stores 4K page
+- 1478       |         // numbers in u32. A reservation never commits pages or pins NVMap.
+- 1479       |         auto& allocator = *vm.small_page_allocator;
+- 1480       |         const u64 first_va = static_cast<u64>(allocator.GetVAStart()) << VM::PAGE_SIZE_BITS;
+- 1481       |         const u64 limit_va = static_cast<u64>(allocator.GetVALimit()) << VM::PAGE_SIZE_BITS;
+- 1482       |         const u64 size = static_cast<u64>(params.pages) * VM::YUZU_PAGESIZE;
+- 1483       |         if (size > limit_va - first_va)
+- 1484       |             return NvResult::InsufficientMemory;
+- 1485       |         const bool fixed = (params.flags & MappingFlags::Fixed) != MappingFlags::None;
+- 1486       |         u64 address = fixed ? static_cast<u64>(params.offset) : 0;
+- 1487       |         if (fixed) {
+- 1488       |             if (address < first_va || address >= limit_va ||
+- 1489       |                 (address & (VM::YUZU_PAGESIZE - 1)) != 0 ||
+- 1490       |                 size > limit_va - address)
+- 1491       |                 return NvResult::BadValue;
+- 1492       |             // FlatAllocator::AllocateFixed does not reject an overlapping
+- 1493       |             // reservation itself. An alias must not steal another guest VA,
+- 1494       |             // including existing fixed maps from MapBufferEx.
+- 1495       |             const auto reserved = allocation_map.lower_bound(address);
+- 1496       |             if ((reserved != allocation_map.end() &&
+- 1497       |                  reserved->first < address + size) ||
+- 1498       |                 (reserved != allocation_map.begin() &&
+- 1499       |                  std::prev(reserved)->second.size >
+- 1500       |                      address - std::prev(reserved)->first))
+- 1501       |                 return NvResult::BadValue;
+- 1502       |             const auto mapped = mapping_map.lower_bound(address);
+- 1503       |             if ((mapped != mapping_map.end() &&
+- 1504       |                  mapped->first < address + size) ||
+- 1505       |                 (mapped != mapping_map.begin() &&
+- 1506       |                  std::prev(mapped)->second.size >
+- 1507       |                      address - std::prev(mapped)->first))
+- 1508       |                 return NvResult::BadValue;
+- 1509       |         }
+- 1510       | 
+- 1511       |         u32 first_page{};
+- 1512       |         bool reserved_pages = false;
+- 1513       |         bool tracked = false;
+- 1514       |         try {
+- 1515       |             if (fixed) {
+- 1516       |                 first_page = static_cast<u32>(address >> VM::PAGE_SIZE_BITS);
+- 1517       |                 allocator.AllocateFixed(first_page, params.pages);
+- 1518       |             } else {
+- 1519       |                 first_page = allocator.Allocate(params.pages);
+- 1520       |                 if (!first_page)
+- 1521       |                     return NvResult::InsufficientMemory;
+- 1522       |                 address = static_cast<u64>(first_page) << VM::PAGE_SIZE_BITS;
+- 1523       |             }
+- 1524       |             reserved_pages = true;
+- 1525       |             const auto [it, inserted] = allocation_map.try_emplace(
+- 1526       |                 address, Allocation{{}, size, VM::YUZU_PAGESIZE, true, false});
+- 1527       |             if (!inserted) {
+- 1528       |                 allocator.Free(first_page, params.pages);
+- 1529       |                 return NvResult::BadValue;
+- 1530       |             }
+- 1531       |             tracked = true;
+- 1532       |             // The last operation only marks GMMU pages Reserved, not
+- 1533       |             // Mapped. A later fixed MapBufferEx/worker sparse remap is
+- 1534       |             // responsible for real backing and the corresponding fence.
+- 1535       |             try {
+- 1536       |                 gmmu->MapSparse(address, size, false);
+- 1537       |             } catch (const std::bad_alloc&) {
+- 1538       |                 // The page-table operation may have partially reserved VA.
+- 1539       |                 // Only release its ledger after undoing those GPU PTEs.
+- 1540       |                 try {
+- 1541       |                     gmmu->Unmap(address, size);
+- 1542       |                 } catch (const std::bad_alloc&) {
+- 1543       |                     // GMMU rollback failed after a partial MapSparse.
+- 1544       |                     // Retain VA ownership and quarantine all further native
+- 1545       |                     // mutations; an untracked live PTE must not be reused.
+- 1546       |                     PoisonNativeAddressSpace();
+- 1547       |                     return NvResult::InvalidState;
+- 1548       |                 }
+- 1549       |                 allocation_map.erase(address);
+- 1550       |                 allocator.Free(first_page, params.pages);
+- 1551       |                 return NvResult::InsufficientMemory;
+- 1552       |             }
+- 1553       |         } catch (const std::bad_alloc&) {
+- 1554       |             if (tracked) allocation_map.erase(address);
+- 1555       |             if (reserved_pages) allocator.Free(first_page, params.pages);
+- 1556       |             return NvResult::InsufficientMemory;
+- 1557       |         }
+- 1558       |         params.offset = address;
+- 1559       |         return NvResult::Success;
+- 1560       |     }
+- 1561       | 
+- 1562       |     // NS2 regular 4K/big-page and big-page sparse reservations must not
+- 1563       |     // publish a guest VA without a live owner in allocation_map. The
+- 1564       |     // already-admitted native 4K sparse branch above is unchanged.
+- 1565       |     // Legacy Maxwell follows its original path below.
+- 1566       |     if (m_native_process &&
+- 1567       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process)) {
+- 1568       |         constexpr u32 allowed_flags =
+- 1569       |             static_cast<u32>(MappingFlags::Fixed) | static_cast<u32>(MappingFlags::Sparse);
+- 1570       |         // The VA allocator counts 4K or negotiated big-page units.
+- 1571       |         // An arbitrary page_size would reserve N small pages but publish
+- 1572       |         // N*page_size bytes of GPU VA, aliasing an adjacent reservation.
+- 1573       |         // Validate the exact page class BEFORE any allocator/GMMU change.
+- 1574       |         if (!gmmu || !vm.small_page_allocator || !vm.big_page_allocator ||
+- 1575       |             !params.pages ||
+- 1576       |             (params.page_size != VM::YUZU_PAGESIZE &&
+- 1577       |              params.page_size != vm.big_page_size) ||
+- 1578       |             (static_cast<u32>(params.flags) & ~allowed_flags))
+- 1579       |             return NvResult::BadValue;
+- 1580       |         const bool big = params.page_size == vm.big_page_size;
+- 1581       |         const bool fixed = (params.flags & MappingFlags::Fixed) != MappingFlags::None;
+- 1582       |         const bool sparse = (params.flags & MappingFlags::Sparse) != MappingFlags::None;
+- 1583       |         const u32 shift = big ? vm.big_page_size_bits : VM::PAGE_SIZE_BITS;
+- 1584       |         auto& allocator = big ? *vm.big_page_allocator : *vm.small_page_allocator;
+- 1585       |         const u64 min_va = static_cast<u64>(allocator.GetVAStart()) << shift;
+- 1586       |         const u64 max_va = static_cast<u64>(allocator.GetVALimit()) << shift;
+- 1587       |         const u64 size = static_cast<u64>(params.pages) * params.page_size;
+- 1588       |         if (min_va >= max_va || !size || size > max_va - min_va)
+- 1589       |             return NvResult::InsufficientMemory;
+- 1590       | 
+- 1591       |         u64 address = fixed ? static_cast<u64>(params.offset) : 0;
+- 1592       |         u32 start_page = 0;
+- 1593       |         if (fixed) {
+- 1594       |             if (address < min_va || address >= max_va ||
+- 1595       |                 (address & (params.page_size - 1)) ||
+- 1596       |                 size > max_va - address)
+- 1597       |                 return NvResult::BadValue;
+- 1598       |             const auto next_allocation = allocation_map.lower_bound(address);
+- 1599       |             if ((next_allocation != allocation_map.end() &&
+- 1600       |                  next_allocation->first < address + size) ||
+- 1601       |                 (next_allocation != allocation_map.begin() &&
+- 1602       |                  std::prev(next_allocation)->second.size >
+- 1603       |                      address - std::prev(next_allocation)->first))
+- 1604       |                 return NvResult::BadValue;
+- 1605       |             const auto next_mapping = mapping_map.lower_bound(address);
+- 1606       |             if ((next_mapping != mapping_map.end() &&
+- 1607       |                  next_mapping->first < address + size) ||
+- 1608       |                 (next_mapping != mapping_map.begin() &&
+- 1609       |                  std::prev(next_mapping)->second.size >
+- 1610       |                      address - std::prev(next_mapping)->first))
+- 1611       |                 return NvResult::BadValue;
+- 1612       |             start_page = static_cast<u32>(address >> shift);
+- 1613       |         }
+- 1614       | 
+- 1615       |         bool reserved = false;
+- 1616       |         try {
+- 1617       |             if (fixed) {
+- 1618       |                 allocator.AllocateFixed(start_page, params.pages);
+- 1619       |             } else {
+- 1620       |                 start_page = allocator.Allocate(params.pages);
+- 1621       |                 if (!start_page) return NvResult::InsufficientMemory;
+- 1622       |                 address = static_cast<u64>(start_page) << shift;
+- 1623       |             }
+- 1624       |             reserved = true;
+- 1625       |             const auto [entry, inserted] = allocation_map.try_emplace(
+- 1626       |                 address, Allocation{{}, size, params.page_size, sparse, big});
+- 1627       |             (void)entry;
+- 1628       |             if (!inserted) {
+- 1629       |                 allocator.Free(start_page, params.pages);
+- 1630       |                 return NvResult::BadValue;
+- 1631       |             }
+- 1632       |         } catch (const std::bad_alloc&) {
+- 1633       |             if (reserved) {
+- 1634       |                 allocation_map.erase(address);
+- 1635       |                 allocator.Free(start_page, params.pages);
+- 1636       |             }
+- 1637       |             return NvResult::InsufficientMemory;
+- 1638       |         }
+- 1639       |         if (sparse) {
+- 1640       |             try {
+- 1641       |                 gmmu->MapSparse(address, size, big);
+- 1642       |             } catch (const std::bad_alloc&) {
+- 1643       |                 // MapSparse may already have touched PTEs. Retain the
+- 1644       |                 // reservation if the rollback itself cannot complete:
+- 1645       |                 // freeing potentially live GPU VA would be unsafe.
+- 1646       |                 try {
+- 1647       |                     gmmu->Unmap(address, size);
+- 1648       |                 } catch (const std::bad_alloc&) {
+- 1649       |                     // The GMMU might still contain some reserved PTEs.
+- 1650       |                     // Do not let a later ioctl overwrite these stale pages
+- 1651       |                     // or release their owning VA on a second failed unwind.
+- 1652       |                     PoisonNativeAddressSpace();
+- 1653       |                     return NvResult::InvalidState;
+- 1654       |                 }
+- 1655       |                 allocation_map.erase(address);
+- 1656       |                 allocator.Free(start_page, params.pages);
+- 1657       |                 return NvResult::InsufficientMemory;
+- 1658       |             }
+- 1659       |         }
+- 1660       |         params.offset = address;
+- 1661       |         return NvResult::Success;
+- 1662       |     }
+- 1663       | 
+  1664   497 |     if (params.page_size != vm.big_page_size &&
+  1665   498 |         ((params.flags & MappingFlags::Sparse) != MappingFlags::None)) {
+  1666   499 |         UNIMPLEMENTED_MSG("Sparse small pages are not implemented!");
+  1667   500 |         return NvResult::NotImplemented;
+  1668   501 |     }
+  1669   502 | 
+  1670   503 |     const u32 page_size_bits{params.page_size == VM::YUZU_PAGESIZE ? VM::PAGE_SIZE_BITS
+  1671   504 |                                                                    : vm.big_page_size_bits};
+  1672   505 | 
+  1673   506 |     auto& allocator{params.page_size == VM::YUZU_PAGESIZE ? *vm.small_page_allocator
+  1674   507 |                                                           : *vm.big_page_allocator};
+  1675   508 | 
+  1676   509 |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
+  1677   510 |         allocator.AllocateFixed(static_cast<u32>(params.offset >> page_size_bits), params.pages);
+  1678   511 |     } else {
+  1679   512 |         params.offset = static_cast<u64>(allocator.Allocate(params.pages)) << page_size_bits;
+  1680   513 |         if (!params.offset) {
+  1681   514 |             ASSERT_MSG(false, "Failed to allocate free space in the GPU AS!");
+  1682   515 |             return NvResult::InsufficientMemory;
+  1683   516 |         }
+  1684   517 |     }
+  1685   518 | 
+  1686   519 |     u64 size{static_cast<u64>(params.pages) * params.page_size};
+  1687   520 | 
+  1688   521 |     if ((params.flags & MappingFlags::Sparse) != MappingFlags::None) {
+  1689   522 |         gmmu->MapSparse(params.offset, size);
+  1690   523 |     }
+  1691   524 | 
+  1692   525 |     allocation_map[params.offset] = {
+  1693   526 |         .mappings{},
+  1694   527 |         .size = size,
+  1695   528 |         .page_size = params.page_size,
+  1696   529 |         .sparse = (params.flags & MappingFlags::Sparse) != MappingFlags::None,
+  1697   530 |         .big_pages = params.page_size != VM::YUZU_PAGESIZE,
+  1698   531 |     };
+  1699   532 | 
+  1700   533 |     return NvResult::Success;
+  1701   534 | }
+```
+
+</details>
+
+### P0-M02 · AS-GPU FreeSpace
+
+Point critique de durée de vie : retrait de mapping, désenregistrement et libération VA. Une différence n'est un bug que si elle laisse une traduction ou une référence survivre à la libération.
+
+Encore : [nvhost_as_gpu.cpp:1765–1844](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L1765-L1844) — 80 lignes.
+
+<details>
+<summary>Lichii — 631–658 : 21 alignées, 59 propres Encore, 7 propres upstream</summary>
+
+Source : [nvhost_as_gpu.cpp:631–658](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L631-L658).
+
+```diff
+  1765   631 | NvResult nvhost_as_gpu::FreeSpace(IoctlFreeSpace& params) {
+  1766   632 |     LOG_DEBUG(Service_NVDRV, "called, offset={:X}, pages={:X}, page_size={:X}", params.offset, params.pages, params.page_size);
+- 1767       |     // A native GPU free retires GMMU PTEs and may drop the last NVMap
+- 1768       |     // physical pin. A queued GPU command could still dereference that PA.
+- 1769       |     // Drain BEFORE taking the AS mutex: GPU command processing can query
+- 1770       |     // these page tables while WaitForIdle() runs. NS1 stays unchanged.
+- 1771       |     if (m_native_process &&
+- 1772       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process) &&
+- 1773       |         system.IsPoweredOn() && !system.IsShuttingDown())
+- 1774       |         system.GPU().WaitForIdle();
+  1775   633 |     std::scoped_lock lock(mutex);
+  1776   634 |     if (!vm.initialised) {
+  1777   635 |         return NvResult::BadValue;
+  1778   636 |     }
+- 1779       |     if (native_sparse_regions.contains(params.offset))
+- 1780       |         return NvResult::BadParameter;
+- 1781       |     if (native_sparse_poisoned && m_native_process &&
+- 1782       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process))
+- 1783       |         return NvResult::InvalidState;
+  1784   637 |     if (auto const it = allocation_map.find(params.offset); it != allocation_map.end()) {
+- 1785       |         // FreeSpace holds the AS mutex throughout retirement; no other
+- 1786       |         // caller may mutate this allocation vector. Avoid copying the
+- 1787       |         // entire owner ledger on a P0 memory-pressure exit path.
+- 1788       |         const auto& allocation = it->second;
++        638 |         auto const allocation = it->second;
+  1789   639 |         if (allocation.page_size != params.page_size || allocation.size != (u64(params.pages) * params.page_size))
+  1790   640 |             return NvResult::BadValue;
+  1791   641 | 
+- 1792       |         // Native A:14 and GSV 216 share the sparse range/pin registry.
+- 1793       |         // Reserve all needed host nodes before unmapping any guest PTE.
+- 1794       |         NativeSparseMappingTable updated_sparse;
+- 1795       |         std::set<u32> retained_handles;
+- 1796       |         const bool native_sparse = allocation.sparse && m_native_process &&
+- 1797       |                                    NativeGpuProcessRegistry::Instance().Contains(m_native_process);
+- 1798       |         if (native_sparse) {
+- 1799       |             try {
+- 1800       |                 updated_sparse = native_sparse_mappings;
+- 1801       |                 updated_sparse.Replace(NativeSparseRange{
+- 1802       |                     static_cast<u64>(params.offset), allocation.size, 0, 0});
+- 1803       |                 retained_handles = updated_sparse.ReferencedHandles();
+- 1804       |             } catch (const std::bad_alloc&) {
+- 1805       |                 return NvResult::InsufficientMemory;
+- 1806       |             }
++        642 |         for (const auto mapping_offset : allocation.mappings) {
++        643 |             void(FreeMappingLocked(mapping_offset));
+  1807   644 |         }
+  1808   645 | 
+- 1809       |         for (const auto mapping_offset : allocation.mappings)
+- 1810       |             if (!FreeMappingLocked(mapping_offset))
+- 1811       |                 return NvResult::BadValue;
+- 1812       | 
+- 1813       |         // Always retire GPU PTEs BEFORE dropping their pinned NVMap memory.
+- 1814       |         if (allocation.sparse) {
+- 1815       |             if (native_sparse) {
+- 1816       |                 try {
+- 1817       |                     gmmu->Unmap(params.offset, allocation.size);
+- 1818       |                 } catch (const std::bad_alloc&) {
+- 1819       |                     // Retain the ledger and pins on an incomplete unmap.
+- 1820       |                     PoisonNativeAddressSpace();
+- 1821       |                     return NvResult::InvalidState;
+- 1822       |                 }
+- 1823       |             } else {
++        646 |         // Unset sparse flag if required
++        647 |         if (allocation.sparse)
+  1824   648 |                 gmmu->Unmap(params.offset, allocation.size);
+- 1825       |             }
+- 1826       |         }
+- 1827       |         if (native_sparse) {
+- 1828       |             native_sparse_mappings = std::move(updated_sparse);
+- 1829       |             for (auto pin = native_sparse_pins.begin(); pin != native_sparse_pins.end();) {
+- 1830       |                 if (retained_handles.contains(pin->first)) { ++pin; continue; }
+- 1831       |                 nvmap.UnpinHandle(pin->first);
+- 1832       |                 pin = native_sparse_pins.erase(pin);
+- 1833       |             }
+- 1834       |         }
+  1835   649 | 
+- 1836       |         auto& allocator{params.page_size == VM::YUZU_PAGESIZE ? *vm.small_page_allocator : *vm.big_page_allocator};
+- 1837       |         u32 page_size_bits{params.page_size == VM::YUZU_PAGESIZE ? VM::PAGE_SIZE_BITS : vm.big_page_size_bits};
++        650 |         auto& allocator{params.page_size == VM::LICHII_PAGESIZE ? *vm.small_page_allocator : *vm.big_page_allocator};
++        651 |         u32 page_size_bits{params.page_size == VM::LICHII_PAGESIZE ? VM::PAGE_SIZE_BITS : vm.big_page_size_bits};
+  1838   652 | 
+  1839   653 |         allocator.Free(u32(params.offset >> page_size_bits), u32(allocation.size >> page_size_bits));
+  1840   654 |         allocation_map.erase(params.offset);
+  1841   655 |         return NvResult::Success;
+  1842   656 |     }
+  1843   657 |     return NvResult::BadValue;
+  1844   658 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 560–587 : 25 alignées, 55 propres Encore, 3 propres upstream</summary>
+
+Source : [nvhost_as_gpu.cpp:560–587](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L560-L587).
+
+```diff
+  1765   560 | NvResult nvhost_as_gpu::FreeSpace(IoctlFreeSpace& params) {
+  1766   561 |     LOG_DEBUG(Service_NVDRV, "called, offset={:X}, pages={:X}, page_size={:X}", params.offset, params.pages, params.page_size);
+- 1767       |     // A native GPU free retires GMMU PTEs and may drop the last NVMap
+- 1768       |     // physical pin. A queued GPU command could still dereference that PA.
+- 1769       |     // Drain BEFORE taking the AS mutex: GPU command processing can query
+- 1770       |     // these page tables while WaitForIdle() runs. NS1 stays unchanged.
+- 1771       |     if (m_native_process &&
+- 1772       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process) &&
+- 1773       |         system.IsPoweredOn() && !system.IsShuttingDown())
+- 1774       |         system.GPU().WaitForIdle();
+  1775   562 |     std::scoped_lock lock(mutex);
+  1776   563 |     if (!vm.initialised) {
+  1777   564 |         return NvResult::BadValue;
+  1778   565 |     }
+- 1779       |     if (native_sparse_regions.contains(params.offset))
+- 1780       |         return NvResult::BadParameter;
+- 1781       |     if (native_sparse_poisoned && m_native_process &&
+- 1782       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process))
+- 1783       |         return NvResult::InvalidState;
+  1784   566 |     if (auto const it = allocation_map.find(params.offset); it != allocation_map.end()) {
+- 1785       |         // FreeSpace holds the AS mutex throughout retirement; no other
+- 1786       |         // caller may mutate this allocation vector. Avoid copying the
+- 1787       |         // entire owner ledger on a P0 memory-pressure exit path.
+- 1788       |         const auto& allocation = it->second;
++        567 |         auto const allocation = it->second;
+  1789   568 |         if (allocation.page_size != params.page_size || allocation.size != (u64(params.pages) * params.page_size))
+  1790   569 |             return NvResult::BadValue;
+  1791   570 | 
+- 1792       |         // Native A:14 and GSV 216 share the sparse range/pin registry.
+- 1793       |         // Reserve all needed host nodes before unmapping any guest PTE.
+- 1794       |         NativeSparseMappingTable updated_sparse;
+- 1795       |         std::set<u32> retained_handles;
+- 1796       |         const bool native_sparse = allocation.sparse && m_native_process &&
+- 1797       |                                    NativeGpuProcessRegistry::Instance().Contains(m_native_process);
+- 1798       |         if (native_sparse) {
+- 1799       |             try {
+- 1800       |                 updated_sparse = native_sparse_mappings;
+- 1801       |                 updated_sparse.Replace(NativeSparseRange{
+- 1802       |                     static_cast<u64>(params.offset), allocation.size, 0, 0});
+- 1803       |                 retained_handles = updated_sparse.ReferencedHandles();
+- 1804       |             } catch (const std::bad_alloc&) {
+- 1805       |                 return NvResult::InsufficientMemory;
+- 1806       |             }
+- 1807       |         }
+- 1808       | 
+  1809   571 |         for (const auto mapping_offset : allocation.mappings)
+  1810   572 |             if (!FreeMappingLocked(mapping_offset))
+  1811   573 |                 return NvResult::BadValue;
+  1812   574 | 
+- 1813       |         // Always retire GPU PTEs BEFORE dropping their pinned NVMap memory.
+- 1814       |         if (allocation.sparse) {
+- 1815       |             if (native_sparse) {
+- 1816       |                 try {
+- 1817       |                     gmmu->Unmap(params.offset, allocation.size);
+- 1818       |                 } catch (const std::bad_alloc&) {
+- 1819       |                     // Retain the ledger and pins on an incomplete unmap.
+- 1820       |                     PoisonNativeAddressSpace();
+- 1821       |                     return NvResult::InvalidState;
+- 1822       |                 }
+- 1823       |             } else {
++        575 |         // Unset sparse flag if required
++        576 |         if (allocation.sparse)
+  1824   577 |                 gmmu->Unmap(params.offset, allocation.size);
+- 1825       |             }
+- 1826       |         }
+- 1827       |         if (native_sparse) {
+- 1828       |             native_sparse_mappings = std::move(updated_sparse);
+- 1829       |             for (auto pin = native_sparse_pins.begin(); pin != native_sparse_pins.end();) {
+- 1830       |                 if (retained_handles.contains(pin->first)) { ++pin; continue; }
+- 1831       |                 nvmap.UnpinHandle(pin->first);
+- 1832       |                 pin = native_sparse_pins.erase(pin);
+- 1833       |             }
+- 1834       |         }
+  1835   578 | 
+  1836   579 |         auto& allocator{params.page_size == VM::YUZU_PAGESIZE ? *vm.small_page_allocator : *vm.big_page_allocator};
+  1837   580 |         u32 page_size_bits{params.page_size == VM::YUZU_PAGESIZE ? VM::PAGE_SIZE_BITS : vm.big_page_size_bits};
+  1838   581 | 
+  1839   582 |         allocator.Free(u32(params.offset >> page_size_bits), u32(allocation.size >> page_size_bits));
+  1840   583 |         allocation_map.erase(params.offset);
+  1841   584 |         return NvResult::Success;
+  1842   585 |     }
+  1843   586 |     return NvResult::BadValue;
+  1844   587 | }
+```
+
+</details>
+
+### P0-M03 · AS-GPU Remap
+
+Le remap est directement pertinent aux mappings sparse NS2. Relever séparément validation des entrées, kind, source offset, batch et ordre map/unmap ; ne pas déduire une équivalence d'un simple ResultSuccess.
+
+Encore : [nvhost_as_gpu.cpp:1846–1934](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L1846-L1934) — 89 lignes.
+
+<details>
+<summary>Lichii — 660–704 : 38 alignées, 51 propres Encore, 7 propres upstream</summary>
+
+Source : [nvhost_as_gpu.cpp:660–704](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L660-L704).
+
+```diff
+  1846   660 | NvResult nvhost_as_gpu::Remap(std::span<IoctlRemapEntry> entries) {
+  1847   661 |     LOG_DEBUG(Service_NVDRV, "called, num_entries={:#x}", entries.size());
+  1848   662 | 
+- 1849       |     if (m_native_process &&
+- 1850       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process)) {
+- 1851       |         // Native NVDRV A:14 shares the same transactional pin and mapping
+- 1852       |         // table with GSV 216. Legacy A:14 pinned on every remap but never
+- 1853       |         // recorded enough ownership to retire the backing.
+- 1854       |         if (entries.empty()) return NvResult::Success;
+- 1855       |         if (entries.size() > 256) return NvResult::BadParameter;
+- 1856       |         if (!vm.initialised) return NvResult::InvalidState;
+- 1857       |         std::vector<NativeSparseRemapEntry> transaction;
+- 1858       |         try {
+- 1859       |             transaction.reserve(entries.size());
+- 1860       |             for (const auto& entry : entries) {
+- 1861       |                 // SwitchBrew A:14 remap_op flags bit2 controls
+- 1862       |                 // cacheability. Accept it without mistaking it for a
+- 1863       |                 // page-size selector or an unknown command bit.
+- 1864       |                 if ((u32{entry.flags} & ~0x4U) || !entry.big_pages ||
+- 1865       |                     entry.kind > std::numeric_limits<u8>::max())
+- 1866       |                     return NvResult::BadParameter;
+- 1867       |                 NativeSparseRemapEntry item{};
+- 1868       |                 item.flags = (vm.big_page_size_bits == 16 ? 0x2000U : 0x4000U) |
+- 1869       |                              (u32{entry.flags} & 0x4U);
+- 1870       |                 item.kind = entry.kind;
+- 1871       |                 item.fallback_kind = entry.kind;
+- 1872       |                 item.handle = entry.handle;
+- 1873       |                 item.source_pages = entry.handle ? u64{entry.handle_offset_big_pages} : u64{0};
+- 1874       |                 item.destination_pages = entry.as_offset_big_pages;
+- 1875       |                 item.pages = entry.big_pages;
+- 1876       |                 transaction.push_back(item);
+- 1877       |             }
+- 1878       |         } catch (const std::bad_alloc&) {
+- 1879       |             return NvResult::InsufficientMemory;
+- 1880       |         }
+- 1881       |         // The guest can have already queued reads of the old big-page
+- 1882       |         // backing. Retire those commands before changing their GMMU PTEs.
+- 1883       |         // GSV 216 has the same wait-before-remap contract; no NS1 wait.
+- 1884       |         if (system.IsPoweredOn() && !system.IsShuttingDown())
+- 1885       |             system.GPU().WaitForIdle();
+- 1886       |         return RemapNativeSparse(transaction);
+- 1887       |     }
+- 1888       | 
+  1889   663 |     if (!vm.initialised) {
+  1890   664 |         return NvResult::BadValue;
+  1891   665 |     }
+  1892   666 | 
+  1893   667 |     for (const auto& entry : entries) {
+  1894   668 |         GPUVAddr virtual_address{static_cast<u64>(entry.as_offset_big_pages)
+  1895   669 |                                  << vm.big_page_size_bits};
+  1896   670 |         u64 size{static_cast<u64>(entry.big_pages) << vm.big_page_size_bits};
+  1897   671 | 
+- 1898       |         const auto alloc = NativeGpuAllocation::FindContaining(
+- 1899       |             allocation_map, virtual_address, size);
+- 1900       |         if (alloc == allocation_map.end()) {
++        672 |         auto alloc{allocation_map.upper_bound(virtual_address)};
++        673 | 
++        674 |         if (alloc-- == allocation_map.begin() ||
++        675 |             (virtual_address - alloc->first) + size > alloc->second.size) {
+  1901   676 |             LOG_WARNING(Service_NVDRV, "Cannot remap into an unallocated region!");
+  1902   677 |             return NvResult::BadValue;
+  1903   678 |         }
+  1904   679 | 
+  1905   680 |         if (!alloc->second.sparse) {
+  1906   681 |             LOG_WARNING(Service_NVDRV, "Cannot remap a non-sparse mapping!");
+  1907   682 |             return NvResult::BadValue;
+  1908   683 |         }
+  1909   684 | 
+  1910   685 |         const bool use_big_pages = alloc->second.big_pages;
+  1911   686 |         if (!entry.handle) {
+  1912   687 |             gmmu->MapSparse(virtual_address, size, use_big_pages);
+  1913   688 |         } else {
+  1914   689 |             auto handle{nvmap.GetHandle(entry.handle)};
+  1915   690 |             if (!handle) {
+  1916   691 |                 return NvResult::BadValue;
+  1917   692 |             }
+  1918   693 | 
+- 1919       |             const DAddr base = nvmap.PinHandle(entry.handle, false);
+- 1920       |             const u64 source = static_cast<u64>(entry.handle_offset_big_pages)
+- 1921       |                                << vm.big_page_size_bits;
+- 1922       |             if (!NativePinnedPhysicalSpan(base, source, size)) {
+- 1923       |                 if (base) nvmap.UnpinHandle(entry.handle);
+- 1924       |                 return NvResult::InsufficientMemory;
+- 1925       |             }
+- 1926       |             const DAddr device_address = base + source;
++        694 |             DAddr base = nvmap.PinHandle(entry.handle, false);
++        695 |             DAddr device_address{static_cast<DAddr>(
++        696 |                 base + (static_cast<u64>(entry.handle_offset_big_pages) << vm.big_page_size_bits))};
+  1927   697 | 
+  1928   698 |             gmmu->Map(virtual_address, device_address, size,
+  1929   699 |                       static_cast<Tegra::PTEKind>(entry.kind), use_big_pages);
+  1930   700 |         }
+  1931   701 |     }
+  1932   702 | 
+  1933   703 |     return NvResult::Success;
+  1934   704 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 589–633 : 38 alignées, 51 propres Encore, 7 propres upstream</summary>
+
+Source : [nvhost_as_gpu.cpp:589–633](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L589-L633).
+
+```diff
+  1846   589 | NvResult nvhost_as_gpu::Remap(std::span<IoctlRemapEntry> entries) {
+  1847   590 |     LOG_DEBUG(Service_NVDRV, "called, num_entries={:#x}", entries.size());
+  1848   591 | 
+- 1849       |     if (m_native_process &&
+- 1850       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process)) {
+- 1851       |         // Native NVDRV A:14 shares the same transactional pin and mapping
+- 1852       |         // table with GSV 216. Legacy A:14 pinned on every remap but never
+- 1853       |         // recorded enough ownership to retire the backing.
+- 1854       |         if (entries.empty()) return NvResult::Success;
+- 1855       |         if (entries.size() > 256) return NvResult::BadParameter;
+- 1856       |         if (!vm.initialised) return NvResult::InvalidState;
+- 1857       |         std::vector<NativeSparseRemapEntry> transaction;
+- 1858       |         try {
+- 1859       |             transaction.reserve(entries.size());
+- 1860       |             for (const auto& entry : entries) {
+- 1861       |                 // SwitchBrew A:14 remap_op flags bit2 controls
+- 1862       |                 // cacheability. Accept it without mistaking it for a
+- 1863       |                 // page-size selector or an unknown command bit.
+- 1864       |                 if ((u32{entry.flags} & ~0x4U) || !entry.big_pages ||
+- 1865       |                     entry.kind > std::numeric_limits<u8>::max())
+- 1866       |                     return NvResult::BadParameter;
+- 1867       |                 NativeSparseRemapEntry item{};
+- 1868       |                 item.flags = (vm.big_page_size_bits == 16 ? 0x2000U : 0x4000U) |
+- 1869       |                              (u32{entry.flags} & 0x4U);
+- 1870       |                 item.kind = entry.kind;
+- 1871       |                 item.fallback_kind = entry.kind;
+- 1872       |                 item.handle = entry.handle;
+- 1873       |                 item.source_pages = entry.handle ? u64{entry.handle_offset_big_pages} : u64{0};
+- 1874       |                 item.destination_pages = entry.as_offset_big_pages;
+- 1875       |                 item.pages = entry.big_pages;
+- 1876       |                 transaction.push_back(item);
+- 1877       |             }
+- 1878       |         } catch (const std::bad_alloc&) {
+- 1879       |             return NvResult::InsufficientMemory;
+- 1880       |         }
+- 1881       |         // The guest can have already queued reads of the old big-page
+- 1882       |         // backing. Retire those commands before changing their GMMU PTEs.
+- 1883       |         // GSV 216 has the same wait-before-remap contract; no NS1 wait.
+- 1884       |         if (system.IsPoweredOn() && !system.IsShuttingDown())
+- 1885       |             system.GPU().WaitForIdle();
+- 1886       |         return RemapNativeSparse(transaction);
+- 1887       |     }
+- 1888       | 
+  1889   592 |     if (!vm.initialised) {
+  1890   593 |         return NvResult::BadValue;
+  1891   594 |     }
+  1892   595 | 
+  1893   596 |     for (const auto& entry : entries) {
+  1894   597 |         GPUVAddr virtual_address{static_cast<u64>(entry.as_offset_big_pages)
+  1895   598 |                                  << vm.big_page_size_bits};
+  1896   599 |         u64 size{static_cast<u64>(entry.big_pages) << vm.big_page_size_bits};
+  1897   600 | 
+- 1898       |         const auto alloc = NativeGpuAllocation::FindContaining(
+- 1899       |             allocation_map, virtual_address, size);
+- 1900       |         if (alloc == allocation_map.end()) {
++        601 |         auto alloc{allocation_map.upper_bound(virtual_address)};
++        602 | 
++        603 |         if (alloc-- == allocation_map.begin() ||
++        604 |             (virtual_address - alloc->first) + size > alloc->second.size) {
+  1901   605 |             LOG_WARNING(Service_NVDRV, "Cannot remap into an unallocated region!");
+  1902   606 |             return NvResult::BadValue;
+  1903   607 |         }
+  1904   608 | 
+  1905   609 |         if (!alloc->second.sparse) {
+  1906   610 |             LOG_WARNING(Service_NVDRV, "Cannot remap a non-sparse mapping!");
+  1907   611 |             return NvResult::BadValue;
+  1908   612 |         }
+  1909   613 | 
+  1910   614 |         const bool use_big_pages = alloc->second.big_pages;
+  1911   615 |         if (!entry.handle) {
+  1912   616 |             gmmu->MapSparse(virtual_address, size, use_big_pages);
+  1913   617 |         } else {
+  1914   618 |             auto handle{nvmap.GetHandle(entry.handle)};
+  1915   619 |             if (!handle) {
+  1916   620 |                 return NvResult::BadValue;
+  1917   621 |             }
+  1918   622 | 
+- 1919       |             const DAddr base = nvmap.PinHandle(entry.handle, false);
+- 1920       |             const u64 source = static_cast<u64>(entry.handle_offset_big_pages)
+- 1921       |                                << vm.big_page_size_bits;
+- 1922       |             if (!NativePinnedPhysicalSpan(base, source, size)) {
+- 1923       |                 if (base) nvmap.UnpinHandle(entry.handle);
+- 1924       |                 return NvResult::InsufficientMemory;
+- 1925       |             }
+- 1926       |             const DAddr device_address = base + source;
++        623 |             DAddr base = nvmap.PinHandle(entry.handle, false);
++        624 |             DAddr device_address{static_cast<DAddr>(
++        625 |                 base + (static_cast<u64>(entry.handle_offset_big_pages) << vm.big_page_size_bits))};
+  1927   626 | 
+  1928   627 |             gmmu->Map(virtual_address, device_address, size,
+  1929   628 |                       static_cast<Tegra::PTEKind>(entry.kind), use_big_pages);
+  1930   629 |         }
+  1931   630 |     }
+  1932   631 | 
+  1933   632 |     return NvResult::Success;
+  1934   633 | }
+```
+
+</details>
+
+### P0-M04 · AS-GPU MapBufferEx
+
+Fonction centrale pour la traduction NVMap→GPU VA. Encore ajoute des contrats de session/processus, des mappings natifs 4K et de la quarantaine ; les forks ont un chemin Nx2Map plus direct. À corréler avec les adresses des deux GPFIFO Pokopia, pas à simplifier aveuglément.
+
+Encore : [nvhost_as_gpu.cpp:1936–2317](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L1936-L2317) — 382 lignes.
+
+<details>
+<summary>Lichii — 706–797 : 64 alignées, 318 propres Encore, 28 propres upstream</summary>
+
+Source : [nvhost_as_gpu.cpp:706–797](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L706-L797).
+
+```diff
+  1936   706 | NvResult nvhost_as_gpu::MapBufferEx(IoctlMapBufferEx& params) {
+  1937   707 |     LOG_DEBUG(Service_NVDRV,
+  1938   708 |               "called, flags={:X}, nvmap_handle={:X}, buffer_offset={}, mapping_size={}"
+  1939   709 |               ", offset={:#x}",
+  1940   710 |               params.flags, params.handle, params.buffer_offset, params.mapping_size,
+  1941   711 |               params.offset);
+  1942   712 | 
+- 1943       |     // A native PTE-kind remap must drain prior GPU work BEFORE entering the
+- 1944       |     // address-space critical section. The GPU worker may still query these
+- 1945       |     // page tables while WaitForIdle drains the queue.
+- 1946       |     const bool native_remap_requested =
+- 1947       |         m_native_process &&
+- 1948       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process) &&
+- 1949       |         (params.flags & MappingFlags::Remap) != MappingFlags::None;
+- 1950       |     if (native_remap_requested && system.IsPoweredOn() && !system.IsShuttingDown())
+- 1951       |         system.GPU().WaitForIdle();
+- 1952       | 
+  1953   713 |     std::scoped_lock lock(mutex);
+  1954   714 | 
+  1955   715 |     if (!vm.initialised) {
+  1956   716 |         return NvResult::BadValue;
+  1957   717 |     }
+  1958   718 | 
+- 1959       |     // A partially committed native sparse transaction has quarantined
+- 1960       |     // physical owners. Do not let an unrelated ioctl overwrite its PTEs.
+- 1961       |     const bool remap_native = m_native_process &&
+- 1962       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process);
+- 1963       |     if (remap_native && native_sparse_poisoned)
+- 1964       |         return NvResult::InvalidState;
+- 1965       |     if (remap_native) {
+- 1966       |         // Switch 2 allows FIXED bit0, CACHEABLE bit2 and the legacy
+- 1967       |         // subrange REMAP bit8 only. Unknown bits cannot be acknowledged
+- 1968       |         // as a successful mapping with silently different PTE ownership.
+- 1969       |         constexpr u32 valid_flags = 0x105U;
+- 1970       |         if ((static_cast<u32>(params.flags) & ~valid_flags) != 0)
+- 1971       |             return NvResult::NotSupported;
+- 1972       |         // The fourth u32 in MAP_BUFFER_EX/EX2 is documented as
+- 1973       |         // reserved/inout, not a requested page size. Preserve it.
+- 1974       |     }
+- 1975       | 
+  1976   719 |     // Remaps a subregion of an existing mapping to a different PA
+  1977   720 |     if ((params.flags & MappingFlags::Remap) != MappingFlags::None) {
+- 1978       |         // These two ioctl fields are SIGNED; reject negative input before
+- 1979       |         // conversion, address arithmetic or locating an existing mapping.
+- 1980       |         if (params.offset < 0 || params.buffer_offset < 0) {
+- 1981       |             return NvResult::BadValue;
+- 1982       |         }
+- 1983       |         const u64 gpu_base = static_cast<u64>(params.offset);
+- 1984       |         const u64 buffer_offset = static_cast<u64>(params.buffer_offset);
+- 1985       |         if (auto const it = mapping_map.find(gpu_base); it != mapping_map.end()) {
++        721 |         if (auto const it = mapping_map.find(params.offset); it != mapping_map.end()) {
+  1986   722 |             auto const mapping = it->second;
+- 1987       |             // A remap into an existing buffer must fit its original offset
+- 1988       |             // and size. Reject wrapped GPU VAs before any page-table change.
+- 1989       |             constexpr u64 gpu_limit = u64{1} << 49;
+- 1990       |             if (!NativeGpuAllocation::ContainsSubrange(
+- 1991       |                     mapping.size, buffer_offset, params.mapping_size) ||
+- 1992       |                 gpu_base >= gpu_limit ||
+- 1993       |                 buffer_offset >= gpu_limit - gpu_base ||
+- 1994       |                 params.mapping_size > gpu_limit - gpu_base - buffer_offset ||
+- 1995       |                 mapping.ptr > std::numeric_limits<VAddr>::max() - buffer_offset) {
++        723 |             if (mapping.size < params.mapping_size) {
+  1996   724 |                 LOG_WARNING(Service_NVDRV, "Cannot remap a partially mapped GPU address space region: {:#x}", params.offset);
+  1997   725 |                 return NvResult::BadValue;
+  1998   726 |             }
+- 1999       |             const u64 gpu_address = gpu_base + buffer_offset;
+- 2000       |             const VAddr device_address{mapping.ptr + buffer_offset};
+- 2001       |             if (remap_native) {
+- 2002       |                 // Native remap only changes the PTE kind/view of the
+- 2003       |                 // original NvMap owner. A different handle requires the
+- 2004       |                 // explicit sparse-remap transaction; silently ignoring it
+- 2005       |                 // would acknowledge a map to the WRONG physical memory.
+- 2006       |                 if (params.handle != 0 && params.handle != mapping.handle)
+- 2007       |                     return NvResult::NotSupported;
+- 2008       |                 const u64 page = mapping.big_page ? vm.big_page_size
+- 2009       |                                                   : VM::YUZU_PAGESIZE;
+- 2010       |                 if ((gpu_address | buffer_offset | params.mapping_size) & (page - 1))
+- 2011       |                     return NvResult::BadValue;
+- 2012       |                 const auto backing = nvmap.GetHandle(mapping.handle);
+- 2013       |                 const auto* session = backing
+- 2014       |                     ? container.GetSession(backing->session_id) : nullptr;
+- 2015       |                 if (!backing || !backing->allocated || !session ||
+- 2016       |                     session->process != m_native_process)
+- 2017       |                     return NvResult::BadValue;
+- 2018       |                 const u32 requested = params.kind == std::numeric_limits<u32>::max()
+- 2019       |                                           ? u32{backing->kind} : u32{params.kind};
+- 2020       |                 if (requested > std::numeric_limits<u8>::max())
+- 2021       |                     return NvResult::NotSupported;
+- 2022       |                 const u8 candidate = static_cast<u8>(requested);
+- 2023       |                 auto native_kind = SelectNativeMemoryKind(candidate, candidate);
+- 2024       |                 if (!native_kind && candidate != backing->kind)
+- 2025       |                     native_kind = SelectNativeMemoryKind(candidate, backing->kind);
+- 2026       |                 if (!native_kind &&
+- 2027       |                     candidate == static_cast<u8>(Tegra::PTEKind::GENERIC_16BX2))
+- 2028       |                     native_kind = NativeMemoryKind{
+- 2029       |                         static_cast<u8>(Tegra::PTEKind::GENERIC_16BX2), candidate};
+- 2030       |                 if (!native_kind) return NvResult::NotSupported;
+- 2031       |                 try {
+- 2032       |                     gmmu->Map(gpu_address, device_address, params.mapping_size,
+- 2033       |                               static_cast<Tegra::PTEKind>(native_kind->backend),
+- 2034       |                               mapping.big_page);
+- 2035       |                 } catch (const std::bad_alloc&) {
+- 2036       |                     // The original NVMap owner and pin remain valid even if
+- 2037       |                     // this PTE edit was only partially completed.
+- 2038       |                     PoisonNativeAddressSpace();
+- 2039       |                     return NvResult::InsufficientMemory;
+- 2040       |                 }
+- 2041       |                 params.kind = native_kind->selected;
+- 2042       |                 return NvResult::Success;
+- 2043       |             }
++        727 |             u64 gpu_address = u64(params.offset + params.buffer_offset);
++        728 |             VAddr device_address{mapping.ptr + params.buffer_offset};
+  2044   729 |             gmmu->Map(gpu_address, device_address, params.mapping_size, Tegra::PTEKind(params.kind), mapping.big_page);
+  2045   730 |             return NvResult::Success;
+  2046   731 |         } else {
+  2047   732 |             LOG_WARNING(Service_NVDRV, "Cannot remap an unmapped GPU address space region: {:#x}", params.offset);
+  2048   733 |             return NvResult::BadValue;
+  2049   734 |         }
+  2050   735 |     }
+  2051   736 | 
+  2052   737 |     auto handle{nvmap.GetHandle(params.handle)};
+  2053   738 |     if (!handle) {
+  2054   739 |         return NvResult::BadValue;
+  2055   740 |     }
+- 2056       |     // An authenticated NS2 GPU AS may only bind actually allocated NVMap
+- 2057       |     // backing from its KProcess. An unrelated FD may expose a numeric
+- 2058       |     // handle with the same value, but must not create an alias into it.
+- 2059       |     const bool native =
+- 2060       |         m_native_process && NativeGpuProcessRegistry::Instance().Contains(m_native_process);
+- 2061       |     std::optional<NativeMemoryKind> native_kind;
+- 2062       |     if (native) {
+- 2063       |         const auto* owner = container.GetSession(handle->session_id);
+- 2064       |         if (!handle->allocated || !owner || owner->process != m_native_process)
+- 2065       |             return NvResult::BadValue;
+  2066   741 | 
+- 2067       |         // In the native ioctl the kind is a GA10F MMU kind, not an Eden
+- 2068       |         // Maxwell PTEKind ordinal. For example native generic kind 6 is
+- 2069       |         // NOT backend PTE kind 6 (Z16 MS16). The same translation already
+- 2070       |         // governs GSV GPU 210/216 sparse mappings. -1 selects the
+- 2071       |         // allocated NvMap handle's kind, as specified by NVGPU_AS ioctl.
+- 2072       |         const u32 requested = params.kind == std::numeric_limits<u32>::max()
+- 2073       |                                   ? u32{handle->kind} : u32{params.kind};
+- 2074       |         if (requested > std::numeric_limits<u8>::max())
+- 2075       |             return NvResult::NotSupported;
+- 2076       |         const u8 candidate = static_cast<u8>(requested);
+- 2077       |         native_kind = SelectNativeMemoryKind(candidate, candidate);
+- 2078       |         if (!native_kind && candidate != handle->kind)
+- 2079       |             native_kind = SelectNativeMemoryKind(candidate, handle->kind);
+- 2080       |         // The legacy generic backend kind is still used by imported
+- 2081       |         // NvMap allocations, and has an exact 1:1 backend representation.
+- 2082       |         if (!native_kind && candidate == static_cast<u8>(Tegra::PTEKind::GENERIC_16BX2))
+- 2083       |             native_kind = NativeMemoryKind{
+- 2084       |                 static_cast<u8>(Tegra::PTEKind::GENERIC_16BX2), candidate};
+- 2085       |         if (!native_kind) return NvResult::NotSupported;
+- 2086       |     }
+- 2087       | 
+- 2088       |     const u64 size{params.mapping_size ? params.mapping_size : handle->orig_size};
+- 2089       |     if (!NativeGpuAllocation::ContainsSubrange(handle->orig_size,
+- 2090       |                                                params.buffer_offset, size))
+- 2091       |         return NvResult::BadValue;
+- 2092       |     // Validate the fixed GPU allocation BEFORE pinning NvMap. Refusing
+- 2093       |     // an invalid ioctl after PinHandle leaked its underlying GPU pin.
+- 2094       |     auto fixed_alloc = allocation_map.end();
+- 2095       |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
+- 2096       |         fixed_alloc = NativeGpuAllocation::FindContaining(
+- 2097       |             allocation_map, params.offset, size);
+- 2098       |         if (fixed_alloc == allocation_map.end()) {
+- 2099       |             LOG_WARNING(Service_NVDRV, "Fixed GPU map outside allocation: {:#x}", params.offset);
+- 2100       |             return NvResult::BadValue;
+- 2101       |         }
+- 2102       |         if (native) {
+- 2103       |             // A fixed map without the Remap flag may not replace a live GPU
+- 2104       |             // view. insert_or_assign would forget its NVMap pin and leave
+- 2105       |             // queued texture/compute work pointing at re-used pages.
+- 2106       |             const u64 address = static_cast<u64>(params.offset);
+- 2107       |             const auto next = mapping_map.lower_bound(address);
+- 2108       |             if ((next != mapping_map.end() && next->first < address + size) ||
+- 2109       |                 (next != mapping_map.begin() &&
+- 2110       |                  std::prev(next)->second.size > address - std::prev(next)->first))
+- 2111       |                 return NvResult::BadValue;
+- 2112       |         }
+- 2113       |     }
+- 2114       |     const DAddr pinned = nvmap.PinHandle(params.handle, false);
+- 2115       |     if (!NativePinnedPhysicalSpan(pinned, params.buffer_offset, size)) {
+- 2116       |         if (pinned) nvmap.UnpinHandle(params.handle);
+- 2117       |         return NvResult::InsufficientMemory;
+- 2118       |     }
+- 2119       |     const DAddr device_address = pinned + params.buffer_offset;
++        742 |     DAddr device_address = DAddr(nvmap.PinHandle(params.handle, false) + params.buffer_offset);
++        743 |     u64 size{params.mapping_size ? params.mapping_size : handle->orig_size};
+  2120   744 | 
+  2121   745 |     bool big_page{[&]() {
+  2122   746 |         if (Common::IsAligned(handle->align, vm.big_page_size)) {
+  2123   747 |             return true;
+- 2124       |         } else if (Common::IsAligned(handle->align, VM::YUZU_PAGESIZE)) {
++        748 |         } else if (Common::IsAligned(handle->align, VM::LICHII_PAGESIZE)) {
+  2125   749 |             return false;
+  2126   750 |         } else {
+  2127   751 |             ASSERT(false);
+  2128   752 |             return false;
+  2129   753 |         }
+  2130   754 |     }()};
+- 2131       |     if (native) {
+- 2132       |         if (vm.big_page_allocator &&
+- 2133       |             vm.big_page_allocator->GetVAStart() == vm.big_page_allocator->GetVALimit())
+- 2134       |             // A native small-page-only address-space view cannot use a big
+- 2135       |             // PTE merely because its physical NvMap handle is aligned.
+- 2136       |             big_page = false;
+- 2137       |         if (big_page && !Common::IsAligned(handle->align, vm.big_page_size)) {
+- 2138       |             nvmap.UnpinHandle(params.handle);
+- 2139       |             return NvResult::BadValue;
+- 2140       |         }
+- 2141       |     }
+  2142   755 | 
+- 2143       |     // Native NS2: all fallible owner and lookup allocations must complete
+- 2144       |     // BEFORE publishing GPU PTEs. The legacy NVDRV path below stays intact.
+- 2145       |     // Otherwise a failed map/offset-vector allocation can orphan an NVMap
+- 2146       |     // pin or publish backing that can no longer be retired.
+- 2147       |     if (native) {
+- 2148       |         const bool fixed = (params.flags & MappingFlags::Fixed) != MappingFlags::None;
+- 2149       |         // The allocated VA determines which GMMU table can resolve this
+- 2150       |         // fixed map. Mapping a 4K physical view into a big-page-only VA
+- 2151       |         // would succeed at ioctl level but remain invisible to the guest
+- 2152       |         // (GetEntry selects the big table above the split).
+- 2153       |         if (fixed && fixed_alloc->second.big_pages && !big_page) {
+- 2154       |             nvmap.UnpinHandle(params.handle);
+- 2155       |             return NvResult::BadValue;
+- 2156       |         }
+- 2157       |         const bool use_big_pages = fixed ? fixed_alloc->second.big_pages : big_page;
+- 2158       |         const u32 page_size = use_big_pages ? vm.big_page_size : VM::YUZU_PAGESIZE;
+- 2159       |         const u32 page_bits = use_big_pages ? vm.big_page_size_bits : VM::PAGE_SIZE_BITS;
+- 2160       |         if (!size || size > std::numeric_limits<u64>::max() - (page_size - 1)) {
+- 2161       |             nvmap.UnpinHandle(params.handle);
+- 2162       |             return NvResult::BadValue;
+- 2163       |         }
+- 2164       |         const u64 mapped_size = Common::AlignUp(size, u64{page_size});
+- 2165       |         const u64 source_offset = static_cast<u64>(params.buffer_offset);
+- 2166       |         // MemoryManager::Map walks whole PTEs even if the requested size
+- 2167       |         // ends mid-page. Validate the full physical range and alignment.
+- 2168       |         if ((source_offset & (page_size - 1)) ||
+- 2169       |             source_offset > handle->aligned_size ||
+- 2170       |             mapped_size > handle->aligned_size - source_offset ||
+- 2171       |             !NativePinnedPhysicalSpan(pinned, source_offset, mapped_size) ||
+- 2172       |             ((pinned + source_offset) & (page_size - 1)) != 0) {
+- 2173       |             nvmap.UnpinHandle(params.handle);
+- 2174       |             return NvResult::BadValue;
+- 2175       |         }
+- 2176       | 
+- 2177       |         u64 address{};
+- 2178       |         u32 allocated_page{};
+- 2179       |         u32 allocated_pages{};
+- 2180       |         bool owns_va = false;
+- 2181       |         auto* allocator = use_big_pages ? &*vm.big_page_allocator : &*vm.small_page_allocator;
+- 2182       |         if (fixed) {
+- 2183       |             address = static_cast<u64>(params.offset);
+- 2184       |             const auto& allocation = fixed_alloc->second;
+- 2185       |             if (address < fixed_alloc->first ||
+- 2186       |                 ((address | mapped_size) & (page_size - 1)) ||
+- 2187       |                 mapped_size > allocation.size - (address - fixed_alloc->first)) {
+- 2188       |                 nvmap.UnpinHandle(params.handle);
+- 2189       |                 return NvResult::BadValue;
+- 2190       |             }
+- 2191       |         } else {
+- 2192       |             const u64 page_count = mapped_size >> page_bits;
+- 2193       |             if (!page_count || page_count > std::numeric_limits<u32>::max()) {
+- 2194       |                 nvmap.UnpinHandle(params.handle);
+- 2195       |                 return NvResult::BadValue;
+- 2196       |             }
+- 2197       |             allocated_pages = static_cast<u32>(page_count);
+- 2198       |             try {
+- 2199       |                 allocated_page = allocator->Allocate(allocated_pages);
+- 2200       |             } catch (const std::bad_alloc&) {
+- 2201       |                 nvmap.UnpinHandle(params.handle);
+- 2202       |                 return NvResult::InsufficientMemory;
+- 2203       |             }
+- 2204       |             if (!allocated_page) {
+- 2205       |                 nvmap.UnpinHandle(params.handle);
+- 2206       |                 return NvResult::InsufficientMemory;
+- 2207       |             }
+- 2208       |             owns_va = true;
+- 2209       |             address = static_cast<u64>(allocated_page) << page_bits;
+- 2210       |         }
+- 2211       | 
+- 2212       |         bool owner_inserted = false;
+- 2213       |         bool token_inserted = false;
+- 2214       |         bool allocation_indexed = false;
+- 2215       |         const auto rollback = [&] {
+- 2216       |             if (allocation_indexed) fixed_alloc->second.mappings.pop_back();
+- 2217       |             if (token_inserted) map_buffer_offsets.erase(static_cast<s64>(address));
+- 2218       |             if (owner_inserted) mapping_map.erase(address);
+- 2219       |             if (owns_va) allocator->Free(allocated_page, allocated_pages);
+- 2220       |             nvmap.UnpinHandle(params.handle);
+- 2221       |         };
+- 2222       | 
+- 2223       |         // The sparse batch table is a distinct physical owner from
+- 2224       |         // MapBufferEx. Never silently override its live PTE/pin by a fixed
+- 2225       |         // mapping which would survive the sparse table's later release.
+- 2226       |         const auto sparse = native_sparse_mappings.Ranges().lower_bound(address);
+- 2227       |         if ((sparse != native_sparse_mappings.Ranges().end() &&
+- 2228       |              sparse->first < address + mapped_size) ||
+- 2229       |             (sparse != native_sparse_mappings.Ranges().begin() &&
+- 2230       |              std::prev(sparse)->second.size >
+- 2231       |                  address - std::prev(sparse)->first)) {
+- 2232       |             rollback();
+- 2233       |             return NvResult::BadValue;
+- 2234       |         }
++        756 |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
++        757 |         auto alloc{allocation_map.upper_bound(params.offset)};
+  2235   758 | 
+- 2236       |         try {
+- 2237       |             if (fixed)
+- 2238       |                 fixed_alloc->second.mappings.reserve(fixed_alloc->second.mappings.size() + 1);
+- 2239       |             const auto [it, inserted] = mapping_map.try_emplace(
+- 2240       |                 address, Mapping(params.handle, device_address, address,
+- 2241       |                                  mapped_size, fixed, use_big_pages,
+- 2242       |                                  fixed && fixed_alloc->second.sparse));
+- 2243       |             if (!inserted) {
+- 2244       |                 rollback();
+- 2245       |                 return NvResult::BadValue;
+- 2246       |             }
+- 2247       |             owner_inserted = true;
+- 2248       |             const auto [token, new_token] =
+- 2249       |                 map_buffer_offsets.insert(static_cast<s64>(address));
+- 2250       |             (void)token;
+- 2251       |             if (!new_token) {
+- 2252       |                 rollback();
++        759 |         if (alloc-- == allocation_map.begin() ||
++        760 |             (params.offset - alloc->first) + size > alloc->second.size) {
++        761 |             ASSERT_MSG(false, "Cannot perform a fixed mapping into an unallocated region!");
+  2253   762 |                 return NvResult::BadValue;
+  2254   763 |             }
+- 2255       |             token_inserted = true;
+- 2256       |             if (fixed) {
+- 2257       |                 fixed_alloc->second.mappings.push_back(address);
+- 2258       |                 allocation_indexed = true;
+- 2259       |             }
+- 2260       |         } catch (const std::bad_alloc&) {
+- 2261       |             rollback();
+- 2262       |             return NvResult::InsufficientMemory;
+- 2263       |         }
+  2264   764 | 
+- 2265       |         try {
+- 2266       |             // No unowned GMMU page can become visible: every mapping has a
+- 2267       |             // complete ledger and pin before this transaction commits.
+- 2268       |             gmmu->Map(address, device_address, mapped_size,
+- 2269       |                       static_cast<Tegra::PTEKind>(native_kind->backend), use_big_pages);
+- 2270       |         } catch (const std::bad_alloc&) {
+- 2271       |             // A GMMU allocation may have modified some PTEs before OOM.
+- 2272       |             // Do not unpin live backing unless the page-table rollback
+- 2273       |             // succeeds. A retained ledger is safer than a GPU UAF.
+- 2274       |             try {
+- 2275       |                 if (fixed && fixed_alloc->second.sparse)
+- 2276       |                     gmmu->MapSparse(address, mapped_size, use_big_pages);
+- 2277       |                 else
+- 2278       |                     gmmu->Unmap(address, mapped_size);
+- 2279       |             } catch (const std::bad_alloc&) {
+- 2280       |                 PoisonNativeAddressSpace();
+- 2281       |                 return NvResult::InvalidState;
+- 2282       |             }
+- 2283       |             rollback();
+- 2284       |             return NvResult::InsufficientMemory;
+- 2285       |         }
+- 2286       |         params.offset = address;
+- 2287       |         params.kind = native_kind->selected; // Native selected/fallback kind, never backend ordinal.
+- 2288       |         // The caller's reserved/inout word is not the selected page size.
+- 2289       |         return NvResult::Success;
+- 2290       |     }
+- 2291       | 
+- 2292       |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
+- 2293       |         const auto alloc = fixed_alloc; // Validated before NvMap pin.
+  2294   765 |         const bool use_big_pages = alloc->second.big_pages && big_page;
+  2295   766 |         gmmu->Map(params.offset, device_address, size, static_cast<Tegra::PTEKind>(params.kind), use_big_pages);
+  2296   767 | 
+  2297   768 |         alloc->second.mappings.push_back(params.offset);
+  2298   769 |         mapping_map.insert_or_assign(params.offset, Mapping(params.handle, device_address, params.offset, size, true, use_big_pages, alloc->second.sparse));
+  2299   770 |     } else {
+  2300   771 |         auto& allocator{big_page ? *vm.big_page_allocator : *vm.small_page_allocator};
+- 2301       |         u32 page_size{big_page ? vm.big_page_size : VM::YUZU_PAGESIZE};
++        772 |         u32 page_size{big_page ? vm.big_page_size : VM::LICHII_PAGESIZE};
+  2302   773 |         u32 page_size_bits{big_page ? vm.big_page_size_bits : VM::PAGE_SIZE_BITS};
+  2303   774 | 
+- 2304       |         params.offset = u64(allocator.Allocate(u32(Common::AlignUp(size, page_size) >> page_size_bits))) << page_size_bits;
++        775 |         const u64 aligned_size{Common::AlignUp(size, page_size)};
++        776 |         params.offset = u64(allocator.Allocate(u32(aligned_size >> page_size_bits))) << page_size_bits;
+  2305   777 |         if (!params.offset) {
+- 2306       |             nvmap.UnpinHandle(params.handle); // Allocation failed after NvMap pin.
++        778 |             u64 buffers{};
++        779 |             u64 buffer_bytes{};
++        780 |             for (const auto& [offset, mapping] : mapping_map) {
++        781 |                 if (!mapping.fixed && mapping.big_page == big_page) {
++        782 |                     ++buffers;
++        783 |                     buffer_bytes += mapping.size;
++        784 |                 }
++        785 |             }
++        786 |             LOG_ERROR(Service_NVDRV,
++        787 |                       "No free {} page range of {:#x} bytes; {} buffers hold {} MiB of it",
++        788 |                       big_page ? "big" : "small", aligned_size, buffers, buffer_bytes >> 20);
+  2307   789 |             ASSERT_MSG(false, "Failed to allocate free space in the GPU AS!");
+  2308   790 |             return NvResult::InsufficientMemory;
+  2309   791 |         }
+- 2310       |         gmmu->Map(params.offset, device_address, Common::AlignUp(size, page_size), Tegra::PTEKind(params.kind), big_page);
+- 2311       |         mapping_map.insert_or_assign(params.offset, Mapping(params.handle, device_address, params.offset, size, false, big_page, false));
++        792 |         gmmu->Map(params.offset, device_address, aligned_size, Tegra::PTEKind(params.kind), big_page);
++        793 |         mapping_map.insert_or_assign(params.offset, Mapping(params.handle, device_address, params.offset, aligned_size, false, big_page, false));
+  2312   794 |     }
+  2313   795 | 
+- 2314       |     map_buffer_offsets.insert(params.offset);
+- 2315       | 
+  2316   796 |     return NvResult::Success;
+  2317   797 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 635–716 : 71 alignées, 311 propres Encore, 11 propres upstream</summary>
+
+Source : [nvhost_as_gpu.cpp:635–716](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L635-L716).
+
+```diff
+  1936   635 | NvResult nvhost_as_gpu::MapBufferEx(IoctlMapBufferEx& params) {
+  1937   636 |     LOG_DEBUG(Service_NVDRV,
+  1938   637 |               "called, flags={:X}, nvmap_handle={:X}, buffer_offset={}, mapping_size={}"
+  1939   638 |               ", offset={:#x}",
+  1940   639 |               params.flags, params.handle, params.buffer_offset, params.mapping_size,
+  1941   640 |               params.offset);
+  1942   641 | 
+- 1943       |     // A native PTE-kind remap must drain prior GPU work BEFORE entering the
+- 1944       |     // address-space critical section. The GPU worker may still query these
+- 1945       |     // page tables while WaitForIdle drains the queue.
+- 1946       |     const bool native_remap_requested =
+- 1947       |         m_native_process &&
+- 1948       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process) &&
+- 1949       |         (params.flags & MappingFlags::Remap) != MappingFlags::None;
+- 1950       |     if (native_remap_requested && system.IsPoweredOn() && !system.IsShuttingDown())
+- 1951       |         system.GPU().WaitForIdle();
+- 1952       | 
+  1953   642 |     std::scoped_lock lock(mutex);
+  1954   643 | 
+  1955   644 |     if (!vm.initialised) {
+  1956   645 |         return NvResult::BadValue;
+  1957   646 |     }
+  1958   647 | 
+- 1959       |     // A partially committed native sparse transaction has quarantined
+- 1960       |     // physical owners. Do not let an unrelated ioctl overwrite its PTEs.
+- 1961       |     const bool remap_native = m_native_process &&
+- 1962       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process);
+- 1963       |     if (remap_native && native_sparse_poisoned)
+- 1964       |         return NvResult::InvalidState;
+- 1965       |     if (remap_native) {
+- 1966       |         // Switch 2 allows FIXED bit0, CACHEABLE bit2 and the legacy
+- 1967       |         // subrange REMAP bit8 only. Unknown bits cannot be acknowledged
+- 1968       |         // as a successful mapping with silently different PTE ownership.
+- 1969       |         constexpr u32 valid_flags = 0x105U;
+- 1970       |         if ((static_cast<u32>(params.flags) & ~valid_flags) != 0)
+- 1971       |             return NvResult::NotSupported;
+- 1972       |         // The fourth u32 in MAP_BUFFER_EX/EX2 is documented as
+- 1973       |         // reserved/inout, not a requested page size. Preserve it.
+- 1974       |     }
+- 1975       | 
+  1976   648 |     // Remaps a subregion of an existing mapping to a different PA
+  1977   649 |     if ((params.flags & MappingFlags::Remap) != MappingFlags::None) {
+- 1978       |         // These two ioctl fields are SIGNED; reject negative input before
+- 1979       |         // conversion, address arithmetic or locating an existing mapping.
+- 1980       |         if (params.offset < 0 || params.buffer_offset < 0) {
+- 1981       |             return NvResult::BadValue;
+- 1982       |         }
+- 1983       |         const u64 gpu_base = static_cast<u64>(params.offset);
+- 1984       |         const u64 buffer_offset = static_cast<u64>(params.buffer_offset);
+- 1985       |         if (auto const it = mapping_map.find(gpu_base); it != mapping_map.end()) {
++        650 |         if (auto const it = mapping_map.find(params.offset); it != mapping_map.end()) {
+  1986   651 |             auto const mapping = it->second;
+- 1987       |             // A remap into an existing buffer must fit its original offset
+- 1988       |             // and size. Reject wrapped GPU VAs before any page-table change.
+- 1989       |             constexpr u64 gpu_limit = u64{1} << 49;
+- 1990       |             if (!NativeGpuAllocation::ContainsSubrange(
+- 1991       |                     mapping.size, buffer_offset, params.mapping_size) ||
+- 1992       |                 gpu_base >= gpu_limit ||
+- 1993       |                 buffer_offset >= gpu_limit - gpu_base ||
+- 1994       |                 params.mapping_size > gpu_limit - gpu_base - buffer_offset ||
+- 1995       |                 mapping.ptr > std::numeric_limits<VAddr>::max() - buffer_offset) {
++        652 |             if (mapping.size < params.mapping_size) {
+  1996   653 |                 LOG_WARNING(Service_NVDRV, "Cannot remap a partially mapped GPU address space region: {:#x}", params.offset);
+  1997   654 |                 return NvResult::BadValue;
+  1998   655 |             }
+- 1999       |             const u64 gpu_address = gpu_base + buffer_offset;
+- 2000       |             const VAddr device_address{mapping.ptr + buffer_offset};
+- 2001       |             if (remap_native) {
+- 2002       |                 // Native remap only changes the PTE kind/view of the
+- 2003       |                 // original NvMap owner. A different handle requires the
+- 2004       |                 // explicit sparse-remap transaction; silently ignoring it
+- 2005       |                 // would acknowledge a map to the WRONG physical memory.
+- 2006       |                 if (params.handle != 0 && params.handle != mapping.handle)
+- 2007       |                     return NvResult::NotSupported;
+- 2008       |                 const u64 page = mapping.big_page ? vm.big_page_size
+- 2009       |                                                   : VM::YUZU_PAGESIZE;
+- 2010       |                 if ((gpu_address | buffer_offset | params.mapping_size) & (page - 1))
+- 2011       |                     return NvResult::BadValue;
+- 2012       |                 const auto backing = nvmap.GetHandle(mapping.handle);
+- 2013       |                 const auto* session = backing
+- 2014       |                     ? container.GetSession(backing->session_id) : nullptr;
+- 2015       |                 if (!backing || !backing->allocated || !session ||
+- 2016       |                     session->process != m_native_process)
+- 2017       |                     return NvResult::BadValue;
+- 2018       |                 const u32 requested = params.kind == std::numeric_limits<u32>::max()
+- 2019       |                                           ? u32{backing->kind} : u32{params.kind};
+- 2020       |                 if (requested > std::numeric_limits<u8>::max())
+- 2021       |                     return NvResult::NotSupported;
+- 2022       |                 const u8 candidate = static_cast<u8>(requested);
+- 2023       |                 auto native_kind = SelectNativeMemoryKind(candidate, candidate);
+- 2024       |                 if (!native_kind && candidate != backing->kind)
+- 2025       |                     native_kind = SelectNativeMemoryKind(candidate, backing->kind);
+- 2026       |                 if (!native_kind &&
+- 2027       |                     candidate == static_cast<u8>(Tegra::PTEKind::GENERIC_16BX2))
+- 2028       |                     native_kind = NativeMemoryKind{
+- 2029       |                         static_cast<u8>(Tegra::PTEKind::GENERIC_16BX2), candidate};
+- 2030       |                 if (!native_kind) return NvResult::NotSupported;
+- 2031       |                 try {
+- 2032       |                     gmmu->Map(gpu_address, device_address, params.mapping_size,
+- 2033       |                               static_cast<Tegra::PTEKind>(native_kind->backend),
+- 2034       |                               mapping.big_page);
+- 2035       |                 } catch (const std::bad_alloc&) {
+- 2036       |                     // The original NVMap owner and pin remain valid even if
+- 2037       |                     // this PTE edit was only partially completed.
+- 2038       |                     PoisonNativeAddressSpace();
+- 2039       |                     return NvResult::InsufficientMemory;
+- 2040       |                 }
+- 2041       |                 params.kind = native_kind->selected;
+- 2042       |                 return NvResult::Success;
+- 2043       |             }
++        656 |             u64 gpu_address = u64(params.offset + params.buffer_offset);
++        657 |             VAddr device_address{mapping.ptr + params.buffer_offset};
+  2044   658 |             gmmu->Map(gpu_address, device_address, params.mapping_size, Tegra::PTEKind(params.kind), mapping.big_page);
+  2045   659 |             return NvResult::Success;
+  2046   660 |         } else {
+  2047   661 |             LOG_WARNING(Service_NVDRV, "Cannot remap an unmapped GPU address space region: {:#x}", params.offset);
+  2048   662 |             return NvResult::BadValue;
+  2049   663 |         }
+  2050   664 |     }
+  2051   665 | 
+  2052   666 |     auto handle{nvmap.GetHandle(params.handle)};
+  2053   667 |     if (!handle) {
+  2054   668 |         return NvResult::BadValue;
+  2055   669 |     }
+- 2056       |     // An authenticated NS2 GPU AS may only bind actually allocated NVMap
+- 2057       |     // backing from its KProcess. An unrelated FD may expose a numeric
+- 2058       |     // handle with the same value, but must not create an alias into it.
+- 2059       |     const bool native =
+- 2060       |         m_native_process && NativeGpuProcessRegistry::Instance().Contains(m_native_process);
+- 2061       |     std::optional<NativeMemoryKind> native_kind;
+- 2062       |     if (native) {
+- 2063       |         const auto* owner = container.GetSession(handle->session_id);
+- 2064       |         if (!handle->allocated || !owner || owner->process != m_native_process)
+- 2065       |             return NvResult::BadValue;
+  2066   670 | 
+- 2067       |         // In the native ioctl the kind is a GA10F MMU kind, not an Eden
+- 2068       |         // Maxwell PTEKind ordinal. For example native generic kind 6 is
+- 2069       |         // NOT backend PTE kind 6 (Z16 MS16). The same translation already
+- 2070       |         // governs GSV GPU 210/216 sparse mappings. -1 selects the
+- 2071       |         // allocated NvMap handle's kind, as specified by NVGPU_AS ioctl.
+- 2072       |         const u32 requested = params.kind == std::numeric_limits<u32>::max()
+- 2073       |                                   ? u32{handle->kind} : u32{params.kind};
+- 2074       |         if (requested > std::numeric_limits<u8>::max())
+- 2075       |             return NvResult::NotSupported;
+- 2076       |         const u8 candidate = static_cast<u8>(requested);
+- 2077       |         native_kind = SelectNativeMemoryKind(candidate, candidate);
+- 2078       |         if (!native_kind && candidate != handle->kind)
+- 2079       |             native_kind = SelectNativeMemoryKind(candidate, handle->kind);
+- 2080       |         // The legacy generic backend kind is still used by imported
+- 2081       |         // NvMap allocations, and has an exact 1:1 backend representation.
+- 2082       |         if (!native_kind && candidate == static_cast<u8>(Tegra::PTEKind::GENERIC_16BX2))
+- 2083       |             native_kind = NativeMemoryKind{
+- 2084       |                 static_cast<u8>(Tegra::PTEKind::GENERIC_16BX2), candidate};
+- 2085       |         if (!native_kind) return NvResult::NotSupported;
+- 2086       |     }
+- 2087       | 
+- 2088       |     const u64 size{params.mapping_size ? params.mapping_size : handle->orig_size};
+- 2089       |     if (!NativeGpuAllocation::ContainsSubrange(handle->orig_size,
+- 2090       |                                                params.buffer_offset, size))
+- 2091       |         return NvResult::BadValue;
+- 2092       |     // Validate the fixed GPU allocation BEFORE pinning NvMap. Refusing
+- 2093       |     // an invalid ioctl after PinHandle leaked its underlying GPU pin.
+- 2094       |     auto fixed_alloc = allocation_map.end();
+- 2095       |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
+- 2096       |         fixed_alloc = NativeGpuAllocation::FindContaining(
+- 2097       |             allocation_map, params.offset, size);
+- 2098       |         if (fixed_alloc == allocation_map.end()) {
+- 2099       |             LOG_WARNING(Service_NVDRV, "Fixed GPU map outside allocation: {:#x}", params.offset);
+- 2100       |             return NvResult::BadValue;
+- 2101       |         }
+- 2102       |         if (native) {
+- 2103       |             // A fixed map without the Remap flag may not replace a live GPU
+- 2104       |             // view. insert_or_assign would forget its NVMap pin and leave
+- 2105       |             // queued texture/compute work pointing at re-used pages.
+- 2106       |             const u64 address = static_cast<u64>(params.offset);
+- 2107       |             const auto next = mapping_map.lower_bound(address);
+- 2108       |             if ((next != mapping_map.end() && next->first < address + size) ||
+- 2109       |                 (next != mapping_map.begin() &&
+- 2110       |                  std::prev(next)->second.size > address - std::prev(next)->first))
+- 2111       |                 return NvResult::BadValue;
+- 2112       |         }
+- 2113       |     }
+- 2114       |     const DAddr pinned = nvmap.PinHandle(params.handle, false);
+- 2115       |     if (!NativePinnedPhysicalSpan(pinned, params.buffer_offset, size)) {
+- 2116       |         if (pinned) nvmap.UnpinHandle(params.handle);
+- 2117       |         return NvResult::InsufficientMemory;
+- 2118       |     }
+- 2119       |     const DAddr device_address = pinned + params.buffer_offset;
++        671 |     DAddr device_address = DAddr(nvmap.PinHandle(params.handle, false) + params.buffer_offset);
++        672 |     u64 size{params.mapping_size ? params.mapping_size : handle->orig_size};
+  2120   673 | 
+  2121   674 |     bool big_page{[&]() {
+  2122   675 |         if (Common::IsAligned(handle->align, vm.big_page_size)) {
+  2123   676 |             return true;
+  2124   677 |         } else if (Common::IsAligned(handle->align, VM::YUZU_PAGESIZE)) {
+  2125   678 |             return false;
+  2126   679 |         } else {
+  2127   680 |             ASSERT(false);
+  2128   681 |             return false;
+  2129   682 |         }
+  2130   683 |     }()};
+- 2131       |     if (native) {
+- 2132       |         if (vm.big_page_allocator &&
+- 2133       |             vm.big_page_allocator->GetVAStart() == vm.big_page_allocator->GetVALimit())
+- 2134       |             // A native small-page-only address-space view cannot use a big
+- 2135       |             // PTE merely because its physical NvMap handle is aligned.
+- 2136       |             big_page = false;
+- 2137       |         if (big_page && !Common::IsAligned(handle->align, vm.big_page_size)) {
+- 2138       |             nvmap.UnpinHandle(params.handle);
+- 2139       |             return NvResult::BadValue;
+- 2140       |         }
+- 2141       |     }
+  2142   684 | 
+- 2143       |     // Native NS2: all fallible owner and lookup allocations must complete
+- 2144       |     // BEFORE publishing GPU PTEs. The legacy NVDRV path below stays intact.
+- 2145       |     // Otherwise a failed map/offset-vector allocation can orphan an NVMap
+- 2146       |     // pin or publish backing that can no longer be retired.
+- 2147       |     if (native) {
+- 2148       |         const bool fixed = (params.flags & MappingFlags::Fixed) != MappingFlags::None;
+- 2149       |         // The allocated VA determines which GMMU table can resolve this
+- 2150       |         // fixed map. Mapping a 4K physical view into a big-page-only VA
+- 2151       |         // would succeed at ioctl level but remain invisible to the guest
+- 2152       |         // (GetEntry selects the big table above the split).
+- 2153       |         if (fixed && fixed_alloc->second.big_pages && !big_page) {
+- 2154       |             nvmap.UnpinHandle(params.handle);
+- 2155       |             return NvResult::BadValue;
+- 2156       |         }
+- 2157       |         const bool use_big_pages = fixed ? fixed_alloc->second.big_pages : big_page;
+- 2158       |         const u32 page_size = use_big_pages ? vm.big_page_size : VM::YUZU_PAGESIZE;
+- 2159       |         const u32 page_bits = use_big_pages ? vm.big_page_size_bits : VM::PAGE_SIZE_BITS;
+- 2160       |         if (!size || size > std::numeric_limits<u64>::max() - (page_size - 1)) {
+- 2161       |             nvmap.UnpinHandle(params.handle);
+- 2162       |             return NvResult::BadValue;
+- 2163       |         }
+- 2164       |         const u64 mapped_size = Common::AlignUp(size, u64{page_size});
+- 2165       |         const u64 source_offset = static_cast<u64>(params.buffer_offset);
+- 2166       |         // MemoryManager::Map walks whole PTEs even if the requested size
+- 2167       |         // ends mid-page. Validate the full physical range and alignment.
+- 2168       |         if ((source_offset & (page_size - 1)) ||
+- 2169       |             source_offset > handle->aligned_size ||
+- 2170       |             mapped_size > handle->aligned_size - source_offset ||
+- 2171       |             !NativePinnedPhysicalSpan(pinned, source_offset, mapped_size) ||
+- 2172       |             ((pinned + source_offset) & (page_size - 1)) != 0) {
+- 2173       |             nvmap.UnpinHandle(params.handle);
+- 2174       |             return NvResult::BadValue;
+- 2175       |         }
+- 2176       | 
+- 2177       |         u64 address{};
+- 2178       |         u32 allocated_page{};
+- 2179       |         u32 allocated_pages{};
+- 2180       |         bool owns_va = false;
+- 2181       |         auto* allocator = use_big_pages ? &*vm.big_page_allocator : &*vm.small_page_allocator;
+- 2182       |         if (fixed) {
+- 2183       |             address = static_cast<u64>(params.offset);
+- 2184       |             const auto& allocation = fixed_alloc->second;
+- 2185       |             if (address < fixed_alloc->first ||
+- 2186       |                 ((address | mapped_size) & (page_size - 1)) ||
+- 2187       |                 mapped_size > allocation.size - (address - fixed_alloc->first)) {
+- 2188       |                 nvmap.UnpinHandle(params.handle);
+- 2189       |                 return NvResult::BadValue;
+- 2190       |             }
+- 2191       |         } else {
+- 2192       |             const u64 page_count = mapped_size >> page_bits;
+- 2193       |             if (!page_count || page_count > std::numeric_limits<u32>::max()) {
+- 2194       |                 nvmap.UnpinHandle(params.handle);
+- 2195       |                 return NvResult::BadValue;
+- 2196       |             }
+- 2197       |             allocated_pages = static_cast<u32>(page_count);
+- 2198       |             try {
+- 2199       |                 allocated_page = allocator->Allocate(allocated_pages);
+- 2200       |             } catch (const std::bad_alloc&) {
+- 2201       |                 nvmap.UnpinHandle(params.handle);
+- 2202       |                 return NvResult::InsufficientMemory;
+- 2203       |             }
+- 2204       |             if (!allocated_page) {
+- 2205       |                 nvmap.UnpinHandle(params.handle);
+- 2206       |                 return NvResult::InsufficientMemory;
+- 2207       |             }
+- 2208       |             owns_va = true;
+- 2209       |             address = static_cast<u64>(allocated_page) << page_bits;
+- 2210       |         }
+- 2211       | 
+- 2212       |         bool owner_inserted = false;
+- 2213       |         bool token_inserted = false;
+- 2214       |         bool allocation_indexed = false;
+- 2215       |         const auto rollback = [&] {
+- 2216       |             if (allocation_indexed) fixed_alloc->second.mappings.pop_back();
+- 2217       |             if (token_inserted) map_buffer_offsets.erase(static_cast<s64>(address));
+- 2218       |             if (owner_inserted) mapping_map.erase(address);
+- 2219       |             if (owns_va) allocator->Free(allocated_page, allocated_pages);
+- 2220       |             nvmap.UnpinHandle(params.handle);
+- 2221       |         };
+- 2222       | 
+- 2223       |         // The sparse batch table is a distinct physical owner from
+- 2224       |         // MapBufferEx. Never silently override its live PTE/pin by a fixed
+- 2225       |         // mapping which would survive the sparse table's later release.
+- 2226       |         const auto sparse = native_sparse_mappings.Ranges().lower_bound(address);
+- 2227       |         if ((sparse != native_sparse_mappings.Ranges().end() &&
+- 2228       |              sparse->first < address + mapped_size) ||
+- 2229       |             (sparse != native_sparse_mappings.Ranges().begin() &&
+- 2230       |              std::prev(sparse)->second.size >
+- 2231       |                  address - std::prev(sparse)->first)) {
+- 2232       |             rollback();
+- 2233       |             return NvResult::BadValue;
+- 2234       |         }
++        685 |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
++        686 |         auto alloc{allocation_map.upper_bound(params.offset)};
+  2235   687 | 
+- 2236       |         try {
+- 2237       |             if (fixed)
+- 2238       |                 fixed_alloc->second.mappings.reserve(fixed_alloc->second.mappings.size() + 1);
+- 2239       |             const auto [it, inserted] = mapping_map.try_emplace(
+- 2240       |                 address, Mapping(params.handle, device_address, address,
+- 2241       |                                  mapped_size, fixed, use_big_pages,
+- 2242       |                                  fixed && fixed_alloc->second.sparse));
+- 2243       |             if (!inserted) {
+- 2244       |                 rollback();
+- 2245       |                 return NvResult::BadValue;
+- 2246       |             }
+- 2247       |             owner_inserted = true;
+- 2248       |             const auto [token, new_token] =
+- 2249       |                 map_buffer_offsets.insert(static_cast<s64>(address));
+- 2250       |             (void)token;
+- 2251       |             if (!new_token) {
+- 2252       |                 rollback();
++        688 |         if (alloc-- == allocation_map.begin() ||
++        689 |             (params.offset - alloc->first) + size > alloc->second.size) {
++        690 |             ASSERT_MSG(false, "Cannot perform a fixed mapping into an unallocated region!");
+  2253   691 |                 return NvResult::BadValue;
+  2254   692 |             }
+- 2255       |             token_inserted = true;
+- 2256       |             if (fixed) {
+- 2257       |                 fixed_alloc->second.mappings.push_back(address);
+- 2258       |                 allocation_indexed = true;
+- 2259       |             }
+- 2260       |         } catch (const std::bad_alloc&) {
+- 2261       |             rollback();
+- 2262       |             return NvResult::InsufficientMemory;
+- 2263       |         }
+  2264   693 | 
+- 2265       |         try {
+- 2266       |             // No unowned GMMU page can become visible: every mapping has a
+- 2267       |             // complete ledger and pin before this transaction commits.
+- 2268       |             gmmu->Map(address, device_address, mapped_size,
+- 2269       |                       static_cast<Tegra::PTEKind>(native_kind->backend), use_big_pages);
+- 2270       |         } catch (const std::bad_alloc&) {
+- 2271       |             // A GMMU allocation may have modified some PTEs before OOM.
+- 2272       |             // Do not unpin live backing unless the page-table rollback
+- 2273       |             // succeeds. A retained ledger is safer than a GPU UAF.
+- 2274       |             try {
+- 2275       |                 if (fixed && fixed_alloc->second.sparse)
+- 2276       |                     gmmu->MapSparse(address, mapped_size, use_big_pages);
+- 2277       |                 else
+- 2278       |                     gmmu->Unmap(address, mapped_size);
+- 2279       |             } catch (const std::bad_alloc&) {
+- 2280       |                 PoisonNativeAddressSpace();
+- 2281       |                 return NvResult::InvalidState;
+- 2282       |             }
+- 2283       |             rollback();
+- 2284       |             return NvResult::InsufficientMemory;
+- 2285       |         }
+- 2286       |         params.offset = address;
+- 2287       |         params.kind = native_kind->selected; // Native selected/fallback kind, never backend ordinal.
+- 2288       |         // The caller's reserved/inout word is not the selected page size.
+- 2289       |         return NvResult::Success;
+- 2290       |     }
+- 2291       | 
+- 2292       |     if ((params.flags & MappingFlags::Fixed) != MappingFlags::None) {
+- 2293       |         const auto alloc = fixed_alloc; // Validated before NvMap pin.
+  2294   694 |         const bool use_big_pages = alloc->second.big_pages && big_page;
+  2295   695 |         gmmu->Map(params.offset, device_address, size, static_cast<Tegra::PTEKind>(params.kind), use_big_pages);
+  2296   696 | 
+  2297   697 |         alloc->second.mappings.push_back(params.offset);
+  2298   698 |         mapping_map.insert_or_assign(params.offset, Mapping(params.handle, device_address, params.offset, size, true, use_big_pages, alloc->second.sparse));
+  2299   699 |     } else {
+  2300   700 |         auto& allocator{big_page ? *vm.big_page_allocator : *vm.small_page_allocator};
+  2301   701 |         u32 page_size{big_page ? vm.big_page_size : VM::YUZU_PAGESIZE};
+  2302   702 |         u32 page_size_bits{big_page ? vm.big_page_size_bits : VM::PAGE_SIZE_BITS};
+  2303   703 | 
+  2304   704 |         params.offset = u64(allocator.Allocate(u32(Common::AlignUp(size, page_size) >> page_size_bits))) << page_size_bits;
+  2305   705 |         if (!params.offset) {
+- 2306       |             nvmap.UnpinHandle(params.handle); // Allocation failed after NvMap pin.
+  2307   706 |             ASSERT_MSG(false, "Failed to allocate free space in the GPU AS!");
+  2308   707 |             return NvResult::InsufficientMemory;
+  2309   708 |         }
+  2310   709 |         gmmu->Map(params.offset, device_address, Common::AlignUp(size, page_size), Tegra::PTEKind(params.kind), big_page);
+  2311   710 |         mapping_map.insert_or_assign(params.offset, Mapping(params.handle, device_address, params.offset, size, false, big_page, false));
+  2312   711 |     }
+  2313   712 | 
+  2314   713 |     map_buffer_offsets.insert(params.offset);
+  2315   714 | 
+  2316   715 |     return NvResult::Success;
+  2317   716 | }
+```
+
+</details>
+
+### P0-M05 · AS-GPU UnmapBuffer
+
+Comparer symétrie exacte avec MapBufferEx : taille, page size, aliases et invalidation. C'est aussi un candidat pour les fermetures DK/Pokopia si une traduction reste vivante après le propriétaire.
+
+Encore : [nvhost_as_gpu.cpp:2319–2433](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L2319-L2433) — 115 lignes.
+
+<details>
+<summary>Lichii — 799–804 : 4 alignées, 111 propres Encore, 2 propres upstream</summary>
+
+Source : [nvhost_as_gpu.cpp:799–804](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L799-L804).
+
+```diff
+  2319   799 | NvResult nvhost_as_gpu::UnmapBuffer(IoctlUnmapBuffer& params) {
+- 2320       |     // Native unmap also invalidates the GMMU and unpins NvMap memory.
+- 2321       |     // Never let the producer retire backing ahead of an already queued
+- 2322       |     // consumer. Do NOT wait with mutex held (GPU worker may read its PTEs).
+- 2323       |     if (m_native_process &&
+- 2324       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process) &&
+- 2325       |         system.IsPoweredOn() && !system.IsShuttingDown())
+- 2326       |         system.GPU().WaitForIdle();
+- 2327       |     std::scoped_lock lock(mutex);
+- 2328       |     if (native_sparse_poisoned && m_native_process &&
+- 2329       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process))
+- 2330       |         return NvResult::InvalidState;
+- 2331       |     if (auto const offset_it = map_buffer_offsets.find(params.offset); offset_it != map_buffer_offsets.end()) {
+  2332   800 |         LOG_DEBUG(Service_NVDRV, "called, offset={:#x}", params.offset);
+- 2333       |         if (!vm.initialised) {
+- 2334       |             return NvResult::BadValue;
+- 2335       |         }
+- 2336       | 
+- 2337       |         auto const it = mapping_map.find(params.offset);
+- 2338       |         // A stale unmap token is never a valid mapping. In particular a
+- 2339       |         // FreeSpace/UnmapBuffer race must not dereference end() or free a
+- 2340       |         // different allocation whose VA was re-used.
+- 2341       |         if (it == mapping_map.end()) {
+- 2342       |             map_buffer_offsets.erase(offset_it);
+- 2343       |             return NvResult::BadValue;
+- 2344       |         }
+- 2345       |         auto const mapping = it->second;
+- 2346       |         const bool native = m_native_process &&
+- 2347       |                             NativeGpuProcessRegistry::Instance().Contains(m_native_process);
+- 2348       |         if (native) {
+- 2349       |             // The GPU must relinquish its PTE/cache reference before VA or
+- 2350       |             // NVMap backing can be released. On host OOM retain the ledger
+- 2351       |             // and its physical pin, even if the unmap partially progressed.
+- 2352       |             try {
+- 2353       |                 if (mapping.sparse_alloc)
+- 2354       |                     gmmu->MapSparse(params.offset, mapping.size, mapping.big_page);
+- 2355       |                 else
+- 2356       |                     gmmu->Unmap(params.offset, mapping.size);
+- 2357       |                 if (!mapping.fixed) {
+- 2358       |                     auto& allocator = mapping.big_page ? *vm.big_page_allocator
+- 2359       |                                                        : *vm.small_page_allocator;
+- 2360       |                     const u32 page_size = mapping.big_page ? vm.big_page_size
+- 2361       |                                                              : VM::YUZU_PAGESIZE;
+- 2362       |                     const u32 page_bits = mapping.big_page ? vm.big_page_size_bits
+- 2363       |                                                              : VM::PAGE_SIZE_BITS;
+- 2364       |                     const u64 rounded = Common::AlignUp(mapping.size, u64{page_size});
+- 2365       |                     allocator.Free(u32(mapping.offset >> page_bits),
+- 2366       |                                    u32(rounded >> page_bits));
+- 2367       |                 }
+- 2368       |             } catch (const std::bad_alloc&) {
+- 2369       |                 PoisonNativeAddressSpace();
+- 2370       |                 return NvResult::InsufficientMemory;
+- 2371       |             }
+- 2372       | 
+- 2373       |             if (mapping.fixed) {
+- 2374       |                 const auto owner = NativeGpuAllocation::FindContaining(
+- 2375       |                     allocation_map, static_cast<u64>(params.offset), mapping.size);
+- 2376       |                 if (owner != allocation_map.end()) {
+- 2377       |                     auto& entries = owner->second.mappings;
+- 2378       |                     entries.erase(std::remove(entries.begin(), entries.end(),
+- 2379       |                                               static_cast<u64>(params.offset)), entries.end());
+- 2380       |                 }
+- 2381       |             }
+- 2382       |             nvmap.UnpinHandle(mapping.handle);
+- 2383       |             mapping_map.erase(params.offset);
+- 2384       |             map_buffer_offsets.erase(params.offset);
+- 2385       |             return NvResult::Success;
+- 2386       |         }
+- 2387       |         if (!mapping.fixed) {
+- 2388       |             auto& allocator{mapping.big_page ? *vm.big_page_allocator : *vm.small_page_allocator};
+- 2389       |             u32 page_size_bits{mapping.big_page ? vm.big_page_size_bits : VM::PAGE_SIZE_BITS};
+- 2390       |             // Allocate() reserved CEIL(size/page_size) pages, not the floor.
+- 2391       |             // On native NS2 a partial final page must be returned too, or
+- 2392       |             // repeated GPU texture/buffer streaming leaks virtual space.
+- 2393       |             // Keep Maxwell's original release behavior untouched.
+- 2394       |             const bool native =
+- 2395       |                 m_native_process &&
+- 2396       |                 NativeGpuProcessRegistry::Instance().Contains(m_native_process);
+- 2397       |             const u64 rounded_size = native
+- 2398       |                 ? Common::AlignUp(mapping.size,
+- 2399       |                                   mapping.big_page ? vm.big_page_size : VM::YUZU_PAGESIZE)
+- 2400       |                 : mapping.size;
+- 2401       |             allocator.Free(u32(mapping.offset >> page_size_bits),
+- 2402       |                            u32(rounded_size >> page_size_bits));
+- 2403       |         }
+- 2404       | 
+- 2405       |         // Sparse mappings shouldn't be fully unmapped, just returned to their sparse state
+- 2406       |         // Only FreeSpace can unmap them fully
+- 2407       |         if (mapping.sparse_alloc) {
+- 2408       |             gmmu->MapSparse(params.offset, mapping.size, mapping.big_page);
+- 2409       |         } else {
+- 2410       |             gmmu->Unmap(params.offset, mapping.size);
+- 2411       |         }
+- 2412       | 
+- 2413       |         // A fixed mapping may have been explicitly UnmapBuffer'd before
+- 2414       |         // FreeSpace. Retire its allocation ledger reference now so the
+- 2415       |         // later FreeSpace cannot try to unpin an already retired mapping.
+- 2416       |         if (m_native_process &&
+- 2417       |             NativeGpuProcessRegistry::Instance().Contains(m_native_process) &&
+- 2418       |             mapping.fixed) {
+- 2419       |             auto owner = NativeGpuAllocation::FindContaining(
+- 2420       |                 allocation_map, static_cast<u64>(params.offset), mapping.size);
+- 2421       |             if (owner != allocation_map.end()) {
+- 2422       |                 auto& mappings = owner->second.mappings;
+- 2423       |                 mappings.erase(std::remove(mappings.begin(), mappings.end(),
+- 2424       |                                            static_cast<u64>(params.offset)),
+- 2425       |                                mappings.end());
+- 2426       |             }
+- 2427       |         }
+- 2428       |         nvmap.UnpinHandle(mapping.handle);
+- 2429       |         mapping_map.erase(params.offset);
+- 2430       |         map_buffer_offsets.erase(params.offset);
+- 2431       |     }
++        801 |     std::scoped_lock lock(mutex);
++        802 |     void(FreeMappingLocked(params.offset));
+  2432   803 |     return NvResult::Success;
+  2433   804 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 718–747 : 29 alignées, 86 propres Encore, 1 propres upstream</summary>
+
+Source : [nvhost_as_gpu.cpp:718–747](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp#L718-L747).
+
+```diff
+  2319   718 | NvResult nvhost_as_gpu::UnmapBuffer(IoctlUnmapBuffer& params) {
+- 2320       |     // Native unmap also invalidates the GMMU and unpins NvMap memory.
+- 2321       |     // Never let the producer retire backing ahead of an already queued
+- 2322       |     // consumer. Do NOT wait with mutex held (GPU worker may read its PTEs).
+- 2323       |     if (m_native_process &&
+- 2324       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process) &&
+- 2325       |         system.IsPoweredOn() && !system.IsShuttingDown())
+- 2326       |         system.GPU().WaitForIdle();
+  2327   719 |     std::scoped_lock lock(mutex);
+- 2328       |     if (native_sparse_poisoned && m_native_process &&
+- 2329       |         NativeGpuProcessRegistry::Instance().Contains(m_native_process))
+- 2330       |         return NvResult::InvalidState;
+  2331   720 |     if (auto const offset_it = map_buffer_offsets.find(params.offset); offset_it != map_buffer_offsets.end()) {
+  2332   721 |         LOG_DEBUG(Service_NVDRV, "called, offset={:#x}", params.offset);
+  2333   722 |         if (!vm.initialised) {
+  2334   723 |             return NvResult::BadValue;
+  2335   724 |         }
+  2336   725 | 
+  2337   726 |         auto const it = mapping_map.find(params.offset);
+- 2338       |         // A stale unmap token is never a valid mapping. In particular a
+- 2339       |         // FreeSpace/UnmapBuffer race must not dereference end() or free a
+- 2340       |         // different allocation whose VA was re-used.
+- 2341       |         if (it == mapping_map.end()) {
+- 2342       |             map_buffer_offsets.erase(offset_it);
+- 2343       |             return NvResult::BadValue;
+- 2344       |         }
+  2345   727 |         auto const mapping = it->second;
+- 2346       |         const bool native = m_native_process &&
+- 2347       |                             NativeGpuProcessRegistry::Instance().Contains(m_native_process);
+- 2348       |         if (native) {
+- 2349       |             // The GPU must relinquish its PTE/cache reference before VA or
+- 2350       |             // NVMap backing can be released. On host OOM retain the ledger
+- 2351       |             // and its physical pin, even if the unmap partially progressed.
+- 2352       |             try {
+- 2353       |                 if (mapping.sparse_alloc)
+- 2354       |                     gmmu->MapSparse(params.offset, mapping.size, mapping.big_page);
+- 2355       |                 else
+- 2356       |                     gmmu->Unmap(params.offset, mapping.size);
+  2357   728 |                 if (!mapping.fixed) {
+- 2358       |                     auto& allocator = mapping.big_page ? *vm.big_page_allocator
+- 2359       |                                                        : *vm.small_page_allocator;
+- 2360       |                     const u32 page_size = mapping.big_page ? vm.big_page_size
+- 2361       |                                                              : VM::YUZU_PAGESIZE;
+- 2362       |                     const u32 page_bits = mapping.big_page ? vm.big_page_size_bits
+- 2363       |                                                              : VM::PAGE_SIZE_BITS;
+- 2364       |                     const u64 rounded = Common::AlignUp(mapping.size, u64{page_size});
+- 2365       |                     allocator.Free(u32(mapping.offset >> page_bits),
+- 2366       |                                    u32(rounded >> page_bits));
+- 2367       |                 }
+- 2368       |             } catch (const std::bad_alloc&) {
+- 2369       |                 PoisonNativeAddressSpace();
+- 2370       |                 return NvResult::InsufficientMemory;
+- 2371       |             }
+- 2372       | 
+- 2373       |             if (mapping.fixed) {
+- 2374       |                 const auto owner = NativeGpuAllocation::FindContaining(
+- 2375       |                     allocation_map, static_cast<u64>(params.offset), mapping.size);
+- 2376       |                 if (owner != allocation_map.end()) {
+- 2377       |                     auto& entries = owner->second.mappings;
+- 2378       |                     entries.erase(std::remove(entries.begin(), entries.end(),
+- 2379       |                                               static_cast<u64>(params.offset)), entries.end());
+- 2380       |                 }
+- 2381       |             }
+- 2382       |             nvmap.UnpinHandle(mapping.handle);
+- 2383       |             mapping_map.erase(params.offset);
+- 2384       |             map_buffer_offsets.erase(params.offset);
+- 2385       |             return NvResult::Success;
+- 2386       |         }
+- 2387       |         if (!mapping.fixed) {
+  2388   729 |             auto& allocator{mapping.big_page ? *vm.big_page_allocator : *vm.small_page_allocator};
+  2389   730 |             u32 page_size_bits{mapping.big_page ? vm.big_page_size_bits : VM::PAGE_SIZE_BITS};
+- 2390       |             // Allocate() reserved CEIL(size/page_size) pages, not the floor.
+- 2391       |             // On native NS2 a partial final page must be returned too, or
+- 2392       |             // repeated GPU texture/buffer streaming leaks virtual space.
+- 2393       |             // Keep Maxwell's original release behavior untouched.
+- 2394       |             const bool native =
+- 2395       |                 m_native_process &&
+- 2396       |                 NativeGpuProcessRegistry::Instance().Contains(m_native_process);
+- 2397       |             const u64 rounded_size = native
+- 2398       |                 ? Common::AlignUp(mapping.size,
+- 2399       |                                   mapping.big_page ? vm.big_page_size : VM::YUZU_PAGESIZE)
+- 2400       |                 : mapping.size;
+- 2401       |             allocator.Free(u32(mapping.offset >> page_size_bits),
+- 2402       |                            u32(rounded_size >> page_size_bits));
++        731 |             allocator.Free(u32(mapping.offset >> page_size_bits), u32(mapping.size >> page_size_bits));
+  2403   732 |         }
+  2404   733 | 
+  2405   734 |         // Sparse mappings shouldn't be fully unmapped, just returned to their sparse state
+  2406   735 |         // Only FreeSpace can unmap them fully
+  2407   736 |         if (mapping.sparse_alloc) {
+  2408   737 |             gmmu->MapSparse(params.offset, mapping.size, mapping.big_page);
+  2409   738 |         } else {
+  2410   739 |             gmmu->Unmap(params.offset, mapping.size);
+  2411   740 |         }
+  2412   741 | 
+- 2413       |         // A fixed mapping may have been explicitly UnmapBuffer'd before
+- 2414       |         // FreeSpace. Retire its allocation ledger reference now so the
+- 2415       |         // later FreeSpace cannot try to unpin an already retired mapping.
+- 2416       |         if (m_native_process &&
+- 2417       |             NativeGpuProcessRegistry::Instance().Contains(m_native_process) &&
+- 2418       |             mapping.fixed) {
+- 2419       |             auto owner = NativeGpuAllocation::FindContaining(
+- 2420       |                 allocation_map, static_cast<u64>(params.offset), mapping.size);
+- 2421       |             if (owner != allocation_map.end()) {
+- 2422       |                 auto& mappings = owner->second.mappings;
+- 2423       |                 mappings.erase(std::remove(mappings.begin(), mappings.end(),
+- 2424       |                                            static_cast<u64>(params.offset)),
+- 2425       |                                mappings.end());
+- 2426       |             }
+- 2427       |         }
+  2428   742 |         nvmap.UnpinHandle(mapping.handle);
+  2429   743 |         mapping_map.erase(params.offset);
+  2430   744 |         map_buffer_offsets.erase(params.offset);
+  2431   745 |     }
+  2432   746 |     return NvResult::Success;
+  2433   747 | }
+```
+
+</details>
+
+### P0-M06 · NVMap IocAlloc
+
+Comparer alignement, kind, adresse, taille et état allocated. Encore est plus long que les forks : la comparaison ligne par ligne montre précisément les contrôles supplémentaires au lieu de traiter la longueur comme un écart fonctionnel.
+
+Encore : [nvmap.cpp:100–184](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvmap.cpp#L100-L184) — 85 lignes.
+
+<details>
+<summary>Lichii — 99–142 : 40 alignées, 45 propres Encore, 4 propres upstream</summary>
+
+Source : [nvmap.cpp:99–142](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvdrv/devices/nvmap.cpp#L99-L142).
+
+```diff
+   100    99 | NvResult nvmap::IocAlloc(IocAllocParams& params, DeviceFD fd) {
+   101   100 |     LOG_DEBUG(Service_NVDRV, "called, addr={:X}", params.address);
+   102   101 | 
+   103   102 |     if (!params.handle) {
+   104   103 |         LOG_CRITICAL(Service_NVDRV, "Handle is 0");
+   105   104 |         return NvResult::BadValue;
+   106   105 |     }
+   107   106 | 
+   108   107 |     if ((params.align - 1) & params.align) {
+   109   108 |         LOG_CRITICAL(Service_NVDRV, "Incorrect alignment used, alignment={:08X}", params.align);
+   110   109 |         return NvResult::BadValue;
+   111   110 |     }
+   112   111 | 
+   113   112 |     // Force page size alignment at a minimum
+-  114       |     if (params.align < YUZU_PAGESIZE) {
+-  115       |         params.align = YUZU_PAGESIZE;
++        113 |     if (params.align < LICHII_PAGESIZE) {
++        114 |         params.align = LICHII_PAGESIZE;
+   116   115 |     }
+   117   116 | 
+   118   117 |     auto handle_description{file.GetHandle(params.handle)};
+   119   118 |     if (!handle_description) {
+   120   119 |         LOG_CRITICAL(Service_NVDRV, "Object does not exist, handle={:08X}", params.handle);
+   121   120 |         return NvResult::BadValue;
+   122   121 |     }
+   123   122 | 
+   124   123 |     if (handle_description->allocated) {
+   125   124 |         LOG_CRITICAL(Service_NVDRV, "Object is already allocated, handle={:08X}", params.handle);
+   126   125 |         return NvResult::InsufficientMemory;
+   127   126 |     }
+   128   127 | 
+-  129       | #ifdef PS5_NATIVE
+-  130       |     // A zero CPU backing cannot be pinned into the guest process address space.
+-  131       |     // Do not report success with a handle whose pages do not exist: FC27's
+-  132       |     // observed failure otherwise cascades into writes to address 0.
+-  133       |     if (!params.address) {
+-  134       |         LOG_ERROR(Service_NVDRV, "EDEN_NVMAP_REJECT_ZERO_ADDRESS handle={:08X} size={:X}",
+-  135       |                   params.handle, handle_description->size);
+-  136       |         return NvResult::BadValue;
+-  137       |     }
+-  138       | #endif
+-  139       | 
+-  140       |     // Never manufacture an NVDRV session when the caller supplies a stale FD.
+-  141       |     // Verify ownership before Handle::Alloc mutates its allocated state.
+-  142       |     const auto session_it = sessions.find(fd);
+-  143       |     if (session_it == sessions.end()) {
+-  144       |         return NvResult::BadValue;
+-  145       |     }
+-  146       |     auto* const session = container.GetSession(session_it->second);
+-  147       |     if (!session || !session->process) {
+-  148       |         return NvResult::BadValue;
+-  149       |     }
+   150   128 |     const auto result = handle_description->Alloc(params.flags, params.align, params.kind,
+-  151       |                                                   params.address, session_it->second);
++        129 |                                                   params.address, sessions[fd]);
+   152   130 |     if (result != NvResult::Success) {
+   153   131 |         LOG_CRITICAL(Service_NVDRV, "Object failed to allocate, handle={:08X}", params.handle);
+   154   132 |         return result;
+   155   133 |     }
+   156   134 |     bool is_out_io{};
+-  157       |     auto* const process = session->process;
+-  158       | #ifdef PS5_NATIVE
+-  159       |     const auto map_result = process->GetPageTable().LockForMapDeviceAddressSpace(
+-  160       |         &is_out_io, handle_description->address, handle_description->size,
+-  161       |         Kernel::KMemoryPermission::None, true, false);
+-  162       |     if (!map_result.IsSuccess()) {
+-  163       |         // Handle::Alloc has already set allocated=true; without rollback,
+-  164       |         // the guest receives a successful nvmap allocation for unmapped pages.
+-  165       |         // No device lock was acquired on this failure path, so NEVER unlock.
+-  166       |         LOG_ERROR(Service_NVDRV,
+-  167       |                   "EDEN_NVMAP_MAP_FAILED handle={:08X} addr={:X} size={:X}",
+-  168       |                   params.handle, handle_description->address, handle_description->size);
+-  169       |         {
+-  170       |             std::scoped_lock lock(handle_description->mutex);
+-  171       |             handle_description->allocated = false;
+-  172       |             handle_description->address = 0;
+-  173       |         }
+-  174       |         return NvResult::BadValue;
+-  175       |     }
+-  176       | #else
++        135 |     auto process = container.GetSession(sessions[fd])->process;
+   177   136 |     ASSERT(process->GetPageTable()
+   178   137 |                .LockForMapDeviceAddressSpace(&is_out_io, handle_description->address,
+   179   138 |                                              handle_description->size,
+   180   139 |                                              Kernel::KMemoryPermission::None, true, false)
+   181   140 |                .IsSuccess());
+-  182       | #endif
+   183   141 |     return result;
+   184   142 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 100–143 : 42 alignées, 43 propres Encore, 2 propres upstream</summary>
+
+Source : [nvmap.cpp:100–143](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvdrv/devices/nvmap.cpp#L100-L143).
+
+```diff
+   100   100 | NvResult nvmap::IocAlloc(IocAllocParams& params, DeviceFD fd) {
+   101   101 |     LOG_DEBUG(Service_NVDRV, "called, addr={:X}", params.address);
+   102   102 | 
+   103   103 |     if (!params.handle) {
+   104   104 |         LOG_CRITICAL(Service_NVDRV, "Handle is 0");
+   105   105 |         return NvResult::BadValue;
+   106   106 |     }
+   107   107 | 
+   108   108 |     if ((params.align - 1) & params.align) {
+   109   109 |         LOG_CRITICAL(Service_NVDRV, "Incorrect alignment used, alignment={:08X}", params.align);
+   110   110 |         return NvResult::BadValue;
+   111   111 |     }
+   112   112 | 
+   113   113 |     // Force page size alignment at a minimum
+   114   114 |     if (params.align < YUZU_PAGESIZE) {
+   115   115 |         params.align = YUZU_PAGESIZE;
+   116   116 |     }
+   117   117 | 
+   118   118 |     auto handle_description{file.GetHandle(params.handle)};
+   119   119 |     if (!handle_description) {
+   120   120 |         LOG_CRITICAL(Service_NVDRV, "Object does not exist, handle={:08X}", params.handle);
+   121   121 |         return NvResult::BadValue;
+   122   122 |     }
+   123   123 | 
+   124   124 |     if (handle_description->allocated) {
+   125   125 |         LOG_CRITICAL(Service_NVDRV, "Object is already allocated, handle={:08X}", params.handle);
+   126   126 |         return NvResult::InsufficientMemory;
+   127   127 |     }
+   128   128 | 
+-  129       | #ifdef PS5_NATIVE
+-  130       |     // A zero CPU backing cannot be pinned into the guest process address space.
+-  131       |     // Do not report success with a handle whose pages do not exist: FC27's
+-  132       |     // observed failure otherwise cascades into writes to address 0.
+-  133       |     if (!params.address) {
+-  134       |         LOG_ERROR(Service_NVDRV, "EDEN_NVMAP_REJECT_ZERO_ADDRESS handle={:08X} size={:X}",
+-  135       |                   params.handle, handle_description->size);
+-  136       |         return NvResult::BadValue;
+-  137       |     }
+-  138       | #endif
+-  139       | 
+-  140       |     // Never manufacture an NVDRV session when the caller supplies a stale FD.
+-  141       |     // Verify ownership before Handle::Alloc mutates its allocated state.
+-  142       |     const auto session_it = sessions.find(fd);
+-  143       |     if (session_it == sessions.end()) {
+-  144       |         return NvResult::BadValue;
+-  145       |     }
+-  146       |     auto* const session = container.GetSession(session_it->second);
+-  147       |     if (!session || !session->process) {
+-  148       |         return NvResult::BadValue;
+-  149       |     }
+   150   129 |     const auto result = handle_description->Alloc(params.flags, params.align, params.kind,
+-  151       |                                                   params.address, session_it->second);
++        130 |                                                   params.address, sessions[fd]);
+   152   131 |     if (result != NvResult::Success) {
+   153   132 |         LOG_CRITICAL(Service_NVDRV, "Object failed to allocate, handle={:08X}", params.handle);
+   154   133 |         return result;
+   155   134 |     }
+   156   135 |     bool is_out_io{};
+-  157       |     auto* const process = session->process;
+-  158       | #ifdef PS5_NATIVE
+-  159       |     const auto map_result = process->GetPageTable().LockForMapDeviceAddressSpace(
+-  160       |         &is_out_io, handle_description->address, handle_description->size,
+-  161       |         Kernel::KMemoryPermission::None, true, false);
+-  162       |     if (!map_result.IsSuccess()) {
+-  163       |         // Handle::Alloc has already set allocated=true; without rollback,
+-  164       |         // the guest receives a successful nvmap allocation for unmapped pages.
+-  165       |         // No device lock was acquired on this failure path, so NEVER unlock.
+-  166       |         LOG_ERROR(Service_NVDRV,
+-  167       |                   "EDEN_NVMAP_MAP_FAILED handle={:08X} addr={:X} size={:X}",
+-  168       |                   params.handle, handle_description->address, handle_description->size);
+-  169       |         {
+-  170       |             std::scoped_lock lock(handle_description->mutex);
+-  171       |             handle_description->allocated = false;
+-  172       |             handle_description->address = 0;
+-  173       |         }
+-  174       |         return NvResult::BadValue;
+-  175       |     }
+-  176       | #else
++        136 |     auto process = container.GetSession(sessions[fd])->process;
+   177   137 |     ASSERT(process->GetPageTable()
+   178   138 |                .LockForMapDeviceAddressSpace(&is_out_io, handle_description->address,
+   179   139 |                                              handle_description->size,
+   180   140 |                                              Kernel::KMemoryPermission::None, true, false)
+   181   141 |                .IsSuccess());
+-  182       | #endif
+   183   142 |     return result;
+   184   143 | }
+```
+
+</details>
+
+### P0-M07 · NVMap IocFromId
+
+Contrat de duplication/référence d'un handle partagé. Pertinent aux images GSV : une référence supplémentaire doit être libérée exactement une fois.
+
+Encore : [nvmap.cpp:206–231](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvmap.cpp#L206-L231) — 26 lignes.
+
+<details>
+<summary>Lichii — 164–189 : 26 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [nvmap.cpp:164–189](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvdrv/devices/nvmap.cpp#L164-L189).
+
+```diff
+   206   164 | NvResult nvmap::IocFromId(IocFromIdParams& params) {
+   207   165 |     LOG_DEBUG(Service_NVDRV, "called, id:{}", params.id);
+   208   166 | 
+   209   167 |     // Handles and IDs are always the same value in nvmap however IDs can be used globally given the
+   210   168 |     // right permissions.
+   211   169 |     // Since we don't plan on ever supporting multiprocess we can skip implementing handle refs and
+   212   170 |     // so this function just does simple validation and passes through the handle id.
+   213   171 |     if (!params.id) {
+   214   172 |         LOG_CRITICAL(Service_NVDRV, "Zero Id is invalid!");
+   215   173 |         return NvResult::BadValue;
+   216   174 |     }
+   217   175 | 
+   218   176 |     auto handle_description{file.GetHandle(params.id)};
+   219   177 |     if (!handle_description) {
+   220   178 |         LOG_CRITICAL(Service_NVDRV, "Unregistered handle!");
+   221   179 |         return NvResult::BadValue;
+   222   180 |     }
+   223   181 | 
+   224   182 |     auto result = handle_description->Duplicate(false);
+   225   183 |     if (result != NvResult::Success) {
+   226   184 |         LOG_CRITICAL(Service_NVDRV, "Could not duplicate handle!");
+   227   185 |         return result;
+   228   186 |     }
+   229   187 |     params.handle = handle_description->id;
+   230   188 |     return NvResult::Success;
+   231   189 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 165–190 : 26 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [nvmap.cpp:165–190](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvdrv/devices/nvmap.cpp#L165-L190).
+
+```diff
+   206   165 | NvResult nvmap::IocFromId(IocFromIdParams& params) {
+   207   166 |     LOG_DEBUG(Service_NVDRV, "called, id:{}", params.id);
+   208   167 | 
+   209   168 |     // Handles and IDs are always the same value in nvmap however IDs can be used globally given the
+   210   169 |     // right permissions.
+   211   170 |     // Since we don't plan on ever supporting multiprocess we can skip implementing handle refs and
+   212   171 |     // so this function just does simple validation and passes through the handle id.
+   213   172 |     if (!params.id) {
+   214   173 |         LOG_CRITICAL(Service_NVDRV, "Zero Id is invalid!");
+   215   174 |         return NvResult::BadValue;
+   216   175 |     }
+   217   176 | 
+   218   177 |     auto handle_description{file.GetHandle(params.id)};
+   219   178 |     if (!handle_description) {
+   220   179 |         LOG_CRITICAL(Service_NVDRV, "Unregistered handle!");
+   221   180 |         return NvResult::BadValue;
+   222   181 |     }
+   223   182 | 
+   224   183 |     auto result = handle_description->Duplicate(false);
+   225   184 |     if (result != NvResult::Success) {
+   226   185 |         LOG_CRITICAL(Service_NVDRV, "Could not duplicate handle!");
+   227   186 |         return result;
+   228   187 |     }
+   229   188 |     params.handle = handle_description->id;
+   230   189 |     return NvResult::Success;
+   231   190 | }
+```
+
+</details>
+
+### P0-M08 · NVMap IocFree
+
+Comparer decrement de références, destruction et retour d'adresse/taille. À relier au nouveau pool GSV base+i, qui duplique une référence par image.
+
+Encore : [nvmap.cpp:278–310](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvmap.cpp#L278-L310) — 33 lignes.
+
+<details>
+<summary>Lichii — 236–260 : 24 alignées, 9 propres Encore, 1 propres upstream</summary>
+
+Source : [nvmap.cpp:236–260](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/service/nvdrv/devices/nvmap.cpp#L236-L260).
+
+```diff
+   278   236 | NvResult nvmap::IocFree(IocFreeParams& params, DeviceFD fd) {
+   279   237 |     LOG_DEBUG(Service_NVDRV, "called");
+   280   238 | 
+   281   239 |     if (!params.handle) {
+   282   240 |         LOG_CRITICAL(Service_NVDRV, "Handle null freed?");
+   283   241 |         return NvResult::Success;
+   284   242 |     }
+   285   243 | 
+-  286       |     const auto session_it = sessions.find(fd);
+-  287       |     if (session_it == sessions.end()) {
+-  288       |         return NvResult::BadValue;
+-  289       |     }
+-  290       |     auto* const session = container.GetSession(session_it->second);
+-  291       |     if (!session || !session->process) {
+-  292       |         return NvResult::BadValue;
+-  293       |     }
+   294   244 |     if (auto freeInfo{file.FreeHandle(params.handle, false)}) {
+-  295       |         auto* const process = session->process;
++        245 |         auto process = container.GetSession(sessions[fd])->process;
+   296   246 |         if (freeInfo->can_unlock) {
+   297   247 |             ASSERT(process->GetPageTable()
+   298   248 |                        .UnlockForDeviceAddressSpace(freeInfo->address, freeInfo->size)
+   299   249 |                        .IsSuccess());
+   300   250 |         }
+   301   251 |         params.address = freeInfo->address;
+   302   252 |         params.size = static_cast<u32>(freeInfo->size);
+   303   253 |         params.flags.raw = 0;
+   304   254 |         params.flags.map_uncached.Assign(freeInfo->was_uncached);
+   305   255 |     } else {
+   306   256 |         // This is possible when there's internal dups or other duplicates.
+   307   257 |     }
+   308   258 | 
+   309   259 |     return NvResult::Success;
+   310   260 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 237–261 : 24 alignées, 9 propres Encore, 1 propres upstream</summary>
+
+Source : [nvmap.cpp:237–261](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/service/nvdrv/devices/nvmap.cpp#L237-L261).
+
+```diff
+   278   237 | NvResult nvmap::IocFree(IocFreeParams& params, DeviceFD fd) {
+   279   238 |     LOG_DEBUG(Service_NVDRV, "called");
+   280   239 | 
+   281   240 |     if (!params.handle) {
+   282   241 |         LOG_CRITICAL(Service_NVDRV, "Handle null freed?");
+   283   242 |         return NvResult::Success;
+   284   243 |     }
+   285   244 | 
+-  286       |     const auto session_it = sessions.find(fd);
+-  287       |     if (session_it == sessions.end()) {
+-  288       |         return NvResult::BadValue;
+-  289       |     }
+-  290       |     auto* const session = container.GetSession(session_it->second);
+-  291       |     if (!session || !session->process) {
+-  292       |         return NvResult::BadValue;
+-  293       |     }
+   294   245 |     if (auto freeInfo{file.FreeHandle(params.handle, false)}) {
+-  295       |         auto* const process = session->process;
++        246 |         auto process = container.GetSession(sessions[fd])->process;
+   296   247 |         if (freeInfo->can_unlock) {
+   297   248 |             ASSERT(process->GetPageTable()
+   298   249 |                        .UnlockForDeviceAddressSpace(freeInfo->address, freeInfo->size)
+   299   250 |                        .IsSuccess());
+   300   251 |         }
+   301   252 |         params.address = freeInfo->address;
+   302   253 |         params.size = static_cast<u32>(freeInfo->size);
+   303   254 |         params.flags.raw = 0;
+   304   255 |         params.flags.map_uncached.Assign(freeInfo->was_uncached);
+   305   256 |     } else {
+   306   257 |         // This is possible when there's internal dups or other duplicates.
+   307   258 |     }
+   308   259 | 
+   309   260 |     return NvResult::Success;
+   310   261 | }
+```
+
+</details>
+
+### P0-K01 · KPageTableBase::SetHeapSize
+
+Le cœur KPageTable est presque ancestralement commun, mais Eglantine contient des adaptations PS5 supplémentaires. Pour MKW/Pokopia, la question utile est la réservation physique réelle et le rollback en cas d'échec, pas seulement la valeur retournée au SVC.
+
+Encore : [k_page_table_base.cpp:2150–2299](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-core/src/core/hle/kernel/k_page_table_base.cpp#L2150-L2299) — 150 lignes.
+
+<details>
+<summary>Lichii — 2181–2330 : 150 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [k_page_table_base.cpp:2181–2330](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/kernel/k_page_table_base.cpp#L2181-L2330).
+
+```diff
+  2150  2181 | Result KPageTableBase::SetHeapSize(KProcessAddress* out, size_t size) {
+  2151  2182 |     // Lock the physical memory mutex.
+  2152  2183 |     KScopedLightLock map_phys_mem_lk(m_map_physical_memory_lock);
+  2153  2184 | 
+  2154  2185 |     // Try to perform a reduction in heap, instead of an extension.
+  2155  2186 |     KProcessAddress cur_address;
+  2156  2187 |     size_t allocation_size;
+  2157  2188 |     {
+  2158  2189 |         // Lock the table.
+  2159  2190 |         KScopedLightLock lk(m_general_lock);
+  2160  2191 | 
+  2161  2192 |         // Validate that setting heap size is possible at all.
+  2162  2193 |         R_UNLESS(!m_is_kernel, ResultOutOfMemory);
+  2163  2194 |         R_UNLESS(size <= static_cast<size_t>(m_heap_region_end - m_heap_region_start),
+  2164  2195 |                  ResultOutOfMemory);
+  2165  2196 |         R_UNLESS(size <= m_max_heap_size, ResultOutOfMemory);
+  2166  2197 | 
+  2167  2198 |         if (size < static_cast<size_t>(m_current_heap_end - m_heap_region_start)) {
+  2168  2199 |             // The size being requested is less than the current size, so we need to free the end of
+  2169  2200 |             // the heap.
+  2170  2201 | 
+  2171  2202 |             // Validate memory state.
+  2172  2203 |             size_t num_allocator_blocks;
+  2173  2204 |             R_TRY(this->CheckMemoryState(
+  2174  2205 |                 std::addressof(num_allocator_blocks), m_heap_region_start + size,
+  2175  2206 |                 (m_current_heap_end - m_heap_region_start) - size, KMemoryState::All,
+  2176  2207 |                 KMemoryState::Normal, KMemoryPermission::All, KMemoryPermission::UserReadWrite,
+  2177  2208 |                 KMemoryAttribute::All, KMemoryAttribute::None));
+  2178  2209 | 
+  2179  2210 |             // Create an update allocator.
+  2180  2211 |             Result allocator_result;
+  2181  2212 |             KMemoryBlockManagerUpdateAllocator allocator(std::addressof(allocator_result),
+  2182  2213 |                                                          m_memory_block_slab_manager,
+  2183  2214 |                                                          num_allocator_blocks);
+  2184  2215 |             R_TRY(allocator_result);
+  2185  2216 | 
+  2186  2217 |             // We're going to perform an update, so create a helper.
+  2187  2218 |             KScopedPageTableUpdater updater(this);
+  2188  2219 | 
+  2189  2220 |             // Unmap the end of the heap.
+  2190  2221 |             const size_t num_pages = ((m_current_heap_end - m_heap_region_start) - size) / PageSize;
+  2191  2222 |             const KPageProperties unmap_properties = {KMemoryPermission::None, false, false,
+  2192  2223 |                                                       DisableMergeAttribute::None};
+  2193  2224 |             R_TRY(this->Operate(updater.GetPageList(), m_heap_region_start + size, num_pages, 0,
+  2194  2225 |                                 false, unmap_properties, OperationType::Unmap, false));
+  2195  2226 | 
+  2196  2227 |             // Release the memory from the resource limit.
+  2197  2228 |             m_resource_limit->Release(m_system.Kernel(), Svc::LimitableResource::PhysicalMemoryMax,
+  2198  2229 |                                       num_pages * PageSize);
+  2199  2230 | 
+  2200  2231 |             // Apply the memory block update.
+  2201  2232 |             m_memory_block_manager.Update(std::addressof(allocator), m_heap_region_start + size,
+  2202  2233 |                                           num_pages, KMemoryState::Free, KMemoryPermission::None,
+  2203  2234 |                                           KMemoryAttribute::None,
+  2204  2235 |                                           KMemoryBlockDisableMergeAttribute::None,
+  2205  2236 |                                           size == 0 ? KMemoryBlockDisableMergeAttribute::Normal
+  2206  2237 |                                                     : KMemoryBlockDisableMergeAttribute::None);
+  2207  2238 | 
+  2208  2239 |             // Update the current heap end.
+  2209  2240 |             m_current_heap_end = m_heap_region_start + size;
+  2210  2241 | 
+  2211  2242 |             // Set the output.
+  2212  2243 |             *out = m_heap_region_start;
+  2213  2244 |             R_SUCCEED();
+  2214  2245 |         } else if (size == static_cast<size_t>(m_current_heap_end - m_heap_region_start)) {
+  2215  2246 |             // The size requested is exactly the current size.
+  2216  2247 |             *out = m_heap_region_start;
+  2217  2248 |             R_SUCCEED();
+  2218  2249 |         } else {
+  2219  2250 |             // We have to allocate memory. Determine how much to allocate and where while the table
+  2220  2251 |             // is locked.
+  2221  2252 |             cur_address = m_current_heap_end;
+  2222  2253 |             allocation_size = size - (m_current_heap_end - m_heap_region_start);
+  2223  2254 |         }
+  2224  2255 |     }
+  2225  2256 | 
+  2226  2257 |     // Reserve memory for the heap extension.
+  2227  2258 |     KScopedResourceReservation memory_reservation(m_system.Kernel(),
+  2228  2259 |         m_resource_limit, Svc::LimitableResource::PhysicalMemoryMax, allocation_size);
+  2229  2260 |     R_UNLESS(memory_reservation.Succeeded(), ResultLimitReached);
+  2230  2261 | 
+  2231  2262 |     // Allocate pages for the heap extension.
+  2232  2263 |     KPageGroup pg(m_system.Kernel(), m_block_info_manager);
+  2233  2264 |     R_TRY(m_system.Kernel().MemoryManager().AllocateAndOpen(std::addressof(pg), allocation_size / PageSize,
+  2234  2265 |                                                    m_allocate_option));
+  2235  2266 | 
+  2236  2267 |     // Close the opened pages when we're done with them.
+  2237  2268 |     // If the mapping succeeds, each page will gain an extra reference, otherwise they will be freed
+  2238  2269 |     // automatically.
+  2239  2270 |     SCOPE_EXIT {
+  2240  2271 |         pg.Close(m_system.Kernel());
+  2241  2272 |     };
+  2242  2273 | 
+  2243  2274 |     // Clear all the newly allocated pages.
+  2244  2275 |     for (const auto& it : pg) {
+  2245  2276 |         ClearBackingRegion(m_system, it.GetAddress(), it.GetSize(), m_heap_fill_value);
+  2246  2277 |     }
+  2247  2278 | 
+  2248  2279 |     // Map the pages.
+  2249  2280 |     {
+  2250  2281 |         // Lock the table.
+  2251  2282 |         KScopedLightLock lk(m_general_lock);
+  2252  2283 | 
+  2253  2284 |         // Ensure that the heap hasn't changed since we began executing.
+  2254  2285 |         ASSERT(cur_address == m_current_heap_end);
+  2255  2286 | 
+  2256  2287 |         // Check the memory state.
+  2257  2288 |         size_t num_allocator_blocks;
+  2258  2289 |         R_TRY(this->CheckMemoryState(std::addressof(num_allocator_blocks), m_current_heap_end,
+  2259  2290 |                                      allocation_size, KMemoryState::All, KMemoryState::Free,
+  2260  2291 |                                      KMemoryPermission::None, KMemoryPermission::None,
+  2261  2292 |                                      KMemoryAttribute::None, KMemoryAttribute::None));
+  2262  2293 | 
+  2263  2294 |         // Create an update allocator.
+  2264  2295 |         Result allocator_result;
+  2265  2296 |         KMemoryBlockManagerUpdateAllocator allocator(
+  2266  2297 |             std::addressof(allocator_result), m_memory_block_slab_manager, num_allocator_blocks);
+  2267  2298 |         R_TRY(allocator_result);
+  2268  2299 | 
+  2269  2300 |         // We're going to perform an update, so create a helper.
+  2270  2301 |         KScopedPageTableUpdater updater(this);
+  2271  2302 | 
+  2272  2303 |         // Map the pages.
+  2273  2304 |         const size_t num_pages = allocation_size / PageSize;
+  2274  2305 |         const KPageProperties map_properties = {KMemoryPermission::UserReadWrite, false, false,
+  2275  2306 |                                                 (m_current_heap_end == m_heap_region_start)
+  2276  2307 |                                                     ? DisableMergeAttribute::DisableHead
+  2277  2308 |                                                     : DisableMergeAttribute::None};
+  2278  2309 |         R_TRY(this->Operate(updater.GetPageList(), m_current_heap_end, num_pages, pg,
+  2279  2310 |                             map_properties, OperationType::MapGroup, false));
+  2280  2311 | 
+  2281  2312 |         // We succeeded, so commit our memory reservation.
+  2282  2313 |         memory_reservation.Commit();
+  2283  2314 | 
+  2284  2315 |         // Apply the memory block update.
+  2285  2316 |         m_memory_block_manager.Update(
+  2286  2317 |             std::addressof(allocator), m_current_heap_end, num_pages, KMemoryState::Normal,
+  2287  2318 |             KMemoryPermission::UserReadWrite, KMemoryAttribute::None,
+  2288  2319 |             m_heap_region_start == m_current_heap_end ? KMemoryBlockDisableMergeAttribute::Normal
+  2289  2320 |                                                       : KMemoryBlockDisableMergeAttribute::None,
+  2290  2321 |             KMemoryBlockDisableMergeAttribute::None);
+  2291  2322 | 
+  2292  2323 |         // Update the current heap end.
+  2293  2324 |         m_current_heap_end = m_heap_region_start + size;
+  2294  2325 | 
+  2295  2326 |         // Set the output.
+  2296  2327 |         *out = m_heap_region_start;
+  2297  2328 |         R_SUCCEED();
+  2298  2329 |     }
+  2299  2330 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 2249–2398 : 150 alignées, 0 propres Encore, 0 propres upstream</summary>
+
+Source : [k_page_table_base.cpp:2249–2398](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/kernel/k_page_table_base.cpp#L2249-L2398).
+
+```diff
+  2150  2249 | Result KPageTableBase::SetHeapSize(KProcessAddress* out, size_t size) {
+  2151  2250 |     // Lock the physical memory mutex.
+  2152  2251 |     KScopedLightLock map_phys_mem_lk(m_map_physical_memory_lock);
+  2153  2252 | 
+  2154  2253 |     // Try to perform a reduction in heap, instead of an extension.
+  2155  2254 |     KProcessAddress cur_address;
+  2156  2255 |     size_t allocation_size;
+  2157  2256 |     {
+  2158  2257 |         // Lock the table.
+  2159  2258 |         KScopedLightLock lk(m_general_lock);
+  2160  2259 | 
+  2161  2260 |         // Validate that setting heap size is possible at all.
+  2162  2261 |         R_UNLESS(!m_is_kernel, ResultOutOfMemory);
+  2163  2262 |         R_UNLESS(size <= static_cast<size_t>(m_heap_region_end - m_heap_region_start),
+  2164  2263 |                  ResultOutOfMemory);
+  2165  2264 |         R_UNLESS(size <= m_max_heap_size, ResultOutOfMemory);
+  2166  2265 | 
+  2167  2266 |         if (size < static_cast<size_t>(m_current_heap_end - m_heap_region_start)) {
+  2168  2267 |             // The size being requested is less than the current size, so we need to free the end of
+  2169  2268 |             // the heap.
+  2170  2269 | 
+  2171  2270 |             // Validate memory state.
+  2172  2271 |             size_t num_allocator_blocks;
+  2173  2272 |             R_TRY(this->CheckMemoryState(
+  2174  2273 |                 std::addressof(num_allocator_blocks), m_heap_region_start + size,
+  2175  2274 |                 (m_current_heap_end - m_heap_region_start) - size, KMemoryState::All,
+  2176  2275 |                 KMemoryState::Normal, KMemoryPermission::All, KMemoryPermission::UserReadWrite,
+  2177  2276 |                 KMemoryAttribute::All, KMemoryAttribute::None));
+  2178  2277 | 
+  2179  2278 |             // Create an update allocator.
+  2180  2279 |             Result allocator_result;
+  2181  2280 |             KMemoryBlockManagerUpdateAllocator allocator(std::addressof(allocator_result),
+  2182  2281 |                                                          m_memory_block_slab_manager,
+  2183  2282 |                                                          num_allocator_blocks);
+  2184  2283 |             R_TRY(allocator_result);
+  2185  2284 | 
+  2186  2285 |             // We're going to perform an update, so create a helper.
+  2187  2286 |             KScopedPageTableUpdater updater(this);
+  2188  2287 | 
+  2189  2288 |             // Unmap the end of the heap.
+  2190  2289 |             const size_t num_pages = ((m_current_heap_end - m_heap_region_start) - size) / PageSize;
+  2191  2290 |             const KPageProperties unmap_properties = {KMemoryPermission::None, false, false,
+  2192  2291 |                                                       DisableMergeAttribute::None};
+  2193  2292 |             R_TRY(this->Operate(updater.GetPageList(), m_heap_region_start + size, num_pages, 0,
+  2194  2293 |                                 false, unmap_properties, OperationType::Unmap, false));
+  2195  2294 | 
+  2196  2295 |             // Release the memory from the resource limit.
+  2197  2296 |             m_resource_limit->Release(m_system.Kernel(), Svc::LimitableResource::PhysicalMemoryMax,
+  2198  2297 |                                       num_pages * PageSize);
+  2199  2298 | 
+  2200  2299 |             // Apply the memory block update.
+  2201  2300 |             m_memory_block_manager.Update(std::addressof(allocator), m_heap_region_start + size,
+  2202  2301 |                                           num_pages, KMemoryState::Free, KMemoryPermission::None,
+  2203  2302 |                                           KMemoryAttribute::None,
+  2204  2303 |                                           KMemoryBlockDisableMergeAttribute::None,
+  2205  2304 |                                           size == 0 ? KMemoryBlockDisableMergeAttribute::Normal
+  2206  2305 |                                                     : KMemoryBlockDisableMergeAttribute::None);
+  2207  2306 | 
+  2208  2307 |             // Update the current heap end.
+  2209  2308 |             m_current_heap_end = m_heap_region_start + size;
+  2210  2309 | 
+  2211  2310 |             // Set the output.
+  2212  2311 |             *out = m_heap_region_start;
+  2213  2312 |             R_SUCCEED();
+  2214  2313 |         } else if (size == static_cast<size_t>(m_current_heap_end - m_heap_region_start)) {
+  2215  2314 |             // The size requested is exactly the current size.
+  2216  2315 |             *out = m_heap_region_start;
+  2217  2316 |             R_SUCCEED();
+  2218  2317 |         } else {
+  2219  2318 |             // We have to allocate memory. Determine how much to allocate and where while the table
+  2220  2319 |             // is locked.
+  2221  2320 |             cur_address = m_current_heap_end;
+  2222  2321 |             allocation_size = size - (m_current_heap_end - m_heap_region_start);
+  2223  2322 |         }
+  2224  2323 |     }
+  2225  2324 | 
+  2226  2325 |     // Reserve memory for the heap extension.
+  2227  2326 |     KScopedResourceReservation memory_reservation(m_system.Kernel(),
+  2228  2327 |         m_resource_limit, Svc::LimitableResource::PhysicalMemoryMax, allocation_size);
+  2229  2328 |     R_UNLESS(memory_reservation.Succeeded(), ResultLimitReached);
+  2230  2329 | 
+  2231  2330 |     // Allocate pages for the heap extension.
+  2232  2331 |     KPageGroup pg(m_system.Kernel(), m_block_info_manager);
+  2233  2332 |     R_TRY(m_system.Kernel().MemoryManager().AllocateAndOpen(std::addressof(pg), allocation_size / PageSize,
+  2234  2333 |                                                    m_allocate_option));
+  2235  2334 | 
+  2236  2335 |     // Close the opened pages when we're done with them.
+  2237  2336 |     // If the mapping succeeds, each page will gain an extra reference, otherwise they will be freed
+  2238  2337 |     // automatically.
+  2239  2338 |     SCOPE_EXIT {
+  2240  2339 |         pg.Close(m_system.Kernel());
+  2241  2340 |     };
+  2242  2341 | 
+  2243  2342 |     // Clear all the newly allocated pages.
+  2244  2343 |     for (const auto& it : pg) {
+  2245  2344 |         ClearBackingRegion(m_system, it.GetAddress(), it.GetSize(), m_heap_fill_value);
+  2246  2345 |     }
+  2247  2346 | 
+  2248  2347 |     // Map the pages.
+  2249  2348 |     {
+  2250  2349 |         // Lock the table.
+  2251  2350 |         KScopedLightLock lk(m_general_lock);
+  2252  2351 | 
+  2253  2352 |         // Ensure that the heap hasn't changed since we began executing.
+  2254  2353 |         ASSERT(cur_address == m_current_heap_end);
+  2255  2354 | 
+  2256  2355 |         // Check the memory state.
+  2257  2356 |         size_t num_allocator_blocks;
+  2258  2357 |         R_TRY(this->CheckMemoryState(std::addressof(num_allocator_blocks), m_current_heap_end,
+  2259  2358 |                                      allocation_size, KMemoryState::All, KMemoryState::Free,
+  2260  2359 |                                      KMemoryPermission::None, KMemoryPermission::None,
+  2261  2360 |                                      KMemoryAttribute::None, KMemoryAttribute::None));
+  2262  2361 | 
+  2263  2362 |         // Create an update allocator.
+  2264  2363 |         Result allocator_result;
+  2265  2364 |         KMemoryBlockManagerUpdateAllocator allocator(
+  2266  2365 |             std::addressof(allocator_result), m_memory_block_slab_manager, num_allocator_blocks);
+  2267  2366 |         R_TRY(allocator_result);
+  2268  2367 | 
+  2269  2368 |         // We're going to perform an update, so create a helper.
+  2270  2369 |         KScopedPageTableUpdater updater(this);
+  2271  2370 | 
+  2272  2371 |         // Map the pages.
+  2273  2372 |         const size_t num_pages = allocation_size / PageSize;
+  2274  2373 |         const KPageProperties map_properties = {KMemoryPermission::UserReadWrite, false, false,
+  2275  2374 |                                                 (m_current_heap_end == m_heap_region_start)
+  2276  2375 |                                                     ? DisableMergeAttribute::DisableHead
+  2277  2376 |                                                     : DisableMergeAttribute::None};
+  2278  2377 |         R_TRY(this->Operate(updater.GetPageList(), m_current_heap_end, num_pages, pg,
+  2279  2378 |                             map_properties, OperationType::MapGroup, false));
+  2280  2379 | 
+  2281  2380 |         // We succeeded, so commit our memory reservation.
+  2282  2381 |         memory_reservation.Commit();
+  2283  2382 | 
+  2284  2383 |         // Apply the memory block update.
+  2285  2384 |         m_memory_block_manager.Update(
+  2286  2385 |             std::addressof(allocator), m_current_heap_end, num_pages, KMemoryState::Normal,
+  2287  2386 |             KMemoryPermission::UserReadWrite, KMemoryAttribute::None,
+  2288  2387 |             m_heap_region_start == m_current_heap_end ? KMemoryBlockDisableMergeAttribute::Normal
+  2289  2388 |                                                       : KMemoryBlockDisableMergeAttribute::None,
+  2290  2389 |             KMemoryBlockDisableMergeAttribute::None);
+  2291  2390 | 
+  2292  2391 |         // Update the current heap end.
+  2293  2392 |         m_current_heap_end = m_heap_region_start + size;
+  2294  2393 | 
+  2295  2394 |         // Set the output.
+  2296  2395 |         *out = m_heap_region_start;
+  2297  2396 |         R_SUCCEED();
+  2298  2397 |     }
+  2299  2398 | }
+```
+
+</details>
+
+### P0-K02 · SVC SetHeapSize
+
+Couche ABI au-dessus de KPageTable. Comparer validation d'alignement/taille et propagation Result ; les différences de wrappers 64/32 sont documentées séparément.
+
+Encore : [svc_physical_memory.cpp:16–36](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/kernel/core/hle/kernel/svc/svc_physical_memory.cpp#L16-L36) — 21 lignes.
+
+<details>
+<summary>Lichii — 17–36 : 19 alignées, 2 propres Encore, 1 propres upstream</summary>
+
+Source : [svc_physical_memory.cpp:17–36](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/kernel/svc/svc_physical_memory.cpp#L17-L36).
+
+```diff
+    16    17 | Result SetHeapSize(Core::System& system, u64* out_address, u64 size) {
+    17    18 |     LOG_TRACE(Kernel_SVC, "called, heap_size={:#x}", size);
+    18    19 | 
+    19    20 |     // Validate size.
+    20    21 |     R_UNLESS(Common::IsAligned(size, HeapSizeAlignment), ResultInvalidSize);
+-   21       |     // Keep the NS1 limit when the kernel intends 8 GiB, but admit NS2's
+-   22       |     // larger virtual heap when a 12 GiB guest memory layout is selected.
++         22 |     // Switch 2 titles size their heap from the total memory, which exceeds Switch 1's 8 GiB.
+    23    23 |     const size_t max_heap_size =
+    24    24 |         (std::max)(MainMemorySizeMax, KSystemControl::Init::GetIntendedMemorySize());
+    25    25 |     R_UNLESS(size < max_heap_size, ResultInvalidSize);
+    26    26 | 
+    27    27 |     // Set the heap size.
+    28    28 |     KProcessAddress address{};
+    29    29 |     R_TRY(GetCurrentProcess(system.Kernel())
+    30    30 |               .GetPageTable()
+    31    31 |               .SetHeapSize(std::addressof(address), size));
+    32    32 | 
+    33    33 |     // We succeeded.
+    34    34 |     *out_address = GetInteger(address);
+    35    35 |     R_SUCCEED();
+    36    36 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 19–45 : 19 alignées, 2 propres Encore, 8 propres upstream</summary>
+
+Source : [svc_physical_memory.cpp:19–45](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/kernel/svc/svc_physical_memory.cpp#L19-L45).
+
+```diff
+    16    19 | Result SetHeapSize(Core::System& system, u64* out_address, u64 size) {
++         20 |     MemoryStats::Note(MemoryStats::SetHeapSize, size, true);
+    17    21 |     LOG_TRACE(Kernel_SVC, "called, heap_size={:#x}", size);
+    18    22 | 
+    19    23 |     // Validate size.
+    20    24 |     R_UNLESS(Common::IsAligned(size, HeapSizeAlignment), ResultInvalidSize);
+-   21       |     // Keep the NS1 limit when the kernel intends 8 GiB, but admit NS2's
+-   22       |     // larger virtual heap when a 12 GiB guest memory layout is selected.
++         25 |     // Switch 2 titles size their heap from the total memory, which exceeds Switch 1's 8 GiB.
+    23    26 |     const size_t max_heap_size =
+    24    27 |         (std::max)(MainMemorySizeMax, KSystemControl::Init::GetIntendedMemorySize());
+    25    28 |     R_UNLESS(size < max_heap_size, ResultInvalidSize);
+    26    29 | 
+    27    30 |     // Set the heap size.
+    28    31 |     KProcessAddress address{};
+    29    32 |     R_TRY(GetCurrentProcess(system.Kernel())
+    30    33 |               .GetPageTable()
+    31    34 |               .SetHeapSize(std::addressof(address), size));
+    32    35 | 
+    33    36 |     // We succeeded.
+    34    37 |     *out_address = GetInteger(address);
++         38 |     MemoryStats::LastHeapSize().store(size, std::memory_order_relaxed);
++         39 |     if (size > MemoryStats::LargestHeapSize().load(std::memory_order_relaxed)) {
++         40 |         MemoryStats::LargestHeapSize().store(size, std::memory_order_relaxed);
++         41 |         LOG_INFO(Kernel_SVC, "SetHeapSize: the heap grows to {} MiB at {:#x}", size >> 20,
++         42 |                  GetInteger(address));
++         43 |     }
+    35    44 |     R_SUCCEED();
+    36    45 | }
+```
+
+</details>
+
+### P0-K03 · SVC MapPhysicalMemory
+
+Pour NS2, cette voie conditionne la résidence effective et les budgets. Encore doit conserver ses protections PS5 contre OOM/corruption ; toute différence avec les forks doit être classée validation, politique mémoire ou comportement invité.
+
+Encore : [svc_physical_memory.cpp:39–85](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/kernel/core/hle/kernel/svc/svc_physical_memory.cpp#L39-L85) — 47 lignes.
+
+<details>
+<summary>Lichii — 39–85 : 45 alignées, 2 propres Encore, 2 propres upstream</summary>
+
+Source : [svc_physical_memory.cpp:39–85](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/kernel/svc/svc_physical_memory.cpp#L39-L85).
+
+```diff
+    39    39 | Result MapPhysicalMemory(Core::System& system, u64 addr, u64 size) {
+    40    40 |     LOG_DEBUG(Kernel_SVC, "called, addr={:#016x}, size={:#x}", addr, size);
+    41    41 | 
+-   42       |     if (!Common::IsAligned(addr, Core::Memory::YUZU_PAGESIZE)) {
++         42 |     if (!Common::IsAligned(addr, Core::Memory::LICHII_PAGESIZE)) {
+    43    43 |         LOG_ERROR(Kernel_SVC, "Address is not aligned to 4KB, {:#016X}", addr);
+    44    44 |         R_THROW(ResultInvalidAddress);
+    45    45 |     }
+    46    46 | 
+-   47       |     if (!Common::IsAligned(size, Core::Memory::YUZU_PAGESIZE)) {
++         47 |     if (!Common::IsAligned(size, Core::Memory::LICHII_PAGESIZE)) {
+    48    48 |         LOG_ERROR(Kernel_SVC, "Size is not aligned to 4KB, {:#X}", size);
+    49    49 |         R_THROW(ResultInvalidSize);
+    50    50 |     }
+    51    51 | 
+    52    52 |     if (size == 0) {
+    53    53 |         LOG_ERROR(Kernel_SVC, "Size is zero");
+    54    54 |         R_THROW(ResultInvalidSize);
+    55    55 |     }
+    56    56 | 
+    57    57 |     if (!(addr < addr + size)) {
+    58    58 |         LOG_ERROR(Kernel_SVC, "Size causes 64-bit overflow of address");
+    59    59 |         R_THROW(ResultInvalidMemoryRegion);
+    60    60 |     }
+    61    61 | 
+    62    62 |     KProcess* const current_process{GetCurrentProcessPointer(system.Kernel())};
+    63    63 |     auto& page_table{current_process->GetPageTable()};
+    64    64 | 
+    65    65 |     if (current_process->GetTotalSystemResourceSize() == 0) {
+    66    66 |         LOG_ERROR(Kernel_SVC, "System Resource Size is zero");
+    67    67 |         R_THROW(ResultInvalidState);
+    68    68 |     }
+    69    69 | 
+    70    70 |     if (!page_table.Contains(addr, size)) {
+    71    71 |         LOG_ERROR(Kernel_SVC,
+    72    72 |                   "Address is not within the address space, addr={:#016x}, size={:#016x}", addr,
+    73    73 |                   size);
+    74    74 |         R_THROW(ResultInvalidMemoryRegion);
+    75    75 |     }
+    76    76 | 
+    77    77 |     if (!page_table.IsInAliasRegion(addr, size)) {
+    78    78 |         LOG_ERROR(Kernel_SVC,
+    79    79 |                   "Address is not within the alias region, addr={:#016x}, size={:#016x}", addr,
+    80    80 |                   size);
+    81    81 |         R_THROW(ResultInvalidMemoryRegion);
+    82    82 |     }
+    83    83 | 
+    84    84 |     R_RETURN(page_table.MapPhysicalMemory(addr, size));
+    85    85 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 48–95 : 47 alignées, 0 propres Encore, 1 propres upstream</summary>
+
+Source : [svc_physical_memory.cpp:48–95](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/kernel/svc/svc_physical_memory.cpp#L48-L95).
+
+```diff
+    39    48 | Result MapPhysicalMemory(Core::System& system, u64 addr, u64 size) {
++         49 |     MemoryStats::Note(MemoryStats::MapPhysicalMemory, size, true);
+    40    50 |     LOG_DEBUG(Kernel_SVC, "called, addr={:#016x}, size={:#x}", addr, size);
+    41    51 | 
+    42    52 |     if (!Common::IsAligned(addr, Core::Memory::YUZU_PAGESIZE)) {
+    43    53 |         LOG_ERROR(Kernel_SVC, "Address is not aligned to 4KB, {:#016X}", addr);
+    44    54 |         R_THROW(ResultInvalidAddress);
+    45    55 |     }
+    46    56 | 
+    47    57 |     if (!Common::IsAligned(size, Core::Memory::YUZU_PAGESIZE)) {
+    48    58 |         LOG_ERROR(Kernel_SVC, "Size is not aligned to 4KB, {:#X}", size);
+    49    59 |         R_THROW(ResultInvalidSize);
+    50    60 |     }
+    51    61 | 
+    52    62 |     if (size == 0) {
+    53    63 |         LOG_ERROR(Kernel_SVC, "Size is zero");
+    54    64 |         R_THROW(ResultInvalidSize);
+    55    65 |     }
+    56    66 | 
+    57    67 |     if (!(addr < addr + size)) {
+    58    68 |         LOG_ERROR(Kernel_SVC, "Size causes 64-bit overflow of address");
+    59    69 |         R_THROW(ResultInvalidMemoryRegion);
+    60    70 |     }
+    61    71 | 
+    62    72 |     KProcess* const current_process{GetCurrentProcessPointer(system.Kernel())};
+    63    73 |     auto& page_table{current_process->GetPageTable()};
+    64    74 | 
+    65    75 |     if (current_process->GetTotalSystemResourceSize() == 0) {
+    66    76 |         LOG_ERROR(Kernel_SVC, "System Resource Size is zero");
+    67    77 |         R_THROW(ResultInvalidState);
+    68    78 |     }
+    69    79 | 
+    70    80 |     if (!page_table.Contains(addr, size)) {
+    71    81 |         LOG_ERROR(Kernel_SVC,
+    72    82 |                   "Address is not within the address space, addr={:#016x}, size={:#016x}", addr,
+    73    83 |                   size);
+    74    84 |         R_THROW(ResultInvalidMemoryRegion);
+    75    85 |     }
+    76    86 | 
+    77    87 |     if (!page_table.IsInAliasRegion(addr, size)) {
+    78    88 |         LOG_ERROR(Kernel_SVC,
+    79    89 |                   "Address is not within the alias region, addr={:#016x}, size={:#016x}", addr,
+    80    90 |                   size);
+    81    91 |         R_THROW(ResultInvalidMemoryRegion);
+    82    92 |     }
+    83    93 | 
+    84    94 |     R_RETURN(page_table.MapPhysicalMemory(addr, size));
+    85    95 | }
+```
+
+</details>
+
+### P0-K04 · SVC UnmapPhysicalMemory
+
+Vérifier la symétrie de MapPhysicalMemory et les états mémoire admissibles. Un unmap prématuré pourrait expliquer un crash ; un unmap absent peut expliquer une pression mémoire ou une fermeture bloquée. Le diff seul ne tranche pas.
+
+Encore : [svc_physical_memory.cpp:88–134](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/kernel/core/hle/kernel/svc/svc_physical_memory.cpp#L88-L134) — 47 lignes.
+
+<details>
+<summary>Lichii — 88–134 : 45 alignées, 2 propres Encore, 2 propres upstream</summary>
+
+Source : [svc_physical_memory.cpp:88–134](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/core/hle/kernel/svc/svc_physical_memory.cpp#L88-L134).
+
+```diff
+    88    88 | Result UnmapPhysicalMemory(Core::System& system, u64 addr, u64 size) {
+    89    89 |     LOG_DEBUG(Kernel_SVC, "called, addr={:#016x}, size={:#x}", addr, size);
+    90    90 | 
+-   91       |     if (!Common::IsAligned(addr, Core::Memory::YUZU_PAGESIZE)) {
++         91 |     if (!Common::IsAligned(addr, Core::Memory::LICHII_PAGESIZE)) {
+    92    92 |         LOG_ERROR(Kernel_SVC, "Address is not aligned to 4KB, {:#016X}", addr);
+    93    93 |         R_THROW(ResultInvalidAddress);
+    94    94 |     }
+    95    95 | 
+-   96       |     if (!Common::IsAligned(size, Core::Memory::YUZU_PAGESIZE)) {
++         96 |     if (!Common::IsAligned(size, Core::Memory::LICHII_PAGESIZE)) {
+    97    97 |         LOG_ERROR(Kernel_SVC, "Size is not aligned to 4KB, {:#X}", size);
+    98    98 |         R_THROW(ResultInvalidSize);
+    99    99 |     }
+   100   100 | 
+   101   101 |     if (size == 0) {
+   102   102 |         LOG_ERROR(Kernel_SVC, "Size is zero");
+   103   103 |         R_THROW(ResultInvalidSize);
+   104   104 |     }
+   105   105 | 
+   106   106 |     if (!(addr < addr + size)) {
+   107   107 |         LOG_ERROR(Kernel_SVC, "Size causes 64-bit overflow of address");
+   108   108 |         R_THROW(ResultInvalidMemoryRegion);
+   109   109 |     }
+   110   110 | 
+   111   111 |     KProcess* const current_process{GetCurrentProcessPointer(system.Kernel())};
+   112   112 |     auto& page_table{current_process->GetPageTable()};
+   113   113 | 
+   114   114 |     if (current_process->GetTotalSystemResourceSize() == 0) {
+   115   115 |         LOG_ERROR(Kernel_SVC, "System Resource Size is zero");
+   116   116 |         R_THROW(ResultInvalidState);
+   117   117 |     }
+   118   118 | 
+   119   119 |     if (!page_table.Contains(addr, size)) {
+   120   120 |         LOG_ERROR(Kernel_SVC,
+   121   121 |                   "Address is not within the address space, addr={:#016x}, size={:#016x}", addr,
+   122   122 |                   size);
+   123   123 |         R_THROW(ResultInvalidMemoryRegion);
+   124   124 |     }
+   125   125 | 
+   126   126 |     if (!page_table.IsInAliasRegion(addr, size)) {
+   127   127 |         LOG_ERROR(Kernel_SVC,
+   128   128 |                   "Address is not within the alias region, addr={:#016x}, size={:#016x}", addr,
+   129   129 |                   size);
+   130   130 |         R_THROW(ResultInvalidMemoryRegion);
+   131   131 |     }
+   132   132 | 
+   133   133 |     R_RETURN(page_table.UnmapPhysicalMemory(addr, size));
+   134   134 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 98–145 : 47 alignées, 0 propres Encore, 1 propres upstream</summary>
+
+Source : [svc_physical_memory.cpp:98–145](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/core/hle/kernel/svc/svc_physical_memory.cpp#L98-L145).
+
+```diff
+    88    98 | Result UnmapPhysicalMemory(Core::System& system, u64 addr, u64 size) {
++         99 |     MemoryStats::Note(MemoryStats::UnmapPhysicalMemory, size, true);
+    89   100 |     LOG_DEBUG(Kernel_SVC, "called, addr={:#016x}, size={:#x}", addr, size);
+    90   101 | 
+    91   102 |     if (!Common::IsAligned(addr, Core::Memory::YUZU_PAGESIZE)) {
+    92   103 |         LOG_ERROR(Kernel_SVC, "Address is not aligned to 4KB, {:#016X}", addr);
+    93   104 |         R_THROW(ResultInvalidAddress);
+    94   105 |     }
+    95   106 | 
+    96   107 |     if (!Common::IsAligned(size, Core::Memory::YUZU_PAGESIZE)) {
+    97   108 |         LOG_ERROR(Kernel_SVC, "Size is not aligned to 4KB, {:#X}", size);
+    98   109 |         R_THROW(ResultInvalidSize);
+    99   110 |     }
+   100   111 | 
+   101   112 |     if (size == 0) {
+   102   113 |         LOG_ERROR(Kernel_SVC, "Size is zero");
+   103   114 |         R_THROW(ResultInvalidSize);
+   104   115 |     }
+   105   116 | 
+   106   117 |     if (!(addr < addr + size)) {
+   107   118 |         LOG_ERROR(Kernel_SVC, "Size causes 64-bit overflow of address");
+   108   119 |         R_THROW(ResultInvalidMemoryRegion);
+   109   120 |     }
+   110   121 | 
+   111   122 |     KProcess* const current_process{GetCurrentProcessPointer(system.Kernel())};
+   112   123 |     auto& page_table{current_process->GetPageTable()};
+   113   124 | 
+   114   125 |     if (current_process->GetTotalSystemResourceSize() == 0) {
+   115   126 |         LOG_ERROR(Kernel_SVC, "System Resource Size is zero");
+   116   127 |         R_THROW(ResultInvalidState);
+   117   128 |     }
+   118   129 | 
+   119   130 |     if (!page_table.Contains(addr, size)) {
+   120   131 |         LOG_ERROR(Kernel_SVC,
+   121   132 |                   "Address is not within the address space, addr={:#016x}, size={:#016x}", addr,
+   122   133 |                   size);
+   123   134 |         R_THROW(ResultInvalidMemoryRegion);
+   124   135 |     }
+   125   136 | 
+   126   137 |     if (!page_table.IsInAliasRegion(addr, size)) {
+   127   138 |         LOG_ERROR(Kernel_SVC,
+   128   139 |                   "Address is not within the alias region, addr={:#016x}, size={:#016x}", addr,
+   129   140 |                   size);
+   130   141 |         R_THROW(ResultInvalidMemoryRegion);
+   131   142 |     }
+   132   143 | 
+   133   144 |     R_RETURN(page_table.UnmapPhysicalMemory(addr, size));
+   134   145 | }
+```
+
+</details>
+
+### Lecture de cette annexe
+
+- **AS-GPU** : la principale divergence structurelle est le propriétaire PS5 natif 4K/sparse et sa quarantaine. Son existence est justifiée par l'environnement PS5 ; elle doit être vérifiée sur les mêmes séquences de map/remap/unmap que les jeux, pas supprimée pour ressembler aux forks.
+- **NVMap** : les références sont directement liées aux pools d'images GSV. La comparaison permet de vérifier la symétrie duplication/libération autour de 429/430 et de VI2.
+- **KPageTable/SVC** : les gros blocs communs ne prouvent pas la parité de résidence physique. Les différences PS5 doivent être croisées avec les budgets, les erreurs OOM et les rollbacks déjà qualifiés.
+
+**Couverture ajoutée :** 12 fonctions, 24 comparaisons directes, 3851 lignes-source parcourues (répétitions incluses) ; 1094 lignes alignées, 1570 propres Encore, 93 propres upstream. Aucun statut console n'est modifié par cette annexe.

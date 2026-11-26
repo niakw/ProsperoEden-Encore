@@ -2853,6 +2853,22 @@ if shipping_vendor == "806252e96253489c18d11551bf2dcfd668502719":
     # The old 337-source snapshot must remain exact. Separate only the
     # ten newer owners still present after the existing specialized ledgers.
     post_snapshot = set(physical) - catalog_paths
+    # These TWO maintained frame-pacing headers have separate exact F07
+    # successor receipts; they are not among the 43 newly added vendor paths.
+    pacing_headers = {
+        "eden-vulkan/include/video_core/renderer_vulkan/frame_pacer.h":
+            "c3f6f99dd427fb9fd0acb84bb50ba88dc25d9a89",
+        "eden-vulkan/include/video_core/renderer_vulkan/vk_swapchain.h":
+            "c4df1ab813495b8014e0eda5ed4bcd8fb0be855c",
+    }
+    assert set(pacing_headers).issubset(post_snapshot)
+    for relative, expected_sha in pacing_headers.items():
+        actual_sha = subprocess.check_output(
+            ["git", "hash-object", str(active / relative)], text=True).strip()
+        assert actual_sha == expected_sha, ("Nov26 frame-pacing owner drift", relative, actual_sha)
+    source_pacing = (root / "headless/CMakeLists.txt").read_text()
+    assert "EDEN_MAINTAINED" in source_pacing
+    post_snapshot -= set(pacing_headers)
     new_owners = post_snapshot & selected_nov26_post_f07_additions
     assert len(new_owners) == 10 and post_snapshot == new_owners, (
         "Nov26 unclassified native owners", sorted(post_snapshot - new_owners))
@@ -2866,9 +2882,9 @@ if shipping_vendor == "806252e96253489c18d11551bf2dcfd668502719":
         actual = subprocess.check_output(
             ["git", "hash-object", str(path)], text=True).strip()
         assert actual == pinned, ("Selected source differs from vendor gitlink", relative)
-    physical = [p for p in physical if p not in new_owners]
+    physical = [p for p in physical if p not in new_owners | set(pacing_headers)]
     print("ENCORE_POST_F07_SELECTED_CATALOG_SEPARATION_PASS",
-          "historical=337 additions=43 native_unclassified=10", flush=True)
+          "historical=337 additions=43 native_unclassified=10 pacing_headers=2", flush=True)
 assert len(physical) == 337, ("Shipping source catalogue changed",len(physical),
     "unclassified=" + repr(sorted(set(physical) - catalog_paths)),
     "missing=" + repr(sorted(catalog_paths - set(physical))))

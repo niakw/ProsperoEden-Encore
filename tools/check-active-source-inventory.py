@@ -3235,6 +3235,15 @@ for path, blob in post_f07_loading_artwork_receipts.items():
     # Exact alternate-artwork successor from launcher commit 2b8c715.
     if path == "headless/loading_artwork_gl.hpp" and actual == "b08c16fa6650e89dbbd6b8f1b73d26f66a1f441e":
         blob = "b08c16fa6650e89dbbd6b8f1b73d26f66a1f441e"
+    if path == "headless/loading_case_shader_source.hpp" and actual == "ddf1695883a05d06448d2e3e7f29b952bd0e41e9":
+        # Exact selected Spine orientation and vector fallback, independently
+        # sealed by the F07 optimization coverage register.
+        f07_shader_source = (root / "tools/check-eden-optimization-coverage.py").read_text()
+        assert '"headless/loading_case_shader_source.hpp": "ddf1695883a05d06448d2e3e7f29b952bd0e41e9"' in f07_shader_source
+        shader_text = (root / path).read_text()
+        assert "if (shape == 14) v_uv = vec2(1.0 - corner.x, corner.y);" in shader_text
+        assert "else if (shape == 15)" in shader_text
+        blob = "ddf1695883a05d06448d2e3e7f29b952bd0e41e9"
     assert actual == blob, path
 print("ENCORE_LOADING_ARTWORK_POST_F07_PASS owners=5 historical_headless_catalog_preserved=193")
 

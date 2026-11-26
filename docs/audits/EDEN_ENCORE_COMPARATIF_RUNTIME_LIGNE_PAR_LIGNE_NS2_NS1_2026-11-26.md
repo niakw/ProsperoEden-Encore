@@ -2001,3 +2001,602 @@ Source : [buffer_cache.h:418–440](https://github.com/heydemoura/EglantinePS5/b
 Ne pas reclasser un écart en bug sans preuve, ni marquer résolu avant console. [Bibliothèque NS1/NS2](../EDEN_ENCORE_BIBLIOTHEQUE_TECHNIQUE_NS1_NS2_2026-11-20.md), [gap analysis](EDEN_ENCORE_GAP_ANALYSIS_NS2_THEN_NS1_2026-11-20.md), [FC27 F07](../FC27_F07_MASTER_TRACKER.md).
 
 **Couverture de cette section :** 9 fonctions homologues, 18 comparaisons, 1877 lignes-source parcourues (répétitions incluses), 184 alignées, 1026 propres Encore, 483 propres upstream. Reste hors périmètre : comparaison intégrale kernel, shader, VI2, loader, teardown et autres propriétaires. OunceVK reste à intégrer par signatures exactes.
+
+## Annexe II — ordonnancement GPU et chemin de lecture CPU
+
+Même photographie de sources, mêmes règles d'alignement.
+
+### P0-08 · Scheduler::Push
+
+Encore protège l'epoch et le bind du contexte, et publie les canaux parqués sous le même verrou GPU depuis 465d7e9c. Les forks doivent être lus avec leur propre chemin de soumission et de snapshot ; pas de backport isolé.
+
+Encore : [scheduler.cpp:19–52](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp#L19-L52).
+
+<details>
+<summary>Lichii — 38–60 : 6 alignées, 28 propres Encore, 17 propres upstream</summary>
+
+Source : [scheduler.cpp:38–60](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/control/scheduler.cpp#L38-L60).
+
+```diff
+    19    38 | void Scheduler::Push(GPU& gpu, s32 channel, CommandList&& entries) {
+-   20       |     {
+-   21       |         // Hold a SHARED channel epoch lease through submission. Channel
+-   22       |         // re-registration must not retire the old owner while a GPU worker
+-   23       |         // is still dispatching its commands. Independent readers retain
+-   24       |         // concurrency; only replacement needs the exclusive lease.
+-   25       |         std::shared_lock epoch_lock(scheduling_guard);
+-   26       |         const auto it = channels.find(channel);
+-   27       |         if (it == channels.end() || !it->second || !it->second->payload)
+-   28       |             throw std::runtime_error("Native GPFIFO: missing channel owner");
+-   29       |         const auto channel_state = it->second;
+-   30       |         auto& pusher = channel_state->payload->dma_pusher;
+-   31       |         // GPU::BindChannel mutates a single shared GPU execution context.
+-   32       |         // Concurrent native channel submissions and semaphore replay must
+-   33       |         // not interleave a bind with another owner's DispatchCalls.
++         39 |     std::shared_ptr<ChannelState> channel_state;
+    34    40 |         {
+-   35       |             const std::scoped_lock gpu_lock(gpu_submit_guard);
+-   36       |             gpu.BindChannel(channel_state->bind_id);
+-   37       |             pusher.Push(std::move(entries));
+-   38       |             pusher.DispatchCalls();
+-   39       |             // Publish the parked state while the GPU execution lease still
+-   40       |             // protects the pusher. A concurrent replay must not change it.
+-   41       |             const std::scoped_lock pending_lock(pending_guard);
+-   42       |             if (pusher.HasPendingNativeAcquire() &&
+-   43       |                 std::find(pending_native_channels.begin(), pending_native_channels.end(),
+-   44       |                           channel_state) == pending_native_channels.end()) {
+-   45       |                 pending_native_channels.push_back(channel_state);
++         41 |         std::unique_lock lk(scheduling_guard);
++         42 |         auto it = channels.find(channel);
++         43 |         ASSERT(it != channels.end());
++         44 |         channel_state = it->second;
+    46    45 |             }
++         46 |     BindChannel(gpu, channel_state->bind_id);
++         47 |     // Process commands outside the lock to reduce contention.
++         48 |     // Multiple channels can prepare their commands in parallel.
++         49 |     channel_state->payload->dma_pusher.Push(std::move(entries));
++         50 |     channel_state->payload->dma_pusher.DispatchCalls();
++         51 |     if (channel_state->payload->dma_pusher.HasPendingAcquire() &&
++         52 |         std::find(pending_channels.begin(), pending_channels.end(), channel_state) ==
++         53 |             pending_channels.end()) {
++         54 |         pending_channels.push_back(channel_state);
++         55 |         any_pending.store(true, std::memory_order_release);
+    47    56 |         }
++         57 |     if (!pending_channels.empty()) {
++         58 |         ResumePending(gpu);
+    48    59 |     }
+-   49       |     // Do not hold the scheduling lease while replaying other channels.
+-   50       |     if (HasPendingNativeChannels())
+-   51       |         ResumePendingNative(gpu);
+    52    60 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 42–79 : 7 alignées, 27 propres Encore, 31 propres upstream</summary>
+
+Source : [scheduler.cpp:42–79](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/control/scheduler.cpp#L42-L79).
+
+```diff
+    19    42 | void Scheduler::Push(GPU& gpu, s32 channel, CommandList&& entries) {
++         43 |     std::shared_ptr<ChannelState> channel_state;
+    20    44 |     {
+-   21       |         // Hold a SHARED channel epoch lease through submission. Channel
+-   22       |         // re-registration must not retire the old owner while a GPU worker
+-   23       |         // is still dispatching its commands. Independent readers retain
+-   24       |         // concurrency; only replacement needs the exclusive lease.
+-   25       |         std::shared_lock epoch_lock(scheduling_guard);
+-   26       |         const auto it = channels.find(channel);
+-   27       |         if (it == channels.end() || !it->second || !it->second->payload)
+-   28       |             throw std::runtime_error("Native GPFIFO: missing channel owner");
+-   29       |         const auto channel_state = it->second;
+-   30       |         auto& pusher = channel_state->payload->dma_pusher;
+-   31       |         // GPU::BindChannel mutates a single shared GPU execution context.
+-   32       |         // Concurrent native channel submissions and semaphore replay must
+-   33       |         // not interleave a bind with another owner's DispatchCalls.
++         45 | #if !defined(__PROSPERO__) // not PS5
++         46 | #else // PS5
++         47 |         const ::Eden::Performance::Timer sched_lock_timer(::Eden::Performance::gpu_sched_lock);
++         48 | #endif // PS5
++         49 |         std::unique_lock lk(scheduling_guard);
++         50 |         auto it = channels.find(channel);
++         51 |         ASSERT(it != channels.end());
++         52 |         channel_state = it->second;
++         53 |     }
++         54 |     BindChannel(gpu, channel_state->bind_id);
++         55 |     // Process commands outside the lock to reduce contention.
++         56 |     // Multiple channels can prepare their commands in parallel.
++         57 | #if !defined(__PROSPERO__) // not PS5
++         58 |     channel_state->payload->dma_pusher.Push(std::move(entries));
++         59 |     channel_state->payload->dma_pusher.DispatchCalls();
++         60 | #else // PS5
+    34    61 |         {
+-   35       |             const std::scoped_lock gpu_lock(gpu_submit_guard);
+-   36       |             gpu.BindChannel(channel_state->bind_id);
+-   37       |             pusher.Push(std::move(entries));
+-   38       |             pusher.DispatchCalls();
+-   39       |             // Publish the parked state while the GPU execution lease still
+-   40       |             // protects the pusher. A concurrent replay must not change it.
+-   41       |             const std::scoped_lock pending_lock(pending_guard);
+-   42       |             if (pusher.HasPendingNativeAcquire() &&
+-   43       |                 std::find(pending_native_channels.begin(), pending_native_channels.end(),
+-   44       |                           channel_state) == pending_native_channels.end()) {
+-   45       |                 pending_native_channels.push_back(channel_state);
++         62 |         const ::Eden::Performance::Timer dma_push_timer(::Eden::Performance::gpu_dma_push);
++         63 |         channel_state->payload->dma_pusher.Push(std::move(entries));
+    46    64 |             }
++         65 |     {
++         66 |         const ::Eden::Performance::Timer dma_dispatch_timer(::Eden::Performance::gpu_dma_dispatch);
++         67 |         channel_state->payload->dma_pusher.DispatchCalls();
+    47    68 |         }
++         69 | #endif // PS5
++         70 |     if (channel_state->payload->dma_pusher.HasPendingAcquire() &&
++         71 |         std::find(pending_channels.begin(), pending_channels.end(), channel_state) ==
++         72 |             pending_channels.end()) {
++         73 |         pending_channels.push_back(channel_state);
++         74 |         any_pending.store(true, std::memory_order_release);
+    48    75 |     }
+-   49       |     // Do not hold the scheduling lease while replaying other channels.
+-   50       |     if (HasPendingNativeChannels())
+-   51       |         ResumePendingNative(gpu);
++         76 |     if (!pending_channels.empty()) {
++         77 |         ResumePending(gpu);
+    52    78 | }
++         79 | }
+```
+
+</details>
+
+### P0-09 · Scheduler::DeclareChannel
+
+Préserver le recyclage des bind IDs, l'identité du propriétaire et la disparition des canaux parqués retirés.
+
+Encore : [scheduler.cpp:90–109](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp#L90-L109).
+
+<details>
+<summary>Lichii — 99–103 : 2 alignées, 18 propres Encore, 3 propres upstream</summary>
+
+Source : [scheduler.cpp:99–103](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/control/scheduler.cpp#L99-L103).
+
+```diff
+    90    99 | void Scheduler::DeclareChannel(std::shared_ptr<ChannelState> new_channel) {
+-   91       |     if (!new_channel || !new_channel->payload)
+-   92       |         throw std::runtime_error("Native GPFIFO: invalid channel owner");
+-   93       |     const s32 channel = new_channel->bind_id;
+-   94       |     std::unique_lock epoch_lock(scheduling_guard);
+-   95       |     const std::scoped_lock pending_lock(pending_guard);
+-   96       |     const auto existing = channels.find(channel);
+-   97       |     if (existing != channels.end()) {
+-   98       |         if (existing->second == new_channel)
+-   99       |             return; // Same live owner: never discard its pending wait.
+-  100       |         // A driver can reuse the bind ID after process/channel teardown.
+-  101       |         // The old generation must not resume a parked semaphore against
+-  102       |         // the new owner's GPU binding, or publish an obsolete guest fence.
+-  103       |         const auto retired = existing->second;
+-  104       |         std::erase(pending_native_channels, retired);
+-  105       |         existing->second = std::move(new_channel);
+-  106       |     } else {
+-  107       |         channels.emplace(channel, std::move(new_channel));
+-  108       |     }
++        100 |     s32 channel = new_channel->bind_id;
++        101 |     std::unique_lock lk(scheduling_guard);
++        102 |     channels.emplace(channel, new_channel);
+   109   103 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 110–114 : 2 alignées, 18 propres Encore, 3 propres upstream</summary>
+
+Source : [scheduler.cpp:110–114](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/control/scheduler.cpp#L110-L114).
+
+```diff
+    90   110 | void Scheduler::DeclareChannel(std::shared_ptr<ChannelState> new_channel) {
+-   91       |     if (!new_channel || !new_channel->payload)
+-   92       |         throw std::runtime_error("Native GPFIFO: invalid channel owner");
+-   93       |     const s32 channel = new_channel->bind_id;
+-   94       |     std::unique_lock epoch_lock(scheduling_guard);
+-   95       |     const std::scoped_lock pending_lock(pending_guard);
+-   96       |     const auto existing = channels.find(channel);
+-   97       |     if (existing != channels.end()) {
+-   98       |         if (existing->second == new_channel)
+-   99       |             return; // Same live owner: never discard its pending wait.
+-  100       |         // A driver can reuse the bind ID after process/channel teardown.
+-  101       |         // The old generation must not resume a parked semaphore against
+-  102       |         // the new owner's GPU binding, or publish an obsolete guest fence.
+-  103       |         const auto retired = existing->second;
+-  104       |         std::erase(pending_native_channels, retired);
+-  105       |         existing->second = std::move(new_channel);
+-  106       |     } else {
+-  107       |         channels.emplace(channel, std::move(new_channel));
+-  108       |     }
++        111 |     s32 channel = new_channel->bind_id;
++        112 |     std::unique_lock lk(scheduling_guard);
++        113 |     channels.emplace(channel, new_channel);
+   109   114 | }
+```
+
+</details>
+
+### P1-03 · Rasterizer::GetFlushArea
+
+Encore vérifie texture et buffer séparément avec preuve négative de propriété, et contrôle toute la plage renvoyée. Examiner les raccourcis upstream et la latence du readback sans réintroduire une publication différée non sûre.
+
+Encore : [vulkan_rasterizer.cpp:2427–2464](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vulkan_rasterizer.cpp#L2427-L2464).
+
+<details>
+<summary>Lichii — 4338–4387 : 12 alignées, 26 propres Encore, 38 propres upstream</summary>
+
+Source : [vk_rasterizer.cpp:4338–4387](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/renderer_vulkan/vk_rasterizer.cpp#L4338-L4387).
+
+```diff
+  2427  4338 | VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {
+- 2428       |     ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);
+- 2429       |     const VideoCore::RasterizerDownloadArea clean_area{
++       4339 |     RENDER_LEND_RESULT(GetFlushArea(addr, size))
++       4340 |     // Guest cores ask this on reads of cached pages, and the back holds both caches' locks through
++       4341 |     // each draw. Pages no image was ever registered on, and Switch 2 pages the GPU never wrote,
++       4342 |     // get the clean area the caches would return without a look under their locks (after
++       4343 |     // Stephen Jayakar's EDEN_NX2_READ_FASTPATH, eb3553bcb8).
++       4344 |     const VideoCore::RasterizerDownloadArea owed_area{
+  2430  4345 |         .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),
+  2431  4346 |         .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),
+- 2432       |         .preemtive = true,
++       4347 |         .preemtive = false,
+  2433  4348 |     };
+- 2434       |     // A clean/never-held texture page does not prove that a GPU-written
+- 2435       |     // storage buffer is current in guest memory. Query each cache independently:
+- 2436       |     // never-owned pages remain lock-free, and no two cache locks are nested.
++       4349 |     // GPU-written list words owed on these pages land in guest memory first (FlushRegionForRead):
++       4350 |     // the core keeps the area it gets, so later reads in it would not ask again.
++       4351 |     if (buffer_cache_runtime.Nx2Slots().Owes(owed_area.start_address,
++       4352 |                                              owed_area.end_address - owed_area.start_address)) {
++       4353 |         std::scoped_lock lock{buffer_cache.mutex};
++       4354 |         buffer_cache.ForgetReadTraps(owed_area.start_address,
++       4355 |                                      owed_area.end_address - owed_area.start_address);
++       4356 |         return owed_area;
++       4357 |     }
+  2437  4358 |     std::optional<VideoCore::RasterizerDownloadArea> texture_area;
+- 2438       |     if (!::Eden::ImagePages::NeverHeld(addr, size)) {
+- 2439       |         ::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);
+- 2440       |         std::lock_guard lock{texture_cache.mutex, std::adopt_lock};
++       4359 |     if (texture_cache.page_filter.Any(addr, size)) {
++       4360 |         std::scoped_lock lock{texture_cache.mutex};
+  2441  4361 |         texture_area = texture_cache.GetFlushArea(addr, size);
+  2442  4362 |     }
+- 2443       |     if (texture_area && !texture_area->preemtive) {
+- 2444       |         // The existing GPU sync flushes both cache domains.
++       4363 |     if (texture_area) {
++       4364 |         // The core disarmed the read's pages before asking, and skips later reads in this area,
++       4365 |         // even through another device alias of those pages. The buffer cache arms only pages it
++       4366 |         // doesn't count as armed, so it must forget the whole area.
++       4367 |         std::scoped_lock lock{buffer_cache.mutex};
++       4368 |         buffer_cache.ForgetReadTraps(texture_area->start_address,
++       4369 |                                      texture_area->end_address - texture_area->start_address);
+  2445  4370 |         return *texture_area;
+  2446  4371 |     }
+- 2447       |     auto area = texture_area.value_or(clean_area);
+- 2448       |     // Core::Memory caches the returned interval, not just the original
+- 2449       |     // scalar read. A preemptive texture can extend over other GPU-written
+- 2450       |     // buffers. Check EVERY byte the caller may subsequently read without
+- 2451       |     // re-entering GetFlushArea. Keep the original texture extent when clean.
+- 2452       |     const DAddr buffer_start = area.start_address;
+- 2453       |     const u64 buffer_size = area.end_address - buffer_start;
+- 2454       |     if (!::Eden::BufferPages::NeverRegistered(buffer_start, buffer_size)) {
+- 2455       |         ::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);
+- 2456       |         std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};
+- 2457       |         if (buffer_cache.IsRegionGpuModified(buffer_start, buffer_size)) {
+- 2458       |             // Preserve the real GPU ownership and the existing ordered
+- 2459       |             // FlushRegion on the GPU worker. Do not certify stale siblings.
+- 2460       |             area.preemtive = false;
++       4372 |     if (buffer_cache.FlushesOnCpuRead() &&
++       4373 |         (!Tegra::g_nx2_ampere.load(std::memory_order_relaxed) ||
++       4374 |          Tegra::Nx2MayBeGpuWritten(addr, size))) {
++       4375 |         std::scoped_lock lock{buffer_cache.mutex};
++       4376 |         auto area = buffer_cache.GetFlushArea(addr, size);
++       4377 |         if (area) {
++       4378 |             return *area;
+  2461  4379 |         }
+  2462  4380 |     }
+- 2463       |     return area;
++       4381 |     VideoCore::RasterizerDownloadArea new_area{
++       4382 |         .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),
++       4383 |         .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),
++       4384 |         .preemtive = true,
++       4385 |     };
++       4386 |     return new_area;
+  2464  4387 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 2776–2836 : 14 alignées, 24 propres Encore, 47 propres upstream</summary>
+
+Source : [vk_rasterizer.cpp:2776–2836](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/renderer_vulkan/vk_rasterizer.cpp#L2776-L2836).
+
+```diff
+  2427  2776 | VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {
+- 2428       |     ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);
+- 2429       |     const VideoCore::RasterizerDownloadArea clean_area{
++       2777 |     ::Eden::Performance::Timer guest_read_timer(::Eden::Performance::guest_cpu_read);
++       2778 |     const VideoCore::RasterizerDownloadArea owed_area{
+  2430  2779 |         .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),
+  2431  2780 |         .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),
+- 2432       |         .preemtive = true,
++       2781 |         .preemtive = false,
+  2433  2782 |     };
+- 2434       |     // A clean/never-held texture page does not prove that a GPU-written
+- 2435       |     // storage buffer is current in guest memory. Query each cache independently:
+- 2436       |     // never-owned pages remain lock-free, and no two cache locks are nested.
++       2783 |     // GPU-written list words owed on these pages land in guest memory first (FlushRegionForRead):
++       2784 |     // the core keeps the area it gets, so later reads in it would not ask again.
++       2785 |     if (buffer_cache_runtime.Nx2Slots().Owes(owed_area.start_address,
++       2786 |                                              owed_area.end_address - owed_area.start_address)) {
++       2787 |         std::scoped_lock lock{buffer_cache.mutex};
++       2788 |         buffer_cache.ForgetReadTraps(owed_area.start_address,
++       2789 |                                      owed_area.end_address - owed_area.start_address);
++       2790 |         return owed_area;
++       2791 |     }
+  2437  2792 |     std::optional<VideoCore::RasterizerDownloadArea> texture_area;
++       2793 | #if defined(__PROSPERO__) // PS5
++       2794 |     // Pages no image was ever registered in have nothing for the texture cache to flush: answered
++       2795 |     // without its lock, which the GPU thread holds through every draw (image_pages.h). Otherwise
++       2796 |     // the lock is spun for briefly before sleeping on it (performance.h, GuestCacheLock).
+  2438  2797 |     if (!::Eden::ImagePages::NeverHeld(addr, size)) {
+- 2439       |         ::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);
++       2798 |         ::Eden::Performance::GuestCacheLock(texture_cache.mutex);
+  2440  2799 |         std::lock_guard lock{texture_cache.mutex, std::adopt_lock};
+  2441  2800 |         texture_area = texture_cache.GetFlushArea(addr, size);
+  2442  2801 |     }
+- 2443       |     if (texture_area && !texture_area->preemtive) {
+- 2444       |         // The existing GPU sync flushes both cache domains.
++       2802 | #else // PS5
++       2803 |     // Guest cores ask this on reads of cached pages, and the back holds both caches' locks through
++       2804 |     // each draw. Pages no image was ever registered on, and Switch 2 pages the GPU never wrote,
++       2805 |     // get the clean area the caches would return without a look under their locks (after
++       2806 |     // Stephen Jayakar's EDEN_NX2_READ_FASTPATH, eb3553bcb8).
++       2807 |     if (texture_cache.page_filter.Any(addr, size)) {
++       2808 |         std::scoped_lock lock{texture_cache.mutex};
++       2809 |         texture_area = texture_cache.GetFlushArea(addr, size);
++       2810 |     }
++       2811 | #endif // PS5
++       2812 |     if (texture_area) {
++       2813 |         // The core disarmed the read's pages before asking, and skips later reads in this area,
++       2814 |         // even through another device alias of those pages. The buffer cache arms only pages it
++       2815 |         // doesn't count as armed, so it must forget the whole area.
++       2816 |         std::scoped_lock lock{buffer_cache.mutex};
++       2817 |         buffer_cache.ForgetReadTraps(texture_area->start_address,
++       2818 |                                      texture_area->end_address - texture_area->start_address);
+  2445  2819 |         return *texture_area;
+  2446  2820 |     }
+- 2447       |     auto area = texture_area.value_or(clean_area);
+- 2448       |     // Core::Memory caches the returned interval, not just the original
+- 2449       |     // scalar read. A preemptive texture can extend over other GPU-written
+- 2450       |     // buffers. Check EVERY byte the caller may subsequently read without
+- 2451       |     // re-entering GetFlushArea. Keep the original texture extent when clean.
+- 2452       |     const DAddr buffer_start = area.start_address;
+- 2453       |     const u64 buffer_size = area.end_address - buffer_start;
+- 2454       |     if (!::Eden::BufferPages::NeverRegistered(buffer_start, buffer_size)) {
+- 2455       |         ::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);
+- 2456       |         std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};
+- 2457       |         if (buffer_cache.IsRegionGpuModified(buffer_start, buffer_size)) {
+- 2458       |             // Preserve the real GPU ownership and the existing ordered
+- 2459       |             // FlushRegion on the GPU worker. Do not certify stale siblings.
+- 2460       |             area.preemtive = false;
++       2821 |     if (buffer_cache.FlushesOnCpuRead() &&
++       2822 |         (!Tegra::g_nx2_ampere.load(std::memory_order_relaxed) ||
++       2823 |          Tegra::Nx2MayBeGpuWritten(addr, size))) {
++       2824 |         std::scoped_lock lock{buffer_cache.mutex};
++       2825 |         auto area = buffer_cache.GetFlushArea(addr, size);
++       2826 |         if (area) {
++       2827 |             return *area;
+  2461  2828 |         }
+  2462  2829 |     }
+- 2463       |     return area;
++       2830 |     VideoCore::RasterizerDownloadArea new_area{
++       2831 |         .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),
++       2832 |         .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),
++       2833 |         .preemtive = true,
++       2834 |     };
++       2835 |     return new_area;
+  2464  2836 | }
+```
+
+</details>
+
+### P0/P1-04 · Rasterizer::ReleaseFences
+
+Comparer la retraite du fence, le comportement force=false et le travail encore en attente. Le producteur NS2 ne peut pas être signalé avant la disponibilité de son marqueur GPU.
+
+Encore : [vulkan_rasterizer.cpp:2705–2712](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vulkan_rasterizer.cpp#L2705-L2712).
+
+<details>
+<summary>Lichii — 4845–4862 : 3 alignées, 5 propres Encore, 15 propres upstream</summary>
+
+Source : [vk_rasterizer.cpp:4845–4862](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/renderer_vulkan/vk_rasterizer.cpp#L4845-L4862).
+
+```diff
+  2705  4845 | void RasterizerVulkan::ReleaseFences(bool force) {
+- 2706       |     if (force) {
+- 2707       |         ::Eden::Performance::DiagnosticTimer drain_timer(::Eden::Performance::gpu_fence_drain);
+- 2708       |         fence_manager.WaitPendingFences(force);
+- 2709       |     } else {
+- 2710       |         fence_manager.WaitPendingFences(force);
++       4846 |     // EDEN_NX2_RENDER_SOFT_RELEASE_E: with the fencing thread an unforced release does nothing
++       4847 |     // (FenceManager::WaitPendingFences), so the back has nothing to lend (Fritchii 554125b40).
++       4848 |     static_assert(FenceManagerParams::HAS_ASYNC_CHECK);
++       4849 |     if (!force && VideoCommon::GpuSplit::SoftReleasesOnBack()) {
++       4850 |         VideoCommon::GpuSplit::Get().NoteSoftRelease();
++       4851 |         return;
+  2711  4852 |     }
++       4853 |     // With immediate fences the forced release's wait ends inside SignalFence (Fritchii 440c984e7).
++       4854 |     if (force && PostFence([this] { fence_manager.WaitPendingFences(true); })) {
++       4855 |         return;
+  2712  4856 | }
++       4857 |     if (VideoCommon::GpuSplit::LendsToRender() && force) {
++       4858 |         NoteSyncLent();
++       4859 |     }
++       4860 |     RENDER_LEND(ReleaseFences(force))
++       4861 |     fence_manager.WaitPendingFences(force);
++       4862 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 3108–3115 : 7 alignées, 1 propres Encore, 1 propres upstream</summary>
+
+Source : [vk_rasterizer.cpp:3108–3115](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/renderer_vulkan/vk_rasterizer.cpp#L3108-L3115).
+
+```diff
+  2705  3108 | void RasterizerVulkan::ReleaseFences(bool force) {
+  2706  3109 |     if (force) {
+- 2707       |         ::Eden::Performance::DiagnosticTimer drain_timer(::Eden::Performance::gpu_fence_drain);
++       3110 |         ::Eden::Performance::Timer drain_timer(::Eden::Performance::gpu_fence_drain);
+  2708  3111 |         fence_manager.WaitPendingFences(force);
+  2709  3112 |     } else {
+  2710  3113 |         fence_manager.WaitPendingFences(force);
+  2711  3114 |     }
+  2712  3115 | }
+```
+
+</details>
+
+### P0/P1-05 · Rasterizer::WaitForIdle
+
+Comparer barrières et flushes. Le WFI de la completion 0x100 constitue un coût potentiel, pas une preuve de deadlock. Ne pas supprimer les dépendances mémoire.
+
+Encore : [vulkan_rasterizer.cpp:2722–2752](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/465d7e9c82f364dcde05354d67ec1b5bf5e2682d/encore-active/eden-vulkan/vulkan_rasterizer.cpp#L2722-L2752).
+
+<details>
+<summary>Lichii — 4912–4978 : 27 alignées, 4 propres Encore, 40 propres upstream</summary>
+
+Source : [vk_rasterizer.cpp:4912–4978](https://github.com/zortos293/Lichii/blob/0288882f36692a94b56fa85177abdad0ec8be59d/src/video_core/renderer_vulkan/vk_rasterizer.cpp#L4912-L4978).
+
+```diff
+  2722  4912 | void RasterizerVulkan::WaitForIdle() {
++       4913 |     // EDEN_NX2_RENDER_POST_WFI: with no report since the last lent fence (whose commit synced
++       4914 |     // the queries), no streamer has a sync pending and NotifyWFI leaves the back's buffer cache
++       4915 |     // alone: the rest is GPURender's recording.
++       4916 |     // EDEN_NX2_RENDER_QUERY_SYNC_E: also with reports whose value syncs the back collects here.
++       4917 |     using VideoCommon::GpuSplit;
++       4918 |     if (GpuSplit::Get().Posts(GpuSplit::PostedOp::WaitForIdle) && maxwell3d != nullptr &&
++       4919 |         !QuerySyncOwed()) {
++       4920 |         QuerySyncPacket sync;
++       4921 |         if (GpuSplit::QuerySyncOnBack()) {
++       4922 |             CollectQuerySync(sync);
++       4923 |         } else if (!back_payload_sync.empty()) [[unlikely]] {
++       4924 |             GpuSplit::Get().NotePayloadSyncsLeft();
++       4925 |         }
++       4926 |         PostRenderOp(GpuSplit::PostedOp::WaitForIdle, [this, sync = std::move(sync)]() mutable {
++       4927 |             if (!sync.commands.Empty()) {
++       4928 |                 buffer_cache_runtime.Arena().PlayCollected(sync.commands, sync.stamp);
++       4929 |             }
++       4930 |             if (!GpuSplit::QuerySyncEnabled() && query_cache.HasPendingSync()) [[unlikely]] {
++       4931 |                 GpuSplit::Get().NotePostedWaitSynced();
++       4932 |             }
++       4933 |             t_query_sync_targets = &sync.targets;
++       4934 |             SCOPE_EXIT {
++       4935 |                 t_query_sync_targets = nullptr;
++       4936 |             };
++       4937 |             WaitForIdle();
++       4938 |         });
++       4939 |         return;
++       4940 |     }
++       4941 |     if (GpuSplit::QuerySyncOnBack()) {
++       4942 |         // Lent: NotifyWFI syncs everything pending, the back parked.
++       4943 |         query_sync_lent_only = false;
++       4944 |         samples_slots.clear();
++       4945 |     }
++       4946 |     RENDER_LEND(WaitForIdle())
+  2723  4947 |     // Everything but wait pixel operations. This intentionally includes FRAGMENT_SHADER_BIT because
+  2724  4948 |     // fragment shaders can still write storage buffers.
+  2725  4949 |     VkPipelineStageFlags flags =
+  2726  4950 |         VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT | VK_PIPELINE_STAGE_VERTEX_INPUT_BIT |
+  2727  4951 |         VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT |
+  2728  4952 |         VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT |
+  2729  4953 |         VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+  2730  4954 |         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT;
+  2731  4955 |     if (device.IsExtTransformFeedbackSupported()) {
+  2732  4956 |         flags |= VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT;
+  2733  4957 |     }
+  2734  4958 | 
+  2735  4959 |     query_cache.NotifyWFI();
+  2736  4960 | 
++       4961 |     if (device.IsMoltenVK() && scheduler.IsRenderPassActive()) {
++       4962 |         scheduler.DeferFragmentBarrier();
++       4963 |         fence_manager.SignalOrdering();
++       4964 |         return;
++       4965 |     }
+  2737  4966 |     scheduler.RequestOutsideRenderPassOperationContext();
+  2738  4967 |     scheduler.Record([flags](vk::CommandBuffer cmdbuf) {
+- 2739       |         // A reusable event that is never reset only orders its first signal and, without a
+- 2740       |         // memory barrier, does not make earlier GPU writes visible to subsequent commands.
+- 2741       |         // A pipeline barrier expresses both the execution dependency and the guest WFI memory
+- 2742       |         // visibility on every invocation. Adapted from Lichii #295 / 73bcdc059d.
++       4968 |         // Later work waits for the earlier work and sees its writes.
+  2743  4969 |         static constexpr VkMemoryBarrier WFI_BARRIER{
+  2744  4970 |             .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
+  2745  4971 |             .pNext = nullptr,
+  2746  4972 |             .srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
+  2747  4973 |             .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
+  2748  4974 |         };
+  2749  4975 |         cmdbuf.PipelineBarrier(flags, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, WFI_BARRIER);
+  2750  4976 |     });
+  2751  4977 |     fence_manager.SignalOrdering();
+  2752  4978 | }
+```
+
+</details>
+
+<details>
+<summary>EglantinePS5 — 3146–3178 : 27 alignées, 4 propres Encore, 6 propres upstream</summary>
+
+Source : [vk_rasterizer.cpp:3146–3178](https://github.com/heydemoura/EglantinePS5/blob/75a552ff945521eb31adf34f34ccb73a003809dc/Eglantine/src/video_core/renderer_vulkan/vk_rasterizer.cpp#L3146-L3178).
+
+```diff
+  2722  3146 | void RasterizerVulkan::WaitForIdle() {
+  2723  3147 |     // Everything but wait pixel operations. This intentionally includes FRAGMENT_SHADER_BIT because
+  2724  3148 |     // fragment shaders can still write storage buffers.
+  2725  3149 |     VkPipelineStageFlags flags =
+  2726  3150 |         VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT | VK_PIPELINE_STAGE_VERTEX_INPUT_BIT |
+  2727  3151 |         VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT |
+  2728  3152 |         VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT |
+  2729  3153 |         VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+  2730  3154 |         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT;
+  2731  3155 |     if (device.IsExtTransformFeedbackSupported()) {
+  2732  3156 |         flags |= VK_PIPELINE_STAGE_TRANSFORM_FEEDBACK_BIT_EXT;
+  2733  3157 |     }
+  2734  3158 | 
+  2735  3159 |     query_cache.NotifyWFI();
+  2736  3160 | 
++       3161 |     if (device.IsMoltenVK() && scheduler.IsRenderPassActive()) {
++       3162 |         scheduler.DeferFragmentBarrier();
++       3163 |         fence_manager.SignalOrdering();
++       3164 |         return;
++       3165 |     }
+  2737  3166 |     scheduler.RequestOutsideRenderPassOperationContext();
+  2738  3167 |     scheduler.Record([flags](vk::CommandBuffer cmdbuf) {
+- 2739       |         // A reusable event that is never reset only orders its first signal and, without a
+- 2740       |         // memory barrier, does not make earlier GPU writes visible to subsequent commands.
+- 2741       |         // A pipeline barrier expresses both the execution dependency and the guest WFI memory
+- 2742       |         // visibility on every invocation. Adapted from Lichii #295 / 73bcdc059d.
++       3168 |         // Later work waits for the earlier work and sees its writes.
+  2743  3169 |         static constexpr VkMemoryBarrier WFI_BARRIER{
+  2744  3170 |             .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
+  2745  3171 |             .pNext = nullptr,
+  2746  3172 |             .srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
+  2747  3173 |             .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
+  2748  3174 |         };
+  2749  3175 |         cmdbuf.PipelineBarrier(flags, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, WFI_BARRIER);
+  2750  3176 |     });
+  2751  3177 |     fence_manager.SignalOrdering();
+  2752  3178 | }
+```
+
+</details>
+
+**Couverture cumulée :** 14 fonctions, 28 comparaisons directes, 2447 lignes-source parcourues (répétitions incluses). Ni couverture exhaustive du GPU ni preuve console.

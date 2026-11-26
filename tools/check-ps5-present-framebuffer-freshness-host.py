@@ -14,7 +14,7 @@ root = Path(__file__).resolve().parents[1]
 cache = (root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
 generator = (root/"tools/prepare-vulkan-port.py").read_text()
 raster = (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-layer = (root/"vendor/encore-active/eden-vulkan/vulkan_present_layer.cpp").read_text()
+layer = (root/"headless/vulkan_present_layer_r24.cpp").read_text()
 fast = (root/".github/workflows/encore-core-fast-gate.yml").read_text()
 full = (root/".github/workflows/encore-core-preflight.yml").read_text()
 
@@ -51,6 +51,7 @@ assert loop.index("if (image.cpu_addr != cpu_addr)") < loop.index("ImageFlagBits
 assert loop.index("ImageFlagBits::IsDecoding") < loop.index("if (image.image_view_ids.empty())")
 assert "valid_image_ids.push_back(map.image_id);" in loop
 assert "return GetImageViewForFramebuffer(freshest_id);" in selection
+assert selection.index("VideoCore::Surface::IsViewCompatible(") < selection.index("return GetImageViewForFramebuffer(freshest_id);")
 assert "std::ranges::max_element(valid_image_ids" in selection  # desktop untouched
 for label in (
     "F07 P0.4 accelerated present rejects remapped or CPU-dirty framebuffer",
@@ -71,7 +72,7 @@ assert "F07 P0.4 present flushes remaps before inspecting image cache" in genera
 draw_texture=raster.split("void RasterizerVulkan::DrawTexture() {",1)[1].split("void RasterizerVulkan::Clear(",1)[0]
 assert draw_texture.index("gpu_memory->FlushCaching();") < draw_texture.index("std::scoped_lock l{texture_cache.mutex};")
 assert "return {};" in raster.split("RasterizerVulkan::AccelerateDisplay(",1)[1].split("query_cache.NotifySegment",1)[0]
-assert "if (!use_accelerated) {\n        UpdateRawImage(framebuffer, image_index);" in layer
+assert "if (!use_accelerated) {\n        UpdateRawImage(rasterizer, framebuffer, image_index);" in layer
 for wf in (fast,full):
     assert "python3 -B tools/check-ps5-present-framebuffer-freshness-host.py" in wf
 
@@ -103,8 +104,21 @@ struct ImageBase {
     unsigned flags{};
     std::vector<int> image_view_ids;
     std::uint64_t modification_tick{};
+    struct { int format{1}; } info;
+};
+namespace VideoCore::Surface {
+bool IsViewCompatible(int a,int b,bool broken,bool native_bgr) {
+    return a==b || (!broken && native_bgr && ((a==1 && b==2) || (a==2 && b==1)));
+}
+}
+struct MockRuntime {
+    bool broken{}, bgr{true};
+    bool HasBrokenTextureViewFormats() const { return broken; }
+    bool HasNativeBgr() const { return bgr; }
 };
 struct Selector {
+    int view_format{1};
+    MockRuntime runtime;
     std::unordered_map<int,ImageMapView> slot_map_views;
     std::unordered_map<int,ImageBase> slot_images;
     std::vector<ImageMapId> image_map_ids;
@@ -123,7 +137,7 @@ int main() {
     constexpr DAddr guest = 0x9000;
     for(int i=1;i<=8;++i) {
         c.slot_map_views[i]={i};
-        c.slot_images[i]={guest,0,{i},static_cast<std::uint64_t>(i)};
+        c.slot_images[i]={guest,0,{i},static_cast<std::uint64_t>(i),{1}};
         c.image_map_ids.push_back(i);
     }
     c.slot_images[8].cpu_addr=guest+4096;
@@ -166,6 +180,21 @@ int main() {
     assert((c.Run(guest)==std::vector<int>{2}));
     c.image_map_ids={3,2};
     assert((c.Run(guest)==std::vector<int>{3}));
+    // A newer incompatible alias cannot create a view or promote stale pixels.
+    c.image_map_ids={2,3};
+    c.slot_images[2].modification_tick=101;
+    c.slot_images[2].info.format=3;
+    assert(c.Run(guest).empty());
+    c.slot_images[2].info.format=2;
+    assert((c.Run(guest)==std::vector<int>{2}));
+    c.runtime.bgr=false;
+    assert(c.Run(guest).empty());
+    c.runtime.bgr=true;
+    c.runtime.broken=true;
+    assert(c.Run(guest).empty());
+    c.runtime.broken=false;
+    c.slot_images[2].info.format=1;
+    assert((c.Run(guest)==std::vector<int>{2}));
     // More than the old inline capacity: bounded O(1) selection state.
     c.image_map_ids={1,2,3,4,5,6,7};
     for(int i=1;i<=7;++i) {
@@ -358,3 +387,68 @@ with tempfile.TemporaryDirectory(prefix="encore-c04-display-handle-") as d:
             assert result.returncode==0,(opt,native,result.stderr)
             assert "F07_C04_DISPLAY_NULL_HANDLE_FALLBACK_PASS" in result.stdout
             print("F07_C04_DISPLAY_NULL_HANDLE_FALLBACK_PASS",opt,"native",int(native))
+
+
+# Exercise the actual selected R24 raw-source fragment with separate CPU/GPU
+# bytes and fragmented or remapped device pages. No Vulkan driver is mocked as
+# a successful PS5 submission: this checks only the read-before-unswizzle policy.
+raw_start = layer.index("        // The raw fallback must observe GPU-owned bytes")
+raw_end = layer.index("        Tegra::Texture::UnswizzleTexture(", raw_start)
+raw_fragment = layer[raw_start:raw_end]
+raw_cpp = r'''
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cstdint>
+#include <vector>
+using u8=std::uint8_t;
+using u64=std::uint64_t;
+using DAddr=u64;
+struct Memory {
+    std::array<u8,8> cpu{},gpu{};
+    bool mapped=true,contiguous=true,remap_on_flush=false;
+    int flushes=0,reads=0,spans=0;
+    const u8* GetSpan(DAddr,u64 n) {
+        ++spans;
+        return mapped&&contiguous&&n==cpu.size()?cpu.data():nullptr;
+    }
+    void Flush() {++flushes;cpu=gpu;if(remap_on_flush)contiguous=false;}
+    void ReadBlock(DAddr,void* out,u64 n) {
+        ++reads;Flush();assert(n==cpu.size());
+        if(mapped)std::copy(cpu.begin(),cpu.end(),static_cast<u8*>(out));
+        else std::fill_n(static_cast<u8*>(out),n,0);
+    }
+};
+struct Rasterizer {Memory& mem;void FlushRegion(DAddr,u64){mem.Flush();}};
+void Raw(Memory& device_memory,Rasterizer& rasterizer,std::array<u8,8>& result){
+    const DAddr framebuffer_addr=0x1000;
+    const u64 tiled_size=8;
+    if(device_memory.mapped){
+__SOURCE__
+        std::copy_n(source,tiled_size,result.begin());
+    }else{result.fill(0);}
+}
+int main(){
+    for(int n=0;n<256;++n)for(bool mapped:{false,true})
+    for(bool contiguous:{false,true})for(bool remap:{false,true}){
+        Memory mem;mem.mapped=mapped;mem.contiguous=contiguous;mem.remap_on_flush=remap;
+        mem.cpu.fill(0x55);mem.gpu.fill(static_cast<u8>(n));
+        Rasterizer r{mem};std::array<u8,8> result;result.fill(0xff);Raw(mem,r,result);
+        for(auto b:result)assert(b==(mapped?static_cast<u8>(n):0));
+        if(!mapped)assert(mem.flushes==0&&mem.reads==0&&mem.spans==0);
+        else if(contiguous&&!remap)assert(mem.flushes==1&&mem.reads==0&&mem.spans==2);
+        else if(!contiguous)assert(mem.flushes==1&&mem.reads==1&&mem.spans==1);
+        else assert(mem.flushes==2&&mem.reads==1&&mem.spans==2);
+    }
+}
+'''.replace("__SOURCE__", raw_fragment)
+with tempfile.TemporaryDirectory(prefix="encore-f07-raw-read-") as d:
+    src=Path(d)/"raw.cpp"
+    src.write_text(raw_cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(d)/("raw"+opt[1:])
+        subprocess.run(["c++","-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=undefined","-fno-sanitize-recover=all",
+                        str(src),"-o",str(exe)],check=True,timeout=60)
+        subprocess.run([str(exe)],check=True,timeout=20)
+        print("F07_RAW_FRAMEBUFFER_READBACK_PASS",opt,"cases=2048")

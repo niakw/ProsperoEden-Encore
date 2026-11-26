@@ -172,7 +172,9 @@ void flat_front_fallback(Canvas& c, const Game& game, const Rect& r)
                             Color::rgb(0x09101c, 0.36f));
     // The supplied red NS2 banner belongs only to reconstructed fronts:
     // genuine retail scans already include their own printed platform header.
-    const bool ns2_cover = case_media::IsSwitch2TitleId(game.title_id);
+    const bool ns2_cover = case_media::IsSwitch2TitleId(game.title_id) ||
+        game.format == "NUP" || game.file.ends_with(".nup") ||
+        game.file.ends_with(".NUP");
     if (ns2_cover) {
         constexpr float kHeaderAspect = 246.0f / 1164.0f;
         const Rect header{r.x, r.y, r.w, r.w * kHeaderAspect};
@@ -378,7 +380,9 @@ void flat_retail_sleeve(Canvas& c, const Game& game, const Rect& shell,
     const float side = shell.w * (7.0f / 454.0f);
     const float top = shell.h * (13.0f / 730.0f);
     const float radius = std::max(5.0f, shell.w * 0.028f);
-    const bool ns2_case = case_media::IsSwitch2TitleId(game.title_id);
+    const bool ns2_case = case_media::IsSwitch2TitleId(game.title_id) ||
+        game.format == "NUP" || game.file.ends_with(".nup") ||
+        game.file.ends_with(".NUP");
     // One continuous square-corner paper wrap, folded directly onto the
     // printed red spine: front touches its LEFT hinge, back its RIGHT hinge.
     // The ONLY exposed clear-plastic vertical opening is the opposite edge.
@@ -681,9 +685,10 @@ void Launcher::start_home_media()
         home_recent_ >= 0 && home_recent_ < static_cast<int>(home_.recents.size()) ?
             &home_.recents[static_cast<std::size_t>(home_recent_)] : nullptr;
     const std::uint64_t title_id = recent != nullptr ? recent->title_id : home_.last_title_id;
-    if (title_id == 0) return;
+    const std::string& file = recent != nullptr ? recent->file : home_.last_file;
+    if (title_id == 0 || file.empty()) return;
     const auto now = std::chrono::steady_clock::now();
-    const auto due = home_media_next_retry_.find(title_id);
+    const auto due = home_media_next_retry_.find(file);
     if (due != home_media_next_retry_.end() && now < due->second)
         return;
 
@@ -711,8 +716,9 @@ void Launcher::start_home_media()
 
     // An incomplete response must never blacklist this game until restart.
     // A short cooldown keeps the UI responsive without retrying every frame.
-    home_media_next_retry_[title_id] = now + std::chrono::minutes(2);
+    home_media_next_retry_[file] = now + std::chrono::minutes(2);
     home_media_scan_title_id_ = title_id;
+    home_media_scan_file_ = file;
     home_media_scan_ = std::async(std::launch::async, [this, request = std::move(request)]() mutable {
         return services_.enrich_game_media(std::move(request), &media_cancel_);
     });
@@ -729,7 +735,8 @@ void Launcher::finish_home_media()
         // A worker response belongs strictly to the request that launched
         // it. Do not publish a zero/wrong TitleID into Home, Recents or the
         // library during an overlapping selection or failed lookup.
-        if (!enriched.title_id || enriched.title_id != home_media_scan_title_id_)
+        if (!enriched.title_id || enriched.title_id != home_media_scan_title_id_ ||
+            enriched.file != home_media_scan_file_)
             throw std::runtime_error{"stale Home media identity"};
         if (enriched.artwork_changed) {
             textures_.invalidate(enriched.cover);
@@ -743,23 +750,28 @@ void Launcher::finish_home_media()
             textures_.invalidate(enriched.box_front);
         if (enriched.case_artwork_changed & 2u)
             textures_.invalidate(enriched.box_back);
-        if (enriched.title_id == home_.last_title_id) {
+        if (enriched.case_artwork_changed & 4u)
+            textures_.invalidate(enriched.box_spine);
+        if (enriched.title_id == home_.last_title_id && enriched.file == home_.last_file) {
             if (!enriched.cover.empty()) home_.last_cover = enriched.cover;
             if (!enriched.hero.empty()) home_.last_hero = enriched.hero;
-            if (!enriched.screenshots.empty()) home_.last_screenshot = enriched.screenshots.front();
+            if (const auto* shot = case_media::BackgroundScreenshot(enriched.screenshots))
+                home_.last_screenshot = *shot;
             if (enriched.max_players > 0) home_.last_max_players = enriched.max_players;
             if (!enriched.name.empty()) home_.last_title = enriched.name;
             if (!enriched.intro.empty()) home_.last_intro = enriched.intro;
             if (!enriched.description.empty()) home_.last_description = enriched.description;
         }
         for (Recent& recent : home_.recents) {
-            if (recent.title_id != enriched.title_id) continue;
+            if (recent.title_id != enriched.title_id || recent.file != enriched.file) continue;
             if (!enriched.cover.empty()) {
                 recent.cover = enriched.cover;
-                if (recent.tile_icon.empty()) recent.tile_icon = enriched.cover;
+                if (recent.tile_icon.empty() || recent.tile_icon.find("/box-square-") != std::string::npos)
+                    recent.tile_icon = enriched.cover;
             }
             if (!enriched.hero.empty()) recent.hero = enriched.hero;
-            if (!enriched.screenshots.empty()) recent.screenshot = enriched.screenshots.front();
+            if (const auto* shot = case_media::BackgroundScreenshot(enriched.screenshots))
+                recent.screenshot = *shot;
             if (enriched.max_players > 0) recent.max_players = enriched.max_players;
             if (!enriched.name.empty()) recent.title = enriched.name;
             if (!enriched.intro.empty()) recent.intro = enriched.intro;
@@ -768,7 +780,8 @@ void Launcher::finish_home_media()
         // If the library scan completed while the Home request was in flight, keep both views
         // on the same cache result without another network request.
         for (Game& game : games_) {
-            if (!enriched.title_id || game.title_id != enriched.title_id) continue;
+            if (!enriched.title_id || game.title_id != enriched.title_id ||
+                game.file != enriched.file) continue;
             if (!enriched.cover.empty()) game.cover = enriched.cover;
             if (!enriched.box_front.empty()) game.box_front = enriched.box_front;
             if (!enriched.box_back.empty()) game.box_back = enriched.box_back;
@@ -787,9 +800,9 @@ void Launcher::finish_home_media()
             if (!enriched.language.empty()) game.language = enriched.language;
             if (!enriched.language_note.empty()) game.language_note = enriched.language_note;
             sync_home_game(game);
-            // Home's Nlib result must refresh every installed copy of this
-            // TitleID, not just the first item encountered in a rescan.
-            // A zero or changed identity never inherits its metadata.
+            // Only the exact installed input receives this result. A second
+            // NS2 NUP or NS1 package with the same TitleID must retain its
+            // own cover and hero until its media worker completes.
         }
     }
     catch (const std::exception& error)
@@ -797,6 +810,7 @@ void Launcher::finish_home_media()
         sys::log("Nlib home media: %s", error.what());
     }
     home_media_scan_title_id_ = 0;
+    home_media_scan_file_.clear();
     // If the user selected another Recent card while this request ran, start that title now.
     start_home_media();
 }
@@ -818,10 +832,11 @@ void Launcher::start_selected_media()
     const Game& game = games_[static_cast<std::size_t>(library_.selected)];
     if (game.title_id == 0) return;
     const auto now = std::chrono::steady_clock::now();
-    const auto due = media_next_retry_.find(game.title_id);
+    const auto due = media_next_retry_.find(game.file);
     if (due != media_next_retry_.end() && now < due->second) return;
-    media_next_retry_[game.title_id] = now + std::chrono::minutes(5);
+    media_next_retry_[game.file] = now + std::chrono::minutes(5);
     media_scan_title_id_ = game.title_id;
+    media_scan_file_ = game.file;
     // The previous future has been consumed; no worker can still read this token.
     selected_media_cancel_.store(false, std::memory_order_release);
     Game copy = game;
@@ -840,7 +855,8 @@ void Launcher::finish_selected_media()
         const bool still_selected = screen_ == Screen::library &&
             library_.selected >= 0 &&
             library_.selected < static_cast<int>(games_.size()) &&
-            games_[static_cast<std::size_t>(library_.selected)].title_id == media_scan_title_id_;
+            games_[static_cast<std::size_t>(library_.selected)].title_id == media_scan_title_id_ &&
+            games_[static_cast<std::size_t>(library_.selected)].file == media_scan_file_;
         if (!still_selected)
             selected_media_cancel_.store(true, std::memory_order_release);
         return;
@@ -848,7 +864,8 @@ void Launcher::finish_selected_media()
     const bool cancelled = selected_media_cancel_.load(std::memory_order_acquire);
     try {
         Game enriched = media_scan_.get();
-        if (!enriched.title_id || enriched.title_id != media_scan_title_id_)
+        if (!enriched.title_id || enriched.title_id != media_scan_title_id_ ||
+            enriched.file != media_scan_file_)
             throw std::runtime_error{"stale library media identity"};
         if (enriched.artwork_changed) {
             textures_.invalidate(enriched.cover);
@@ -862,11 +879,14 @@ void Launcher::finish_selected_media()
             textures_.invalidate(enriched.box_front);
         if (enriched.case_artwork_changed & 2u)
             textures_.invalidate(enriched.box_back);
+        if (enriched.case_artwork_changed & 4u)
+            textures_.invalidate(enriched.box_spine);
         // An obsolete worker may have atomically replaced an image: the
         // invalidations above remain necessary, but its old Game snapshot
         // must not overwrite newer data from Home or a refreshed scan.
         if (!cancelled) for (Game& game : games_) {
-            if (!enriched.title_id || game.title_id != enriched.title_id) continue;
+            if (!enriched.title_id || game.title_id != enriched.title_id ||
+                game.file != enriched.file) continue;
             if (!enriched.cover.empty()) game.cover = enriched.cover;
             if (!enriched.box_front.empty()) game.box_front = enriched.box_front;
             if (!enriched.box_back.empty()) game.box_back = enriched.box_back;
@@ -885,9 +905,9 @@ void Launcher::finish_selected_media()
             if (!enriched.language.empty()) game.language = enriched.language;
             if (!enriched.language_note.empty()) game.language_note = enriched.language_note;
             if (!enriched.size.empty() && enriched.size != "—") game.size = enriched.size;
-            // A single Nlib lookup belongs to a TitleID and must update
-            // EVERY installed copy; moving into the first one silently
-            // starved later entries with that same identity.
+            // The file and TitleID jointly identify this media request.
+            // Never publish artwork from one installed edition into another
+            // package merely because their numeric TitleID is identical.
             sync_home_game(game);
         }
     }
@@ -896,9 +916,10 @@ void Launcher::finish_selected_media()
         sys::log("Nlib selected media: %s", error.what());
     }
     if (cancelled && !media_cancel_.load(std::memory_order_acquire))
-        media_next_retry_[media_scan_title_id_] = std::chrono::steady_clock::now() +
+        media_next_retry_[media_scan_file_] = std::chrono::steady_clock::now() +
                                                 std::chrono::seconds(2);
     media_scan_title_id_ = 0;
+    media_scan_file_.clear();
     // If the player moved while that request was running, enrich the title highlighted now.
     start_selected_media();
 }
@@ -1092,7 +1113,8 @@ void Launcher::sync_home_game(const Game& game)
         home_.last_title = game.name;
         if (!game.cover.empty()) home_.last_cover = game.cover;
         if (!game.hero.empty()) home_.last_hero = game.hero;
-        if (!game.screenshots.empty()) home_.last_screenshot = game.screenshots.front();
+        if (const auto* shot = case_media::BackgroundScreenshot(game.screenshots))
+            home_.last_screenshot = *shot;
         if (!game.intro.empty()) home_.last_intro = game.intro;
         if (!game.description.empty()) home_.last_description = game.description;
         if (game.max_players > 0) home_.last_max_players = game.max_players;
@@ -1103,13 +1125,15 @@ void Launcher::sync_home_game(const Game& game)
             recent.title = game.name;
             if (!game.cover.empty()) {
                 recent.cover = game.cover;
-                if (recent.tile_icon.empty()) recent.tile_icon = game.cover;
+                if (recent.tile_icon.empty() || recent.tile_icon.find("/box-square-") != std::string::npos)
+                    recent.tile_icon = game.cover;
             }
             if (game.title_id != 0) recent.title_id = game.title_id;
             if (!game.addons.empty()) recent.addons = game.addons;
             if (!game.language.empty()) recent.language = game.language;
             if (!game.hero.empty()) recent.hero = game.hero;
-            if (!game.screenshots.empty()) recent.screenshot = game.screenshots.front();
+            if (const auto* shot = case_media::BackgroundScreenshot(game.screenshots))
+                recent.screenshot = *shot;
             if (!game.intro.empty()) recent.intro = game.intro;
             if (!game.description.empty()) recent.description = game.description;
             if (game.max_players > 0) recent.max_players = game.max_players;
@@ -1136,8 +1160,8 @@ void Launcher::name_home_games()
             recent.cover = game.cover; // square icon only; case fronts stay in box_front
             recent.tile_icon = game.cover;
             recent.hero = game.hero;
-            recent.screenshot = game.screenshots.empty() ? std::string{} :
-                                game.screenshots.front();
+            if (const auto* shot = case_media::BackgroundScreenshot(game.screenshots))
+                recent.screenshot = *shot;
             recent.max_players = game.max_players;
             recent.intro = game.intro;
             recent.description = game.description;
@@ -1241,6 +1265,16 @@ void Launcher::finish_home_scan()
         }
         home_ = std::move(snapshot);
         home_loaded_ = true;
+        // Queue the first seven displayed square icons before their first
+        // Home draw. Urgent requests are inserted at the front; reverse the
+        // traversal so the first tile decodes first. Both workers do decoding,
+        // while the UI keeps its existing one-upload-per-frame GPU budget.
+        for (std::size_t i = std::min<std::size_t>(7, home_.recents.size()); i > 0; --i) {
+            const Recent& recent = home_.recents[i - 1];
+            const std::string& art =
+                recent.tile_icon.empty() ? recent.cover : recent.tile_icon;
+            if (!art.empty()) (void)textures_.cover(art, 232.0f, true);
+        }
         // Reconcile the completed ROM catalog with the Home snapshot even when
         // the two independent workers finish in the opposite order.
         if (games_loaded_) name_home_games();
@@ -2895,53 +2929,96 @@ void Launcher::draw_mods(Canvas &c, float open)
 void Launcher::start_home_icons()
 {
     if (screen_ != Screen::home || !home_.setup_ready ||
-        media_cancel_.load(std::memory_order_acquire) || home_icon_scan_.valid()) return;
+        media_cancel_.load(std::memory_order_acquire) ||
+        (home_icon_scan_.valid() && home_icon_scan_extra_.valid())) return;
     const auto now = std::chrono::steady_clock::now();
-    // One bounded icon request at a time, regardless of controller focus.
-    // No full-media calls for unselected titles, even in a large library.
+    // Two independent background requests prevent a slow GamesDB/Nlib HTTP
+    // response from serializing all seven Home square icons. Decoder/GL
+    // upload limits remain unchanged: no network or image decode on UI.
     for (const Recent& recent : home_.recents) {
-        // A nonempty fallback can be a portrait scan, not a canonical icon.
-        // The service uses a try-lock if selected full media owns the title.
-        if (!recent.title_id || !recent.tile_icon.empty()) continue;
-        const auto due = home_icon_next_retry_.find(recent.title_id);
+        if (!recent.title_id) continue;
+        if ((home_icon_scan_.valid() &&
+             home_icon_scan_file_ == recent.file) ||
+            (home_icon_scan_extra_.valid() &&
+             home_icon_scan_extra_file_ == recent.file)) continue;
+        const auto due = home_icon_next_retry_.find(recent.file);
         if (due != home_icon_next_retry_.end() && now < due->second) continue;
+        const bool provisional = recent.tile_icon.find("/box-square-") != std::string::npos;
+        const bool rejected = !recent.tile_icon.empty() && textures_.known_missing(recent.tile_icon);
+        if (!recent.tile_icon.empty() && !provisional && !rejected) {
+            home_icon_next_retry_[recent.file] = now + std::chrono::seconds(1);
+            continue;
+        }
         Game request;
+        request.artwork_rejected = rejected;
+        if (rejected) request.cover = recent.tile_icon;
         request.title_id = recent.title_id;
         request.file = recent.file;
         request.name = recent.title;
-        home_icon_next_retry_[recent.title_id] = now + std::chrono::minutes(2);
-        home_icon_scan_title_id_ = recent.title_id;
-        home_icon_scan_ = std::async(std::launch::async, [this, request = std::move(request)]() mutable {
+        auto job = std::async(std::launch::async, [this, request = std::move(request)]() mutable {
             return services_.enrich_home_icon(std::move(request), &media_cancel_);
         });
-        return;
+        home_icon_next_retry_[recent.file] = now + std::chrono::minutes(provisional ? 5 : 2);
+        if (!home_icon_scan_.valid()) {
+            home_icon_scan_title_id_ = recent.title_id;
+            home_icon_scan_file_ = recent.file;
+            home_icon_scan_ = std::move(job);
+        } else {
+            home_icon_scan_extra_title_id_ = recent.title_id;
+            home_icon_scan_extra_file_ = recent.file;
+            home_icon_scan_extra_ = std::move(job);
+        }
+        if (home_icon_scan_.valid() && home_icon_scan_extra_.valid())
+            break;
     }
 }
 
 void Launcher::finish_home_icons()
 {
-    if (!home_icon_scan_.valid() ||
-        home_icon_scan_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
-    try {
-        Game result = home_icon_scan_.get();
-        if (!media_cancel_.load(std::memory_order_acquire) &&
-            result.title_id && result.title_id == home_icon_scan_title_id_ && !result.cover.empty()) {
-            if (result.artwork_changed) textures_.invalidate(result.cover);
-            if (result.title_id == home_.last_title_id && result.file == home_.last_file)
-                home_.last_cover = result.cover;
-            for (Recent& recent : home_.recents) {
-                if (recent.title_id != result.title_id) continue;
-                recent.tile_icon = result.cover;
-                if (recent.file == result.file) recent.cover = result.cover;
+    const auto finish = [this](std::future<Game>& job, std::uint64_t& requested_id,
+                               std::string& requested_file) {
+        if (!job.valid() ||
+            job.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
+        try {
+            Game result = job.get();
+            // A selected full-media worker may temporarily own the same
+            // title lock. Retry promptly rather than hiding the square for
+            // the default two-minute network backoff.
+            if (result.artwork_deferred && result.title_id == requested_id &&
+                result.file == requested_file)
+                home_icon_next_retry_[result.file] =
+                    std::chrono::steady_clock::now() + std::chrono::seconds(1);
+            if (!media_cancel_.load(std::memory_order_acquire) &&
+                result.title_id && result.title_id == requested_id &&
+                result.file == requested_file && !result.cover.empty()) {
+                if (result.artwork_changed) textures_.invalidate(result.cover);
+                if (result.title_id == home_.last_title_id && result.file == home_.last_file)
+                    home_.last_cover = result.cover;
+                for (Recent& recent : home_.recents) {
+                    // A legitimate NS2 NUP with a reused program TitleID
+                    // must not replace the square art of its NS1 package.
+                    if (recent.title_id != result.title_id ||
+                        recent.file != result.file) continue;
+                    if (!recent.tile_icon.empty() &&
+                        recent.tile_icon.find("/box-square-") == std::string::npos &&
+                        recent.tile_icon != result.cover &&
+                        !textures_.known_missing(recent.tile_icon)) continue;
+                    recent.tile_icon = result.cover;
+                    recent.cover = result.cover;
+                }
+                for (Game& game : games_)
+                    if (game.title_id == result.title_id && game.file == result.file)
+                        game.cover = result.cover;
             }
-            for (Game& game : games_)
-                if (game.title_id == result.title_id && game.file == result.file)
-                    game.cover = result.cover;
+        } catch (const std::exception& error) {
+            sys::log("Nlib Home icon: %s", error.what());
         }
-    } catch (const std::exception& error) {
-        sys::log("Nlib Home icon: %s", error.what());
-    }
-    home_icon_scan_title_id_ = 0;
+        requested_id = 0;
+        requested_file.clear();
+    };
+    finish(home_icon_scan_, home_icon_scan_title_id_, home_icon_scan_file_);
+    finish(home_icon_scan_extra_, home_icon_scan_extra_title_id_,
+           home_icon_scan_extra_file_);
 }
 
 } // namespace pe::ui

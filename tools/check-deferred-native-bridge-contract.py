@@ -335,10 +335,81 @@ r23_raster = next(item for item in r23_m07["files"]
 def m07_source_blob(value):
     raw = value.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+def reverse_attribute_index_batch_successor(source):
+    current = m07_source_blob(source)
+    if current == "39b2ed67e51937aecad666de4113ce792d32132d":
+        newer, older = "VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);\n    const VideoCore::RasterizerDownloadArea clean_area{\n        .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n        .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n        .preemtive = true,\n    };\n    // A clean/never-held texture page does not prove that a GPU-written\n    // storage buffer is current in guest memory. Query each cache independently:\n    // never-owned pages remain lock-free, and no two cache locks are nested.\n    std::optional<VideoCore::RasterizerDownloadArea> texture_area;\n    if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n        ::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        texture_area = texture_cache.GetFlushArea(addr, size);\n    }\n    if (texture_area && !texture_area->preemtive) {\n        // The existing GPU sync flushes both cache domains.\n        return *texture_area;\n    }\n    auto area = texture_area.value_or(clean_area);\n    // Core::Memory caches the returned interval, not just the original\n    // scalar read. A preemptive texture can extend over other GPU-written\n    // buffers. Check EVERY byte the caller may subsequently read without\n    // re-entering GetFlushArea. Keep the original texture extent when clean.\n    const DAddr buffer_start = area.start_address;\n    const u64 buffer_size = area.end_address - buffer_start;\n    if (!::Eden::BufferPages::NeverRegistered(buffer_start, buffer_size)) {\n        ::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);\n        std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};\n        if (buffer_cache.IsRegionGpuModified(buffer_start, buffer_size)) {\n            // Preserve the real GPU ownership and the existing ordered\n            // FlushRegion on the GPU worker. Do not certify stale siblings.\n            area.preemtive = false;\n        }\n    }\n    return area;\n}\n", "VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);\n    const VideoCore::RasterizerDownloadArea clean_area{\n        .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n        .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n        .preemtive = true,\n    };\n    // A clean/never-held texture page does not prove that a GPU-written\n    // storage buffer is current in guest memory. Query each cache independently:\n    // never-owned pages remain lock-free, and no two cache locks are nested.\n    std::optional<VideoCore::RasterizerDownloadArea> texture_area;\n    if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n        ::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        texture_area = texture_cache.GetFlushArea(addr, size);\n    }\n    if (texture_area && !texture_area->preemtive) {\n        // The existing GPU sync flushes both cache domains.\n        return *texture_area;\n    }\n    if (!::Eden::BufferPages::NeverRegistered(addr, size)) {\n        ::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);\n        std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};\n        if (buffer_cache.IsRegionGpuModified(\n                clean_area.start_address, clean_area.end_address - clean_area.start_address)) {\n            // GPU::OnCPURead must not return early for buffer-only GPU writes.\n            // Keep any texture-covered extent, including its sibling bytes.\n            return VideoCore::RasterizerDownloadArea{\n                .start_address = texture_area\n                    ? (std::min)(texture_area->start_address, clean_area.start_address)\n                    : clean_area.start_address,\n                .end_address = texture_area\n                    ? (std::max)(texture_area->end_address, clean_area.end_address)\n                    : clean_area.end_address,\n                .preemtive = false,\n            };\n        }\n    }\n    return texture_area.value_or(clean_area);\n}\n"
+        assert source.count(newer) == 1, "Guest readback extent successor drift"
+        source = source.replace(newer, older, 1)
+        current = m07_source_blob(source)
+        assert current == "d8c093893b882175c46fb07c87193468da5f0f7a"
+    if current == "d8c093893b882175c46fb07c87193468da5f0f7a":
+        for newer, older in (("        // Indirect arguments are read, not overwritten. Preserve GPU dirty bytes.\n        const auto post_op = VideoCommon::ObtainBufferOperation::DoNothing;", "        const auto post_op = VideoCommon::ObtainBufferOperation::DiscardWrite;"), ("        buffer->MarkUsage(offset, 12);\n        scheduler.RequestOutsideRenderPassOperationContext();\n        // Lichii #1246: keep the input barrier in the dispatch command.", "        scheduler.RequestOutsideRenderPassOperationContext();\n        // Lichii #1246: keep the input barrier in the dispatch command.")):
+            assert source.count(newer) == 1, "Indirect dispatch ownership successor drift"
+            source = source.replace(newer, older, 1)
+        current = m07_source_blob(source)
+        assert current == "4a7ba88e47d686e3d277bee9df48f9b0d81a1248"
+    if current == "4a7ba88e47d686e3d277bee9df48f9b0d81a1248":
+        indirect_new = "        scheduler.RequestOutsideRenderPassOperationContext();\n        // Lichii #1246: keep the input barrier in the dispatch command. Vulkan\n        // ordering is unchanged, but one scheduler/worker command disappears.\n        scheduler.Record([pipeline, indirect_buffer = buffer->Handle(),\n                          indirect_offset = offset](vk::CommandBuffer cmdbuf) {\n            if (::Eden::DevVulkan::compute_barriers) {\n                cmdbuf.PipelineBarrier(vk::PIPELINE_STAGE_GRAPHICS_COMPUTE_TRANSFER,\n                                       VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT |\n                                           VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT,\n                                       0, COMPUTE_INPUT_BARRIER);\n            }\n            if (!pipeline->IsBound()) {\n                return;\n            }"
+        indirect_old = "        scheduler.RequestOutsideRenderPassOperationContext();\n        if (::Eden::DevVulkan::compute_barriers) {\n            scheduler.Record([](vk::CommandBuffer cmdbuf) {\n                cmdbuf.PipelineBarrier(vk::PIPELINE_STAGE_GRAPHICS_COMPUTE_TRANSFER,\n                                       VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT,\n                                       0, COMPUTE_INPUT_BARRIER);\n            });\n        }\n        scheduler.Record([pipeline, indirect_buffer = buffer->Handle(),\n                          indirect_offset = offset](vk::CommandBuffer cmdbuf) {\n            if (!pipeline->IsBound()) {\n                return;\n            }"
+        direct_new = "    static constexpr VkMemoryBarrier READ_BARRIER{\n        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,\n        .pNext = nullptr,\n        .srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,\n        .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,\n    };\n    // Lichii #1246: this barrier was a separate scheduler command although\n    // nothing records Vulkan work between it and the dispatch.\n    scheduler.Record([pipeline, dim](vk::CommandBuffer cmdbuf) {\n        cmdbuf.PipelineBarrier(vk::PIPELINE_STAGE_GRAPHICS_COMPUTE_TRANSFER,\n                               VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, READ_BARRIER);\n        if (!pipeline->IsBound()) {"
+        direct_old = "    static constexpr VkMemoryBarrier READ_BARRIER{\n        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,\n        .pNext = nullptr,\n        .srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,\n        .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,\n    };\n    scheduler.Record([](vk::CommandBuffer cmdbuf) { cmdbuf.PipelineBarrier(vk::PIPELINE_STAGE_GRAPHICS_COMPUTE_TRANSFER, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,\n                               0, READ_BARRIER); });\n    scheduler.Record([pipeline, dim](vk::CommandBuffer cmdbuf) {\n        if (!pipeline->IsBound()) {"
+        assert source.count(indirect_new) == source.count(direct_new) == 1, "Compute barrier folding successor drift"
+        source = source.replace(indirect_new, indirect_old, 1).replace(direct_new, direct_old, 1)
+        current = m07_source_blob(source)
+        assert current == "7049700a833c9e6cb239de8b01b5015dd7e3d163", ("Compute barrier folding predecessor drift", current)
+    if current == "7049700a833c9e6cb239de8b01b5015dd7e3d163":
+        newer = "void RasterizerVulkan::FlushCommands() {\n#ifdef PS5_NATIVE\n    // draw_counter measures graphics batching, not whether Vulkan work exists.\n    // DMA fills/copies and image transfers can record scheduler commands without\n    // any graphics draw. Conversely, a fence/explicit scheduler flush may have\n    // already submitted the current recording. Use the selected native\n    // scheduler's command epoch as the end-of-list authority.\n    draw_counter = 0;\n    if (!scheduler.RecordedSinceSubmit()) {\n        return;\n    }\n#else\n    if (draw_counter == 0) {\n        return;\n    }\n    draw_counter = 0;\n#endif\n    scheduler.Flush();\n}"
+        older = "void RasterizerVulkan::FlushCommands() {\n    if (draw_counter == 0) {\n        return;\n    }\n    draw_counter = 0;\n    scheduler.Flush();\n}"
+        assert source.count(newer) == 1, "DMA-only submit successor drift"
+        source = source.replace(newer, older, 1)
+        current = m07_source_blob(source)
+        assert current == "f79943f596b8a95cdcb05ce74a964a2141ae10ac", ("DMA-only submit predecessor drift", current)
+    if current != "f79943f596b8a95cdcb05ce74a964a2141ae10ac":
+        return source
+    newer = "#ifdef PS5_NATIVE\n    // FC27 uses a vertex-attribute texture handle on indexed triangle draws.\n    // OnCPUWrite is serialized by buffer_cache.mutex before guest memcpy, so\n    // this scan must stay under that lock. Reduce only repeated GMMU walks:\n    // prefetch a small, fully-mapped index span and decode sampled indices\n    // from it. Authenticated NS2 channels retain the original per-index path.\n    struct AttributeIndexBatch {\n        std::array<u8, 256> bytes{};\n        u32 first_position{};\n        u32 position_count{};\n        size_t index_width{};\n        bool valid{};\n    } index_batch;\n#endif\n    const auto read_index = [&](u32 position) {\n        const auto& indices = state.index_buffer;\n        const size_t index_width = indices.FormatSizeInBytes();\n        if (index_width == 0 || index_width > sizeof(u32)) return u32{};\n#ifdef PS5_NATIVE\n        if (!gpu_memory->UsesNativeTiling()) {\n            if (index_batch.valid && index_batch.index_width == index_width &&\n                position >= index_batch.first_position &&\n                position - index_batch.first_position < index_batch.position_count) {\n                u32 index{};\n                const size_t byte_offset =\n                    static_cast<size_t>(position - index_batch.first_position) * index_width;\n                std::memcpy(&index, index_batch.bytes.data() + byte_offset, index_width);\n                return index;\n            }\n            if (position < total) {\n                const size_t max_positions = index_batch.bytes.size() / index_width;\n                const u32 position_count =\n                    (std::min)(total - position, static_cast<u32>(max_positions));\n                const GPUVAddr offset = static_cast<GPUVAddr>(position) * index_width;\n                const GPUVAddr start = indices.IndexStart();\n                const GPUVAddr address = start + offset;\n                const size_t read_bytes = static_cast<size_t>(position_count) * index_width;\n                const bool address_ok =\n                    (position == 0 || offset / index_width == position) &&\n                    address >= start && read_bytes != 0 &&\n                    address <= ~GPUVAddr{0} - static_cast<GPUVAddr>(read_bytes);\n                if (position_count > 1 && address_ok &&\n                    gpu_memory->IsFullyMappedRange(address, read_bytes)) {\n                    gpu_memory->ReadBlockUnsafe(address, index_batch.bytes.data(), read_bytes);\n                    index_batch.first_position = position;\n                    index_batch.position_count = position_count;\n                    index_batch.index_width = index_width;\n                    index_batch.valid = true;\n                    u32 index{};\n                    std::memcpy(&index, index_batch.bytes.data(), index_width);\n                    return index;\n                }\n            }\n        }\n#endif\n        const GPUVAddr address = indices.IndexStart() +\n                                 static_cast<GPUVAddr>(position) * index_width;\n        u32 index{};\n        gpu_memory->ReadBlockUnsafe(address, &index, index_width);\n        return index;\n    };\n    const auto read_handle = [&](u32 position) {\n        const u32 vertex =\n            is_indexed ? static_cast<u32>(state.base_index + read_index(position))\n                       : state.vertex_buffer.first + position;"
+    older = "    const auto read_handle = [&](u32 position) {\n        u32 vertex{};\n        if (is_indexed) {\n            const auto& indices = state.index_buffer;\n            const size_t index_width = indices.FormatSizeInBytes();\n            if (index_width == 0 || index_width > sizeof(u32)) return u32{};\n            const GPUVAddr address = indices.IndexStart() +\n                                     static_cast<GPUVAddr>(position) * index_width;\n            u32 index{};\n            gpu_memory->ReadBlockUnsafe(address, &index, index_width);\n            vertex = static_cast<u32>(state.base_index + index);\n        } else {\n            vertex = state.vertex_buffer.first + position;\n        }"
+    assert source.count(newer) == 1
+    source = source.replace(newer, older, 1)
+    assert m07_source_blob(source) == "fcd174ed2326f3c205365b192c98f9d2f4d82ec3"
+    return source
+
+def reverse_collected_batch_preflight_successor(source):
+    if m07_source_blob(source) != "fcd174ed2326f3c205365b192c98f9d2f4d82ec3":
+        return source
+    newer = "    // One owner-witness pass for the complete collected batch, as in\n    // InnerInvalidation. Each witness is monotonic and fails closed; once both\n    // cache domains may overlap, no later range can change the lock decision.\n    bool may_claim_buffer = false;\n    bool may_touch_texture = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr == 0 || size == 0) continue;\n        if (!may_claim_buffer && !::Eden::BufferPages::NeverRegistered(addr, size))\n            may_claim_buffer = true;\n        if (!may_touch_texture && !::Eden::ImagePages::NeverHeld(addr, size))\n            may_touch_texture = true;\n        if (may_claim_buffer && may_touch_texture) break;\n    }\n    // GPU-collected write batches acquire each cache domain only once. Claim\n    // still precedes every BufferCache write/readback below.\n"
+    older = "    // Remove the complete CPU-write batch from GPU-owned ranges before any\n    // individual invalidation can download stale bytes over a later write.\n    // No registered buffer page in this CPU-write batch means no buffer can\n    // own GPU bytes to claim. Avoid the buffer mutex entirely in that case.\n    // NeverRegistered is monotonic and fails closed on unknown address spans.\n    bool may_claim_buffer = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr != 0 && size != 0 && !::Eden::BufferPages::NeverRegistered(addr, size)) {\n            may_claim_buffer = true;\n            break;\n        }\n    }\n    // The single-range invalidation callback takes the texture and buffer\n    // mutex once PER range. GPU-collected write batches often contain many\n    // pages; acquire each domain only once, as InnerInvalidation already\n    // does for the same texture -> buffer -> shader ordering. The prior\n    // ClaimCpuWrites still precedes every possible GPU sibling readback.\n    bool may_touch_texture = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr != 0 && size != 0 && !::Eden::ImagePages::NeverHeld(addr, size)) {\n            may_touch_texture = true;\n            break;\n        }\n    }\n"
+    assert source.count(newer) == 1
+    source = source.replace(newer, older, 1)
+    assert m07_source_blob(source) == "e4948333ed15fba8024aeb4ffaa143a2e010f991"
+    return source
+
+def reverse_collected_batch_lock_successor(source):
+    if m07_source_blob(source) != "e4948333ed15fba8024aeb4ffaa143a2e010f991":
+        return source
+    newer = "    if (may_claim_buffer) {\n        // Lichii 5e428570 / f5edeab: claim and apply the complete buffer batch\n        // under ONE acquisition. Texture state was handled above and is independent.\n        // Claim must precede BufferCache::WriteMemory so a sibling GPU download\n        // cannot overwrite a later CPU write from this same collected batch.\n        std::scoped_lock lock{buffer_cache.mutex};\n        buffer_cache.ClaimCpuWrites(ranges);\n        for (const auto& [addr, size] : ranges) {\n"
+    older = "    if (may_claim_buffer) {\n        std::scoped_lock lock{buffer_cache.mutex};\n        for (const auto& [addr, size] : ranges) {\n"
+    marker = "    // The single-range invalidation callback takes the texture and buffer\n"
+    first = "    if (may_claim_buffer) {\n        std::scoped_lock lock{buffer_cache.mutex};\n        buffer_cache.ClaimCpuWrites(ranges);\n    }\n\n"
+    assert source.count(newer) == source.count(marker) == 1
+    source = source.replace(newer, older, 1).replace(marker, first + marker, 1)
+    assert m07_source_blob(source) == "e5baa7f438d8caf11327989087db38ed1ca053a4"
+    return source
+
 # R457 MSAA fallback is later than the frozen R23/M07 source receipt.
 # Verify both full blobs and undo only the reviewed owner hunk in memory.
 # Keep the original source checks below; never modify the selected vendor.
 m07_selected_sha = m07_source_blob(original_m07)
+original_m07 = reverse_attribute_index_batch_successor(original_m07)
+original_m07 = reverse_collected_batch_preflight_successor(original_m07)
+original_m07 = reverse_collected_batch_lock_successor(original_m07)
+m07_selected_sha = m07_source_blob(original_m07)
+if m07_selected_sha == "e5baa7f438d8caf11327989087db38ed1ca053a4":
+    strict_completion = "#ifdef PS5_NATIVE\nbool RasterizerVulkan::SignalNativeSyncPoint(u32 value) {\n    fence_manager.SignalNativeSyncPoint(value);\n    return true;\n}\n#endif\n\n"
+    assert original_m07.count(strict_completion) == 1
+    original_m07 = original_m07.replace(strict_completion, "", 1)
+    m07_selected_sha = m07_source_blob(original_m07)
+    assert m07_selected_sha == "f67815618d25657dcf64a87944b0c0bc5c2d8993"
 if m07_selected_sha == "f67815618d25657dcf64a87944b0c0bc5c2d8993":
     # The merged native rasterizer has two independently qualified successors.
     # The vendor's source witness proves GuestCacheLock and all 16 integrated
@@ -1023,33 +1094,80 @@ endif()
             assert maintained.count(native_span_guard) == 1, (
                 "PS5 early audio GetSpan null-table guard missing or duplicated", owner)
             baseline = baseline.replace(native_span_old, native_span_guard)
-        # PR #53 adds a PS5-only precommit hook to the two real native
-        # memory owners. Remove ONLY that exact gated addition when checking
-        # immutable G13/M12 history, then independently assert its placement
-        # before MapPages. The unrelated historical paths retain parity.
+        # The PS5 NS2 demand-zero path has three reviewed sparse guards:
+        # admission before PTE publication, the native declaration, and
+        # ZeroBlock's no-op-zero bypass. Reverse only their exact source
+        # regions to compare against immutable G13/M12 history; retain the
+        # real production checks independently.
         if owner.startswith("eden-core/src/core/memory_native_"):
             marker = "#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)"
-            if marker in maintained:
-                declaration = (
-                    "#include <new>\n"
-                )
-                assert maintained.count(marker) == 2, ("sparse gate count", owner)
-                assert maintained.count('extern "C" bool EdenNs2CommitGuestBacking(') == 1
-                call_start = marker + "\n        // The guest PTE contains a direct pointer into HostMemory."
-                point = maintained.index(call_start)
-                call_end = maintained.index("#endif\n", point) + len("#endif\n")
-                before_map = maintained.index("        MapPages(page_table", point)
-                assert call_end <= before_map, ("sparse admission after PTE", owner)
-                decl_start = maintained.index(marker)
-                decl_end = maintained.index("#endif\n", decl_start) + len("#endif\n")
-                assert decl_end < point
-                reviewed = maintained[:point] + maintained[call_end:]
-                # The production declaration adds one blank separator after
-                # #endif. Remove it too, preserving exact historical parity.
-                assert reviewed[decl_end:decl_end+1] == "\n", owner
-                reviewed = reviewed[:decl_start] + reviewed[decl_end+1:]
-                reviewed = reviewed.replace("#include <new>\n", "", 1)
-                maintained = reviewed
+            assert maintained.count(marker) == 3, ("NS2 sparse guard locations", owner)
+            assert maintained.count('extern "C" bool EdenNs2EnsureGuestBackingReadable(') == 1
+            assert 'EdenNs2CommitGuestBacking(' not in maintained
+            call_start = marker + "\n        // PTE publication only needs readable backing."
+            point = maintained.index(call_start)
+            call_end = maintained.index("#endif\n", point) + len("#endif\n")
+            before_map = maintained.index("        MapPages(page_table", point)
+            assert call_end <= before_map, ("sparse admission after PTE", owner)
+            admission = maintained[point:call_end]
+            assert 'EdenNs2EnsureGuestBackingReadable(' in admission
+            assert 'throw std::bad_alloc{};' in admission
+            assert admission.index('EdenNs2EnsureGuestBackingReadable(') < admission.index(
+                'throw std::bad_alloc{};')
+            # A zero-fill of genuinely unowned NS2 backing must not promote
+            # the whole 2 MiB granule. Non-direct aliases still use memset.
+            zero_start = maintained.index(
+                marker + "\n            // A normal guest-memory ZERO page")
+            zero_end = maintained.index("#endif\n", zero_start) + len("#endif\n")
+            zero_owner = maintained.index("    bool ZeroBlock(", before_map)
+            zero_memset = maintained.index(
+                "            std::memset(ptr, 0, copy_amount);", zero_start)
+            assert zero_owner < zero_start < zero_end == zero_memset, owner
+            zero_guard = maintained[zero_start:zero_end]
+            for witness in (
+                'either NS1 or NS2',
+                'IsDirectBackingAlias(reinterpret_cast<std::uintptr_t>(ptr), copy_amount)',
+                'buffer.ClearBackingRegion(',
+                'return;',
+            ):
+                assert witness in zero_guard, ("PS5 guest zero-owner safety guard", owner, witness)
+            assert 'GetIntendedMemorySize() ==' not in zero_guard, owner
+            assert '(12ull << 30)' not in zero_guard, owner
+            alias_start = maintained.index(
+                "#ifdef PS5_NATIVE\n    // Delta-zero page pointers")
+            alias_end = maintained.index("#endif\n\n", alias_start) + len("#endif\n\n")
+            alias_method = maintained[alias_start:alias_end]
+            for witness in (
+                'IsDirectBackingAlias(u64 address, std::size_t bytes) const',
+                'base != 0 && address >= base && bytes <= capacity',
+                'address - base <= capacity - bytes',
+            ):
+                assert witness in alias_method, ("direct alias bounds guard", owner, witness)
+            assert maintained.count("IsDirectBackingAlias(") == 5, owner
+            decl_start = maintained.index(marker)
+            decl_end = maintained.index("#endif\n", decl_start) + len("#endif\n")
+            assert decl_end < alias_start < point < zero_start, owner
+            reviewed = maintained[:zero_start] + maintained[zero_end:]
+            # 648989 changed this one direct ZeroBlock lambda from [=] to [&]
+            # only so the sparse path can reach system.DeviceMemory().
+            zero_lambda = (
+                "        [&](const std::size_t offset, const std::size_t copy_amount, u8* const ptr) {\n"
+                "            std::memset(ptr, 0, copy_amount);"
+            )
+            historical_zero_lambda = (
+                "        [=](const std::size_t offset, const std::size_t copy_amount, u8* const ptr) {\n"
+                "            std::memset(ptr, 0, copy_amount);"
+            )
+            assert reviewed.count(zero_lambda) == 1, owner
+            reviewed = reviewed.replace(zero_lambda, historical_zero_lambda, 1)
+            reviewed = reviewed[:point] + reviewed[call_end:]
+            # The direct-alias helper and its three historical call sites
+            # already belong to the G13 baseline: keep them for parity.
+            # Remove only the standalone NS2-gated declaration and separator.
+            assert reviewed[decl_end:decl_end+1] == "\n", owner
+            reviewed = reviewed[:decl_start] + reviewed[decl_end+1:]
+            assert reviewed.count("#include <new>\n") == 1, owner
+            maintained = reviewed.replace("#include <new>\n", "", 1)
         # C00/R457 adds exactly one reviewed, native-only readiness method
         # to BOTH selected memory backends. Reverse just this fixed addition
         # for the historical G13/M12 parity check; all older bytes remain

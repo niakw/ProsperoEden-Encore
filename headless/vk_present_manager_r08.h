@@ -31,6 +31,8 @@ struct Frame {
     u32 width;
     u32 height;
     u32 index;
+    VkFormat image_format{VK_FORMAT_UNDEFINED};
+    VkFormat image_view_format{VK_FORMAT_UNDEFINED};
     vk::Image image;
     vk::ImageView image_view;
     vk::ImageView storage_view;
@@ -38,6 +40,8 @@ struct Frame {
     vk::CommandBuffer cmdbuf;
     vk::Semaphore render_ready;
     vk::Fence present_done;
+    /// One real present plus any synthetic presents produced from the same guest frame.
+    u32 game_frame_presents{1};
 };
 
 class PresentManager {
@@ -50,6 +54,8 @@ public:
                    Swapchain& swapchain,
                    vk::SurfaceKHR& surface);
     ~PresentManager();
+    // Renderer calls this after the final scheduler callback has stopped.
+    void StopForShutdown();
 
     /// Returns the last used presentation frame
     Frame* GetRenderFrame();
@@ -65,6 +71,8 @@ public:
         // instead of stalling the real game or missing a usable resource.
         for (auto it = free_queue.begin(); it != free_queue.end(); ++it) {
             Frame* frame = *it;
+            if (frame->image_format != SwapchainImageFormat() ||
+                frame->image_view_format != SwapchainImageViewFormat()) continue;
             if (frame->present_done.GetStatus() != VK_SUCCESS) continue;
             free_queue.erase(it);
             return frame;

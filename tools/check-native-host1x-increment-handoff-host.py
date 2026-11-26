@@ -117,14 +117,19 @@ int main(){
   running_cancel.get();
   assert(cancelled==0);
 
-  // Guest mirror must observe the pre-increment value while publishing next.
-  std::atomic<u32> mirrored{},observed{};
-  m.SetGuestMirror([&](u32 id,u32 value){
-    assert(id==3); mirrored=value; observed=m.GetGuestSyncpointValue(id);
+  // Legacy guest progress is immediate, but NS2 native completion is
+  // mirrored only on host retirement, before publishing the wide counter.
+  std::atomic<u64> mirrored{},observed{};
+  m.SetGuestMirror([&](u32 id,u64 value){
+    assert(id==3); mirrored=value; observed=m.GetNativeGuestSyncpointValue(id);
   });
   m.IncrementGuest(3);
-  assert(mirrored==1 && observed==0 && m.GetGuestSyncpointValue(3)==1);
-  m.WithGuestValuesStable([&]{assert(m.GetGuestSyncpointValue(3)==1);});
+  assert(mirrored==0 && m.GetGuestSyncpointValue(3)==1 &&
+         m.GetNativeGuestSyncpointValue(3)==0);
+  m.IncrementHost(3);
+  assert(mirrored==1 && observed==0 && m.GetHostSyncpointValue(3)==1 &&
+         m.GetNativeGuestSyncpointValue(3)==1);
+  m.WithGuestValuesStable([&]{assert(m.GetNativeGuestSyncpointValue(3)==1);});
   m.SetGuestMirror({});
 
   std::atomic<unsigned> stress{};

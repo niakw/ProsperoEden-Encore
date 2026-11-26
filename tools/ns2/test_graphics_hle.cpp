@@ -68,6 +68,18 @@ int main(){
     require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
             N::NativeKernelChannelSetupStatus::Unsupported,
             "NVGPU refuses unmapped GPFIFO offset");
+    // Real libounce Syncpt bootstrap: capacity query 1 then configure 21.
+    for (u32 slots : {1u, 16u, P::SyncptAdvertisedSlots}) {
+        const std::array<u32,3> packet{16+21,1,slots};
+        require(P::DecodeSyncptSlotCount(packet)==slots,
+                "Syncpt 21 admits bounded configured slot count");
+    }
+    for (const auto packet : {std::array<u32,3>{16+21,1,0},
+                              std::array<u32,3>{16+21,1,P::SyncptAdvertisedSlots+1},
+                              std::array<u32,3>{16+21,0,1},
+                              std::array<u32,3>{16+22,1,1}}) {
+        require(!P::DecodeSyncptSlotCount(packet), "reject invalid Syncpt slot configuration");
+    }
     // Execute the selected NS2 GSV GraphicsFrame TIPC decoders, not merely
     // source-grep receipts. Unknown policy values must fail closed.
     const std::array<u32, 2> graphicsFrameCreate{16 + 1101, 0};
@@ -669,6 +681,40 @@ int main(){
             "graphics supervisor requires ordered bootstrap phases");
     require(state.Complete(completeBootstrap)==GS::Status::InvalidState,
             "duplicate graphics supervisor completion rejected");
+    // Console 24 Nov: 4 -> 11 -> 101 -> 1501 produced kernel NotImplemented
+    // and aborted MKW/Bananza/Pokopia before the first guest GPU submission.
+    // libounce's full root sequence 4/11/101/126/[120]/1501/1502.
+    // Mode 0 must have exactly one output word and skips mode-1 setup.
+    const std::array<GP::U32,2> queryMode{16+126,0};
+    GP::U32 mode=0xffffffffu;
+    GS::State modeUnbooted{0xabc};
+    require(modeUnbooted.QuerySessionMode(queryMode,mode)==GS::Status::InvalidState &&
+            mode==0xffffffffu, "mode query requires completed bootstrap");
+    auto badMode=queryMode;
+    badMode[1]=1;
+    require(state.QuerySessionMode(badMode,mode)==GS::Status::InvalidPacket &&
+            mode==0xffffffffu, "malformed mode query has no output");
+    require(state.QuerySessionMode(queryMode,mode)==GS::Status::Success &&
+            mode==0, "root mode 0 skips unsupported mode-1 command 120");
+    const std::array<GP::U32,2> createInter{16+1501,0};
+    const std::array<GP::U32,2> initInter{16+1502,0};
+    GS::State unbootedInter{0xabc};
+    require(unbootedInter.InitializeInterModuleImageContext(createInter,1501)==GS::Status::InvalidState,
+            "inter-module context cannot bypass authenticated bootstrap");
+    require(state.InitializeInterModuleImageContext(initInter,1502)==GS::Status::InvalidState,
+            "1502 cannot precede 1501");
+    auto malformedInter=createInter;
+    malformedInter[1]=1;
+    require(state.InitializeInterModuleImageContext(malformedInter,1501)==GS::Status::InvalidPacket,
+            "reject unexpected payload without advancing context");
+    require(state.InitializeInterModuleImageContext(createInter,1501)==GS::Status::Success &&
+            !state.InterModuleImageReady() &&
+            state.InitializeInterModuleImageContext(createInter,1501)==GS::Status::InvalidState &&
+            state.InitializeInterModuleImageContext(initInter,1502)==GS::Status::Success &&
+            state.InterModuleImageReady() &&
+            state.InitializeInterModuleImageContext(initInter,1502)==GS::Status::InvalidState,
+            "1501/1502 create and initialize session context before any real GPU object");
+    require(!state.GpuContextReady(), "inter-module context does not create a GPU context");
     require(state.InitializeGpuContext(activateGpu,402)==GS::Status::InvalidState &&
             !state.GpuContextReady(),
             "activate GPU context cannot precede initialization");
@@ -1342,6 +1388,33 @@ int main(){
             !images.Destroy(*first_image) && images.Count() == 1 &&
             images.Destroy(*second_image) && images.Records().empty(),
             "GSV 430 rejects stale images and retires independent references");
+
+    // 429 count=3 must publish base+i and actual per-image offsets.
+    // This is not three aliases of the same first image.
+    NativeImageLedger multi_images;
+    const auto multi_requirements = CalculateNativeImageRequirements(preferences, 3);
+    require(multi_requirements && multi_requirements->size == 98304,
+            "GSV 429 calculates full three-image backing");
+    require(!multi_images.Create(16, 98303, *multi_requirements, preferences, 8, 3) &&
+            !multi_images.Create(16, 98304, *multi_requirements, preferences, 0xffffffffU, 3) &&
+            !multi_images.Create(16, 98304, *multi_requirements, preferences, 8, 0) &&
+            multi_images.Count() == 0,
+            "GSV 429 refuses invalid pool without partial handles");
+    const auto multi = multi_images.Create(16, 98304, *multi_requirements, preferences, 8, 3);
+    require(multi && *multi == 8 && multi_images.Count() == 3 &&
+            multi_images.Get(8)->offset == 0 &&
+            multi_images.Get(9)->offset == 32768 &&
+            multi_images.Get(10)->offset == 65536 &&
+            multi_images.Get(10)->size == 32768 &&
+            !multi_images.Get(11) &&
+            multi_images.ConfigureWindowPool(8, 3, true) &&
+            multi_images.Get(10)->window_pool &&
+            multi_images.ConfigureWindowPool(8, 0, false) &&
+            multi_images.Destroy(8) && multi_images.Destroy(9) &&
+            multi_images.Destroy(10) && multi_images.Count() == 0,
+            "GSV 429/315/314/430 admit and retire consecutive independently backed image views");
+    const auto next_image = multi_images.Create(16, 98304, *multi_requirements, preferences, 0, 3);
+    require(next_image && *next_image == 11, "GSV 429 never reuses retired image IDs");
 
     // Native video pools (911) are distinct from 429 native image handles.
     // Both kinds must reject foreign backing before any GPU VA allocation.

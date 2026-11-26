@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include <exception>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -33,6 +34,7 @@
 #include "prosperoeden/pe/platform/display_egl.hpp"
 #include "display_refresh.h"
 #include "frame_metrics.h"
+#include "gpu_failure.h"
 #include "fsr3_optical_session.h"
 #include "hud.h"
 #include "loading_artwork_transfer.hpp"
@@ -122,16 +124,38 @@ vk::SurfaceKHR CreateHandoffSurface(
     const vk::Instance& instance,
     const Core::Frontend::EmuWindow::WindowSystemInfo& window_info) {
 #ifdef PS5_NATIVE
-    if (pe::ps5::Display::has_deferred_scanout()) {
-        // Keep the final OpenGL loading frame visible through System::Load
-        // and Vulkan instance creation. Release VideoOut only at the exact
-        // WSI takeover boundary; never run two scanout owners concurrently.
+    if (pe::ps5::Display::has_deferred_scanout() &&
+        Eden::Display::requested_hz.load(std::memory_order_relaxed) >= 120) {
+        // 119.88 Hz must be qualified by VideoOut while display modes are
+        // enumerated. Keep the established early takeover for that case.
         if (!pe::ps5::Display::close_deferred_scanout())
-            throw std::runtime_error{"Could not release launcher VideoOut before Vulkan surface creation"};
-        std::fprintf(stderr, "EDEN_GL_VK_SCANOUT_HANDOFF release=1 boundary=create_surface\n");
+            throw std::runtime_error{"Could not release launcher VideoOut before 120 Hz surface qualification"};
+        std::fprintf(stderr,
+                     "EDEN_GL_VK_SCANOUT_HANDOFF release=1 boundary=create_surface reason=120hz\n");
+    } else if (pe::ps5::Display::has_deferred_scanout()) {
+        // The maintained WSI reports the fixed 59.94 Hz mode without opening
+        // VideoOut. Keep EGL presenting through surface + logical-device setup.
+        std::fprintf(stderr,
+                     "EDEN_GL_VK_SCANOUT_HANDOFF retained=1 boundary=pre_swapchain\n");
     }
 #endif
     return CreateSurface(instance, window_info);
+}
+
+VkSurfaceKHR PrepareHandoffSwapchain(vk::SurfaceKHR& surface) {
+#ifdef PS5_NATIVE
+    if (pe::ps5::Display::has_deferred_scanout()) {
+        // The 60 Hz WSI takes VideoOut in swapchain creation, not mode
+        // enumeration. Stop/join EGL immediately before that exact owner
+        // boundary: never overlap two scanout owners, while avoiding the
+        // former device/allocator/scheduler-sized black interval.
+        if (!pe::ps5::Display::close_deferred_scanout())
+            throw std::runtime_error{"Could not release launcher VideoOut before Vulkan swapchain creation"};
+        std::fprintf(stderr,
+                     "EDEN_GL_VK_SCANOUT_HANDOFF release=1 boundary=create_swapchain reason=60hz\n");
+    }
+#endif
+    return *surface;
 }
 
 } // Anonymous namespace
@@ -174,7 +198,8 @@ try
     , memory_allocator((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=device_ready\n"), device))
     , state_tracker()
     , scheduler((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=allocator_ready\n"), device), state_tracker)
-    , swapchain((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=swapchain_begin\n"), *surface),
+    , swapchain((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=swapchain_begin\n"),
+                 PrepareHandoffSwapchain(surface)),
                 device,
                 scheduler,
                render_window.GetFramebufferLayout().width,
@@ -220,19 +245,49 @@ try
     std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=loading_present_returned\n");
     Report();
 } catch (const vk::Exception& exception) {
+#ifdef PS5_NATIVE
+    // A failure before PrepareHandoffSwapchain must not strand the retained
+    // launcher EGL owner and its presenter thread.
+    if (pe::ps5::Display::has_deferred_scanout())
+        (void)pe::ps5::Display::close_deferred_scanout();
+#endif
     LOG_ERROR(Render_Vulkan, "Vulkan initialization failed with error: {}", exception.what());
     throw std::runtime_error{fmt::format("Vulkan initialization error {}", exception.what())};
 }
 
 RendererVulkan::~RendererVulkan() {
-    scheduler.RegisterOnSubmit([] {});
-    // Drain the scheduler's deferred recording worker BEFORE retiring
-    // the private images, then wait for Vulkan completion in Destroy().
-    // This runs only at renderer shutdown, never in the frame loop.
-    scheduler.Finish();
+    try {
+        scheduler.RegisterOnSubmit([] {});
+        // Normal path drains real work before stopping host queue producers.
+        scheduler.WaitWorker();
+        scheduler.Finish();
+        present_manager.WaitPresent();
+    } catch (...) {
+        ::Eden::RecordGpuFailure(std::current_exception());
+    }
+
+    // Guest execution has stopped. Fence callbacks may use the scheduler,
+    // so join that producer first; join the scheduler before the presenter
+    // so no late callback can enqueue another frame.
+    rasterizer.StopFenceWorkerForShutdown();
+    scheduler.StopForShutdown();
+    present_manager.StopForShutdown();
+
+    // Vulkan Lost Device: VK_ERROR_DEVICE_LOST is equivalent to VK_SUCCESS
+    // ONLY for resource-in-use/pending-state determination, never guest
+    // completion. All queue producers are joined before this call.
+    const VkResult retired = device.GetLogical().WaitIdle();
+    if (retired != VK_SUCCESS) {
+        try { vk::Check(retired); }
+        catch (...) { ::Eden::RecordGpuFailure(std::current_exception()); }
+    }
+    if (retired != VK_SUCCESS && retired != VK_ERROR_DEVICE_LOST) {
+        // No retirement proof: releasing potentially live GPU objects is unsafe.
+        std::terminate();
+    }
+    scheduler.ConfirmDeviceRetiredForShutdown(retired);
     mihawk_native.reset();
     fsr3_optical.reset();
-    void(device.GetLogical().WaitIdle());
 }
 
 void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebuffers) {
@@ -251,10 +306,12 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     // Retire only after the final loading copy's exact scheduler tick is
     // complete. No WaitIdle / Finish in normal gameplay; otherwise retain
     // the allocation through the existing drained renderer destruction.
-    if (!framebuffers.empty() && loading_artwork_buffer && loading_artwork_tick &&
+    if (!framebuffers.empty() && loading_artwork_tick &&
         loading_artwork_tick != std::numeric_limits<u64>::max() &&
         scheduler.IsFree(loading_artwork_tick)) {
         loading_artwork_buffer = {};
+        blit_swapchain.RetireLoadingArtwork();
+        Eden::LaunchHandoff::Clear();
         loading_artwork_unavailable = true;
         loading_artwork_tick = 0;
     }
@@ -289,14 +346,19 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
 #ifdef HAS_LSFG
     // User-selected LSFG only. Do not mix a legacy generator with MihawkGen
     // or turn frame generation on merely because HAS_LSFG was compiled in.
-    if (Eden::Display::frame_generation_method.load(std::memory_order_relaxed) == 3) {
+    // Use the same per-composite selection as the native generators and HUD.
+    // A menu change during this composite must not select two generators.
+    if (native_fg_method == 3) {
     void(frame_gen.WantedGenerations(present_manager.MaxExtraFrames()));
 
     frame_gen.Process(device, frame, present_manager.SwapchainImageFormat(), GuestExtent(framebuffers));
 
     const size_t generated_frames = frame_gen.GeneratedFrameCount();
+    const u32 lsfg_game_frame_presents = static_cast<u32>(generated_frames) + 1;
+    frame->game_frame_presents = lsfg_game_frame_presents;
     for (size_t generation = 0; generation < generated_frames; ++generation) {
         Frame* generated = present_manager.GetRenderFrame();
+        generated->game_frame_presents = lsfg_game_frame_presents;
         blit_swapchain.PrepareFrame(device, generated, render_window.GetFramebufferLayout());
         frame_gen.GenerateInto(device, generated, generation);
         // LSFG's shader output is in GENERAL. Native UI is post-composited
@@ -304,6 +366,8 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
         blit_swapchain.DrawHudOverlay(device, generated, postprocess_hud);
         scheduler.Flush(*generated->render_ready);
         present_manager.Present(generated);
+        // Publish the return-to-pool callback before another frame acquisition.
+        scheduler.DispatchWork();
         ::Eden::FrameMetrics::OnGeneratedQueued();
     }
     }
@@ -606,6 +670,17 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
         mihawk_previous_source_ns = 0;
     }
 
+    // Native generated frames and their source frame share one pacing slot.
+    // Exactly one native generator can own a synthetic frame in a session.
+    if (native_fg_method != 3) {
+        const u32 native_game_frame_presents = (r08_generated || fsr3_generated) ? 2U : 1U;
+        frame->game_frame_presents = native_game_frame_presents;
+        if (r08_generated && r08_synthetic)
+            r08_synthetic->game_frame_presents = native_game_frame_presents;
+        if (fsr3_generated && fsr3_synthetic)
+            fsr3_synthetic->game_frame_presents = native_game_frame_presents;
+    }
+
     // If generated, submit and queue the midpoint FIRST. The original real
     // frame is flushed and queued next. Both use existing PresentManager FIFO.
     if (r08_generated) {
@@ -691,7 +766,10 @@ void RendererVulkan::PresentLoading() {
     trace("loading_frame_blit_ready");
 #ifdef PS5_NATIVE
     const VkFormat format = present_manager.SwapchainImageViewFormat();
-    if (!loading_artwork_buffer && !loading_artwork_unavailable &&
+    const bool animated_artwork = !loading_artwork_buffer &&
+        !loading_artwork_unavailable &&
+        blit_swapchain.DrawLoadingArtwork(device, frame, format);
+    if (!animated_artwork && !loading_artwork_buffer && !loading_artwork_unavailable &&
         frame->width && frame->height && frame->width <= 4096 && frame->height <= 2160) {
         const auto artwork = Eden::LaunchHandoff::Peek();
         const bool bgra = format == VK_FORMAT_B8G8R8A8_UNORM ||
@@ -744,10 +822,10 @@ void RendererVulkan::PresentLoading() {
                         static_cast<u32>(format));
         }
     }
-    const bool has_artwork = loading_artwork_buffer &&
+    const bool has_artwork = animated_artwork || (loading_artwork_buffer &&
         loading_artwork_width == frame->width && loading_artwork_height == frame->height &&
-        loading_artwork_format == format;
-    if (has_artwork) {
+        loading_artwork_format == format);
+    if (!animated_artwork && has_artwork) {
         const VkImage target = *frame->image;
         const VkBuffer upload = *loading_artwork_buffer;
         const VkBufferImageCopy copy{
@@ -824,6 +902,9 @@ void RendererVulkan::PresentLoading() {
 #endif
     trace("loading_flush_returned");
     present_manager.Present(frame);
+    // Flush submitted the render work, but Present records a new callback.
+    // Do not leave it waiting for guest execution or the next loading draw.
+    scheduler.DispatchWork();
     trace("loading_present_queued");
     ::Eden::FrameMetrics::OnLoadingQueued();
 }

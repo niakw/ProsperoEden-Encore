@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdio>
 #include <cstring>
 #include <deque>
 #include <functional>
@@ -193,18 +194,22 @@ void Archive::Parse() {
     const auto head = ReadChunk(source_, 0, 0x80);
     Check(head[0] == 'N' && head[1] == 'U' && head[2] == 'P' && head[3] == 1,
           "wrong NUP magic/version");
-    Check(ReadLe<std::uint16_t>(head, 4) == 0x80 &&
+    const auto header_size = ReadLe<std::uint16_t>(head, 4);
+    Check(header_size >= 0x80 && header_size <= source_.Size() &&
           ReadLe<std::uint16_t>(head, 6) == 1, "unsupported NUP header");
     const auto toc_at = ReadLe<std::uint64_t>(head, 8);
     const auto toc_size = ReadLe<std::uint64_t>(head, 0x10);
     const auto blob_at = ReadLe<std::uint64_t>(head, 0x38);
     const auto file_size = ReadLe<std::uint64_t>(head, 0x40);
     const auto count = ReadLe<std::uint32_t>(head, 0x48);
-    Check(toc_at == 0x80 && toc_size > 0 && toc_size <= MaxToc && toc_size % 16 == 0,
-          "invalid TOC dimensions");
-    Check(file_size == source_.Size() && toc_at + toc_size <= file_size &&
-          blob_at >= toc_at + toc_size && blob_at <= file_size && blob_at % 16 == 0,
-          "invalid NUP blob bounds");
+    // Lichii supports padded/extended NUP v1 headers. Do not impose the
+    // writer's exact 0x80 TOC offset or 16-byte TOC size on other valid
+    // archives; all bounds, the TOC SHA-256 and content UUID stay mandatory.
+    Check(file_size == source_.Size() && toc_at >= header_size &&
+          toc_at <= file_size && toc_size > 0 && toc_size <= MaxToc &&
+          toc_size <= file_size - toc_at, "invalid TOC dimensions");
+    Check(blob_at >= toc_at && toc_size <= blob_at - toc_at &&
+          blob_at <= file_size && blob_at % 16 == 0, "invalid NUP blob bounds");
     Check(count > 0 && count <= 65536 && ReadLe<std::uint32_t>(head, 0x4C) == 0 &&
           AllZero(std::span<const std::uint8_t>(head).subspan(0x60, 0x20)),
           "unsupported superblock fields");
@@ -369,9 +374,56 @@ void Archive::Parse() {
         std::set<std::string> localized_icon_tags;
         if (!meta_size) Check(meta_at == 0, "zero metadata with nonzero address");
         else {
-            Check(meta_size <= MaxMeta && meta_at >= blob_at &&
-                  meta_at <= file_size && meta_size <= file_size - meta_at,
-                  "metadata exceeds file");
+            // Some verified NUP v1 packers place OPTIONAL package metadata
+            // in the padding between the TOC and the payload blob (Lichii's
+            // writer explicitly supports this layout). Do not reject that
+            // non-overlapping gap merely because it is before blob_at.
+            // Payloads and TOC hashes remain mandatory; metadata overlapping
+            // the TOC, payloads or other metadata is still rejected.
+            const bool metadata_inside_file =
+                meta_size <= MaxMeta && meta_at <= file_size &&
+                meta_size <= file_size - meta_at;
+            const bool metadata_in_toc_gap =
+                meta_at >= toc_at + toc_size && meta_at < blob_at &&
+                meta_size <= blob_at - meta_at;
+            const bool metadata_after_blob = meta_at >= blob_at;
+            const bool metadata_bounded =
+                metadata_inside_file && (metadata_in_toc_gap || metadata_after_blob);
+            if (!metadata_bounded) {
+                // The metadata region is optional; upstream Lichii nx2 and
+                // EglantinePS5 discard an absent/out-of-file advertisement
+                // instead of rejecting the otherwise authenticated payload.
+                // Never dereference or read an invalid metadata range.
+                const bool optional_metadata_outside_file =
+                    meta_at == 0 || meta_at > file_size ||
+                    meta_size > file_size - meta_at;
+                if (optional_metadata_outside_file) {
+                    const char* reason = meta_at == 0 ? "missing_offset" :
+                        meta_at > file_size ? "offset_outside_file" : "range_outside_file";
+                    std::fprintf(stderr,
+                        "EDEN_NUP_OPTIONAL_METADATA_SKIPPED package=%u reason=%s offset=%llu size=%u declared_file=%llu\n",
+                        static_cast<unsigned>(i), reason,
+                        static_cast<unsigned long long>(meta_at),
+                        static_cast<unsigned>(meta_size),
+                        static_cast<unsigned long long>(file_size));
+                } else {
+                    // In-file metadata whose extent overlaps the TOC/blob
+                    // boundary or exceeds our bounded parser is not optional
+                    // to validate: do not read a disguised payload/TOC alias.
+                    const char* reason = meta_size > MaxMeta ? "size_limit" :
+                        meta_at < toc_at + toc_size ? "overlaps_toc_or_header" :
+                        meta_at < blob_at ? "gap_crosses_blob" : "invalid_extent";
+                    std::fprintf(stderr,
+                        "EDEN_NUP_METADATA_BOUNDS_REJECT package=%u reason=%s offset=%llu size=%u blob_at=%llu declared_file=%llu\n",
+                        static_cast<unsigned>(i), reason,
+                        static_cast<unsigned long long>(meta_at),
+                        static_cast<unsigned>(meta_size),
+                        static_cast<unsigned long long>(blob_at),
+                        static_cast<unsigned long long>(file_size));
+                    Check(false, "metadata exceeds file");
+                }
+            }
+            if (metadata_bounded) {
             metadata_regions.emplace_back(meta_at, meta_at + meta_size);
             const auto meta = ReadChunk(source_, meta_at, meta_size);
             std::size_t pos = 0;
@@ -453,6 +505,7 @@ void Archive::Parse() {
                 }
                 pos += 8 + length;
             }
+            }
         }
         package_metadata_.push_back(std::move(package_meta));
 
@@ -493,17 +546,31 @@ void Archive::Parse() {
         Check(update_versions.insert(p.version).second,
               "duplicate update version");
     }
-    // NUP is a single application's base/update bundle. A malicious update
-    // claiming an unrelated base title must never shadow that game's ExeFS
-    // or RomFS simply because its NCM version is larger. This is the same
-    // title-base mask used by the common FileSys::GetBaseTitleID API.
+    // NUP holds one application family. Lichii also supports Switch 2
+    // Edition updates (04... IDs) paired with the exact Switch 1 application
+    // base (01... ID). Permit only the matching low 56-bit title family and
+    // only when an actual NS1 base package exists; never accept unrelated
+    // updates, including an arbitrary second NS2 application.
     constexpr std::uint64_t BaseTitleMask = 0xFFFFFFFFFFFFE000ULL;
+    constexpr std::uint64_t PlatformMask = 0xFF00000000000000ULL;
+    constexpr std::uint64_t LowTitleMask = ~PlatformMask;
+    std::optional<std::uint64_t> ns1_application_base;
+    for (const auto& p : packages_) {
+        if (p.kind == 0 && (p.title_id & PlatformMask) == 0x0100000000000000ULL)
+            ns1_application_base = p.title_id & BaseTitleMask;
+    }
     std::optional<std::uint64_t> application_base;
     for (const auto& p : packages_) {
         if (p.kind == 2) continue; // Addons are isolated by the native AoC view.
         const auto base = p.title_id & BaseTitleMask;
-        if (!application_base) application_base = base;
-        Check(*application_base == base, "unrelated base/update title ID");
+        const bool matching_ns2_edition_update =
+            p.kind == 1 && ns1_application_base &&
+            (base & PlatformMask) == 0x0400000000000000ULL &&
+            (base & LowTitleMask) == (*ns1_application_base & LowTitleMask);
+        const auto family = matching_ns2_edition_update
+            ? *ns1_application_base : base;
+        if (!application_base) application_base = family;
+        Check(*application_base == family, "unrelated base/update title ID");
     }
 
     const auto uuid = uuid_hash.End();
@@ -712,6 +779,12 @@ std::optional<std::vector<DirEntry>> Archive::ListPackageDirectory(
     const auto& package = packages_[pkg];
     const auto dir = view == ContentView::ExeFS ? package.exefs_dir : package.romfs_dir;
     return ListFromDir(dir, path);
+}
+
+std::optional<std::vector<DirEntry>> Archive::ListPackageRootDirectory(
+    std::size_t pkg, std::string_view path) const {
+    if (pkg >= packages_.size()) return std::nullopt;
+    return ListFromDir(packages_[pkg].root_dir, path);
 }
 
 std::optional<std::vector<DirEntry>> Archive::ListEffectiveDirectory(

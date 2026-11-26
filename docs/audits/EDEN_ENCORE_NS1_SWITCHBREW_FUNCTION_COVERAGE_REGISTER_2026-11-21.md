@@ -5528,3 +5528,9 @@ Le zéro historique n'est PAS une preuve de qualification runtime exhaustive. Le
 🟢 **26/11/2026 — Reçus moteur main repris sans écraser les reçus NS1.** Les successeurs historiques `fcd62408`, `b6b9e98e`, `dbef2305` et leurs arbres `8447712e2cecf661910fd1a32613f0b844ceaeb0`, `067c72d30a71a79faefd1ad14876e2a46f02755c`, `9e28e5b83cf9c0f4086a33d6838904353a8fd541` sont ajoutés aux oracles existants. Les fichiers qui n'avaient aucune divergence NS1 prennent directement leurs blobs finaux main ; les trois grands inventaires divergents conservent tous leurs pins NS1.
 
 **Différé volontairement :** le commit historique SelfController `dc526f06` n'est pas rejoué isolément, car le main actuel a depuis remplacé son ancien handler 2400 par la famille typée 2100/2200/2300/2400-2402. Cette zone sera reprise sur la sémantique main actuelle, pas sur l'ancien état. Aucun merge vers main, aucun build PS5 manuel.
+
+### 2026-11-26 — Rattrapage main → NS1 — 259 chemins moteur non chevauchés
+
+🟢 **26/11/2026 — Trois-voies moteur.** Base `452fd7fe999757377175ab1eae1bb431877d1ccf`, main `9fba986ab0e97d8263569d129b52dc3f026e4497`, NS1 `201becb010db840ccad2bd596e617caf253685fe`. 258 chemins modifiés/ajoutés par main ont encore exactement le blob de base côté NS1 et sont repris byte-for-byte depuis main ; `headless/prosperoeden/ui/box-art-fallback.tsv`, supprimé uniquement par main, est supprimé également sur NS1. Aucun de ces 259 chemins ne contient une modification NS1 à préserver.
+
+**Après ce lot (instantané `9fba986a`) :** seuls les chemins réellement modifiés des deux côtés nécessitent une résolution ; les chemins NS1-only restent intacts. Aucun merge parent, aucune fusion vers main, aucun build PS5 manuel.

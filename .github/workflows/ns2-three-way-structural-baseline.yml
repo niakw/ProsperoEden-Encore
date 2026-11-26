@@ -1,0 +1,26 @@
+name: NS2 Lichii/Eglantine selected-owner baseline (host only)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'vendor'
+      - 'headless/CMakeLists.txt'
+      - 'tools/ns2/check-three-way-structural-baseline.py'
+      - '.github/workflows/ns2-three-way-structural-baseline.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  selected-owners:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Check exact engine/vendor gitlink and NS1-safe selected source contracts
+        run: |
+          set -euo pipefail
+          python3 -B tools/ns2/check-three-way-structural-baseline.py

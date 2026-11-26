@@ -73,11 +73,21 @@ for name in "${unresolved_weak[@]}"; do
         echo "Unsafe weak symbol name from linker: $name" >&2
         exit 2
     }
-    # Mesa Vulkan dispatch has thousands of legitimate optional weak slots.
-    # Never silently turn required native kernel/CRT functions into null calls.
+    # R457's 5,719 unresolved weak symbols were confirmed against its
+    # unstripped release ELF: they are ONLY optional Mesa Vulkan dispatch
+    # slots (radv / vk_common / wsi and seven instrumentation layers).
+    # An unknown weak function is a missing PS5 ABI/provider until proven
+    # otherwise. Do not silently resolve it to NULL and risk a guest crash.
     case "$name" in
         sceKernel*|sceSystemService*|sceVideoOut*|sceAudioOut*|sceNet*|pthread_create|pthread_join|__cxa_throw|__cxa_allocate_exception)
             printf 'Refusing to null required PS5 runtime symbol: %s\n' "$name" >&2
+            exit 2
+            ;;
+        radv_[A-Z]*|vk_common_[A-Z]*|wsi_[A-Z]*|ctx_roll_[A-Z]*|rmv_[A-Z]*|rra_[A-Z]*|utrace_[A-Z]*|sqtt_[A-Z]*|annotate_[A-Z]*|threaded_[A-Z]*)
+            # These are optional Vulkan entrypoints; absent slots are NULL.
+            ;;
+        *)
+            printf 'Refusing to null unreviewed weak PS5 import: %s\n' "$name" >&2
             exit 2
             ;;
     esac

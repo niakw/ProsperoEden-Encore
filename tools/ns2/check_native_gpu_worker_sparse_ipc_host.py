@@ -44,7 +44,7 @@ for symbol in ("SnapshotNativeSparseHandle(id, ranges)",
     assert symbol in release or symbol in source,symbol
 assert release.index("SnapshotNativeSparseHandle(id, ranges)") < release.index("system.GPU().WaitForIdle()")
 assert release.index("system.GPU().WaitForIdle()") < release.index("batch.owner->RemapNativeSparse(batch.entries)")
-assert release.index("batch.owner->RemapNativeSparse(batch.entries)") < release.index("nvmap.FreeHandle(id, false)")
+assert release.index("batch.owner->RemapNativeSparse(batch.entries)") < release.index("nvmap.FreeHandleIfUnpinned(id)")
 fixture=r"""
 #include <algorithm>
 #include <array>
@@ -422,12 +422,17 @@ selected_close=source[close_begin:close_end]
 assert "mapping_as->IsNativeSparsePoisoned()" in selected_cleanup
 assert "m_quarantined_nv_session = true;" in selected_cleanup
 assert "nvmap.FreeHandle(id, false);" in selected_cleanup
+assert "std::erase_if(m_shared->pending_211" in selected_close
 assert selected_cleanup.index("mapping_as->IsNativeSparsePoisoned()") < selected_cleanup.index(
     "nvmap.FreeHandle(id, false)")
 fixture_poison=r"""
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <map>
 #include <memory>
+#include <mutex>
+#include <vector>
 #include <optional>
 #include <utility>
 #define LOG_ERROR(...) ((void)0)
@@ -477,7 +482,14 @@ struct Module {
     Container c{};
     Container& GetContainer(){return c;}
 };
+struct Pending211 { u32 memory{}; };
+struct Shared {
+    std::mutex mutex{};
+    std::map<std::pair<u32,u64>,Pending211> pending_211{};
+};
 struct Fixture {
+    std::shared_ptr<Shared> m_shared{std::make_shared<Shared>()};
+    std::vector<u32> m_memory{91};
     bool m_quarantined_nv_session{};
     std::optional<std::size_t> m_nv_session{33};
     std::shared_ptr<Module> m_module{std::make_shared<Module>()};
@@ -510,7 +522,11 @@ int main() {
         assert(result.raw==Kernel::ResultOutOfResource.raw && f.m_quarantined_nv_session);
         assert(f.nvmap.frees==0 && f.table.unmaps==0 && f.closed==0 && f.destroyed==0);
         assert(f.handle && !f.pages);
+        f.m_shared->pending_211[{7,0x20000}]={91};
+        f.m_shared->pending_211[{8,0x30000}]={92};
         f.CloseIfSafe();
+        assert(f.m_shared->pending_211.count({7,0x20000})==0);
+        assert(f.m_shared->pending_211.count({8,0x30000})==1);
         assert(f.m_module->GetContainer().closes==0);
         delete pending; // stand-in for later process and GMMU teardown
         assert(f.destroyed==1);

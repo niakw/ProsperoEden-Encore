@@ -66,7 +66,11 @@ for needle in ('quick settings overlay', 'recently played: seven-ish large artwo
                'utility cards: the four Home actions', 'hero_button(details_rect, "..."'):
     assert needle in home, needle
 assert 'recent.max_players' not in home
-assert 'const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f)' in home
+# Preserve the responsive banner-first path and the validated screenshot fallback.
+assert 'const Cover hero_picture = hero_artwork == hero_banner' in home
+assert '? banner_picture : c.textures.cover(hero_artwork, 1920.0f);' in home
+assert 'banner_picture.texture != 0 ? hero_banner :' in home
+assert 'case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};' in home
 # The visible rail has its independent icon-only worker, not a second full media sweep.
 icons = lib.split("void Launcher::start_home_icons()", 1)[1].split("void Launcher::finish_home_icons()", 1)[0]
 assert "screen_ != Screen::home" in icons and "media_cancel_.load" in icons
@@ -83,18 +87,29 @@ assert 'recent.cover = EnsureCover(name);' in native_home
 assert 'if (!recent.cover.empty()) recent.tile_icon = recent.cover;' in native_home
 # No generic package metadata extraction may run for an ExeFS /main.
 assert 'if (cover.empty()) cover = EnsureCover(home.last_file, &title);' not in native_home
-assert 'if (!nlib.icon.empty() && recent.tile_icon.empty())' in native_home
+assert 'if (!nlib.icon.empty() && recent.tile_icon.empty()' in native_home
 native_icon = svc.split("pe::ui::Game EdenServices::enrich_home_icon(", 1)[1].split("pe::ui::Game EdenServices::enrich_game_media(", 1)[0]
 assert "NlibTitleMutex(game.title_id), std::try_to_lock" in native_icon
 assert '"/icon/512"' in native_icon and "CachedNlibIcon(game.title_id)" in native_icon
 assert "EnsureRetailCase" not in native_icon and "EnsureNlibEnrichment" not in native_icon
 assert "const std::string& art = recent.tile_icon.empty() ? recent.cover : recent.tile_icon;" in home
-assert 'CachedGamesDbSquare(recent.title_id)' in svc
-assert 'CachedGamesDbSquare(title_id)' in svc
+assert 'CachedGamesDbSquare(recent.title_id, second_generation)' in svc
+assert 'CachedGamesDbSquare(title_id, second_generation)' in svc
 assert 'EnsureGamesDbSquare(game.title_id' in native_icon
 full_media = svc.split("pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,\n", 1)[1]
-assert 'if (!enrichment.icon.empty() && game.cover.empty())' in full_media
-assert 'else if (game.cover.empty()) {' in full_media
+assert 'NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);' in full_media
+assert 'const bool second_generation = UseNs2CaseIndex(game);' in native_icon
+assert 'game.cover = CachedNlibIcon(game.title_id);' in native_icon
+assert native_icon.index("CachedNlibIcon(game.title_id)") < native_icon.index("EnsureGamesDbSquare(game.title_id")
+assert 'game.cover == CachedGamesDbSquare(game.title_id, second_generation)' in full_media
+assert '? NlibEnrichment{}' not in full_media
+# NLIB screenshot must outrank GamesDB fanart when the banner is missing.
+assert 'home.last_hero = !nlib.hero.empty() ? nlib.hero :' in native_home
+assert '!home.last_screenshot.empty() ? home.last_screenshot :' in native_home
+assert 'recent.hero = !nlib.hero.empty() ? nlib.hero :' in native_home
+assert '!recent.screenshot.empty() ? recent.screenshot :' in native_home
+assert 'else if (nlib_screenshots) game.hero = enrichment.screenshots.front();' in full_media
+assert 'game.hero = CachedGamesDbHero(game.title_id, second_generation);' in full_media
 assert 'recent.tile_icon = square;' in svc
 assert 'recent.cover = box_art(recent.title_id).front;' not in svc
 assert 'home.last_cover = box_art(title_id).front;' not in svc
@@ -108,6 +123,22 @@ assert 'switch_game_tile(c,!g.cover.empty()?g.cover:g.box_front' not in (root/'h
 assert "recent.tile_icon = previous.tile_icon;" in lib
 assert "cover(c, art, icon, 20.0f, 0.0f)" in home
 assert "home_icon_scan_.wait();" in launch and "finish_home_icons();" in launch
+# A generated image or a full media response must never cross an NS1/NS2
+# installed-file boundary merely because the emulator sees the same TitleID.
+home_completed = lib.split("void Launcher::finish_home_media()", 1)[1].split(
+    "void Launcher::start_selected_media()", 1)[0]
+selected_completed = lib.split("void Launcher::finish_selected_media()", 1)[1].split(
+    "void Launcher::start_selected_size()", 1)[0]
+for owner, identity in ((home_completed, "home_media_scan_file_"),
+                        (selected_completed, "media_scan_file_")):
+    assert f"enriched.file != {identity}" in owner, identity
+    assert "game.file != enriched.file" in owner, identity
+assert "recent.title_id != enriched.title_id || recent.file != enriched.file" in home_completed
+assert "enriched.file == home_.last_file" in home_completed
+assert "media_next_retry_[game.file]" in lib
+assert "home_media_next_retry_[file]" in lib
+assert "home_icon_scan_extra_file_ == recent.file" in home
+assert "std::unordered_map<std::string, std::chrono::steady_clock::time_point> media_next_retry_" in hpp
 print('Selected-only complete Nlib media, bounded visible icon worker and aspect-safe Home tiles PASS')
 
 # Test the exact current worker, including both historic request branches.
@@ -118,7 +149,7 @@ import tempfile
 worker = lib.split("void Launcher::start_home_media()", 1)[1].split(
     "void Launcher::finish_home_media()", 1)[0]
 assert "screen_ != Screen::home" in worker
-assert worker.index("screen_ != Screen::home") < worker.index("home_media_next_retry_[title_id]")
+assert worker.index("screen_ != Screen::home") < worker.index("home_media_next_retry_[file]")
 cpp = r"""
 #include <atomic>
 #include <cassert>
@@ -161,7 +192,8 @@ struct Launcher {
     Services services_;
     std::future<Game> home_media_scan_;
     std::uint64_t home_media_scan_title_id_=0;
-    std::unordered_map<std::uint64_t,std::chrono::steady_clock::time_point> home_media_next_retry_;
+    std::string home_media_scan_file_;
+    std::unordered_map<std::string,std::chrono::steady_clock::time_point> home_media_next_retry_;
     void start_home_media();
 };
 """ + "void Launcher::start_home_media()" + worker + r"""
@@ -175,7 +207,8 @@ int main() {
     l.screen_=Screen::home; l.media_cancel_=true; l.start_home_media();
     assert(!l.home_media_scan_.valid() && l.home_media_next_retry_.empty());
     l.media_cancel_=false; l.start_home_media();
-    assert(l.home_media_scan_.valid() && l.home_media_scan_title_id_==101);
+    assert(l.home_media_scan_.valid() && l.home_media_scan_title_id_==101 &&
+           l.home_media_scan_file_=="last");
     l.start_home_media();
     auto last=l.home_media_scan_.get();
     assert(last.title_id==101 && last.file=="last" && last.max_players==2 && l.services_.calls==1);
@@ -183,11 +216,22 @@ int main() {
     Recent recent; recent.title_id=202; recent.file="new"; recent.screenshot="shot";
     l.home_.recents.push_back(recent); l.home_recent_=0;
     l.screen_=Screen::library; l.start_home_media(); // late Home completion/restart
-    assert(!l.home_media_scan_.valid() && l.home_media_next_retry_.count(202)==0);
+    assert(!l.home_media_scan_.valid() && l.home_media_next_retry_.count("new")==0);
     l.screen_=Screen::home; l.start_home_media();
     auto selected=l.home_media_scan_.get();
     assert(selected.title_id==202 && selected.file=="new" && selected.screenshots.size()==1);
+    assert(l.home_media_scan_file_=="new");
     assert(l.services_.calls==2);
+    // A second installed edition with the SAME TitleID is not blocked by
+    // the first edition's network retry cooldown.
+    Recent other; other.title_id=101; other.file="other-edition";
+    l.home_.recents.push_back(other); l.home_recent_=1;
+    l.start_home_media();
+    assert(l.home_media_scan_.valid() && l.home_media_scan_file_=="other-edition");
+    auto edition=l.home_media_scan_.get();
+    assert(edition.title_id==101 && edition.file=="other-edition");
+    assert(l.services_.calls==3);
+    l.home_recent_=0;
     l.home_.recents[0].title_id=0; l.start_home_media(); assert(!l.home_media_scan_.valid());
 }
 """
@@ -216,18 +260,22 @@ icon_cpp = r"""
 #include <vector>
 #include <utility>
 enum class Screen { home, library, settings };
-struct Game { std::uint64_t title_id=0; std::string file,name,cover; bool artwork_changed=false; };
+struct Game { std::uint64_t title_id=0; std::string file,name,cover; bool artwork_changed=false; bool artwork_deferred=false; bool artwork_rejected=false; };
 struct Recent { std::uint64_t title_id=0; std::string file,title,cover; std::string tile_icon{}; };
 struct Home { bool setup_ready=true; std::uint64_t last_title_id=0; std::string last_file,last_cover; std::vector<Recent> recents; };
 struct Services {
-    unsigned calls=0;
+    std::atomic<unsigned> calls{0};
     Game enrich_home_icon(Game g,const std::atomic<bool>* cancel) {
-        assert(cancel && !cancel->load()); ++calls;
-        g.cover="nlib-icon-"+std::to_string(g.title_id); g.artwork_changed=true;
+        assert(cancel && !cancel->load());
+        calls.fetch_add(1);
+        if (g.file == "four") assert(g.artwork_rejected && g.cover == "local-icon");
+        g.cover="nlib-icon-"+std::to_string(g.title_id)+"-"+g.file;
+        g.artwork_changed=true;
         return g;
     }
 };
-struct Textures { unsigned invalidations=0; void invalidate(const std::string&) { ++invalidations; } };
+struct Textures { unsigned invalidations=0; void invalidate(const std::string&) { ++invalidations; }
+    bool known_missing(const std::string& path) const { return path == "local-icon"; } };
 namespace sys { template<class... T> void log(T...) {} }
 struct Launcher {
     Screen screen_=Screen::library;
@@ -236,8 +284,11 @@ struct Launcher {
     Services services_;
     Textures textures_;
     std::future<Game> home_icon_scan_;
-    std::uint64_t home_icon_scan_title_id_=0, home_media_scan_title_id_=1;
-    std::unordered_map<std::uint64_t,std::chrono::steady_clock::time_point> home_icon_next_retry_;
+    std::future<Game> home_icon_scan_extra_;
+    std::uint64_t home_icon_scan_title_id_=0, home_icon_scan_extra_title_id_=0;
+    std::uint64_t home_media_scan_title_id_=1;
+    std::string home_icon_scan_file_, home_icon_scan_extra_file_;
+    std::unordered_map<std::string,std::chrono::steady_clock::time_point> home_icon_next_retry_;
     std::vector<Game> games_;
     void start_home_icons();
     void finish_home_icons();
@@ -245,33 +296,66 @@ struct Launcher {
 """ + icon_methods + r"""
 int main() {
     Launcher l;
-    l.home_.recents={{1,"selected","A",""},{2,"two","B",""},{3,"three","C","/box-front-3.webp"},{4,"four","D","local-icon"},{3,"different-file","C","fallback"},{5,"cached","E","fallback","canonical-5"}};
+    l.home_.recents={{1,"selected","A",""},{2,"two","B",""},{3,"three","C","/box-front-3.webp"},{4,"four","D","local-icon","local-icon"},{3,"different-file","C","fallback","fallback"},{5,"cached","E","fallback","canonical-5"}};
     l.home_.last_title_id=2; l.home_.last_file="two";
     l.games_={{2,"two","B","",false},{3,"three","C","",false},{3,"different-file","C","unchanged",false}};
     l.start_home_icons(); assert(!l.home_icon_scan_.valid());
     l.screen_=Screen::home; l.media_cancel_=true;
     l.start_home_icons(); assert(!l.home_icon_scan_.valid());
-    l.media_cancel_=false; l.start_home_icons();
-    assert(l.home_icon_scan_.valid() && l.home_icon_scan_title_id_==1);
-    l.home_icon_scan_.wait(); l.finish_home_icons();
-    assert(l.home_.recents[0].tile_icon=="nlib-icon-1");
-    l.start_home_icons(); assert(l.home_icon_scan_title_id_==2);
-    l.start_home_icons(); l.home_icon_scan_.wait(); l.finish_home_icons();
-    assert(l.home_.last_cover=="nlib-icon-2" && l.home_.recents[1].cover=="nlib-icon-2");
-    assert(l.home_.recents[1].tile_icon=="nlib-icon-2");
-    assert(l.games_[0].cover=="nlib-icon-2" && l.services_.calls==2);
-    l.start_home_icons(); assert(l.home_icon_scan_title_id_==3);
-    l.home_icon_scan_.wait(); l.finish_home_icons();
-    assert(l.games_[1].cover=="nlib-icon-3" && l.games_[2].cover=="unchanged");
-    assert(l.home_.recents[2].cover=="nlib-icon-3" && l.textures_.invalidations==3);
-    assert(l.home_.recents[4].tile_icon=="nlib-icon-3" && l.home_.recents[4].cover=="fallback");
-    l.start_home_icons(); assert(l.home_icon_scan_title_id_==4);
-    l.home_icon_scan_.wait(); l.media_cancel_=true; l.finish_home_icons();
-    assert(l.home_.recents[3].tile_icon.empty() && l.home_.recents[3].cover=="local-icon");
     l.media_cancel_=false;
-    l.start_home_icons(); assert(!l.home_icon_scan_.valid() && l.services_.calls==4);
-    l.home_.recents[1].tile_icon.clear(); l.home_.recents[1].cover.clear(); l.start_home_icons();
-    assert(!l.home_icon_scan_.valid()); // retry not every frame
+    l.start_home_icons();
+    // A slow first title must not block the next title's first square.
+    assert(l.home_icon_scan_.valid() && l.home_icon_scan_extra_.valid());
+    assert(l.home_icon_scan_file_=="selected" && l.home_icon_scan_extra_file_=="two");
+    l.home_icon_scan_.wait(); l.home_icon_scan_extra_.wait();
+    l.finish_home_icons();
+    assert(l.home_.recents[0].tile_icon=="nlib-icon-1-selected");
+    assert(l.home_.recents[1].tile_icon=="nlib-icon-2-two");
+    assert(l.home_.last_cover=="nlib-icon-2-two");
+    assert(l.games_[0].cover=="nlib-icon-2-two");
+    assert(l.services_.calls.load()==2 && l.textures_.invalidations==2);
+    assert(l.home_icon_scan_file_.empty() && l.home_icon_scan_extra_file_.empty());
+
+    l.start_home_icons();
+    assert(l.home_icon_scan_title_id_==3 && l.home_icon_scan_file_=="three");
+    assert(l.home_icon_scan_extra_title_id_==4 && l.home_icon_scan_extra_file_=="four");
+    l.home_icon_scan_.wait(); l.home_icon_scan_extra_.wait();
+    l.finish_home_icons();
+    assert(l.games_[1].cover=="nlib-icon-3-three");
+    assert(l.games_[2].cover=="unchanged");
+    assert(l.home_.recents[2].cover=="nlib-icon-3-three");
+    assert(l.home_.recents[3].tile_icon=="nlib-icon-4-four");
+    // Same numeric program ID but a different edition/file is untouched.
+    assert(l.home_.recents[4].tile_icon=="fallback");
+    assert(l.home_.recents[4].cover=="fallback");
+    assert(l.textures_.invalidations==4);
+
+    // The other installed edition may request its OWN square immediately.
+    // A TitleID-wide cooldown previously suppressed it for two minutes.
+    l.home_.recents[4].tile_icon.clear();
+    l.home_icon_next_retry_.erase("different-file"); // explicit fixture change, not a failed-fetch retry
+    l.start_home_icons();
+    assert(l.home_icon_scan_.valid() && l.home_icon_scan_title_id_==3);
+    assert(l.home_icon_scan_file_=="different-file");
+    l.home_icon_scan_.wait(); l.finish_home_icons();
+    assert(l.games_[2].cover=="nlib-icon-3-different-file");
+    assert(l.games_[1].cover=="nlib-icon-3-three");
+    assert(l.home_.recents[4].tile_icon=="nlib-icon-3-different-file");
+    assert(l.textures_.invalidations==5);
+
+    // A completed request cannot publish after launcher teardown starts.
+    l.home_.recents.push_back({6,"cancel","F",""});
+    l.start_home_icons(); assert(l.home_icon_scan_file_=="cancel");
+    l.home_icon_scan_.wait();
+    l.media_cancel_=true;
+    l.finish_home_icons();
+    assert(l.home_.recents.back().tile_icon.empty());
+    l.media_cancel_=false;
+    l.home_.recents[1].tile_icon.clear();
+    l.home_.recents[1].cover.clear();
+    l.start_home_icons();
+    assert(!l.home_icon_scan_.valid()); // per-file cooldown, not per-frame retry
+    assert(l.services_.calls.load()==6);
 }
 """
 with tempfile.TemporaryDirectory(prefix="home-icon-visible-") as tmp:
@@ -282,4 +366,4 @@ with tempfile.TemporaryDirectory(prefix="home-icon-visible-") as tmp:
         subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror","-pthread",
                         str(source),"-o",str(exe)],check=True,timeout=60)
         subprocess.run([str(exe)],check=True,timeout=10)
-print("HOME_VISIBLE_ICONS_HOST_PASS independent=1 selected_only_full_media=1 exact_identity=1 cancellation=1 cooldown=1 actual_owner=1")
+print("HOME_VISIBLE_ICONS_HOST_PASS parallel=2 per_file_identity=1 cancellation=1 cooldown=1 actual_owner=1")

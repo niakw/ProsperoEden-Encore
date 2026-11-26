@@ -332,6 +332,9 @@ bool Display::close_deferred_scanout()
         presenter.request_stop();
         presenter.join();
     }
+    // The GL presenter has released its GL textures. Keep both CPU
+    // poses title-scoped until the next graphics owner consumes them.
+    // Destroying EGL is not the end of the unified loading animation.
 
     if (context != EGL_NO_CONTEXT && !eglDestroyContext(display, context))
     {

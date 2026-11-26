@@ -18,7 +18,7 @@ print("NATIVE_MANUAL_RUN_ISOLATION_PASS event-separated concurrency")
 
 # The R457 log-retention merge exposed a false build trigger: mentioning a
 # build token in the commit BODY must not authorize a full native rebuild.
-for token in ("[full-build]", "[build-only]", "[resume-stage:37728435816]"):
+for token in ("[full-build]", "[build-only]", "[resume-stage:45087056642]"):
     marker = "startsWith(github.event.head_commit.message || '', '" + token + "')"
     assert marker in workflow, token
     assert ("contains(github.event.head_commit.message || '', '" + token + "')") not in workflow

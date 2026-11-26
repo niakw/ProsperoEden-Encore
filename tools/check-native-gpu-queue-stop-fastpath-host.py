@@ -33,18 +33,49 @@ assert consumer.count("std::destroy_at(std::addressof(m_data[pos].value));") == 
 assert consumer.index("std::destroy_at(std::addressof(m_data[pos].value));") < consumer.index("++consumer.index")
 assert "std::destroy_at(std::addressof(m_data[cursor % Capacity].value));" in header
 
+# Compile the actual native GPU producer and completion-notifier methods.
+# A 2-slot queue reproduces the 256-slot producer/consumer lock cycle.
+worker=(root/"vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp").read_text()
+worker_header=(root/"vendor/encore-active/eden-gpu/include/video_core/gpu_thread.h").read_text()
+assert "std::mutex completion_lock;" in worker_header
+producer_method="u64 ThreadManager::PushCommand("+worker.split("u64 ThreadManager::PushCommand(",1)[1].split("\n} // namespace",1)[0]
+notification=worker.split("            if (next.block) {",1)[1].split("\n            }",1)[0]
+assert "state.completion_lock" in notification and "lk{state.write_lock}" not in notification
+assert producer_method.index("lk.unlock();") < producer_method.index("state.cv.wait(completion_lk, completion_token")
 cpp = r"""
 #include <array>
 #include <atomic>
 #include <cassert>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <memory>
+#include <future>
+#include <exception>
 #include <stop_token>
 #include <thread>
 #include <utility>
 #include "common/bounded_threadsafe_queue.h"
+using u64=std::uint64_t;
+using CommandData=int;
+namespace Eden { std::exception_ptr PeekGpuFailure() { return {}; } }
+struct Item { int command{}; u64 fence{}; bool block{}; };
+struct ThreadManager {
+    struct { std::mutex write_lock,completion_lock;
+             Common::SPSCQueue<Item,2> queue;
+             u64 last_fence{}; std::atomic<u64> signaled_fence{};
+             std::condition_variable_any cv; } state;
+    std::stop_source stop_source;
+    u64 PushCommand(CommandData&&,bool,bool);
+    void Complete(const Item& next){
+        state.signaled_fence.store(next.fence,std::memory_order_release);
+        if(next.block){
+NOTIFICATION
+        }
+    }
+};
+PRODUCER_METHOD
 int main() {
     using namespace std::chrono_literals;
     {
@@ -129,9 +160,43 @@ int main() {
         }
         assert(resource.use_count() == 1);
     }
-    std::puts("ENCORE_GPU_QUEUE_STOP_FASTPATH_PASS");
+    {
+        // A blocked producer holds write_lock with no free FIFO slot.
+        // The GPU consumer must notify command 1 before another pop.
+        ThreadManager manager;
+        auto blocked=std::async(std::launch::async,[&]{return manager.PushCommand(1,true,true);});
+        Item next;
+        const auto deadline=std::chrono::steady_clock::now()+1s;
+        while(!manager.state.queue.TryPop(next)) {
+            assert(std::chrono::steady_clock::now()<deadline);
+            std::this_thread::yield();
+        }
+        assert(next.command==1 && next.block);
+        assert(manager.PushCommand(2,false,true)==2);
+        assert(manager.PushCommand(3,false,true)==3);
+        auto full=std::async(std::launch::async,[&]{return manager.PushCommand(4,false,true);});
+        bool producer_owns_lock=false;
+        const auto lease_deadline=std::chrono::steady_clock::now()+1s;
+        while(std::chrono::steady_clock::now()<lease_deadline) {
+            if(manager.state.write_lock.try_lock()) {
+                manager.state.write_lock.unlock();
+                std::this_thread::yield();
+            } else {producer_owns_lock=true;break;}
+        }
+        assert(producer_owns_lock);
+        assert(full.wait_for(10ms)==std::future_status::timeout);
+        manager.Complete(next);
+        assert(blocked.wait_for(1s)==std::future_status::ready && blocked.get()==1);
+        assert(manager.state.queue.TryPop(next) && next.command==2);
+        assert(full.wait_for(1s)==std::future_status::ready && full.get()==4);
+        assert(manager.state.queue.TryPop(next) && next.command==3);
+        assert(manager.state.queue.TryPop(next) && next.command==4);
+        assert(!manager.state.queue.TryPop(next));
+    }
+    std::puts("ENCORE_GPU_QUEUE_STOP_FASTPATH_PASS completion-lock=1");
 }
 """
+cpp = cpp.replace("PRODUCER_METHOD",producer_method).replace("NOTIFICATION",notification)
 compiler = shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler, "C++20 compiler required"
 with tempfile.TemporaryDirectory(prefix="encore-gpu-spsc-") as tmp:

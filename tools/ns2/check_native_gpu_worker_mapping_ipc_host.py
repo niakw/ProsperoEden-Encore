@@ -23,11 +23,14 @@ translate=extract("Result TranslateMappingStatus(", "} // namespace\n\nvoid IGpu
 mapping=extract("void IGpuWorker::NormalMapGpuMemory4K(", "void IGpuWorker::NormalModifyGpuMemory4K(")
 modify=extract("void IGpuWorker::NormalModifyGpuMemory4K(", "void IGpuWorker::NormalUnmapGpuMemory4K(")
 unmap=extract("void IGpuWorker::NormalUnmapGpuMemory4K(", "void IGpuWorker::CreateSparseRegion(")
-assert mapping.index("m_mappings.PrepareMapped") < mapping.index("as->MapNative4K") < mapping.index("CommitPrepared")
+assert mapping.index("ledger.PrepareMapped") < mapping.index("as->MapNative4K") < mapping.index("CommitPrepared")
+assert "m_mappings.SparseReservationPageShift(" in mapping
+assert "auto& ledger = sparse_overlay ? m_sparse_overlays : m_mappings;" in mapping
+assert "request->cache != 0" in mapping
 assert "mapped == Nvidia::NvResult::InsufficientMemory" in mapping
 assert modify.index("system.GPU().WaitForIdle()") < modify.index("as->ModifyNativeKind")
 assert unmap.index("system.GPU().WaitForIdle()") < unmap.index("as->UnmapNative4K")
-assert "m_mappings.RecordUnmapped(*request);" in unmap
+assert "ledger->RecordUnmapped(*request)" in unmap
 
 fixture=r"""
 #include <algorithm>
@@ -81,9 +84,12 @@ struct NativeAS {
     NvResult next_modify{NvResult::Success};
     NvResult next_unmap{NvResult::Success};
     unsigned map_calls{}, modify_calls{}, unmap_calls{};
-    NvResult MapNative4K(u32 handle,u64 address,u64 offset,u64 size,std::uint8_t) {
+    bool last_cache{};
+    NvResult MapNative4K(u32 handle,u64 address,u64 offset,u64 size,std::uint8_t,
+                         bool gpu_cacheable=false) {
         assert(handle==27 && address==0x20000 && offset==0 && size==0x2000);
         ++map_calls;
+        last_cache=gpu_cacheable;
         return next_map;
     }
     NvResult ModifyNativeKind(u64 address,u64 size,std::uint8_t) {
@@ -147,6 +153,8 @@ struct IGpuWorker {
     std::shared_ptr<Nvidia::Module> m_module=std::make_shared<Nvidia::Module>();
     std::vector<u32> m_memory{27};
     GW::MappingLedger m_mappings{};
+    GW::MappingLedger m_sparse_overlays{};
+    bool m_quarantined_nv_session{};
     FakeSystem system{};
     Kernel::KernelCore kernel{};
     void NormalMapGpuMemory4K(HLERequestContext&);
@@ -162,19 +170,19 @@ static HLERequestContext valid_map() {
     HLERequestContext c{};
     c.command=211;
     c.packet={0xe3,16,7,0x20000,0,0x21fff,0,27,
-              0,0,0,0,0,0,0,1,0,3};
+              0,0,0,0,0,0,0,1,1,3};
     return c;
 }
 static HLERequestContext valid_modify() {
     HLERequestContext c{};
     c.command=212;
-    c.packet={0xe4,9,7,0x20000,0,0x21fff,0,0,0,0,3};
+    c.packet={0xe4,9,7,0x20000,0,0x21fff,0,0,0,1,3};
     return c;
 }
 static HLERequestContext valid_unmap() {
     HLERequestContext c{};
     c.command=213;
-    c.packet={0xe5,7,7,0x20000,0,0x21fff,0,0,3};
+    c.packet={0xe5,7,7,0x20000,0,0x21fff,0,1,3};
     return c;
 }
 int main() {
@@ -229,19 +237,37 @@ int main() {
     as.next_unmap=Service::Nvidia::NvResult::InvalidState;
     auto failed_unmap=valid_unmap();
     w.NormalUnmapGpuMemory4K(failed_unmap);
-    assert(failed_unmap.words==4 && failed_unmap.reply[0]==Kernel::ResultInvalidState.raw);
-    assert(failed_unmap.reply[1]==0 && w.m_mappings.Count()==1);
+    assert(failed_unmap.words==2 && failed_unmap.reply.size()==1 &&
+           failed_unmap.reply[0]==Kernel::ResultInvalidState.raw);
+    assert(w.m_mappings.Count()==1);
     assert(event.signals==2 && as.unmap_calls==1);
     as.next_unmap=Service::Nvidia::NvResult::Success;
     auto good_unmap=valid_unmap();
     w.NormalUnmapGpuMemory4K(good_unmap);
-    assert(good_unmap.reply[0]==0 && good_unmap.reply[1]==0x2000);
+    assert(good_unmap.words==2 && good_unmap.reply.size()==1 && good_unmap.reply[0]==0);
     assert(w.m_mappings.Count()==0 && event.signals==3 && as.unmap_calls==2);
     auto repeated=valid_unmap();
     w.NormalUnmapGpuMemory4K(repeated);
     assert(repeated.reply[0]==Kernel::ResultNotFound.raw);
     assert(as.unmap_calls==2 && event.signals==3);
     assert(w.system.gpu.idle_waits==4);
+
+    // A 4K 211 view may live inside one already-owned 214 sparse VA.
+    // It gets a distinct physical mapping ledger and forwards cacheability.
+    assert(w.m_mappings.RecordSparse(7,1,0x20000,0x4000)==
+           Service::AM::GW::LedgerStatus::Success);
+    auto overlay=valid_map();
+    overlay.packet[11]=1;
+    w.NormalMapGpuMemory4K(overlay);
+    assert(overlay.reply[0]==0 && as.map_calls==3 && as.last_cache);
+    assert(w.m_mappings.Count()==1 && w.m_sparse_overlays.Count()==1);
+    auto overlay_modify=valid_modify();
+    w.NormalModifyGpuMemory4K(overlay_modify);
+    assert(overlay_modify.reply[0]==0 && as.modify_calls==3);
+    auto overlay_unmap=valid_unmap();
+    w.NormalUnmapGpuMemory4K(overlay_unmap);
+    assert(overlay_unmap.reply[0]==0 && as.unmap_calls==3);
+    assert(w.m_mappings.Count()==1 && w.m_sparse_overlays.Count()==0);
 }
 """.replace("__TRANSLATE__",translate).replace("__MAP__",mapping).replace("__MODIFY__",modify).replace("__UNMAP__",unmap)
 
@@ -264,5 +290,5 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-worker211-213-") as directory:
             done=subprocess.run([str(exe)],capture_output=True,text=True,timeout=25)
             assert done.returncode==0,done.stderr[-6000:]
             print("H06_REAL_WORKER_211_212_213_PASS",Path(cc).name,opt,
-                  "map_oom=rolled_back modify=ordered unmap=retryable signals=exact",
+                  "map_oom=rolled_back sparse_overlay=1 cache=forwarded modify=ordered unmap=retryable",
                   flush=True)

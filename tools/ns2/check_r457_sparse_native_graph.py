@@ -34,6 +34,24 @@ REVIEWED_VENDORS={
     "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e",
     "4572e581d011c444fd59428d5c042098f05dcfca","f7ee793f1ee1bb1c2b1a35f68073844163658262","3f019c64c2907ac3e84baa9b6200de8898f30636","f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1","b1bb49abea63b6664e0945df8431e10aac128c2f","89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce",
 }
+# Exact vendor successor: revised optimized memory OOM owner, no source drift.
+REVIEWED_VENDORS.add("ced1b9cdd6f0fa4e0ca7949b404f450aae0055df")
+REVIEWED_VENDORS.add("06b453171af26b5703e2fcc5e68c4e8288d758b7")
+REVIEWED_VENDORS.add("fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2")
+REVIEWED_VENDORS.add("56959a23273ea2ee82d2e59628c92cc9e1144fe9")
+REVIEWED_VENDORS.add("d3c76f07cd82f7766be7b5e3fc3c399a3be15291")
+REVIEWED_VENDORS.add("436e702cc970417455c088c4bc38ce5fec8e0762")
+REVIEWED_VENDORS.add("6489896230a030cf28d31961c7c8f242cab73f27")
+REVIEWED_VENDORS.add("05de9e8e7f75e9a7400a351b18f2b1e83165108e")
+REVIEWED_VENDORS.add("ee64fac70671126c9b6ab9aa3b3885a40538cf16")
+REVIEWED_VENDORS.add("603e0d5c70b04fa84a19cca8f580ed1bdb230be0")
+REVIEWED_VENDORS.add("593bc9ee6ddfcf38e488325ccf318f1a0a109d8e")
+REVIEWED_VENDORS.add("6b48e6734e738306dd57ceed8be9b003631eb8cb")
+REVIEWED_VENDORS.add("d554e257ae82db66d9542f472dcde067510bfa1f")
+REVIEWED_VENDORS.add("93c3dd6c86627e91999f965c45c05cd8e50e17eb")
+REVIEWED_VENDORS.add("eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb")
+REVIEWED_VENDORS.add("93da3b707ef147385380eb0690e0d93fc8e907ad")
+REVIEWED_VENDORS.add("a6240909b823492d9ff20070c09387a732d83007")
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
 NATIVE_GUEST=(ROOT/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp",
@@ -41,6 +59,7 @@ NATIVE_GUEST=(ROOT/"vendor/encore-active/eden-core/src/core/memory_native_a32.cp
 NATIVE_SHARED=ROOT/"vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp"
 NATIVE_KERNEL=ROOT/"vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp"
 NATIVE_SLAB=ROOT/"vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp"
+NATIVE_PAGE_HEAP=ROOT/"vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_page_heap.cpp"
 
 def args(row):
     return list(row["arguments"]) if "arguments" in row else shlex.split(row["command"])
@@ -59,14 +78,32 @@ def main():
         raw=path.read_bytes()
         return hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
     for owner,expected in (
-        (NATIVE_GUEST[0],"1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
-        (NATIVE_GUEST[1],"c8f197810af244c3f2d66413352533734d031620"),
-        (NATIVE_SHARED,"9b47d62a6b8503c7a3cdff053888ea47a799cbed"),
-        (NATIVE_KERNEL,"88f3e2c9220ee03fd6600ef12441d7ece7527c9d"),
+        (NATIVE_GUEST[0],"3e3b07af30032ce14ca68e8482986d2f1a7201da" if sha in {"6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"} else "aa08b4af80e22109495f8dfbec1fec129f2261e9" if sha in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"} else "8007c91fd1757acf66f5f5b6a67d862afa0c475c" if sha in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
+         else "1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
+        (NATIVE_GUEST[1],"96663d23335fe7448712a15416003a975a3f8023" if sha in {"6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"} else "9dad056a223b90f27470c6a5b55977217238993a" if sha in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"} else "3757b123153c66584ec0dde8bd01334ec41ec9e2" if sha in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
+         else "c8f197810af244c3f2d66413352533734d031620"),
+        (NATIVE_SHARED,"515df1ec4a4b231266d6f3e5481c54ca87c94453" if sha in {"06b453171af26b5703e2fcc5e68c4e8288d758b7", "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"}
+         else "9b47d62a6b8503c7a3cdff053888ea47a799cbed"),
+        (NATIVE_KERNEL,"2b5be4eba2500da2993db2ed1c86d44ddfa5554f" if sha in {"436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"}
+         else "6397dd2c4a9c9c10674ab87b344f5c6956b79e0c" if sha == "d3c76f07cd82f7766be7b5e3fc3c399a3be15291"
+         else "aeee7f62a3fc609936ff5dc6a64722ca8d860c2e" if sha == "56959a23273ea2ee82d2e59628c92cc9e1144fe9"
+         else "12d3d0ddc59308b80df46bc54e6e8ee54011d568" if sha == "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2"
+         else "c5b5dd99bb9a65286783f4b220d991f422d19e67"
+         if sha in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e2fcc5e68c4e8288d758b7"}
+         else "88f3e2c9220ee03fd6600ef12441d7ece7527c9d"),
         (NATIVE_SLAB,"130eb7bd53e29b816bb81fec3fa053a584cd4b6e"),
     ):
         if gitblob(owner)!=expected:
             raise RuntimeError("Unreviewed native sparse owner "+str(owner))
+    if sha in {"05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"}:
+        expected_page_heap = ("574c88dc2add018094c3e6db9047881709da6659"
+                              if sha in {"ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"}
+                              else "1183a2455d027d546e069a455d0c3b460065732a")
+        if gitblob(NATIVE_PAGE_HEAP) != expected_page_heap:
+            raise RuntimeError("Unreviewed native sparse page-heap owner")
+        cmake_source=(ROOT/"headless/CMakeLists.txt").read_text()
+        if "EDEN_R457_SPARSE_PAGE_HEAP_SRC" not in cmake_source:
+            raise RuntimeError("Sparse page heap not selected by native CMake")
     cache=(native/"CMakeCache.txt").read_text()
     if "set(EDEN_NS2_SPARSE_BACKING ON)" not in (ROOT/"headless/CMakeLists.txt").read_text():
         raise RuntimeError("Production sparse PS5 backing not selected")
@@ -93,6 +130,11 @@ def main():
     if len(slab_rows)!=1:
         raise RuntimeError(f"Expected one real native KPort/KPageBuffer slab owner, got {len(slab_rows)}")
     selected.append(("native_kernel_slabs",slab_rows[0]))
+    if sha in {"05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"}:
+        page_heap_rows=[r for r in db if Path(r["file"]).resolve()==NATIVE_PAGE_HEAP.resolve()]
+        if len(page_heap_rows)!=1:
+            raise RuntimeError(f"Expected one real sparse page-heap owner, got {len(page_heap_rows)}")
+        selected.append(("native_kernel_page_heap_free_return",page_heap_rows[0]))
     # R457 storage follow-up: the new six maintained readers were previously
     # tested through source-derived mocks and a script-mode selector. Prove
     # they are each the sole real CMake native compilation owner, then compile

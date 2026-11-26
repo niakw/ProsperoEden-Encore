@@ -87,6 +87,21 @@ KNOWN_VENDOR_GRAPH = {
     "ab417b59c5f7f4613ff27386be05c0644d0ed776": "same FC27 audio/cache plus PS5 NS2-only HLE IPC wake and VFS128 owners",
     "7fc673495b2ee18d5216023280057a42aa78d46c": "same FC27 audio/cache plus reviewed MKW NS2 GameChat/GSV boot services",
 }
+KNOWN_VENDOR_GRAPH["fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2"] = "same NS1 audio owners; NS2 demand-zero guest-memory successor"
+KNOWN_VENDOR_GRAPH["56959a23273ea2ee82d2e59628c92cc9e1144fe9"] = "same NS1 audio owners; NS2 zero metadata stays demand-backed"
+KNOWN_VENDOR_GRAPH["d3c76f07cd82f7766be7b5e3fc3c399a3be15291"] = "same NS1 audio owners; NS2 no-op zero bitmap writes stay demand-backed"
+KNOWN_VENDOR_GRAPH["436e702cc970417455c088c4bc38ce5fec8e0762"] = "same NS1 audio owners; NS2 optimized bitmap OOM is recoverable"
+KNOWN_VENDOR_GRAPH["6489896230a030cf28d31961c7c8f242cab73f27"] = "same NS1 audio owners; NS2 ZeroBlock keeps shared demand-zero backing"
+KNOWN_VENDOR_GRAPH["05de9e8e7f75e9a7400a351b18f2b1e83165108e"] = "same NS1 audio owners; NS2 page-heap freed slots return to ZERO"
+KNOWN_VENDOR_GRAPH["ee64fac70671126c9b6ab9aa3b3885a40538cf16"] = "same NS1 audio owners; page-heap ZERO return plus joined service-worker teardown"
+KNOWN_VENDOR_GRAPH["603e0d5c70b04fa84a19cca8f580ed1bdb230be0"] = "same NS1 audio owners; server workers joined and SM dynamic session capacity preserved"
+KNOWN_VENDOR_GRAPH["593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"] = "same runtime owners as 603; GSV 1121 parity test corrected"
+KNOWN_VENDOR_GRAPH["6b48e6734e738306dd57ceed8be9b003631eb8cb"] = "same NS1 audio owners; native guest ZeroBlock is generation-neutral sparse backing"
+KNOWN_VENDOR_GRAPH["d554e257ae82db66d9542f472dcde067510bfa1f"] = "same C++ owners as 6b48; sparse OOM qualification test corrected"
+KNOWN_VENDOR_GRAPH["93c3dd6c86627e91999f965c45c05cd8e50e17eb"] = "same NS1 audio and guest-memory owners; gpu-time fail-closed compile fix only"
+KNOWN_VENDOR_GRAPH["eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb"] = "same NS1 audio/guest-memory owners; FC27 NONE render-target Vulkan fix only"
+KNOWN_VENDOR_GRAPH["93da3b707ef147385380eb0690e0d93fc8e907ad"] = "same runtime owners as eb9a454d; FC27 NONE qualification test only"
+KNOWN_VENDOR_GRAPH["a6240909b823492d9ff20070c09387a732d83007"] = "same runtime owners as eb9a454d; unified FC27 cache receipt tests only"
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"
 
@@ -122,8 +137,8 @@ backends = [VENDOR / f"encore-active/eden-core/src/core/memory_native_{name}.cpp
 for owner, expected in (
     (h, "d4273c4539971285711a8e26c39bae046ccbbad6"),
     (audio, "893e5e5352149555ac15895d86e79068ab0ee7ae"),
-    (backends[0], "1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
-    (backends[1], "c8f197810af244c3f2d66413352533734d031620"),
+    (backends[0], "3e3b07af30032ce14ca68e8482986d2f1a7201da" if selected in {"6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"} else "aa08b4af80e22109495f8dfbec1fec129f2261e9" if selected in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"} else "8007c91fd1757acf66f5f5b6a67d862afa0c475c" if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"} else "1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
+    (backends[1], "96663d23335fe7448712a15416003a975a3f8023" if selected in {"6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"} else "9dad056a223b90f27470c6a5b55977217238993a" if selected in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"} else "3757b123153c66584ec0dde8bd01334ec41ec9e2" if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"} else "c8f197810af244c3f2d66413352533734d031620"),
 ):
     assert git_blob(owner) == expected, ("Unreviewed audio owner drift", owner)
 assert 'ReadyForAudioRead() const noexcept' in h.read_text()

@@ -102,6 +102,7 @@ struct FramebufferConfig {std::uint64_t address{};};
 }
 struct Frame {
     std::uint32_t game{},hud{},index{};
+    std::uint32_t game_frame_presents{1};
     inline static int ready{};
     int* render_ready{&ready};
     struct PresentFence {void Wait(){}void Reset(){}} present_done;
@@ -163,6 +164,7 @@ public:
             hold_cv.wait(lock,[this]{return !hold_copy;});
         }
         std::lock_guard lock{result_mutex};
+        assert(frame->game_frame_presents==1);
         presented.emplace_back(frame->game,frame->hud);
         ++copies;
     }
@@ -217,6 +219,8 @@ static void Deliver(RendererVulkan& renderer,std::uint32_t game,std::uint32_t hu
 }
 int main(){
     PresentManager present{7};
+    // Every reused real frame must discard the previous synthetic pacing count.
+    for(auto& frame:present.frames) frame.game_frame_presents=3;
     RendererVulkan renderer{present};
     // OnFrameDisplayed is a GPU-worker callback, not a swapchain ACK.
     // Hold the real PresentThread's copy while the callback returns.
@@ -310,3 +314,80 @@ with tempfile.TemporaryDirectory(prefix="encore-f05-vulkan-present-") as tmp:
         run=subprocess.run([str(exe)],capture_output=True,text=True,timeout=30)
         assert run.returncode==0,(opt,run.stderr[-3500:])
         print(run.stdout.strip(),opt)
+
+
+# The R08 overlay is the native renderer selected by CMake.
+# The older fixture above executes Record immediately; model its deferred
+# publication here so a producer cannot depend on a subsequent guest draw.
+active = (ROOT / "headless/vulkan_renderer_r08.cpp").read_text()
+cmake = (ROOT / "headless/vulkan.cmake").read_text()
+assert '"'+chr(36)+'{EDEN_PORT_DIR}/vulkan_renderer_r08.cpp"' in cmake
+loading = native(active, "void RendererVulkan::PresentLoading() {")
+active_composite = native(active, "void RendererVulkan::Composite(")
+def publish_tail(body, frame):
+    start = body.index("present_manager.Present(" + frame + ");")
+    end = body.index("scheduler.DispatchWork();", start) + len("scheduler.DispatchWork();")
+    tail = body[start:end]
+    assert tail.count("present_manager.Present(") == 1
+    assert "scheduler.Flush(" not in tail
+    return tail
+loading_tail = publish_tail(loading, "frame")
+assert loading.index("scheduler.Flush(*frame->render_ready)") < loading.index(loading_tail)
+assert loading.index(loading_tail) < loading.index("OnLoadingQueued()")
+lsfg_tail = publish_tail(active_composite, "generated")
+assert active_composite.index("scheduler.Flush(*generated->render_ready)") < active_composite.index(lsfg_tail)
+assert active_composite.index(lsfg_tail) < active_composite.index("OnGeneratedQueued()")
+active_present = (ROOT / "headless/vulkan_present_manager_ps5.cpp").read_text()
+assert "scheduler.Record([this, frame]" in native(active_present, "void PresentManager::Present(Frame* frame) {")
+publish_cpp = r"""
+#include <cassert>
+#include <functional>
+#include <vector>
+#include <utility>
+struct Scheduler {
+    unsigned flushes{};
+    std::vector<std::function<void()>> pending;
+    void DispatchWork() {
+        auto work=std::move(pending);
+        pending.clear();
+        for(auto& fn:work)fn();
+    }
+    void Flush(int){DispatchWork();++flushes;}
+    void Record(std::function<void()> fn){pending.push_back(std::move(fn));}
+};
+struct Frame {int ready=1;};
+struct PresentManager {
+    Scheduler& scheduler;
+    unsigned published{};
+    void Present(Frame* frame) {
+        scheduler.Record([this,frame]{assert(frame->ready);++published;});
+    }
+};
+void PublishLoading(Scheduler& scheduler, PresentManager& present_manager, Frame* frame) {
+    scheduler.Flush(frame->ready);
+    LOADING_TAIL
+}
+void PublishGenerated(Scheduler& scheduler, PresentManager& present_manager, Frame* generated) {
+    scheduler.Flush(generated->ready);
+    LSFG_TAIL
+}
+int main(){
+    for(unsigned i=0;i<1000;++i){
+        Frame f; Scheduler s; PresentManager p{s};
+        PublishLoading(s,p,&f);
+        assert(p.published==1 && s.pending.empty() && s.flushes==1);
+        PublishGenerated(s,p,&f);
+        assert(p.published==2 && s.pending.empty() && s.flushes==2);
+    }
+}
+""".replace("LOADING_TAIL",loading_tail).replace("LSFG_TAIL",lsfg_tail)
+with tempfile.TemporaryDirectory(prefix="encore-r08-publish-") as tmp:
+    src=Path(tmp)/"publish.cpp"
+    src.write_text(publish_cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(tmp)/("publish"+opt)
+        subprocess.run([compiler,*fixture_include,"-std=c++20",opt,"-Wall","-Wextra",
+            "-Werror","-fsanitize=undefined","-fno-sanitize-recover=all",str(src),"-o",str(exe)],
+            check=True,timeout=75,env=compiler_env)
+        subprocess.run([str(exe)],check=True,timeout=20)
+        print("R08_DEFERRED_PRESENT_PUBLICATION_PASS",opt,"loading=1000 generated=1000 extra_gpu_flushes=0 scope=host_mock")

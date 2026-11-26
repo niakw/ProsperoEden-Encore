@@ -14,7 +14,7 @@ source=(root/"headless/prosperoeden/eden_services.cpp").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
 assert "prosperoeden/eden_services.cpp" in cmake or "eden_services.cpp" in cmake
 begin="bool SafeCaseFilename(const std::string& file) {"
-end="\nconst BoxIndex& RetailCaseIndex() {"
+end="\nvoid LoadCaseIndexRow("
 assert source.count(begin)==1 and source.count(end)==1
 actual=begin+source.split(begin,1)[1].split(end,1)[0]
 assert actual.count("std::unordered_set<std::string> seen;")==1
@@ -39,13 +39,14 @@ std::vector<std::string> reference(const std::vector<std::string>& entries,
                                     int language_choice, int face) {
   // Previous linear duplicate elimination for a given region-ranked input.
   // Compare with source first-pass insertion order, including equal priorities.
+  (void)face;
+  language_choice=std::clamp(language_choice,0,2);
   const std::string locale=Eden::kLanguageKeys[language_choice];
+  // Independent locale order: local edition, US, UK, then stable source order.
   std::vector<std::string> regions;
-  if(locale=="fr")regions={"fr","eu","world","uk","ca","us"};
-  else if(locale=="en-GB")regions=face==1?
-      std::vector<std::string>{"uk","us","ca","world","eu"}:
-      std::vector<std::string>{"uk","eu","us","world","ca"};
-  else regions={"us","ca","world","uk","eu","fr"};
+  if(locale=="fr")regions={"fr","eu","us","uk"};
+  else if(locale=="en-GB")regions={"uk","us"};
+  else regions={"us","uk"};
   struct Candidate{int priority;std::size_t order;std::string file;};
   std::vector<Candidate> choices;
   for(std::size_t i=0;i<entries.size();++i) {
@@ -90,6 +91,10 @@ int main() {
     for(int face=0;face<2;++face)
       assert(LocaleCaseCandidates(many,lang,face)==reference(many,lang,face));
   assert(LocaleCaseCandidates({},0,0).empty());
+  assert(LocaleCaseCandidates(examples,-10,0)==reference(examples,0,0));
+  assert(LocaleCaseCandidates(examples,100,1)==reference(examples,2,1));
+  assert(LocaleCaseCandidates(examples,1,0)==
+         (std::vector<std::string>{b+".png",a+".jpg",c+".jpg"}));
 }
 """;
 with tempfile.TemporaryDirectory(prefix="encore-case-rank-") as td:
@@ -97,6 +102,6 @@ with tempfile.TemporaryDirectory(prefix="encore-case-rank-") as td:
     for opt in ("-O0","-O2"):
         binary=Path(td)/("test"+opt[2:])
         subprocess.run(["c++","-std=c++20","-Wall","-Wextra","-Werror",opt,
-                        str(src),"-o",str(binary)],check=True,capture_output=True,text=True)
-        subprocess.run([str(binary)],check=True,capture_output=True,text=True)
+                        str(src),"-o",str(binary)],check=True,text=True)
+        subprocess.run([str(binary)],check=True,text=True)
 print("ENCORE_RELEASE_CASE_RANK_DEDUP_HOST_PASS exact_native=1 O0=1 O2=1 stable_rank=1")

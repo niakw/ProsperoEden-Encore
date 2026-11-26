@@ -20,12 +20,16 @@ public:
             program_id_ = 0x0100123400002000ULL;
         } else if (data == "sibling-npdm") {
             program_id_ = 0x0100123400000001ULL;
+        } else if (data == "switch2-npdm") {
+            // Verified embedded program-index-1 sibling of the NS1 update.
+            program_id_ = 0x0400123400000001ULL;
         } else {
             return Loader::ResultStatus::ErrorBadNPDMHeader;
         }
         return Loader::ResultStatus::Success;
     }
     u64 GetTitleID() const { return program_id_; }
+    bool IsSwitch2() const { return (program_id_ >> 56) == 0x04; }
 private:
     u64 program_id_{};
 };

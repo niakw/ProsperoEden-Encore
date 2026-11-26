@@ -24,6 +24,11 @@ pdep=cut(decoder,"template <u32 mask>\nconstexpr u32 pdep(",
 gob=cut(decoder,"template <bool TO_LINEAR, u32 BYTES_PER_PIXEL>\nvoid SwizzleSubrectImpl(",
         "template <bool TO_LINEAR>\nvoid Swizzle(")
 api=cut(decoder,"void SwizzleSubrect(","std::size_t CalculateSize(")
+# This historical GOB implementation models NS1 only; real NS2 bytes
+# and the native tiling switch are independently tested by vendor R3.
+assert api.count("u32 pitch_linear) {") == 2
+api=api.replace("u32 pitch_linear) {",
+                "u32 pitch_linear, bool native_tiling = false) {\n    assert(!native_tiling);")
 assert "i * 4" in method
 assert all(s in live for s in ["UnswizzleSubrect(", "SwizzleSubrect(",
                               "needs_destination", "MAX_BYTES", "IsFullyMappedRange",
@@ -31,6 +36,30 @@ assert all(s in live for s in ["UnswizzleSubrect(", "SwizzleSubrect(",
 assert "UnswizzleSubrect(linear_src, tiled_src, 1," in live
 assert "UnswizzleSubrect(linear_dst, tiled_dst, 1," in live
 assert "SwizzleSubrect(tiled_dst, linear_dst, 1," in live
+# Historical host mock embeds Eden's unchanged NS1-only GOB decoder. The
+# selected native decoder has an independently tested origin-Z overload.
+# Authenticate the exact new 3D remap source, then remove its three
+# origin-Z arguments only in the 2D compatibility fixture below.
+live_host = live
+if "memory_manager.UsesNativeTiling(),\n                             regs.src_params.layer" in live:
+    import hashlib
+    raw = source.encode("utf-8")
+    blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert blob in {"d083d3298b3fb11373d7a7fc164a42ba92bdb2b5", "1fe0b4f25d6f4bbd24406e2f929868151d32c133"}
+    if blob == "1fe0b4f25d6f4bbd24406e2f929868151d32c133":
+        assert "DmaVolumeLinearRows(height, depth, src_params.layer" in source
+    assert "const bool is_volume = image.layer != 0 || image.depth != 1" in live
+    assert "const u64 padded_depth =" in live
+    assert "padded_width * padded_height * padded_depth" in live
+    for path in (
+        "                             regs.src_params.layer);",
+        "                             regs.dst_params.layer);",
+        "                       regs.dst_params.layer);",
+    ):
+        old = "memory_manager.UsesNativeTiling(),\\n" + path
+        old = old.replace("\\n", "\n")
+        assert live_host.count(old) == 1, ("3D remap Z owner drift", path)
+        live_host = live_host.replace(old, "memory_manager.UsesNativeTiling());", 1)
 cpp=r"""
 #include <algorithm>
 #include <array>
@@ -67,6 +96,7 @@ struct Parameters{
 };
 }
 struct MemoryManager{
+ bool UsesNativeTiling() const noexcept{return false;}
  std::array<u8,65536> mem{};
  u32 writes{};
  bool IsFullyMappedRange(GPUVAddr a,size_t n)const{return a<=mem.size()&&n<=mem.size()-a;}
@@ -219,7 +249,7 @@ int main(){
 }
 """
 for k,v in [("__PDEP__",pdep),("__GOB__",gob),("__API__",api),
-            ("__METHOD__",method),("__LIVE__",live)]:
+            ("__METHOD__",method),("__LIVE__",live_host)]:
     assert cpp.count(k)==1,k
     cpp=cpp.replace(k,v)
 compilers=[x for x in ("clang++","g++") if shutil.which(x)]

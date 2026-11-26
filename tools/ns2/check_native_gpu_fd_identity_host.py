@@ -1,124 +1,111 @@
 #!/usr/bin/env python3
-"""H06: execute the real GPU shared FD/process identity owner.
-
-Use the maintained FindOwnedAddressSpace C++ method verbatim. Exercise stale,
-recycled, foreign-type and cross-process descriptors without publishing a GPU
-partition or worker handle. This is not the entire H06 IPC command matrix.
-"""
+"""Execute the actual NS2 VM-to-AS binding, lookup, replay and unbind owners.
+Mock only the GPU page-table operations; verify process identity and rollback."""
 from pathlib import Path
 import os
 import shutil
 import subprocess
 import tempfile
 
-ROOT = Path(__file__).resolve().parents[2]
-vendor = ROOT / "vendor"
-source = (vendor / "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp").read_text()
-begin = "std::shared_ptr<Nvidia::Devices::nvhost_as_gpu>\nGpuWorkerSharedState::FindOwnedAddressSpace("
-end = "\nGpuWorkerSharedState::~GpuWorkerSharedState()"
-assert source.count(begin) == source.count(end) == 1
-owner = begin + source.split(begin, 1)[1].split(end, 1)[0]
-for fragment in ("address_spaces.Owns(id)", "module->VerifyFD(",
-                 "opened_gpu_as.find(id)", "it->second.lock()",
-                 "GetDevice<Nvidia::Devices::nvdevice>", "owned.get() == live.get()",
-                 "owned->OwnsNativeProcess(native_process)"):
-    assert fragment in owner, fragment
-
-fixture = r"""
+ROOT=Path(__file__).resolve().parents[2]
+vendor=ROOT/"vendor"
+root=vendor/"encore-active/ns2-runtime/gpu_session/core/hle/service/am/service"
+source=(root/"gpu_worker_shared.cpp").read_text()
+header=(root/"gpu_worker_shared.h").read_text()
+begin="std::shared_ptr<Nvidia::Devices::nvhost_as_gpu>\nGpuWorkerSharedState::FindOwnedAddressSpace("
+end="\nGpuWorkerSharedState::~GpuWorkerSharedState()"
+assert source.count(begin)==source.count(end)==1
+owner=begin+source.split(begin,1)[1].split(end,1)[0]
+identity="struct IdentityGpuMapping {"+header.split("struct IdentityGpuMapping {",1)[1].split("\n};",1)[0]+"\n};"
+assert "address_spaces.Registered(id)" in owner and "owned->OwnsNativeProcess(native_process)" in owner
+assert "module->VerifyFD(" not in owner
+fixture=r"""
+#include <array>
 #include <cassert>
 #include <cstdint>
-#include <limits>
 #include <map>
 #include <memory>
-#include <set>
+#include <mutex>
+#include <new>
+#include <vector>
 #include "core/hle/service/am/service/gpu_session_protocol.h"
-
-namespace Kernel { struct KProcess { int pid{}; }; }
-namespace Nvidia {
-using DeviceFD = int;
-enum class NvResult { Success, InvalidState };
+namespace Kernel {struct KProcess {int pid{};};}
+namespace Service::Nvidia {
+enum class NvResult {Success,InvalidState,BadParameter,InsufficientMemory};
 namespace Devices {
-struct nvdevice { virtual ~nvdevice() = default; };
-struct nvhost_as_gpu : nvdevice {
+struct nvhost_as_gpu {
     Kernel::KProcess* process{};
-    bool OwnsNativeProcess(Kernel::KProcess* p) const { return p == process; }
+    bool live{true};
+    unsigned map_calls{},fail_at{},unmap_calls{};
+    std::map<std::uint64_t,std::uint64_t> mappings;
+    bool OwnsNativeProcess(Kernel::KProcess* p) const {return live&&p==process;}
+    NvResult MapNative4K(std::uint32_t handle,std::uint64_t address,std::uint64_t source,
+                         std::uint64_t size,std::uint8_t kind) {
+        assert(handle&&source==0&&kind==0);
+        if(++map_calls==fail_at)return NvResult::InsufficientMemory;
+        return mappings.emplace(address,size).second?NvResult::Success:NvResult::InvalidState;
+    }
+    NvResult UnmapNative4K(std::uint64_t address,std::uint64_t size) {
+        ++unmap_calls;auto it=mappings.find(address);
+        if(it==mappings.end()||it->second!=size)return NvResult::InvalidState;
+        mappings.erase(it);return NvResult::Success;
+    }
 };
-struct foreign_device : nvdevice {};
 }
-struct Module {
-    std::map<int, std::shared_ptr<Devices::nvdevice>> live;
-    std::set<int> valid;
-    NvResult VerifyFD(DeviceFD fd) const {
-        return valid.contains(fd) ? NvResult::Success : NvResult::InvalidState;
-    }
-    template <class T> std::shared_ptr<T> GetDevice(DeviceFD fd) const {
-        auto it = live.find(fd);
-        if (it == live.end()) return {};
-        return std::static_pointer_cast<T>(it->second);
-    }
-};
 }
 namespace Service::AM {
+__IDENTITY__
 struct GpuWorkerSharedState {
-    GpuSessionProtocol::AddressSpaceSlots address_spaces{};
-    std::shared_ptr<Nvidia::Module> module{std::make_shared<Nvidia::Module>()};
-    std::map<std::uint32_t, std::weak_ptr<Nvidia::Devices::nvhost_as_gpu>> opened_gpu_as{};
+    std::mutex mutex;
+    GpuSessionProtocol::AddressSpaceSlots address_spaces;
+    std::map<std::uint32_t,std::weak_ptr<Nvidia::Devices::nvhost_as_gpu>> opened_gpu_as;
+    std::vector<IdentityGpuMapping> identity_gpu_mappings;
     Kernel::KProcess* native_process{};
-    std::shared_ptr<Nvidia::Devices::nvhost_as_gpu>
-        FindOwnedAddressSpace(std::uint32_t id) const;
+    std::shared_ptr<Nvidia::Devices::nvhost_as_gpu> FindOwnedAddressSpace(std::uint32_t) const;
+    Nvidia::NvResult BindImportedAddressSpace(std::uint32_t,const std::shared_ptr<Nvidia::Devices::nvhost_as_gpu>&);
+    void UnbindImportedAddressSpace(std::uint32_t,const Nvidia::Devices::nvhost_as_gpu*);
 };
-__REAL_OWNER__
+__OWNER__
 }
-
-int main() {
+int main(){
     using Service::AM::GpuWorkerSharedState;
     using Service::AM::GpuSessionProtocol::Status;
-    using Nvidia::Devices::nvhost_as_gpu;
-    Kernel::KProcess first{1}, foreign{2};
-    GpuWorkerSharedState shared;
-    shared.native_process = &first;
-    auto owned = std::make_shared<nvhost_as_gpu>();
-    owned->process = &first;
-    assert(shared.address_spaces.Add(17) == Status::Success);
-    shared.opened_gpu_as.emplace(17, owned);
-    shared.module->valid.insert(17);
-    shared.module->live[17] = owned;
-    assert(shared.FindOwnedAddressSpace(17) == owned);
-
-    assert(!shared.FindOwnedAddressSpace(0));
-    assert(!shared.FindOwnedAddressSpace(std::numeric_limits<std::uint32_t>::max()));
-    // A valid live device is not enough: the session must own that slot.
-    shared.module->valid.insert(18);
-    shared.module->live[18] = owned;
-    assert(!shared.FindOwnedAddressSpace(18));
-    shared.module->valid.erase(18);
-    shared.module->live.erase(18);
-
-    shared.module->valid.erase(17);
-    assert(!shared.FindOwnedAddressSpace(17)); // guest already closed FD
-    shared.module->valid.insert(17);
-    shared.module->live[17] = std::make_shared<Nvidia::Devices::foreign_device>();
-    assert(!shared.FindOwnedAddressSpace(17)); // recycled FD with foreign type
-    auto replacement = std::make_shared<nvhost_as_gpu>();
-    replacement->process = &first;
-    shared.module->live[17] = replacement;
-    assert(!shared.FindOwnedAddressSpace(17)); // recycled with same device type
-    shared.module->live[17] = owned;
-
-    shared.native_process = &foreign;
-    assert(!shared.FindOwnedAddressSpace(17)); // different guest KProcess
-    shared.native_process = &first;
-    assert(shared.FindOwnedAddressSpace(17) == owned);
-
-    shared.opened_gpu_as.erase(17);
-    assert(!shared.FindOwnedAddressSpace(17)); // no registered original identity
-    shared.opened_gpu_as.emplace(17, owned);
-    shared.module->live.erase(17);
-    owned.reset(); // only a weak entry remains
-    assert(!shared.FindOwnedAddressSpace(17)); // original owner expired
+    using Service::Nvidia::NvResult;
+    using Service::Nvidia::Devices::nvhost_as_gpu;
+    Kernel::KProcess first{1},foreign{2};
+    GpuWorkerSharedState s;s.native_process=&first;
+    auto a=std::make_shared<nvhost_as_gpu>();a->process=&first;
+    auto b=std::make_shared<nvhost_as_gpu>();b->process=&foreign;
+    assert(s.address_spaces.Add(17)==Status::Success);
+    assert(s.BindImportedAddressSpace(17,a)==NvResult::InvalidState);
+    assert(s.address_spaces.Register(17)==Status::Success);
+    assert(!s.FindOwnedAddressSpace(17));
+    assert(s.BindImportedAddressSpace(17,b)==NvResult::InvalidState);
+    s.identity_gpu_mappings.push_back({1,0x20000,0x1000,{},0});
+    s.identity_gpu_mappings.push_back({2,0x30000,0x1000,{},0});
+    a->fail_at=2;
+    assert(s.BindImportedAddressSpace(17,a)==NvResult::InsufficientMemory);
+    assert(a->mappings.empty()&&a->unmap_calls==1&&!s.FindOwnedAddressSpace(17));
+    for(const auto& m:s.identity_gpu_mappings)assert(!m.HasSpace(17));
+    a->fail_at=0;
+    assert(s.BindImportedAddressSpace(17,a)==NvResult::Success);
+    assert(s.FindOwnedAddressSpace(17)==a&&a->mappings.size()==2);
+    for(const auto& m:s.identity_gpu_mappings)assert(m.HasSpace(17));
+    assert(!s.FindOwnedAddressSpace(0)&&!s.FindOwnedAddressSpace(18));
+    b->process=&first;
+    assert(s.BindImportedAddressSpace(17,b)==NvResult::InvalidState);
+    s.UnbindImportedAddressSpace(17,b.get());
+    assert(s.FindOwnedAddressSpace(17)==a);
+    a->live=false;
+    assert(!s.FindOwnedAddressSpace(17));
+    s.UnbindImportedAddressSpace(17,a.get());
+    assert(!s.FindOwnedAddressSpace(17));
+    for(const auto& m:s.identity_gpu_mappings)assert(!m.HasSpace(17));
+    assert(s.BindImportedAddressSpace(17,b)==NvResult::Success);
+    assert(s.FindOwnedAddressSpace(17)==b&&b->mappings.size()==2);
+    b.reset();assert(!s.FindOwnedAddressSpace(17));
 }
-""".replace("__REAL_OWNER__", owner)
-
+""".replace("__IDENTITY__",identity).replace("__OWNER__",owner)
 compilers = list(dict.fromkeys(x for x in (shutil.which("clang++"), shutil.which("g++")) if x))
 assert compilers, "Clang or GCC C++20 compiler required"
 with tempfile.TemporaryDirectory(prefix="eden-h06-fd-identity-") as directory:
@@ -137,4 +124,4 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-fd-identity-") as directory:
             run = subprocess.run([str(executable)], capture_output=True, text=True, timeout=20)
             assert run.returncode == 0, run.stderr[-5000:]
             print("H06_REAL_GPU_FD_IDENTITY_PASS", Path(compiler).name, opt,
-                  "valid=1 stale=1 recycled=2 foreign_process=1 expired=1", flush=True)
+                  "vm_import=1 foreign_process=1 duplicate=refused close_identity=1 replay_rollback=1 expired=1", flush=True)

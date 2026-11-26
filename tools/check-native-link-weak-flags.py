@@ -15,21 +15,35 @@ for part in (
     'if "$nm_tool" -D --undefined-only "$output"',
     'Native link still contains unresolved weak imports:',
     'Refusing to null required PS5 runtime symbol:',
+    'Refusing to null unreviewed weak PS5 import:',
 ):
     assert part in link, f"missing weak-import contract: {part}"
-# Test the exact linker guard against essential native APIs and optional Mesa slots.
+# Execute the production shell case. The R457 ELF has exactly 5,719 weak
+# optional dispatch entries under these ten Mesa families, and no others.
+# A future missing runtime/CRT/Vulkan export must fail the link, not get NULL.
 case_body = link.split('    case "$name" in\n', 1)[1].split('    esac', 1)[0]
+def guarded(symbol: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["bash", "-c", 'name="$1"; case "$name" in\n'
+                           + case_body + 'esac', "_", symbol],
+                          capture_output=True, text=True, timeout=5)
+
 for symbol in ("sceKernelUsleep", "sceSystemServiceParamGetInt",
                "sceVideoOutSubmitFlip", "sceAudioOutOutput", "sceNetInit",
                "pthread_create", "pthread_join", "__cxa_throw",
                "__cxa_allocate_exception"):
-    test = subprocess.run(["bash", "-c", 'name="$1"; case "$name" in\n'
-                           + case_body + 'esac', "_", symbol], capture_output=True)
-    assert test.returncode == 2, (symbol, test.returncode, test.stderr)
-for symbol in ("vkCmdDraw", "radv_shader_nir_to_asm", "glDrawArrays"):
-    test = subprocess.run(["bash", "-c", 'name="$1"; case "$name" in\n'
-                           + case_body + 'esac', "_", symbol], capture_output=True)
-    assert test.returncode == 0, (symbol, test.returncode, test.stderr)
+    test = guarded(symbol)
+    assert test.returncode == 2 and 'required PS5 runtime symbol' in test.stderr, (symbol, test)
+for symbol in ("vkCmdDraw", "radv_shader_nir_to_asm", "glDrawArrays",
+               "__cxa_thread_atexit", "malloc", "foreign_OptionalHook",
+               "sceKernelWeakEntry", "radv_missingFallback"):
+    test = guarded(symbol)
+    assert test.returncode == 2 and test.stderr.strip(), (symbol, test)
+for symbol in ("radv_AcquireNextImageKHR", "vk_common_AcquireNextImageKHR",
+               "wsi_AllocateCommandBuffers", "ctx_roll_CmdDraw",
+               "rmv_CmdDraw", "rra_CmdDraw", "utrace_CmdDraw",
+               "sqtt_CmdDraw", "annotate_CmdDraw", "threaded_CmdDraw"):
+    test = guarded(symbol)
+    assert test.returncode == 0, (symbol, test)
 subprocess.run(["bash","-n",str(root/"tools/link-headless-native.sh")],
                check=True,timeout=10)
-print("PASS native weak symbol scan/resolution; required PS5 imports reject NULL; optional Mesa GPU entrypoints allowed")
+print("PASS native weak symbol scan/resolution; required PS5 and unknown imports rejected; ten optional Mesa dispatch families only")

@@ -60,7 +60,12 @@ print(f'VENDOR_COMPLETE_OK pinned={len(ITEMS)} source_roots={sum((V / 'sources' 
 import tempfile
 import sys
 sys.path.insert(0,str(ROOT/'tools'))
-import deps
+import os
+from unittest.mock import patch
+with patch.dict(os.environ):
+ os.environ.pop('PROSPEROEDEN_DEPS_OFFLINE',None)
+ import deps
+ assert deps.OFFLINE,'dependency loader must default to offline'
 with tempfile.TemporaryDirectory(prefix='eden-vendor-airgap-') as tmp:
  isolated=Path(tmp)
  # Keep the extra git dependency inside this temporary airgap, not in /tmp
@@ -69,7 +74,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vendor-airgap-') as tmp:
  os.environ['PROSPEROEDEN_GIT_DEPS_ROOT']=str(isolated/'repos')
  deps.ROOT=isolated
  deps.CACHE=isolated/'empty-source-cache'
- deps.OFFLINE=True
+ assert deps.OFFLINE
  for name in ('eden','fmt','compiler-rt','zbic','encore-overrides'):
   dep=next(x for x in ITEMS if x['name']==name)
   deps.fetch(dep)
@@ -80,6 +85,41 @@ with tempfile.TemporaryDirectory(prefix='eden-vendor-airgap-') as tmp:
  assert (isolated/'.deps/fmt-12.1.0.tar.gz').is_file()
  assert deps.revision(isolated/'.deps/zbic-11b08f27')=='11b08f2712264bbed731545085cbd9702096ceb7'
  assert deps.revision(isolated/'repos/encore-overrides-review')=='95f21edf13bfbd2888602f2b419dd856d6d0fbfa'
+ # Vendored restoration is a true air-gap path: it must not even leave an
+ # upstream remote configured that a later generic Git command could contact.
+ import subprocess
+ for checkout in (isolated/'.deps/zbic-11b08f27',
+                  isolated/'repos/encore-overrides-review'):
+  remotes=subprocess.check_output(['git','-C',str(checkout),'remote'],text=True).strip()
+  assert remotes=='',f'{checkout}: vendored restore unexpectedly configured remote {remotes!r}'
+ # Fetch itself must reject an existing, dirty checkout, before native setup.
+ zbic=next(x for x in ITEMS if x['name']=='zbic')
+ zbic_path=deps.location(zbic)
+ tracked=subprocess.check_output(['git','-C',str(zbic_path),'ls-files'],text=True).splitlines()
+ file=next((zbic_path/rel for rel in tracked
+            if (zbic_path/rel).is_file() and not (zbic_path/rel).is_symlink()),None)
+ assert file is not None,'isolated zbic checkout has no regular tracked source'
+ before=file.read_bytes()
+ try:
+  file.write_bytes(before+b'X')
+  try:
+   deps.fetch(zbic)
+  except SystemExit as exc:
+   assert exc.code==1
+  else:
+   raise AssertionError('fetch accepted dirty pinned Git source')
+  assert file.read_bytes()==before+b'X','fetch modified existing tracked source'
+ finally:
+  file.write_bytes(before)
+ assert not deps.tracked_changes(zbic_path)
+ # Wrong HEAD is also rejected without even reaching setup_preflight.
+ with patch.object(deps,'revision',return_value='0'*40):
+  try:
+   deps.fetch(zbic)
+  except SystemExit as exc:
+   assert exc.code==1
+  else:
+   raise AssertionError('fetch accepted unexpected Git revision')
  boilerplate=next(x for x in ITEMS if x['name']=='boilerplate')
  sdk=boilerplate['setup_prefetch'][1]
  archive=deps.download(sdk['url'],'sha256',sdk['sha256'],'boilerplate-ps5-payload-sdk.zip')

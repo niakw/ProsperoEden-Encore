@@ -3,6 +3,7 @@
 // Native UI-only GL helpers. No guest graphics state or file/network access.
 #include "loading_artwork_transfer.hpp"
 #include "loading_scene_glsl.h"
+#include "loading_case_shader_source.hpp"
 #include <GL/glcorearb.h>
 #include <algorithm>
 #include <cstdint>
@@ -20,12 +21,12 @@ namespace {
 // The caller supplies the already composed Encore draw list. Render once at
 // a bounded resolution using an explicit FBO, not the transient scanout.
 template<class Draw>
-bool Capture(Draw&& draw) {
-    constexpr int width = 1920, height = 1080;
+bool Capture(Draw&& draw,bool alternate=false,int width=1920,int height=1080){
+    if(width<=0||height<=0||width>4096||height>2160)return false;
     LaunchHandoff::Frame frame;
     frame.width = width;
     frame.height = height;
-    constexpr std::size_t stride = std::size_t(width) * 4;
+    const std::size_t stride = std::size_t(width) * 4;
     try {
         frame.rgba.resize(stride * height);
     } catch (...) {
@@ -111,7 +112,7 @@ bool Capture(Draw&& draw) {
                          frame.rgba.begin() + (height - y - 1) * stride);
     }
     try {
-        LaunchHandoff::Publish(std::move(frame));
+        LaunchHandoff::Publish(std::move(frame), alternate);
     } catch (...) {
         return false;
     }
@@ -127,9 +128,12 @@ public:
     GlPresenter& operator=(const GlPresenter&) = delete;
     void Release() {
         glDeleteTextures(1, &texture_);
+        glDeleteTextures(1, &alternate_texture_);
         glDeleteVertexArrays(1, &vao_);
         glDeleteProgram(program_);
-        texture_ = vao_ = program_ = 0;
+        glDeleteProgram(case_program_);
+        texture_=alternate_texture_=vao_=program_=case_program_=0;
+        scene_.reset();
         width_ = height_ = 0;
         attempted_ = false;
     }
@@ -138,11 +142,12 @@ public:
         if (!program_ && !Build()) return false;
         if (!attempted_) {
             attempted_ = true;
-            const auto artwork = LaunchHandoff::Peek();
-            if (artwork && LaunchHandoff::Valid(*artwork)) {
+            const auto upload = [&](const std::shared_ptr<const LaunchHandoff::Frame>& artwork,
+                                    GLuint* out) {
+                if (!artwork || !LaunchHandoff::Valid(*artwork)) return;
                 glActiveTexture(GL_TEXTURE0);
-                glGenTextures(1, &texture_);
-                glBindTexture(GL_TEXTURE_2D, texture_);
+                glGenTextures(1, out);
+                glBindTexture(GL_TEXTURE_2D, *out);
                 glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
                 glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
                 glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
@@ -154,13 +159,20 @@ public:
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                if (texture_ && glGetError() == GL_NO_ERROR) {
-                    width_ = artwork->width;
-                    height_ = artwork->height;
-                } else {
-                    glDeleteTextures(1, &texture_);
-                    texture_ = 0;
+                if (!*out || glGetError() != GL_NO_ERROR) {
+                    glDeleteTextures(1, out);
+                    *out = 0;
                 }
+            };
+            const auto artwork = LaunchHandoff::Peek();
+            upload(artwork, &texture_);
+            if (texture_ && artwork) {
+                width_ = artwork->width;
+                height_ = artwork->height;
+                const auto alternate = LaunchHandoff::PeekAlternate();
+                scene_=LaunchHandoff::PeekCase();
+                if(scene_&&alternate&&alternate->width==LoadingCase::kAtlasWidth&&
+                   alternate->height==LoadingCase::kAtlasHeight)upload(alternate,&alternate_texture_);
             }
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -173,13 +185,41 @@ public:
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture_);
         glUniform1i(glGetUniformLocation(program_, "art"), 0);
-        glUniform1i(glGetUniformLocation(program_, "has_art"), texture_ ? 1 : 0);
+        glUniform1i(glGetUniformLocation(program_,"has_art"),texture_?1:0);
         const auto fit = Fit(width_, height_, width, height);
         glUniform4f(glGetUniformLocation(program_, "fit_rect"), float(fit.x), float(fit.y),
                     float(std::max(1u, fit.width)), float(std::max(1u, fit.height)));
         glUniform2f(glGetUniformLocation(program_, "size"), float(width), float(height));
         glUniform1f(glGetUniformLocation(program_, "seconds"), float(seconds));
         glDrawArrays(GL_TRIANGLES, 0, 3);
+        if(scene_ && (!alternate_texture_ || (!case_program_ && !BuildCase())))
+            return false;
+        if(scene_ && alternate_texture_){
+            const auto draw=LoadingCase::MakeBatch(*scene_,seconds,float(width),float(height));
+            glUseProgram(case_program_);
+            glEnable(GL_BLEND);
+            glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
+            glDisable(GL_CULL_FACE);
+            glBindTexture(GL_TEXTURE_2D,alternate_texture_);
+            glUniform1i(glGetUniformLocation(case_program_,"u_texture"),0);
+            const float scale=std::min(float(width)/1920.0f,float(height)/1080.0f);
+            glUniform4f(glGetUniformLocation(case_program_,"u_viewport"),scale,
+                (width-1920.0f*scale)*0.5f,(height-1080.0f*scale)*0.5f,0.0f);
+            glUniform2f(glGetUniformLocation(case_program_,"u_surface"),float(width),float(height));
+            const char* names[]={"a_rect","a_top","a_bottom","a_border","a_params","a_extra"};
+            GLint loc[6]{};
+            for(int i=0;i<6;++i)loc[i]=glGetUniformLocation(case_program_,names[i]);
+            const GLint slot=glGetUniformLocation(case_program_,"u_slot");
+            for(std::size_t n=0;n<draw.count;++n){
+                const auto& q=draw.quads[n];
+                for(int i=0;i<6;++i) {
+                    const auto* value=q.values.data()+4*i;
+                    glUniform4f(loc[i],value[0],value[1],value[2],value[3]);
+                }
+                glUniform1i(slot,int(q.output[2]));glDrawArrays(GL_TRIANGLES,0,6);
+            }
+            glDisable(GL_BLEND);
+        }
         glFlush();
         return glGetError() == GL_NO_ERROR;
     }
@@ -222,7 +262,28 @@ private:
         program_ = program;
         return true;
     }
-    GLuint program_{}, vao_{}, texture_{};
+    bool BuildCase(){
+        const std::string prefix="#version 330 core\n#define EDEN_CASE_HANDOFF_GL 1\n";
+        const std::string vertex=prefix+LoadingCase::kVertex,fragment=prefix+LoadingCase::kFragment;
+        const GLuint program=glCreateProgram();if(!program)return false;
+        bool ok=true;
+        for(unsigned i=0;i<2&&ok;++i){
+            GLuint shader=glCreateShader(i?GL_FRAGMENT_SHADER:GL_VERTEX_SHADER);
+            if(!shader){ok=false;break;}
+            const char* code=i?fragment.c_str():vertex.c_str();
+            glShaderSource(shader,1,&code,nullptr);glCompileShader(shader);
+            GLint compiled=0;glGetShaderiv(shader,GL_COMPILE_STATUS,&compiled);
+            if(compiled)glAttachShader(program,shader);
+            else{char info[1024]{};glGetShaderInfoLog(shader,sizeof(info),nullptr,info);
+                 std::fprintf(stderr,"EDEN_LOADING_CASE_SHADER %s\n",info);}
+            glDeleteShader(shader);ok=compiled!=0;
+        }
+        if(ok){glLinkProgram(program);GLint linked=0;glGetProgramiv(program,GL_LINK_STATUS,&linked);ok=linked!=0;}
+        if(!ok){glDeleteProgram(program);return false;}
+        case_program_=program;return true;
+    }
+    GLuint program_{},vao_{},texture_{},alternate_texture_{},case_program_{};
+    std::shared_ptr<const LoadingCase::Scene> scene_;
     std::uint32_t width_{}, height_{};
     bool attempted_{};
 };

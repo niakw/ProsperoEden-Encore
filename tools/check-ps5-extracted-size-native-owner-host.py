@@ -19,10 +19,15 @@ end = library.index("\n// Local user-supplied covers", begin)
 real_owner = library[begin:end]
 assert '#if defined(PS5_NATIVE)' in real_owner
 native = real_owner.split('#if defined(PS5_NATIVE)', 1)[1].split('#else', 1)[0]
-assert "Eden::ReadNativeDirectory(current.path, listing_error)" in native
+assert "Eden::ReadNativeDirectoryStats(current.path, listing_error)" in native
 assert "fs::recursive_directory_iterator" not in native
 assert "Eden::IsReservedAddOnPackageStem" in native
-assert "::lstat(entry.path().c_str(), &info)" in native
+assert "::lstat(" not in native
+assert "const auto& info = entry.info;" in native
+native_reader = (ROOT / "headless/native_directory.h").read_text()
+assert "stat_entries->push_back({full, native});" in native_reader
+assert native_reader.index("stat_entries->push_back({full, native});") < native_reader.index("entries.emplace_back(full, error);")
+assert "stat_entries || (errno != EPERM && errno != EACCES)" in native_reader
 assert "if (info.st_size < 0)" in native
 assert 'return fail("getdents"' in native
 assert "kMaxExtractedFiles = 1000000" in real_owner
@@ -49,17 +54,24 @@ namespace fs = std::filesystem;
 namespace Eden {
 // Exercise the real size-collector code with a controllable host equivalent
 // of the native PS5 getdents reader. Inject incomplete directory errors.
-std::vector<fs::directory_entry> ReadNativeDirectory(const fs::path& path,
-                                                     std::error_code& ec) {
+struct NativeDirectoryStat { fs::path path; struct stat info{}; };
+std::vector<NativeDirectoryStat> ReadNativeDirectoryStats(const fs::path& path,
+                                                         std::error_code& ec) {
     if (path.filename() == "readerr") {
         ec = std::make_error_code(std::errc::io_error);
         return {};
     }
-    std::vector<fs::directory_entry> entries;
+    std::vector<NativeDirectoryStat> entries;
     for (fs::directory_iterator it(path, fs::directory_options::none, ec), end;
-         it != end && !ec; it.increment(ec))
-        entries.push_back(*it);
-    return ec ? std::vector<fs::directory_entry>{} : entries;
+         it != end && !ec; it.increment(ec)) {
+        struct stat info{};
+        if (::lstat(it->path().c_str(), &info) != 0) {
+            ec = {errno, std::generic_category()};
+            return {};
+        }
+        if (!S_ISLNK(info.st_mode)) entries.push_back({it->path(), info});
+    }
+    return ec ? std::vector<NativeDirectoryStat>{} : entries;
 }
 }
 """

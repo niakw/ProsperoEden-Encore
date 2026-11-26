@@ -154,3 +154,61 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-dirty-gc-") as folder:
             ran=subprocess.run([str(exe)],capture_output=True,text=True,timeout=15)
             assert ran.returncode==0,(native,opt,ran.stderr[-5000:])
 print("F07_GC_DIRTY_EVICTION_ROLLBACK_PASS native_short=1 null=1 oom=1 no_delete=1 valid_finish=1 prefetched=1 desktop_original=1 O0=1 O2=1")
+
+# Exercise the actual CMake-selected PS5 cache, not only its shadow owner.
+selected=(ROOT/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+start=selected.index("void TextureCache<P>::RunGarbageCollector() {")
+end=selected.index("\ntemplate <class P>",start)
+active=selected[start:end]
+first_active="#ifdef PS5_NATIVE\n        // Charge each eligible attempt"
+assert active.count(first_active)==active.count(last)==1
+active_block=active[active.index(first_active):active.index(last)]
+# The fixture tests readback/eviction safety, not the enclosing attempt counter.
+active_block="#ifdef PS5_NATIVE\n"+active_block[active_block.index("        if (must_download && !UseGcPrefetch(image_id, image)) {"):]
+active_block=active_block.replace("UseGcPrefetch(", "UsePrefetched(")
+assert "if (frame_tick < ticks_to_destroy) return;" in active
+assert "total_used_memory -= (std::min)(total_used_memory, scaled_bytes);" in selected
+assert "total_used_memory -= (std::min)(total_used_memory, reclaimed_bytes);" in selected
+assert active_block.index("if (FullDownloadCopies(image.info).empty())") < active_block.index("runtime.DownloadStagingBuffer")
+assert active_block.index("!map.buffer ||") < active_block.index("image.DownloadMemory(map,")
+assert cpp.count(block)==1
+active_cpp=cpp.replace(block,active_block,1).replace("        const ImageId image_id=1;","        [[maybe_unused]] const ImageId image_id=1;",1)
+prefetch_case="""    Cache prefetched;
+    prefetched.prefetched=true;
+    assert(prefetched.Cleanup() && prefetched.deletions==1);
+    assert(prefetched.runtime.allocs==0 && prefetched.runtime.finishes==0);
+"""
+assert active_cpp.count(prefetch_case)==1
+active_cpp=active_cpp.replace(prefetch_case,"",1).replace(".skipped==1",".skipped==0")
+with tempfile.TemporaryDirectory(prefix="eden-active-dirty-gc-") as folder:
+    path=Path(folder)/"gc.cpp"
+    path.write_text(active_cpp)
+    for opt in ("-O0","-O2"):
+        for native in (False,True):
+            exe=Path(folder)/("gc"+opt[1:]+("-ps5" if native else "-desktop"))
+            cmd=[compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                 "-fsanitize=undefined","-fno-sanitize-recover=all",
+                 *(['-DPS5_NATIVE=1'] if native else []),str(path),"-o",str(exe)]
+            subprocess.run(cmd,check=True,timeout=40)
+            subprocess.run([str(exe)],check=True,timeout=15)
+print("F07_SELECTED_GC_DIRTY_EVICTION_ROLLBACK_PASS native_desktop_O0_O2")
+
+# The actual native GC prefetch must preserve the visit/pressure policy and
+# publish readbacks only after retirement. The legacy shadow is checked above.
+for marker in (
+    "constexpr size_t gc_batch_count = 40;",
+    "constexpr size_t gc_batch_bytes = 32_MiB;",
+    "if (candidates.size() < 2) return;",
+    "image.cpu_addr < other.cpu_addr_end",
+    "const size_t rounded = std::bit_ceil(bytes);",
+    "map.mapped_span.size_bytes() > gc_batch_bytes - mapped_bytes",
+    "if (!gc_retired)",
+    "if (must_download && !UseGcPrefetch(image_id, image))",
+):
+    assert marker in active, marker
+prefetch=active[active.index("const auto PrefetchGc"):active.index("const auto UseGcPrefetch")]
+assert prefetch.index("gc_maps.emplace_back(id, map);") < prefetch.index("image.DownloadMemory(gc_maps.back().second, copies);")
+assert prefetch.index("runtime.Finish();") < prefetch.index("gc_retired = true;")
+consume=active[active.index("const auto UseGcPrefetch"):active.index("const auto Cleanup")]
+assert consume.index("SwizzleImage(") < consume.index("runtime.FreeDeferredStagingBuffer(it->second);")
+print("F07_SELECTED_GC_PREFETCH_ORDER_AND_CAP_PASS")

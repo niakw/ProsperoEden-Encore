@@ -5,6 +5,33 @@ layout(push_constant) uniform Text { uint glyphs[24]; uint width; uint x; uint y
 layout(location = 0) out vec4 color;
 #include "loading_wordmark.glsl"
 #include "loading_scene.glsl"
+#ifdef EDEN_LOADING_ARTWORK
+// First image: 2D title scene. The second is flat paper consumed by the
+// shared original case vertex/fragment shader.
+layout(std430, set = 0, binding = 0) readonly buffer LoadingArt { uint pixels[]; } artwork;
+vec3 artPixel(ivec2 p){
+    ivec2 dim=ivec2(text.glyphs[1],text.glyphs[2]);p=clamp(p,ivec2(0),dim-1);
+    return unpackUnorm4x8(artwork.pixels[uint(p.y*dim.x+p.x)]).rgb;
+}
+vec3 artSample(vec2 uv){
+    vec2 dim=vec2(text.glyphs[1],text.glyphs[2]);
+    vec2 p=clamp(uv,vec2(0),vec2(1))*dim-0.5;ivec2 lo=ivec2(floor(p));vec2 f=fract(p);
+    return mix(mix(artPixel(lo),artPixel(lo+ivec2(1,0)),f.x),
+               mix(artPixel(lo+ivec2(0,1)),artPixel(lo+ivec2(1,1)),f.x),f.y);
+}
+void main(){
+    vec2 size=vec2(text.x,text.y),source=vec2(text.glyphs[1],text.glyphs[2]);
+    float scale=min(size.x/source.x,size.y/source.y);vec2 fit=source*scale;
+    vec2 uv=clamp((gl_FragCoord.xy-(size-fit)*0.5)/fit,vec2(0),vec2(1));
+    vec3 base=artSample(uv);
+    // Captured pixels are already display-encoded. SRGB attachments encode
+    // the shader's output themselves, so undo that encoding only for them.
+    if (text.glyphs[3] != 0u)
+        base = mix(base / 12.92, pow((base + 0.055) / 1.055, vec3(2.4)),
+                   greaterThan(base, vec3(0.04045)));
+    color = vec4(base, 1.0);
+}
+#else
 #ifdef EDEN_QUICK_MENU
 #include "vulkan_menu_font.glsl"
 #endif
@@ -139,3 +166,4 @@ void main() {
     }
     color = ink ? vec4(0.9, 0.95, 1.0, 1.0) : vec4(0.025, 0.04, 0.075, 0.5);
 }
+#endif // EDEN_LOADING_ARTWORK

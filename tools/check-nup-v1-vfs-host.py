@@ -159,6 +159,22 @@ def main() -> None:
         archive.write_bytes(fixtures.fixture(0, raw))
         subprocess.run([str(mutable_binary), str(archive)], check=True)
         layered = layered_fixture()
+        # Upstream-compatible optional metadata: a bad pointer does not
+        # invalidate a SHA-verified TOC or otherwise valid game payload.
+        invalid_optional = bytearray(layered)
+        metadata_record = 0x80 + 0x30 + 0x20
+        struct.pack_into("<QI", invalid_optional, metadata_record,
+                         len(invalid_optional) + 4096, 16)
+        invalid_optional[0x18:0x38] = hashlib.sha256(
+            invalid_optional[0x80:0x320]).digest()
+        execute(bytes(invalid_optional), "@effective/romfs/state.bin", b"latest-v3")
+        # A metadata range that aliases the verified TOC is NOT an optional
+        # out-of-file advertisement and must remain rejected.
+        invalid_overlap = bytearray(layered)
+        struct.pack_into("<QI", invalid_overlap, metadata_record, 0x80 + 0x30, 16)
+        invalid_overlap[0x18:0x38] = hashlib.sha256(
+            invalid_overlap[0x80:0x320]).digest()
+        execute(bytes(invalid_overlap), "@effective/romfs/state.bin", None)
         execute(layered, "@base/romfs/state.bin", b"base-v1")
         execute(layered, "@update1/romfs/state.bin", b"latest-v3")
         execute(layered, "@update2/romfs/state.bin", b"older-v2")

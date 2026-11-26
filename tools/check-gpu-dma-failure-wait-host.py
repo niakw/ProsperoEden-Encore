@@ -27,7 +27,13 @@ def extract(src: str) -> str:
     snippet = src[src.index(START):src.index(END)]
     assert snippet.count("::Eden::PeekGpuFailure()") == 2
     assert snippet.count("std::rethrow_exception(failure);") == 2
-    assert snippet.count("#ifdef PS5_NATIVE") == 2
+    native_lease = "require_native_submission_lease();" in snippet
+    assert snippet.count("#ifdef PS5_NATIVE") == (3 if native_lease else 2)
+    if native_lease:
+        assert snippet.count("require_native_submission_lease();") == 1
+        assert snippet.index("require_native_submission_lease();") > snippet.index("sync_cv.wait_for")
+        assert "const auto require_native_submission_lease = [this]" in src
+        assert 'FailNativeSubmission("Native GPFIFO address-space lease retired");' in src
     assert snippet.count("sync_cv.wait_for(lk, std::chrono::milliseconds(10))") == 1
     assert "synced = false;" in snippet
     assert snippet.index("::Eden::PeekGpuFailure()") < snippet.index("sync_cv.wait_for")
@@ -37,6 +43,7 @@ def extract(src: str) -> str:
 quiet_wait = extract(QUIET)
 dev_wait = extract(DEV)
 assert "DiagnosticActiveTimer" not in quiet_wait
+assert "require_native_submission_lease();" in quiet_wait
 assert dev_wait.count("DiagnosticActiveTimer") == 1
 
 CPP = r"""
@@ -66,7 +73,14 @@ struct Dma {
     std::condition_variable sync_cv;
     bool signal_sync=true, synced=false;
     std::atomic<unsigned> acknowledges{0};
+    std::atomic<bool> lease_current{true};
     bool Go() {
+#if defined(PS5_NATIVE)
+        [[maybe_unused]] const auto require_native_submission_lease = [this] {
+            if (!lease_current.load(std::memory_order_acquire))
+                throw std::runtime_error("native lease retired");
+        };
+#endif
 INJECT
         ++acknowledges;
         return true;
@@ -139,6 +153,20 @@ int main() {
         assert(d.Go() && d.synced && d.acknowledges==1);
     }
     Eden::ResetGpuFailureForTitle();
+#if defined(TEST_LEASE_RECHECK)
+    {
+        Dma d;
+        std::thread waiter([&] {
+            std::this_thread::sleep_for(20ms);
+            d.lease_current.store(false,std::memory_order_release);
+            d.Satisfy();
+        });
+        bool caught=false;
+        try { d.Go(); } catch (const std::runtime_error&) { caught=true; }
+        waiter.join();
+        assert(caught && d.acknowledges==0);
+    }
+#endif
 #endif
 }
 """
@@ -150,6 +178,8 @@ with tempfile.TemporaryDirectory(prefix="eden-gpu-dma-failed-fence-") as tmp:
         source = p / (label + ".cpp")
         source.write_text(CPP.replace("INJECT", snippet))
         for target_name, flags in (("host", []), ("native", ["-DPS5_NATIVE=1"])):
+            if target_name == "native" and label == "quiet":
+                flags = [*flags, "-DTEST_LEASE_RECHECK=1"]
             exe = p / (label + "-" + target_name)
             subprocess.run(
                 [compiler, "-std=c++20", "-O1", "-Wall", "-Wextra", "-Werror",

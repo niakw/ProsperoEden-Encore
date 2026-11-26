@@ -149,6 +149,21 @@ assert expected.count(pinned_gather) == 1, "Pinned Gather source drift"
 assert expected.count(field_after) == 1, "Pinned Gather mutex missing"
 expected = expected.replace(pinned_gather, gather_after)
 
+# Lichii maintained fast-path: a nonempty current mask is the publication
+# witness for any pending dirty page, including older pages already queued.
+may_have_pending = """    /// False when Gather would find no newly collected CPU write. Every
+    /// Collect that pushes an older page into back_buffer simultaneously
+    /// publishes a non-empty replacement in current; only Gather empties
+    /// current while taking ownership of those older pages. A write that
+    /// starts after this load is ordered after the caller and is gathered by
+    /// the next invalidation.
+    [[nodiscard]] bool MayHavePending() const noexcept {
+        return current.load(std::memory_order_acquire).mask != 0;
+    }
+
+"""
+pending_anchor = "    /// Enumerate collected writes without consuming them. Downloads can use\n"
+
 # Vendor #156 exposes collected CPU writes non-destructively so GPU downloads
 # cannot overwrite newer guest bytes. Reconstruct the two exact additions on
 # top of the already-reviewed M09 header, then require full-file equality.
@@ -172,6 +187,8 @@ pending_snapshot = """    /// Enumerate collected writes without consuming them.
 gather_anchor = "    void Gather(std::function<void(PAddr, size_t)>& callback) {\n"
 assert expected.count(gather_anchor) == 1
 expected = expected.replace(gather_anchor, pending_snapshot + gather_anchor, 1)
+assert expected.count(pending_anchor) == 1
+expected = expected.replace(pending_anchor, may_have_pending + pending_anchor, 1)
 for_each_run = """    template <typename Func>
     static void ForEachRun(const TransformAddress& transform, Func&& callback) {
         size_t offset = 0;
@@ -195,13 +212,14 @@ expected = expected.replace(page_anchor, for_each_run + page_anchor, 1)
 actual_blob = subprocess.check_output(
     ["git", "hash-object", str(root / "vendor/encore-active/eden-core/overrides/core/gpu_dirty_memory_manager.h")],
     text=True).strip()
-assert actual_blob == "d489855e83f53ba703c18ce67d620f8db7b932fc"
+assert actual_blob == "7769e314fbefeb8393e6d11b115c88bc0a8a0e58"
 assert maintained == expected
 assert 'set(EDEN_NATIVE_DIRTY_HEADER_ROOT' in cmake
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake
 assert 'if(PS5_NATIVE)' in cmake.split('set(EDEN_NATIVE_DIRTY_HEADER_ROOT', 1)[0]
 assert "python3 -B tools/check-native-gpu-dirty-transition-host.py" in workflow
 assert maintained.count("back_buffer.back() = current.exchange(t, std::memory_order_acq_rel);") == 1
+assert maintained.count("[[nodiscard]] bool MayHavePending() const noexcept") == 1
 
 source = r"""
 #include "core/gpu_dirty_memory_manager.h"

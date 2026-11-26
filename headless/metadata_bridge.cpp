@@ -201,6 +201,39 @@ FileSys::VirtualFile ExtractedNpdm(const char* rom_path, FileSys::RealVfsFilesys
                         FileSys::OpenMode::Read);
 }
 
+// The extracted selection's base Control NACP owns its language flags.
+// Use the same RawNACP ABI as packaged Control NCA, without guessing names.
+static uint32_t ReadExtractedLanguageFlags(const char* rom_path) {
+    namespace fs = std::filesystem;
+    const fs::path selected{rom_path};
+    if (selected.filename() != "main") return 0;
+    const fs::path root{Eden::AssetsPath("roms")};
+    const auto relative = selected.lexically_relative(root).generic_string();
+    if (!Eden::IsSafeDeconstructedGamePath(root, relative)) return 0;
+    const fs::path title = root / relative.substr(0, relative.find('/'));
+    FileSys::RealVfsFilesystem vfs;
+    for (const char* candidate : {"control.nacp", "base/control.nacp",
+                                  "exefs/control.nacp", "base/exefs/control.nacp",
+                                  "control/control.nacp", "base/control/control.nacp"}) {
+        fs::path parent = title;
+        bool safe = true;
+        for (const auto& part : fs::path(candidate).parent_path()) {
+            parent /= part;
+            if (!Eden::IsSafeExtractedDirectory(parent)) { safe = false; break; }
+        }
+        if (!safe) continue;
+        const auto path = title / candidate;
+        std::error_code ec;
+        const auto status = fs::symlink_status(path, ec);
+        if (ec || !fs::is_regular_file(status) || fs::is_symlink(status)) continue;
+        const auto file = vfs.OpenFile(path.string(), FileSys::OpenMode::Read);
+        FileSys::RawNACP raw{};
+        if (file && file->ReadObject(&raw) == sizeof(raw))
+            return static_cast<uint32_t>(raw.supported_languages);
+    }
+    return 0;
+}
+
 bool ReadExtractedProgramMetadata(const char* rom_path, FileSys::RealVfsFilesystem& vfs,
                                   FileSys::ProgramMetadata* metadata) {
     if (!metadata) return false;
@@ -336,6 +369,8 @@ int eden_extract_game_metadata(const char* rom_path, const char* keys_dir,
 
 uint32_t eden_game_supported_languages(const char* rom_path, const char* keys_dir) {
     if (!rom_path || !keys_dir) return 0;
+    if (std::filesystem::path(rom_path).filename() == "main")
+        return ReadExtractedLanguageFlags(rom_path);
     if (const auto known = GameLanguages().find(rom_path); known != GameLanguages().end()) return known->second;
     try {
         Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, keys_dir);
@@ -600,11 +635,14 @@ int eden_game_language(const char* rom_path, const char* keys_dir, uint64_t titl
     uint32_t supported = 0;
     {
         const std::lock_guard lock{ScannedAddOnsMutex()};
-        if (!UpdatesScanCompleted()) return chosen;
-        const auto& scanned = ScannedAddOns();
-        if (const auto found = scanned.find(FileSys::GetBaseTitleID(title_id));
-            title_id && found != scanned.end() && !found->second.update.empty())
-            supported = found->second.languages;
+        if (UpdatesScanCompleted()) {
+            const auto& scanned = ScannedAddOns();
+            if (const auto found = scanned.find(FileSys::GetBaseTitleID(title_id));
+                title_id && found != scanned.end() && !found->second.update.empty())
+                supported = found->second.languages;
+        } else if (!rom_path || std::filesystem::path(rom_path).filename() != "main") {
+            return chosen;
+        }
     }
     if (!supported) supported = eden_game_supported_languages(rom_path, keys_dir);
     namespace NS = Service::NS;

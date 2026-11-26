@@ -561,19 +561,27 @@ public:
 #endif
     Impl(size_t requested, bool fastmem) : size(requested) {
 #if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
-        constexpr std::size_t Ns2Dram = 12ull << 30;
-        constexpr std::size_t PhysicalBudget = 6ull << 30;
-        if (requested == Ns2Dram) {
-            // Preserve the full 12 GiB guest-physical address range. The
-            // production backing commits independent 2 MiB direct mappings
-            // before a kernel PTE or ClearBackingRegion can expose them.
-            // A32 fastmem's single-PA alias is intentionally NOT created.
+        constexpr std::size_t GiB = 1ull << 30;
+        constexpr std::size_t PhysicalBudget = 6ull * GiB;
+        // Nintendo's supported guest layouts are 4/6/8/10/12 GiB. Use the
+        // same ZERO/OWN sparse owner for NS1 and NS2 instead of allocating
+        // the complete guest DRAM physically up front. The physical budget
+        // is bounded by the guest layout for 4/6 GiB and by 6 GiB above it.
+        const bool supported_guest_layout =
+            requested == 4ull * GiB || requested == 6ull * GiB ||
+            requested == 8ull * GiB || requested == 10ull * GiB ||
+            requested == 12ull * GiB;
+        if (supported_guest_layout) {
+            const auto budget = (std::min)(requested, PhysicalBudget);
             sparse = std::make_unique<Eden::PS5::GuestBacking::Runtime>(
-                requested, PhysicalBudget);
+                requested, budget);
             if (!sparse->Valid() || !sparse->Install())
                 throw std::system_error(ENOMEM, std::generic_category(),
-                                        "NS2 sparse guest VA reservation");
+                                        "PS5 sparse guest VA reservation");
             base = static_cast<u8*>(sparse->Base());
+            // Production PS5 keeps Fastmem disabled. If a developer requests
+            // it, fail safely to the page-table path rather than aliasing the
+            // shared read-only ZERO block writable.
             return;
         }
 #endif
@@ -652,8 +660,11 @@ void HostMemory::ClearBackingRegion(size_t offset, size_t length, u32 fill) {
         throw std::out_of_range("Backing clear range");
     if (length) {
 #if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
-        if (impl->sparse && !impl->sparse->Commit(offset, length))
-            throw std::bad_alloc{}; // fail closed, not a virtual-hole write
+        if (impl->sparse) {
+            if (!impl->sparse->Clear(offset, length, fill))
+                throw std::bad_alloc{}; // fail closed, not a virtual-hole write
+            return; // sparse owner performed the exact clear
+        }
 #endif
         std::memset(backing_base + offset, fill, length);
     }

@@ -112,12 +112,26 @@ assert 'TreeBytes(Eden::LogsDir(), cancel)' in services
 assert 'home_diagnostics_.free_bytes' not in home  # no invented PS5 total capacity
 assert 'home_diagnostics_.storage_root' in home
 
-assert 'const std::string hero_artwork = !hero_banner.empty() ? hero_banner : hero_screenshot;' in home
+assert 'const std::string hero_artwork =\n' in home
+assert 'case_media::BackgroundAllowed(hero_banner)' in home
+assert 'c.textures.cover(hero_banner, 1920.0f)' in home
+assert 'banner_picture.texture != 0 ? hero_banner :' in home
+assert 'case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};' in home
 assert 'hero_recent->hero' in home
-assert 'recent.hero = nlib.hero;' in services
+# The selected service gives NLIB banner and screenshots precedence over GamesDB.
+for marker in (
+    'recent.screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();',
+    'recent.hero = !nlib.hero.empty() ? nlib.hero :\n'
+    '                    !recent.screenshot.empty() ? recent.screenshot :\n'
+    '                    CachedGamesDbHero(recent.title_id, second_generation);',
+    'home.last_hero = !nlib.hero.empty() ? nlib.hero :\n'
+    '            !home.last_screenshot.empty() ? home.last_screenshot :\n'
+    '            CachedGamesDbHero(title_id, second_generation);',
+):
+    assert marker in services, marker
 # Hero content is game media only: banner -> screenshot -> opaque neutral fallback.
 hero_draw = home[home.index('// ---- full-bleed cinematic game hero'):home.index('// Effective values:')]
-assert 'const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f)' in hero_draw
+assert 'banner_picture : c.textures.cover(hero_artwork, 1920.0f)' in hero_draw
 assert 'list.image(hero_picture.texture, hero, uv' in hero_draw
 assert 'if (hero_picture.texture != 0)' in hero_draw
 assert 'hero_recent->cover' not in hero_draw and 'home_.last_cover' not in hero_draw

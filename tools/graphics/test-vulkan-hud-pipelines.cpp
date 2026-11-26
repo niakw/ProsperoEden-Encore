@@ -72,7 +72,9 @@ int main(){
     auto boot=Module(device,EDEN_HUD_FRAG_SPV);
     auto quick=Module(device,EDEN_QUICK_MENU_FRAG_SPV);
     VkPushConstantRange push{VK_SHADER_STAGE_FRAGMENT_BIT,0,112};
-    for(bool menu:{false,true}){
+    auto loading=Module(device,EDEN_LOADING_ARTWORK_FRAG_SPV);
+    for(unsigned variant:{0u,1u,2u}){
+        const bool menu=variant!=0u;
         auto li=Info<VkPipelineLayoutCreateInfo>(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO);
         li.setLayoutCount=menu?1u:0u;li.pSetLayouts=menu?&set:nullptr;
         li.pushConstantRangeCount=1;li.pPushConstantRanges=&push;
@@ -80,7 +82,7 @@ int main(){
         std::array<VkPipelineShaderStageCreateInfo,2> stages{};
         for(auto& s:stages){s.sType=VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;s.pName="main";}
         stages[0].stage=VK_SHADER_STAGE_VERTEX_BIT;stages[0].module=vertex;
-        stages[1].stage=VK_SHADER_STAGE_FRAGMENT_BIT;stages[1].module=menu?quick:boot;
+        stages[1].stage=VK_SHADER_STAGE_FRAGMENT_BIT;stages[1].module=variant==2u?loading:menu?quick:boot;
         auto input=Info<VkPipelineVertexInputStateCreateInfo>(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
         auto assembly=Info<VkPipelineInputAssemblyStateCreateInfo>(VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO);
         assembly.topology=VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
@@ -101,12 +103,12 @@ int main(){
         pi.pViewportState=&vp;pi.pRasterizationState=&raster;pi.pMultisampleState=&ms;pi.pColorBlendState=&blend;
         pi.layout=layout;pi.renderPass=pass;pi.basePipelineIndex=-1;
         VkPipeline pipeline{};const auto begin=std::chrono::steady_clock::now();
-        Check(vkCreateGraphicsPipelines(device,VK_NULL_HANDLE,1,&pi,nullptr,&pipeline),menu?"quick menu pipeline":"boot HUD pipeline");
+        Check(vkCreateGraphicsPipelines(device,VK_NULL_HANDLE,1,&pi,nullptr,&pipeline),variant==2u?"loading artwork pipeline":menu?"quick menu pipeline":"boot HUD pipeline");
         const auto elapsed=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-begin).count();
-        std::printf("VULKAN_HUD_REAL_PIPELINE_PASS variant=%s ms=%lld device=%s\n",menu?"unicode-menu":"boot",static_cast<long long>(elapsed),props.deviceName);
+        std::printf("VULKAN_HUD_REAL_PIPELINE_PASS variant=%s ms=%lld device=%s\n",variant==2u?"loading-artwork":menu?"unicode-menu":"boot",static_cast<long long>(elapsed),props.deviceName);
         vkDestroyPipeline(device,pipeline,nullptr);vkDestroyPipelineLayout(device,layout,nullptr);
     }
-    for(auto m:{vertex,boot,quick})vkDestroyShaderModule(device,m,nullptr);
+    for(auto m:{vertex,boot,quick,loading})vkDestroyShaderModule(device,m,nullptr);
     vkDestroyDescriptorSetLayout(device,set,nullptr);vkDestroyRenderPass(device,pass,nullptr);
     vkDestroyDevice(device,nullptr);vkDestroyInstance(instance,nullptr);
     std::printf("VULKAN_HUD_ATLAS_LAYOUT_PASS slots=%zu bytes=%zu boot_words=%zu quick_words=%zu\n",slots,sizeof(FontAtlas::kWords),std::size(EDEN_HUD_FRAG_SPV),std::size(EDEN_QUICK_MENU_FRAG_SPV));

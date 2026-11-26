@@ -22,6 +22,11 @@ spirv_store = (root / "vendor/sources/eden/src/shader_recompiler/backend/spirv/e
 fragment = pipeline.split("case Shader::Stage::Fragment: {", 1)[1].split("\n    default:", 1)[0]
 assert "const bool require_typed_fragment_outputs =" in fragment
 assert "#ifdef PS5_NATIVE\n            true;\n#else\n            device.IsMoltenVK();\n#endif" in fragment
+none_guard = "if (format == Tegra::RenderTargetFormat::NONE)"
+assert fragment.count(none_guard) == 1
+assert "info.color_output_types[i] = Shader::AttributeType::Float;" in fragment
+assert fragment.index(none_guard) < fragment.index("PixelFormatFromRenderTargetFormat(format)")
+assert "Unused color slots are encoded as RenderTargetFormat::NONE" in gen
 assert fragment.index("if (require_typed_fragment_outputs)") < fragment.index("IsPixelFormatInteger(pixel_format)")
 assert "Shader::AttributeType::SignedInt" in fragment
 assert "Shader::AttributeType::UnsignedInt" in fragment
@@ -59,6 +64,30 @@ for name in ("GraphicsShaderEnvironment", "ShaderPoolReset", "ShaderCfg", "Shade
 assert "stats->total_ns.fetch_add(ns, std::memory_order_relaxed);" in real_timer
 assert "std::chrono::steady_clock::time_point" in real_trace
 assert "stages: tuple[int, int, int, int, int, int] | None = None" in analyzer
+
+# Parallel graphics translation runs CFG/IR on dedicated workers, so the
+# thread-local keyed owner must be transferred to private per-stage buckets
+# and merged only after all workers have joined.
+parallel_begin = pipeline.index(
+    "std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>")
+parallel_end = pipeline.index("\n#endif", parallel_begin)
+parallel = pipeline[parallel_begin:parallel_end]
+for token in (
+    "parallel_stage_costs{}",
+    "ShaderMissStageScope",
+    "shader_miss_stage_active = current;",
+    "shader_miss_stage_active = previous;",
+    "shader_translation_workers.WaitForRequests();",
+    "owner_stage_costs->cfg_ns += parallel_stage_costs[index].cfg_ns;",
+    "owner_stage_costs->ir_ns += parallel_stage_costs[index].ir_ns;",
+):
+    assert token in parallel, token
+assert parallel.index("shader_translation_workers.WaitForRequests();") < parallel.index(
+    "owner_stage_costs->cfg_ns += parallel_stage_costs[index].cfg_ns;")
+# Each worker owns a distinct array element; no atomic/keyed sharing between
+# concurrent stage translations is introduced.
+assert "&parallel_stage_costs[index]" in parallel
+assert "std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>" in gen
 
 cpp = r"""
 #include <array>
@@ -126,17 +155,37 @@ int main() {
         assert(cold.stages.env_ns == 3 && cold.stages.pool_ns == 5);
         assert(cold.stages.cfg_ns == 7 && cold.stages.ir_ns == 11);
         assert(cold.stages.spirv_ns == 13 && cold.stages.module_ns == 17);
+        // Model the exact worker contract: a worker gets a private keyed bucket,
+        // then the GPU owner merges it after the join. The owner's thread-local
+        // pointer remains its ColdShaderMissTrace throughout.
+        ShaderMissStageCosts worker_cfg{}, worker_ir{};
+        {
+            auto* const owner = shader_miss_stage_active;
+            shader_miss_stage_active = &worker_cfg;
+            Stage(CachePhase::ShaderCfg, 41);
+            shader_miss_stage_active = owner;
+        }
+        {
+            auto* const owner = shader_miss_stage_active;
+            shader_miss_stage_active = &worker_ir;
+            Stage(CachePhase::ShaderIr, 43);
+            shader_miss_stage_active = owner;
+        }
+        assert(cold.stages.cfg_ns == 7 && cold.stages.ir_ns == 11);
+        cold.stages.cfg_ns += worker_cfg.cfg_ns;
+        cold.stages.ir_ns += worker_ir.ir_ns;
+        assert(cold.stages.cfg_ns == 48 && cold.stages.ir_ns == 54);
         {
             ColdShaderMissTrace nested{"compute", 3, true};
             assert(shader_miss_stage_active == &nested.stages);
             Stage(CachePhase::ShaderCfg, 23);
             assert(nested.stages.cfg_ns == 23);
-            assert(cold.stages.cfg_ns == 7);
+            assert(cold.stages.cfg_ns == 48);
             nested.Complete(false);
         }
         assert(shader_miss_stage_active == &cold.stages);
         Stage(CachePhase::ShaderCfg, 29);
-        assert(cold.stages.cfg_ns == 36);
+        assert(cold.stages.cfg_ns == 77);
         cold.Complete(true);
         assert(shader_miss_stage_active == nullptr);
         Stage(CachePhase::ShaderModule, 31); // not part of the completed miss
@@ -195,7 +244,7 @@ with tempfile.TemporaryDirectory(prefix="f07-keyed-shader-stages-") as temp:
             if native:
                 assert run.stdout.count("EDEN_VULKAN_SHADER_MISS") == 3
                 assert "key=0000000000000002" in run.stdout
-                assert "env_ns=3 pool_ns=5 cfg_ns=36 ir_ns=11 spirv_ns=13 module_ns=17" in run.stdout
+                assert "env_ns=3 pool_ns=5 cfg_ns=77 ir_ns=54 spirv_ns=13 module_ns=17" in run.stdout
                 assert "key=0000000000000003" in run.stdout
                 assert "cfg_ns=23" in run.stdout
                 assert "key=0000000000000004" in run.stdout
@@ -207,3 +256,9 @@ with tempfile.TemporaryDirectory(prefix="f07-keyed-shader-stages-") as temp:
                 assert "EDEN_VULKAN_SHADER_MISS" not in run.stdout
             print(f"F07_KEYED_SHADER_STAGES_PASS mode={'PS5' if native else 'desktop'} {opt}")
 print("HOST_ONLY no shader output, Vulkan worker, FPS or console measurements")
+
+# GPU-owner participation keeps the same snapshot and stage-local attribution.
+assert "const size_t parallel_stage_count = envs.size();" in pipeline
+assert "if (parallel_env_index == parallel_stage_count) {" in pipeline
+assert pipeline.index("translate_stage();") < pipeline.index("shader_translation_workers.QueueWork(std::move(translate_stage));")
+assert pipeline.index("shader_translation_workers.QueueWork(std::move(translate_stage));") < pipeline.index("shader_translation_workers.WaitForRequests();", pipeline.index("translate_stage();"))

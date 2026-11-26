@@ -28,6 +28,7 @@ assert 'UNIMPLEMENTED_MSG("Unimplemented ioctl={:08X}", command.raw);' in ioctl1
 assert "return NvResult::NotImplemented;" in ioctl1.split("UNIMPLEMENTED_MSG", 1)[1]
 header = (BASE / "nvhost_gpu.h").read_text()
 native_puller = (ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp").read_text()
+native_mme_state = (ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/native_ampere_macro_state.h").read_text()
 # BindObject must not change the active subchannel before native class
 # authentication, or a rejected Ampere bind can hijack subsequent methods.
 bind_source = native_puller.split("void Puller::ProcessBindMethod(", 1)[1].split(
@@ -47,7 +48,11 @@ required_puller = (
     "engine_id == static_cast<EngineID>(0xc797)",
     "CallNative3D(dma_pusher,method_call.method,",
     "CallNative3D(dma_pusher,method,",
-    "native_3d->ExecuteStaged(",
+    "native_3d->ExecuteStagedWithEffects(",
+    "DmaReadFifoed = 0x158",
+    "IsFullyMappedRange(source, bytes)",
+    "ReadBlock(source, data.data(), bytes)",
+    "fifo.insert(fifo.end(), data.begin(), data.begin() + words)",
     "native_macro_method=method",
     "engine.draw_manager.DrawDeferred(engine)",
     "native_3d = std::make_unique<Tegra::NativeAmpereMacroState>(&native_mme_dram)",
@@ -57,11 +62,11 @@ required_puller = (
 
 required_cpp = (
     "bool nvhost_gpu::UsesNativeAbi(DeviceFD fd) const {",
-    "const auto it = sessions.find(fd);",
-    "if (it == sessions.end()) return false;",
-    "const auto* session = core.GetSession(it->second);",
-    "NativeGpuProcessRegistry::Instance().Contains(session->process);",
-    "NativeGpuChannelRegistry::Instance().Bind(",
+    "return sessions.contains(fd) && native_generations.contains(fd);",
+    "bool nvhost_gpu::NativeEpochCurrent(DeviceFD fd) const {",
+    "native_generations.find(fd)",
+    "NativeGpuProcessRegistry::Instance().IsCurrent(",
+    "native_channel_registry.Bind(",
     "if (!opened || opened->process != native_owner)",
     "NativeGpuChannelRegistry::Instance().Unbind(channel_state.get());",
     "NvResult nvhost_gpu::AllocateObjectContext(IoctlAllocObjCtx& params, DeviceFD fd)",
@@ -70,8 +75,17 @@ required_cpp = (
     "if (UsesNativeAbi(fd)) {",
     "return WrapFixed(this, &nvhost_gpu::AllocateObjectContext, input, output, fd);",
     "return SubmitGPFIFOImpl(params, std::move(entries), fd);",
-    "return sessions.size() == 1 && UsesNativeAbi(sessions.begin()->first)",
+    "Kernel::KEvent* nvhost_gpu::QueryEvent(DeviceFD fd, u32 event_id)",
+    "return UsesNativeAbi(fd) ? error_notifier_event : nullptr;",
 )
+# Native event 7 follows the actual querying FD, not a singleton session.
+query_legacy = source.split("Kernel::KEvent* nvhost_gpu::QueryEvent(u32 event_id)", 1)[1].split("Kernel::KEvent* nvhost_gpu::QueryEvent(DeviceFD", 1)[0]
+query_native = source.split("Kernel::KEvent* nvhost_gpu::QueryEvent(DeviceFD fd, u32 event_id)", 1)[1].split("bool nvhost_gpu::UsesNativeAbi", 1)[0]
+assert "case 7:" not in query_legacy and "UsesNativeAbi" not in query_legacy
+assert "if (event_id == 7)" in query_native
+assert "return UsesNativeAbi(fd) ? error_notifier_event : nullptr;" in query_native
+assert "return QueryEvent(event_id);" in query_native
+assert "sessions.size()" not in query_native and "sessions.begin()" not in query_native
 # The native submission envelope and every FD must be validated before
 # even lazy InitChannel, binding a GPU owner or incrementing a syncpoint.
 # The normal NS1 path still takes its historical legacy flags and counters.
@@ -87,21 +101,35 @@ native_plan_block = submit.split(native_plan_reject, 1)[1].split("system.GPU().I
 assert "return NvResult::BadParameter;" in native_plan_block
 assert submit.index("if (!opened || opened->process != native_owner)") < submit.index(
     "system.GPU().InitChannel(")
-# G10 native preflight must reject an unresolved wait before any GPU
-# channel mutation or syncpoint reservation; the native puller deliberately
-# refuses FENCE_ACTION Acquire until it has a real nonblocking scheduler.
-native_wait_guard = ("if (native && flags.fence_wait.Value() &&\n"
-                     "        !syncpoint_manager.IsFenceSignalled(params.fence)) {")
+# G10 native waits are now descriptor-owned scheduler metadata. Capture an
+# exact syncpoint-generation lease before any channel mutation, attach it to
+# the command list, and let the native scheduler suspend only that channel.
+native_wait_guard = "if (native && flags.fence_wait.Value()) {"
 assert native_wait_guard in submit
-native_wait_block = submit.split(native_wait_guard, 1)[1].split("system.GPU().InitChannel(", 1)[0]
-assert "return NvResult::NotImplemented;" in native_wait_block
+native_wait_block = submit.split(native_wait_guard, 1)[1].split(
+    "system.GPU().InitChannel(", 1)[0]
+for token in (
+    "CaptureNativeSyncpointLease(",
+    "if (!lease)",
+    "return NvResult::BadParameter;",
+    "entries.native_syncpoint_wait.emplace(Tegra::NativeSyncpointWait{",
+    "std::move(lease)",
+    "catch (const std::bad_alloc&)",
+    "return NvResult::InsufficientMemory;",
+):
+    assert token in native_wait_block, token
+assert "IsFenceSignalled(params.fence)" not in native_wait_block
+assert "return NvResult::NotImplemented;" not in native_wait_block
 assert submit.index(native_wait_guard) < submit.index("system.GPU().InitChannel(")
 assert submit.index(native_wait_guard) < submit.index("IncrementSyncpointMaxExt(")
+# FENCE_ACTION Acquire remains unsupported in the puller because native
+# GPFIFO waits no longer synthesize that legacy method packet.
 assert "Native GPFIFO FENCE_ACTION acquire unsupported" in native_puller
 assert submit.index("system.GPU().InitChannel(") < submit.index(
-    "NativeGpuChannelRegistry::Instance().Bind(")
-assert submit.index("NativeGpuChannelRegistry::Instance().Bind(") < submit.index(
+    "native_channel_registry.Bind(")
+assert submit.index("native_channel_registry.Bind(") < submit.index(
     "IncrementSyncpointMaxExt(")
+assert submit.index("native_channel_registry.Bind(") < submit.index("AttachFaultNotifier(") < submit.index("IncrementSyncpointMaxExt(")
 assert "const u32 increment = native\n        ? native_plan->increment_total" in submit
 assert "const u32 native_completion = native_plan ? native_plan->completion_count : 0;" in submit
 assert "u32{params.fence.value}" in submit
@@ -109,6 +137,7 @@ required_header = (
     "NvResult AllocateObjectContext(IoctlAllocObjCtx& params, DeviceFD fd);",
     "NvResult SubmitGPFIFOImpl(IoctlSubmitGpfifo& params, Tegra::CommandList&& entries, DeviceFD fd);",
     "bool UsesNativeAbi(DeviceFD fd) const;",
+    "bool NativeEpochCurrent(DeviceFD fd) const;",
 )
 # Native H:0x1b kickoff pointer lists must be mapped in their exact FD
 # process before any command reads or GPU queue submission.
@@ -132,6 +161,12 @@ checks = [
     (all(s in header for s in required_header), "native header exposes caller FD"),
     (all(s in native_puller for s in required_puller),
      "actual research Puller owns authenticated native 3D/Turing macro dispatch"),
+    (all(s in native_mme_state for s in (
+        "ExecuteStagedWithEffects(",
+        "ExecuteWithMutableFifo(",
+        "return effect(address, value, fifo, *active_dram, stage_read);",
+        "fifo.reserve(MaxFifo);",
+    )), "native MME staging exposes only rollback-safe FIFO/DRAM effects"),
     (binding_write not in bind_source.split(
         "if (engine_id == static_cast<EngineID>(0xc797)) {", 1)[0],
      "native classes do not commit binding before authentication"),

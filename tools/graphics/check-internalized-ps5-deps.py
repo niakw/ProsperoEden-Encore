@@ -8,7 +8,10 @@ def git(c,*args): return subprocess.check_output(["git","-C",str(c),*args],text=
 modules=[s.split()[-1] for s in git(root,"ls-tree","-r","HEAD").splitlines() if s.startswith("160000 commit ")]
 assert modules==["encore-overrides","vendor"],modules
 assert (root/".gitmodules").read_text().count('[submodule "')==2
-assert git(root,"rev-parse","HEAD:encore-overrides")=="95f21edf13bfbd2888602f2b419dd856d6d0fbfa"
+# This is the moving upstream tracking gitlink, not the immutable native
+# profile snapshot whose exact provenance is tested in check-vendored-overrides.py.
+overrides_link=git(root,"rev-parse","HEAD:encore-overrides")
+assert len(overrides_link)==40 and all(c in "0123456789abcdef" for c in overrides_link)
 assert not (vendor/".gitmodules").exists()
 assert git(root,"rev-parse","HEAD:vendor")==git(vendor,"rev-parse","HEAD")
 pins={"ps5-mihawkgen":("aad67f4bd28c040db7aa0d78cfd3d0de85cfba7a","c57232a9f16bcb6df5fe07c9bb631518f2b1cc0e"),

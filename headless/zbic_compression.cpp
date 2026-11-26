@@ -13,9 +13,19 @@
 #undef ZSTD_MULTITHREAD
 
 #include "zstd.h"
+// The vendored single-file ZBIC decoder intentionally exposes static Zstd
+// helpers unused by this translation unit. Limit the diagnostic exclusion to
+// that included third-party implementation, never to our decoder or other TUs.
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
 #define g_ZSTD_threading_useless_symbol g_ZSTD_zbic_threading_useless_symbol
 #include "zstd.c"
 #undef g_ZSTD_threading_useless_symbol
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 namespace Common::Compression {
 

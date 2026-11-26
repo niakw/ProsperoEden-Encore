@@ -4,7 +4,7 @@
 Unlike the small_vector-only check, this includes the actual source snippet
 from the byte-matched Encore-maintained readback snippet inside a mocked texture cache and
 checks GPU Finish ordering, image byte integrity, 40-map/32-MiB batching,
-zero-sized images, and oversized standalone transfers. Not a native PS5 run.
+invalid/zero-sized readbacks, and oversized standalone transfers. Not a native PS5 run.
 """
 from pathlib import Path
 import shutil
@@ -14,7 +14,17 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 snippet = (root / "vendor/encore-active/eden-vulkan-oracles/vulkan_download_batch.inc").read_text()
 maintained = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
-assert snippet in maintained, "compiled readback differs from historical integration oracle"
+assert snippet in maintained, "historical integration oracle drift"
+selected = (root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+start = selected.index("void TextureCache<P>::DownloadMemory(DAddr")
+end = selected.index("template <class P>", start)
+method = selected[start:end]
+start = method.index("    if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>)")
+end = method.index("\n#endif", start)
+snippet = method[start:end]
+assert "DownloadStagingBuffer(bytes, true)" in snippet
+assert "if (bytes == 0 || copies.empty())" in snippet
+assert "!map.buffer || map.mapped_span.size_bytes() < bytes" in snippet
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 assert "boost::container::small_vector<std::pair<ImageId, Map>, readback_batch_limit> pending;" in snippet
 assert "constexpr size_t readback_batch_limit = 40;" in snippet
@@ -33,12 +43,19 @@ cpp = r"""
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <memory>
+#include <new>
+#include <stdexcept>
 #include <span>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
+template<class F> struct ScopeExit { F f; ~ScopeExit(){f();} };
+struct ScopeMaker {};
+template<class F> ScopeExit<F> operator+(ScopeMaker,F f){return {f};}
+#define SCOPE_EXIT auto scope_exit = ScopeMaker{} + [&]()
 using ImageId = std::size_t;
 constexpr std::size_t operator""_MiB(unsigned long long n) {
     return static_cast<std::size_t>(n) * 1024 * 1024;
@@ -50,6 +67,13 @@ struct Monitor {
     std::size_t batch_bytes{};
     std::size_t max_batch_bytes{};
     std::vector<std::size_t> image_tickets;
+    std::vector<bool> held;
+    std::size_t releases{};
+    int fail_after_record{-1};
+    int fail_allocation_at{-1};
+    bool fail_finish{false};
+    int null_map_at{-1};
+    int short_map_at{-1};
 };
 namespace Vulkan {
 struct TextureCacheRuntime {
@@ -57,27 +81,44 @@ struct TextureCacheRuntime {
     // Pinned vk_staging_buffer_pool.h defines a trivially-copyable
     // non-owning StagingBufferRef; the runtime's pool owns each allocation.
     struct Map {
-        std::size_t index;
-        std::span<std::uint8_t> mapped_span;
+        std::size_t index{};
+        std::size_t buffer{};
+        std::span<std::uint8_t> mapped_span{};
     };
     static_assert(std::is_trivially_copyable_v<Map>);
     std::vector<std::unique_ptr<std::vector<std::uint8_t>>> backing;
-    Map DownloadStagingBuffer(std::size_t n) {
+    Map DownloadStagingBuffer(std::size_t n, bool deferred=false) {
+        assert(deferred);
+        if (monitor->fail_allocation_at == static_cast<int>(monitor->held.size()))
+            throw std::bad_alloc{};
+        if (monitor->null_map_at == static_cast<int>(monitor->held.size())) return {};
+        const bool short_map = monitor->short_map_at == static_cast<int>(monitor->held.size());
+        monitor->held.push_back(true);
         monitor->batch_bytes += n;
         monitor->max_batch_bytes = std::max(monitor->max_batch_bytes,
                                             monitor->batch_bytes);
         backing.push_back(std::make_unique<std::vector<std::uint8_t>>(n));
-        return Map{backing.size(), *backing.back()};
+        return Map{backing.size(), backing.size(), std::span<std::uint8_t>(*backing.back()).first(short_map ? n-1 : n)};
+    }
+    void FreeDeferredStagingBuffer(Map& map) {
+        assert(monitor->held.at(map.index-1));
+        monitor->held[map.index-1]=false;
+        ++monitor->releases;
     }
     void Finish() {
+        if (monitor->fail_finish) {
+            ++monitor->finishes;
+            throw std::runtime_error("GPU completion not proven");
+        }
         monitor->completed = monitor->issued;
         monitor->batch_bytes = 0;
         ++monitor->finishes;
     }
 };
 }
-struct Info { std::size_t id{}; };
+struct Info { std::size_t id{}; bool no_regions{}; };
 std::vector<std::size_t> FullDownloadCopies(Info info) {
+    if (info.no_regions) return {};
     return {info.id};
 }
 std::vector<std::size_t> FixSmallVectorADL(std::vector<std::size_t> copies) {
@@ -98,6 +139,8 @@ struct Image {
             bytes[i] = static_cast<std::uint8_t>((info.id * 13 + i) % 251);
         }
         monitor->image_tickets[info.id] = ++monitor->issued;
+        if (monitor->fail_after_record == static_cast<int>(info.id))
+            throw std::bad_alloc{};
     }
 };
 struct MockGpuMemory {
@@ -137,6 +180,7 @@ struct MockCache {
         }
     }
     void Run() {
+        const int uncaught_before_readback = std::uncaught_exceptions();
 #include "vulkan_download_batch.inc"
     }
     void Check() const {
@@ -151,6 +195,8 @@ struct MockCache {
                 assert(contents[j] == static_cast<std::uint8_t>((id * 13 + j) % 251));
         }
         assert(runtime.monitor->completed == runtime.monitor->issued);
+        assert(runtime.monitor->releases == images.size());
+        assert(std::ranges::none_of(runtime.monitor->held, [](bool b){return b;}));
     }
 };
 void Test(std::vector<std::size_t> bytes, std::size_t expected_finishes) {
@@ -158,6 +204,30 @@ void Test(std::vector<std::size_t> bytes, std::size_t expected_finishes) {
     cache.Run();
     cache.Check();
     assert(cache.runtime.monitor->finishes == expected_finishes);
+}
+void TestExceptionalRetirement(bool fail_finish) {
+    MockCache cache({1, 2, 3});
+    auto m = cache.runtime.monitor;
+    m->fail_after_record = 1; // Two images have recorded copies
+    m->fail_finish = fail_finish;
+    bool caught = false;
+    try { cache.Run(); } catch (const std::bad_alloc&) { caught = true; }
+    assert(caught && m->issued == 2 && m->finishes == 1);
+    assert(m->completed == (fail_finish ? 0U : 2U));
+    assert(m->releases == (fail_finish ? 0U : 2U));
+    assert(std::count(m->held.begin(), m->held.end(), true) ==
+           (fail_finish ? 2 : 0));
+    assert(cache.gpu.write_order.empty());
+}
+void TestAllocationFailure() {
+    MockCache cache({1, 2, 3});
+    auto m = cache.runtime.monitor;
+    m->fail_allocation_at = 1; // First image already recorded
+    bool caught = false;
+    try { cache.Run(); } catch (const std::bad_alloc&) { caught = true; }
+    assert(caught && m->issued == 1 && m->completed == 1);
+    assert(m->finishes == 1 && m->releases == 1);
+    assert(std::ranges::none_of(m->held, [](bool v) { return v; }));
 }
 int main() {
     Test({}, 0);
@@ -168,18 +238,34 @@ int main() {
     Test({20_MiB, 14_MiB, 1}, 2); // 32-MiB staging boundary
     Test({33_MiB, 1}, 2); // large texture is standalone
     Test({32_MiB, 1}, 2); // exact cap, then next submission
-    Test({0, 0, 0}, 1);
+    for (int kind = 0; kind < 4; ++kind) {
+        MockCache invalid({1, kind == 0 ? 0u : 2u, 3});
+        auto m = invalid.runtime.monitor;
+        if (kind == 1) invalid.slot_images[1].info.no_regions = true;
+        if (kind == 2) m->null_map_at = 1;
+        if (kind == 3) m->short_map_at = 1;
+        bool caught = false;
+        try { invalid.Run(); } catch (const std::bad_alloc&) { caught = true; }
+        assert(caught && m->issued == 1 && m->completed == 1);
+        assert(m->finishes == 1 && m->releases == (kind == 3 ? 2u : 1u));
+        assert(std::ranges::none_of(m->held, [](bool v){return v;}));
+        assert(invalid.gpu.write_order.empty());
+    }
+    TestExceptionalRetirement(false);
+    TestExceptionalRetirement(true);
+    TestAllocationFailure();
 }
 """
 with tempfile.TemporaryDirectory(prefix="eden-gpu-readback-batch-") as temp:
     src = Path(temp) / "readback-batch.cpp"
     exe = Path(temp) / "readback-batch"
     src.write_text(cpp, encoding="utf-8")
+    (Path(temp)/"vulkan_download_batch.inc").write_text(snippet, encoding="utf-8")
     subprocess.run([compiler, "-std=c++20", "-O1", "-g",
                     "-Wall", "-Wextra", "-Werror",
                     "-fsanitize=address,undefined", "-fno-sanitize-recover=all",
                     "-I", str(root / "vendor/encore-active/eden-vulkan-oracles"), str(src), "-o", str(exe)],
                    check=True, timeout=120)
     subprocess.run([str(exe)], check=True, timeout=180)
-print("PASS production Vulkan guest readback batch C++: ordered publication, 40 POD maps, 32MiB, Finish fences, oversized cases")
+print("PASS production Vulkan guest readback batch C++: ordered publication, 40 POD maps, 32MiB, Finish fences, oversized cases, exceptional GPU retirement")
 print("The GPU implementation and PS5 firmware transfer paths remain unqualified")

@@ -14,7 +14,7 @@ s = selected.read_text()
 needle = "    Result Unknown230(u32 in_val, Out<u16> out_val);\n"
 extra = "    Result Unknown240(u32 in_val);\n"
 comment = "// Selected PS5 NS1/NS2 SelfController ABI header; exact vendor base + command 240.\n"
-assert blob(base.read_bytes()) == "b7762da79b357e34adf096da3574c9cd130943f9"
+assert blob(base.read_bytes()) == "571793025a886f3878e7b61ec9569faba84647f2"
 # The selected vendor already carries command 240 exactly once.
 # Preserve that ABI unchanged; do not add another declaration to an
 # already-integrated base header or silently discard the selected overlay.
@@ -25,6 +25,11 @@ assert s.count(extra) == 1
 implementation = cpp.read_text()
 assert implementation.count("Result ISelfController::Unknown240(u32 in_val)") == 1
 assert implementation.count("D<&ISelfController::Unknown240>") == 1
+for cmd in (2400, 2401, 2402):
+    assert implementation.count(f'{{{cmd}, &ISelfController::StubReplyZeroedNx2, "Unknown{cmd}"}}') == 1
+assert 'constexpr u32 ZeroWords = 32;' in implementation
+assert 'IPC::ResponseBuilder rb{ctx, 2 + ZeroWords};' in implementation
+assert 'rb.Push<u32>(0);' in implementation
 assert "r23_self_controller_240_ps5.h" in cm
 assert "target_include_directories(core BEFORE PRIVATE" in cm
 assert "EDEN_R23_SELF_CONTROLLER_INCLUDE" in cm

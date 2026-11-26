@@ -80,6 +80,7 @@ struct Game
     std::vector<std::string> screenshots; // up to three cached Nlib gameplay screenshots
     int max_players = 0; // Nlib maximum local players; 0 when unknown/offline
     bool artwork_changed = false; // async refresh replaced one or more files
+    bool artwork_deferred = false; // icon worker missed per-title lock; retry shortly
     unsigned case_artwork_changed = 0; // bit 0 front, bit 1 back, bit 2 spine; only successful replacements
     std::string intro;
     std::string description;
@@ -101,6 +102,9 @@ struct Game
     bool docked = true; // effective mode precomputed on library worker; no settings I/O on D-pad
     // Nlib artwork is complete per title (icon, banner, all advertised screens).
     // No title-specific source or performance override is attached to Game.
+    // Icon-only request: the previous cached path failed actual GPU decoding.
+    bool artwork_rejected = false;
+    std::string box_spine{}; // worker-resolved path for exact texture invalidation
 };
 
 struct Recent
@@ -318,6 +322,9 @@ class Services
     // Enrich one already-scanned game lazily (Nlib on native builds). The default is a no-op so
     // host/preview services stay deterministic and offline.
     virtual Game enrich_game_media(Game game) { return game; }
+    // Bounded local header probes: refresh a launch snapshot even while
+    // background network enrichment has not finished publishing it.
+    virtual Game cached_game_media(Game game) { return game; }
     // Visible Home icons only; no retail scan, banner or screenshot request.
     virtual Game enrich_home_icon(Game game, const std::atomic<bool>*) { return game; }
     // Cancel Nlib work that has not started by the time a title launches;
@@ -331,7 +338,10 @@ class Services
     virtual std::string exact_game_size(const std::string&, const std::atomic<bool>*) { return {}; }
     // Resolve locally cached, user-supplied retail-case artwork by title ID.
     // Never requests an API or blocks gameplay startup on a network call.
-    virtual BoxArt box_art(std::uint64_t) { return {}; }
+    virtual BoxArt box_art(std::uint64_t, bool second_generation = false) {
+        (void)second_generation;
+        return {};
+    }
     // The value the launcher hands back to start a game.
     virtual std::string game_path(const std::string &file) = 0;
     // Cheap presence check used while the launcher is open.

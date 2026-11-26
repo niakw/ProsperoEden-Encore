@@ -13,6 +13,7 @@
 
 #include "core/frontend/framebuffer_layout.h"
 #include "hud.h"
+#include "launch_handoff.hpp"
 #include "in_game_overlay.h"
 #include "eden_vulkan_hud_shaders.h"
 #include "vulkan_menu_font_data.h"
@@ -148,6 +149,155 @@ void WindowAdaptPass::PrepareQuickMenu(const Device& device, MemoryAllocator& al
         std::fprintf(stderr, "EDEN_QUICK_MENU_ATLAS ready=0 reason=%s\n", e.what());
     }
 }
+
+#ifdef PS5_NATIVE
+// One immutable 2D scene and flat material atlas, not guest memory. The
+// same scheduler tick that protects the static transfer protects this
+// descriptor and pipeline. No per-frame allocation or CPU image repack.
+struct WindowAdaptPass::LoadingArtworkResources {
+    vk::Buffer pixels;
+    vk::DescriptorSetLayout descriptor_layout;
+    vk::DescriptorPool pool;
+    vk::DescriptorSets sets;
+    vk::PipelineLayout layout;
+    vk::Pipeline pipeline;
+    vk::PipelineLayout case_layout;
+    vk::Pipeline case_pipeline;
+    std::shared_ptr<const Eden::LoadingCase::Scene> scene;
+    std::uint32_t width{}, height{};
+};
+
+bool WindowAdaptPass::DrawLoadingArtwork(const Device& device, MemoryAllocator& allocator,
+                                        Scheduler& scheduler, Frame* dst, VkFormat format) {
+    if (!dst || !dst->framebuffer || !dst->width || !dst->height || loading_artwork_failed)
+        return false;
+    if (!loading_artwork) {
+        const auto primary = Eden::LaunchHandoff::Peek();
+        const auto alternate=Eden::LaunchHandoff::PeekAlternate();
+        const auto scene=Eden::LaunchHandoff::PeekCase();
+        if(!primary||!alternate||!scene||!Eden::LoadingCase::Valid(*scene)||
+           !Eden::LaunchHandoff::Valid(*primary)||!Eden::LaunchHandoff::Valid(*alternate)||
+           primary->width!=1920||primary->height!=1080||
+           alternate->width!=Eden::LoadingCase::kAtlasWidth||
+           alternate->height!=Eden::LoadingCase::kAtlasHeight)
+            return false;
+        try {
+            const auto bytes = primary->rgba.size() + alternate->rgba.size();
+            if (bytes > device.GetMaxStorageBufferRange())
+                throw std::runtime_error("loading artwork exceeds storage buffer range");
+            auto next = std::make_unique<LoadingArtworkResources>();
+            next->width = primary->width;
+            next->height = primary->height;
+            next->pixels = allocator.CreateBuffer(VkBufferCreateInfo{
+                .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+                .size = bytes,
+                .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            }, MemoryUsage::Upload);
+            auto mapped = next->pixels.Mapped();
+            if (mapped.size() < bytes)
+                throw std::runtime_error("loading artwork mapping is incomplete");
+            std::memcpy(mapped.data(), primary->rgba.data(), primary->rgba.size());
+            std::memcpy(mapped.data() + primary->rgba.size(), alternate->rgba.data(),
+                        alternate->rgba.size());
+            next->pixels.Flush();
+            next->descriptor_layout = CreateWrappedDescriptorSetLayout(
+                device, {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER}, VK_SHADER_STAGE_FRAGMENT_BIT);
+            next->pool = CreateWrappedDescriptorPool(device, 1, 1,
+                                                     {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER});
+            const std::array<VkDescriptorSetLayout, 1> layouts{*next->descriptor_layout};
+            next->sets = CreateWrappedDescriptorSets(next->pool,
+                vk::Span<VkDescriptorSetLayout>{layouts.data(), layouts.size()});
+            if (next->sets.IsOutOfPoolMemory() || next->sets.size() != 1)
+                throw std::runtime_error("loading artwork descriptor allocation failed");
+            const VkDescriptorBufferInfo buffer{*next->pixels, 0, bytes};
+            const VkWriteDescriptorSet write{
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = next->sets[0],
+                .dstBinding = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                .pBufferInfo = &buffer,
+            };
+            device.GetLogical().UpdateDescriptorSets(std::array{write}, {});
+            const VkPushConstantRange range{VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                                           sizeof(Eden::HudSnapshot)};
+            next->layout = device.GetLogical().CreatePipelineLayout(VkPipelineLayoutCreateInfo{
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+                .setLayoutCount = 1,
+                .pSetLayouts = next->descriptor_layout.address(),
+                .pushConstantRangeCount = 1,
+                .pPushConstantRanges = &range,
+            });
+            auto vertex = BuildShader(device, EDEN_HUD_VERT_SPV);
+            auto fragment = BuildShader(device, EDEN_LOADING_ARTWORK_FRAG_SPV);
+            next->pipeline = CreateWrappedCoverageBlendingPipeline(
+                device, hud_overlay_render_pass, next->layout, std::tie(vertex, fragment));
+            const VkPushConstantRange case_range{VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT,0,
+                                                  sizeof(Eden::LoadingCase::Push)};
+            next->case_layout=device.GetLogical().CreatePipelineLayout(VkPipelineLayoutCreateInfo{
+                .sType=VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,.setLayoutCount=1,
+                .pSetLayouts=next->descriptor_layout.address(),.pushConstantRangeCount=1,.pPushConstantRanges=&case_range,
+            });
+            auto case_vertex=BuildShader(device,EDEN_LOADING_CASE_VERT_SPV);
+            auto case_fragment=BuildShader(device,EDEN_LOADING_CASE_FRAG_SPV);
+            next->case_pipeline=CreateWrappedCoverageBlendingPipeline(
+                device,hud_overlay_render_pass,next->case_layout,std::tie(case_vertex,case_fragment));
+            next->scene=scene;
+            loading_artwork = std::move(next);
+        } catch (const std::exception& e) {
+            // The prior static upload remains the safe fallback on memory
+            // pressure or pipeline creation failure. No guest state touched.
+            loading_artwork_failed = true;
+            std::fprintf(stderr, "EDEN_LOADING_ARTWORK_VK animation=unavailable reason=%s\n", e.what());
+            return false;
+        }
+    }
+
+    auto constants = Eden::MakeLoadingSnapshot(Eden::LaunchHandoff::LoadingSeconds());
+    constants.x = dst->width;
+    constants.y = dst->height;
+    constants.glyphs[1] = loading_artwork->width;
+    constants.glyphs[2] = loading_artwork->height;
+    constants.glyphs[3] = format == VK_FORMAT_B8G8R8A8_SRGB ||
+        format == VK_FORMAT_R8G8B8A8_SRGB || format == VK_FORMAT_A8B8G8R8_SRGB_PACK32;
+    const VkFramebuffer fb = *dst->framebuffer;
+    const VkRenderPass rp = *hud_overlay_render_pass;
+    const VkPipeline pipeline = *loading_artwork->pipeline;
+    const VkPipelineLayout layout = *loading_artwork->layout;
+    const VkDescriptorSet set = loading_artwork->sets[0];
+    const VkPipeline case_pipeline=*loading_artwork->case_pipeline;
+    const VkPipelineLayout case_layout=*loading_artwork->case_layout;
+    const auto case_draw=Eden::LoadingCase::MakeBatch(*loading_artwork->scene,
+        Eden::LaunchHandoff::LoadingSeconds(),float(dst->width),float(dst->height),constants.glyphs[3]!=0);
+    const VkExtent2D size{dst->width, dst->height};
+    scheduler.Record([=](vk::CommandBuffer cmdbuf) {
+        BeginRenderPass(cmdbuf, rp, fb, size);
+        const VkViewport viewport{0.0f, 0.0f, static_cast<float>(size.width),
+                                  static_cast<float>(size.height), 0.0f, 1.0f};
+        cmdbuf.SetViewport(0, viewport);
+        cmdbuf.SetScissor(0, VkRect2D{{0, 0}, size});
+        cmdbuf.BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        cmdbuf.BindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, set, {});
+        cmdbuf.PushConstants(layout, VK_SHADER_STAGE_FRAGMENT_BIT, constants);
+        cmdbuf.Draw(4, 1, 0, 0);
+        cmdbuf.BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS,case_pipeline);
+        cmdbuf.BindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS,case_layout,0,set,{});
+        for(std::size_t i=0;i<case_draw.count;++i){
+            cmdbuf.PushConstants(case_layout,VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT,
+                                 case_draw.quads[i]);
+            cmdbuf.Draw(4,1,0,0);
+        }
+        cmdbuf.EndRenderPass();
+    });
+    return true;
+}
+
+void WindowAdaptPass::RetireLoadingArtwork() {
+    loading_artwork.reset();
+    loading_artwork_failed = true;
+}
+#endif
 
 WindowAdaptPass::WindowAdaptPass(const Device& device, VkFormat frame_format, vk::Sampler&& sampler_, vk::ShaderModule&& fragment_shader_)
     : sampler(std::move(sampler_))

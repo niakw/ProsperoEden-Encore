@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "performance.h"
+#ifdef PS5_NATIVE
+#include "core/loader/ns2_svc_trace.h"
+#endif
 #include "frame_metrics.h"
 #include "ps5_cpu_topology.h"
 #include "direct_pool_accounting.h"
@@ -932,7 +935,85 @@ HleCounters hle_calls;
 } // namespace
 #endif
 
+
+#ifdef PS5_NATIVE
+namespace {
+constexpr std::size_t Ns2HleSlots = 8;
+struct Ns2HleBootEntry {
+    std::atomic_flag writing = ATOMIC_FLAG_INIT;
+    std::atomic<std::uint64_t> sequence{0};
+    std::array<std::atomic<std::uint64_t>, 3> name{};
+    std::atomic<unsigned> command{0};
+    std::atomic<std::uint64_t> elapsed_ns{0};
+};
+std::array<Ns2HleBootEntry, Ns2HleSlots> ns2_boot_hle{};
+std::atomic<std::uint64_t> ns2_boot_hle_seq{0};
+
+// No per-IPC output, guest-memory access, dynamic allocation or blocking lock.
+void RememberNs2Hle(const char* service, unsigned command, long long elapsed_ns) noexcept {
+    if (!service || ::Eden::NS2::SvcTrace::active_pid.load(std::memory_order_acquire) == 0 ||
+        !detailed_gpu_profile.load(std::memory_order_relaxed))
+        return;
+    const auto seq = ns2_boot_hle_seq.fetch_add(1, std::memory_order_relaxed) + 1;
+    auto& slot = ns2_boot_hle[(seq - 1) % Ns2HleSlots];
+    if (slot.writing.test_and_set(std::memory_order_acquire)) return;
+    slot.sequence.store(0, std::memory_order_release);
+    std::array<std::uint64_t, 3> name{};
+    for (std::size_t i = 0; i < name.size() * 8 && service[i] != '\0'; ++i)
+        name[i / 8] |= std::uint64_t{static_cast<unsigned char>(service[i])} << ((i % 8) * 8);
+    for (std::size_t i = 0; i < name.size(); ++i)
+        slot.name[i].store(name[i], std::memory_order_relaxed);
+    slot.command.store(command, std::memory_order_relaxed);
+    slot.elapsed_ns.store(elapsed_ns > 0 ? static_cast<std::uint64_t>(elapsed_ns) : 0,
+                          std::memory_order_relaxed);
+    slot.sequence.store(seq, std::memory_order_release);
+    slot.writing.clear(std::memory_order_release);
+}
+} // namespace
+
+void ResetNs2BootHle() noexcept {
+    // Called between fully shut-down title sessions; old title data is invalid.
+    ns2_boot_hle_seq.store(0, std::memory_order_release);
+    for (auto& slot : ns2_boot_hle)
+        slot.sequence.store(0, std::memory_order_release);
+}
+
+void ReportNs2BootHle(unsigned stage_seconds) noexcept {
+    const auto pid = ::Eden::NS2::SvcTrace::active_pid.load(std::memory_order_acquire);
+    if (pid == 0) return;
+    const auto end = ns2_boot_hle_seq.load(std::memory_order_acquire);
+    unsigned printed = 0;
+    for (auto seq = end; seq > (end > Ns2HleSlots ? end - Ns2HleSlots : 0) && printed < 4; --seq) {
+        const auto& slot = ns2_boot_hle[(seq - 1) % Ns2HleSlots];
+        if (slot.sequence.load(std::memory_order_acquire) != seq) continue;
+        char name[25]{};
+        for (std::size_t i = 0; i < 3; ++i) {
+            const auto part = slot.name[i].load(std::memory_order_relaxed);
+            for (unsigned j = 0; j < 8; ++j)
+                name[i * 8 + j] = static_cast<char>((part >> (j * 8)) & 0xff);
+        }
+        const auto command = slot.command.load(std::memory_order_relaxed);
+        const auto elapsed = slot.elapsed_ns.load(std::memory_order_relaxed);
+        if (slot.sequence.load(std::memory_order_acquire) != seq) continue;
+        std::fprintf(stderr, "EDEN_NS2_LAST_HLE stage=%us pid=%llu sequence=%llu "
+                     "service=%s cmd=%u elapsed_ns=%llu completion=handler_returned\n",
+                     stage_seconds, static_cast<unsigned long long>(pid),
+                     static_cast<unsigned long long>(seq), name, command,
+                     static_cast<unsigned long long>(elapsed));
+        ++printed;
+    }
+    if (printed == 0)
+        std::fprintf(stderr, "EDEN_NS2_LAST_HLE stage=%us pid=%llu "
+                     "completion=no_completed_handler_observed detailed=%u\n",
+                     stage_seconds, static_cast<unsigned long long>(pid),
+                     unsigned(detailed_gpu_profile.load(std::memory_order_relaxed)));
+}
+#endif
+
 void RecordHle(const char* service, unsigned command, long long ns) {
+#ifdef PS5_NATIVE
+    RememberNs2Hle(service, command, ns);
+#endif
 #ifdef EDEN_DEV_PROFILE
     hle_calls.Record(service, command, ns);
 #else

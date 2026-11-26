@@ -44,3 +44,60 @@ with tempfile.TemporaryDirectory() as d:
  subprocess.run(['c++','-std=c++20','-fsanitize=address,undefined','-g',str(p/'test.cpp'),'-o',str(p/'test')],check=True,env=env)
  subprocess.run([str(p/'test')],check=True,env=env)
 print('Generated nvdrv session ownership: shared sessions, dead external owner, final unmap before release, ID reuse PASS')
+# Residual FD devices must be destroyed while their borrowed event/service
+# context still lives. Extract the actual production destructor, not a second
+# implementation of it. Reproduce the old implicit-member-order defect.
+module_source=(r/'vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp').read_text()
+module_header=(r/'vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv.h').read_text()
+assert module_header.index('FilesContainerType open_files;') < module_header.index('KernelHelpers::ServiceContext service_context;')
+destructor=module_source.split('Module::~Module()',1)[1].split('NvResult Module::VerifyFD',1)[0]
+assert 'device.reset();' in destructor
+cmake=(r/'headless/CMakeLists.txt').read_text()
+assert 'list(REMOVE_ITEM eden_ns2_nvdrv_session_sources "hle/service/nvdrv/nvdrv.cpp")' in cmake
+assert 'list(APPEND eden_ns2_nvdrv_session_sources "${EDEN_NATIVE_NVDRV_MODULE_SOURCE}")' in cmake
+assert 'configure_file("${EDEN_NATIVE_NVDRV_MODULE_HEADER}"' in cmake
+fd_model=r'''
+#include <cassert>
+#include <memory>
+#include <unordered_map>
+#include <utility>
+struct State { bool live=true; int invalid=0; int retired=0; };
+struct Context { State& s; ~Context(){s.live=false;} };
+struct Device {
+    State& s;
+    explicit Device(State& owner):s(owner){}
+    ~Device(){++s.retired;if(!s.live)++s.invalid;}
+};
+struct ModuleOld {
+    std::unordered_map<int,std::shared_ptr<Device>> open_files;
+    Context service_context;
+    explicit ModuleOld(State& s):service_context{s}{
+        for(int i=0;i<8;++i)open_files.emplace(i,std::make_shared<Device>(s));
+    }
+};
+struct Module {
+    std::unordered_map<int,std::shared_ptr<Device>> open_files;
+    Context service_context;
+    explicit Module(State& s):service_context{s}{
+        for(int i=0;i<8;++i)open_files.emplace(i,std::make_shared<Device>(s));
+    }
+    ~Module();
+};
+Module::~Module()
+'''+destructor+r'''
+int main(){
+    for(int i=0;i<1000;++i){
+        State old;{ModuleOld m(old);}
+        assert(old.invalid==8&&old.retired==8);
+        State fixed;{Module m(fixed);}
+        assert(fixed.invalid==0&&fixed.retired==8);
+    }
+}
+'''
+with tempfile.TemporaryDirectory() as d:
+    p=Path(d)
+    (p/'fd_model.cpp').write_text(fd_model)
+    for opt in ('-O0','-O2'):
+        subprocess.run(['c++','-std=c++20',opt,'-fsanitize=undefined',str(p/'fd_model.cpp'),'-o',str(p/'fd_model')],check=True,env=env)
+        subprocess.run([str(p/'fd_model')],check=True,env=env)
+print('NVDRV residual FD lifetime: 8000 old invalid destructor accesses, zero after per optimization (host model)')

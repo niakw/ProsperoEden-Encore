@@ -47,12 +47,19 @@ committed.add(0)
 assert bytes(pages[0]) == bytes(4)
 native = (root / "src/memory_pages.cpp").read_text()
 commit_source = native.split("void CommitSparsePage(std::uintptr_t page) noexcept {", 1)[1].split(
+    "bool TryCommitSparsePage(std::uintptr_t page) noexcept {", 1
+)[0]
+try_commit_source = native.split("bool TryCommitSparsePage(std::uintptr_t page) noexcept {", 1)[1].split(
     "std::size_t SparseCommitSpan()", 1
 )[0]
 # The global owner lock must protect SparseRangeOf and the first owned[slot]
 # dereference; otherwise concurrent FreeSparsePages can free the bitmap.
-assert commit_source.count("const std::lock_guard lock{sparse_mutex};") == 1
-assert commit_source.index("const std::lock_guard lock{sparse_mutex};") < commit_source.index("SparseRange* range = SparseRangeOf(page);")
-assert commit_source.index("SparseRange* range = SparseRangeOf(page);") < commit_source.index("range->owned[slot]")
+for method in (commit_source, try_commit_source):
+    assert method.count("const std::lock_guard lock{sparse_mutex};") == 1
+    assert method.index("const std::lock_guard lock{sparse_mutex};") < method.index("SparseRange* range = SparseRangeOf(page);")
+    assert method.index("SparseRange* range = SparseRangeOf(page);") < method.index("range->owned[slot]")
+    assert method.index("OwnSlot(") < method.index("range->owned[slot].store(true, std::memory_order_release)")
+assert "std::abort();" in commit_source
+assert "return false;" in try_commit_source and "std::abort();" not in try_commit_source
 print("PASS: sparse table zero/decommit and page commit serialized per vector")
 print("PASS: pinned SparseLargeVector GetAndFault/Set/IsCommittedPage stop at count")

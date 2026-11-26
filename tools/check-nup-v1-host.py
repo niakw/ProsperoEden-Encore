@@ -46,10 +46,13 @@ def check(path: Path) -> dict:
         toc_offset, toc_size = struct.unpack_from("<QQ", header, 8)
         blob_offset, announced_size = struct.unpack_from("<QQ", header, 0x38)
         package_count, flags = struct.unpack_from("<II", header, 0x48)
-        require(header_size == 0x80 and version == 1, "unsupported header revision")
-        require(toc_offset == header_size, "wrong TOC offset")
-        require(0 < toc_size <= MAX_TOC and toc_size % 16 == 0, "invalid TOC size")
-        require(blob_offset % 16 == 0 and blob_offset >= toc_offset + toc_size,
+        require(0x80 <= header_size <= total and version == 1,
+                "unsupported header revision")
+        require(header_size <= toc_offset <= total and
+                0 < toc_size <= MAX_TOC and toc_size <= total - toc_offset,
+                "invalid TOC dimensions")
+        require(blob_offset % 16 == 0 and blob_offset >= toc_offset and
+                toc_size <= blob_offset - toc_offset,
                 "invalid blob offset")
         require(announced_size == total and blob_offset <= total, "invalid file size")
         require(0 < package_count <= 65536 and flags == 0, "invalid package count/flags")
@@ -170,8 +173,17 @@ def check(path: Path) -> dict:
         if kind == 0:
             base_packages += 1
         if meta_size:
-            require(meta_offset >= blob_offset and meta_offset <= total and
-                    meta_size <= total - meta_offset, "metadata outside container")
+            # Upstream Lichii / Eglantine: optional metadata advertised
+            # outside the file is absent, not a reason to read outside it.
+            if meta_offset == 0 or meta_offset > total or meta_size > total - meta_offset:
+                pass
+            else:
+                in_toc_gap = (meta_offset >= toc_offset + toc_size and
+                              meta_offset < blob_offset and
+                              meta_size <= blob_offset - meta_offset)
+                after_blob = meta_offset >= blob_offset
+                require(meta_size <= 32 * 1024 * 1024 and
+                        (in_toc_gap or after_blob), "metadata overlaps TOC/blob or exceeds cap")
         else:
             require(meta_offset == 0, "empty metadata with nonzero offset")
         signature.extend(struct.pack("<QIB", title_id, version_num, kind))

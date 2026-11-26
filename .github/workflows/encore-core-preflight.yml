@@ -39,6 +39,9 @@ on:
       - 'docs/EDEN_OVERRIDE_SOURCE_OF_TRUTH.md'
       - 'docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md'
       - 'docs/EDEN_NATIVE_CONFIG_METADATA_REVIEW_2026-10-21.md'
+      # Native build recipe changes can alter dependency/bootstrap behavior before Clang.
+      # Requalify the host source/build contracts before spending a PS5 full build.
+      - '.github/workflows/build-040-zbic.yml'
       - '.github/workflows/encore-core-fast-gate.yml'
       # A release sign-off changes its finite acceptance contract without
       # changing executable source. Requalify at the exact resulting SHA.
@@ -82,7 +85,10 @@ jobs:
       matrix:
         suite: [early, audit, memory, ux, baseline, f01-f06]
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    # The audit shard compiles/runs hundreds of source witnesses and exceeded
+    # 25 minutes on ubuntu-24.04 while still producing green results.
+    # This is only a maximum wall-clock guard; it does not weaken any test.
+    timeout-minutes: 60
     steps:
       - name: Checkout source (GitHub only)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -141,7 +147,19 @@ jobs:
           for source in \
             vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp \
             vendor/encore-active/ns2-runtime/gamechat/core/hle/service/friend/friend.cpp \
-            vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp; do
+            vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp \
+            vendor/encore-active/ns2-runtime/nx/core/loader/nx.cpp \
+            vendor/encore-active/ns2-runtime/nx/core/file_sys/nx_content.cpp \
+            vendor/encore-active/eden-core/src/core/loader/loader.cpp \
+            vendor/encore-active/ns2-runtime/hle/core/hle/service/acc/acc.cpp \
+            vendor/encore-active/ns2-runtime/hle/core/hle/service/caps/caps_u.cpp \
+            vendor/encore-active/ns2-runtime/hle/core/hle/service/caps/caps_su.cpp \
+            vendor/encore-active/ns2-runtime/hle/core/hle/service/set/settings_server.cpp \
+            vendor/encore-active/ns2-runtime/hle/core/hle/service/mii/mii.cpp \
+            vendor/encore-active/ns2-runtime/hle/core/hle/service/lm/lm.cpp \
+            vendor/encore-active/ns2-runtime/hle/core/hle/service/audio/audio_device.cpp \
+            vendor/encore-active/ns2-runtime/hle/core/hle/service/audio/audio_renderer_manager.cpp \
+            vendor/encore-active/ns2-runtime/hle/core/hle/service/nifm/nifm.cpp; do
             clang++-18 -std=c++20 -fsyntax-only -Wno-unused-parameter \
               -DPS5_NATIVE=1 \
               -Ivendor/sources/fmt/include \
@@ -153,6 +171,11 @@ jobs:
               -Ivendor/encore-active/ns2-runtime/gpu_session \
               -Ivendor/encore-active/ns2-runtime/nvdrv_as \
               -Ivendor/encore-active/ns2-runtime/hle \
+              -Ivendor/encore-active/eden-core/include \
+              -Ivendor/encore-active/eden-core/overrides \
+              -Ivendor/encore-active/ns2-runtime/nx \
+              -Ivendor/encore-active/ns2-runtime/nx/nxformat \
+              -Ivendor/sources/eden/externals/stb \
               -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
@@ -253,7 +276,12 @@ jobs:
       - name: Audit generic graphics, JIT, runtime and filtered game networking
         if: ${{ matrix.suite == 'audit' }}
         run: |
-          set -euxo pipefail
+          # Run independent host checks to completion and retain every failure.
+          # No failure is waived; the aggregate remains mandatory and fail-closed.
+          set -uxo pipefail
+          set +e  # Actions may start bash with -e; aggregate errors explicitly.
+          audit_failed=0
+          trap 'rc=$?; echo "::error::Audit failed (exit $rc): $BASH_COMMAND"; audit_failed=1' ERR
           python3 -B tools/check-ci-neutral-labels.py
           python3 -B tools/check-upstream-coverage-inventory.py
           python3 -B tools/update-upstream-comparison.py --self-test
@@ -735,12 +763,23 @@ jobs:
           python3 -B tools/check-nlib-media-safety.py
           python3 -B tools/check-ci-cache.py
           python3 -B tools/check-package-flexible-memory.py
+          exit "$audit_failed"
 
       - name: Verify native memory arena ownership (host sanitizers only)
         if: ${{ matrix.suite == 'memory' }}
         run: |
           set -euxo pipefail
           python3 -B tools/check-maintained-heap-sources.py
+          # Compile and execute the exact PS5 guest backing owner against host
+          # syscall mocks. This covers NS1/NS2 layout plans plus ZERO->OWN,
+          # OWN->ZERO, OOM rollback and zero-clear ownership on every main push.
+          clang++ -std=c++20 -O1 -Wall -Wextra -Werror -pedantic \
+            -DPS5_NATIVE=1 -fsanitize=undefined -fno-sanitize-recover=all \
+            -Isrc -Iheadless src/ns2_sparse_guest.cpp \
+            tools/ns2/test_r457_native_sparse_owner.cpp -o /tmp/r457-native-owner
+          /tmp/r457-native-owner
+          python3 -B tools/ns2/check_r457_sparse_kernel_source.py
+          python3 -B tools/ns2/check_gpu_worker_native_guard_host.py
           # P1.3 real close-admission body: refuse malformed/stale NVDRV session
           # IDs BEFORE NvMap cleanup and ASID unregistration.
           python3 -B tools/ns2/check_native_nvcore_session_close_host.py

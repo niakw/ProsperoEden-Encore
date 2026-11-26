@@ -249,12 +249,53 @@ gc_method=buffer_src[gc_begin:gc_end]
 assert "if (frame_tick < ticks_to_destroy)" in gc_method
 assert gc_method.index("if (frame_tick < ticks_to_destroy)") < gc_method.index("ForEachItemBelow(")
 gc_cpp=r"""
+#include <array>
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <new>
+#include <optional>
+#include <span>
 #include <vector>
 using u64=std::uint64_t;
+using DAddr=u64;
 using BufferId=int;
+// The fixture exercises the selected native GC body, including its batch
+// planner and publication order. The vector substitutes only storage.
+namespace boost::container {
+template<class T, std::size_t N> using small_vector=std::vector<T>;
+}
+struct BufferCopy { u64 src_offset{},dst_offset{},size{}; };
+struct Tracker {
+    int clears{};
+    template<class F> void ForEachDownloadRange(u64 addr,u64 size,bool clear,F f) {
+        assert(!clear); f(addr,size);
+    }
+    template<class F> void ForEachDownloadRangeAndClear(u64 addr,u64 size,F f) {
+        ++clears; f(addr,size);
+    }
+};
+struct Ranges {
+    int clears{};
+    template<class F> void ForEachInRange(u64 addr,u64 size,F f) { f(addr,addr+size); }
+    void Subtract(u64,u64) { ++clears; }
+};
+struct Runtime {
+    int finishes{},copies{};
+    bool fail_allocation{};
+    struct Stage { int buffer{}; u64 offset{}; std::vector<std::uint8_t> mapped_span; };
+    Stage DownloadStagingBuffer(u64 size) {
+        if (fail_allocation) throw std::bad_alloc{};
+        return {1,0,std::vector<std::uint8_t>(size,7)};
+    }
+    void PreCopyBarrier(){}
+    void PostCopyBarrier(){}
+    template<class B> void CopyBuffer(int dst,B&,std::span<const BufferCopy> regions,bool) {
+        assert(dst==1 && !regions.empty()); ++copies;
+    }
+    void Finish(){++finishes;}
+};
 struct LruCache {
     int calls{};
     u64 threshold{};
@@ -266,10 +307,27 @@ struct LruCache {
 };
 template<class P>struct BufferCache {
     u64 frame_tick{},total_used_memory{},critical_memory{100};
-    int downloads{},deletions{};
-    struct Buffer { int value{}; };
+    static constexpr bool USE_MEMORY_MAPS=true, IS_OPENGL=false;
+    int downloads{},deletions{},published{};
+    struct Buffer {
+        int value{};
+        u64 CpuAddr() const {return 4096;}
+        u64 SizeBytes() const {return 64;}
+        void MarkUsage(u64 offset,u64 size){assert(offset==0 && size==64);}
+    };
     std::vector<Buffer> slot_buffers{{},{42}};
     LruCache lru_cache{};
+    Tracker memory_tracker{};
+    Ranges gpu_modified_ranges{};
+    Runtime runtime{};
+    int PendingCpuWriteRanges() const { assert(runtime.finishes>0); return 0; }
+    void WriteDownloadedMemory(int,u64 addr,const std::uint8_t* data,u64 size){
+        assert(runtime.finishes>0 && addr==4096 && size==64 && data[0]==7);
+        ++published;
+    }
+    void ClearDownload(u64 addr,u64 size){
+        assert(addr==4096 && size==64 && published>0);
+    }
     void DownloadBufferMemory(Buffer& buffer){assert(buffer.value==42);++downloads;}
     void DeleteBuffer(BufferId id){assert(id==1);++deletions;}
     void RunGarbageCollector();
@@ -291,6 +349,21 @@ int main(){
     assert(b.lru_cache.threshold==0);
     b.frame_tick=61;b.RunGarbageCollector();
     assert(b.lru_cache.threshold==1);
+#ifdef PS5_NATIVE
+    assert(b.runtime.finishes==1 && b.runtime.copies==1);
+    assert(b.published==1 && b.deletions==1 && b.downloads==0);
+    assert(b.memory_tracker.clears==1 && b.gpu_modified_ranges.clears==1);
+    BufferCache<Mock> oom;
+    oom.total_used_memory=101; oom.frame_tick=61; oom.runtime.fail_allocation=true;
+    oom.RunGarbageCollector();
+    assert(oom.runtime.finishes==0 && oom.published==0 && oom.deletions==0);
+    assert(oom.memory_tracker.clears==0 && oom.gpu_modified_ranges.clears==0);
+    oom.runtime.fail_allocation=false;
+    oom.RunGarbageCollector();
+    assert(oom.runtime.finishes==1 && oom.published==1 && oom.deletions==1);
+#else
+    assert(b.runtime.finishes==0 && b.downloads==4 && b.deletions==4);
+#endif
     b.total_used_memory=50; // ordinary GC requires 120 frames.
     BufferCache<Mock> low;
     low.total_used_memory=50;

@@ -27,7 +27,7 @@ assert active.count("if (pipeline && pipeline->IsBound()) {") == 1
 assert active.count("if (pipeline && pipeline->CanExecuteDraw()) {") == 1
 assert active.count("++state.valid;") == 2
 assert "EDEN_PS5_SHADER_PREWARM queued=%zu completed=%zu valid=%zu rejected=%zu prebuild_ms=%lld limit=%zu" in active
-assert active.index("    workers.WaitForRequests();\n    prewarm_drain.joined = true;\n#else\n    workers.WaitForRequests(stop_loading);") < active.index("EDEN_PS5_SHADER_PREWARM queued=")
+assert active.index("    workers.WaitForRequests();\n    prewarm_drain.joined = true;\n    // Propagate the original failure on the loading owner, not std::terminate\n    // on a worker. Never advertise a partial failed cache as a successful load.\n    if (state.worker_error) std::rethrow_exception(state.worker_error);\n#else\n    workers.WaitForRequests(stop_loading);") < active.index("EDEN_PS5_SHADER_PREWARM queued=")
 assert "f07_warm_after_4" in generator
 assert "    workers.WaitForRequests();" in generator
 assert "startup_prewarm_started = std::chrono::steady_clock::now();" in active
@@ -122,3 +122,48 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-preseed-") as d:
             subprocess.run([compiler,"-std=c++20",level,*variant,"-Wall","-Wextra","-Werror",str(p),"-o",str(exe)],check=True,capture_output=True,text=True,timeout=35)
             subprocess.run([str(exe)],check=True,timeout=15)
 print("F07_PREWARM_PIPELINE_ADMISSION_HOST_PASS native_graphics_invalid=1 compute_invalid=1 optimized_recovery=1 unpublished_rejected=1 actual_header_predicate=1 desktop=1 O0=1 O2=1")
+
+# Compile the actual typed-key selection block with move-only jobs.
+selection = active.split("            const PrewarmKey candidate{key};", 1)[1].split("\n            return;", 1)[0]
+selection = "            const PrewarmKey candidate{key};" + selection
+assert "entry.first == candidate" in selection
+assert "recent_cache_builds.erase(duplicate)" in selection
+assert "workers.QueueWork(std::move(entry.second))" in active
+cpp_recent = r"""
+#include <algorithm>
+#include <cassert>
+#include <list>
+#include <memory>
+#include <utility>
+#include <variant>
+struct Compute { int key; bool operator==(const Compute&) const = default; };
+struct Graphics { int key; int state; bool operator==(const Graphics&) const = default; };
+using PrewarmKey = std::variant<Compute, Graphics>;
+int main() {
+    std::list<std::pair<PrewarmKey, std::unique_ptr<int>>> recent_cache_builds;
+    constexpr std::size_t prewarm_pipeline_limit = 3;
+    const auto admit = [&](const auto& key, std::unique_ptr<int> build) {
+""" + selection + r"""
+    };
+    admit(Compute{1}, std::make_unique<int>(10));
+    admit(Graphics{1, 0}, std::make_unique<int>(20));
+    admit(Graphics{1, 1}, std::make_unique<int>(30));
+    admit(Compute{1}, std::make_unique<int>(40));
+    assert(recent_cache_builds.size() == 3);
+    auto it = recent_cache_builds.begin();
+    assert(std::get<Graphics>(it->first).state == 0 && *it->second == 20); ++it;
+    assert(std::get<Graphics>(it->first).state == 1 && *it->second == 30); ++it;
+    assert(std::get<Compute>(it->first).key == 1 && *it->second == 40);
+    admit(Compute{2}, std::make_unique<int>(50));
+    assert(recent_cache_builds.size() == 3);
+    assert(*recent_cache_builds.front().second == 30);
+    assert(*recent_cache_builds.back().second == 50);
+}
+"""
+with tempfile.TemporaryDirectory(prefix="eden-fc27-distinct-prewarm-") as d:
+    p = Path(d)/"test.cpp"
+    p.write_text(cpp_recent)
+    exe = Path(d)/"run"
+    subprocess.run([compiler, "-std=c++20", "-O2", "-Wall", "-Wextra", "-Werror", str(p), "-o", str(exe)], check=True, capture_output=True, text=True, timeout=35)
+    subprocess.run([str(exe)], check=True, timeout=15)
+print("FC27_DISTINCT_PREWARM_HOST_PASS typed_keys=1 latest=1 bounded=1 move_only=1")

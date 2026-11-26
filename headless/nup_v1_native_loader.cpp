@@ -2,6 +2,7 @@
 #include "nup_v1_native_loader.h"
 #include "nup_v1_native_aoc.h"
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdio>
@@ -10,6 +11,11 @@
 #include <utility>
 #include <zlib.h>
 
+#include "common/settings.h"
+#include "core/core.h"
+#include "core/file_sys/romfs_factory.h"
+#include "core/hle/kernel/k_process.h"
+#include "core/hle/service/filesystem/filesystem.h"
 #include "core/file_sys/control_metadata.h"
 #include "core/file_sys/common_funcs.h"
 #include "core/file_sys/program_metadata.h"
@@ -167,9 +173,14 @@ std::unique_ptr<NupAppLoader> NupAppLoader::Open(FileSys::VirtualFile source,
     // unlike the directory-only overload in the pinned extracted loader.
     // Our NativeFile retains its containing ExeFS directory across reads.
     const auto main_file = loader->content_->ExeFS()->GetFile("main");
-    loader->extracted_loader_ =
+    // Preserve the main-file metadata parser, but boot through the directory
+    // overload: the package, not a standalone loose ExeFS, owns RomFS.
+    loader->metadata_loader_ =
         std::make_unique<Loader::AppLoader_DeconstructedRomDirectory>(
             main_file, false);
+    loader->extracted_loader_ =
+        std::make_unique<Loader::AppLoader_DeconstructedRomDirectory>(
+            loader->content_->ExeFS(), false);
     // Merely inspecting NUP metadata for the game catalogue must NOT expose
     // add-ons to a running game's services. Publish only after Load succeeds.
     return loader;
@@ -210,10 +221,29 @@ Loader::ResultStatus NupAppLoader::ValidateProgramIdentity(u64& program_id) cons
     // A base package identifies the exact program, including its program
     // index. A standalone update carries the update title ID, so only its
     // common base-program family can be compared with the loaded NPDM.
-    if ((declared->kind == 0 && program_id != declared->title_id) ||
+    // Lichii Switch 2 Edition: an NS1 base (01xxxxxxxxxxxxxx) may ship
+    // a verified NS2 update executable (04xxxxxxxxxxxxxx, program index 1).
+    // The low 56 bits must match the exact preceding NS1 program ID; never
+    // accept an unrelated NPDM or infer NS2 from filename alone.
+    constexpr u64 PlatformMask = 0xFF00000000000000ULL;
+    constexpr u64 LowTitleMask = ~PlatformMask;
+    const bool matching_ns2_edition =
+        declared->kind == 0 && metadata.IsSwitch2() &&
+        (declared->title_id & PlatformMask) == 0x0100000000000000ULL &&
+        (program_id & PlatformMask) == 0x0400000000000000ULL &&
+        (program_id & LowTitleMask) == ((declared->title_id + 1) & LowTitleMask);
+    const bool matching_embedded_edition =
+        declared->kind == 1 && declared->standalone_update && metadata.IsSwitch2() &&
+        (declared->title_id & PlatformMask) == 0x0100000000000000ULL &&
+        (program_id & PlatformMask) == 0x0400000000000000ULL &&
+        (program_id & LowTitleMask) ==
+            ((FileSys::GetBaseTitleID(declared->title_id) + 1) & LowTitleMask);
+    if ((declared->kind == 0 && program_id != declared->title_id &&
+         !matching_ns2_edition) ||
         (declared->kind == 1 &&
          FileSys::GetBaseTitleID(program_id) !=
-             FileSys::GetBaseTitleID(declared->title_id))) {
+             FileSys::GetBaseTitleID(declared->title_id) &&
+         !matching_embedded_edition)) {
         return Loader::ResultStatus::ErrorBadNPDMHeader;
     }
     return Loader::ResultStatus::Success;
@@ -257,6 +287,16 @@ NupAppLoader::LoadResult NupAppLoader::Load(Kernel::KProcess& process,
     }
     auto result = extracted_loader_->Load(process, system);
     if (result.first == Loader::ResultStatus::Success) {
+        // The directory delegate only maps ExeFS. Register the outer NUP
+        // loader so RomFSFactory reads its validated effective overlay and
+        // the filesystem/save-data controller receives the real NPDM ID.
+        auto& filesystem = system.GetFileSystemController();
+        const auto registered = filesystem.RegisterProcess(
+            process.GetProcessId(), program_id,
+            std::make_shared<FileSys::RomFSFactory>(*this, system.GetContentProvider(),
+                                                    filesystem));
+        if (registered.IsError())
+            return {Loader::ResultStatus::ErrorNoRomFS, {}};
         PublishActiveAddOns(this, std::make_shared<AddOnIndex>(
             mount_, program_id, nacp_aoc_base_id_));
     }
@@ -270,7 +310,20 @@ Loader::ResultStatus NupAppLoader::ReadRomFS(FileSys::VirtualFile& out_file) {
     const auto status = ValidateProgramIdentity(program_id);
     if (status != Loader::ResultStatus::Success) return status;
     std::scoped_lock guard(romfs_mutex_);
-    if (!effective_romfs_) effective_romfs_ = content_->CreateRomFS();
+    if (!effective_romfs_) {
+        const auto dlc_disabled = [](u64 id) {
+            const auto& disabled = Settings::values.disabled_addons;
+            const auto it = disabled.find(id);
+            return it != disabled.end() &&
+                std::find(it->second.begin(), it->second.end(), "DLC") != it->second.end();
+        };
+        const auto native_base = FileSys::GetBaseTitleID(program_id);
+        const auto legacy_base = (native_base & 0x00FFFFFFFFFFFFFFULL) |
+                                 0x0100000000000000ULL;
+        effective_romfs_ = content_->CreateRomFS(
+            !dlc_disabled(program_id) && !dlc_disabled(native_base) &&
+            !dlc_disabled(legacy_base));
+    }
     if (!effective_romfs_) return Loader::ResultStatus::ErrorNoRomFS;
     out_file = effective_romfs_;
     return Loader::ResultStatus::Success;
@@ -285,7 +338,7 @@ Loader::ResultStatus NupAppLoader::ReadIcon(std::vector<u8>& out_buffer) {
         out_buffer = metadata->default_icon;
         return Loader::ResultStatus::Success;
     }
-    return extracted_loader_ ? extracted_loader_->ReadIcon(out_buffer)
+    return metadata_loader_ ? metadata_loader_->ReadIcon(out_buffer)
                              : Loader::ResultStatus::ErrorNoIcon;
 }
 
@@ -334,7 +387,7 @@ Loader::ResultStatus NupAppLoader::ReadTitle(std::string& out_title) {
         out_title = metadata->title;
         return Loader::ResultStatus::Success;
     }
-    return extracted_loader_ ? extracted_loader_->ReadTitle(out_title)
+    return metadata_loader_ ? metadata_loader_->ReadTitle(out_title)
                              : Loader::ResultStatus::ErrorNoControl;
 }
 

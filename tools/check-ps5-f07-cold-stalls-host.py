@@ -42,8 +42,8 @@ for enum_name, log_name in names:
     assert enum_name in gen, enum_name
 
 # Exact active shader phase sites and generation policy.
-for stage, expected in (("ShaderPoolReset",2), ("ShaderCfg",3),
-                        ("ShaderIr",3), ("ShaderSpirv",2), ("ShaderModule",2)):
+for stage, expected in (("ShaderPoolReset",2), ("ShaderCfg",4),
+                        ("ShaderIr",4), ("ShaderSpirv",2), ("ShaderModule",2)):
     assert pipeline.count("CachePhase::"+stage) == expected, stage
     assert stage in gen, stage
 assert pipeline.count("CachePhase::GraphicsShaderEnvironment") == 1
@@ -56,8 +56,25 @@ assert "detailed_gpu_profile.load(std::memory_order_relaxed)" in pipeline[
     environment_start:environment_start+210]
 assert "shader_source.count(f07_environment_old) != 1" in gen
 assert "shader_source.replace(f07_environment_old, f07_environment_new, 1)" in gen
-assert pipeline.count("cfg_stage_cost.Stop();") == 3
+assert pipeline.count("cfg_stage_cost.Stop();") == 4
+# The historical generator phase still creates three synchronous CFG timers;
+# the reviewed parallel delta is applied afterwards and adds the worker site.
 assert "if len(re.findall(cfg_match, shader_source)) != 3:" in gen
+parallel_start = pipeline.index(
+    "std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>")
+parallel_end = pipeline.index("\n#endif", parallel_start)
+parallel = pipeline[parallel_start:parallel_end]
+assert "shader_translation_workers.QueueWork(" in parallel
+assert "shader_miss_stage_active = current;" in parallel
+assert "shader_miss_stage_active = previous;" in parallel
+assert parallel.index("shader_translation_workers.WaitForRequests();") < parallel.index(
+    "owner_stage_costs->cfg_ns += parallel_stage_costs[index].cfg_ns;")
+assert "owner_stage_costs->ir_ns += parallel_stage_costs[index].ir_ns;" in parallel
+assert "_parallel_timing_reverse =" in gen
+assert 'if predecessor_count == 1 and current_count == 0:' in gen
+assert 'elif predecessor_count == 0 and current_count == 1:' in gen
+assert 'f"FC27 parallel shader timing anchor drift index={index} "' in gen
+assert 'f"predecessor={predecessor_count} current={current_count}"' in gen
 assert 'if shader_source.count(f07_pipeline_old) != 1:' in gen
 assert "shader_source = shader_source.replace(f07_pipeline_old, f07_pipeline_new, 1)" in gen
 assert "texture_costs.append((" in gen

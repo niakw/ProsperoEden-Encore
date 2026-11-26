@@ -7,7 +7,13 @@ s=(root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/
 gen=(root/"tools/prepare-vulkan-port.py").read_text()
 start=s.index("void TextureCache<P>::CheckFeedbackLoop(")
 end=s.index("\ntemplate <class P>",start+20)
-method=s[start:end]
+shadow=s[start:end]
+selected=(root/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+start=selected.index("void TextureCache<P>::CheckFeedbackLoop(")
+end=selected.index("\ntemplate <class P>",start+20)
+method=selected[start:end]
+assert method == shadow, "selected native feedback owner drift"
+assert "#include <bit>" in selected
 assert method.count("std::countr_zero(color_slots)")==2
 assert "F07 enumerate active color slots for feedback view IDs" in gen
 assert "F07 enumerate active color slots for feedback image IDs" in gen

@@ -1,13 +1,16 @@
+#include "core/file_sys/romfs_factory.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Exercise native adapter WITHOUT linking a PS5 renderer/loader.
 #include "nup_v1_native_vfs.h"
 #include "nup_v1_native_content.h"
 #include "nup_v1_native_aoc.h"
 #include "nup_v1_native_loader.h"
+#include "common/settings.h"
 #include "core/loader/loader.h"
 #include "core/file_sys/romfs.h"
 #include "core/file_sys/control_metadata.h"
 #include "core/file_sys/vfs/vfs.h"
+#include "core/file_sys/vfs/vfs_layered.h"
 
 #include <algorithm>
 #include <atomic>
@@ -104,7 +107,7 @@ std::unique_ptr<AppLoader> GetLoader(
 } // namespace Loader
 
 int main(int argc, char** argv) {
-    assert(argc == 20);
+    assert(argc >= 21 && argc <= 23);
     auto input = std::make_shared<MemoryFile>(Load(argv[1]));
     // File recognition must be based on the superblock, not .nup extension.
     // This cheap probe does not replace the full archive validation.
@@ -165,6 +168,141 @@ int main(int argc, char** argv) {
     using Eden::NupV1::ContentView;
     assert(!mount->Effective(ContentView::ExeFS));
     assert(!mount->PackageView(100, ContentView::RomFS));
+
+
+    // A standalone NS1 update can contain an ordinary, valid NS1 ExeFS and
+    // a separate NPDM-verified Switch 2 program1. Prefer the latter, then
+    // overlay program1 resources without losing shared update assets.
+    auto edition_mount = Eden::NupV1::Native::Mount::Open(
+        std::make_shared<MemoryFile>(Load(argv[20])), &error);
+    assert(edition_mount && error.empty());
+    Eden::NupV1::Native::ContentSet edition{edition_mount};
+    assert(edition.HasExecutableMain());
+    const auto edition_exefs = edition.ExeFS();
+    assert(edition_exefs);
+    assert(Read(edition_exefs->GetFile("main")) == "native-main");
+    assert(Read(edition_exefs->GetFile("main.npdm")) == "switch2-npdm");
+    assert(Read(edition.CreateRomFS()) == "state.bin=native-state\n");
+    // The selected 04-platform NPDM must retain the 01-platform
+    // standalone-update AoC family, but only with the verified program ID.
+    Eden::NupV1::Native::ContentSet scoped_edition{
+        edition_mount, 0x0400123400000001ULL};
+    assert(scoped_edition.AddOns().size() == 1);
+    assert(Read(scoped_edition.CreateAddOnRomFS(1)) == "bonus.bin=edition-addon\n");
+    Eden::NupV1::Native::ContentSet foreign_edition{
+        edition_mount, 0x0400123400002001ULL};
+    assert(foreign_edition.AddOns().empty());
+    Eden::NupV1::Native::AddOnIndex embedded_service{
+        edition_mount, 0x0400123400000001ULL};
+    assert(embedded_service.BaseId(0x0400123400000001ULL) ==
+           0x0100123400001000ULL);
+    assert(embedded_service.Count(0x0400123400000001ULL) == 1);
+    assert(Read(embedded_service.OpenRomFS(0x0400123400000001ULL, 0)) ==
+           "bonus.bin=edition-addon\n");
+    const auto native_package_root = edition_mount->PackageRoot(0);
+    const auto native_program = native_package_root->GetSubdirectory("program1");
+    const auto native_romfs = native_program->GetSubdirectory("romfs");
+    const auto normal_romfs = edition_mount->Effective(ContentView::RomFS);
+    assert(native_romfs && normal_romfs);
+    const auto layered_romfs = FileSys::LayeredVfsDirectory::MakeLayeredDirectory(
+        {native_romfs, normal_romfs}, "romfs");
+    const auto shared_assets = layered_romfs->GetSubdirectory("assets");
+    assert(shared_assets);
+    assert(Read(shared_assets->GetFile("shared.bin")) == "shared-assets");
+    assert(Read(shared_assets->GetFile("native.bin")) == "native-assets");
+
+    if (argc >= 22) {
+        // A regular NS1 base + matching NS2 update must expose the same
+        // verified NS1 AoC family as a standalone embedded edition.
+        auto paired_mount = Eden::NupV1::Native::Mount::Open(
+            std::make_shared<MemoryFile>(Load(argv[21])), &error);
+        assert(paired_mount && error.empty());
+        Eden::NupV1::Native::ContentSet paired{
+            paired_mount, 0x0400123400000001ULL};
+        assert(paired.HasExecutableMain());
+        assert(Read(paired.ExeFS()->GetFile("main.npdm")) == "switch2-npdm");
+        assert(Read(paired.CreateRomFS(false)).find("bonus.bin=") == std::string::npos);
+        assert(Read(paired.CreateRomFS(true)).find("bonus.bin=edition-addon\n") !=
+               std::string::npos);
+        assert(Read(paired.CreateRomFS(true)).find("state.bin=native-state\n") !=
+               std::string::npos);
+        // Unscoped metadata and legacy callers do not get an Edition overlay.
+        Eden::NupV1::Native::ContentSet unscoped_paired{paired_mount};
+        assert(Read(unscoped_paired.CreateRomFS(true)).find("bonus.bin=") ==
+               std::string::npos);
+
+        assert(paired.AddOns().size() == 1);
+        assert(Read(paired.CreateAddOnRomFS(2)) == "bonus.bin=edition-addon\n");
+        Eden::NupV1::Native::ContentSet foreign_paired{
+            paired_mount, 0x0400123400002001ULL};
+        assert(foreign_paired.AddOns().empty());
+        Eden::NupV1::Native::ContentSet wrong_index{
+            paired_mount, 0x0400123400000002ULL};
+        assert(wrong_index.AddOns().empty());
+        Eden::NupV1::Native::AddOnIndex paired_service{
+            paired_mount, 0x0400123400000001ULL};
+        assert(paired_service.BaseId(0x0400123400000001ULL) ==
+               0x0100123400001000ULL);
+        assert(paired_service.Count(0x0400123400000001ULL) == 1);
+        assert(Read(paired_service.OpenRomFS(0x0400123400000001ULL, 0)) ==
+               "bonus.bin=edition-addon\n");
+        assert(!paired_service.OpenRomFS(0x0400123400002001ULL, 0));
+        assert(!paired_service.OpenRomFS(0x0100123400000000ULL, 0));
+        Eden::NupV1::Native::AddOnIndex foreign_service{
+            paired_mount, 0x0400123400002001ULL};
+        assert(!foreign_service.BaseId(0x0400123400002001ULL));
+        // Exercise the real outer loader policy, not only ContentSet.
+        auto open_paired = [&] {
+            return Eden::NupV1::Native::NupAppLoader::Open(
+                std::make_shared<MemoryFile>(Load(argv[21])), &error);
+        };
+        auto upgraded_loader = open_paired();
+        assert(upgraded_loader && error.empty());
+        FileSys::VirtualFile upgraded_romfs;
+        assert(upgraded_loader->ReadRomFS(upgraded_romfs) ==
+               Loader::ResultStatus::Success);
+        assert(Read(upgraded_romfs).find("bonus.bin=edition-addon\n") !=
+               std::string::npos);
+        Settings::values.disabled_addons[0x0100123400000000ULL] = {"DLC"};
+        auto disabled_loader = open_paired();
+        assert(disabled_loader && error.empty());
+        FileSys::VirtualFile disabled_romfs;
+        assert(disabled_loader->ReadRomFS(disabled_romfs) ==
+               Loader::ResultStatus::Success);
+        assert(Read(disabled_romfs).find("bonus.bin=") == std::string::npos);
+        Settings::values.disabled_addons.clear();
+    }
+
+    if (argc == 23) {
+        // A program1-only edition has no ordinary RomFS. A marked upgrade
+        // still supplies shared resources; the native file wins conflicts.
+        auto native_only_mount = Eden::NupV1::Native::Mount::Open(
+            std::make_shared<MemoryFile>(Load(argv[22])), &error);
+        assert(native_only_mount && error.empty());
+        assert(!native_only_mount->Effective(ContentView::RomFS));
+        Eden::NupV1::Native::ContentSet native_only{
+            native_only_mount, 0x0400123400000001ULL};
+        assert(native_only.HasExecutableMain());
+        const auto native_only_disabled = Read(native_only.CreateRomFS(false));
+        assert(native_only_disabled == "state.bin=native-state\n");
+        const auto native_only_enabled = Read(native_only.CreateRomFS(true));
+        assert(native_only_enabled.find("state.bin=native-state\n") != std::string::npos);
+        assert(native_only_enabled.find("bonus.bin=marked-upgrade\n") != std::string::npos);
+        assert(native_only_enabled.find("foreign.bin=") == std::string::npos);
+        assert(native_only_enabled.find("ordinary.bin=") == std::string::npos);
+        // A trusted custom NACP base changes AoC enumeration, not the
+        // separate conventional-family upgrade search.
+        Eden::NupV1::Native::ContentSet custom_base{
+            native_only_mount, 0x0400123400000001ULL, 0x0400123400001000ULL};
+        assert(custom_base.AddOns().empty());
+        assert(Read(custom_base.CreateRomFS(true)) == native_only_enabled);
+        auto loader = Eden::NupV1::Native::NupAppLoader::Open(
+            std::make_shared<MemoryFile>(Load(argv[22])), &error);
+        assert(loader && error.empty());
+        FileSys::VirtualFile romfs;
+        assert(loader->ReadRomFS(romfs) == Loader::ResultStatus::Success);
+        assert(Read(romfs) == native_only_enabled);
+    }
 
     auto effective = mount->Effective(ContentView::RomFS);
     assert(effective && effective->IsReadable() && !effective->IsWritable());
@@ -276,6 +414,8 @@ int main(int argc, char** argv) {
     auto exefs = exec_content.ExeFS();
     assert(exefs && Read(exefs->GetFile("main")) == "latest-main");
     assert(Read(exefs->GetFile("main.npdm")) == "latest-npdm");
+    // The selected update program must not inherit base-only ExeFS members.
+    assert(!exefs->GetFile("base-only-marker.txt"));
     assert(exefs->GetFile("main")->GetContainingDirectory() == exefs);
     assert(Read(exec_content.CreateRomFS()) == "state.bin=latest-v3\n");
     auto effective_tree = playable_mount->Effective(ContentView::RomFS);
@@ -367,9 +507,15 @@ int main(int argc, char** argv) {
     Kernel::KProcess process;
     Core::System system;
     assert(app->Load(process, system).first == Loader::ResultStatus::Success);
+    const auto& fs_registration = system.GetFileSystemController();
+    assert(fs_registration.registrations == 1);
+    assert(fs_registration.process_id == process.GetProcessId());
+    assert(fs_registration.program_id == 0x0100123400000000ULL);
+    assert(fs_registration.romfs && fs_registration.romfs->file == romfs_result);
     assert(app->ReadNSOModules(modules) == Loader::ResultStatus::Success);
     assert(modules.at(0) == "main");
     assert(app->Load(process, system).first == Loader::ResultStatus::ErrorAlreadyLoaded);
+    assert(fs_registration.registrations == 1);
     app.reset();
     assert(Read(romfs_result) == "state.bin=latest-v3\n");
 

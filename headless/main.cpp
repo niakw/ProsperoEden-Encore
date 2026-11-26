@@ -1045,6 +1045,7 @@ int main(int argc, char** argv) {
             Eden::ResolveGameTitleId(rom_metadata_id, selected_game);
 #ifdef PS5_NATIVE
         incident_title_id = launch_title_id;
+        Eden::Performance::ResetNs2BootHle();
         record_session_phase("title_resolved");
         record_session_boundary("title_resolved");
 #endif
@@ -2447,7 +2448,10 @@ int main(int argc, char** argv) {
 #endif
 #ifdef EDEN_PS5_OPENGL
                 // Match yuzu_cmd's ordering: GPU/context ready, cache load, guest Run.
-                if (Settings::values.use_disk_shader_cache.GetValue() && !graphics_error) {
+                // Both renderer macros are enabled in the native shipping build.
+                // Only the selected backend may load its disk resources.
+                if (backend == Eden::GraphicsBackend::OpenGL &&
+                    Settings::values.use_disk_shader_cache.GetValue() && !graphics_error) {
                     // Every cached pipeline is built before the game starts; report progress
                     // every five seconds so a slow build can be told apart from a stalled one.
                     std::atomic<size_t> built{0}, total{0};
@@ -2492,7 +2496,8 @@ int main(int argc, char** argv) {
                 }
 #endif
 #ifdef EDEN_PS5_VULKAN
-                if (game && Settings::values.use_disk_shader_cache.GetValue()) {
+                if (backend == Eden::GraphicsBackend::Vulkan && game &&
+                    Settings::values.use_disk_shader_cache.GetValue()) {
                     // Restore a SMALL part of the per-title cache before guest
                     // execution. LoadDiskResources bounds the reader itself;
                     // passing a cancelled token would kill the persistent

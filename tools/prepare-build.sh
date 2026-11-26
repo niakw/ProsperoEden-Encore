@@ -89,9 +89,28 @@ fi
 step "Native packaging tool"
 bash tools/build-native-tool.sh
 # The app's runtime libc.prx: the boilerplate's clean-room build, checked against its recorded digest.
-if [[ ! -f ../ps5-native-app-boilerplate/runtime/libc.prx ]]; then
+# rebuild-libc.sh calls the upstream dependency bootstrap with --skip-sdk. Its
+# zlib wget fallback must never become reachable in the standard Encore build:
+# accept either the already-built pinned zlib or its exact vendored archive.
+boilerplate=../ps5-native-app-boilerplate
+if [[ ! -f $boilerplate/runtime/libc.prx ]]; then
+    zlib_root="$boilerplate/.deps/native/zlib/root"
+    zlib_archive="$boilerplate/.deps/native/zlib/zlib-1.3.2.tar.gz"
+    if [[ -f $zlib_root/usr/lib/libz.a &&
+          -f $zlib_root/usr/include/zlib.h &&
+          -f $zlib_root/.source-version &&
+          $(<"$zlib_root/.source-version") == 1.3.2 ]]; then
+        :
+    elif [[ -f $zlib_archive ]] &&
+         printf '%s  %s\n' bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16 "$zlib_archive" |
+             sha256sum --check --strict >/dev/null 2>&1; then
+        :
+    else
+        echo "Vendored boilerplate zlib closure missing; refusing upstream download fallback" >&2
+        exit 2
+    fi
     step "Runtime libc.prx"
-    bash ../ps5-native-app-boilerplate/tools/rebuild-libc.sh
+    bash "$boilerplate/tools/rebuild-libc.sh"
 fi
 step "libSceAgcDriver link stub"
 bash tools/build-agc-driver-stub.sh

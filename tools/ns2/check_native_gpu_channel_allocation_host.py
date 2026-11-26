@@ -32,7 +32,20 @@ assert 'sessions.find(fd)' in body
 assert 'sessions[fd]' not in body
 assert 'program_id = process->GetProgramId();' in body
 assert 'const bool native =' in body
-assert 'NativeGpuProcessRegistry::Instance().Contains(opened->process)' in body
+assert 'const bool native = UsesNativeAbi(fd);' in body
+assert 'if (native && !NativeEpochCurrent(fd))' in body
+assert '!UsesNativeAbi(opened_fd.first)' in body
+assert '!NativeEpochCurrent(opened_fd.first)' in body
+assert 'else if (UsesNativeAbi(opened_fd.first))' in body
+def extract_method(signature):
+    assert code.count(signature) == 1
+    begin = code.index(signature)
+    end = code.index('\n}', begin) + 2
+    return code[begin:end]
+abi = extract_method('bool nvhost_gpu::UsesNativeAbi(DeviceFD fd) const')
+epoch = extract_method('bool nvhost_gpu::NativeEpochCurrent(DeviceFD fd) const')
+assert 'sessions.contains(fd) && native_generations.contains(fd)' in abi
+assert 'NativeGpuProcessRegistry::Instance().IsCurrent(' in epoch
 assert body.index('sessions.find(fd)') < body.index('program_id = process->GetProgramId();')
 assert '[[nodiscard]] NvResult ValidateChannelOwner(DeviceFD fd, u64& program_id) const;' in HEADER.read_text()
 for method in ('AllocGPFIFOEx','AllocGPFIFOEx2'):
@@ -50,7 +63,10 @@ assert context.index('ValidateChannelOwner(') < context.index('ctxObjs[ctx_class
 # SubmitGPFIFOImpl's original per-native-owner gate remains in place.
 submission=code.split('NvResult nvhost_gpu::SubmitGPFIFOImpl(',1)[1].split('Core::Memory::Memory& nvhost_gpu::GetSessionMemory(',1)[0]
 assert 'for (const auto& [other_fd, session_id] : sessions)' in submission
-assert submission.index('if (native && !native_plan)') < submission.index('gpu.PushGPUEntries(bind_id, std::move(entries));')
+assert submission.index('if (native && !native_plan)') < submission.index('gpu.PushGPUEntries(bind_id, std::move(list));')
+assert submission.count('gpu.PushGPUEntries(') == 1
+assert submission.index('list.native_submission_lease = native_submission_lease;') < submission.index('gpu.PushGPUEntries(bind_id, std::move(list));')
+assert 'push_gpu_entries(std::move(entries));' in submission
 
 fixture=r'''
 #include <cassert>
@@ -77,19 +93,29 @@ struct FakeCore {
     }
 };
 class NativeGpuProcessRegistry {
-    std::unordered_set<const FakeProcess*> owners;
+    std::unordered_map<const FakeProcess*,u64> owners;
+    u64 next_generation{};
 public:
+    struct Ticket { const FakeProcess* process; u64 generation; };
     static NativeGpuProcessRegistry& Instance() {static NativeGpuProcessRegistry one;return one;}
-    bool Contains(const FakeProcess* process) const {return owners.contains(process);}
-    void Register(const FakeProcess* process) {owners.insert(process);}
+    bool IsCurrent(Ticket ticket) const {
+        auto it=owners.find(ticket.process);
+        return it!=owners.end() && it->second==ticket.generation;
+    }
+    u64 Register(const FakeProcess* process) {
+        return owners[process]=++next_generation;
+    }
     void Unregister(const FakeProcess* process) {owners.erase(process);}
 };
 class nvhost_gpu {
 public:
     explicit nvhost_gpu(FakeCore& core_):core(core_){}
     NvResult ValidateChannelOwner(DeviceFD fd,u64& program_id) const;
+    bool UsesNativeAbi(DeviceFD fd) const;
+    bool NativeEpochCurrent(DeviceFD fd) const;
     FakeCore& core;
     std::unordered_map<DeviceFD,int> sessions;
+    std::unordered_map<DeviceFD,u64> native_generations;
 };
 __OWNER_BODY__
 }
@@ -126,8 +152,9 @@ int main() {
     assert(gpu.ValidateChannelOwner(6,program)==NvResult::Success && program==1002);
     // A native FD may never initialise a shared channel from a foreign
     // legacy session, and a legacy FD must refuse the same native channel.
-    native_registry.Register(&native);
+    const auto generation=native_registry.Register(&native);
     gpu.sessions.emplace(7,20);
+    gpu.native_generations.emplace(7,generation);
     program=sentinel;
     assert(gpu.ValidateChannelOwner(7,program)==NvResult::InvalidState);
     assert(program==sentinel);
@@ -136,15 +163,17 @@ int main() {
     gpu.sessions.clear();
     gpu.sessions.emplace(7,20);
     gpu.sessions.emplace(8,21);
+    gpu.native_generations.emplace(8,generation);
     assert(gpu.ValidateChannelOwner(7,program)==NvResult::Success && program==2001);
     assert(gpu.ValidateChannelOwner(8,program)==NvResult::Success && program==2001);
     gpu.sessions.emplace(9,22);
     program=sentinel;
     assert(gpu.ValidateChannelOwner(7,program)==NvResult::InvalidState && program==sentinel);
-    native_registry.Register(&native2);
+    gpu.native_generations.emplace(9,native_registry.Register(&native2));
     assert(gpu.ValidateChannelOwner(9,program)==NvResult::InvalidState && program==sentinel);
     native_registry.Unregister(&native2);
     gpu.sessions.erase(9);
+    gpu.native_generations.erase(9);
     // Even a stale non-owner session blocks authentic native allocation.
     gpu.sessions.emplace(9,999);
     assert(gpu.ValidateChannelOwner(7,program)==NvResult::InvalidState && program==sentinel);
@@ -152,14 +181,26 @@ int main() {
     assert(gpu.ValidateChannelOwner(7,program)==NvResult::Success && program==2001);
     // After native teardown a remaining pair of legacy sessions works.
     native_registry.Unregister(&native);
+    program=sentinel;
+    assert(gpu.UsesNativeAbi(7) && !gpu.NativeEpochCurrent(7));
+    assert(gpu.ValidateChannelOwner(7,program)==NvResult::InvalidState && program==sentinel);
+    const auto new_generation=native_registry.Register(&native);
+    assert(new_generation!=generation && !gpu.NativeEpochCurrent(7));
+    assert(gpu.ValidateChannelOwner(7,program)==NvResult::InvalidState && program==sentinel);
+    gpu.native_generations[7]=new_generation;
+    assert(gpu.ValidateChannelOwner(7,program)==NvResult::InvalidState && program==sentinel);
+    gpu.native_generations[8]=new_generation;
+    assert(gpu.ValidateChannelOwner(7,program)==NvResult::Success && program==2001);
+    native_registry.Unregister(&native);
     gpu.sessions.clear();
+    gpu.native_generations.clear();
     gpu.sessions.emplace(5,10);
     gpu.sessions.emplace(6,11);
     assert(gpu.ValidateChannelOwner(5,program)==NvResult::Success && program==1001);
     assert(gpu.sessions.size()==2);
     std::puts("P0_2_NATIVE_GPU_ALLOC_FD_OWNER_RECOVERY_PASS");
 }
-'''.replace('__OWNER_BODY__',body)
+'''.replace('__OWNER_BODY__',body+'\n'+abi+'\n'+epoch)
 compiler=shutil.which('clang++') or shutil.which('g++')
 assert compiler
 sdk=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')

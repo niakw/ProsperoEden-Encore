@@ -98,7 +98,7 @@ struct GPU {
     std::mutex sync_request_mutex;
     std::condition_variable sync_request_cv;
     std::list<std::function<void()>> sync_requests;
-    u64 last_sync_fence{};
+    std::atomic<u64> last_sync_fence{};
     std::atomic<u64> current_sync_fence{};
     bool sync_requests_stopped{};
     [[nodiscard]] u64 CurrentSyncRequestFence() const {

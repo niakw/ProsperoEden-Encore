@@ -1100,6 +1100,23 @@ void CommitSparsePage(std::uintptr_t page) noexcept {
     range->owned[slot].store(true, std::memory_order_release);
 }
 
+// GPU page-table mappings have an NVDRV recovery path for resource pressure.
+// Unlike CommitSparsePage (kept fatal for unrelated sparse owners), this
+// variant leaves the failed slot unpublished and lets the mapping's caller
+// roll back its PTE reservation. Uses the same mutex/lifetime contract.
+bool TryCommitSparsePage(std::uintptr_t page) noexcept {
+    const std::lock_guard lock{sparse_mutex};
+    SparseRange* range = SparseRangeOf(page);
+    if (range == nullptr) return true; // dense fallback is already writable
+    const auto begin = range->begin.load(std::memory_order_relaxed);
+    const std::size_t slot = (page - begin) / SparseSlot;
+    if (range->owned[slot].load(std::memory_order_relaxed)) return true;
+    if (!OwnSlot(begin + slot * SparseSlot, &range->physical[slot])) return false;
+    sparse_committed.fetch_add(SparseSlot, std::memory_order_relaxed);
+    range->owned[slot].store(true, std::memory_order_release);
+    return true;
+}
+
 std::size_t SparseCommitSpan() noexcept {
     return SparseSlot;
 }
@@ -1155,6 +1172,37 @@ void* ReserveMemoryRange(std::size_t size) noexcept {
     void* address = mmap(nullptr, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
     return address == MAP_FAILED ? nullptr : address;
 #endif
+}
+
+// Guest DRAM is not a CPU heap, JIT region or RADV allocation. Keep its
+// backing outside the 39-bit guest VA: a host-minus-guest page-table delta
+// of zero is decoded as a null pointer by non-identity-aware consumers.
+// EglantinePS5 proved this failure mode on console. The hint is not fixed;
+// on unsupported VA layouts preserve the previous low-VA fallback.
+void* ReserveGuestMemoryRange(std::size_t size) noexcept {
+    if (size == 0 || size % LargePage != 0) return nullptr;
+#ifdef PS5_NATIVE
+    constexpr std::uintptr_t GuestAddressSpaceEnd = 0x8000000000ull;
+    void* const hint = reinterpret_cast<void*>(GuestAddressSpaceEnd);
+    void* address = hint;
+    const auto rc = sceKernelReserveVirtualRange(&address, size, 0, LargePage);
+    if (rc == 0) {
+        const auto start = reinterpret_cast<std::uintptr_t>(address);
+        if (address != nullptr && address != MAP_FAILED &&
+            start >= GuestAddressSpaceEnd &&
+            size <= std::numeric_limits<std::uintptr_t>::max() - start)
+            return address;
+        // The PS5 may ignore placement hints. Never retain a low reservation
+        // on this first attempt; release it before using the known fallback.
+        if (address == nullptr || address == MAP_FAILED ||
+            munmap(address, size) != 0)
+            std::abort();
+    } else if (address != hint) {
+        // Failed reservations must not mutate a live owner pointer.
+        std::abort();
+    }
+#endif
+    return ReserveMemoryRange(size);
 }
 
 bool CommitMemoryRange(void* address, std::size_t size, std::int64_t* physical_out) noexcept {

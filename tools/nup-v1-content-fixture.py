@@ -171,6 +171,7 @@ def executable_fixture() -> bytes:
          "files": {
             "exefs/main": b"base-main",
             "exefs/main.npdm": b"base-npdm",
+            "exefs/base-only-marker.txt": b"must-not-leak-to-update",
             "romfs/state.bin": b"base-v1",
             "romfs/sub/base.dat": b"base-only",
         }},
@@ -394,3 +395,33 @@ def large_raw_fixture() -> bytes:
         {"title_id": 0x0100123400000000, "version": 1, "kind": 0,
          "files": {"romfs/large.bin": bytes(contents)}},
     ])
+
+
+def embedded_edition_fixture() -> bytes:
+    """Standalone NS1 update with BOTH legacy ExeFS and verified NS2 program1.
+
+    Exercises the exact Lichii SelectProgram precedence; neither a title
+    suffix nor an unverified NPDM can enable the native Switch 2 route.
+    """
+    return build([{
+        "title_id": 0x0100123400000800,
+        "version": 7,
+        "kind": 1,
+        "files": {
+            "exefs/main": b"legacy-main",
+            "exefs/main.npdm": b"latest-npdm",
+            "program1/exefs/main": b"native-main",
+            "program1/exefs/main.npdm": b"switch2-npdm",
+            "romfs/state.bin": b"legacy-state",
+            "romfs/assets/shared.bin": b"shared-assets",
+            "program1/romfs/state.bin": b"native-state",
+            "program1/romfs/assets/native.bin": b"native-assets",
+        },
+    }, {
+        "title_id": 0x0100123400001000,
+        "version": 2,
+        "kind": 2,
+        "files": {
+            "romfs/bonus.bin": b"edition-addon",
+        },
+    }])

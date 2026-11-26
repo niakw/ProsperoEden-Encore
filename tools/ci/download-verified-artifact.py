@@ -43,15 +43,28 @@ def api_get(path: str, token: str) -> object:
 
 
 def select_artifact(repository: str, run_id: int, name: str, token: str) -> dict:
-    found = []
-    for page in range(1, 21):
-        response = api_get(f"/repos/{repository}/actions/runs/{run_id}/artifacts?per_page=100&page={page}", token)
-        artifacts = response["artifacts"]
-        found.extend(a for a in artifacts if a["name"] == name)
-        if len(artifacts) < 100:
+    # upload-artifact can finish before GitHub's run-artifact listing has
+    # indexed its new ID. The native build ZIP was already uploaded when a
+    # same-second read returned zero results. Retry ONLY the empty listing;
+    # duplicate names, bad digests and unrelated runs still fail closed.
+    for attempt in range(10):
+        found = []
+        for page in range(1, 21):
+            response = api_get(
+                f"/repos/{repository}/actions/runs/{run_id}/artifacts?per_page=100&page={page}",
+                token,
+            )
+            artifacts = response["artifacts"]
+            found.extend(a for a in artifacts if a["name"] == name)
+            if len(artifacts) < 100:
+                break
+        if len(found) == 1:
             break
-    if len(found) != 1:
-        raise ValueError(f"expected exactly one artifact {name!r} on run {run_id}; got {len(found)}")
+        if len(found) > 1 or attempt == 9:
+            raise ValueError(
+                f"expected exactly one artifact {name!r} on run {run_id}; got {len(found)}"
+            )
+        time.sleep(3)
     artifact = found[0]
     if artifact.get("expired"):
         raise ValueError("artifact has expired")

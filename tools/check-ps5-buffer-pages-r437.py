@@ -185,7 +185,29 @@ def raster_method(name, next_name):
 buffer_witness = '::Eden::BufferPages::NeverRegistered(addr, size)'
 assert raster_method('FlushRegion', 'MustFlushRegion').count(buffer_witness) == 1
 assert raster_method('MustFlushRegion', 'GetFlushArea').count(buffer_witness) == 1
-assert raster_method('GetFlushArea', 'InvalidateRegion').count(buffer_witness) == 1
+# Vendor 0fa692489 fixes the actual cached readback extent: the witness must
+# cover every byte of the interval returned to Core::Memory, not just addr/size.
+# Retain the page proof before the cache lock and require the dirty query to
+# use that same interval before certifying a preemptive read.
+read_area = raster_method('GetFlushArea', 'InvalidateRegion')
+assert read_area.count(buffer_witness) == 0
+extent_witness = '::Eden::BufferPages::NeverRegistered(buffer_start, buffer_size)'
+read_area_contract = (
+    'auto area = texture_area.value_or(clean_area);',
+    'const DAddr buffer_start = area.start_address;',
+    'const u64 buffer_size = area.end_address - buffer_start;',
+    extent_witness,
+    '::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);',
+    'std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};',
+    'buffer_cache.IsRegionGpuModified(buffer_start, buffer_size)',
+    'area.preemtive = false;',
+    'return area;',
+)
+assert all(read_area.count(fragment) == 1 for fragment in read_area_contract)
+positions = [read_area.index(fragment) for fragment in read_area_contract]
+assert positions == sorted(positions)
+assert 'if (!' + extent_witness + ') {' in read_area
+assert 'if (buffer_cache.IsRegionGpuModified(buffer_start, buffer_size)) {' in read_area
 assert raster_method('InvalidateRegion', 'InnerInvalidation').count(buffer_witness) == 1
 assert raster_method('InnerInvalidation', 'OnCPUWrite').count(buffer_witness) == 2
 assert raster_method('OnCPUWrite', 'OnCacheInvalidations').count(buffer_witness) == 1

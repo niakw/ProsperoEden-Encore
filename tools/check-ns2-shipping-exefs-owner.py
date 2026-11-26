@@ -27,6 +27,25 @@ assert "Eden::NS2::SvcTrace::Register" in rom
 assert 'IdentifyFileLoader<AppLoader_DeconstructedRomDirectory>(file)' in loader
 assert "Eden::NS2::Content::IdentifyName" in loader
 assert "AppLoader_NSP" in loader and "AppLoader_XCI" in loader
+# Regression: CMake selects metadata/loader.cpp AFTER the maintained NCZ loader.
+# Keep NX, DNSP and DXCI dispatch in that actual shipping translation unit.
+assert 'set(eden_ns2_replacement' in release
+assert '"${EDEN_NS2_METADATA_OVERLAY}/core/loader/${eden_ns2_basename}")' in release
+assert 'list(REMOVE_ITEM eden_ns2_exefs_sources "${eden_ns2_original}")' in release
+assert 'list(APPEND eden_ns2_exefs_sources "${eden_ns2_replacement}")' in release
+for required in (
+    '#include "core/loader/nx.h"',
+    'file->GetName() == "main"',
+    'IdentifyFileLoader<AppLoader_NX>(file)',
+    'AppLoader_NX::IsBootable(file)',
+    'case FileType::NX:',
+    'std::make_unique<AppLoader_NX>(system',
+    'Eden::NS2::Content::Kind::DNSP',
+    'Eden::NS2::Content::Kind::DXCI',
+    'Eden::NS2::Content::Kind::NX',
+    '!Eden::NS2::Content::MayFallbackByName(filename_kind)',
+):
+    assert required in loader, required
 assert 'set(EDEN_SHARED_NS2_AM ON)' in cmake
 assert 'if(EDEN_SHARED_NS2_AM)' in cmake
 assert 'option(EDEN_NS2_AM_EXPERIMENTAL' not in cmake

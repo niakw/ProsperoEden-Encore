@@ -1,0 +1,20 @@
+# Legacy identity migration only; source: https://www.switchbrew.org/wiki/Switch_2:Title_list/Games
+# Title ID, name, publisher, date, genre. No synopses.
+040003901FBC2000	Survival Kids
+0400303021AAC000	DELTARUNE
+040052E01D3DA000	Nintendo GameCube - Nintendo Classics
+040057C02159A000	Nintendo Switch 2 Welcome Tour
+04006CC0223D2000	HITMAN World of Assassination - Signature Edition
+040074A01BF12000	Donkey Kong Bananza	Nintendo	2025-07-17	Action · Platformer
+040077201BE50000	Kirby Air Riders
+040078001CCF6000	Street Fighter 6
+0400813022B32000	Fortnite
+040082902313C000	Arcade Archives 2 RIDGE RACER
+04009570209F8000	Hogwarts Legacy
+0400A4802437E000	Drag x Drive: Global Jam
+0400BBB020FF0000	Yakuza 0 Director's Cut
+0400C3F00006E000	Mario Kart World	Nintendo	2025-06-05	Racing · Party
+0400CA40208C8000	Split Fiction
+0400CBA0221EA000	BRAVELY DEFAULT FLYING FAIRY HD Remaster
+0400DDB020648000	Cyberpunk 2077: Ultimate Edition
+0400E140216D4000	SONIC X SHADOW GENERATIONS

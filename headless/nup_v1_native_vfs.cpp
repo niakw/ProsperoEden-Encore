@@ -31,16 +31,22 @@ bool HasNupV1Header(const FileSys::VirtualFile& source) {
             value |= std::uint64_t(header[off + i]) << (8 * i);
         return value;
     };
+    const auto header_size = le16(4);
+    const auto toc_offset = le64(8);
     const auto toc_size = le64(0x10);
     const auto blob_offset = le64(0x38);
     const auto actual_size = std::uint64_t(source->GetSize());
+    // Lichii NUP v1 accepts extended headers and padded TOC locations.
+    // Keep the full archive checksum and bounds validation in Mount::Open.
     return header[0] == 'N' && header[1] == 'U' &&
            header[2] == 'P' && header[3] == 1 &&
-           le16(4) == 0x80 && le16(6) == 1 &&
-           le64(8) == 0x80 && toc_size > 0 &&
-           toc_size <= 64ULL * 1024 * 1024 &&
-           toc_size <= actual_size - 0x80 &&
-           blob_offset >= 0x80 + toc_size &&
+           le16(6) == 1 &&
+           header_size >= 0x80 && header_size <= actual_size &&
+           toc_offset >= header_size && toc_offset <= actual_size &&
+           toc_size > 0 && toc_size <= 64ULL * 1024 * 1024 &&
+           toc_size <= actual_size - toc_offset &&
+           blob_offset >= toc_offset &&
+           toc_size <= blob_offset - toc_offset &&
            blob_offset <= actual_size &&
            blob_offset % 16 == 0 &&
            le64(0x40) == actual_size;
@@ -131,9 +137,10 @@ public:
     NativeDirectory(std::shared_ptr<Detail::State> state,
                     std::optional<std::size_t> package, ContentView view,
                     std::string path, std::string name,
-                    FileSys::VirtualDir parent = {})
+                    FileSys::VirtualDir parent = {}, bool package_root = false)
         : state_(std::move(state)), package_(package), view_(view),
-          path_(std::move(path)), name_(std::move(name)), parent_(std::move(parent)) {}
+          path_(std::move(path)), name_(std::move(name)), parent_(std::move(parent)),
+          package_root_(package_root) {}
 
     std::vector<FileSys::VirtualFile> GetFiles() const override {
         std::vector<FileSys::VirtualFile> result;
@@ -159,7 +166,7 @@ public:
             if (!entry.directory) continue;
             const auto next = path_.empty() ? entry.name : path_ + "/" + entry.name;
             result.emplace_back(std::make_shared<NativeDirectory>(
-                state_, package_, view_, next, entry.name, self));
+                state_, package_, view_, next, entry.name, self, package_root_));
         }
         return result;
     }
@@ -174,7 +181,9 @@ private:
         // Both VFS GetFiles/GetSubdirectories may be called by different
         // services, so initialize exactly once and never copy the entry vector.
         std::call_once(entries_once_, [this] {
-            entries_ = package_
+            entries_ = package_root_ && package_
+                ? state_->archive->ListPackageRootDirectory(*package_, path_)
+                : package_
                 ? state_->archive->ListPackageDirectory(*package_, view_, path_)
                 : state_->archive->ListEffectiveDirectory(view_, path_);
         });
@@ -189,6 +198,7 @@ private:
     std::string path_;
     std::string name_;
     FileSys::VirtualDir parent_;
+    bool package_root_{};
 };
 } // namespace
 
@@ -224,5 +234,12 @@ FileSys::VirtualDir Mount::PackageView(std::size_t package_index, ContentView vi
     if (!state_->archive->ListPackageDirectory(package_index, view)) return {};
     return std::make_shared<NativeDirectory>(
         state_, package_index, view, "", view == ContentView::ExeFS ? "exefs" : "romfs");
+}
+
+FileSys::VirtualDir Mount::PackageRoot(std::size_t package_index) const {
+    if (!state_->archive->ListPackageRootDirectory(package_index)) return {};
+    return std::make_shared<NativeDirectory>(
+        state_, package_index, ContentView::ExeFS, "", "package",
+        FileSys::VirtualDir{}, true);
 }
 } // namespace Eden::NupV1::Native

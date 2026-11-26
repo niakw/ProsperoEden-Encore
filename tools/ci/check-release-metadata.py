@@ -119,6 +119,10 @@ assert "Prospero.Eden Encore" in packager, "package title-name contract changed"
 workflow = (root / ".github/workflows/build-040-zbic.yml").read_text()
 assert "if-no-files-found: error" in workflow, "release artifact upload must fail if files are missing"
 assert "[release]" in workflow, "release trigger contract missing"
+assert "package-image.sh --prepare" not in workflow, (
+    "standard native build must not bootstrap optional MkPFS/network packaging tooling")
+assert "prosperoeden-mkpfs" not in workflow, (
+    "standard native build must not depend on the optional MkPFS cache")
 
 install = (root / "INSTALL.md").read_text()
 assert "## Upgrading from the original native ProsperoEden to Encore" in install, \

@@ -133,7 +133,9 @@ def main()->int:
         'class IVi2Session final : public ServiceFramework<IVi2Session>',
         '{229,&IVi2Session::Present,"PresentClientBuffer"}',
         'GetService<VI::IManagerRootService>("vi:m",true)',
-        'CreateManagedLayer(&layer,*c->display,m_aruid)',
+        'CreateManagedLayer(',
+        '&layer,*m_display,m_aruid)',
+        '&layer,*c->display,m_aruid)',
         'GetPresentImage(p[5])',
         'GetLayerProducerHandle(',
         'std::make_shared<android::GraphicBuffer>(',
@@ -167,6 +169,19 @@ def main()->int:
         'pref[6]==1&&outw<=width&&outh<=height',
     ):
         assert evidence in text, "VI2 compositor must preserve real queue/fence owner: " + evidence
+    # VI2 201 -> 212 -> 251 is observed in the MKW boot trace. A
+    # registered client can query availability before display binding; the
+    # real compositor layer is created by the bind, and reused on rebind.
+    vi2_bind = text.split('void Bind(HLERequestContext& ctx) {',1)[1].split(
+        'void Unbind(HLERequestContext& ctx) {',1)[0]
+    vi2_avail = text.split('void Availability(HLERequestContext& ctx) {',1)[1].split(
+        'void OutputLevels(HLERequestContext& ctx) {',1)[0]
+    assert 'if(c->layer){' in vi2_bind
+    assert 'c->layer=layer;' in vi2_bind and 'c->display=m_display;' in vi2_bind
+    assert 'CreateManagedLayer(' in vi2_bind
+    assert 'Client* c=Find(W(p,2));result=Kernel::ResultNotFound;' in vi2_avail
+    assert 'if(c){' in vi2_avail and 'if(c&&c->display&&m_vi)' not in vi2_avail
+    assert 'mask=c->available;' in vi2_avail
     # New source reflects actual upstream unsigned u32 ABI. Keep the same
     # fail-closed ordering: bound the four-element array BEFORE reading any
     # per-slot syncpoint and retain queued GPU backing while work is pending.
@@ -181,6 +196,7 @@ def main()->int:
         (901, "InitializeVideoCodecContext"),
         (902, "OpenVideoDecoderSession"), (905, "OpenVideoDecoderSession"),
         (906, "OpenVideoDecoderSession"),
+        (903, "ReleaseVideoDecoderAccess"),
         (911, "CreateVideoImagePool"), (912, "DestroyVideoImagePool"),
         (961, "GetCpuVideoImageDescriptor"),
         (426, "MapVideoGpuImage"), (427, "UnmapVideoGpuImage"),
@@ -188,9 +204,22 @@ def main()->int:
     ):
         assert '{'+str(command)+', &IGraphicsSupervisor::'+method in text
     init_video = text.split('void IGraphicsSupervisor::InitializeVideoCodecContext(HLERequestContext& ctx) {',1)[1].split('\n}',1)[0]
+    release_video = text.split('void IGraphicsSupervisor::ReleaseVideoDecoderAccess(HLERequestContext& ctx) {',1)[1].split('\n}',1)[0]
     open_video = text.split('void IGraphicsSupervisor::OpenVideoDecoderSession(HLERequestContext& ctx) {',1)[1].split('\n}',1)[0]
+    for proof in (
+        'packet[0] == 16 + 903 && packet[1] == 0',
+        'm_video_decoder_access_held && m_video_decoder_creator.expired()',
+        'm_video_decoder_access_held = false;',
+        'm_video_decoder_creator.reset();',
+    ):
+        assert proof in release_video, 'Missing libounce 903 root decoder release: '+proof
     assert 'cmd == 905 ? (w[1] == 1 && w[2] <= 0xffU)' in open_video
+    assert '!m_video_decoder_access_held' in open_video
+    assert 'creator = handler;' in open_video
     assert 'ctx.AddMoveObject(client);' in open_video
+    assert open_video.index('ctx.AddMoveObject(client);') < open_video.index(
+        'm_video_decoder_access_held = true;')
+    assert 'm_video_decoder_creator = std::move(creator);' in open_video
     assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in open_video
     for command in (1001, 1002):
         assert '{'+str(command)+', &IGraphicsSupervisor::UnavailableVideoEncoder' in text
@@ -213,6 +242,11 @@ def main()->int:
     )[1].split('namespace GW = GpuWorkerProtocol;', 1)[0]
     assert 'handlers_tipc.contains(ctx.GetCommand())' in worker_fallback
     assert 'Kernel::ResultNotImplemented.raw' in worker_fallback
+    worker_213 = gpu_worker.split(
+        'void IGpuWorker::NormalUnmapGpuMemory4K(HLERequestContext& ctx) {', 1
+    )[1].split('void IGpuWorker::CreateSparseRegion(HLERequestContext& ctx) {', 1)[0]
+    assert 'IPC::ResponseBuilder rb{ctx, 2};' in worker_213
+    assert 'rb.Push(unmapped);' not in worker_213
     for fw19 in (201, 202, 203, 204, 205, 207):
         assert ('{'+str(fw19)+', &IGpuWorker::') not in gpu_worker
     gpu_session = (ROOT / 'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp').read_text()
@@ -223,11 +257,44 @@ def main()->int:
     assert 'Kernel::ResultNotImplemented.raw' in gpu_fallback
     # 1691 is no longer ABI-unknown: it shares the reviewed feature-image
     # requirements-only calculator with 391/691/1291 below.
-    for unknown in (12, 311, 312, 321, 327, 361, 424, 425, 437, 494,
-                    1061, 1091, 1601, 1602, 1603, 1611, 1612):
+    for unknown in (12, 327, 437, 1061):
         assert ('{'+str(unknown)+', &IGraphicsSupervisor::') not in text
-    for unknown in (13, 53, 107, 113, 301, 302):
-        assert ('{'+str(unknown)+',&IVi2Session::') not in text
+    # Lichii-known IDs below are deliberately registered and fail closed.
+    lichii_fail_closed = (
+        5, 120, 121, 122, 123, 124, 125, 131, 133,
+        311, 312, 321, 361, 424, 425, 436,
+        461, 462, 463, 464, 465, 466, 467, 468, 494,
+        801, 802, 803, 811, 812, 813, 814, 861,
+        1091, 1503, 1601, 1602, 1603, 1611, 1612,
+    )
+    for command in lichii_fail_closed:
+        assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') in text, command
+    # VI2 53 now has a reviewed native timestamp reply. The other Lichii-
+    # documented IDs are intentionally registered but must reject unknown
+    # payloads: a structural stub is not an implemented ABI.
+    assert '{53,&IVi2Session::GetRecordedTimestamps,"GetRecordedTimestamps"}' in text
+    timestamps = text.split(
+        'void GetRecordedTimestamps(HLERequestContext& ctx) {', 1
+    )[1].split('void Event(HLERequestContext& ctx) {', 1)[0]
+    for witness in (
+        'const u32 recorder = p[5];',
+        'recorder >= m_recorded_ticks.size()',
+        'ctx.GetWriteBufferSize(0)',
+        'ctx.WriteBufferB(ticks.data(), requested, 0)',
+        'NativeTipcReplyWords(ctx, {static_cast<u32>(written), 0, 0});',
+    ):
+        assert witness in timestamps, "VI2 53 lost its bounded timestamp response: " + witness
+    vi2_unknown = (
+        13, 107, 108, 113, 230, 231, 232, 301, 302,
+        353, 354, 355, 356, 358, 359,
+    )
+    for command in vi2_unknown:
+        assert ('{'+str(command)+',&IVi2Session::Unsupported,"Unknown'+str(command)+'"}') in text, (
+            f'VI2 unknown command {command} must be registered fail-closed')
+    vi2_reject = text.split('void Unsupported(HLERequestContext& ctx) {', 1)[1].split(
+        'void Handshake(HLERequestContext& ctx) {', 1)[0]
+    assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in vi2_reject
+    assert 'ResultSuccess' not in vi2_reject
     assert '{102, &IGpuSession::' not in gpu_session
     # Each known optional GSV command is registered in the selected C++ owner.
     # These are not implementations: no fabricated success/handles for unsupported features.
@@ -236,30 +303,45 @@ def main()->int:
         616, 620, 621, 622, 623, 624, 626, 627, 628, 629, 630, 632,
         633, 634, 636, 637, 638, 639, 640, 641, 650, 651, 652, 653,
         654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665,
-        666, 667, 903, 904, 921, 922, 1003, 1004, 1011, 1012, 1021,
-        1022, 1203, 1301, 1302, 1325, 1326, 1411, 1501, 1502,
+        666, 667, 904, 921, 922, 1003, 1004, 1011, 1012, 1021,
+        1022, 1203, 1301, 1302, 1325, 1326,
     )
-    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 68
+    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 64
+    assert '{126, &IGraphicsSupervisor::QuerySessionMode, "GetSessionFlag"}' in text
+    assert 'm_bootstrap.QuerySessionMode(packet, mode)' in text
+    for command in (1501, 1502):
+        assert f'{{{command}, &IGraphicsSupervisor::InitializeInterModuleImageContext' in text
+    assert 'm_bootstrap.InitializeInterModuleImageContext(packet, ctx.GetCommand())' in text
     for command in known_optional_gsv:
         assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') in text, (
             f'optional GSV command {command} missing explicit fail-closed dispatch')
+    assert '{1411, &IGraphicsSupervisor::QueryNvDrvTransferMemoryUsage' in text
+    usage = text.split('void IGraphicsSupervisor::QueryNvDrvTransferMemoryUsage(',1)[1].split('\n}',1)[0]
+    assert 'm_nvsrv_session.lock()' in usage
+    assert 'm_nvsrv_transfer_memory_size >> 32' in usage
+    assert 'm_bootstrap_transfer_memory' not in usage
     explicit_reject = text.split(
         'void IGraphicsSupervisor::UnavailableDocumentedFeature(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
     assert 'IPC::ResponseBuilder rb{ctx, 2};' in explicit_reject
     assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in explicit_reject
     assert 'ResultSuccess' not in explicit_reject
     assert 'ctx.CommandBuffer()' not in explicit_reject
-    # Syncpt 21 has no public ABI: reject explicitly, never return fabricated zero-success.
-    assert '{21, &INativeSyncptSession::Unknown21, "Unknown21"}' in text
-    syncpt21 = text.split('void Unknown21(HLERequestContext& ctx) {', 1)[1].split(
+    # libounce _gsvSyncCreate: 21 configures the event slot count.
+    assert '{21, &INativeSyncptSession::ConfigureSlots, "ConfigureSlots"}' in text
+    syncpt21 = text.split('void ConfigureSlots(HLERequestContext& ctx) {', 1)[1].split(
         '    void QueryCounter(HLERequestContext& ctx) {', 1)[0]
-    assert 'Kernel::ResultNotImplemented.raw' in syncpt21
-    assert 'NativeTipcReplyWords' not in syncpt21
+    assert 'DecodeSyncptSlotCount(packet)' in syncpt21
+    assert 'm_configured_slots = *count;' in syncpt21
+    assert 'm_events.begin() + *count' in syncpt21
+    assert 'if (slot >= m_configured_slots) return nullptr;' in text
     # GSV 202: no input payload and one real MOVE session handle.
     syncpt_open = text.split('void IGraphicsSupervisor::OpenSyncptSession(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
     assert 'packet[0] != 16 + 202 || packet[1] != 0' in syncpt_open
     assert 'Kernel::ResultInvalidCombination.raw' in syncpt_open
     assert 'ctx.AddMoveObject(client);' in syncpt_open
+    assert 'm_bootstrap.CurrentPhase() != GB::Phase::Ready' in syncpt_open
+    assert '!m_syncpt_session.expired()' in syncpt_open
+    assert syncpt_open.index('ctx.AddMoveObject(client);') < syncpt_open.index('m_syncpt_session = handler;')
     assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in syncpt_open
     assert '{101, &IGraphicsSupervisor::CompleteBootstrap' in text
     assert '{301, &IGraphicsSupervisor::InitializeDisplayContext' in text
@@ -427,6 +509,11 @@ def main()->int:
     image_create = text.split('void IGraphicsSupervisor::CreateNativeImage(', 1)[1].split(
         'void IGraphicsSupervisor::ConfigureNativeWindowImagePool(', 1)[0]
     assert 'catch (const std::bad_alloc&)' in image_create
+    assert 'const u32 count = packet[18];' in image_create
+    assert 'm_next_image_id += count;' in image_create
+    assert 'duplicated < count' in image_create and 'while (duplicated != 0)' in image_create
+    assert 'packet[3] == 1' not in image_create
+    assert 'image->offset > handle->orig_size' in vi2_lease
     assert image_create.index('m_native_images.Create(') < image_create.index(
         'catch (const std::bad_alloc&)') < image_create.index(
         'result = Kernel::ResultOutOfResource;',

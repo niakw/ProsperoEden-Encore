@@ -10,7 +10,8 @@
 
 Optional immutable source vault: vendor/source-vault (or PROSPEROEDEN_DEPS_VAULT).
 Verified blobs and Git bundles are preferred to all network fetching.
-PROSPEROEDEN_DEPS_OFFLINE=1 refuses network access when a pinned input is missing.
+Network access is refused by default when a pinned input is missing.
+Only explicit PROSPEROEDEN_DEPS_OFFLINE=0 permits upstream maintenance fetches.
 
 Nothing that already exists is modified: an existing checkout stays at whatever revision it
 has (status reports it), an existing file or folder is not downloaded again. Downloads are
@@ -35,7 +36,7 @@ CACHE = pathlib.Path(os.environ.get('PROSPEROEDEN_DEPS_CACHE') or
                      pathlib.Path(os.environ.get('XDG_CACHE_HOME') or pathlib.Path.home() / '.cache')
                      / 'prosperoeden-deps')
 VAULT = pathlib.Path(os.environ.get('PROSPEROEDEN_DEPS_VAULT') or ROOT / 'vendor').expanduser()
-OFFLINE = os.environ.get('PROSPEROEDEN_DEPS_OFFLINE', '').lower() in ('1', 'true', 'yes')
+OFFLINE = os.environ.get('PROSPEROEDEN_DEPS_OFFLINE', '1').strip() != '0'
 
 
 def vault_source(item):
@@ -230,14 +231,29 @@ def git(*args, cwd=None):
 
 def fetch_git(item):
     path = location(item)
+    # Refuse a pre-existing checkout with an unexpected revision or tracked
+    # changes BEFORE setup_prefetch/SDK bootstrap can mutate that worktree.
+    # make deps runs fetch before verify, so verify alone is too late.
+    if path.exists():
+        current = revision(path)
+        if current != item['commit']:
+            fail(f'{item["name"]}: existing checkout at {current or "invalid Git HEAD"}, '
+                 f'expected {item["commit"]}; refusing to modify it')
+        dirty = tracked_changes(path)
+        if dirty:
+            fail(f'{item["name"]}: existing checkout has tracked changes; '
+                 'refusing to run dependency bootstrap')
     if not path.exists():
-        print(f'deps: fetching {item["url"]} at {item["commit"][:12]} into {path}', flush=True)
         staging = path.with_name(path.name + f'.partial-{os.getpid()}')
         shutil.rmtree(staging, ignore_errors=True)
         git('init', '-q', str(staging))
-        git('remote', 'add', 'origin', item['url'], cwd=staging)
         bundle = vault_bundle(item)
         if bundle is not None:
+            print(
+                f'deps: restoring vendored Git pack {item["name"]} '
+                f'at {item["commit"][:12]} into {path}',
+                flush=True,
+            )
             # Our committed Git bundles are intentionally made from shallow,
             # exact-SHA snapshots. Standard `git fetch bundle` rejects their
             # absent ancestor objects. Extract the *self-contained pack* and
@@ -266,6 +282,11 @@ def fetch_git(item):
             if OFFLINE:
                 shutil.rmtree(staging, ignore_errors=True)
                 fail(f'offline Git source missing in vendor/objects: {item["name"]}')
+            print(
+                f'deps: network fallback {item["url"]} at {item["commit"][:12]} into {path}',
+                flush=True,
+            )
+            git('remote', 'add', 'origin', item['url'], cwd=staging)
             git('fetch', '-q', '--depth', '1', 'origin', item['commit'], cwd=staging)
             git('-c', 'advice.detachedHead=false', 'checkout', '-q', '--detach', 'FETCH_HEAD', cwd=staging)
         head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=staging, text=True).strip()

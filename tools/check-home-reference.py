@@ -19,7 +19,14 @@ assert "const Rect hero{0.0f, 0.0f, 1920.0f, 1080.0f}" in home
 assert "list.hgradient_rect(hero, 0.0f" in home
 assert "list.gradient_rect({0.0f, 325.0f, 1920.0f, 755.0f}" in home
 assert 'tr("Max. players: {0}")' in home
-assert "const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f)" in home
+# The banner is polled independently; a valid screenshot stays visible while
+# its banner is missing or still being refreshed asynchronously.
+assert "const Cover banner_picture = prefs_.show_game_background &&" in home
+assert "? c.textures.cover(hero_banner, 1920.0f) : Cover{};" in home
+assert "banner_picture.texture != 0 ? hero_banner :" in home
+assert "case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};" in home
+assert "const Cover hero_picture = hero_artwork == hero_banner" in home
+assert "? banner_picture : c.textures.cover(hero_artwork, 1920.0f);" in home
 assert "list.image(hero_picture.texture, hero, uv" in home
 assert "list.gradient_rect(hero, 0.0f" not in home
 assert "const Rect quick_sheet{" in home  # overlay only, not permanent
@@ -35,8 +42,9 @@ assert "if (home.recents.size() == 7) break" in service
 # R457 preserves the actual canonical square rail icon across focus
 # and game return. Do not prefer arbitrary fallback art over it.
 assert "const std::string& art = recent.tile_icon.empty() ? recent.cover : recent.tile_icon;" in home
-assert "recent.tile_icon = game.cover;" in (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
-assert "if (recent.tile_icon.empty()) recent.tile_icon = game.cover;" in (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
+library = (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
+assert "recent.tile_icon = game.cover;" in library
+assert 'if (recent.tile_icon.empty() || recent.tile_icon.find("/box-square-") != std::string::npos)' in library
 rail = home.split("const std::string& art = recent.tile_icon.empty()", 1)[1].split("// ---- utility cards:", 1)[0]
 assert "art, std::max(card_w - 8.0f, card_h - 8.0f), true);" in rail
 assert "cover(c, art, icon, 20.0f, 0.0f)" in rail and "cover_crop(c, art, icon" not in rail

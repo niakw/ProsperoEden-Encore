@@ -18,6 +18,7 @@ window = (root / "headless/vulkan_window_adapt_r08.cpp").read_text()
 shader = (root / "headless/vulkan_hud.frag").read_text()
 vulkan_cmake = (root / "headless/vulkan.cmake").read_text()
 gl_art = (root / "headless/loading_artwork_gl.hpp").read_text()
+wsi = (root / "vendor/encore-active/ps5-mesa/src/vulkan/wsi/wsi_common_videoout.c").read_text()
 vendor_egl = (root / "vendor/sources/opengl-source/src/egl/ps5_egl.c").read_text()
 vendor_present = (
     root / "vendor/sources/opengl-source/src/platform/ps5_agc_native_runtime.c"
@@ -53,7 +54,11 @@ assert "display.swap()" in unified
 assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in unified
 assert "Eden::LaunchHandoff::BeginLoading();" in frontend
 assert "Eden::LoadingArtwork::Capture(" in frontend
-assert "LaunchHandoff::Publish(std::move(frame))" in gl_art
+assert "LaunchHandoff::Publish(std::move(frame), alternate)" in gl_art
+assert "LaunchHandoff::PeekAlternate()" in gl_art
+assert "Pose::back" in frontend and "Pose::front" in frontend
+assert "Pose::background" in frontend
+assert "PublishCase(std::move(scene))" in frontend
 assert "handoff_captured" not in frontend
 assert "handoff_attempts" not in frontend
 assert frontend.index("PresentUnifiedLoading(display, reduce_motion)") < frontend.index(
@@ -82,6 +87,7 @@ close_deferred = display.split("bool Display::close_deferred_scanout()", 1)[1].s
     "bool Display::has_deferred_scanout()", 1
 )[0]
 assert close_deferred.index("presenter.request_stop();") < close_deferred.index("presenter.join();")
+assert "Eden::LaunchHandoff::ClearAlternate();" not in close_deferred
 assert close_deferred.index("presenter.join();") < close_deferred.index(
     "eglDestroyContext(display, context)"
 )
@@ -112,17 +118,27 @@ assert "vk::SurfaceKHR CreateHandoffSurface(" in renderer
 handover = renderer.split("vk::SurfaceKHR CreateHandoffSurface(", 1)[1].split(
     "} // Anonymous namespace", 1
 )[0]
-assert handover.index("close_deferred_scanout()") < handover.index(
-    "CreateSurface(instance, window_info)"
-)
-assert "EDEN_GL_VK_SCANOUT_HANDOFF release=1 boundary=create_surface" in handover
+assert "requested_hz.load(std::memory_order_relaxed) >= 120" in handover
+assert "PrepareHandoffSwapchain(vk::SurfaceKHR& surface)" in handover
+assert "boundary=create_surface reason=120hz" in handover
+assert "boundary=create_swapchain reason=60hz" in handover
 assert "surface(CreateHandoffSurface(instance, render_window.GetWindowInfo()))" in renderer
+assert renderer.index("device(CreateDevice(instance, dld, *surface))") < renderer.index(
+    "PrepareHandoffSwapchain(surface)"
+)
+modes = wsi.split("static uint32_t\nvideoout_modes(", 1)[1].split(
+    "VKAPI_ATTR VkResult VKAPI_CALL\nwsi_GetDisplayModePropertiesKHR", 1)[0]
+assert "if (videoout_title_declares_high_frame_rate()) {" in modes
+assert modes.index("videoout_settle_modes();") < modes.index("modes[count++] = &videoout_high_mode;")
+assert "modes[count++] = &videoout_mode;" in modes
 
 present = renderer.split("void RendererVulkan::PresentLoading()", 1)[1].split(
     "void RendererVulkan::Report()", 1
 )[0]
 assert "LaunchHandoff::Peek()" in present
 assert "Eden::LoadingArtwork::Repack" in present
+assert "blit_swapchain.DrawLoadingArtwork(device, frame, format)" in present
+assert "Eden::LaunchHandoff::PeekAlternate()" in window
 assert present.index("CopyBufferToImage") < present.index("DrawHudOverlay")
 assert "live_loading.glyphs[0] = has_artwork ? 1u : 0u" in present
 for retired in ("loading_jacket", "EDEN_LOADER_JACKET_HANDOFF_VULKAN", "0x80000000u"):

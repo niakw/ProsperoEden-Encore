@@ -2,16 +2,15 @@
 """R311: replay PS5 nvmap invalid-device-lock fix against immutable Eden input."""
 from pathlib import Path
 import hashlib
+import json
 import subprocess
 import tempfile
-from urllib.request import urlopen, Request
 
 root = Path(__file__).resolve().parents[1]
 patch_path = root / "headless/backports/eden-ps5-nvmap-alloc-rollback.patch"
 source_path = "src/core/hle/service/nvdrv/devices/nvmap.cpp"
 pinned = "5f142c7926d0c7fcbbd0ce30794d72f638a43b2a"
 blob_sha = "a42b5682aa4de70683fb5fc579de3b816cabf622"
-url = f"https://raw.githubusercontent.com/eden-emulator/mirror/{pinned}/{source_path}"
 script = (root / "tools/apply-eden-backports.sh").read_text()
 assert "expected=" + pinned in script
 assert script.count('apply_one "$root/headless/backports/' + patch_path.name + '"') == 1
@@ -19,9 +18,11 @@ assert "validate_ps5_nvmap_alloc_rollback" in script
 
 if not patch_path.is_file():
     raise SystemExit("Missing production nvmap patch")
-with urlopen(Request(url, headers={"User-Agent": "Encore-R311-pinned-source-replay"}),
-             timeout=25) as response:
-    payload = response.read(200_000)
+vendor_eden = root / "vendor/sources/eden"
+origin = json.loads((vendor_eden / "VENDOR-ORIGIN.json").read_text())
+assert origin["name"] == "eden"
+assert origin["upstream_url"].endswith(f"/archive/{pinned}.tar.gz"), origin
+payload = (vendor_eden / source_path).read_bytes()
 actual = hashlib.sha1(
     b"blob " + str(len(payload)).encode() + b"\0" + payload).hexdigest()
 assert actual == blob_sha, (actual, blob_sha)

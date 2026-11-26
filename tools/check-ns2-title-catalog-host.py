@@ -8,7 +8,7 @@ root=Path(__file__).resolve().parents[1]
 header=(root/"headless/ns2_title_catalog.h").read_text()
 services=(root/"headless/prosperoeden/eden_services.cpp").read_text()
 assert '#include "ns2_title_catalog.h"' in services
-assert 'Eden::Ns2Catalog::Find(game.title_id)' in services
+assert 'FindOfflineTitle(game.title_id)' in services
 assert 'return FetchKnownNs2Front(title_id, cancel)' not in services
 assert 'return 0u;' in services
 # CodeQL #17: the old substring assertion searched *C++ source text*,
@@ -40,7 +40,11 @@ games_owner = services.split(
 )[1].split("\npe::ui::Game EdenServices::enrich_home_icon(", 1)[0]
 assert 'game.cover = game.box_front' not in games_owner
 assert 'const pe::ui::BoxArt cached_case = box_art(game.title_id);' not in games_owner
-assert 'const std::string cached_icon = CachedNlibIcon(game.title_id);' in games_owner
+# Preserve extracted Control icon before either square-only cache fallback.
+nlib_fallback = 'if (game.cover.empty()) game.cover = CachedNlibIcon(game.title_id);'
+gamesdb_fallback = 'if (game.cover.empty()) game.cover = CachedGamesDbSquare(game.title_id, UseNs2CaseIndex(game));'
+assert nlib_fallback in games_owner and gamesdb_fallback in games_owner
+assert games_owner.index('game.cover = ExtractedLocalCover(') < games_owner.index(nlib_fallback) < games_owner.index(gamesdb_fallback)
 assert 'base/exefs/icon.jpg' in services and 'exefs/icon.png' in services
 assert 'IsSafeExtractedDirectory(parent)' in services
 assert 'icon_' in services and 'std::memcmp(signature,' in services
@@ -48,7 +52,8 @@ assert 'IsSafeExtractedDirectory(ancestor)' in services
 # The shared CDN artwork encoder was migrated to bounded WebP output.
 # Verify the current encode + atomic publish path, not the obsolete TGA name.
 fetch = services.split("bool FetchCaseFace(", 1)[1].split("unsigned EnsureRetailCase(", 1)[0]
-assert 'WriteJpegWebP(' in fetch and 'require_square ? 512 : 0' in fetch
+assert 'WriteJpegWebP(' in fetch and '(require_square || logo) ? 512 : 0' in fetch
+assert 'body, staged, !require_square && !logo, &decode_failed,' in fetch
 assert 'if (decode_failed)' in fetch
 assert fetch.index('const bool encoded = WriteJpegWebP(') < fetch.index('std::rename(staged.c_str(), destination.c_str())')
 assert 'if (encoded && std::rename(staged.c_str(), destination.c_str()) == 0)' in fetch
@@ -57,28 +62,37 @@ assert 'std::rename(staged.c_str(), destination.c_str())' in services
 assert 'std::rename(staged.c_str(), destination.c_str())' in services
 assert 'FetchKnownNs2Front' not in services
 assert 'front_host' not in header and 'front_path' not in header
+assert "kTitles" not in header and "Ns2Catalog::Description(" not in services
+assert "ApplyCatalogSynopsis" in services
+assert "NIAK_DEEPL_API_KEY" not in services
+assert "language_choice, true);" in services
+subprocess.run(["python3", str(root/"tools/launcher/translate-overviews.py"), "--self-test"], check=True, timeout=30)
+assert 'ui/ns2-title-identities.txt' in services
 compiler=shutil.which("clang++") or shutil.which("g++")
 if not compiler: raise SystemExit("No native C++20 compiler")
 source=r"""
 #include <cassert>
 #include <cstdint>
-#include <string_view>
+#include <fstream>
+#include <sstream>
 #include "ns2_title_catalog.h"
-int main() {
-    using Eden::Ns2Catalog::Find;
-    static_assert(Eden::Ns2Catalog::kTitles.size() == 18);
-    const auto* mkw = Find(0x0400C3F00006E000ULL);
-    const auto* dk = Find(0x040074A01BF12000ULL);
-    assert(mkw && mkw->name == "Mario Kart World");
-    assert(dk && dk->name == "Donkey Kong Bananza");
-    assert(!Find(0x0100C49025D3E000ULL));
-    for (const auto& item : Eden::Ns2Catalog::kTitles) {
-        assert(!item.name.empty() && (item.id >> 56) == 4);
-        assert(item.id != 0 && !item.name.empty());
-    }
-    for (std::size_t i = 0; i < Eden::Ns2Catalog::kTitles.size(); ++i)
-        for (std::size_t j = i+1; j < Eden::Ns2Catalog::kTitles.size(); ++j)
-            assert(Eden::Ns2Catalog::kTitles[i].id != Eden::Ns2Catalog::kTitles[j].id);
+int main(int argc, char** argv) {
+    using namespace Eden::Ns2Catalog;
+    assert(argc == 2);
+    std::ifstream input(argv[1]);
+    auto catalog = Read(input);
+    assert(catalog.size() == 18);
+    assert(Find(catalog, 0x0400C3F00006E000ULL));
+    assert(!Find(catalog, 0x0100000000001000ULL));
+    assert(SelectDescription("").empty());
+    assert(SelectDescription("Si vous achetez la version numérique").empty());
+    assert(SelectDescription("Un vrai résumé") == "Un vrai résumé");
+    std::istringstream sample("0400000000001000\tName\t\t\t\n"
+                              "0400000000001000\tDuplicate\t\t\t\n"
+                              "0100000000001000\tWrong generation\t\t\t\n"
+                              "0400000000002000\tValid\t\t\t\n");
+    auto checked = Read(sample);
+    assert(checked.size() == 1 && Find(checked, 0x0400000000002000ULL));
 }
 """
 with tempfile.TemporaryDirectory(prefix="encore-ns2-catalog-") as tmp:
@@ -88,7 +102,7 @@ with tempfile.TemporaryDirectory(prefix="encore-ns2-catalog-") as tmp:
     subprocess.run([compiler,"-std=c++20","-Wall","-Wextra","-Werror",
                     "-I",str(root/"headless"),str(cpp),"-o",str(exe)],
                    check=True,timeout=30)
-    subprocess.run([str(exe)],check=True,timeout=10)
+    subprocess.run([str(exe), str(root/"headless/prosperoeden/ui/ns2-title-identities.txt")],check=True,timeout=10)
 print("ENCORE_NS2_TITLE_CATALOG_HOST_PASS IDs=18 safety=1 launch_integration=1")
 
 # Portrait retail scans remain physical-case media, never square tile art.

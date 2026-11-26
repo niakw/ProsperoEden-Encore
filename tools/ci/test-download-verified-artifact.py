@@ -66,6 +66,27 @@ class TestVerifiedArtifact(unittest.TestCase):
             with self.assertRaises(ValueError):
                 mod.select_artifact("x/y", 44, "a", "secret")
 
+    def test_eventually_visible_after_upload(self):
+        artifact = dict(name="ready", id=42, size_in_bytes=123,
+                        digest="sha256:" + "a" * 64, expired=False,
+                        workflow_run={"id": 455})
+        # GitHub can return zero artifacts for the first same-second query
+        # after upload-artifact succeeded; require a bounded retry.
+        with mock.patch.object(mod, "api_get", side_effect=[
+            {"artifacts": []}, {"artifacts": [artifact]}
+        ]) as api, mock.patch.object(mod.time, "sleep") as pause:
+            self.assertEqual(mod.select_artifact("x/y", 455, "ready", "secret"), artifact)
+            self.assertEqual(api.call_count, 2)
+            pause.assert_called_once_with(3)
+
+        # Never retry duplicate names into a potentially arbitrary choice.
+        with mock.patch.object(mod, "api_get", return_value={
+            "artifacts": [artifact, dict(artifact, id=43)]
+        }), mock.patch.object(mod.time, "sleep") as pause:
+            with self.assertRaises(ValueError):
+                mod.select_artifact("x/y", 455, "ready", "secret")
+            pause.assert_not_called()
+
     def test_crc_failure(self):
         with tempfile.TemporaryDirectory() as tmp:
             archive = Path(tmp) / "a.zip"

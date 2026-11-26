@@ -31,7 +31,18 @@ workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 assert "python3 -B tools/check-fermi2d-address-widening-host.py" in workflow
 
 fermi_layer_source = (engines / "fermi_2d_observed.cpp").read_text()
-assert "const bool pitch_layer_copy = regs.src.layer != 0 || regs.dst.layer != 0;" in fermi_layer_source
+# The active Fermi2D owner now distinguishes pitch-array layers from a
+# hardware-defined destination-only block-linear volume slice. Keep the
+# original 64-bit pitched-layer lambdas intact and verify the new gates.
+assert "const bool has_layer = regs.src.layer != 0 || regs.dst.layer != 0;" in fermi_layer_source
+assert "has_layer && regs.src.linear == MemoryLayout::Pitch &&" in fermi_layer_source
+assert "regs.dst.linear == MemoryLayout::Pitch;" in fermi_layer_source
+assert "const bool dst_volume_layer_copy =" in fermi_layer_source
+assert "regs.src.layer == 0 && regs.dst.layer != 0 &&" in fermi_layer_source
+assert "regs.dst.linear == MemoryLayout::BlockLinear && regs.dst.block_depth > 0" in fermi_layer_source
+assert "regs.dst.depth > 1 && regs.dst.layer < regs.dst.depth" in fermi_layer_source
+assert "else if (has_layer && !dst_volume_layer_copy)" in fermi_layer_source
+assert 'UNIMPLEMENTED_MSG("Rejected Fermi2D destination volume slice")' in fermi_layer_source
 assert "regs.src.format != regs.dst.format || regs.clip_enable != 0" in fermi_layer_source
 assert fermi_layer_source.count("memory_manager.IsFullyMappedRange(base + offset,") == 1
 assert "sw_blitter->Blit(src, dst, config);" in fermi_layer_source
@@ -284,7 +295,7 @@ fallback_fixture=r"""
 using u32=std::uint32_t;
 static unsigned unimplemented{}, software_calls{}, accelerated_calls{};
 #define UNIMPLEMENTED_MSG(...) (++unimplemented)
-struct Surface { u32 depth{1}; };
+struct Surface { u32 depth{1}; u32 layer{}; };
 struct Config {};
 struct Rasterizer {
  bool result{};
@@ -295,7 +306,7 @@ struct Rasterizer {
 struct Blitter {
  void Blit(Surface&,Surface&,Config&) { ++software_calls; }
 };
-struct Regs { Surface dst{}; };
+struct Regs { Surface dst{}; u32 clip_enable{}; };
 struct Test {
  Rasterizer* rasterizer{};
  Blitter* sw_blitter{};
@@ -309,12 +320,19 @@ int main() {
  Surface s{}; Config c{};
  r.result=false; s.depth=1; t.regs.dst.depth=1; t.Run(s,c);
  assert(accelerated_calls==1 && software_calls==1 && unimplemented==0);
- r.result=false; s.depth=4; t.regs.dst.depth=4; t.Run(s,c);
- assert(accelerated_calls==2 && software_calls==1 && unimplemented==1);
+ // Base z=0 of a 3D surface is now a verified software fallback after
+ // TextureCache declines acceleration; it must not be reported unsupported.
+ r.result=false; s.depth=4; s.layer=0; t.regs.dst.depth=4; t.regs.dst.layer=0; t.Run(s,c);
+ assert(accelerated_calls==2 && software_calls==2 && unimplemented==0);
+ // A 2D source targeting the destination's base z=0 slice is equally safe.
  r.result=false; s.depth=1; t.regs.dst.depth=4; t.Run(s,c);
- assert(accelerated_calls==3 && software_calls==1 && unimplemented==2);
- r.result=true; s.depth=4; t.regs.dst.depth=4; t.Run(s,c);
- assert(accelerated_calls==4 && software_calls==1 && unimplemented==2);
+ assert(accelerated_calls==3 && software_calls==3 && unimplemented==0);
+ // A non-zero volume slice remains unresolved and must fail closed.
+ s.depth=4; s.layer=1; t.regs.dst.depth=4; t.regs.dst.layer=0; t.Run(s,c);
+ assert(accelerated_calls==4 && software_calls==3 && unimplemented==1);
+ // Successful TextureCache acceleration still bypasses software fallback.
+ s.layer=0; r.result=true; t.Run(s,c);
+ assert(accelerated_calls==5 && software_calls==3 && unimplemented==1);
 }
 """.replace("__FALLBACK__",volume_fallback)
 
@@ -379,5 +397,5 @@ with tempfile.TemporaryDirectory(prefix="encore-fermi2d-volume-") as tmp:
             subprocess.run([str(exe)],check=True,timeout=20)
 print("FERMI2D_NS1_VOLUME_SLICE_HOST_PASS upstream_853=1 active_owner=1 "
       "ns2_native_tiling_excluded=1 exact_fallback=1 depth1_software=1 "
-      "volume_no_software_fallback=1 cached_slice=1 ambiguous_rejected=1 "
+      "base_layer_software_fallback=1 nonzero_slice_failclosed=1 cached_slice=1 ambiguous_rejected=1 "
       "O0_O2=2 ASan_UBSan=1")

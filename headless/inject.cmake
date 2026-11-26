@@ -15,6 +15,11 @@ include_directories(BEFORE "${CMAKE_BINARY_DIR}/headless/sparse")
 # the machine that built it: a package must not carry those. Before any target exists, so it holds
 # for every one.
 if(PS5_NATIVE)
+    # Set platform identity before any Eden target or dependency is created.
+    # Directory definitions inherit into all child directories, including
+    # common, core, video_core, shader_recompiler, audio_core and Dynarmic.
+    # A target-local define on the launcher cannot cover shared header ABIs.
+    add_compile_definitions(PS5_NATIVE=1)
     # SDL3 is kept only for host-oriented dependencies; Encore removes its
     # SDL audio sink and uses the native PS5 audio path (see CMakeLists.txt).
     # Do not probe the Linux runner for desktop/audio/input backends which cannot

@@ -71,6 +71,10 @@ public:
     void DrawHudOverlay(const Device& device, Frame* frame,
                         const Eden::HudSnapshot& hud);
 
+#ifdef PS5_NATIVE
+    bool DrawLoadingArtwork(const Device& device, Frame* frame, VkFormat format);
+    void RetireLoadingArtwork();
+#endif
     void PrepareFrame(const Device& device, Frame* frame, const Layout::FramebufferLayout& layout);
 
     [[nodiscard]] vk::Framebuffer CreateFramebuffer(const Device& device, const Layout::FramebufferLayout& layout,
@@ -95,6 +99,10 @@ private:
     Settings::ScalingFilter scaling_filter{};
     std::unique_ptr<WindowAdaptPass> window_adapt{};
     std::list<Layer> layers{};
+#ifdef PS5_NATIVE
+    // Constructor extent for output-sized spatial filter resources.
+    VkExtent2D layer_window_size{};
+#endif
 };
 
 } // namespace Vulkan

@@ -11,6 +11,13 @@ assert 'period == 0 || (period > UINT64_C(15000000) && period < UINT64_C(1850000
 assert '119.88 Hz not offered on present output' in wsi
 assert '119.88 Hz accepted, but a vblank wait failed' in wsi
 assert 'out->high_frame_rate = supported > 0 && configured == 0;' in generator
+# 60 Hz mode enumeration is ownership-free, while an explicit 120 Hz request
+# still performs the same hardware qualification before offering high mode.
+modes = wsi.split("static uint32_t\nvideoout_modes(", 1)[1].split(
+    "VKAPI_ATTR VkResult VKAPI_CALL\nwsi_GetDisplayModePropertiesKHR", 1)[0]
+assert "if (videoout_title_declares_high_frame_rate()) {" in modes
+assert modes.index("videoout_settle_modes();") < modes.index("modes[count++] = &videoout_high_mode;")
+assert "if (videoout_title_declares_high_frame_rate()) {" in generator
 assert 'period == 0 || (period > UINT64_C(15000000) && period < UINT64_C(18500000))' in generator
 # Truth-table all relevant outputs. In particular unsupported=0/configured=0
 # must NEVER offer 119.88Hz, and VRR 48Hz vblank must not be misread as 60Hz.

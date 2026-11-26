@@ -25,6 +25,12 @@ case_index_staged = app / "ui/box-art-index.tsv"
 assert case_index_staged.is_file(), "retail case index missing from installable application"
 case_index_text = case_index_staged.read_text(encoding="utf-8")
 assert case_index_text.count("\n") > 1000, "retail case index is empty/truncated"
+case_rows = [row.split("\t") for row in case_index_text.splitlines() if row.startswith("ns2:")]
+assert case_rows and all(len(row) == 12 for row in case_rows), "missing or malformed NS2 GamesDB rows"
+for column, role in ((1, "front"), (4, "fanart"), (9, "square")):
+    assert any(row[column] != "-" for row in case_rows), f"NS2 GamesDB missing {role}"
+companion = app / "ui/box-art-index.txt"
+assert companion.is_file() and companion.read_bytes() == case_index_staged.read_bytes(), "missing or stale GamesDB companion"
 assert "eu:9524e5f7-ccc8-4ce6-a581-03f82c51825e.jpg" in case_index_text, (
     "reference physical front missing from installed scan catalog"
 )
@@ -50,6 +56,8 @@ for stem in ("switch-logo", "switch-rear-footer", "ns2-head"):
 # Resumed builds restore the already staged catalog from an earlier Actions
 # run: the source-tree index is not regenerated during a stage resume.
 ui_expected.add("ui/box-art-index.tsv")
+ui_expected.add("ui/box-art-index.txt")
+ui_expected.discard("ui/box-art-fallback.tsv")
 
 for source in (source_ui / "lang").glob("*.po"):
     ui_expected.add("ui/lang/" + source.with_suffix(".txt").name)
@@ -137,9 +145,20 @@ home_source = (root / "headless/prosperoeden/pe/ui/home.cpp").read_text()
 library_source = (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
 assert "Confirmation::launch_game" not in home_source + library_source, "launch still asks for confirmation"
 assert "open_game_settings_at_file" in home_source, "Home Triangle no longer opens per-game settings"
-assert "recent.hero = nlib.hero;" in nlib_source, "Nlib hero is not propagated into recent-game state"
+# Keep the current fallback order, not the retired unconditional assignment.
+normalized_nlib = " ".join(nlib_source.split())
+assert (
+    "recent.screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();" in normalized_nlib
+    and "recent.hero = !nlib.hero.empty() ? nlib.hero : !recent.screenshot.empty() ? recent.screenshot : CachedGamesDbHero(recent.title_id, second_generation);" in normalized_nlib
+), "Recent-game hero must prefer Nlib banner, then Nlib screenshot, then GamesDB"
 assert "hero_recent->hero" in home_source, "recent-game Nlib hero is not consumed by Home"
-assert "hero_artwork = !hero_banner.empty() ? hero_banner : hero_screenshot" in home_source, "Home hero fallback no longer prefers Nlib banner over screenshot"
+# The reviewed case-media policy refuses physical covers and failed banners.
+normalized_home = " ".join(home_source.split())
+assert (
+    "const std::string hero_artwork = banner_picture.texture != 0 ? hero_banner : "
+    "case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};"
+    in normalized_home
+), "Home hero fallback must prefer a usable Nlib banner, then a valid screenshot"
 assert "hero_description;" in home_source and "hero_intro" not in home_source, "Home must use Nlib long description only"
 assert "game->screenshots" in library_source, "Nlib screenshots are not used by Library"
 assert "VIEW ALL GAMES" not in home_source, "removed Home pseudo-link returned"
@@ -147,7 +166,7 @@ assert all(marker in home_source for marker in (
     "kHomeQuickPanel", "kHomeQuickFirst", "kHomeStorage", "kHomeControllers", "kHomeFullSettings",
 )), "final Home navigation/utility contract missing"
 assert "const Rect hero{0.0f, 0.0f, 1920.0f, 1080.0f}" in home_source, "reference hero is not full bleed"
-assert "const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f)" in home_source, "Nlib hero is not full bleed"
+assert "c.textures.cover(hero_banner, 1920.0f)" in home_source and "banner_picture : c.textures.cover(hero_artwork, 1920.0f)" in home_source, "Nlib hero is not full bleed"
 assert "utility_card(3" in home_source, "reference four utilities missing"
 assert "Cross launches" not in library_source, "text-only controller hint returned"
 print(f"Staged Encore artifact PASS ({len(actual)} files, current launcher/runtime markers present)")

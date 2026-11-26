@@ -14,6 +14,8 @@ import argparse
 import ftplib
 import hashlib
 import pathlib
+import os
+import runpy
 import sys
 
 REMOTE = '/data/homebrew/PPSA99008'
@@ -64,6 +66,18 @@ def main(argv):
                 pass
             client.rename(f'{target}.partial', target)
             print(f'copied {relative}', flush=True)
+    # Optional metadata synchronization gets an independent connection.
+    # A provider/FTP failure must not contaminate executable verification.
+    if os.environ.get("NIAK_DEEPL_API_KEY", "").strip():
+        try:
+            translator = runpy.run_path(str(pathlib.Path(__file__).parent / "launcher/translate-overviews.py"))
+            index = app / "ui/box-art-index.tsv"
+            if index.is_file():
+                with connect(host, port) as metadata_client:
+                    count = translator["sync"](metadata_client, index.read_text(encoding="utf-8"))
+                print(f"Synchronized {count} requested game descriptions.")
+        except ftplib.all_errors + (ValueError, RuntimeError):
+            print("Optional description synchronization unavailable; original text retained.")
     with connect(host, port) as client:
         # First verify the complete install inventory by size. This catches partial folder copies
         # (notably ui/lang/*.po): a build can be valid while a manual FTP transfer silently omits

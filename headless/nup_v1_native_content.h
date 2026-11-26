@@ -36,19 +36,24 @@ public:
     FileSys::VirtualDir ExeFS() const;
     // Read-only RomFS binary via the existing engine's CreateRomFS builder;
     // nullptr when no effective RomFS directory exists.
-    FileSys::VirtualFile CreateRomFS() const;
+    FileSys::VirtualFile CreateRomFS(bool allow_upgrade_pack = false) const;
     // The extracted-directory loader requires BOTH main and main.npdm.
     bool HasExecutableMain() const;
     // Directory handles only. Registration into the shared AoC provider
-    // is deliberately deferred; no addon is folded into effective RomFS.
+    // is independent of the explicitly identified NS2 upgrade-pack overlay.
     const std::vector<AddOnDirectory>& AddOns() const { return addons_; }
+    // Only set after caller and package-family admission.
+    std::optional<std::uint64_t> AddOnBaseId() const { return addon_base_id_; }
     // Explicit addon-only RomFS binary for a future AoC provider.
-    // Base/update packages are rejected, never merged into CreateRomFS().
+    // Base/update packages are rejected by this addon-only interface.
     FileSys::VirtualFile CreateAddOnRomFS(std::size_t package_index) const;
 
 private:
     std::shared_ptr<Mount> mount_;
     std::vector<AddOnDirectory> addons_;
+    std::optional<std::uint64_t> addon_base_id_;
+    // Set only when the exact NS2 Edition NPDM was verified against an NS1 family.
+    std::optional<std::uint64_t> edition_upgrade_base_;
 };
 
 } // namespace Eden::NupV1::Native

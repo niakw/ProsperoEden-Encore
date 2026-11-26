@@ -118,7 +118,7 @@ start='void IGraphicsVideoDecoderSession::Pump() {'
 end='\nvoid IGraphicsVideoDecoderSession::SubmitInput('
 assert source.count(start)==source.count(end)==1
 method=source[source.index(start):source.index(end,source.index(start))]
-assert method.index('if (!m_owner->WriteVideoSurface(') < method.index('syncpoints.IncrementGuest(m_syncpoint)')
+assert method.index('if (!m_owner->WriteVideoSurface(') < method.index('syncpoints.IncrementGuest(m_syncpoint)') < method.index('syncpoints.IncrementHost(m_syncpoint)')
 assert 'IsReadyGuest(image.release->id, image.release->value)' in method
 assert 'std::find_if(m_available.begin(), m_available.end()' in method
 assert 'm_available.erase(ready);' in method
@@ -164,8 +164,10 @@ namespace Tegra::Host1x {
 }
 struct FakeSyncpoints {
  std::array<u32, 192> values{};
+ std::array<u32, 192> completed{};
  bool IsReadyGuest(u32 id,u32 value)const{return values.at(id)>=value;}
  void IncrementGuest(u32 id){++values.at(id);}
+ void IncrementHost(u32 id){++completed.at(id);}
 };
 struct FakeHost {FakeSyncpoints sync;FakeSyncpoints& GetSyncpointManager(){return sync;}};
 struct FakeSystem {FakeHost host;FakeHost& Host1x(){return host;}int kernel{};int& Kernel(){return kernel;}};
@@ -288,7 +290,7 @@ int main(){
  run.m_pending.push_back(Pic(333));
  run.Pump();
  assert(run.m_outputs.size()==1 && run.m_outputs.front().image==10);
- assert(sync.values[4]==1 && run.m_owner->writes==1);
+ assert(sync.values[4]==1 && sync.completed[4]==1 && run.m_owner->writes==1);
  assert(run.m_owner->last.size()==64 && run.m_owner->last[0]==0xa5);
  assert(run.m_guest_owned.contains(10) && run.m_available.empty() && run.m_pending.empty());
  // The decoder must never signal a fence if the target was destroyed.
@@ -296,64 +298,64 @@ int main(){
  run.m_registered.insert(11);
  run.m_pending.push_back(Pic(444));run.m_available.push_back({11,{}});
  run.Pump();
- assert(sync.values[4]==1 && run.m_owner->writes==1 && run.m_outputs.size()==1);
+ assert(sync.values[4]==1 && sync.completed[4]==1 && run.m_owner->writes==1 && run.m_outputs.size()==1);
  assert(run.m_pending.size()==1 && run.m_available.empty() &&
         !run.m_registered.contains(11));
  run.m_owner->valid=true;run.m_decoder->renderrunnable=false;
  run.m_registered.insert(18);run.m_available.push_back({18,{}});
  run.Pump();
- assert(sync.values[4]==1 && run.m_owner->writes==1);
+ assert(sync.values[4]==1 && sync.completed[4]==1 && run.m_owner->writes==1);
  run.m_decoder->renderrunnable=true;run.m_owner->writability=false;
  run.Pump();
- assert(sync.values[4]==1 && run.m_owner->writes==1);
+ assert(sync.values[4]==1 && sync.completed[4]==1 && run.m_owner->writes==1);
  run.m_owner->writability=true;
  run.Pump();
- assert(sync.values[4]==2 && run.m_owner->writes==2);
+ assert(sync.values[4]==2 && sync.completed[4]==2 && run.m_owner->writes==2);
  // A release fence not yet reached must defer a valid decoded image.
  run.m_pending.push_back(Pic(555,true));
  run.m_available.push_back({12,IGraphicsVideoDecoderSession::ReleaseFence{9,3}});
  run.Pump();
- assert(sync.values[4]==2 && run.m_owner->writes==2);
+ assert(sync.values[4]==2 && sync.completed[4]==2 && run.m_owner->writes==2);
  sync.values[9]=3;
  run.Pump();
- assert(sync.values[4]==3 && run.m_owner->writes==3 && run.m_outputs.back().eos);
+ assert(sync.values[4]==3 && sync.completed[4]==3 && run.m_owner->writes==3 && run.m_outputs.back().eos);
  // P1.3: a stalled fence may block its OWN image, never a later ready
  // surface. The old FIFO-front Pump failed to produce image 17 here.
  run.m_pending.push_back(Pic(600));
  run.m_available.push_back({16,IGraphicsVideoDecoderSession::ReleaseFence{9,5}});
  run.m_available.push_back({17,{}});
  run.Pump();
- assert(sync.values[4]==4 && run.m_owner->writes==4);
+ assert(sync.values[4]==4 && sync.completed[4]==4 && run.m_owner->writes==4);
  assert(run.m_outputs.back().image==17 &&
         run.m_available.size()==1 && run.m_available.front().id==16 &&
         !run.m_pending.size());
  run.m_pending.push_back(Pic(601));
  run.Pump();
- assert(sync.values[4]==4 && run.m_pending.size()==1);
+ assert(sync.values[4]==4 && sync.completed[4]==4 && run.m_pending.size()==1);
  sync.values[9]=5;
  run.Pump();
- assert(sync.values[4]==5 && run.m_owner->writes==5 &&
+ assert(sync.values[4]==5 && sync.completed[4]==5 && run.m_owner->writes==5 &&
         run.m_outputs.back().image==16 && run.m_available.empty());
  // An unstarted or unconfigured decoder cannot emit a guest frame.
  run.m_pending.push_back(Pic(777));run.m_available.push_back({13,{}});
  run.m_started=false;run.Pump();
- assert(sync.values[4]==5 && run.m_owner->writes==5);
+ assert(sync.values[4]==5 && sync.completed[4]==5 && run.m_owner->writes==5);
  run.m_started=true;run.m_decoder.reset();run.Pump();
- assert(sync.values[4]==5 && run.m_owner->writes==5);
+ assert(sync.values[4]==5 && sync.completed[4]==5 && run.m_owner->writes==5);
  // Restore the valid codec: real RGB GPU maps require the tiled handoff.
  run.m_decoder=std::make_unique<FakeDecoder>();
  run.Pump();
- assert(sync.values[4]==6 && run.m_owner->writes==6);
+ assert(sync.values[4]==6 && sync.completed[4]==6 && run.m_owner->writes==6);
  run.m_owner->gpu=true;
  run.m_available.push_back({14,{}});run.m_pending.push_back(Pic(888));
  run.Pump();
- assert(sync.values[4]==7 && run.m_owner->writes==7 &&
+ assert(sync.values[4]==7 && sync.completed[4]==7 && run.m_owner->writes==7 &&
         run.m_owner->last[0]==0x5a && Tegra::Texture::swizzles==1);
  // NV12 is deliberately pitch-linear even when mapped by the GPU.
  run.m_owner->nv12=true;
  run.m_available.push_back({15,{}});run.m_pending.push_back(Pic(999));
  run.Pump();
- assert(sync.values[4]==8 && run.m_owner->writes==8 &&
+ assert(sync.values[4]==8 && sync.completed[4]==8 && run.m_owner->writes==8 &&
         run.m_owner->last[0]==0xa5 && Tegra::Texture::swizzles==1);
  // An invalidated pool must not strand the next ready surface or release a
  // fake fence. Execute the actual maintained Pump against two queue entries:
@@ -363,7 +365,7 @@ int main(){
  run.m_available.push_back({20,{}});run.m_available.push_back({21,{}});
  run.m_pending.push_back(Pic(1000));
  run.Pump();
- assert(sync.values[4]==9 && run.m_owner->writes==9);
+ assert(sync.values[4]==9 && sync.completed[4]==9 && run.m_owner->writes==9);
  assert(run.m_outputs.back().image==21 && run.m_pending.empty() &&
         run.m_available.empty() && !run.m_registered.contains(20) &&
         run.m_registered.contains(21));

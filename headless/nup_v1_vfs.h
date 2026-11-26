@@ -99,6 +99,10 @@ public:
     std::optional<std::vector<DirEntry>> ListPackageDirectory(
         std::size_t package_index, ContentView view,
         std::string_view relative_path = {}) const;
+    // Lichii Switch 2 Edition: allow a verified standalone-update package to
+    // expose its embedded program1/exefs WITHOUT treating its root as RomFS.
+    std::optional<std::vector<DirEntry>> ListPackageRootDirectory(
+        std::size_t package_index, std::string_view relative_path = {}) const;
     std::optional<std::vector<DirEntry>> ListEffectiveDirectory(
         ContentView view, std::string_view relative_path = {}) const;
     // Reads exactly dst.size() bytes, never past member bounds. First access

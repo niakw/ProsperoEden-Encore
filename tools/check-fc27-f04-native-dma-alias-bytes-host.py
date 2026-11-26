@@ -40,6 +40,10 @@ assert "width > (~u32{0}) / rows" in coalesce
 alias = section(texture,
     "void TextureCache<P>::SynchronizeAliases(ImageId image_id) {",
     "\ntemplate <class P>\nvoid TextureCache<P>::PrepareImage(")
+selected_texture = (ROOT / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+selected_alias = section(selected_texture,
+    "void TextureCache<P>::SynchronizeAliases(ImageId image_id) {",
+    "\ntemplate <class P>\nvoid TextureCache<P>::PrepareImage(")
 write = section(texture,
     "void TextureCache<P>::WriteMemory(DAddr cpu_addr, size_t size) {",
     "\ntemplate <class P>\nbool TextureCache<P>::IsDownloadable(")
@@ -48,9 +52,10 @@ assert "std::ranges::sort(aliased_images" in alias
 assert "CopyImage(image_id, aliased->id, aliased->copies);" in alias
 # A failed alias copy must not commit a newer destination tick or GPU-dirty flag.
 commit_anchor = "#ifdef PS5_NATIVE\n    // Publish alias freshness only after all Vulkan copies were queued."
-assert commit_anchor in alias
-assert alias.rindex("image.modification_tick = most_recent_tick;") > alias.rindex(
-    "CopyImage(image_id, aliased->id, aliased->copies);")
+for owner in (alias, selected_alias):
+    assert commit_anchor in owner
+    assert owner.rindex("image.modification_tick = most_recent_tick;") > owner.rindex(
+        "CopyImage(image_id, aliased->id, aliased->copies);")
 assert "F07 alias revision publication after copy 1/2" in (
     ROOT / "tools/prepare-vulkan-port.py").read_text()
 assert "F07 alias revision publication after copy 2/2" in (
@@ -345,19 +350,22 @@ compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("
 assert compiler, "C++20 compiler is required"
 with tempfile.TemporaryDirectory(prefix="encore-f04-dma-alias-") as directory:
     src=Path(directory)/"payload.cpp"
-    src.write_text(fixture)
-    for opt in ("-O0","-O2"):
-        exe=Path(directory)/("payload"+opt)
-        args=[compiler,"-std=c++20",opt,"-DPS5_NATIVE=1","-Wall","-Wextra",
-              "-Werror","-fsanitize=undefined","-fno-sanitize-recover=all",
-              str(src),"-o",str(exe)]
-        built=subprocess.run(args,capture_output=True,text=True,timeout=75)
-        assert built.returncode==0,(opt,built.stderr[-6000:])
-        run=subprocess.run([str(exe)],capture_output=True,text=True,timeout=30)
-        assert run.returncode==0,(opt,run.stdout,run.stderr[-5000:])
-        assert "F04_NATIVE_DMA_ALIAS_CONTENT_PASS" in run.stdout
-        assert "F04_DMA_BYTE_PARITY_PASS" in run.stdout
-        print(run.stdout.strip(),opt,flush=True)
+    assert fixture.count(alias) == 1
+    for owner_name, owner_fixture in (("shadow", fixture),
+            ("selected", fixture.replace(alias, selected_alias, 1))):
+        src.write_text(owner_fixture)
+        for opt in ("-O0","-O2"):
+            exe=Path(directory)/("payload-"+owner_name+opt)
+            args=[compiler,"-std=c++20",opt,"-DPS5_NATIVE=1","-Wall","-Wextra",
+                  "-Werror","-fsanitize=undefined","-fno-sanitize-recover=all",
+                  str(src),"-o",str(exe)]
+            built=subprocess.run(args,capture_output=True,text=True,timeout=75)
+            assert built.returncode==0,(opt,built.stderr[-6000:])
+            run=subprocess.run([str(exe)],capture_output=True,text=True,timeout=30)
+            assert run.returncode==0,(opt,run.stdout,run.stderr[-5000:])
+            assert "F04_NATIVE_DMA_ALIAS_CONTENT_PASS" in run.stdout
+            assert "F04_DMA_BYTE_PARITY_PASS" in run.stdout
+            print(run.stdout.strip(),owner_name,opt,flush=True)
 print("F04_REAL_VULKAN_UPLOAD_AND_GUEST_PIXELS_NOT_PROVEN")
 
 

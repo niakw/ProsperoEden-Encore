@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Focused contract for the continuous native loading compositor.
 
-The actual Encore jacket is composed once, then the same title artwork and
+The actual Encore jacket is projected per frame from shared geometry, and
 three animated dots must survive GL -> retained EGL -> Vulkan/OpenGL.
 Reject the old purple full-screen/band paths, and require the existing
 stop/join ownership boundary. No physical PS5 continuity is claimed.
@@ -27,6 +27,7 @@ scene = (root / "headless/loading_scene.glsl").read_text()
 launcher = (root / "headless/prosperoeden/pe/ui/launcher.cpp").read_text()
 launcher_h = (root / "headless/prosperoeden/pe/ui/launcher.hpp").read_text()
 transfer = (root / "headless/loading_artwork_transfer.hpp").read_text()
+wsi = (root / "vendor/encore-active/ps5-mesa/src/vulkan/wsi/wsi_common_videoout.c").read_text()
 
 assert 'target_compile_definitions(video_core PRIVATE PS5_NATIVE=1)' in vulkan_cmake
 assert "vulkan_renderer_r08.cpp" in vulkan_cmake
@@ -52,19 +53,29 @@ assert "bool native_artwork_loading = false" in launcher_h
 assert "pe::ui::Launcher launcher(services, textures, fonts, first_start, true)" in frontend
 assert "native_launch_art_ready_ || std::chrono::steady_clock::now() >= native_launch_deadline_" in launcher
 assert "std::chrono::milliseconds(750)" in launcher
-assert "if (!native_artwork_loading_) prepare_case_page(true);" in launcher
+assert "if (!native_artwork_loading_ || done_) prepare_case_page(true);" in launcher
+assert "prepare_case_page(true);" in launcher
 assert "!(native_artwork_loading_ && done_)" in launcher
 assert "const float appear = native_artwork_loading_ ? 1.0f" in launcher
 
 # Composition is read only from the explicitly owned offscreen target.
 assert "Eden::LoadingArtwork::Capture(" in frontend
-assert "constexpr int width = 1920, height = 1080;" in gl_art
+assert "int width=1920,int height=1080" in gl_art
 assert gl_art.index("glFramebufferTexture2D") < gl_art.index("glReadPixels")
 assert "glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo)" in gl_art
 assert "glBindBuffer(GL_PIXEL_PACK_BUFFER, 0)" in gl_art
 assert "glPixelStorei(GL_PACK_ROW_LENGTH, 0)" in gl_art
 assert "std::swap_ranges" in gl_art
-assert "LaunchHandoff::Publish(std::move(frame))" in gl_art
+assert "LaunchHandoff::Publish(std::move(frame), alternate)" in gl_art
+assert "LaunchHandoff::PeekAlternate()" in gl_art
+assert "alternate_texture_" in gl_art
+assert "has_alternate" not in gl_art
+assert "abs(cos(turn" not in gl_art + shader
+assert "Pose::front" in frontend and "Pose::back" in frontend
+assert "Pose::background" in frontend and "paper.image(run.texture" in frontend
+assert "PublishCase(std::move(scene))" in frontend
+assert "LoadingCase::MakeBatch" in gl_art and "LoadingCase::MakeBatch" in window
+assert "EDEN_LOADING_CASE_VERT_SPV" in window and "EDEN_LOADING_CASE_FRAG_SPV" in window
 assert "LaunchHandoff::Peek()" in gl_art
 assert "LaunchHandoff::Valid(*artwork)" in gl_art
 assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in frontend
@@ -108,6 +119,7 @@ for required in (
     "eglTerminate(display)",
 ):
     assert required in close_deferred
+assert "Eden::LaunchHandoff::ClearAlternate();" not in close_deferred
 assert close_deferred.index("presenter.join();") < close_deferred.index(
     "eglDestroyContext(display, context)"
 )
@@ -124,6 +136,12 @@ loading = renderer.split("void RendererVulkan::PresentLoading()", 1)[1].split(
 assert "present_manager.SwapchainImageViewFormat(), false);" in loading
 assert "Eden::GetVulkanHud()" in loading
 assert "Eden::LoadingArtwork::Repack" in loading
+assert "blit_swapchain.DrawLoadingArtwork(device, frame, format)" in loading
+assert "if (!animated_artwork && has_artwork)" in loading
+assert "Eden::LaunchHandoff::PeekAlternate()" in window
+assert "EDEN_LOADING_ARTWORK_FRAG_SPV" in window
+assert "blit_swapchain.RetireLoadingArtwork();" in renderer
+assert "layout(std430, set = 0, binding = 0)" in shader
 assert "loading_artwork_attempts >= 3" in loading
 assert "loading_artwork_format == format" in loading
 assert "VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL" in loading
@@ -152,7 +170,23 @@ assert "cmdbuf.ClearAttachments" not in overlay
 handover = renderer.split("vk::SurfaceKHR CreateHandoffSurface(", 1)[1].split(
     "} // Anonymous namespace", 1
 )[0]
-assert handover.index("close_deferred_scanout()") < handover.index("CreateSurface(")
+assert "requested_hz.load(std::memory_order_relaxed) >= 120" in handover
+assert "PrepareHandoffSwapchain(vk::SurfaceKHR& surface)" in handover
+assert "boundary=create_surface reason=120hz" in handover
+assert "boundary=create_swapchain reason=60hz" in handover
+assert renderer.index("device(CreateDevice(instance, dld, *surface))") < renderer.index(
+    "PrepareHandoffSwapchain(surface)"
+)
+assert "if (videoout_title_declares_high_frame_rate()) {" in wsi
+modes = wsi.split("static uint32_t\nvideoout_modes(", 1)[1].split(
+    "VKAPI_ATTR VkResult VKAPI_CALL\nwsi_GetDisplayModePropertiesKHR", 1)[0]
+assert modes.index("if (videoout_title_declares_high_frame_rate())") < modes.index(
+    "videoout_settle_modes();"
+)
+assert modes.index("videoout_settle_modes();") < modes.index(
+    "modes[count++] = &videoout_high_mode;"
+)
+assert "modes[count++] = &videoout_mode;" in modes
 
 assert "LaunchHandoff::LoadingSeconds(LoadingCalm())" in graphics
 assert "inline void BeginLoading() noexcept" in handoff
@@ -160,7 +194,7 @@ assert "inline void EndLoading() noexcept" in handoff
 assert "inline double LoadingSeconds(double calm_offset = 0.0) noexcept" in handoff
 assert "loading_started_ns" in handoff
 # Updated exact shader source receipt; preserve historical source reviews.
-assert subprocess.check_output(["git", "hash-object", "headless/vulkan_hud.frag"], cwd=root, text=True).strip() == "8bab5ee14daa1d316fbac6b3643823967d53e376"
+assert subprocess.check_output(["git", "hash-object", "headless/vulkan_hud.frag"], cwd=root, text=True).strip() == "9fde027ac8dbbd9bca6bfd133e7415bab014e7f8"
 subprocess.run([sys.executable, "-B", str(root / "tools/check-loading-artwork-transfer-host.py")], check=True)
 
 print("PS5_CONTINUOUS_GL_VULKAN_LOADING_SOURCE_PASS shared_artwork=1 shared_epoch=1 animated_system_load=1 single_videoout_owner=1 purple_loader=0 console_pending=1")

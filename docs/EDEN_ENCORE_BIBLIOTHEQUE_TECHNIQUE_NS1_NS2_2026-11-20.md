@@ -184,6 +184,21 @@ SwitchBrew a intégré les informations de l'ancien wiki `switch2brew.org`, lequ
 | [Switch 2 NPDM Explorer](https://tasenjo80.github.io/switch2-npdm-explorer/index.html) | Exploration des permissions/services des sysmodules NS2 | **R** ; outil d'orientation, non preuve définitive d'ABI |
 | [switch2brew.org](https://switch2brew.org/wiki/Main_Page) | Ancien wiki NS2 | **H**, **fusionné dans SwitchBrew**, pas source canonique |
 
+### Ouncebrew — référence prioritaire pour les contrats clients NS2 (24 novembre 2026)
+
+[Organisation et liste complète des dépôts Ouncebrew](https://github.com/orgs/ouncebrew/repositories). Écosystème homebrew Switch 2 complémentaire de SwitchBrew, et non synonyme de l'ancien wiki switch2brew.org. Examiner le code client et les exemples avant de conclure qu'une commande inconnue est optionnelle.
+
+| Dépôt | Usage Eden Encore |
+|---|---|
+| [libounce](https://github.com/ouncebrew/libounce) | **P0** : client IPC/SVC NS2, séquences de bootstrap, tailles, handles MOVE/COPY, événements, NVDRV, GSV, vidéo. [gsv.c, révision 32e7ac41](https://github.com/ouncebrew/libounce/blob/32e7ac414ee1cd98922f66a059be5a85e99feea5/nx/source/switch2/services/gsv.c) : référence déjà exploitée pour GSV 126, Syncpt 21/103/201. README : ISC (libnx/libounce), vérifier chaque fichier. |
+| [ouncevk](https://github.com/ouncebrew/ouncevk) | **P0/P1** : Vulkan/EGL/GL côté invité, backend NVIDIA, VA/GMMU, soumission et synchronisation ; vérifier le fichier et la licence exacts avant réutilisation. |
+| [drako3d](https://github.com/ouncebrew/drako3d) | **P0/P1** : API GPU bas niveau Tegra T239, commandes, queues, mémoire, formats et shaders. |
+| [uam2](https://github.com/ouncebrew/uam2) | **P0/P1** : compilateur drako3d, Mesa NAK, SM 8.6, DKSH, SPIR-V/GLSL et ABI shader NS2. Référence pour des fixtures indépendantes, pas remplacement du recompiler Encore. |
+| [ounce-examples](https://github.com/ouncebrew/ounce-examples) | **P0** : exemples clients homebrew, scénarios minimaux reproductibles indépendamment des titres commerciaux. |
+| [ounce-devkit](https://github.com/ouncebrew/ounce-devkit) | Intégration toolchain, libounce, OunceVK et libkaihen ; environnement invité, pas SDK PS5. |
+
+Les résultats de la comparaison sont consignés dans le [registre fonctionnel NS2](audits/EDEN_ENCORE_NS2_IMPLEMENTATION_COMPLETENESS_REGISTER_2026-11-21.md). Pour toute divergence, relever le SHA amont, comparer firmware/ABI/effets et le propriétaire C++ actif ; ne jamais transformer une réussite homebrew en preuve de gameplay commercial sur PS5.
+
 ### Ce que ces sources ne prouvent pas
 
 - Une méthode `libounce` réussissant sur du homebrew **n'implique pas** que tous les titres NS2 utilisent la même séquence IPC.
@@ -346,7 +361,7 @@ SwitchBrew a intégré les informations de l'ancien wiki `switch2brew.org`, lequ
 **Objectif : établir à quel maillon la progression cesse, sans supposer d'emblée une panne Vulkan.**
 
 1. **Titre, loader et firmware :** [NS2 Title list](https://switchbrew.org/wiki/Switch_2:_Title_list), [NS2 System Versions](https://switchbrew.org/wiki/Switch_2:_System_Versions), [NCA](https://switchbrew.org/wiki/NCA), [NPDM](https://switchbrew.org/wiki/NPDM), [ExeFS](https://switchbrew.org/wiki/ExeFS).
-2. **Services/HLE :** [Services API S1/S2](https://switchbrew.org/wiki/Services_API), [HIPC](https://switchbrew.org/wiki/IPC_Marshalling), [SwIPC historique](https://reswitched.github.io/SwIPC/), [libounce](https://github.com/ouncebrew/ounce-devkit).
+2. **Services/HLE :** [Services API S1/S2](https://switchbrew.org/wiki/Services_API), [HIPC](https://switchbrew.org/wiki/IPC_Marshalling), [SwIPC historique](https://reswitched.github.io/SwIPC/), [libounce](https://github.com/ouncebrew/libounce).
 3. **Kernel/JIT :** [SVC](https://switchbrew.org/wiki/SVC), [Atmosphère/mesosphère](https://github.com/Atmosphere-NX/Atmosphere/tree/master/mesosphere), [Dynarmic](https://github.com/lioncash/dynarmic).
 4. **Commandes GPU :** [GSV services](https://switchbrew.org/wiki/Switch_2:_GSV_services), [drako3d](https://github.com/ouncebrew/drako3d), [GPU Classes](https://switchbrew.org/wiki/GPU_Classes).
 5. **Sortie GPU hôte :** [Khronos sync](https://docs.vulkan.org/guide/latest/synchronization_examples.html), [RADV](https://docs.mesa3d.org/drivers/radv.html).
@@ -456,7 +471,7 @@ Cet index est destiné à la recherche rapide, y compris lors d'une nouvelle con
 | Sujet | Premières sources |
 |---|---|
 | Services IPC NS1 | [SwIPC](https://reswitched.github.io/SwIPC/) · [libnx](https://github.com/switchbrew/libnx) · [Services API](https://switchbrew.org/wiki/Services_API) |
-| Services IPC NS2 | [Services API](https://switchbrew.org/wiki/Services_API) · [GSV](https://switchbrew.org/wiki/Switch_2:_GSV_services) · [libounce](https://github.com/ouncebrew/ounce-devkit) |
+| Services IPC NS2 | [Services API](https://switchbrew.org/wiki/Services_API) · [GSV](https://switchbrew.org/wiki/Switch_2:_GSV_services) · [libounce](https://github.com/ouncebrew/libounce) |
 | Kernel, SVC, MMU | [SVC](https://switchbrew.org/wiki/SVC) · [mesosphère](https://github.com/Atmosphere-NX/Atmosphere/tree/master/mesosphere) · [Memory layout](https://switchbrew.org/wiki/Memory_layout) |
 | Démarrage, AM | [AM services](https://switchbrew.org/wiki/AM_services) · [NPDM](https://switchbrew.org/wiki/NPDM) · [NS services](https://switchbrew.org/wiki/NS_services) |
 | Manette/latence | [HID](https://switchbrew.org/wiki/HID_services) · [AM](https://switchbrew.org/wiki/AM_services) · [Vulkan Profiling](https://docs.vulkan.org/guide/latest/profiling.html) |

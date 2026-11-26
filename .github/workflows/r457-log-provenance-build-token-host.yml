@@ -33,6 +33,7 @@ jobs:
         with:
           persist-credentials: false
           submodules: true
+          fetch-depth: 0
       - name: Historical reviewed service blob (strict inverse source delta)
         run: python3 -B tools/check-post-f07-delta-register.py
       - name: Full post-F07 Nov15 and Nov16 source-history replay

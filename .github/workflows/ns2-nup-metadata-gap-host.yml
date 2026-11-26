@@ -1,0 +1,21 @@
+name: NS2 NUP metadata TOC gap source guard
+on:
+  push:
+    branches: [main]
+    paths:
+      - headless/nup_v1_vfs.cpp
+      - tools/check-nup-metadata-bounds-source.py
+      - .github/workflows/ns2-nup-metadata-gap-host.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  nup-metadata-gap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate safe optional metadata placement
+        run: python3 -B tools/check-nup-metadata-bounds-source.py

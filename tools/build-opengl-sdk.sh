@@ -13,7 +13,8 @@ nir_fix_marker="$prefix/ENCORE_PSBC_NIR_LOCATION_FIX"
 nir_fix_identity=$(
     for script in "$root/tools/ci/patch-psbc-nir-location-print.py" \
                   "$root/tools/ci/patch-psbc-nir-build-hooks.py" \
-                  "$root/tools/ci/patch-ps5-opengl-mesa-options.py"; do
+                  "$root/tools/ci/patch-ps5-opengl-mesa-options.py" \
+                  "$root/tools/ci/patch-ps5-opengl-runtime-warning-flags.py"; do
         sha256sum "$script" | awk '{print $1}'
     done | sha256sum | awk '{print $1}'
 )
@@ -59,28 +60,24 @@ git -C "$source_dir" diff --quiet -- && git -C "$source_dir" diff --cached --qui
     exit 1
 }
 
-if [[ ! -d $template/.git ]]; then
-    rm -rf "$template"
-    git clone --quiet "$template_url" "$template"
-fi
-if [[ $(git -C "$template" rev-parse HEAD) != "$template_revision" ]]; then
-    git -C "$template" fetch --quiet origin "$template_revision" || true
-    git -C "$template" -c advice.detachedHead=false checkout --quiet --detach "$template_revision"
-fi
+# The complete native boilerplate is staged from vendor/objects above.
+# A missing or wrong checkout is a broken vendored closure, never permission
+# to contact its recorded GitHub origin during the standard PS5 build.
+[[ -d $template/.git ]] || {
+    echo "Vendored PS5 OpenGL boilerplate staging is missing" >&2; exit 1;
+}
 [[ $(git -C "$template" rev-parse HEAD) == "$template_revision" ]] || {
-    echo "PS5 OpenGL boilerplate pin mismatch" >&2; exit 1;
+    echo "Vendored PS5 OpenGL boilerplate pin mismatch" >&2; exit 1;
 }
 git -C "$template" diff --quiet -- && git -C "$template" diff --cached --quiet -- || {
     echo "PS5 OpenGL boilerplate source is modified" >&2; exit 1;
 }
-if [[ ! -x $sdk/bin/prospero-clang ]]; then
-    if [[ $(uname -s) == Darwin ]]; then
-        (cd "$template" && MAKEFLAGS=-e ARFLAGS=rcs bash tools/setup-native-dependencies.sh)
-    else
-        (cd "$template" && bash tools/setup-native-dependencies.sh)
-    fi
-fi
-[[ -x $sdk/bin/prospero-clang ]] || { echo "PS5 OpenGL PayloadSDK setup failed" >&2; exit 1; }
+# stage-vendored-opengl-deps.py extracts the complete pinned PayloadSDK.
+# Do not let the boilerplate setup script download anything if that closure is
+# incomplete; fail before the expensive graphics build instead.
+[[ -x $sdk/bin/prospero-clang ]] || {
+    echo "Vendored PS5 OpenGL PayloadSDK compiler missing after staging" >&2; exit 1;
+}
 
 valid=0
 if [[ -f $marker && -f $prefix/manifest.sha256 && -s $prefix/lib/libps5_opengl_core33.a ]] &&
@@ -115,6 +112,8 @@ radv_stub_backup=""
 psbc_extra_sources=()
 mesa_build_script="$source_dir/toolchain/build-mesa-ps5.sh"
 mesa_build_script_backup=""
+runtime_makefile="$source_dir/toolchain/ps5-opengl-core33.mk"
+runtime_makefile_backup=""
 cleanup() {
     if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then
         mv -f "$host_test_backup" "$host_test"
@@ -130,6 +129,9 @@ cleanup() {
     fi
     if [[ -n ${mesa_build_script_backup:-} && -f $mesa_build_script_backup ]]; then
         mv -f "$mesa_build_script_backup" "$mesa_build_script"
+    fi
+    if [[ -n ${runtime_makefile_backup:-} && -f $runtime_makefile_backup ]]; then
+        mv -f "$runtime_makefile_backup" "$runtime_makefile"
     fi
     for extra in "${psbc_extra_sources[@]}"; do
         if [[ -f "${extra}.encore-backup.$$" ]]; then
@@ -175,9 +177,10 @@ EOF_CROSS
     fi
 fi
 
-# Upstream's own fetcher pins and hashes Mesa/compiler dependencies. Building the SDK here keeps
-# Encore on a reviewed source commit instead of silently consuming an untagged moving HEAD.
-python3 "$source_dir/tools/fetch-sources.py"
+# All mandatory repositories, the exact PSBC patch and Mesa 26.2 sources
+# were staged above from vendor-owned bytes. Never invoke the normal upstream
+# fetch mode in the standard PS5 build; its only remaining use here is the
+# explicit offline --verify-psbc check after temporary build patches are restored.
 
 # Mesa 26.2 declares display-info, SPIRV-Tools and lm-sensors as optional
 # feature options. The frozen PS5 OpenGL profile uses softpipe only, no
@@ -188,9 +191,20 @@ python3 "$source_dir/tools/fetch-sources.py"
 [[ -f "$mesa_build_script" && ! -L "$mesa_build_script" ]] || {
     echo "Missing pinned PS5 OpenGL Mesa build script" >&2; exit 1;
 }
-mesa_build_script_backup="${mesa_build_script}.encore-backup.$"
+mesa_build_script_backup="${mesa_build_script}.encore-backup.$$"
 cp -p "$mesa_build_script" "$mesa_build_script_backup"
 python3 -B "$root/tools/ci/patch-ps5-opengl-mesa-options.py" "$mesa_build_script"
+
+# The runtime makefile keeps -Werror for our actual PS5 OpenGL code, but the
+# frozen profile intentionally compiles third-party Mesa/PSBC headers and
+# conditional helpers that produce three reviewed non-semantic diagnostics.
+# Convert only their existing -Wno-error demotions into full, local exclusions.
+[[ -f "$runtime_makefile" && ! -L "$runtime_makefile" ]] || {
+    echo "Missing pinned PS5 OpenGL runtime makefile" >&2; exit 1;
+}
+runtime_makefile_backup="${runtime_makefile}.encore-backup.$$"
+cp -p "$runtime_makefile" "$runtime_makefile_backup"
+python3 -B "$root/tools/ci/patch-ps5-opengl-runtime-warning-flags.py" "$runtime_makefile"
 
 # Fix the pinned PSBC Mesa 26.2 NIR printer's real decimal truncation.
 # A 32-bit location needs 11 bytes (10 digits + NUL), not four. Patch only
@@ -361,6 +375,10 @@ for cfg in "${psbc_configs[@]}"; do
     mv -f "${cfg}.encore-backup.$$" "$cfg"
 done
 psbc_configs=()
+if [[ -n ${runtime_makefile_backup:-} && -f $runtime_makefile_backup ]]; then
+    mv -f "$runtime_makefile_backup" "$runtime_makefile"
+    runtime_makefile_backup=""
+fi
 (cd "$stage" && sha256sum --check --strict manifest.sha256 >/dev/null)
 printf '%s\n' "$expected" > "$stage/ENCORE_SOURCE_COMMIT"
 printf '%s\n' "$nir_fix_identity" > "$stage/ENCORE_PSBC_NIR_LOCATION_FIX"

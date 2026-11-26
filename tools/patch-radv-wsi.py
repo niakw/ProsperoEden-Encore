@@ -63,6 +63,43 @@ replace('''   FILE *const file = fopen("/app0/sce_sys/param.json", "rb");
 ''', '''   const char *const asked = getenv("EDEN_VIDEOOUT_120HZ");
    return asked != NULL && asked[0] == '1';
 ''')
+# Launcher handoff: 59.94 Hz does not need to acquire VideoOut while merely
+# enumerating display modes. Retain the EGL loading scanout through Vulkan
+# surface/device setup; swapchain creation still settles before registration.
+# 119.88 Hz keeps the existing early hardware qualification.
+replace('''static uint32_t
+videoout_modes(struct wsi_videoout_mode *modes[2])
+{
+   videoout_settle_modes();
+   uint32_t count = 0;
+   if (videoout_output.high_mode_offered)
+      modes[count++] = &videoout_high_mode;
+   modes[count++] = &videoout_mode;
+   return count;
+}''', '''static uint32_t
+videoout_modes(struct wsi_videoout_mode *modes[2])
+{
+   uint32_t count = 0;
+   /*
+    * A normal 59.94 Hz session does not need VideoOut ownership merely to
+    * enumerate VK_KHR_display modes. Encore can keep its retained OpenGL
+    * launcher scanout visible while Vulkan creates the instance, surface and
+    * logical device, then hand VideoOut over immediately before swapchain
+    * creation. The swapchain path still calls videoout_settle_modes() before
+    * registration, so the real output is opened exactly once at takeover.
+    *
+    * 119.88 Hz is different: hardware support must be measured before the app
+    * can choose the high display mode, so preserve the existing early settle
+    * only when Encore explicitly requested EDEN_VIDEOOUT_120HZ.
+    */
+   if (videoout_title_declares_high_frame_rate()) {
+      videoout_settle_modes();
+      if (videoout_output.high_mode_offered)
+         modes[count++] = &videoout_high_mode;
+   }
+   modes[count++] = &videoout_mode;
+   return count;
+}''')
 # From upstream ProsperoEden 1f7fcf36 (#95): VRR screens can report a 48Hz
 # vblank during idle while their 120Hz output is valid. Only a measured
 # stable 59.94/60Hz fallback (15–18.5ms vblank) justifies reverting 120Hz.

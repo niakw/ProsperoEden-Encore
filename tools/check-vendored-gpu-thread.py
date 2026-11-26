@@ -96,6 +96,16 @@ def main() -> None:
             assert (build/'gpu_thread.cpp').read_bytes()==generated['gpu_thread_quiet.cpp']
             for name in ('include/video_core/gpu_thread.h', 'include/common/bounded_threadsafe_queue.h'):
                 assert (build/name).read_bytes()==generated[name], (profile,name)
+    # Prove the common worker branch is not nested under a renderer selector.
+    gl_start = cmake.index("if(EDEN_PS5_OPENGL)\n    set(EDEN_MAINTAINED_GL_BUFFER_CACHE")
+    gl_end = cmake.index("endif() # EDEN_PS5_OPENGL renderer-specific owners", gl_start)
+    worker_start = cmake.index(marker)
+    assert gl_start < gl_end < worker_start
+    for kind in ("quiet", "dev"):
+        worker = generated[f"gpu_thread_{kind}.cpp"].decode()
+        assert "std::get_if<RetireChannelCommand>(&next.data)" in worker
+        assert "PushCommand(RetireChannelCommand{std::move(action)}, true, is_async);" in worker
+        assert worker.index("retire->action();") < worker.index("state.signaled_fence.store(next.fence, std::memory_order_release);")
     print('VENDORED_GPU_CMAKE_NATIVE_BRANCH_OK native_quiet=selected dev=unselected; historical variant bytes verified')
     print('VENDORED_GPU_THREAD_EQUIVALENT_OK', len(generated),
           'bounded 256-slot FIFO, stop-aware worker, dev/quiet source variants')

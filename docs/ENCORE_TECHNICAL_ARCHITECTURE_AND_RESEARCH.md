@@ -1,5 +1,9 @@
 # Eden Encore — architecture technique, composants, sources et recherche
 
+> **Dossier mémoire invité NS1/NS2 — 23 novembre :** [architecture détaillée, sources publiques/propriétaires, ressources PS5 et P0 FC27/MKW/Bananza](EDEN_ENCORE_GUEST_MEMORY_NS1_NS2_PS5_ARCHITECTURE.md). Ce dossier complète la section 5.3, sans certifier le boot ni la fluidité.
+
+> **Complément ciblé NS2/PS5 du 23 novembre 2026 :** la section [5.3](#53-cas-ns2--architecture-mémoire-sur-ps5-état-du-23112026) décrit l'écart réel entre notre backing sparse pré-engagé et le `demand-zero` d'EglantinePS5. Couple étudié : moteur `3349171e` / vendor `7bf93eb2`. Les crashs ExeFS MKW/Bananza restent P0 et aucune première frame invitée n'est validée. La photographie historique du 19 novembre ci-dessous n'est pas réécrite.
+
 > **Actualisation du 19 novembre (sans modifier l'architecture de référence) :** le correctif historique de table A64 PS5 réduite à 64K entrées ne fait **plus partie du chemin natif validé à la compilation**. Il a été retiré après un défaut de disposition C++ entre unités de traduction ; vendor `8e564f61` puis `67759611` conservent la table uniforme 16 MiB. Le build natif moteur `4a5b8cc` l'atteste en ELF ; le test PS5 FC27/MKW/Bananza atteint l'entrée invitée sans garantir les premières frames NS2. Les sections JIT doivent être lues avec le [registre de l'incident](audits/PS5_R457_CC8044CE_P0_CROSS_TITLE_A64_JIT_SIGSEGV_2026-11-19.md) et le [suivi du 19 novembre](audits/PS5_R457_2026-11-19_FC27_NS2_POST_TEST.md). Le correctif upstream Lichii #159 sur l'index RomFS zéro est dorénavant intégré aux deux sources sélectionnées, mais la réussite du boot NS2 n'est pas prouvée.
 
 
@@ -10,6 +14,8 @@
 > **Objet :** expliquer les couches, la circulation des données, les composants et leurs responsabilités, leurs chemins dans les DEUX dépôts, les risques de correction/optimisation, les sources officielles et la littérature académique pertinente.
 >
 > **Limite :** une présence de fichiers, de déclarations ou de tests hôtes n'est pas une preuve d'exécution PS5. Une compilation native n'est ni un boot NS1/NS2, ni une image invitée, ni une réduction de saccades. Ce document est une **carte de référence**, non une certification d'implémentation exhaustive ni un changelog des états CI.
+
+**Registre opérationnel NS2 (actualisé au 23/11) :** [complétude SwitchBrew et parité structurelle Lichii](audits/EDEN_ENCORE_NS2_IMPLEMENTATION_COMPLETENESS_REGISTER_2026-11-21.md). Le document architectural ci-dessous est une photographie historique ; pour l'état des commandes, stubs et écarts Lichii, consulter les compteurs séparés de ce registre, à SHAs datés.
 
 ## Sommaire
 
@@ -242,9 +248,89 @@ flowchart LR
 
 **Mesures minimales** : committed guest, reserved guest, committed JIT, maximum contiguous block, GPU heap budget/usage, nombre et somme des buffers persistants, staging in-flight, point de retraite GPU, nombre/tailles des allocs échouées et première erreur causale.
 
-### 5.3 Cas NS2
+### 5.3 Cas NS2 — architecture mémoire sur PS5, état du 23/11/2026
 
-Les voies <code>ns2_sparse_guest</code>, <code>ns2-runtime/sparse-residency</code>, <code>ns2-runtime/nvdrv_as</code>, <code>nvdrv_gpu</code> et <code>gpu_session</code> doivent être étudiées ensemble. Un test d'allocation hôte ne démontre ni une session NVDRV complète ni un jeu lancé sur PS5.
+**Révision opérationnelle distincte de l'instantané du 19/11 :** moteur `3349171e46d7bbf0545edfa75532e3eafaeb1d34`, gitlink/vendor `7bf93eb2da720281a09edd8f7d823fb2558ad937`. Comparaison PS5 : [heydemoura/EglantinePS5 `5eb70367ffde039f237b3b828856f4b4247ea09e`](https://github.com/heydemoura/EglantinePS5/tree/5eb70367ffde039f237b3b828856f4b4247ea09e), 20/11/2026. Référence de *structure* et protocoles NS2 : Lichii, à distinguer de cette référence de *gestion des ressources PS5*. **Statut : problème P0 ouvert, pas de boot NS2 ni de première frame validés par ce complément.** Les SHAs datés sont des références de comparaison, pas une instruction de revenir dessus.
+
+#### 5.3.1 Propriétaires C++ réellement compilés
+
+| Domaine | Source exacte / sélection | Garantie existante et limite |
+|---|---|---|
+| Choix du layout | `vendor/encore-active/ns2-runtime/process/core/core.cpp` | Détection NPDM NS2 avant création du noyau ; sélection du layout invité **12 Gio** sur les programmes détectés, y compris NUP lisible. Un NUP rejeté au parseur n'atteint pas nécessairement cette détection |
+| RAM invitée PS5 | `src/host_memory.cpp`, `Common::HostMemory::Impl` | Pour `requested == 12ull << 30`, réserve **12 Gio d'adresses virtuelles** via `Eden::PS5::GuestBacking::Runtime`, avec budget physique actuel **6 Gio**. Le layout 12 Gio n'est **pas** une allocation physique dense |
+| Plan/ownership | `headless/ps5_ns2_guest_backing_plan.h`, `src/ns2_sparse_guest.cpp` | Granules physiques de **2 Mio**, admission et publication sous verrou, rollback des granules nouvellement mappés en cas d'échec ; conservation jusqu'à destruction du runtime. Pas de libération générale des granules lorsque le noyau invité rend ses pages |
+| Clear mémoire | `src/host_memory.cpp::HostMemory::ClearBackingRegion` | Vérifie les bornes, exécute `sparse->Commit(offset,length)`, puis `memset`. **Même un remplissage à zéro engage les granules** : il n'existe pas encore de véritable état `Zero` physique partagé |
+| Noyau physique NS2 | `vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp` | Les écritures hors PTE passent par `EdenNs2CommitGuestBacking` ; `AllocateForProcess` intercepte désormais le `bad_alloc` provenant du `ClearBackingRegion` non optimisé, rend ses pages non référencées aux pools et renvoie `ResultOutOfMemory` |
+| Shared/slab et publication | `vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp` et `init/init_slab_setup.cpp` | Pré-engagement avant les écritures directes historiques ; ce n'est pas une implémentation demand-zero |
+| Accès invité/vidéo | `vendor/encore-active/ns2-runtime/nvdrv_as/`, `nvdrv_gpu/`, `gpu_session/` et `vendor/encore-active/eden-gpu/` | Mappings GPU, alias, caches et fences à vérifier **avant** toute dépublication/libération physique ; aucune preuve de cohérence zéro-partagé/écriture différée dans le runtime courant |
+
+Le graphe `headless/CMakeLists.txt` place `src/ns2_sparse_guest.cpp` dans `common`, définit `EDEN_NS2_SPARSE_BACKING=1` pour `common` et `core` lorsque `PS5_NATIVE && EDEN_REVIEWED_DUAL_NPDM`, puis remplace **une seule fois** `hle/kernel/k_memory_manager.cpp` par l'owner `encore-active/ns2-runtime/sparse-residency/`. C'est ce chemin maintenu qu'il faut corriger, **pas** `vendor/sources/eden/src/common/host_memory.cpp` ni une copie historique hors build. Vérifier cette condition et le gitlink sur toute révision nouvelle ; la présence d'une source dans l'arbre ne certifie pas son lien ELF.
+
+#### 5.3.2 P0 Mario Kart World / Donkey Kong Bananza — observations et diagnostic différentiel
+
+Les essais PS5 ExeFS du **23/11**, compilés avec moteur `25f12c020eb69ea9b7b29aac35dadcfe8b38f918` et vendor `716e069f212b89b6fd13af56b0677343cf41ba07`, indiquent :
+
+| Jeu | Signal observé sur la version testée | Limite de preuve |
+|---|---|---|
+| Mario Kart World, `0400C3F00006E000` | `std::bad_alloc` sur `CPUCore_0`, ~54 s après lancement, **zéro soumission GPU invitée mesurée** ; plus grand bloc direct libre ~5 194 Mio | La présence de mémoire libre n'annule pas un refus par **budget logique de 6 Gio**, ni un échec d'une allocation de 2 Mio. Le binaire non symbolisé impose de distinguer une adresse de terminaison d'une vraie pile d'appels |
+| Donkey Kong Bananza (ExeFS) | `std::bad_alloc` sur `CPUCore_0`, ~25 s après lancement, **zéro soumission GPU invitée mesurée** ; plus grand bloc direct libre ~5 416 Mio | Signature commune compatible avec le chemin de pré-engagement guest, pas preuve de la même plage exacte ou d'une cause exclusive |
+| Pokémon Legends: Z-A (NUP) | Entrée invitée atteinte ; `guest_frame_handoff=0`, `gpu_submit_sample=0` après 10 et 30 s | Blocage **après acceptation initiale du conteneur** ; le correctif ExeFS/NUP n'est pas une preuve de progrès GPU |
+| Pokémon Pokopia (NUP) | `EDEN_NUP_REJECT stage=archive reason=metadata exceeds file`, `Core initialization failed (2)` | Rejet **avant le processus invité** : contrôler métadonnées, taille réelle du fichier et offsets ; ne pas attribuer ce cas au budget sparse |
+
+Les traces ExeFS montrent `EDEN_NS2_SHARED_CLEAR begin` **puis** `done` sur une plage de 17 Mio : cette opération a fini, et le `bad_alloc` survient ailleurs dans la suite. Le C++ de `HostMemory::ClearBackingRegion` produit explicitement `std::bad_alloc` si `Runtime::Commit` échoue ; `KMemoryManager::AllocateForProcess` passe par cette fonction. Il s'agit du **chemin causal prioritaire** à requalifier avec symboles exacts et marqueur d'échec, pas d'une preuve que tout `std::bad_alloc` du jeu émane nécessairement du même appel.
+
+**Révisions déjà intégrées mais non validées sur console :**
+
+- Vendor [`7bf93eb2`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/7bf93eb2da720281a09edd8f7d823fb2558ad937) : en cas de `bad_alloc` sur le clear **non optimisé** de `AllocateForProcess`, retour des pages invitées **non encore `OpenFirst`** vers chaque pool/manager, destruction des descripteurs et `ResultOutOfMemory` normal. Cela protège cette sortie ; cela **n'augmente pas la mémoire disponible**, ne couvre pas automatiquement les autres écritures kernel, et n'empêche pas le jeu invité d'échouer faute de RAM.
+- Moteur [`3349171e`](https://github.com/niakw/ProsperoEden-Encore/commit/3349171e46d7bbf0545edfa75532e3eafaeb1d34) : gitlink sur le vendor ci-dessus ; `EDEN_NS2_SPARSE_COMMIT_DENIED` à la **première** défaillance, avec `stage=range|admission|native_physical_map|ownership_stage`, offset, longueur, résidence et budget. Les logs du 23/11 proviennent de l'**ancien binaire** et n'ont pas ce marqueur. Sans ce résultat du nouveau binaire, `admission` (quota) et `native_physical_map` (PS5) restent **à départager**.
+
+#### 5.3.3 Écart avéré avec EglantinePS5 : résidence *demand-zero*, pas seulement « sparse »
+
+[Source PS5 `src/guest_memory_service.inc`](https://github.com/heydemoura/EglantinePS5/blob/5eb70367ffde039f237b3b828856f4b4247ea09e/src/guest_memory_service.inc) (intégrée à `src/memory_pages.cpp`) et [`src/host_memory.cpp`](https://github.com/heydemoura/EglantinePS5/blob/5eb70367ffde039f237b3b828856f4b4247ea09e/src/host_memory.cpp) :
+
+| Opération | Encore actuel | EglantinePS5, code examiné |
+|---|---|---|
+| Noyau invité réserve/initialise une plage | `Commit` sur tous les granules touchés par `ClearBackingRegion`, avant `memset` | `ClearGuestMemory` conserve ou restaure les blocs vierges sur une vue **zéro partagée** ; une initialisation ne signifie pas « RAM physique privée pour chaque bloc » |
+| Première lecture d'un bloc vierge | Nécessite le granule physique privé pré-engagé | L'état **`SlotZero`** expose des zéros lisibles |
+| Première écriture d'un bloc vierge | Déjà en `Resident` | Écriture interceptée, promotion vers **`SlotOwn`** puis reprise de l'accès, avec verrou et ownership |
+| Fin de vie/réutilisation | Les granules demeurent résidents jusqu'à la fin du titre | Des pages libérées ou complètement remises à zéro peuvent restituer leur mémoire ; les alias sont révoqués avant retour des blocs |
+| Mémoire froide et fragmentation | Pas de compression/partage équivalent au runtime NS2 courant | États supplémentaires `SlotShared`, `SlotFine`, `SlotPacked`, récupération et hooks de pression ; **ne pas importer ces optimisations comme prérequis** |
+
+La [mesure console Mario Kart World d'EglantinePS5](https://github.com/heydemoura/EglantinePS5/blob/5eb70367ffde039f237b3b828856f4b4247ea09e/docs/MKW-MEMORY-LEAK.md) rapporte ~9,5 Go **mappés par le noyau invité** mais une résidence effective croissant d'environ 1,5 à 6,1 Go suivant la scène et la durée. Les chiffres proviennent de **leur** PS5 et de **leurs** révisions : ce ne sont ni nos mesures ni une prévision de FPS. EglantinePS5 atteint des scènes de jeu sur MKW et Bananza ; il rencontre lui-même des limites de pool GPU/RAM à plus longue durée.
+
+Leur [analyse du budget MKW](https://github.com/heydemoura/EglantinePS5/blob/5eb70367ffde039f237b3b828856f4b4247ea09e/docs/MKW-MEMORY-BUDGET.md) rapporte qu'abaisser le layout invité à **8/10 Go empêche MKW de démarrer**. **Ne pas** modifier le layout 12 Gio, monter arbitrairement notre plafond physique de 6 Gio ou prétendre résoudre la pression de RADV en augmentant l'allocation guest. **Ne pas** backporter automatiquement `SlotPacked`/LZ4 : EglantinePS5 a désactivé par défaut la compression froide après des anomalies GPU/commandes et des hangs lors de tests MKW.
+
+Autre piste PS5 distincte : [`src/direct_memory.c`](https://github.com/heydemoura/EglantinePS5/blob/5eb70367ffde039f237b3b828856f4b4247ea09e/src/direct_memory.c) attribue certaines ressources persistantes en haut du pool direct pour réduire la fragmentation des allocations transitoires. Cela exige une comparaison réelle des wrappers de link, ownership et zones CPU/RADV avant toute transposition : les chiffres de mémoire libre du crash Encore **ne prouvent pas** une fragmentation fatale de blocs de 2 Mio.
+
+#### 5.3.4 Contrat architectural pour la correction fonctionnelle
+
+Objectif initial : **états `ZERO` et `OWN` seulement**, sans nouvelle option expérimentale ni chemin mort. Le mécanisme doit couvrir le runtime natif PS5 sélectionné, les écritures hors PTE et les chemins CPU/GPU réellement actifs ; il ne peut pas être réduit à « ne plus appeler `memset` ».
+
+~~~mermaid
+stateDiagram-v2
+    [*] --> NonPublie
+    NonPublie --> Zero : range initialisé sans PA privée
+    Zero --> Own : avant première écriture, admission + mapping + publication
+    Own --> Zero : clear/libération intégrale, tous alias retirés et GPU retiré
+    Own --> Own : écriture / lecture sans changement de propriétaire
+    Zero --> NonPublie : retrait de mapping après quiescence
+    Own --> NonPublie : destruction après quiescence et retrait de tous les alias
+~~~
+
+**Invariants impératifs :**
+
+1. **Zéro fidèle :** toute lecture CPU invitée, accès HLE/IPC, readback GPU et accès par pointeur direct à une page logique vierge renvoie des zéros, sans SIGSEGV, page arbitraire ni donnée d'une session précédente. Aucun mapping ne doit être publié tant que cette propriété n'est pas vraie.
+2. **Première écriture sûre :** obtenir une PA réellement possédée et writable **avant** d'autoriser l'écriture, copier les données précédentes si nécessaire, puis publier l'alias après les barrières. Définir le chemin exact pour Dynarmic, accès natifs du core, DMA/GMMU et worker GPU. Le callback de faute ne peut pas utiliser un allocateur réentrant ou se bloquer sous un verrou du heap.
+3. **Propriétaire unique, alias multiples :** conserver la correspondance `guest range -> slot -> PA` et un état/génération sous verrou ; retirer toute vue JIT/CPU, GPU/NvMap, cache de textures/buffers et ancienne entrée de table avant de libérer une PA. Aucune promotion ou éviction ne doit exposer une PA libérée.
+4. **Synchronisation GPU :** une page dont des commandes invitées ou hôtes en cours peuvent lire l'ancienne PA ne peut être rendue ni réattribuée avant retraite confirmée des fences correspondants ; les invalidations CPU/GPU et readbacks restent ordonnés. Éviter les chemins de promotion à mi-soumission et le risque de publication différée du BufferCache déjà documenté.
+5. **Fail closed et retry :** distinguer `admission` (quota logique), `native_physical_map` (alloc/mapping direct PS5), absence de réservation et violation d'ownership. Un échec ne publie **aucun** PTE/alias partiel ; les ressources nouvellement prises sont restaurées exactement une fois. Retourner le `Result` noyau approprié seulement lorsque les invariants d'état sont préservés.
+6. **NS1 inchangé :** activer la sémantique uniquement après identification fiable de la génération/layout, conserver l'ABI Dynarmic et les configurations CPU6 réellement sélectionnées. Ne pas restaurer le dispatch JIT 64K supprimé pour écart ABI ; ne pas changer les règles de mémoire NS1 par effet de bord.
+
+**Séquence de réalisation vérifiable, sans nouvel interrupteur de production :** (a) identifier tous les accès directs avant publication de PTE et les alias GPU, (b) proposer un seul owner `ZERO/OWN` avec tests d'accès croisés et admission atomique, (c) raccorder les clears/allocations et la libération après quiescence **dans les unités natives déjà sélectionnées**, (d) valider la première soumission GPU et la première frame sur MKW et Bananza, (e) seulement ensuite considérer la récupération de pages froides, la fragmentation RADV et les effets sur les frametimes. Un test hôte de modèle d'états n'est **pas** une preuve d'absence de corruption sur PS5.
+
+**Critère P0 matériel :** même couple moteur/vendor et même contenu ExeFS, session froide puis chaude, pas de `std::bad_alloc` natif, pas de SIGSEGV ou heap invité artificiellement réduit, `guest_run_begin` puis **soumission GPU invitée non nulle**, première frame invitée vérifiée, puis gameplay stable. Enregistrer résidence guest, plus grande plage directe libre, commits/refus `EDEN_NS2_SPARSE_COMMIT_DENIED`, allocations RADV, alias et fences. Le compteur de présentations de l'écran de chargement hôte ne peut pas satisfaire ce critère.
+
+**État de réalisation au 23/11 :** rollback d'un sous-chemin OOM + diagnostic au premier refus intégrés et gitlink synchronisé ; **owner ZERO/OWN, libération physique à la restitution guest, promotion sécurisée et qualification console non implémentés ou non prouvés**. Ce complément ne certifie donc ni parité runtime avec EglantinePS5, ni chargement des NUP, ni complétude fonctionnelle NS2.
 
 ## 6. Architecture GPU invitée Maxwell / Ampere
 

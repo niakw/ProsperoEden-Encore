@@ -2,6 +2,7 @@
 #pragma once
 // One temporary, title-scoped frame linking the native OpenGL jacket
 // animation to the PS5 Vulkan warm-up. No disk I/O and no guest GPU state.
+#include "loading_case.hpp"
 #include <atomic>
 #include <chrono>
 #include <cstdint>
@@ -26,6 +27,19 @@ inline void QueueMultiplayer() { multiplayer_requested.store(true, std::memory_o
 inline bool TakeMultiplayerRequest() { return multiplayer_requested.exchange(false, std::memory_order_acq_rel); }
 inline std::mutex frame_mutex;
 inline std::shared_ptr<const Frame> pending_frame;
+// The second frame is the flat paper atlas, not a projected jacket.
+inline std::shared_ptr<const Frame> alternate_frame;
+inline std::shared_ptr<const LoadingCase::Scene> case_scene;
+inline void PublishCase(LoadingCase::Scene&& scene) {
+    if(!LoadingCase::Valid(scene))return;
+    auto stored=std::make_shared<LoadingCase::Scene>(std::move(scene));
+    const std::lock_guard lock{frame_mutex};
+    case_scene=std::move(stored);
+}
+inline std::shared_ptr<const LoadingCase::Scene> PeekCase() {
+    const std::lock_guard lock{frame_mutex};
+    return case_scene;
+}
 
 // One monotonic loading epoch spans launcher GL, the retained GL presenter and
 // Vulkan. Each backend asks for the current shader time instead of resetting
@@ -60,11 +74,14 @@ inline bool Valid(const Frame& frame) {
            frame.rgba.size() == static_cast<std::size_t>(frame.width) *
                                     static_cast<std::size_t>(frame.height) * 4;
 }
-inline void Publish(Frame&& frame) {
+inline void Publish(Frame&& frame, bool alternate = false) {
     if (!Valid(frame)) return;
     auto stored = std::make_shared<Frame>(std::move(frame));
     const std::lock_guard lock{frame_mutex};
-    pending_frame = std::move(stored);
+    if (alternate)
+        alternate_frame = std::move(stored);
+    else
+        pending_frame = std::move(stored);
 }
 // Renderer may inspect pending pixels while the swapchain has zero extent
 // or while a transient staging allocation fails. The owner stays available
@@ -73,12 +90,25 @@ inline std::shared_ptr<const Frame> Peek() {
     const std::lock_guard lock{frame_mutex};
     return pending_frame;
 }
+inline std::shared_ptr<const Frame> PeekAlternate() {
+    const std::lock_guard lock{frame_mutex};
+    return alternate_frame;
+}
+inline void ClearAlternate() {
+    const std::lock_guard lock{frame_mutex};
+    alternate_frame.reset();
+    case_scene.reset();
+}
 inline std::shared_ptr<const Frame> Take() {
     const std::lock_guard lock{frame_mutex};
+    alternate_frame.reset();
+    case_scene.reset();
     return std::exchange(pending_frame, {});
 }
 inline void Clear() {
     const std::lock_guard lock{frame_mutex};
     pending_frame.reset();
+    alternate_frame.reset();
+    case_scene.reset();
 }
 } // namespace Eden::LaunchHandoff

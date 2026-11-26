@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2026 Oliv3rmoon
 // SPDX-License-Identifier: GPL-3.0-or-later
-// File selection for the nine extensions recognized by Encore's game picker:
-// NSP/XCI, their NCZ-compressed NSZ/XCZ variants, and direct NRO/NSO/NCA/NAX/KIP.
+// File selection for base NSP/XCI, compressed NSZ/XCZ and decrypted
+// DNSP/DXCI, plus direct NRO/NSO/NCA/NAX/KIP. NUP is gated separately.
 // Direct inputs can require external program contents and are not guaranteed
 // to boot. Internal .ncz, NSO LZ4 and ZBIC/zstd are not standalone games.
 #pragma once
@@ -25,11 +25,17 @@ inline bool EndsWithNoCase(std::string_view name, std::string_view suffix) {
 }
 // Read as an NSP: a package of NCAs.
 inline bool IsPackageFile(std::string_view name) {
-    return EndsWithNoCase(name, ".nsp") || EndsWithNoCase(name, ".nsz");
+    return EndsWithNoCase(name, ".nsp") || EndsWithNoCase(name, ".nsz") ||
+           EndsWithNoCase(name, ".dnsp");
 }
 // Read as an XCI: a game card's image.
 inline bool IsCardImageFile(std::string_view name) {
-    return EndsWithNoCase(name, ".xci") || EndsWithNoCase(name, ".xcz");
+    return EndsWithNoCase(name, ".xci") || EndsWithNoCase(name, ".xcz") ||
+           EndsWithNoCase(name, ".dxci");
+}
+// NX has a full content loader with verified VFS and snapshot dispatch.
+inline bool IsNxFile(std::string_view name) {
+    return EndsWithNoCase(name, ".nx");
 }
 inline bool IsNupFile(std::string_view name) {
 #ifdef EDEN_NUP_V1_RUNTIME
@@ -52,7 +58,7 @@ inline bool IsDirectLoaderFile(std::string_view name) {
 }
 inline bool IsGameFile(std::string_view name) {
     return IsPackageFile(name) || IsCardImageFile(name) ||
-           IsDirectLoaderFile(name) || IsNupFile(name);
+           IsDirectLoaderFile(name) || IsNupFile(name) || IsNxFile(name);
 }
 // Folder classification runs for every ROM scan entry. Match the fixed ASCII
 // tokens directly rather than allocating and lowercasing a temporary string.
@@ -261,7 +267,7 @@ inline bool IsSafeDeconstructedGamePath(const std::filesystem::path& roms_root,
 inline bool IsNestedGameFileSelection(std::string_view selection) {
     if (selection.empty() || selection.size() > 255) return false;
     if (!IsPackageFile(selection) && !IsCardImageFile(selection) &&
-        !IsNupFile(selection)) return false;
+        !IsNupFile(selection) && !IsNxFile(selection)) return false;
     const auto last_slash = selection.find_last_of('/');
     if (last_slash == std::string_view::npos || last_slash == 0 ||
         last_slash == selection.size() - 1) return false;
@@ -346,7 +352,7 @@ inline std::string FindNestedGamePackage(const std::filesystem::path& title) {
             }
             if (!fs::is_regular_file(status) ||
                 (!IsPackageFile(name) && !IsCardImageFile(name) &&
-                 !IsNupFile(name))) continue;
+                 !IsNupFile(name) && !IsNxFile(name))) continue;
             if (IsReservedAddOnPackageStem(path.stem().string())) continue;
             const auto candidate = relative.empty() ? name : relative + "/" + name;
             // The validator consumes a ROM-root-relative persisted selection.

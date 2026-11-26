@@ -115,6 +115,37 @@ public:
         return true;
     }
 
+    // Signal-time ZERO->OWN promotion handles one new chunk and cannot
+    // allocate a vector during rollback. Cancel only an unstaged single
+    // newcomer; its shared zero mapping remains externally owned.
+    [[nodiscard]] bool CancelSingleUnstaged(const Lease& lease) noexcept {
+        if (!matches(lease) || lease.count != 1 || lease.newcomers != 1)
+            return false;
+        auto& chunk = chunks_[lease.first];
+        if (chunk.state != State::Staging || chunk.lease != lease.id ||
+            chunk.physical != -1)
+            return false;
+        chunk = {};
+        --used_chunks_;
+        outstanding_.reset();
+        return true;
+    }
+
+    // A guest page-heap block became fully free. The native owner remaps
+    // ZERO and releases the old PA before asking the Plan to forget it.
+    [[nodiscard]] bool ReleaseResident(std::size_t index,
+                                       std::int64_t physical) noexcept {
+        if (outstanding_ || index >= chunks_.size() || used_chunks_ == 0)
+            return false;
+        auto& chunk = chunks_[index];
+        if (chunk.state != State::Resident || chunk.physical != physical ||
+            physical < 0)
+            return false;
+        chunk = {};
+        --used_chunks_;
+        return true;
+    }
+
     // Return only NEW physical owners to release. Existing resident chunks
     // in a reused range must NOT be released during failed new admission.
     [[nodiscard]] std::optional<std::vector<Reclaim>> Abort(const Lease& lease) {

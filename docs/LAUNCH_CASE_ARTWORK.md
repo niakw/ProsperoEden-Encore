@@ -674,3 +674,20 @@ game title. Original front and back priorities are unaffected.
 ## 12 November 2026 — native handoff status
 
 The current PS5 owner runs two bounded async front/rear decode tasks, serializes GL uploads on the owner thread, and captures the final 3D jacket before handing the texture bytes from OpenGL to Vulkan. The previous R457 console report observed a late front-face appearance and a brief black screen before the violet Vulkan loader. **Neither visual defect is yet demonstrated fixed on PS5**; acceptance requires an actual captured console run (with and without a valid jacket GPU readback). Daily promotional backgrounds are a separate feature and are **not installed by default**; the opt-in eight-WebP policy is documented in [Appearance](ENCORE_LAUNCHER_APPEARANCE_AND_UPDATES.md).
+
+
+### 26 November — spine mirror and live artwork cache
+
+User reports the printed spine and its procedural fallback are horizontally reversed. The shared case shader now mirrors X only for shapes 14 and 15; Y, front/rear UVs, shell geometry and lighting are untouched. Home probes the preferred banner even while showing a screenshot fallback. Enrichment returns the spine path and both consumers invalidate that exact texture when bit 2 is set; transient flags are reset on the worker snapshot. The texture cache revalidates visible successful file-backed entries every five seconds via its existing two async workers (stat identity, size and times); unchanged files skip decode/upload, a rename during decoding rejects the result, failed decode/upload preserves the last-good GPU texture, and replacement retires the old GL ID through the existing bounded queue. Manual/source priority and disk caches are not deleted. New source-extracted host assertions cover refresh scheduling and replacement failure; full CI and console visual confirmation pending. Native build conditional on all required gates.
+
+### Description provenance and private translation
+
+No game synopsis, title catalogue row or per-game publisher/date/genre data belongs in compiled C++ source. Nlib's actual localized description has priority; purchase conditions and taglines are not synopses. The generated GamesDB index supplies the original Overview as a fallback, matched to an unambiguous platform/title (or the standard edition for NS2). The legacy title-identity table is a separate data resource, with no synopsis content.
+
+Only selected-title background enrichment may queue a private translation request. The host reuses the NiakPS5 DeepL contract: `NIAK_DEEPL_API_KEY` remains on the owner's computer; only the matching public source excerpt (up to three sentences and 360 characters) is sent. The console reads the cached translation only when the source, catalogue identity and locale all match. The original remains visible when the key, provider or translation is unavailable. A normal FTP installation consumes outstanding requests if that private key is already configured; independent synchronization is possible without installing or building:
+
+```sh
+python3 tools/launcher/translate-overviews.py HOST --index APP_DIR/ui/box-art-index.tsv
+```
+
+There is no API key in the native application, no mass translation during build, and no request sent from the PS5 to DeepL. Live provider access, redistribution terms for the generated overview fields, and actual PS5 display remain separate qualification requirements.

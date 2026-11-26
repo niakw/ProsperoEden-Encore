@@ -132,7 +132,11 @@ snapshot_owner = ui[start:end]
 assert "class AddOnScanTransaction" in snapshot_owner
 assert "ScannedAddOns().clear();" not in ui
 assert "if (!UpdatesScanCompleted()) return -1;" in ui
-assert "if (!UpdatesScanCompleted()) return chosen;" in ui
+# Bare ExeFS `main` permits a direct base-language check while the global
+# update scan is incomplete; all other titles must retain the chosen language.
+assert 'if (UpdatesScanCompleted()) {' in ui
+assert 'else if (!rom_path || std::filesystem::path(rom_path).filename() != "main") {' in ui
+assert 'return chosen;' in ui
 snapshot_test = r"""
 #include <cassert>
 #include <cstdint>

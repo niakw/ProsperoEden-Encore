@@ -4,6 +4,7 @@
 
 #include "pe/ui/launcher.hpp"
 #include "pe/ui/case_media_selection.hpp"
+#include "../../../launch_handoff.hpp"
 #include "pe/core/log.hpp"
 
 #include <algorithm>
@@ -154,6 +155,8 @@ Launcher::~Launcher()
         presence_scan_.wait();
     if (home_icon_scan_.valid())
         home_icon_scan_.wait();
+    if (home_icon_scan_extra_.valid())
+        home_icon_scan_extra_.wait();
     if (home_media_scan_.valid())
         home_media_scan_.wait();
     if (media_scan_.valid())
@@ -545,12 +548,31 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
         if (launch_screenshots_.empty() && !home_.last_screenshot.empty())
             launch_screenshots_.push_back(home_.last_screenshot);
     }
-    if (launch_hero_.empty() && !launch_screenshots_.empty())
-        launch_hero_ = launch_screenshots_.front();
+    // Read files already published by the active media worker rather than
+    // freezing the older Home/Library snapshot into the loading screen.
+    launch_case_game_.title_id = title_id;
+    launch_case_game_.file = file;
+    launch_case_game_.cover = cover;
+    launch_case_game_.hero = launch_hero_;
+    launch_case_game_.screenshots = launch_screenshots_;
+    launch_case_game_ = services_.cached_game_media(std::move(launch_case_game_));
+    launch_cover_ = launch_case_game_.cover;
+    launch_hero_ = launch_case_game_.hero;
+    launch_screenshots_ = launch_case_game_.screenshots;
+    // A negative cached texture must not veto an image newly present on disk.
+    if (textures_.known_missing(launch_hero_)) textures_.invalidate(launch_hero_);
+    textures_.revalidate(launch_hero_);
+    textures_.revalidate(launch_cover_);
+    if (!case_media::BackgroundAllowed(launch_hero_)) {
+        launch_hero_.clear();
+        if (const auto* fallback = case_media::BackgroundScreenshot(launch_screenshots_))
+            launch_hero_ = *fallback;
+    }
     // Home and Recent launch routes may not have a fully populated Library
     // snapshot. Use their actual cached metadata, never an invented scan.
     launch_case_game_.name = title;
-    launch_case_game_.cover = cover;
+    launch_case_game_.file = file; // Home-only NUP launches still need edition identity.
+    launch_case_game_.cover = launch_cover_;
     launch_case_game_.hero = launch_hero_;
     launch_case_game_.screenshots = launch_screenshots_;
     launch_case_game_.description = launch_description_;
@@ -574,15 +596,24 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
 
     // Real, locally cached retail scans win independently per face. A missing
     // back is composed from cached game metadata, never faked as a real scan.
-    const BoxArt case_art = services_.box_art(title_id);
+    // NUP editions can reuse an NS1 program TitleID, so the cache namespace
+    // must include the generation at launch as well as during enrichment.
+    const bool launch_ns2_case =
+        case_media::IsSwitch2TitleId(title_id) ||
+        launch_case_game_.format == "NUP" ||
+        launch_case_game_.file.ends_with(".nup") ||
+        launch_case_game_.file.ends_with(".NUP");
+    const BoxArt case_art = services_.box_art(title_id, launch_ns2_case);
     launch_box_front_ = case_art.front;
     launch_box_back_ = case_art.back;
     launch_box_spine_ = case_art.spine;
+    for (const auto* path : {&launch_box_front_, &launch_box_back_, &launch_box_spine_})
+        textures_.revalidate(*path);
     launch_title_id_ = title_id;
     launch_case_placeholder_mask_ = 0;
     launch_case_ready_mask_ = 0;
     if (!launch_box_front_.empty()) (void)textures_.cover(launch_box_front_, 760.0f);
-    if (!native_artwork_loading_ && !launch_box_back_.empty())
+    if (!launch_box_back_.empty())
         (void)textures_.cover(launch_box_back_, 760.0f);
     if (!launch_box_spine_.empty()) (void)textures_.cover(launch_box_spine_, 760.0f);
     // Native launch leaves as soon as usable front art is composed. A real
@@ -1285,6 +1316,8 @@ void Launcher::draw_launch(Canvas &c)
 {
     const float t = tween::clamp01(launch_.progress());
     const float seconds = theme::kLaunchSeconds * t;
+    const float case_seconds=native_artwork_loading_
+        ? static_cast<float>(Eden::LaunchHandoff::LoadingSeconds()-1.0):seconds;
     // No fade to black: the Vulkan loading surface reuses this EXACT final
     // launcher picture until the guest actually presents its first frame.
     const float appear = native_artwork_loading_ ? 1.0f : tween::cubic_out(seconds / 0.25f);
@@ -1343,41 +1376,26 @@ void Launcher::draw_launch(Canvas &c)
     c.list.shadow({194.0f, 796.0f, 795.0f, 80.0f}, 42.0f, 94.0f,
                   theme::kSun.with_alpha(0.18f));
 
-    // Every game uses this exact geometric case, independent of the artwork
-    // source. The *same pivot* and camera project front/back and the plastic
-    // side in the OpenGL vertex shader; the scan is a perspective-correct
-    // texture on the face rather than a 2D width squash.
-    // Hold the rear cover 4.5 seconds at full width. A constant 360-degree
-    // spin would make the physical description impossible to read.
-    const float turn_start = theme::kCaseFrontHold;
-    const float back_start = turn_start + theme::kCaseTurnSeconds;
-    const float return_start = back_start + theme::kCaseBackHold;
-    // The front exposes the real LEFT red spine. On the nearly face-on
-    // back, the real clear opening appears on the LEFT through perspective.
-    // No cosmetic red stripe is superimposed on the right edge. Both poses
-    // use the exact same shared case geometry for every game.
-    constexpr float kFrontYaw = 0.52f;
-    constexpr float kBackYaw = 3.14159265358979323846f + 0.18f;
-    constexpr float kFullTurn = 6.28318530717958647692f;
-    float angle = kFrontYaw;
-    if (!native_artwork_loading_ && motion() > 0.0f) {
-        if (seconds < turn_start) {
-            angle = kFrontYaw;
-        } else if (seconds < back_start) {
-            angle = kFrontYaw + (kBackYaw - kFrontYaw) *
-                tween::cubic_in_out((seconds - turn_start) / theme::kCaseTurnSeconds);
-        } else if (seconds < return_start) {
-            angle = kBackYaw;
-        } else {
-            angle = kBackYaw + (kFullTurn + kFrontYaw - kBackYaw) *
-                tween::cubic_in_out((seconds - return_start) / theme::kCaseTurnSeconds);
-        }
+    loading_case_first_=c.list.instances().size();
+    loading_case_count_=0;
+    if(loading_capture_pose_!=LoadingCapturePose::background){
+    // Admission remains bounded, but never shortens the visual cycle.
+    float angle=Eden::LoadingCase::Yaw(case_seconds,motion()<=0.0f);
+    switch(loading_capture_pose_){
+    case LoadingCapturePose::front:angle=Eden::LoadingCase::kTemplateYaw[0];break;
+    case LoadingCapturePose::front_other:angle=Eden::LoadingCase::kTemplateYaw[1];break;
+    case LoadingCapturePose::back_other:angle=Eden::LoadingCase::kTemplateYaw[2];break;
+    case LoadingCapturePose::back:angle=Eden::LoadingCase::kTemplateYaw[3];break;
+    default:break;
     }
     const float facing = std::cos(angle);
     const bool back = facing < 0.0f;
     constexpr float case_depth = 44.0f;
     constexpr float case_radius = 22.0f;
-    const bool ns2_case = case_media::IsSwitch2TitleId(launch_title_id_);
+    const bool ns2_case = case_media::IsSwitch2TitleId(launch_title_id_) ||
+        launch_case_game_.format == "NUP" ||
+        launch_case_game_.file.ends_with(".nup") ||
+        launch_case_game_.file.ends_with(".NUP");
     // Use the actual reusable case outline for projected shadow/geometry.
     // The reference template is taller than the previous 422x655 poster.
     const Rect physical{374.0f, 126.0f, 454.0f, 730.0f};
@@ -1497,7 +1515,8 @@ void Launcher::draw_launch(Canvas &c)
                      rear ? "back" : "front");
     };
     prepare_case_page(false);
-    if (!native_artwork_loading_) prepare_case_page(true);
+    // Prepare both flat paper materials before dropping launcher GL IDs.
+    if (!native_artwork_loading_ || done_) prepare_case_page(true);
     const std::uint32_t composed_page =
         back ? launch_composed_back_ : launch_composed_front_;
     // A queued retail decode is NOT a drawable face. Keep the composed,
@@ -1625,6 +1644,9 @@ void Launcher::draw_launch(Canvas &c)
                                ns2_case ? Color::rgb(0xff4759, 0.90f) : Color::rgb(0xdbe5f0, 0.59f),
                                ns2_case ? Color::rgb(0x97091f, 0.84f) : Color::rgb(0x677588, 0.49f));
     }
+
+    loading_case_count_=c.list.instances().size()-loading_case_first_;
+    } // 2D background contains no case or case shadows
 
     // The brand/title column begins well after the 3D case's cast shadow.
     constexpr float brand_x = 1382.0f;

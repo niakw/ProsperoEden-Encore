@@ -24,10 +24,11 @@ public:
     std::vector<pe::ui::Game> games() override;
     std::vector<pe::ui::Game> games(const std::atomic<bool>* cancel) override;
     pe::ui::Game enrich_game_media(pe::ui::Game game) override;
+    pe::ui::Game cached_game_media(pe::ui::Game game) override;
     pe::ui::Game enrich_home_icon(pe::ui::Game game, const std::atomic<bool>* cancel) override;
     pe::ui::Game enrich_game_media(pe::ui::Game game, const std::atomic<bool>* cancel) override;
     std::string exact_game_size(const std::string& file, const std::atomic<bool>* cancel) override;
-    pe::ui::BoxArt box_art(std::uint64_t title_id) override;
+    pe::ui::BoxArt box_art(std::uint64_t title_id, bool second_generation = false) override;
     std::string game_path(const std::string& file) override;
     bool game_exists(const std::string& file) override;
     bool game_storage_available() override;

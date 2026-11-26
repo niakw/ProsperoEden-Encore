@@ -35,13 +35,19 @@ assert "query_cache = nullptr;" in scheduler_h.split("void ClearQueryCache() noe
 assert "if (query_cache)" in scheduler.split("void Scheduler::EndPendingOperations()", 1)[1].split("void Scheduler::EndRenderPass()", 1)[0]
 assert "scheduler.Finish();" in buffer_cache.split("void BufferCacheRuntime::Finish()", 1)[1].split("}", 1)[0]
 
-# NS2: a reserved 12 GiB guest VA is NOT committed DRAM. The first KSharedMemory
-# direct memset must be preceded by a bounded physical-commit admission.
+# NS2: 12 GiB guest VA is NOT committed DRAM. The maintained
+# HostMemory::ClearBackingRegion admits and zeroes through the sparse
+# owner; no duplicated raw precommit or pointer write is permitted.
 assert "EDEN_NS2_SPARSE_BACKING" in shared
 init = shared.split("Result KSharedMemory::Initialize(", 1)[1].split("void KSharedMemory::Finalize(", 1)[0]
-assert init.index("EdenNs2CommitGuestBacking(") < init.index("std::memset(")
-assert init.index("throw std::bad_alloc{};") < init.index("std::memset(")
-assert "physical - Core::DramMemoryMap::Base, block.GetSize()" in init
+assert "EdenNs2CommitGuestBacking(" not in shared
+assert "const auto offset = physical - Core::DramMemoryMap::Base;" in init
+assert init.index("m_device_memory->buffer.ClearBackingRegion(") < init.index(
+    "memory_reservation.Commit();")
+assert init.index("catch (const std::bad_alloc&)") < init.index(
+    "m_is_initialized = true;")
+assert "m_page_group->CloseAndReset(kernel);" in init
+assert "R_THROW(ResultOutOfMemory);" in init
 assert "list(REMOVE_ITEM eden_sparse_core_sources \"hle/kernel/k_shared_memory.cpp\")" in cmake
 assert "set_property(TARGET core PROPERTY SOURCES \"${eden_sparse_core_sources}\")" in cmake
 # A regression in the tested 88538c45 ELF linked a direct libc memset even
@@ -65,7 +71,8 @@ assert 'std::min(comma, dot)' in lib
 assert 'if (attempts >= 7' in services
 assert "stbi_failure_reason()" in services
 assert "EDEN_EXEFS_SIZE" in services
-assert "Eden::Ns2Catalog::Description(" in services
+assert "ApplyCatalogSynopsis(" in services
+assert "Eden::Ns2Catalog::Description(" not in services
 assert "if (it->second.texture == 0) {" in textures
 assert "target_pixels >= 1024" in textures
 # Library source must provide controller focus over each real screenshot.

@@ -2,6 +2,17 @@ name: NUP v1 host preflight
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - headless/nup_v1_vfs.cpp
+      - tools/check-nup-v1-host.py
+      - tools/check-nup-v1-vfs-host.py
+      - tools/check-nup-v1-native-abi.py
+      - headless/nup_v1_aoc_service.cpp
+      - tools/check-nup-v1-service-parity-host.py
+      - tools/check-nup-metadata-bounds-source.py
+      - .github/workflows/nup-v1-host.yml
 permissions:
   contents: read
 
@@ -20,6 +31,8 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      - name: Check optional metadata bounds and retained fail-closed parsing
+        run: python3 -B tools/check-nup-metadata-bounds-source.py
       - name: Validate NUP v1 structure and reject corrupted fixtures
         run: python3 tools/check-nup-v1-host.py --self-test
       - name: Stream raw and zstd payloads and reject bad hashes / frames

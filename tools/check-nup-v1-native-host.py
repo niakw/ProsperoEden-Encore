@@ -91,6 +91,41 @@ def main():
         oversized_icon.write_bytes(content_module.oversized_icon_fixture())
         large_raw = temp / "large-raw.nup"
         large_raw.write_bytes(content_module.large_raw_fixture())
+        edition = temp / "embedded-edition.nup"
+        edition.write_bytes(content_module.embedded_edition_fixture())
+        paired_edition = temp / "paired-edition.nup"
+        paired_edition.write_bytes(content_module.build([
+            {"title_id": 0x0100123400000000, "version": 0, "kind": 0,
+             "files": {"exefs/main": b"legacy-main",
+                       "exefs/main.npdm": b"latest-npdm",
+                       "romfs/state.bin": b"legacy-state"}},
+            {"title_id": 0x0400123400000800, "version": 7, "kind": 1,
+             "files": {"exefs/main": b"native-main",
+                       "exefs/main.npdm": b"switch2-npdm",
+                       "romfs/state.bin": b"native-state"}},
+            {"title_id": 0x0100123400001000, "version": 2, "kind": 2,
+             "files": {"romfs/bonus.bin": b"edition-addon",
+                       "romfs/System/AoCUpgradeVersion.txt": b"7"}},
+        ]))
+        native_only_edition = temp / "native-only-edition.nup"
+        native_only_edition.write_bytes(content_module.build([
+            {"title_id": 0x0100123400000800, "version": 7, "kind": 1,
+             "files": {"program1/exefs/main": b"native-main",
+                       "program1/exefs/main.npdm": b"switch2-npdm",
+                       "program1/romfs/state.bin": b"native-state"}},
+            {"title_id": 0x0100123400001000, "version": 1, "kind": 2,
+             "files": {"romfs/bonus.bin": b"old-upgrade",
+                       "romfs/System/AoCUpgradeVersion.txt": b"1"}},
+            {"title_id": 0x0100123400001000, "version": 2, "kind": 2,
+             "files": {"romfs/bonus.bin": b"marked-upgrade",
+                       "romfs/state.bin": b"upgrade-state",
+                       "romfs/System/Resource/table.Nin_Ounce.rsizetable": b"2"}},
+            {"title_id": 0x0100123400001001, "version": 9, "kind": 2,
+             "files": {"romfs/ordinary.bin": b"ordinary-addon"}},
+            {"title_id": 0x0100123400003000, "version": 99, "kind": 2,
+             "files": {"romfs/foreign.bin": b"foreign-addon",
+                       "romfs/System/AoCUpgradeVersion.txt": b"99"}},
+        ]))
         completed = subprocess.run(
             [str(binary), str(addon), str(standalone),
              str(executable), str(foreign_update), str(foreign_npdm),
@@ -99,7 +134,7 @@ def main():
              str(nacp_extracted), str(corrupt_nacp),
              str(short_nacp), str(valid_compressed),
              str(overlong_compressed), str(partial_compressed),
-             str(oversized_icon), str(large_raw)],
+             str(oversized_icon), str(large_raw), str(edition), str(paired_edition), str(native_only_edition)],
             check=True, capture_output=True, text=True)
         print(completed.stdout, end="")
         print(completed.stderr, end="", file=sys.stderr)

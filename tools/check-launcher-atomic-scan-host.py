@@ -57,6 +57,11 @@ assert "const Game* game = selected_valid" in draw_library
 assert "count > 0 ? &games_[static_cast<std::size_t>(library_.selected)]" not in draw_library
 
 assert "game.addons = enriched.addons;" in media_finish
+# Production's worker handoff carries an independently invalidated Spine path.
+services_hpp = (ROOT / "headless/prosperoeden/pe/ui/services.hpp").read_text()
+assert "std::string box_spine{};" in services_hpp
+assert "textures_.invalidate(enriched.box_spine);" in media_finish
+assert "textures_.invalidate(enriched.box_spine);" in home_finish
 assert "game.addons_short = enriched.addons_short;" in media_finish
 assert "game.language = enriched.language;" in media_finish
 assert "game.language_note = enriched.language_note;" in media_finish
@@ -78,6 +83,8 @@ cpp = r"""
 #include <unordered_map>
 #include <string_view>
 #include <vector>
+#include "pe/ui/case_media_selection.hpp"
+namespace case_media = pe::ui::case_media;
 struct Game {
     std::string file;
     bool docked = false;
@@ -86,7 +93,7 @@ struct Game {
     std::string name;
     bool artwork_changed = false;
     unsigned case_artwork_changed = 0;
-    std::string cover, box_front, box_back, hero;
+    std::string cover, box_front, box_back, box_spine, hero;
     std::vector<std::string> screenshots;
     std::string intro, description, publisher, developer, release_date, categories, size = "—";
     std::string addons, addons_short, language, language_note;
@@ -100,15 +107,20 @@ namespace sys {
 template<class... Args> void log(const char*, Args...) {}
 }
 std::string tr(const char* message) { return message; }
-struct Textures { int invalidated = 0; void invalidate(const std::string&) { ++invalidated; } };
+struct Textures {
+    int invalidated = 0;
+    std::vector<std::string> paths;
+    void invalidate(const std::string& path) { ++invalidated; paths.push_back(path); }
+};
 struct Recent {
     std::uint64_t title_id = 0;
+    std::string file;
     std::string cover, tile_icon, hero, screenshot, title, intro, description;
     int max_players = 0;
 };
 struct Home {
     std::uint64_t last_title_id = 0;
-    std::string last_cover, last_hero, last_screenshot, last_title;
+    std::string last_file, last_cover, last_hero, last_screenshot, last_title;
     std::string last_intro, last_description;
     int last_max_players = 0;
     std::vector<Recent> recents;
@@ -121,8 +133,9 @@ public:
     std::future<std::string> selected_size_scan_;
     Screen screen_ = Screen::library;
     std::atomic<bool> selected_media_cancel_{false}, selected_size_cancel_{false}, media_cancel_{false};
-    std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> media_next_retry_;
+    std::unordered_map<std::string, std::chrono::steady_clock::time_point> media_next_retry_;
     std::uint64_t media_scan_title_id_ = 0, home_media_scan_title_id_ = 0;
+    std::string media_scan_file_, home_media_scan_file_;
     std::uint64_t selected_size_scan_title_id_ = 0;
     std::uint64_t selected_size_failed_title_id_ = 0;
     std::string selected_size_scan_file_, selected_size_failed_file_, selected_game_;
@@ -218,26 +231,31 @@ int main() {
         assert(same.library_shot_focused_ == -1 && same.library_shot_viewer_ == -1);
         assert(same.library_.resets == 1 && same.refreshed == 1);
     }
-    // A HOME-origin enrichment must also reach every installed physical
-    // copy of a TitleID. This uses the actual asynchronous owner method.
+    // A HOME-origin enrichment is restricted to the exact installed file
+    // and TitleID. This uses the actual asynchronous owner method.
     {
         Launcher home;
         home.home_.last_title_id = 0x777;
+        home.home_.last_file = "MKW alpha";
         Recent last_played;
         last_played.title_id = 0x777;
+        last_played.file = "MKW alpha";
         home.home_.recents.push_back(std::move(last_played));
         Recent local_icon;
         local_icon.title_id = 0x777;
+        local_icon.file = "MKW alpha";
         local_icon.tile_icon = "local-control.webp";
         home.home_.recents.push_back(std::move(local_icon));
         Game a{"MKW alpha", true}; a.title_id = 0x777;
         Game b{"MKW beta", true}; b.title_id = 0x777;
         Game other{"Different", true}; other.title_id = 0x888;
         home.games_ = {a, b, other};
-        Game enriched{"MKW", true};
+        Game enriched{"MKW alpha", true};
         enriched.title_id = 0x777;
         enriched.box_front = "front.webp";
         enriched.box_back = "rear.webp";
+        enriched.box_spine = "spine.webp";
+        enriched.case_artwork_changed = 4u;
         enriched.cover = "icon.webp";
         enriched.hero = "hero.webp";
         enriched.screenshots = {"scene.webp"};
@@ -245,11 +263,14 @@ int main() {
         std::promise<Game> found;
         home.home_media_scan_ = found.get_future();
         home.home_media_scan_title_id_ = 0x777;
+        home.home_media_scan_file_ = "MKW alpha";
         found.set_value(enriched);
         home.finish_home_media();
         assert(home.games_[0].box_back == "rear.webp");
-        assert(home.games_[1].box_back == "rear.webp");
-        assert(home.games_[1].screenshots.size() == 1);
+        assert(std::find(home.textures_.paths.begin(), home.textures_.paths.end(),
+                         "spine.webp") != home.textures_.paths.end());
+        assert(home.games_[1].box_back.empty());
+        assert(home.games_[0].screenshots.size() == 1 && home.games_[1].screenshots.empty());
         assert(home.games_[2].box_back.empty());
         assert(home.home_.last_cover == "icon.webp");
         assert(home.home_.recents.front().hero == "hero.webp");
@@ -263,6 +284,7 @@ int main() {
         home.home_media_scan_ = no_identity.get_future();
         no_identity.set_value(zero);
         home.home_media_scan_title_id_ = 0x777;
+        home.home_media_scan_file_ = "MKW alpha";
         home.finish_home_media();
         assert(home.games_[2].box_front.empty());
         // An unrelated, even valid, TitleID cannot contaminate the active
@@ -273,13 +295,14 @@ int main() {
         std::promise<Game> stale;
         home.home_media_scan_ = stale.get_future();
         home.home_media_scan_title_id_ = 0x777;
+        home.home_media_scan_file_ = "MKW alpha";
         stale.set_value(wrong);
         home.finish_home_media();
         assert(home.games_[2].cover.empty());
         assert(home.home_.last_cover == "icon.webp");
     }
-    // Duplicate installations of the same TitleID must all inherit Nlib
-    // artwork. Never distribute an invalid zero ID to unrelated ROMs.
+    // Duplicate installations of the same TitleID must not share artwork
+    // across files. Never distribute an invalid zero ID to unrelated ROMs.
     {
         Launcher copies;
         Game first{"MKW copy 1", true};
@@ -294,20 +317,25 @@ int main() {
         nlib.cover = "mkw-icon.webp";
         nlib.box_front = "mkw-front.webp";
         nlib.box_back = "mkw-back.webp";
+        nlib.box_spine = "mkw-spine.webp";
+        nlib.case_artwork_changed = 4u;
         nlib.hero = "mkw-hero.webp";
         nlib.description = "Mario Kart World";
         nlib.screenshots = {"mkw-shot.webp"};
         std::promise<Game> done;
         copies.media_scan_ = done.get_future();
         copies.media_scan_title_id_ = 0x123;
+        copies.media_scan_file_ = "MKW copy 1";
         done.set_value(nlib);
         copies.finish_selected_media();
         assert(copies.games_[0].box_back == "mkw-back.webp");
-        assert(copies.games_[1].box_back == "mkw-back.webp");
-        assert(copies.games_[1].hero == "mkw-hero.webp");
-        assert(copies.games_[1].screenshots.size() == 1);
+        assert(std::find(copies.textures_.paths.begin(), copies.textures_.paths.end(),
+                         "mkw-spine.webp") != copies.textures_.paths.end());
+        assert(copies.games_[1].box_back.empty());
+        assert(copies.games_[1].hero.empty());
+        assert(copies.games_[0].screenshots.size() == 1 && copies.games_[1].screenshots.empty());
         assert(copies.games_[2].box_front.empty());
-        assert(copies.home_syncs == 2 && copies.media == 1);
+        assert(copies.home_syncs == 1 && copies.media == 1);
         Game zero{"Invalid", false};
         zero.title_id = 0;
         zero.cover = "bad.webp";
@@ -315,10 +343,11 @@ int main() {
         std::promise<Game> invalid;
         copies.media_scan_ = invalid.get_future();
         copies.media_scan_title_id_ = 0x123;
+        copies.media_scan_file_ = "MKW copy 1";
         invalid.set_value(zero);
         copies.finish_selected_media();
         assert(copies.games_[3].cover == "bad.webp");
-        assert(copies.home_syncs == 2);
+        assert(copies.home_syncs == 1);
         // The worker accidentally reports another *valid* title: refuse
         // before invalidating its textures or touching the matching game.
         Game spoof = nlib;
@@ -327,10 +356,25 @@ int main() {
         std::promise<Game> bad_title;
         copies.media_scan_ = bad_title.get_future();
         copies.media_scan_title_id_ = 0x123;
+        copies.media_scan_file_ = "MKW copy 1";
         bad_title.set_value(spoof);
         copies.finish_selected_media();
         assert(copies.games_[2].box_front.empty());
-        assert(copies.home_syncs == 2);
+        assert(copies.home_syncs == 1);
+        // A stale response with the correct numeric title but wrong file
+        // must also be rejected before touching either installed copy.
+        Game wrong_file = nlib;
+        wrong_file.file = "MKW copy 2";
+        wrong_file.cover = "wrong-file.webp";
+        std::promise<Game> wrong_file_result;
+        copies.media_scan_ = wrong_file_result.get_future();
+        copies.media_scan_title_id_ = 0x123;
+        copies.media_scan_file_ = "MKW copy 1";
+        wrong_file_result.set_value(wrong_file);
+        copies.finish_selected_media();
+        assert(copies.games_[0].cover == "mkw-icon.webp");
+        assert(copies.games_[1].cover.empty());
+        assert(copies.home_syncs == 1);
     }
     // The actual pending-future completion owner cancels a stale request
     // without waiting, preserves another title's metadata and permits retry.
@@ -340,7 +384,7 @@ int main() {
         Game b{"b",true}; b.title_id=2;
         l.games_={a,b}; l.library_.selected=0;
         std::promise<Game> p;
-        l.media_scan_=p.get_future(); l.media_scan_title_id_=1;
+        l.media_scan_=p.get_future(); l.media_scan_title_id_=1; l.media_scan_file_="a";
         l.finish_selected_media();
         assert(!l.selected_media_cancel_ && l.media_scan_.valid());
         l.library_.selected=1;
@@ -352,13 +396,13 @@ int main() {
         assert(!l.media_scan_.valid() && l.media==1);
         assert(l.games_[0].cover=="current.webp" && l.games_[1].cover.empty());
         assert(l.home_syncs==0 && l.textures_.invalidated>0);
-        assert(l.media_next_retry_.at(1)<
+        assert(l.media_next_retry_.at("a")<
                std::chrono::steady_clock::now()+std::chrono::seconds(3));
         // Leaving the library while the same title remains selected also
         // cancels, without changing the global Home/launch cancellation.
         l.selected_media_cancel_=false; l.library_.selected=0;
         std::promise<Game> q; l.media_scan_=q.get_future();
-        l.media_scan_title_id_=1; l.screen_=Screen::home;
+        l.media_scan_title_id_=1; l.media_scan_file_="a"; l.screen_=Screen::home;
         l.finish_selected_media();
         assert(l.selected_media_cancel_ && !l.media_cancel_ && l.media_scan_.valid());
         q.set_value(a); l.finish_selected_media(); assert(!l.media_scan_.valid());
@@ -520,7 +564,8 @@ with tempfile.TemporaryDirectory(prefix="encore-library-atomic-") as folder:
             exe = folder / (Path(compiler).name + opt)
             built = subprocess.run(
                 [compiler, "-std=c++20", "-pthread", opt, "-Wall", "-Wextra",
-                 "-Werror", str(test), "-o", str(exe)],
+                 "-Werror", "-I", str(ROOT / "headless/prosperoeden"),
+                 str(test), "-o", str(exe)],
                 capture_output=True, text=True, timeout=45)
             assert built.returncode == 0, (compiler, opt, built.stderr[-5000:])
             ran = subprocess.run([str(exe)], capture_output=True, text=True, timeout=15)

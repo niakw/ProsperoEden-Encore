@@ -37,7 +37,7 @@ permissions:
 # never accidentally schedule a 1458-object compiler run.
 # workflow_dispatch is already isolated by its event name.
 concurrency:
-  group: encore-native-${{ github.ref }}-${{ github.event_name }}-${{ (github.ref == 'refs/heads/main' && github.event_name == 'push' && !startsWith(github.event.head_commit.message || '', '[full-build]') && !startsWith(github.event.head_commit.message || '', '[build-only]') && !startsWith(github.event.head_commit.message || '', '[resume-stage:37728435816]')) && 'skip-only' || 'build-capable' }}
+  group: encore-native-${{ github.ref }}-${{ github.event_name }}-${{ (github.ref == 'refs/heads/main' && github.event_name == 'push' && !startsWith(github.event.head_commit.message || '', '[full-build]') && !startsWith(github.event.head_commit.message || '', '[build-only]') && !startsWith(github.event.head_commit.message || '', '[resume-stage:45087056642]')) && 'skip-only' || 'build-capable' }}
   cancel-in-progress: true
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
           (github.event_name == 'push' &&
            (startsWith(github.event.head_commit.message || '', '[full-build]') ||
             startsWith(github.event.head_commit.message || '', '[build-only]') ||
-            startsWith(github.event.head_commit.message || '', '[resume-stage:37728435816]'))) }}
+            startsWith(github.event.head_commit.message || '', '[resume-stage:45087056642]'))) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     env:
@@ -63,7 +63,9 @@ jobs:
       BUILD_ONLY: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_only) || (github.event_name == 'push' && startsWith(github.event.head_commit.message || '', '[build-only]')) }}
       # GitHub-only push resume for an already compiled staged app. This marker
       # is one-shot and cannot alter the downloaded binary or publish a release.
-      RESUME_STAGE_RUN_ID: ${{ startsWith(github.event.head_commit.message || '', '[resume-stage:37728435816]') && '37728435816' || inputs.resume_run_id || '' }}
+      RESUME_STAGE_RUN_ID: ${{ startsWith(github.event.head_commit.message || '', '[resume-stage:45087056642]') && '45087056642' || inputs.resume_run_id || '' }}
+      # One-shot packaging recovery of the previously linked application.
+      RECOVER_NATIVE_RUN_ID: ${{ startsWith(github.event.head_commit.message || '', '[full-build] Recover cached native 45742804408') && '45742804408' || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -87,6 +89,9 @@ jobs:
           # Catch cache-step contract drift before apt and native dependencies.
           python3 -B tools/check-ci-cache.py
           python3 -B tools/check-post-f07-delta-register.py
+          # Require both exact source-owner inventories before provisioning the SDK.
+          python3 -B tools/check-active-source-inventory.py
+          python3 -B tools/check-eden-optimization-coverage.py
           # The production JIT no longer has the retired ON/OFF CMake options.
           # Fail here instead of after native configure and 23 syntax TUs.
           python3 -B tools/check-performance.py --source-only
@@ -157,12 +162,35 @@ jobs:
             ~/.cache/ccache
             ~/.cache/prosperoeden-deps
             ~/.cache/ps5-eden-headless.*
-            ~/.cache/prosperoeden-mkpfs
             .deps
-          key: prospero-eden-encore-040-${{ runner.os }}-${{ hashFiles('tools/deps.json') }}
+          key: ${{ env.RECOVER_NATIVE_RUN_ID != '' && 'prospero-eden-encore-040-Linux-fc370fe9ce80cd597292415e2be5ec6a07a034248d03b6fd2f8cc2be59ef6d3e-45742804408' || format('prospero-eden-encore-040-{0}-{1}', runner.os, hashFiles('tools/deps.json')) }}
           restore-keys: |
             prospero-eden-encore-040-${{ runner.os }}-
             prosperoeden-040-zbic-${{ runner.os }}-
+
+      - name: Verify exact cached native recovery input
+        if: ${{ env.RECOVER_NATIVE_RUN_ID != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXACT_CACHE_HIT: ${{ steps.build-cache.outputs.cache-hit }}
+        run: |
+          set -euo pipefail
+          test "$EXACT_CACHE_HIT" = true
+          source_sha=fe31b789b382f69e391fc91c4468d5239363498e
+          git diff --name-only "$source_sha" HEAD | sort > "$RUNNER_TEMP/recovery-diff"
+          printf '%s\n' '.github/workflows/build-040-zbic.yml' 'tools/check-ci-cache.py' 'tools/ci/check-staged-app.py' | sort > "$RUNNER_TEMP/recovery-allowed"
+          diff -u "$RUNNER_TEMP/recovery-allowed" "$RUNNER_TEMP/recovery-diff"
+          test "$(git -C vendor rev-parse HEAD)" = 93e3259c7aea3a88a7fd5f80cf706903fac6ccc9
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RECOVER_NATIVE_RUN_ID" > "$RUNNER_TEMP/recovery-run.json"
+          jq -e --arg sha "$source_sha" '.head_sha == $sha and .status == "completed" and .conclusion == "failure" and .name == "Encore native build and package"' "$RUNNER_TEMP/recovery-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/jobs/139651676983" > "$RUNNER_TEMP/recovery-job.json"
+          jq -e '.run_id == 45742804408 and any(.steps[]; .name == "Build and stage native release" and .conclusion == "success") and any(.steps[]; .name == "Save caches after successful native preparation" and .conclusion == "success")' "$RUNNER_TEMP/recovery-job.json"
+          scratch="$HOME/.cache/ps5-eden-headless.$(printf '%s' "$PWD" | sha256sum | cut -c1-12)"
+          test -s "$scratch/native-local/bin/eden-headless"
+          test -s "$scratch/native-local/bin/eden-headless.map"
+          grep -Eq '^EDEN_ENCORE_SOURCE_COMMIT:(STRING|UNINITIALIZED)=fe31b789b382f69e391fc91c4468d5239363498e$' "$scratch/native-local/CMakeCache.txt"
+          sha256sum "$scratch/native-local/bin/eden-headless" "$scratch/native-local/bin/eden-headless.map" > "$RUNNER_TEMP/recovery-native.sha256"
+          echo "EDEN_CACHED_NATIVE_RECOVERY_INPUT_PASS run=$RECOVER_NATIVE_RUN_ID"
 
       - name: Prepare cacheable sibling dependency paths
         if: ${{ env.RESUME_STAGE_RUN_ID == '' }}
@@ -364,6 +392,8 @@ jobs:
           python3 -B tools/check-ps5-launcher-r385.py
           python3 -B tools/check-home-media.py
           python3 -B tools/check-launch-case-artwork.py
+          python3 -B tools/check-ns2-title-catalog-host.py
+          python3 -B tools/check-release-case-index-dedup-host.py
           python3 -B tools/check-bounded-logs.py
           python3 -B tools/check-log-budget.py
           python3 -B tools/check-log-pipe-unit.py
@@ -384,10 +414,6 @@ jobs:
             echo "::error::One or more source/host contracts failed; native build blocked"
             exit 1
           fi
-
-      - name: Preflight release packaging
-        if: ${{ env.RESUME_STAGE_RUN_ID == '' && env.BUILD_ONLY != 'true' }}
-        run: bash tools/ci/package-image.sh --prepare
 
       # Resume from an internal GitHub cache instead of an extra public
       # build artifact. Historical run artifacts remain a read-only fallback.
@@ -452,7 +478,43 @@ jobs:
           EDEN_SKIP_PREBUILD_SOURCE_CHECKS: ${{ env.BUILD_ONLY == 'true' && '1' || '0' }}
         run: |
           set -euo pipefail
-          bash tools/build-package.sh release-stage
+          if [[ -z "$RECOVER_NATIVE_RUN_ID" ]]; then
+            bash tools/build-package.sh release-stage
+          else
+            # The package script must see the original compiled SHA.
+            # Do not configure, compile or relink Eden.
+            source_sha=fe31b789b382f69e391fc91c4468d5239363498e
+            test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+            git checkout --detach "$source_sha"
+            trap 'git checkout --detach "$GITHUB_SHA"' EXIT
+            sha256sum --check --strict "$RUNNER_TEMP/recovery-native.sha256"
+            bash tools/build-core-fixture.sh
+            python3 -B tools/check-radv-native.py
+            scratch=$(cat .local/headless-cache)
+            export PS5_PAYLOAD_SDK="$scratch/sdk"
+            export EDEN_PS5_VULKAN=ON EDEN_VULKAN_DRIVER=RADV
+            export EDEN_PACKAGE_DIR="$PWD/build/release/PPSA99008"
+            export PS5_ELEVATION_SDK="$(realpath .deps/repos/ps5-native-app-boilerplate)/.deps/native/ps5-payload-sdk"
+            bash tools/package-headless-native.sh --integration
+            # Reject a different executable instead of silently rebuilding.
+            printf '%s  %s\n' '8ab845bd4f318bbc5f08ecb0cdb2fec34c8ef56942733fbfa9a6184e8b6f2a5f' build/headless-native/eboot.elf '773367a389f3ffcad95ada4f3c93404ab5c580d5e6f93517feb5fae657aa0cda' "$EDEN_PACKAGE_DIR/eboot.bin" | sha256sum --check --strict
+            sha256sum --check --strict "$RUNNER_TEMP/recovery-native.sha256"
+            git checkout --detach "$GITHUB_SHA"
+            trap - EXIT
+            echo "EDEN_CACHED_NATIVE_RECOVERY_BINARY_IDENTICAL run=$RECOVER_NATIVE_RUN_ID"
+          fi
+
+      # Private recovery checkpoint, not an installable FTP artifact.
+      # Preserve compiled files before a late validation can fail.
+      - name: Save compiled stage recovery checkpoint
+        if: ${{ !cancelled() && steps.stage.outcome == 'success' }}
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            build/release/
+            build/headless-native/
+          key: encore-compiled-stage-v1-${{ runner.os }}-${{ github.run_id }}
 
       - name: Validate freshly built staged app
         if: ${{ env.RESUME_STAGE_RUN_ID == '' }}
@@ -537,6 +599,10 @@ jobs:
         if: ${{ env.RESUME_STAGE_RUN_ID == '' }}
         run: |
           set -euo pipefail
+          if [[ -n "$RECOVER_NATIVE_RUN_ID" ]]; then
+            export GITHUB_SHA=fe31b789b382f69e391fc91c4468d5239363498e
+            export GITHUB_RUN_ID="$RECOVER_NATIVE_RUN_ID"
+          fi
           python3 -B tools/ci/write-crash-provenance.py \
             --app build/release/PPSA99008 \
             --native build/headless-native \
@@ -596,7 +662,6 @@ jobs:
             ~/.cache/ccache
             ~/.cache/prosperoeden-deps
             ~/.cache/ps5-eden-headless.*
-            ~/.cache/prosperoeden-mkpfs
             .deps
           key: prospero-eden-encore-040-${{ runner.os }}-${{ hashFiles('tools/deps.json') }}-${{ github.run_id }}
 

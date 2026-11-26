@@ -78,7 +78,8 @@ private:
     void SetMatrixData(const Device& device, PresentPushConstants& data, const Layout::FramebufferLayout& layout) const;
     void SetVertexData(const Device& device, PresentPushConstants& data, const Layout::FramebufferLayout& layout, const Common::Rectangle<f32>& crop) const;
     void UpdateDescriptorSet(const Device& device, VkImageView image_view, VkSampler sampler, size_t image_index);
-    void UpdateRawImage(const Tegra::FramebufferConfig& framebuffer, size_t image_index);
+    void UpdateRawImage(RasterizerVulkan& rasterizer, const Tegra::FramebufferConfig& framebuffer,
+                        size_t image_index);
 
 private:
     MemoryAllocator& memory_allocator;

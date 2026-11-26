@@ -39,7 +39,7 @@ using u64=unsigned long long;
 using CommandData=int;
 struct Item { int command{}; u64 fence{}; bool block{}; };
 struct ThreadManager {
- struct { std::mutex write_lock; u64 last_fence{}; std::atomic<u64> signaled_fence{};
+ struct { std::mutex write_lock; std::mutex completion_lock; u64 last_fence{}; std::atomic<u64> signaled_fence{};
           Common::SPSCQueue<Item,2> queue; std::condition_variable_any cv; } state;
  std::stop_source stop_source;
  u64 PushCommand(CommandData&&,bool,bool);

@@ -166,7 +166,9 @@ assert "std::array<std::future<DecodedCover>, 2> decode_{};" in texture_h
 assert "decoded.ok = services_.load_display_image(path, &decoded.image, target_pixels);" in texture_cpp
 assert "decode = std::async(std::launch::async" in texture_cpp
 assert "it->second.generation == result.generation" in texture_cpp
-assert "entry.texture = create(result.image);" in texture_cpp
+assert "const auto replacement = create(result.image);" in texture_cpp
+assert "if (replacement != 0)" in texture_cpp
+assert "entry.texture = replacement;" in texture_cpp
 assert "decode.wait_for(std::chrono::seconds(0))" in texture_cpp
 # Nlib media must be scaled on the decode worker to the dimensions the
 # launcher actually draws. Otherwise every 300px card uploads a 1080p image.

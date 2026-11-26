@@ -7,9 +7,11 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT/'vendor/encore-active/eden-core/src/video_core/gpu_vulkan.cpp'
+OWNER=ROOT/'vendor/encore-active/eden-core/src/video_core/gpu_gl_native.cpp'
 CLOCK=ROOT/'vendor/encore-active/eden-core/include/encore/guest_counter_policy.h'
 source=OWNER.read_text()
+vulkan=(OWNER.parent/'gpu_vulkan.cpp').read_text()
+assert source.split('[[nodiscard]] u64 GetTicks() const {',1)[1].split('void RendererFrameEndNotify',1)[0] == vulkan.split('[[nodiscard]] u64 GetTicks() const {',1)[1].split('void RendererFrameEndNotify',1)[0]
 cmake=(ROOT/'headless/CMakeLists.txt').read_text()
 assert CLOCK.is_file()
 assert '#include "encore/guest_counter_policy.h"' in source

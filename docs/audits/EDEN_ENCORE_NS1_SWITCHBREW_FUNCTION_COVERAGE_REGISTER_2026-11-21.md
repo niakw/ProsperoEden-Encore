@@ -3879,3 +3879,26 @@ Composition opérationnelle : **147 NULL/correspondances non résolues + 14 racc
 Arithmétique depuis le palier précédent : **451 - 100 - 10 = 341**. Depuis le recalcul 631 : **290 lignes fermées par requalification/qualification ciblée**.
 
 Aucun patch C++ runtime, changement de gitlink, build PS5 ou validation console dans cette étape. Les rejets explicites restent classés D/unsupported et ne sont jamais présentés comme une fonctionnalité émulée.
+
+
+### 2026-11-26 — clôture ciblée des ABI-DIFF HOS23 et correctifs runtime : palier 323
+
+Base : **341 lignes ouvertes** au couple moteur `13466a3e1439665edf8be5f5d175bd4bb3029ea5` / gitlink vendor `7be1675e767f5b41e1462dade2b8900ccf7e0706`.
+
+Les **23 ABI-DIFF** encore conservées ont été recroisées avec les tables HOS 23.0.1, les propriétaires réellement sélectionnés et les corps actifs. **18 quittent le pool** ; **5 restent ouvertes** car leur comportement est encore réellement partiel : NS `GetApplicationView`, NS `BoostSystemMemoryResourceLimit` (ancienne ligne mal indexée, commande courante à suivre sur son ID HOS23), NOTIF `GetNotificationPresentationSetting`, Friend `GetUserPresenceViewV1` et `LoadUserSettingV1`.
+
+Sorties de pool démontrées : doublon historique AM `GetDebugStorageChannel` (HOS23 ID 1000, pas 2), SPSM `GetCurrentState`, NS `LaunchMicroApplication`, ancienne ligne NS ServiceGetter `Attach`, NS-dev `LaunchApplicationFromHost`, les deux commandes audrec:a suspend/resume déjà fail-closed dans l'owner audio natif, NEWS 30500 fail-closed, BTDRV 34 `EnableRadio`, CAPS movie session 2001/2002, NPNS 1/2 désormais qualifiés en mode offline, NVDRV 7/8, NVMEMP `GetPid`, time:al `CreateWakeupAlarm`/child `GetAlarmEvent`, et l'ancienne nomenclature SPL cmd31 désormais résolue par interface.
+
+Correctifs C++ runtime vendor :
+- `9b4cb108c84c2209781befc3ab404d2925e5c06d` : SPSM cmd0 expose `GetCurrentState` et renvoie l'état Awake sans contrôler la PS5 ; NVMEMP remplace ses `UNIMPLEMENTED` par un rejet invité propre avec le nom HOS23 `GetPid` ; CAPS `OpenControlSession` retourne une vraie `IAlbumControlSession` dont les commandes movie-read/write HOS23 échouent explicitement faute de backend capture.
+- `6f91d4c31ebbf2d6583a9dee41cbec3f26cfe2c1` : NVDRV cmd7/cmd8 deviennent `SetAruidWithoutCheck` / `SetAruid`, le second vérifie le PID-descriptor avant publication de l'ARUID ; NS cmd2513 `LaunchMicroApplication` n'est plus `nullptr` et échoue explicitement quand le backend plateforme est indisponible.
+
+Le moteur est repinné dans ce commit sur le vendor **`6f91d4c31ebbf2d6583a9dee41cbec3f26cfe2c1`**.
+
+**Nouveau compteur global : 323 lignes ouvertes.**
+
+Composition opérationnelle : **147 NULL/correspondances historiques non résolues + 14 raccordements encore à qualifier + 162 non-NULL réellement ouverts = 323**.
+
+Arithmétique : **341 - 18 = 323**. Depuis le recalcul 631 : **308 lignes sorties du pool** par requalification ou correction ciblée.
+
+Statut validation : correctifs C++ intégrés et gitlink mis à jour ; **pas de build natif PS5 ni validation console revendiqués dans cette passe**. Les cinq cas encore partiels restent volontairement ouverts.

@@ -1301,6 +1301,19 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             # unrelated old vendor commit ID.
             fixture = runpy.run_path(str(receipt_path))
             source = (root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+            # The second immutable FC27 DrawTexture receipt reads the current
+            # rasterizer independently of the main Vulkan audit path. Reverse
+            # the same exact PS5 Ampere-only method before NS1 replays.
+            if raster_blob(source) == "ff8ad79ef203456063dbd848eab3ea575628edfc":
+                only_native_release = (
+                    "bool RasterizerVulkan::SignalNativeFence(std::function<void()>&& func) {\n"
+                    "    fence_manager.SignalNativeFence(std::move(func));\n"
+                    "    return true;\n"
+                    "}\n"
+                )
+                assert source.count(only_native_release)==1
+                source=source.replace(only_native_release,"",1)
+                assert raster_blob(source)=="39b2ed67e51937aecad666de4113ce792d32132d"
             source=reverse_attribute_index_batch_successor(source)
             source=reverse_collected_batch_preflight_successor(source)
             source=reverse_collected_batch_lock_successor(source)

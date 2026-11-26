@@ -4945,4 +4945,19 @@ Le manifeste shipping est synchronisé pour `application_manager_interface.cpp` 
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 37 lignes ouvertes.**
 
 Aucun build PS5 ni validation console revendiqué.
+### 2026-11-26 — FSP hash-salt directory-backend requalifié : 37 → 36
+
+Base précédente : **37 lignes ouvertes**.
+
+Le PARTIEL historique `fsp-srv` cmd35 `CreateSaveDataFileSystemWithHashSalt` est requalifié après recroisement du backend réellement utilisé par Encore avec LibHac :
+- le contrat HOS de cmd35 reste `SaveDataAttribute + SaveDataCreationInfo + SaveDataMetaInfo + HashSalt -> ()`, et Encore consomme l'ABI complète puis crée réellement le save au `space_id` demandé ;
+- dans LibHac, le `HashSalt` est propagé vers `SaveDataCreationInfo2` puis utilisé par le formateur du **save-image** JournalIntegrity ;
+- lorsque le backing est un répertoire, `SaveDataFileSystemCreator::Create` instancie directement `DirectorySaveDataFileSystem`; son initialisation reçoit journaling/multicommit/timestamp/random, mais aucun `HashSalt`. Le salt n'est donc pas une propriété du backend directory-save ;
+- Encore utilise volontairement ce modèle directory-save pour son backing hôte. Depuis les lots ExtraData/SaveDataId, les métadonnées observables du save sont persistées ; aucun getter IPC ne relit le salt de cmd35.
+
+Cette requalification **ne déclare pas JournalIntegrity émulé** : l'absence d'un save-image avec MAC/hash, corruption detection et métadonnées d'intégrité reste une limitation globale du backend filesystem. Elle n'est simplement plus imputée à la couverture de l'IPC cmd35 lui-même.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 36 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette étape.
 

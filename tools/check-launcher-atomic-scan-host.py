@@ -78,6 +78,8 @@ cpp = r"""
 #include <unordered_map>
 #include <string_view>
 #include <vector>
+#include "pe/ui/case_media_selection.hpp"
+namespace case_media = pe::ui::case_media;
 struct Game {
     std::string file;
     bool docked = false;
@@ -545,7 +547,8 @@ with tempfile.TemporaryDirectory(prefix="encore-library-atomic-") as folder:
             exe = folder / (Path(compiler).name + opt)
             built = subprocess.run(
                 [compiler, "-std=c++20", "-pthread", opt, "-Wall", "-Wextra",
-                 "-Werror", str(test), "-o", str(exe)],
+                 "-Werror", "-I", str(ROOT / "headless/prosperoeden"),
+                 str(test), "-o", str(exe)],
                 capture_output=True, text=True, timeout=45)
             assert built.returncode == 0, (compiler, opt, built.stderr[-5000:])
             ran = subprocess.run([str(exe)], capture_output=True, text=True, timeout=15)

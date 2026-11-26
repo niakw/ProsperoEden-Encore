@@ -112,7 +112,9 @@ assert 'TreeBytes(Eden::LogsDir(), cancel)' in services
 assert 'home_diagnostics_.free_bytes' not in home  # no invented PS5 total capacity
 assert 'home_diagnostics_.storage_root' in home
 
-assert 'const std::string hero_artwork = !hero_banner.empty() ? hero_banner : hero_screenshot;' in home
+assert 'const std::string hero_artwork =\n' in home
+assert 'case_media::BackgroundAllowed(hero_banner) && !c.textures.known_missing(hero_banner)' in home
+assert '? hero_banner\n            : case_media::BackgroundAllowed(hero_screenshot) ? hero_screenshot : std::string{};' in home
 assert 'hero_recent->hero' in home
 # The selected service gives NLIB banner and screenshots precedence over GamesDB.
 for marker in (

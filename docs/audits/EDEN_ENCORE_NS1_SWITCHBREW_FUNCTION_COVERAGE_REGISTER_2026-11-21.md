@@ -4019,3 +4019,18 @@ Le pool historique contenait encore **2 lignes** correspondantes (V1).
 Arithmétique : **175 - 2 = 173**. Depuis le recalcul 631 : **458 lignes sorties du pool**.
 
 Gitlink repinné sur `5c5ec7af23bd26eee80be789850cee65ace8fd48`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — ApplicationView basé sur le contenu installé : palier global 171
+
+Base : **173 lignes ouvertes**.
+
+Vendor **`2d389c95320c072349231755b9b4c3feb00042bb`** supprime la version synthétique `0x70000` des vues d'application V19/V20. Les deux chemins utilisent désormais `ContentProviderUnion::GetEntryVersion` : version de l'update `GetUpdateTitleID(application_id)` prioritaire, version de base en fallback. Les flags `0x401f17` sont conservés : ils correspondent au cas titre local entièrement présent/lançable utilisé également par Ryujinx.
+
+Cela qualifie les deux lignes historiques encore ouvertes autour de `GetApplicationViewDeprecated` / `GetApplicationView`.
+
+**Nouveau compteur global : 171 lignes ouvertes.**
+
+Arithmétique : **173 - 2 = 171**. Depuis le recalcul 631 : **460 lignes sorties du pool**.
+
+Gitlink repinné sur `2d389c95320c072349231755b9b4c3feb00042bb`. Aucun build PS5 ni validation console revendiqués.

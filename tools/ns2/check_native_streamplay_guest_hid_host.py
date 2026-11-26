@@ -175,6 +175,14 @@ int main() {
     {
         Service::INx2StreamPlayUserService user{system};
         Service::HLERequestContext first, second;
+        for (int command = 452; command <= 455; ++command) {
+            if (command == 453) continue;
+            Service::HLERequestContext legacy{};
+            user.Dispatch(command, legacy);
+            assert(legacy.result == 0x20b); // HIPC(11), description(1)
+            assert(legacy.copy_handles == 0 && legacy.interface_count == 0);
+        }
+        assert(KSharedMemory::create_count == 0);
         user.Dispatch(300, first);
         assert(first.result == ResultSuccess && first.payload_words == 6);
         assert(first.raw_count == 1 && first.raw_size == 0x9b000 &&

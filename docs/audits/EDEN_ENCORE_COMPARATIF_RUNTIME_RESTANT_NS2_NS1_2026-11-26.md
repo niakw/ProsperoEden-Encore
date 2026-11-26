@@ -683,6 +683,8 @@ Encore possède bien :
 
 Il n'y a donc pas d'absence générale du sous-système audio.
 
+🟢 **26/11/2026 — contrôle source du propriétaire `stpl:u` HOS23/NS2.** Le CMake natif inclut l'implémentation NGC HOS23 et l'audio partagé NS2 ; tous deux enregistraient `stpl:u` quand le firmware de substitution annonçait 23.0. SM refuse la seconde inscription avec `ResultAlreadyRegistered`. Correction vendor [`d5f3a6df`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/d5f3a6df4f6a59846fc7a0dc0c03cadebb6e95f6) : en build PS5 unifié, l'audio reste l'unique propriétaire de `stpl:u` et son enfant conserve le handle mémoire HID NS2 (cmd 300) ainsi que les erreurs explicites des opérations SaveSlot NS1 452/454/455. Le profil NS1 seul maintient l'inscription NGC historique. Backport et sélection CMake cohérents ; **aucune validation build ou console PS5 à cette date.**
+
 ## 8.5 Référence nxnative
 
 La recherche sur nxnative HEAD confirme qu'un SDK moderne peut ouvrir `aud:u` **dès le démarrage d'un thread audio** pour certaines notifications de sortie. Une absence de service y a déjà produit un abort dans un autre titre/SDK.

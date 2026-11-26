@@ -3869,6 +3869,9 @@ if(EDEN_SHARED_NS2_AUDIO)
         "${EDEN_NS2_AUDIO_ROOT}/core/hle/service/audio/nx2_sysmix.cpp")
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_audio_sources}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_AUDIO_ROOT}")
+    # The HOS23 NGC backport also advertises stpl:u. Only the selected
+    # native NS1/NS2 audio owner may register it in this unified build.
+    target_compile_definitions(core PRIVATE EDEN_NATIVE_SHARED_NS2_STPL_OWNER=1)
 endif()
 
 # N3b: shared native PS5 applet compatibility, selected by reviewed NPDM.

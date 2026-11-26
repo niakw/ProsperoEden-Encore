@@ -2275,12 +2275,51 @@ if subprocess.check_output(
 if gpu_table_vendor_pin in {"bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
     ns2_early_hle_receipts[native_applet_proxy_path] = "a07dae606312e673bdbff5110fbf81d4ce307776"
     ns2_early_hle_receipts["ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h"] = "7aab2ba6235b33b91819ea78a006129183194194"
+# The selected Nov26 AM/HID service graph is already qualified by the
+# F07 17-owner exact source table. Reuse that one immutable record on an
+# audit copy instead of comparing new handlers to obsolete early-HLE blobs.
+selected_nov26_hle_receipt = {}
+if shipping_vendor == "806252e96253489c18d11551bf2dcfd668502719":
+    import ast
+    f07_hle_ast = ast.parse(
+        (root / "tools/check-eden-optimization-coverage.py").read_text())
+    hle_literals = [
+        ast.literal_eval(node.value)
+        for node in ast.walk(f07_hle_ast)
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name)
+                and target.id == "qualified_early_hle"
+                for target in node.targets)
+        and isinstance(node.value, ast.Dict)
+    ]
+    hle_candidates = [entry for entry in hle_literals if len(entry) == 17]
+    assert len(hle_candidates) == 1
+    hle_prefix = "vendor/encore-active/"
+    assert all(path.startswith(hle_prefix) for path in hle_candidates[0])
+    selected_nov26_hle_receipt = {
+        path[len(hle_prefix):]: blob
+        for path, blob in hle_candidates[0].items()
+    }
+    selected_nov26_hle_receipt.update({
+        "ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp":
+            "a07dae606312e673bdbff5110fbf81d4ce307776",
+        "ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h":
+            "7aab2ba6235b33b91819ea78a006129183194194",
+    })
+    assert set(ns2_early_hle_receipts).issubset(selected_nov26_hle_receipt)
+    ns2_early_hle_receipts.update(selected_nov26_hle_receipt)
+    print("ENCORE_SELECTED_NS2_HLE_RECEIPT_LOADED owners=17")
+
 ns2_early_hle_present = set(ns2_early_hle_receipts) & set(physical_all)
 if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"} or gpu_table_vendor_pin in {"d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6"} or fc27_p1_vendor:
     assert ns2_early_hle_present == set(ns2_early_hle_receipts)
     for path, blob in ns2_early_hle_receipts.items():
         raw = (active / path).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        if shipping_vendor == "806252e96253489c18d11551bf2dcfd668502719":
+            assert actual == selected_nov26_hle_receipt[path], (
+                "Nov26 selected NS2 HLE drift", path, actual)
+            continue
         if (path == "ns2-runtime/hle/core/hle/service/hid/hid_server.cpp"
                 and actual == "27182c310b7e26ed4ffa57d3ece919d1c88a12f9"):
             # Lichii NX2 HID 213/214 and command-table placeholders:

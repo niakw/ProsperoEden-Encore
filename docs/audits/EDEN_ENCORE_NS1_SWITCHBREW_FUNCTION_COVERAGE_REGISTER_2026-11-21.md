@@ -5328,3 +5328,23 @@ Les signatures 2450/2451 sont recoupées avec les définitions VI indépendantes
 Owner actif : `application_display_service.cpp` SHA-256 `1bbc36058ce2fcc289a8983b00964529b1f999a2a410fa92f2e04c0bea281177`, vendor **`201d986ef94f45ca00a7ece318bceee1d312f860`**, moteur/gitlink runtime **`3b02078c9d5554f764af0cad0a70f202383b9217`**. Les gates de ce pin sont vertes : X8D24 **`45859905639`** et provenance **`45859905406`**. Aucun build PS5 ni test console.
 
 **2 lignes quittent le pool : nouveau plancher = 22 / 4 853.**
+
+
+### 2026-11-26 — AM STUB historiques fail-closed : 22 → 20 minimum
+
+Base précédente : **22 lignes ouvertes au minimum**.
+
+Les deux STUB historiques explicitement conservés lors de la requalification du pool sont fermés sur les propriétaires shipping `eden-backports` :
+
+- `ILibraryAppletSelfAccessor` cmd13 `CanUseApplicationCore` ne renvoie plus `Success + false` alors qu'Encore ne modélise pas la politique NPDM/application-core. Il retourne désormais `ResultUnknown` sans publier de booléen synthétique.
+- `ICommonStateGetter` cmd200 `GetOperationModeSystemInfo` ne renvoie plus `Success + 0` alors que la sémantique OMM correspondante n'est pas modélisée. Il retourne désormais `ResultUnknown` sans inventer un system-info.
+
+Recherche upstream ciblée : Lichii et EglantinePS5 conservent exactement les mêmes deux faux succès hérités ; nxnative n'expose pas d'implémentation correspondante. Aucun comportement public suffisamment fiable n'a donc été trouvé pour produire une valeur fonctionnelle plutôt qu'un rejet explicite.
+
+Correctif vendor **`de1eaf25f4ce36f033640f4869ace7bf7a7d6dca`**. Reçus actifs :
+- `library_applet_self_accessor.cpp` SHA-256 `cbe15e84956b4b31e4b0b6eb33163ff71a458c0773431fedc3121787be7cbaa3`, **22 422 octets** ;
+- `common_state_getter.cpp` SHA-256 `b90358b4a836e9390fe8ab18a42aa0e17f4de5bef810cdacf2df010fd3222120`, **27 461 octets**.
+
+Ces deux identités étaient les **2 STUB** demeurés ouverts après le recalcul conservateur et n'avaient pas été soustraites dans les paliers ultérieurs. **2 lignes quittent donc le pool : nouveau plancher = 20 / 4 853.**
+
+Aucun build natif PS5 ni validation console n'est revendiqué. La qualification CI du nouveau pin doit être vérifiée séparément.

@@ -4306,3 +4306,21 @@ Références : `tailiang2008/NX-Pctl-Manager@7cfbe45d7206ea26e6123cdf811a8cad643
 **5 lignes PARTIEL quittent le pool. Nouveau compteur global : 114 lignes ouvertes.**
 
 Gitlink repinné sur `de705230a87dfe20bfe796a3e2ebfc9ea76d256c`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — PSM politiques batterie virtualisées : palier global 104
+
+Base : **114 lignes ouvertes**.
+
+Requalification des dix PARTIEL PSM cmd2/3/4, 5/6, 8/9, 10/11 et 14 contre le runtime actif et libnx :
+- `Enable/DisableBatteryCharging` et `IsBatteryChargingEnabled` partagent un état atomique réel ;
+- `Acquire/ReleaseControllerPowerSupply` et `Enable/DisableFastBatteryCharging` mettent à jour l'état invité et signalent `BatteryChargeInfoChanged` ;
+- `Enable/DisableEnoughPowerChargeEmulation` alimente directement `IsEnoughPowerSupplied` ;
+- cmd14 combine cet override invité avec le power-status disponible ;
+- le cmd17 HOS17+ corrigé au palier 130 expose désormais `battery_charging`, `fast_battery_charging` et `controller_power_supply` dans son ABI 0x54.
+
+Les wrappers libnx confirment qu'il s'agit de commandes PSM sans entrée/sortie matérielle cachée supplémentaire, hormis les booléens explicitement exposés. Exiger que ces commandes pilotent la batterie/alimentation **physique PS5** était un mauvais critère de complétude : le matériel Switch est virtualisé, et les observables invités sont maintenant cohérents.
+
+**10 lignes PARTIEL quittent le pool. Nouveau compteur global : 104 lignes ouvertes.**
+
+Aucun nouveau patch C++, changement de gitlink, build PS5 ou validation console dans cette requalification.

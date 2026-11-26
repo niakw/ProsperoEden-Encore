@@ -3926,3 +3926,20 @@ Rapprochement du **pool global**, sans soustraire aveuglément les slots physiqu
 Arithmétique : **323 - 64 - 8 - 1 = 250**. Depuis le recalcul 631 : **381 lignes sorties du pool** par requalification ou correction ciblée.
 
 Le gitlink moteur est repinné sur le vendor **`b3e6e3f8c5583a3e4c16e9241b5e392e70b5df02`**. Aucun build natif PS5 ni validation console n'est revendiqué dans cette étape.
+
+
+### 2026-11-26 — SystemDisplay + NS HOS23 : palier global 221
+
+Base : **250 lignes ouvertes** au moteur `5552d35609db137571a398a2df9b6aece76b133d` / vendor `b3e6e3f8c5583a3e4c16e9241b5e392e70b5df02`.
+
+Vendor `4b849800dba674e945c69097a883b149c20271b9` traite deux groupes encore matérialisés dans le pool :
+- **VI SystemDisplay** : les 30 `nullptr` restants de la table active sont remplacés par un rejet invité `ResultNotSupported` explicite. Les handlers déjà fonctionnels (Z-order, visibilité, display modes, shared framebuffer) restent inchangés. **25** de ces slots correspondent exactement à des lignes NULL du catalogue historique encore ouvertes ;
+- **NS ApplicationManager** : les commandes HOS23 **604 RegisterContentsExternalKey**, **1900 IsActiveAccount**, **2200 GetGameCardApplicationCopyIdentifier** et **2201 GetInstalledApplicationCopyIdentifier**, absentes de la table active et également non implémentées dans Lichii, sont désormais enregistrées avec le rejet plateforme existant. **4** lignes du pool sont closes.
+
+Les cinq autres NULL physiques SystemDisplay non matérialisés dans le catalogue historique améliorent la table HOS23 mais ne sont pas soustraits au compteur global.
+
+**Nouveau compteur global : 221 lignes ouvertes.**
+
+Arithmétique : **250 - 25 - 4 = 221**. Depuis le recalcul 631 : **410 lignes sorties du pool**.
+
+Le gitlink moteur est repinné sur le vendor **`4b849800dba674e945c69097a883b149c20271b9`**. Aucun build PS5 ni validation console revendiqués dans cette étape.

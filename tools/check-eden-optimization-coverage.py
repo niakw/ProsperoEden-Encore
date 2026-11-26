@@ -2072,7 +2072,9 @@ print("ENCORE_EDEN4559_F07_ISOLATION_PASS", f"owners={len(drawtexture_present)}"
 selected_nov26_hle = subprocess.check_output(
     ["git", "-C", str(ROOT/"vendor"), "rev-parse", "HEAD"],
     text=True).strip() in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d",
-                  "240550925b0ef097c24c3035c063bdceadd872de"}
+                  "240550925b0ef097c24c3035c063bdceadd872de",
+                  "52b6582953b9b6c986f3fb9ebeea4b707cd50aab",
+                  "b62f36238ca154a0e6ada2be9c65ffb0b5981d97"}
 ns2_early_hle_receipts = {
     "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp":
         "df3edaf42d0596c69eaa6fea18b33fc02c6bff3c",

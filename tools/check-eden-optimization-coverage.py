@@ -2756,7 +2756,11 @@ if selected_nov26_vendor or gpu_table_vendor_pin in {"4354add020afac574198f63d87
         ["git", "-C", str(ROOT/"vendor"),
          "rev-parse", "HEAD:encore-active/eden-backports"], text=True).strip()
     # The reviewed native failure-aware fence successor also changed the backport mirror.
-    expected_tree = ("6aa751742d5b7337a5db5a5234ac6da34087a7b5"
+    expected_tree = ("b11ce08a796fc2cec7b16972245a2ab3e69245f0"
+                     if actual_buffer_hotpath_vendor in {
+                         "b62f36238ca154a0e6ada2be9c65ffb0b5981d97",
+                         "0506a211d82c880a49053c2ecb1b3129523dcbb0"}
+                     else "6aa751742d5b7337a5db5a5234ac6da34087a7b5"
                      if actual_buffer_hotpath_vendor == "240550925b0ef097c24c3035c063bdceadd872de"
                      else "7cd6744b4a352bc9fa84c2d01d126b71e0f12610"
                      if selected_nov26_vendor or actual_buffer_hotpath_pin

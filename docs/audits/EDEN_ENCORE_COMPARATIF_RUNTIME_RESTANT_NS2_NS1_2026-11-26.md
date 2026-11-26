@@ -637,30 +637,25 @@ Eglantine :
 - `Eglantine/src/core/hle/service/audio/audio.cpp` — `b4c6b69c11bb5c48f4bd64c12d1e6243317525e4`;
 - `nx2_audio_user_client.h` — **même blob que Lichii `cde05e...`**.
 
-## 8.2 `aud:u` : table de commandes
+## 8.2 `aud:u` : commandes désormais implémentées sur le propriétaire actif
 
-| Commande | Encore | Lichii/Eglantine |
-|---:|---|---|
-| 0 | **absente** | `GetAudioInManager` |
-| 1 | `GetAudioOutManager` | `GetAudioOutManager` |
-| 2 | `GetAudioRendererManager` | `GetAudioRendererManager` |
+🟢 **26/11/2026 — contrôle source exact** du vendor `0506a211d82c880a49053c2ecb1b3129523dcbb0` (header `encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h`, blob `c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee`), moteur `1a743355a025938def223e5f669d493192698fdb` qui épingle ce vendor ; comparaison Lichii `src/core/hle/service/audio/nx2_audio_user_client.h` (blob `cde05e5576315b87d06ade179bce3f56dcb3825d`). **Cette pastille valide le contrat C++ contrôlé, pas la CI, pas le build PS5 et pas le gameplay.**
 
-**DIVERGENCE DE COUVERTURE CONFIRMÉE : cmd 0.**
+| Cmd | Encore avant correctif | Encore actif | Lichii/Eglantine |
+|---:|---|---|---|
+| 0 | absent | `GetAudioInManager` → `audin:u` enregistré | `GetAudioInManager` |
+| 1 | manager privé `IAudioOutManager` | instance `audout:u` enregistrée | instance partagée `audout:u` |
+| 2 | manager privé `IAudioRendererManager` | instance `audren:u` enregistrée | instance partagée `audren:u` |
 
-## 8.3 Managers privés vs managers enregistrés
+**La divergence de couverture de la commande 0 est corrigée côté source.** Le test hôte `tools/ns2/check_native_audio_virtual_device_host.py` exécute la classe extraite et compare l'identité des trois managers renvoyés, le second appel `aud:u 1` et le cas service absent. Son résultat CI doit être vérifié séparément.
 
-Lichii/Eglantine résolvent les managers `audin:u`, `audout:u`, `audren:u` déjà enregistrés dans le ServiceManager et renvoient ces objets partagés.
+## 8.3 Durée de vie audio : correction C++ publiée, qualification console ouverte
 
-Leur code documente la raison : un second manager AudioOut peut posséder un autre `AudioCore::AudioOut::Manager`, alors que le callback de libération de buffers n'est pas prévu pour plusieurs propriétaires concurrents ; une session ouverte sur le mauvais manager peut donc ne plus recevoir les libérations attendues.
+Lichii/Eglantine réutilisent les managers déjà enregistrés : créer un autre `AudioCore::AudioOut::Manager` peut capter ou perdre le callback de libération des buffers, puis immobiliser le thread audio avec des buffers non recyclés.
 
-Encore, dans le header actif, crée de nouvelles interfaces `IAudioOutManager` / `IAudioRendererManager` avec `system` au lieu de rechercher systématiquement les instances déjà enregistrées.
+Encore appelait auparavant `rb.PushIpcInterface<IAudioOutManager>(ctx, system)` et construisait une nouvelle instance. Le vendor `0506a211` invoque désormais `system.ServiceManager().GetService<T>(service)`, puis `rb.PushIpcInterface<T>(ctx, manager)`. Si le service enregistré manque, il renvoie `ResultNotFound`, **sans inventer de propriétaire concurrent ni de succès**. Le TU final PS5 conserve `headless/r23_audren_debug_ps5.cpp` et inclut ce header partagé.
 
-**DIVERGENCE DE DURÉE DE VIE CONFIRMÉE — candidat P0 conditionnel.**
-
-Il faut la traiter si les logs montrent :
-- `aud:u` cmd 0 → Encore ne couvre pas le contrat ;
-- cmd 1/2 puis queue de buffers qui ne se libère plus ;
-- thread audio devenu le dernier progrès avant le freeze.
+**Statut : correctif runtime intégré sur `main`, effet PS5 non testé.** La cause des freezes de MKW, Pokopia, DK, des autres titres NS2 et des saccades FC27 n'est pas établie par cette correction audio. Aucune mesure de performance ou première frame nouvelle.
 
 ## 8.4 Sysmix / services
 

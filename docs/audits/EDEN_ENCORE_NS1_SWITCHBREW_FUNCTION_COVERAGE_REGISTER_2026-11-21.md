@@ -4233,3 +4233,16 @@ Références de contrat : libnx `PsmBatteryChargeInfoFields` HOS17+ (commit `b15
 **1 ligne PARTIEL quitte le pool. Nouveau compteur global : 130 lignes ouvertes.**
 
 Gitlink repinné sur `8a8416ddb781022acae2f30449dfe1e60c8414f0`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — SSL connection fail-closed : palier global 125
+
+Base : **130 lignes ouvertes** au moteur `4376a75e46d663945817ceaced6f0e6bf8a800ee` / vendor `8a8416ddb781022acae2f30449dfe1e60c8414f0`.
+
+Vendor `cbfb2a24f2f243ce9bb7953b1cc54e6b53823db0` ferme les cinq handlers `ISslConnection` explicitement laissés STUB dans le registre R23 : `Poll`, `GetVerifyCertError`, `GetNeededServerCertBufferSize`, `GetSessionCacheMode` et `FlushSessionCache`.
+
+Ces commandes ne renvoient plus `ResultSuccess` avec des sorties non initialisées ou sans effet. Le backend actif ne fournit pas le contrat correspondant ; Encore renvoie donc `IPC::ResultNotSupported`, en conservant le garde pré-handshake existant pour le cache de session. Les chemins TLS fonctionnels `Peek`, socket/hostname/options et `Set/GetRenegotiationMode` sont inchangés.
+
+**5 lignes raccordées/STUB quittent le pool. Nouveau compteur global : 125 lignes ouvertes.**
+
+Gitlink repinné sur `cbfb2a24f2f243ce9bb7953b1cc54e6b53823db0`. Aucun build PS5 ni validation console revendiqués.

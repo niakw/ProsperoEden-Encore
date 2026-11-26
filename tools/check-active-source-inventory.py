@@ -1992,7 +1992,7 @@ pair_present = pair_new_owners & set(physical_all)
 # Reuse F07's one fourteen-blob selected GPU receipt without importing
 # and executing that audit. Older vendor pins retain historical replay.
 selected_nov26_gpu_pair = {}
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"}:
     import ast
     f07_ast = ast.parse(
         (root / "tools/check-eden-optimization-coverage.py").read_text())
@@ -2005,6 +2005,17 @@ if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f3
     ]
     assert len(selected_nodes) == 1
     selected_nov26_gpu_pair = ast.literal_eval(selected_nodes[0])
+    if shipping_vendor == "240550925b0ef097c24c3035c063bdceadd872de":
+        # Three exact GPU owners differ from the preceding reviewed vendor;
+        # keep the other eleven and all full-blob assertions unchanged.
+        assert subprocess.check_output(
+            ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
+            text=True).strip() == "e40237d089b0a45f77d68ae281821c1a85ce9ca8"
+        selected_nov26_gpu_pair.update({
+            "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "0d22781acbc4e0f32424beb6b0f494b6aa2b034f",
+            "eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
+            "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "5cbd0d0f3482c5811b5b700fee55faf8a89b9f61",
+        })
     assert set(selected_nov26_gpu_pair) == set(pair_receipt["files"])
     print("ENCORE_SELECTED_GPU_PAIR_RECEIPT_LOADED owners=14")
 
@@ -2063,7 +2074,7 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
     for path, blob in pair_receipt["files"].items():
         source_path = active / path
         raw = source_path.read_bytes()
-        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
+        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"}:
             # Authenticate the complete selected C++ blob; older vendor
             # pins still replay the historical F07 inverse deltas below.
             actual = hashlib.sha1(

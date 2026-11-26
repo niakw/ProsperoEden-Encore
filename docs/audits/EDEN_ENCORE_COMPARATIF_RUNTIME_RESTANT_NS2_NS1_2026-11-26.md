@@ -237,24 +237,15 @@ Encore **ne détruit pas l'identité de classe Ampere** :
 
 Cette divergence est volontaire et permet à Encore de ne pas appliquer aveuglément des méthodes Maxwell lorsque les sémantiques Ampere diffèrent.
 
-## 4.2.1 Classe 0 : sémantique d'unbind/no-op différente
+## 4.2.1 Classe 0 : désappairage natif corrigé (26/11)
 
-🟢 **2026-11-26 — cas `SET_OBJECT class 0` contrôlé explicitement.**
+🟢 **26/11/2026 — contrat C++ réellement sélectionné contrôlé à la ligne :** Encore vendor `b62f36238ca154a0e6ada2be9c65ffb0b5981d97`, moteur/gitlink `983704ebe42903eef9e10bbc194c8510b45caf76`; comparé à `Lichii/src/video_core/engines/puller.cpp` et `EglantinePS5/Eglantine/src/video_core/engines/puller.cpp`. Cette pastille certifie **la lecture du code et le correctif**, ni le build PS5 ni un résultat console.
 
-Lichii et Eglantine ont un cas dédié dans `ProcessBindMethod` : lorsqu'un canal
-NS2/Ampere reçoit la classe `0`, ils journalisent l'unbind et **retournent sans
-faire tomber le canal**.
+**Ancien défaut avéré :** les deux upstream interceptent `SET_OBJECT(0)` sur un canal NS2/Ampere et le traitent comme un unbind non fatal. Encore révoquait déjà les propriétaires Ampere, mais la classe `0` tombait ensuite dans le `default` et déclenchait `FailNativeSubmission("Native GPFIFO SET_OBJECT class unsupported")`, empoisonnant toute la session GPU.
 
-Encore n'a pas ce cas spécial dans le propriétaire natif. Après retrait des
-owners Ampere précédents, la classe `0` tombe dans le `default` ; sur un canal
-natif, Encore retire le pointeur de subchannel puis appelle
-`FailNativeSubmission("Native GPFIFO SET_OBJECT class unsupported")`.
+**Correction runtime active :** après `retire_native_3d()` et `retire_native_compute()`, `Puller::ProcessBindMethod` reconnaît **uniquement** `engine == 0 && IsNative(channel)`, vide le pointeur du sous-canal par `BindSubchannel(nullptr, ..., EngineTypes::Nv01Timer)` puis retourne sans faute globale. Les classes non nulles inconnues continuent de déclencher l'échec fatal ; NS1 conserve son ancien chemin. Le vendor ajoute un témoin source dans `tests/ns2_gpu_identity_mapping_source.py`, et le moteur `386724aa92dc622bb87180699a8ea1d8294fcbc1` ajoute l'exécution hôte C++ (graphics puis compute, `-O0/-O2`, compilation PS5 simulée). Résultats CI de cette dernière révision **encore à vérifier**.
 
-**DIVERGENCE DE CONTRAT CONFIRMÉE — candidat P0 conditionnel.** Elle n'est pas
-déclarée fautive sans trace : si un log montre `EDEN_NS2_GPU_BIND ... cls=0000`
-ou un rejet `SET_OBJECT class unsupported` immédiatement avant le freeze,
-ce point devient une cible directe. En l'absence de cette signature, il ne faut
-pas modifier la politique de bind uniquement pour copier l'upstream.
+**Portée : P0 candidat causal lorsque le GPU invité émet réellement un unbind 0.** Rien dans les anciennes traces MKW n'atteste qu'une instruction `SET_OBJECT(0)` a été exécutée. Le signal `VI 2114-0010` survient dans la séquence GSV/VI2 *avant* soumission GPU invitée enregistrée : **ne pas le déclarer résolu par ce correctif**. Aucune première frame PS5 ni gameplay validés.
 
 ## 4.3 C797 : `CallNative3D`
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Install maintained CPU I-cache and host service-wait sources unconditionally.
+"""Install maintained CPU I-cache and SM host service-wait sources unconditionally.
 
 Production copies complete checked-in sources from vendor/encore-active.
 The two historical patches are replayed only into a temporary comparison
-tree to prove byte-for-byte parity. Any difference fails closed.
+tree to prove byte-for-byte parity. AUDCTL is owned by eden-backports and
+must not be overwritten by this legacy active-core installer. Any difference fails closed.
 The quarantined dummy-thread workaround remains excluded (unsafe wait queue).
 """
 from __future__ import annotations
@@ -39,8 +40,8 @@ def affected() -> list[str]:
                 if not rel.startswith("src/") or ".." in Path(rel).parts:
                     raise RuntimeError(f"Invalid target in {patch}: {rel}")
                 names.add(rel)
-    if len(names) != 5:
-        raise RuntimeError(f"Expected exactly five core patch sources: {sorted(names)}")
+    if len(names) != 3:
+        raise RuntimeError(f"Expected exactly three core patch sources: {sorted(names)}")
     return sorted(names)
 
 

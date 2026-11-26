@@ -4374,3 +4374,25 @@ Vendor `0bb36bc586e3b26462191a1be3143d0a67d4a7db`, provenance `309d1457511f55497
 **1 ligne PARTIEL quitte le pool. Nouveau compteur global : 109 lignes ouvertes.**
 
 Gitlink repinné sur `309d1457511f554971cd19683b3c8b3813aa7598`. `SetInputTargetForceEnabled` reste ouvert : aucun consommateur de routage input n'est encore démontré. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — AUDCTL propriétaire final corrigé + input target forcé : palier global 108
+
+Base documentée : **109 lignes ouvertes**.
+
+La vérification de la matérialisation native a identifié une erreur de sélection qui invalidait la preuve du dernier palier sans créer une nouvelle ligne fonctionnelle : `prepare-build.sh` installe d'abord `eden-backports`, puis `install-active-core-backports.py`. Or le patch historique `eden-sm-host-wait.patch` réinstallait encore `audio_controller.cpp/.h` depuis `encore-active/eden-core` après le backport. Les améliorations AUDCTL HOS23 et le master-volume du palier 109 pouvaient donc être écrasés dans la source finale de build.
+
+Correction de propriétaire :
+- `eden-sm-host-wait.patch` ne possède désormais plus que `sm.h`; le lazy `set:sys` est intégré directement dans l'owner AUDCTL shipping `encore-active/eden-backports/src/core/hle/service/audio/audio_controller.{cpp,h}`;
+- `install-active-core-backports.py` matérialise maintenant **3** sources seulement : SM + les deux unités Dynarmic I-cache ; il ne réécrit plus AUDCTL ;
+- le contrôle `check-sm-host-wait.py` vérifie séparément le patch SM et l'owner AUDCTL final. Cette correction **ne décrémente pas** le compteur : elle restaure la validité runtime du palier 109 déjà compté.
+
+Vendor `0809e3c8c1e5d2df1505541fb1b7116df312a0d0` ferme ensuite réellement `audctl` cmd16 `SetInputTargetForceEnabled` :
+- le booléen est publié dans `AudioCore` par un `atomic_bool` partagé ;
+- `audin:u` consulte ce même état dans `AudioIn::Manager::GetDeviceNames` ;
+- quand la force est active, le périphérique invité `Uac` reste découvrable même sans périphérique micro hôte ; le chemin PS5 AudioIn dispose déjà du fallback silencieux/validation de buffers, donc aucun périphérique physique Switch n'est inventé ni déréférencé ;
+- ABI HOS23 recroisée : un booléen d'entrée, aucune sortie.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 108 lignes ouvertes.**
+
+Gitlink vendor attendu : `0809e3c8c1e5d2df1505541fb1b7116df312a0d0`. Aucun build PS5 ni validation console revendiqués. La correction de propriétaire est un correctif de sélection runtime ; le décrément 109 → 108 correspond uniquement à `SetInputTargetForceEnabled`.

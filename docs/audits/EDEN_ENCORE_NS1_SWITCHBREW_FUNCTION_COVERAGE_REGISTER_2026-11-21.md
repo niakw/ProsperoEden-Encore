@@ -4566,3 +4566,18 @@ Correctif vendor `60d87a82acdd1c385ba2525eec7bed15642e418b` sur le propriétaire
 **1 ligne PARTIEL quitte le pool : nouveau compteur global = 89 lignes ouvertes.**
 
 Gitlink vendor repinné sur `60d87a82acdd1c385ba2525eec7bed15642e418b`. Aucun build PS5 ni validation console revendiqués.
+
+
+### 2026-11-26 — HomeMenu LockAccessor requalifiés : palier global 87
+
+Base : **89 lignes ouvertes**.
+
+Les deux PARTIEL historiques `IHomeMenuFunctions` cmd30 `GetHomeButtonWriterLockAccessor` et cmd31 `GetWriterLockAccessorEx` ont été recroisés avec HOS23 et libnx :
+- HOS23 confirme que les deux commandes retournent `ILockAccessor` ; cmd31 prend un `u32` button type ;
+- libnx traite l'objet uniquement via son event non-autoclear, `TryLock`, `Unlock` et la répétition de `TryLock` après attente ; aucun état reader/writer global n'est exposé par l'ABI ;
+- l'owner Encore actif retourne des `ILockAccessor` concrets dont l'event est signalé à la création et à l'unlock, et dont `TryLock`/`IsLocked` conservent l'état ;
+- une implémentation indépendante récente (Recompia) emploie le même modèle de verrou par accessor. Cela ne prouve pas l'algorithme interne Horizon, mais invalide l'ancien motif « arbitre reader/writer global obligatoire » comme défaut fonctionnel démontré.
+
+**2 lignes PARTIEL quittent le pool : nouveau compteur global = 87 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console. Le comportement interne exact d'Horizon n'est pas revendiqué ; seule la conformité observable de l'interface est requalifiée.

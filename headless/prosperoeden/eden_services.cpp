@@ -171,31 +171,29 @@ std::optional<std::uint64_t> ExtractedBaseBytes(const std::filesystem::path& tit
         auto current = std::move(pending.back());
         pending.pop_back();
         std::error_code listing_error;
-        const auto children = Eden::ReadNativeDirectory(current.path, listing_error);
+        const auto children = Eden::ReadNativeDirectoryStats(current.path, listing_error);
         if (listing_error)
             return fail("getdents", current.path, listing_error.value(), examined);
         for (const auto& entry : children) {
             if (cancel && cancel->load(std::memory_order_acquire)) return std::nullopt;
             if (++examined > kMaxExtractedFiles)
-                return fail("entry_limit", entry.path(), 0, examined);
-            struct stat info {};
-            if (::lstat(entry.path().c_str(), &info) != 0)
-                return fail("lstat", entry.path(), errno, examined);
+                return fail("entry_limit", entry.path, 0, examined);
+            const auto& info = entry.info;
             if (S_ISLNK(info.st_mode)) continue;
             if (S_ISDIR(info.st_mode)) {
                 // Updates/DLC never contribute to the base-game size.
-                if (Eden::IsReservedAddOnPackageStem(entry.path().filename().string())) continue;
+                if (Eden::IsReservedAddOnPackageStem(entry.path.filename().string())) continue;
                 if (current.depth >= kMaxExtractedDepth)
-                    return fail("depth_limit", entry.path(), 0, examined);
-                pending.push_back({entry.path(), current.depth + 1});
+                    return fail("depth_limit", entry.path, 0, examined);
+                pending.push_back({entry.path, current.depth + 1});
                 continue;
             }
             if (!S_ISREG(info.st_mode)) continue;
             if (info.st_size < 0)
-                return fail("negative_size", entry.path(), 0, examined);
+                return fail("negative_size", entry.path, 0, examined);
             const auto bytes = static_cast<std::uint64_t>(info.st_size);
             if (bytes > UINT64_MAX - total)
-                return fail("overflow", entry.path(), 0, examined);
+                return fail("overflow", entry.path, 0, examined);
             total += bytes;
         }
     }
@@ -2747,6 +2745,13 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                              !local_control.developer.empty());
             }
             if (game.title_id != 0) {
+                // Loose ExeFS Control flags are local and bounded; do not
+                // defer their language label behind the remote artwork queue.
+                if (deconstructed) {
+                    const auto local_language = LanguageFor(path, game.title_id, language_choice);
+                    game.language = local_language.label;
+                    game.language_note = local_language.note;
+                }
                 // First paint needs only the square application icon and text
                 // already cached locally. Hero/screenshots, retail case faces,
                 // player count, language probing and add-on summaries belong

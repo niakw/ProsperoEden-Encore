@@ -16,8 +16,16 @@
 extern "C" int sceKernelGetdents(int, char*, int);
 
 namespace Eden {
+struct NativeDirectoryStat {
+    std::filesystem::path path;
+    struct stat info{};
+};
+// Strict stat-only enumeration reuses the original lstat result instead
+// of constructing directory_entry objects and querying each file again.
 inline std::vector<std::filesystem::directory_entry> ReadNativeDirectory(
-        const std::filesystem::path& path, std::error_code& error) {
+        const std::filesystem::path& path, std::error_code& error,
+        std::vector<NativeDirectoryStat>* stat_entries = nullptr) {
+    if (stat_entries) stat_entries->clear();
     std::vector<std::filesystem::directory_entry> entries;
     const int fd = open(path.c_str(), O_RDONLY | O_DIRECTORY);
     if (fd < 0) {
@@ -71,11 +79,16 @@ inline std::vector<std::filesystem::directory_entry> ReadNativeDirectory(
                         offset += length;
                         continue;
                     }
-                } else if (errno != EPERM && errno != EACCES) {
+                } else if (stat_entries || (errno != EPERM && errno != EACCES)) {
                     error = {errno, std::generic_category()};
                     return {};
                 }
 
+                if (stat_entries) {
+                    stat_entries->push_back({full, native});
+                    offset += length;
+                    continue;
+                }
                 entries.emplace_back(full, error);
                 // Some PS5 app mounts deny lstat; in that specific case the directory entry may
                 // still be readable through followed status.
@@ -92,5 +105,12 @@ inline std::vector<std::filesystem::directory_entry> ReadNativeDirectory(
             offset += length;
         }
     }
+}
+inline std::vector<NativeDirectoryStat> ReadNativeDirectoryStats(
+        const std::filesystem::path& path, std::error_code& error) {
+    std::vector<NativeDirectoryStat> entries;
+    (void)ReadNativeDirectory(path, error, &entries);
+    if (error) return {};
+    return entries;
 }
 }

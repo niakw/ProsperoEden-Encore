@@ -4481,3 +4481,19 @@ Ces quatre commandes ne sont donc plus ouvertes au seul motif qu'elles ne contr�
 **4 lignes PARTIEL quittent le pool : nouveau compteur global = 100 lignes ouvertes.**
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette requalification.
+
+
+### 2026-11-26 — AM health-warning policy cohérente : palier global 99
+
+Base : **100 lignes ouvertes**.
+
+Requalification de `IOverlayFunctions::SetHealthWarningShowingState` (cmd30) contre l'owner shipping :
+- `IsHealthWarningRequired` retourne explicitement `false` : Encore ne présente pas de warning santé Switch fictif sur la PS5 ;
+- dans cette politique invitée, `showing=true` n'a aucun overlay à matérialiser ;
+- `showing=false` signale `health_warning_disappeared_system_event`, ce qui libère correctement les waiters au lieu de les bloquer sur une UI inexistante.
+
+La limitation historique « signal disparition seulement » est donc cohérente avec la décision HLE « warning jamais requis », et non une fonctionnalité matérielle manquante.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 99 lignes ouvertes.**
+
+Aucun patch C++, changement de gitlink, build PS5 ou validation console dans cette requalification.

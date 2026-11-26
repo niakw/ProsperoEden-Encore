@@ -5291,3 +5291,25 @@ Moteur/gitlink final : `7427fa08622f383929403311dfd61ce20a467d87` → vendor `39
 Les workflows `45856105906` (X8D24) et `45856105821` (provenance vendor) sont **verts**. Aucun build natif PS5 ni test console.
 
 **Compteur de revue inchangé : 30 / 4 853 minimum.** Le décrément correspondant à cmd6 a déjà été compté une seule fois.
+
+### 2026-11-26 — VI IApplicationDisplayService qualifié + permissions conservées : 30 → 24 minimum
+
+Base précédente : **30 lignes ouvertes au minimum**.
+
+Six PARTIEL historiques de `IApplicationDisplayService` sont requalifiés sur le propriétaire shipping `encore-active/eden-backports/src/core/hle/service/vi/application_display_service.cpp`.
+
+- cmd100 `GetRelayService` retourne le vrai `IHOSBinderDriver` du `Container`.
+- cmd101 `GetSystemDisplayService` crée le vrai `ISystemDisplayService` et exige désormais `Permission::System` ou `Permission::Manager`.
+- cmd102 `GetManagerDisplayService` crée le vrai `IManagerDisplayService` et exige désormais `Permission::Manager`.
+- cmd103 `GetIndirectDisplayTransactionService` retourne le Binder partagé et exige désormais une permission System/Manager.
+- cmd1000 `ListDisplays` publie un `DisplayInfo` 0x60 réel avec les initialiseurs du type shipping : `Default`, `has_limited_layers=1`, `max_layers=1`, 1920x1080 ; ce layout et ces valeurs correspondent à Strato et aux structures VI indépendantes.
+- cmd2031 `DestroyStrayLayer` vérifie que la couche appartient à la session, la retire du set de stray layers puis appelle le vrai `Container::DestroyStrayLayer`, cohérent avec l'implémentation Ryujinx.
+
+Le défaut supplémentaire découvert pendant la requalification était causal : les roots `vi:u/vi:s/vi:m` transmettaient déjà `Permission::User/System/Manager` à `GetApplicationDisplayService`, mais `service_creator.cpp` perdait cette information en construisant `IApplicationDisplayService`. Vendor **`201d986ef94f45ca00a7ece318bceee1d312f860`** conserve maintenant la permission dans l'objet et applique les gardes de sous-service. Le miroir `sources/eden` reste intact ; `service_creator.cpp` est matérialisé comme nouvel owner `eden-backports`.
+
+Reçus actifs :
+- `application_display_service.cpp` SHA-256 `1bbc36058ce2fcc289a8983b00964529b1f999a2a410fa92f2e04c0bea281177`, **16 063 octets** ;
+- `application_display_service.h` SHA-256 `84b7650c3e66c8d0275ba24847ca432ce0683a8da6fb3f4b5e1a87826973c1b9`, **4 060 octets** ;
+- `service_creator.cpp` SHA-256 `b2a5d6cc85c8cbb9ae1d61b21bb748010ac2f2dcdbc4c0b703728895908a2283`, **1 258 octets**, upstream `a3dbe47978055f2d221a90762a6dee4a2fdb5f23fc6910b7b95af06575ec61d9`.
+
+Moteur/gitlink **`3b02078c9d5554f764af0cad0a70f202383b9217`** épingle exactement ce vendor. **6 lignes PARTIEL quittent le pool : nouveau plancher = 24 / 4 853.** Aucun build PS5 ni validation console n'est revendiqué ; les gates du nouveau pin sont à qualifier séparément.

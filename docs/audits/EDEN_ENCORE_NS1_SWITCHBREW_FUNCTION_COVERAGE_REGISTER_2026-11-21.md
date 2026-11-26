@@ -4552,3 +4552,17 @@ Le chemin observé par les services de la ligne est donc déterministe et confor
 Cmd102 `GetStandardUserSystemClockInitialYear` reste ouvert : la façade PSC `time:s` renvoie encore `ResultNotImplemented`, contrairement au wrapper Glue qui lit `set:sys`.
 
 Aucun patch C++, changement de gitlink, build PS5 ou validation console.
+
+
+### 2026-11-26 — Time cmd102 PSC aligné sur set:sys : palier global 89
+
+Base : **90 lignes ouvertes**.
+
+Correctif vendor `60d87a82acdd1c385ba2525eec7bed15642e418b` sur le propriétaire PSC actif `sources/eden/src/core/hle/service/psc/time/static.cpp` :
+- cmd102 `GetStandardUserSystemClockInitialYear` ne renvoie plus `ResultNotImplemented` ;
+- il lit désormais `time / standard_user_clock_initial_year` via `set:sys`, exactement comme la façade Glue déjà qualifiée ;
+- aucun fallback synthétique ni constante firmware n'est introduit.
+
+**1 ligne PARTIEL quitte le pool : nouveau compteur global = 89 lignes ouvertes.**
+
+Gitlink vendor repinné sur `60d87a82acdd1c385ba2525eec7bed15642e418b`. Aucun build PS5 ni validation console revendiqués.

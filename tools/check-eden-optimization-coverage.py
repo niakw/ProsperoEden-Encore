@@ -3192,7 +3192,7 @@ launcher_consolidation_predecessors = {
 # reviewed Nov23 launcher. No new runtime qualification is implied.
 launcher_loading_successors = {
     "headless/prosperoeden/frontend.cpp": {"96269c1b211a5b58e2a2297e728d3ae52e515f38", "3d00ef28d445c30f0f4cc7f0e18ef4601131c410"},
-    "headless/prosperoeden/pe/ui/launcher.cpp": {"b0331170dc66cc84593802efbacd1c7db7f81102", "7e266d1523f2ab7a314c5ba1fbf5133580d09925"},
+    "headless/prosperoeden/pe/ui/launcher.cpp": {"b0331170dc66cc84593802efbacd1c7db7f81102", "7e266d1523f2ab7a314c5ba1fbf5133580d09925", "6cfb3097dfccb6a6c55837ae59ce5b49227f70b0"},
     "headless/prosperoeden/pe/ui/launcher.hpp": {"8d864b35d93aa1afce82cc810175d52ef14c37f2", "edc2e8d40030102911d8ce5f10f0857905a1210a"},
     "headless/prosperoeden/pe/ui/home.cpp": {"0536ef9acf649865cb8c9d1220ef89f329d3960d"},
     "headless/prosperoeden/pe/ui/services.hpp": {"534adb20bded1d44bc057bacc36dce2d93be770d"},
@@ -3251,6 +3251,13 @@ for path, (current_blob, predecessor_blob) in launcher_consolidation_predecessor
             b"blob " + str(len(previous)).encode() + b"\0" + previous).hexdigest()
         assert original == "0536ef9acf649865cb8c9d1220ef89f329d3960d", ("Banner predecessor drift", original)
         actual = original
+    # 26/11/2026: the current launcher successor is the exact reviewed
+    # native-loading/media commit, not an arbitrary widened owner receipt.
+    if path == "headless/prosperoeden/pe/ui/launcher.cpp" and actual == "6cfb3097dfccb6a6c55837ae59ce5b49227f70b0":
+        verified = subprocess.check_output(
+            ["git", "rev-parse", "a20fd8f40cd6f2868ada7fdb34dc70436fd755a7:headless/prosperoeden/pe/ui/launcher.cpp"],
+            cwd=ROOT, text=True).strip()
+        assert verified == actual, ("Unreviewed Nov26 launcher media successor", actual)
     if actual == current_blob or actual in launcher_loading_successors.get(path, set()):
         drift_index[path]["actual"] = predecessor_blob
         launcher_consolidation_active_paths.add(path)

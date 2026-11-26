@@ -2950,7 +2950,11 @@ if actual_vendor_pin in {"eace7e056485299e7252c506433a1429a4475051", "05bf05a8dc
     assert "CreateFence(false)" in strict_body
     assert "QueueFence(new_fence);" in strict_body
     assert "Settings::IsGPUFenceBehavior" not in strict_body
-    assert native_release.count("QueueNativeSemaphoreRelease(") == 4
+    # One helper plus four release sites on the reviewed C7C0 16-byte successor.
+    # Older pinned native-fence owner has one helper plus three release sites.
+    assert native_release.count("QueueNativeSemaphoreRelease(") == (
+        5 if actual_vendor_pin == "240550925b0ef097c24c3035c063bdceadd872de" else 4
+    )
     if actual_vendor_pin == "05bf05a8dca75b3e12871ec886a810310cdf43d6":
         # Only the shipping backport manifest and FC27 source-rollback witness
         # changed; verify both full Git blobs before reusing the eight pinned

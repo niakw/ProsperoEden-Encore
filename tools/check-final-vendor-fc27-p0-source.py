@@ -7,6 +7,7 @@ FC27 visual pass, Bananza boot proof, or performance measurement.
 """
 from pathlib import Path
 import hashlib
+import json
 import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -2924,7 +2925,7 @@ checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True
 # 26 Nov: exact shipping native semaphore-retirement successor, independently
 # authenticated without relaxing the frozen FC27 owner receipts. QMD3/G10
 # host real-owner CI is green; these source hashes are not PS5 validation.
-if actual_vendor_pin == "eace7e056485299e7252c506433a1429a4475051":
+if actual_vendor_pin in {"eace7e056485299e7252c506433a1429a4475051", "05bf05a8dca75b3e12871ec886a810310cdf43d6"}:
     native_fence_blobs = {
     "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "23725030557268e6593c9e5f64cb063730b77787",
     "encore-active/eden-backports/src/video_core/fence_manager.h": "fa30c9a0c0a26c39af5174983fc7b4f63062a991",
@@ -2950,6 +2951,22 @@ if actual_vendor_pin == "eace7e056485299e7252c506433a1429a4475051":
     assert "QueueFence(new_fence);" in strict_body
     assert "Settings::IsGPUFenceBehavior" not in strict_body
     assert native_release.count("QueueNativeSemaphoreRelease(") == 4
+    if actual_vendor_pin == "05bf05a8dca75b3e12871ec886a810310cdf43d6":
+        # Only the shipping backport manifest and FC27 source-rollback witness
+        # changed; verify both full Git blobs before reusing the eight pinned
+        # native-fence owner receipts above.
+        successors = {
+            "encore-active/eden-backports/manifest.json": "23f949939b00aefc4c42a855f94c1f1830a3a140",
+            "tests/fc27_deferred_page_protection_host.py": "dc1c4539a0ba8b7a9f433b8dbd9ccd859a895f9",
+        }
+        for relative, expected in successors.items():
+            raw = (V / relative).read_bytes()
+            blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert blob == expected, ("Exact PS5 backport successor changed", relative)
+        m = json.loads((V / "encore-active/eden-backports/manifest.json").read_text())
+        assert m["entries"]["src/video_core/fence_manager.h"]["active"] == (
+            "364fcbdd6584502fb7613c8cbce0d9069832f9289b9913ad021756413cbf5920"
+        )
     REVIEWED_PINS.add(actual_vendor_pin)
 assert actual_vendor_pin==checked and actual_vendor_pin in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

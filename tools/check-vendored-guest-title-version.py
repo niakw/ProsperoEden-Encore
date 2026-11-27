@@ -3,7 +3,7 @@
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 base=(root/"vendor/sources/eden/src/core/hle/service/am/service/application_functions.cpp").read_text()
-current=(root/"vendor/encore-active/eden-core/src/core/hle/service/am/service/application_functions.cpp").read_text()
+current=(root/"vendor/encore-active/eden/src/core/hle/service/am/service/application_functions.cpp").read_text()
 seed="    auto const seed = res.first->raw.seed_for_pseudo_device_id;"
 assert base.count(seed)==1
 assert current.count("res.first != nullptr ? res.first->raw.seed_for_pseudo_device_id : u64_le{0};")==1

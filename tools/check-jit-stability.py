@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parents[1]
 cmake = (root / 'headless/CMakeLists.txt').read_text()
 main = (root / 'headless/main.cpp').read_text()
 jit_list = (root / 'headless/jit_list.h').read_text()
-jit_links = (root / 'vendor/encore-active/eden-core/dynarmic/shared-jit/jit_links.inc').read_text()
+jit_links = (root / 'vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/jit_links.inc').read_text()
 
 # The production CMake graph was consolidated: no experiment selector is
 # defined, and the standard A64 owner is unconditionally selected.  The old

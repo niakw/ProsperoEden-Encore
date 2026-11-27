@@ -7,7 +7,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 vendor = ROOT / "vendor/encore-active"
 entry = vendor / "eden-vulkan/vk_texture_cache_cost.cpp"
-hdr = vendor / "ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h"
+hdr = vendor / "eden/src/video_core/renderer_vulkan/vk_texture_cache.h"
 source = entry.read_text(encoding="utf-8")
 header = hdr.read_text(encoding="utf-8")
 begin = "// NS2 N73 BEGIN: one real cache-side VkImage sparse admission/bind/retire probe."

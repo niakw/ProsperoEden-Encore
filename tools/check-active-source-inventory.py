@@ -956,7 +956,9 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
              if shipping_vendor == "9d8b9c280a9907a9881abcc974a1fde248d73fec"
              else "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4" if shipping_vendor in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "daf493ce6e863397ec44bfae467c4f7533570477"),
         "eden-vulkan/vulkan_rasterizer.cpp":
-            ("71d097b9a83028dfad9370792c905bb3bfccfd5a" if fc27_p1_vendor else
+            ("6f3378f1bb611c74ecfe1f5cd37283137462012a"
+             if shipping_vendor == "9d8b9c280a9907a9881abcc974a1fde248d73fec"
+             else "71d097b9a83028dfad9370792c905bb3bfccfd5a" if fc27_p1_vendor else
              "f23ad861761d53b59b8c83ae6003c089ae688060"
              if current_fc27_raster_source
              else "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35"),

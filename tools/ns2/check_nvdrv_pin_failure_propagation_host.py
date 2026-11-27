@@ -11,7 +11,7 @@ vroot=root/'vendor'
 if not (vroot/'encore-active').exists():vroot=root.parent/'vendor'
 core=(vroot/'encore-active/eden-core/src/core/hle/service/nvdrv/core/nvmap.cpp').read_text()
 nvdec=(vroot/'encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvhost_nvdec_common.cpp').read_text()
-as_gpu=(vroot/'encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp').read_text()
+as_gpu=(vroot/'encore-active/eden/src_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp').read_text()
 cmake=(root/'headless/CMakeLists.txt').read_text()
 assert 'EDEN_MAINTAINED_NVDRV_NVDEC' in cmake
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_NVDRV_NVDEC}")' in cmake

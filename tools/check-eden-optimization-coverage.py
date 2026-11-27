@@ -4768,6 +4768,23 @@ if fake_services_path in drift_index and fake_services_path not in post_index:
           "predecessor=8ae91604", "current=78a3409e",
           "runtime_ps5=0")
 
+# The current NS2 first-SVC handoff extends the reviewed KThread owner.
+# Keep the dated post-F07 register immutable: authenticate the exact successor
+# and replay its historical post-snapshot receipt only after semantic checks.
+thread_path = "vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.h"
+if drift_index[thread_path]["actual"] == "3bd35ffb74bac35814ad616d4fbf9ca04dbb245d":
+    assert post_index[thread_path]["post_snapshot_git_blob"] == \
+        "89bbcbd2b0d3627210a980496d00f30a45c7d944"
+    thread_source = (ROOT / thread_path).read_text()
+    for invariant in ("bool HasEnteredKernel() const",
+                      "void SetEnteredKernel()",
+                      "std::atomic<bool> m_entered_kernel{false};"):
+        assert invariant in thread_source, invariant
+    drift_index[thread_path]["actual"] = \
+        "89bbcbd2b0d3627210a980496d00f30a45c7d944"
+    print("NS2_FIRST_SVC_THREAD_SOURCE_SUCCESSOR_PASS",
+          "historical=89bbcbd2", "current=3bd35ffb")
+
 # The loading cycle now has one shared owner. Reverse only that reviewed change.
 theme_path = "headless/prosperoeden/pe/ui/theme.hpp"
 if drift_index[theme_path]["actual"] == "2a67d1c4993669f7739591b22ceff90d0f6e11f6":

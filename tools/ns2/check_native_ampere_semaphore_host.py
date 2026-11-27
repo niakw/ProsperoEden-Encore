@@ -3,7 +3,7 @@
 from pathlib import Path
 import shutil, subprocess, tempfile
 ROOT = Path(__file__).resolve().parents[2]
-OWNER = ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch"
+OWNER = ROOT / "vendor/encore-active/eden/src"
 puller = (OWNER / "video_core/engines/puller.cpp").read_text()
 for symbol in ("ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument)",
                "ProcessSemaphoreRelease(dma_pusher)",

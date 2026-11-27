@@ -3072,6 +3072,25 @@ if shipping_vendor in {"9d8b9c280a9907a9881abcc974a1fde248d73fec", "806252e96253
     source_pacing = (root / "headless/CMakeLists.txt").read_text()
     assert "EDEN_MAINTAINED" in source_pacing
     post_snapshot -= set(pacing_headers)
+
+    # Lichii #1518's current FC27 successor introduces one additional
+    # maintained native owner so DeviceMemoryManager can hold the deferred
+    # page-untrack epoch through Unmap. Keep it outside the immutable Nov26
+    # 43-source set and seal its exact current blob independently.
+    nov27_fc27_deferred_owners = {}
+    if shipping_vendor == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
+        nov27_fc27_deferred_owners = {
+            "eden-core/overrides/core/device_memory_manager.h":
+                "54f2a710d33487a0d89babe9117be0193ebc2cf9",
+        }
+        assert set(nov27_fc27_deferred_owners).issubset(post_snapshot)
+        for relative, expected_sha in nov27_fc27_deferred_owners.items():
+            actual_sha = subprocess.check_output(
+                ["git", "hash-object", str(active / relative)], text=True).strip()
+            assert actual_sha == expected_sha, (
+                "27 Nov deferred DeviceMemory owner drift", relative, actual_sha)
+        post_snapshot -= set(nov27_fc27_deferred_owners)
+
     new_owners = post_snapshot & selected_nov26_post_f07_additions
     assert len(new_owners) == 8 and post_snapshot == new_owners, (
         "Nov26 unclassified native owners", sorted(post_snapshot - new_owners))
@@ -3085,9 +3104,13 @@ if shipping_vendor in {"9d8b9c280a9907a9881abcc974a1fde248d73fec", "806252e96253
         actual = subprocess.check_output(
             ["git", "hash-object", str(path)], text=True).strip()
         assert actual == pinned, ("Selected source differs from vendor gitlink", relative)
-    physical = [p for p in physical if p not in new_owners | set(pacing_headers)]
+    physical = [
+        p for p in physical
+        if p not in new_owners | set(pacing_headers) | set(nov27_fc27_deferred_owners)
+    ]
     print("ENCORE_POST_F07_SELECTED_CATALOG_SEPARATION_PASS",
-          "historical=337 additions=43 native_unclassified=8 pacing_headers=2", flush=True)
+          "historical=337 additions=43 native_unclassified=8 pacing_headers=2"
+          f" nov27_fc27_deferred={len(nov27_fc27_deferred_owners)}", flush=True)
 assert len(physical) == 337, ("Shipping source catalogue changed",len(physical),
     "unclassified=" + repr(sorted(set(physical) - catalog_paths)),
     "missing=" + repr(sorted(catalog_paths - set(physical))))

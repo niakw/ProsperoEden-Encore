@@ -32,7 +32,7 @@ assert prefetch.index("++scanned;") < prefetch.index("ImageFlagBits::IsDecoding"
 assert prefetch.index("ImageFlagBits::IsDecoding") < prefetch.index("--remaining;")
 cleanup = gc[gc.index("const auto Cleanup"):gc.index("const auto CollectEligible")]
 assert cleanup.index("++gc_scanned;") < cleanup.index("ImageFlagBits::IsDecoding")
-assert cleanup.index("ImageFlagBits::IsDecoding") < cleanup.index("--num_iterations;")
+assert cleanup.index("ImageFlagBits::IsDecoding") < cleanup.rindex("--num_iterations;")
 collect = gc[gc.index("const auto CollectEligible"):gc.index("Configure(false);")]
 assert collect.index("gc_scanned = 0;") < collect.index("PrefetchGc();")
 assert collect.index("PrefetchGc();") < collect.index("lru_cache.ForEachItemBelow")

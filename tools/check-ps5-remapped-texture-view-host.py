@@ -55,6 +55,7 @@ prologue = r"""
 #include <utility>
 // The source-extracted function retains the production invalid-index trace.
 #define LOG_DEBUG(...) ((void)0)
+#define LOG_TRACE(...) ((void)0)
 #define HW_GPU 0
 using u32=std::uint32_t;
 using ImageViewId=u32;
@@ -76,6 +77,7 @@ struct FakeMemory {bool valid=true;};
 bool IsValidEntry(const FakeMemory& m,int) {return m.valid;}
 struct DescriptorTable {
     u32 current_limit=128;
+    std::array<int,128> descriptors{};
     int descriptor=17;
     bool is_new=true;
     std::pair<int,bool> Read(FakeMemory&,u32) const {return {descriptor,is_new};}

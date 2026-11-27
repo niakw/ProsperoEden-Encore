@@ -137,7 +137,7 @@ print('TEXTURE_LAYOUT_HOST_ONLY decoded_pixel_quality_and_PS5_graphics=unverifie
 
 
 # GPU-45: compile the exact generic layer splitter from the active PS5 TextureCache.
-texture_owner=(ROOT/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+texture_owner=(ROOT/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 sig="inline std::vector<ImageCopy> SplitLayeredImageCopies("
 start=texture_owner.index(sig)
 brace=texture_owner.index("{",start)

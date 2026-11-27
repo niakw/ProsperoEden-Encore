@@ -21,7 +21,7 @@ base = Path(__file__).resolve().parents[1]
 cmake = (base / "headless/CMakeLists.txt").read_text()
 assert 'configure_file("${EDEN_PHYSICAL_CORE_SOURCE}" "${PORT_BUILD_DIR}/physical_core.cpp" COPYONLY)' in cmake
 for mode in ("standard", "dev"):
-    source = (base / f"vendor/encore-active/eden-core/src/core/hle/kernel/physical_core_{mode}.cpp").read_text()
+    source = (base / f"vendor/encore-active/eden/src/core/hle/kernel/physical_core_{mode}.cpp").read_text()
     prefetch = source.split('if (prefetch_abort) {', 1)[1].split('::Eden::RecordGuestFault(eden_fault);', 1)[0]
     assert "interface->GetContext(thread->GetContext());" in prefetch
     assert "thread->GetThreadId()" in prefetch

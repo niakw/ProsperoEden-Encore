@@ -11,7 +11,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 main = (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-bridge = (root/"vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp").read_text()
+bridge = (root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp").read_text()
 pinned = (root/"vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp").read_text()
 oracle = (root/"tools/prepare-vulkan-port.py").read_text()
 workflow = (root/".github/workflows/encore-core-preflight.yml").read_text()

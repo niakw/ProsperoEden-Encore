@@ -28,8 +28,13 @@ for token in (
 ):
     assert token in vulkan_cmake, ("native Vulkan owner selection drift", token)
 
-assert "file(SHA256" not in vulkan_cmake
-assert "file(SHA256" not in root_cmake
+for forbidden in (
+    'file(SHA256 "${EDEN_ACTIVE_VULKAN}/${unit}.cpp" source_sha)',
+    'file(SHA256 "${PORT_BUILD_DIR}/${unit}.cpp" selected_sha)',
+    "source_sha STREQUAL selected_sha",
+):
+    assert forbidden not in vulkan_cmake, forbidden
+    assert forbidden not in root_cmake, forbidden
 assert 'message(FATAL_ERROR "Missing native Vulkan fork unit: ${unit}")' in root_cmake
 
 # Historical source generators/replayers are not build inputs.

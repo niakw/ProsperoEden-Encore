@@ -1335,6 +1335,22 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
         assert raster_sha == '1c40cc3b968c76fc505f5cea63218b93e89b4529'
         print('ENCORE_EDEN4559_DRAWTEXTURE_EXACT_REVERSE_PASS')
     pair_vendor_pin = exact_vendor_pin
+    bananza_present_successor = pair_vendor_pin == "cb8635aa95da52de2dd10be9d1574425edc1eb18"
+    if bananza_present_successor:
+        assert subprocess.check_output(
+            ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
+            text=True,
+        ).strip() == "5b1b1dadc684d1c5a6a4d997a30bd66d5e36a58a"
+        for relative, expected in {
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "adfe2e9a0671ea3cb41da43613ac97f3cda9fd32",
+            "tests/ns2_syncpt_bootstrap_source.py": "cdbffe062e6254dd480423723a7686fcba15ed69",
+        }.items():
+            actual = subprocess.check_output(
+                ["git", "-C", str(root / "vendor"), "hash-object", relative],
+                text=True,
+            ).strip()
+            assert actual == expected, ("Bananza present successor drift", relative, actual)
+        pair_vendor_pin = "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"
     if pair_vendor_pin == '510f1efde545357fe8095a812df32251ee546285':
         new_proxy = root / 'vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp'
         assert subprocess.check_output(
@@ -1773,7 +1789,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
         # Reverse ONLY this exact method on the historical audit copy.
         # The real multi-channel scrub remains compiled unchanged.
         selected = core_owner.read_text()
-        if actual_vendor_pin in {"57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} and core_blob == "30e7c389851a5a0f2b6369c35a313f93a0fc6826":
+        if (actual_vendor_pin in {"57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} or bananza_present_successor) and core_blob == "30e7c389851a5a0f2b6369c35a313f93a0fc6826":
             # FC27 successor: reverse ONLY the nine idempotent BufferCache
             # fast-guards on the audit copy. The compiled source remains
             # untouched; reconstructed bytes must equal the reviewed 8d3

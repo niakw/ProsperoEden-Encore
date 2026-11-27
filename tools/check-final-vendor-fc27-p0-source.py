@@ -3079,6 +3079,30 @@ if actual_vendor_pin == "57be62ed6bcc872a850676f92f55de92ace7a290":
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert actual==digest, ("FC27 BufferCache successor graph drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
+if actual_vendor_pin == "cb8635aa95da52de2dd10be9d1574425edc1eb18":
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "5b1b1dadc684d1c5a6a4d997a30bd66d5e36a58a"
+    for relative, digest in {
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "adfe2e9a0671ea3cb41da43613ac97f3cda9fd32",
+        "tests/ns2_syncpt_bootstrap_source.py": "cdbffe062e6254dd480423723a7686fcba15ed69",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "4e4a1f23d89a7ace963a9249afa47a592cb4eb6e",
+        "encore-active/eden-core/src/video_core/dma_pusher.cpp": "76eb30a7e58f17852069a05e2c12cd3c6521967f",
+        "tests/ns2_gpu_identity_mapping_source.py": "787b18b8c9b2841874ceaea911947e533b59e198",
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
+        "encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee",
+        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
+        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
+        "encore-active/eden-core/overrides/core/device_memory_manager.inc": "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4",
+        "encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "30e7c389851a5a0f2b6369c35a313f93a0fc6826",
+        "encore-active/eden-core/overrides/usage-tracker/video_core/buffer_cache/usage_tracker.h": "60ff6c212708684b2444e4ce6a969a1c27994e39",
+        "tests/ps5_buffer_usage_granularity_host.py": "72cd74292b8459a99d053be6d791e5187f1c3e71",
+    }.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == digest, ("Bananza successor graph drift", relative, actual)
+    REVIEWED_PINS.add(actual_vendor_pin)
 assert actual_vendor_pin==checked and actual_vendor_pin in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 if actual_vendor_pin == "57be62ed6bcc872a850676f92f55de92ace7a290":
     # Historical receipts below describe the unchanged 8d3 owner graph.

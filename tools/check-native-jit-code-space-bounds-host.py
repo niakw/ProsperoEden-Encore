@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
-active=(root/"vendor/encore-active/eden/src/dynarmic/backend/x64/block_of_code_native.cpp").read_text()
+active=(root/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/block_of_code_native.cpp").read_text()
 start="void* BlockOfCode::AllocateFromCodeSpace(size_t alloc_size) {"
 assert active.count(start)==1
 method=start+active.split(start,1)[1].split("\n}\n",1)[0]+"\n}"

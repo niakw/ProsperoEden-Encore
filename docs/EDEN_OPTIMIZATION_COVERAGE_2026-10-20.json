@@ -3986,7 +3986,7 @@
       "evidence": "Previous audit host contract H15: Full host preflight #39026035356 SUCCESS; actual SleepThread original/native UBSan and pinned YieldType 0/-1/-2 PASS; CodeQL #39026019170 SUCCESS (C/C++, Python, Actions); no console or frozen gameplay proof"
     },
     {
-      "path": "vendor/encore-active/eden-vulkan-oracles/vulkan_download_batch.inc",
+      "path": "vendor/tests/oracles/vulkan/vulkan_download_batch.inc",
       "disposition": "preexisting_generated_or_inactive_unit",
       "contract_id": "V70",
       "prior_status": "SOURCE",
@@ -3995,7 +3995,7 @@
       "evidence": "Existing source owner audited for optimization relevance: vulkan_oracle_not_compiled; contract V70 Historical Vulkan readback batch oracle, no CMake source mutation. This is not a new runtime performance improvement."
     },
     {
-      "path": "vendor/encore-active/eden-vulkan-oracles/vulkan_gc_downloads.inc",
+      "path": "vendor/tests/oracles/vulkan/vulkan_gc_downloads.inc",
       "disposition": "preexisting_generated_or_inactive_unit",
       "contract_id": "V69",
       "prior_status": "SOURCE",
@@ -4004,7 +4004,7 @@
       "evidence": "Existing source owner audited for optimization relevance: vulkan_oracle_not_compiled; contract V69 Historical GPU texture-eviction oracle, verified against maintained Vulkan fork; not compiled. This is not a new runtime performance improvement."
     },
     {
-      "path": "vendor/encore-active/eden-vulkan-oracles/vulkan_hud_draw.inc",
+      "path": "vendor/tests/oracles/vulkan/vulkan_hud_draw.inc",
       "disposition": "preexisting_generated_or_inactive_unit",
       "contract_id": "V68",
       "prior_status": "SOURCE",
@@ -4013,7 +4013,7 @@
       "evidence": "Existing source owner audited for optimization relevance: vulkan_oracle_not_compiled; contract V68 Historical HUD draw oracle only; no independent CMake injection. This is not a new runtime performance improvement."
     },
     {
-      "path": "vendor/encore-active/eden-vulkan-oracles/vulkan_hud_prepare.inc",
+      "path": "vendor/tests/oracles/vulkan/vulkan_hud_prepare.inc",
       "disposition": "preexisting_generated_or_inactive_unit",
       "contract_id": "V67",
       "prior_status": "SOURCE",
@@ -4022,7 +4022,7 @@
       "evidence": "Existing source owner audited for optimization relevance: vulkan_oracle_not_compiled; contract V67 Historical HUD pipeline oracle only; executable renderer remains the maintained Vulkan fork. This is not a new runtime performance improvement."
     },
     {
-      "path": "vendor/encore-active/eden-vulkan-oracles/vulkan_loading.inc",
+      "path": "vendor/tests/oracles/vulkan/vulkan_loading.inc",
       "disposition": "preexisting_generated_or_inactive_unit",
       "contract_id": "V66",
       "prior_status": "SOURCE",

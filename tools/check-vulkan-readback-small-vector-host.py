@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-batch = (root / "vendor/encore-active/eden-vulkan-oracles/vulkan_download_batch.inc").read_text(encoding="utf-8")
+batch = (root / "vendor/tests/oracles/vulkan/vulkan_download_batch.inc").read_text(encoding="utf-8")
 maintained = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text(encoding="utf-8")
 assert batch in maintained, "reviewed Vulkan readback body is not selected in maintained cache"
 generator = (root / "tools/prepare-vulkan-port.py").read_text(encoding="utf-8")

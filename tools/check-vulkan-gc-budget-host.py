@@ -19,7 +19,7 @@ maintained = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/t
 begin = maintained.index("void TextureCache<P>::RunGarbageCollector() {")
 end = maintained.index("\ntemplate <class P>", begin)
 gc = maintained[begin:end]
-oracle = (root / "vendor/encore-active/eden-vulkan-oracles/vulkan_gc_downloads.inc").read_text(encoding="utf-8")
+oracle = (root / "vendor/tests/oracles/vulkan/vulkan_gc_downloads.inc").read_text(encoding="utf-8")
 vulkan_cmake = (root / "headless/vulkan.cmake").read_text(encoding="utf-8")
 assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in vulkan_cmake
 assert 'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden-vulkan")' in vulkan_cmake

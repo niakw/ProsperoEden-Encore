@@ -333,7 +333,7 @@ corps sont inclus dans les deux variantes de
 ## Oracles Vulkan historiques
 
 Les cinq anciens fragments Vulkan ont été déplacés **sans modifier leurs blobs
-Git** vers `vendor/encore-active/eden-vulkan-oracles/`. Ils ne constituent
+Git** vers `vendor/tests/oracles/vulkan/`. Ils ne constituent
 pas une seconde version compilée de Vulkan : `tools/prepare-vulkan-port.py`
 ne les charge que pour reconstituer les sorties historiques, tandis que
 le binaire choisit exclusivement `vendor/encore-active/eden-vulkan/`.

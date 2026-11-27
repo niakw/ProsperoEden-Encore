@@ -30,7 +30,7 @@ assert native.index("images.push_back(image_id)") < native.index("image.flags &=
 assert method.index(guard) < method.index(collection)
 # The prior oracle remains embedded byte-for-byte; batching and Finish order
 # are untouched by the guarded early flag management.
-oracle=(root/"vendor/encore-active/eden-vulkan-oracles/vulkan_download_batch.inc").read_text()
+oracle=(root/"vendor/tests/oracles/vulkan/vulkan_download_batch.inc").read_text()
 assert oracle in (root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
 assert "DownloadStagingBuffer(bytes, true)" in method
 assert "std::uncaught_exceptions() > uncaught_before_readback && !pending.empty()" in method

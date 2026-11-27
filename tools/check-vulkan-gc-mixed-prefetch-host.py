@@ -17,7 +17,7 @@ maintained = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/t
 begin = maintained.index("void TextureCache<P>::RunGarbageCollector() {")
 end = maintained.index("\ntemplate <class P>", begin)
 gc = maintained[begin:end]
-oracle = (root / "vendor/encore-active/eden-vulkan-oracles/vulkan_gc_downloads.inc").read_text(encoding="utf-8")
+oracle = (root / "vendor/tests/oracles/vulkan/vulkan_gc_downloads.inc").read_text(encoding="utf-8")
 assert "const bool prefetch_dirty = DirtyEvictions();" in oracle and "const bool prefetch_dirty = DirtyEvictions();" in gc
 generator = (root / "tools/prepare-vulkan-port.py").read_text(encoding="utf-8")
 assert "(vulkan_oracle / 'vulkan_gc_downloads.inc').read_text()" in generator

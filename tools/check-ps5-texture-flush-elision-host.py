@@ -7,7 +7,7 @@ import tempfile
 root=Path(__file__).resolve().parents[1]
 def read(p): return (root/p).read_text()
 raster=read("vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp")
-bridge=read("vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp")
+bridge=read("vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp")
 pinned=read("vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp")
 oracle=read("tools/prepare-vulkan-port.py")
 workflow=read(".github/workflows/encore-core-preflight.yml")

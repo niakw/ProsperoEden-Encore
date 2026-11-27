@@ -7,7 +7,7 @@ from native_astc_vendor_parity import reverse_r23_checked_astc, strip_post_r23_a
 ROOT = Path(__file__).resolve().parents[2]
 PIN = ROOT / "vendor/sources/eden/src/video_core/texture_cache"
 ACTIVE = ROOT / "vendor/encore-active/eden/src/video_core/texture_cache"
-OWNER = ROOT / "vendor/encore-active/ns2-astc/include/video_core/texture_cache"
+OWNER = ROOT / "vendor/encore-active/eden/src/video_core/texture_cache"
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 
 def once(src, old, new):

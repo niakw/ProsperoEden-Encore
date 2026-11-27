@@ -33,8 +33,8 @@ attribute_after = "        (True(mask & (KMemoryAttribute::Uncached | KMemoryAtt
 assert expected.count(attribute_before) == 1
 assert maintained == expected.replace(attribute_before, attribute_after, 1), (
     "G16 finalizer / GPU attribute permission delta drift")
-page_h = (root / "vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel/k_page_table_base.h").read_text()
-address_cpp = (root / "vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/k_address_space_info.cpp").read_text()
+page_h = (root / "vendor/encore-active/eden/src_wait64/core/hle/kernel/k_page_table_base.h").read_text()
+address_cpp = (root / "vendor/encore-active/eden/src/core/hle/kernel/k_address_space_info.cpp").read_text()
 assert maintained.count("Result KPageTableBase::InitializeForProcess(") == 1
 assert "bool is_switch2" not in page_h
 assert "bool is_switch2" not in maintained

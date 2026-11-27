@@ -396,7 +396,7 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
             generated=(stage/strict_fence_rel).read_bytes()
             current=(ACTIVE/strict_fence_rel).read_bytes()
             assert len(generated)==9151 and sha(generated)=='012cc72932c34fcc82090791d5a4c8c8d64c34966e69948bb4cf6c7b23349c97'
-            assert len(current)==10589 and sha(current)==spec['entries'][strict_fence_rel]['active']
+            assert len(current)==11568 and sha(current)==spec['entries'][strict_fence_rel]['active']
             strict_native_sync=b'''#ifdef PS5_NATIVE
     // NS2/Ounce completion joins the producer counter with a semaphore marker
     // written by the guest GPU. Never let the native counter retire through

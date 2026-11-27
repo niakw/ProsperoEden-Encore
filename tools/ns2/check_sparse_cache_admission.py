@@ -174,7 +174,6 @@ with tempfile.TemporaryDirectory(prefix="ns2-n73-cache-") as temporary:
             "-fsanitize=undefined","-fno-sanitize-recover=all",
             "-I",str(root),
             "-I",str(vendor/"src"),
-            "-I",str(vendor/"src"),
             str(sourcefile),"-o",str(exe),
         ],check=True)
         subprocess.run([str(exe)],check=True)

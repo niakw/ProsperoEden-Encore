@@ -25,7 +25,7 @@ for dep in deps:
 for extra in ("eden-cpm", "boilerplate-setup-0"):
     assert extra in root_names, extra
 fork_names = {entry.name for entry in active.iterdir() if entry.is_dir()}
-for name in ("eden", "eden-vulkan", "ps5-mesa"):
+for name in ("eden", "ps5-mesa"):
     assert name in fork_names, f"missing active patched tree: {name}"
 assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in vulkan
 assert (active/"eden/src/CMakeLists.txt").is_file(), "missing maintained native CMake"
@@ -2111,7 +2111,7 @@ for filename, expected_git_blob in vulkan_oracle_sources.items():
     assert oracle.is_file() and not (root / "headless" / filename).exists()
     check_canonical_git_object(oracle, expected_git_blob, "Vulkan oracle")
     assert filename not in vulkan, ("test fixture is still a native CMake input", filename)
-assert (active / "eden-vulkan/vulkan_renderer.cpp").is_file()
+assert (active / "eden/src/video_core/renderer_vulkan/vulkan_renderer.cpp").is_file()
 print("ENCORE_VULKAN_ORACLE_SCOPE_PASS", len(vulkan_oracle_sources))
 
 

@@ -39,7 +39,7 @@ assert owner_block.count("list(REMOVE_ITEM eden_ns1_audio_units") == 1
 # Some headers still live in the eden-core migration-debt root; runtime TUs
 # already use canonical encore-active/eden paths. Both are maintained owners,
 # never sources/ copies.
-memory_h = VENDOR / "encore-active/eden-core/overrides/core/memory.h"
+memory_h = VENDOR / "encore-active/eden/src/core/memory.h"
 audio = VENDOR / "encore-active/eden/src/audio_core/device/device_session.cpp"
 backends = [
     VENDOR / "encore-active/eden/src/core/memory_native_a32.cpp",

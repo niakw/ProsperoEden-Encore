@@ -4,7 +4,7 @@ from pathlib import Path
 import hashlib
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNER = ROOT / "vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc"
+OWNER = ROOT / "vendor/encore-active/eden/src/core/device_memory_manager.inc"
 HELPER = ROOT / "vendor/encore-active/eden/src/core/ns2_egl_continuity_guard.h"
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 
@@ -31,7 +31,7 @@ if blob(t) == "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4":
 # source witness. Reverse exactly its three additions in this AUDIT COPY,
 # then retain the original N50 source baseline checksum unchanged.
 if blob(t) == "852a0272696c7ce182bc05aee92bc7cbb195446b":
-    new_header = ROOT/"vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h"
+    new_header = ROOT/"vendor/encore-active/eden/src/core/deferred_cached_updates.h"
     assert blob(new_header.read_text()) == "33262f511777cdd1b4a74ac0cd6dc39caa12c9d0"
     t = once(t, '#include "core/deferred_cached_updates.h"\n', '')
     wait_block = (

@@ -487,7 +487,7 @@ endif()
 if(PS5_NATIVE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
 # Complete BlockOfCode sources are maintained in Encore, staged as byte-exact copies.
 include("${EDEN_PORT_DIR}/jit-alias.cmake")
-set(EDEN_MAINTAINED_BOC_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend/x64")
+set(EDEN_MAINTAINED_BOC_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")
 set(EDEN_BOC_HEADER "${EDEN_MAINTAINED_BOC_ROOT}/block_of_code.h")
 if(PS5_NATIVE)
     set(EDEN_BOC_UNIT "${EDEN_MAINTAINED_BOC_ROOT}/block_of_code_native.cpp")
@@ -514,7 +514,7 @@ if(PS5_NATIVE)
 endif()
 # Complete A32/A64 emitters and matched headers are maintained under encore-active.
 # CMake only selects/copies the source, preserving the exact test build paths.
-set(EDEN_MAINTAINED_EMIT_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend/x64")
+set(EDEN_MAINTAINED_EMIT_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")
 set(EDEN_A64_EMITTER_UNIT "${EDEN_MAINTAINED_EMIT_ROOT}/a64_emit_x64_standard.cpp")
 set(EDEN_A64_EMITTER_HEADER "${EDEN_MAINTAINED_EMIT_ROOT}/a64_emit_x64_standard.h")
 foreach(EDEN_EMITTER_SOURCE IN ITEMS
@@ -545,7 +545,7 @@ endif()
 # translation unit have exactly one maintained owner in encore-active.
 # This remains selected regardless of EDEN_SHARED_JIT.
 set(EDEN_MAINTAINED_BLOCK_RANGE_DIR
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend")
 foreach(EDEN_BLOCK_RANGE_FILE IN ITEMS block_range_information.cpp block_range_information.h)
     if(NOT EXISTS "${EDEN_MAINTAINED_BLOCK_RANGE_DIR}/${EDEN_BLOCK_RANGE_FILE}")
         message(FATAL_ERROR "Missing maintained Dynarmic block-range ${EDEN_BLOCK_RANGE_FILE}")
@@ -566,7 +566,7 @@ if(PS5_NATIVE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 # Complete x64 patch-lookup units; native omits perf-map formatting entirely.
-set(EDEN_MAINTAINED_EMIT_X64_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend/x64")
+set(EDEN_MAINTAINED_EMIT_X64_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")
 if(PS5_NATIVE)
     set(EDEN_EMIT_X64_SOURCE "${EDEN_MAINTAINED_EMIT_X64_ROOT}/emit_x64_native.cpp")
 else()
@@ -584,11 +584,11 @@ target_sources(dynarmic PRIVATE "${PORT_BUILD_DIR}/emit_x64.cpp")
 # Dynarmic scalar translation and optimizer are tracked complete sources.
 # impl/impl.cpp is included once by its adjacent translator.
 set(EDEN_MAINTAINED_SCALAR_IMPL
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/impl/impl.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/frontend/A64/translate/impl/impl.cpp")
 set(EDEN_MAINTAINED_SCALAR_TRANSLATOR
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/frontend/A64/translate/a64_translate.cpp")
 set(EDEN_MAINTAINED_SCALAR_OPT
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/ir/opt_passes.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/ir/opt_passes.cpp")
 foreach(EDEN_MAINTAINED_SCALAR_SOURCE IN ITEMS
         "${EDEN_MAINTAINED_SCALAR_IMPL}"
         "${EDEN_MAINTAINED_SCALAR_TRANSLATOR}"
@@ -608,7 +608,7 @@ target_sources(dynarmic PRIVATE
 # G07: single Encore-owned address decoder header, with C++ guards for
 # checked A32 and the process-wide shared-JIT reservation policy.
 set(EDEN_MAINTAINED_MEMORY_HEADER
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_memory.h")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory.h")
 if(NOT EXISTS "${EDEN_MAINTAINED_MEMORY_HEADER}")
     message(FATAL_ERROR "Missing maintained Dynarmic memory decoder header")
 endif()
@@ -621,7 +621,7 @@ endif()
 # G06: complete C++ include bodies; checked A32 and standard mode are
 # explicit Encore-owned variants. Shared JIT uses compile-time guards.
 set(EDEN_MAINTAINED_MEMORY_IMPL_ROOT
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend/x64")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")
 if(EDEN_A32_FASTMEM)
     set(EDEN_MAINTAINED_MEMORY_IMPL
         "${EDEN_MAINTAINED_MEMORY_IMPL_ROOT}/emit_x64_memory_checked.cpp.inc")
@@ -641,7 +641,7 @@ configure_file("${EDEN_MAINTAINED_MEMORY_IMPL}"
 # existing target-wide EDEN_SHARED_JIT_LAYOUT compile definition, so
 # its three monitor/configuration macros live in the source units.
 set(EDEN_MAINTAINED_MEMORY_UNIT_DIR
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend/x64")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")
 get_target_property(jit_sources dynarmic SOURCES)
 foreach(bits 32 64)
     set(memory_unit "a${bits}_emit_x64_memory.cpp")
@@ -660,7 +660,7 @@ set_property(TARGET dynarmic PROPERTY SOURCES "${jit_sources}")
 if(PS5_NATIVE)
     # The native spin-lock adjustment is a complete Encore source.
     set(EDEN_MAINTAINED_SPIN_LOCK
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/common/spin_lock_x64.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/common/spin_lock_x64.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_SPIN_LOCK}")
         message(FATAL_ERROR "Missing maintained native Dynarmic spin lock")
     endif()
@@ -672,7 +672,7 @@ endif()
 
 # A64 runtime variants are complete maintained C++ units.
 # Compile-batch and DEV are source-defined gates rather than textual CMake rewrites.
-set(EDEN_A64_INTERFACE_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend/x64")
+set(EDEN_A64_INTERFACE_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")
 set(EDEN_A64_INTERFACE_UNIT "${EDEN_A64_INTERFACE_ROOT}/a64_interface_standard.cpp")
 if(NOT EXISTS "${EDEN_A64_INTERFACE_UNIT}")
     message(FATAL_ERROR "Missing maintained A64 interface ${EDEN_A64_INTERFACE_UNIT}")
@@ -690,7 +690,7 @@ endif()
 # Complete A32 native interface is Encore-owned; host uses the pinned original.
 if(PS5_NATIVE)
     set(EDEN_MAINTAINED_A32_INTERFACE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend/x64/a32_interface_native.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a32_interface_native.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_A32_INTERFACE}")
         message(FATAL_ERROR "Missing Encore-maintained native A32 JIT interface")
     endif()
@@ -1831,7 +1831,7 @@ endif()
 # headers/fragments in a private native build include tree, not vendor originals.
 if(PS5_NATIVE)
     set(EDEN_R23_A32_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic")
     set(EDEN_R23_A32_OVERLAY "${PORT_BUILD_DIR}/r23-a32-sha1")
     foreach(a32_path IN ITEMS
             "frontend/A32/decoder/asimd.inc"
@@ -1866,7 +1866,7 @@ endif()
 # replace original CMake source owners, never append duplicate symbols.
 if(PS5_NATIVE)
     set(EDEN_R23_X64_EMIT_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend/x64")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")
     get_target_property(eden_r23_jit_units dynarmic SOURCES)
     foreach(eden_r23_jit_name IN ITEMS
             emit_x64_floating_point.cpp
@@ -3726,16 +3726,15 @@ endif()
 set(EDEN_SHARED_NS2_A64_V81_V85 OFF)
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_SHARED_NS2_A64_V81_V85 ON)
-    set(EDEN_A64_V81_V85_SOURCE_ROOT
-        "${PORT_ROOT}/vendor/sources/eden/src/dynarmic/src")
-    set(EDEN_A64_V81_V85_OUTPUT_ROOT "${PORT_BUILD_DIR}/include")
+    # Final owner: the canonical Dynarmic subtree in encore-active. Do not
+    # manufacture a second C++/header overlay in the build directory.
+    set(EDEN_A64_V81_V85_ACTIVE_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src")
     include("${CMAKE_CURRENT_LIST_DIR}/shared_a64_ldapr.cmake")
-    # a64.h includes ./a64.inc and the maintained translator includes the
-    # implementation .cpp files as source text. All reviewed files therefore
-    # resolve from one overlay before pristine Dynarmic.
-    target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_A64_V81_V85_OUTPUT_ROOT}")
+    target_include_directories(dynarmic BEFORE PRIVATE
+        "${EDEN_A64_V81_V85_ACTIVE_ROOT}")
     target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_V81_V85=1)
-    message(STATUS "Encore shared A64: reviewed ARMv8.1-v8.5 Switch 2 coverage (Lichii 11aac324)")
+    message(STATUS "Encore shared A64: canonical ARMv8.1-v8.5 owners selected directly")
 endif()
 
 # Unified NS2 six-core kernel owner; each process retains its physical

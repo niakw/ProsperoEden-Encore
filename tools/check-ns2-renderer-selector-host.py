@@ -10,7 +10,7 @@ start = "# N3m: compile a renderer-callable"
 end = "# N50: shared native PS5 device-memory"
 assert start in source and end in source
 selector = start + source.split(start,1)[1].split(end,1)[0]
-target = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
+target = ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
 assert target.is_file() and "target_sources(video_core PRIVATE" in selector
 # P2.2: production-selected native renderer obtains TIC metadata exclusively
 # from the authenticated QMD channel tables, not from fake defaults or a

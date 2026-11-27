@@ -12,10 +12,10 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 owners = {
-    "a32": root / "vendor/encore-active/eden-core/src/dynarmic/backend/x64/a32_interface_native.cpp",
-    "a64": root / "vendor/encore-active/eden-core/src/dynarmic/backend/x64/a64_interface_standard.cpp",
+    "a32": root / "vendor/encore-active/eden/src/dynarmic/backend/x64/a32_interface_native.cpp",
+    "a64": root / "vendor/encore-active/eden/src/dynarmic/backend/x64/a64_interface_standard.cpp",
 }
-shared = (root / "vendor/encore-active/eden-core/dynarmic/shared-jit/jit_impl.inc").read_text()
+shared = (root / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/jit_impl.inc").read_text()
 assert "ranges.swap(invalid_cache_ranges);" in shared
 
 def method(src: str, name: str) -> str:

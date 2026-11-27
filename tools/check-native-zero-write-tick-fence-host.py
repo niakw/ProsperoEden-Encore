@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-source = (root/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
+source = (root/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 backport = (root/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 start="template <class P>\nvoid BufferCache<P>::SynchronizeBufferWrites("
 assert source.count(start) == backport.count(start) == 1

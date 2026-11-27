@@ -24,7 +24,7 @@ assert "wide_bindings == 0 && rollback_count == 1" in source
 native = (ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/native_qmd_compute_environment.h").read_text()
 vulkan = (ROOT / "vendor/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()
 legacy = (ROOT / "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
-selected = (ROOT / "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
+selected = (ROOT / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
 assert "storage_buffers.size() > 32" in native
 assert "desc.count > 32 - result.storage_buffers.size()" in native
 assert "bool ComputePipeline::ConfigureNative(" in vulkan

@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-src=(root/"vendor/encore-active/eden-core/src/dynarmic/backend/x64/block_of_code_native.cpp").read_text()
+src=(root/"vendor/encore-active/eden/src/dynarmic/backend/x64/block_of_code_native.cpp").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
 pkg=(root/"tools/build-package.sh").read_text()
 app=(root/"headless/main.cpp").read_text()

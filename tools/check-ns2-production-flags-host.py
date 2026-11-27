@@ -73,7 +73,7 @@ assert '#ifdef PS5_NATIVE' in rasterizer
 assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in rasterizer
 for producer in (
     'vendor/encore-active/eden/src/video_core/engines/puller.cpp',
-    'vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp',
+    'vendor/encore-active/eden/src/video_core/dma_pusher.cpp',
     'vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
 ):
     owner=(ROOT/producer).read_text()

@@ -26,8 +26,8 @@ assert "std::printf(" not in impl and "NowNs()" not in impl
 assert "GetThreadName" not in impl and "mutex" not in impl.lower()
 # The actual DEV IPC instrumentation is a maintained C++ source, not a
 # configure-time CMake replacement. The quiet/active counters stay native.
-ipc = (root / "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_ipc.cpp").read_text()
-standard = (root / "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_ipc_standard.cpp").read_text()
+ipc = (root / "vendor/encore-active/eden/src/core/hle/kernel/svc/svc_ipc.cpp").read_text()
+standard = (root / "vendor/encore-active/eden/src/core/hle/kernel/svc/svc_ipc_standard.cpp").read_text()
 # Production has ONE safe and uninstrumented IPC owner. The optional
 # diagnostic source remains a host reference for counter correctness, but
 # must never enter the native PS5 CMake target or change Switch 1 timing.

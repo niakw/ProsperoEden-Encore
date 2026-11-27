@@ -13,7 +13,7 @@ root = Path(__file__).resolve().parents[1]
 
 def verify_g21_teardown():
     """Require current reviewed GPU lifetime fix; replay historic receipt only in memory."""
-    owner_dir = root / 'vendor/encore-active/eden-core/src/video_core'
+    owner_dir = root / 'vendor/encore-active/eden/src/video_core'
     normalized = {}
     for name in REVIEWED:
         source = (owner_dir / name).read_text()
@@ -54,7 +54,7 @@ native_pending_wait = """            if (scheduler.HasPendingNativeChannels()) {
 # The native build requires both renderers; the common GPU owner is selected by the GL branch.
 cmake = (root / "headless/CMakeLists.txt").read_text()
 assert 'set(EDEN_MAINTAINED_G21_GPU "${EDEN_G21_GPU_ROOT}/gpu_gl_native.cpp")' in cmake
-owner = (root / "vendor/encore-active/eden-core/src/video_core/gpu_gl_native.cpp").read_text()
+owner = (root / "vendor/encore-active/eden/src/video_core/gpu_gl_native.cpp").read_text()
 release = owner.split("void ReleaseChannel(Control::ChannelState& to_release) {", 1)[1].split("/// Binds a renderer", 1)[0]
 assert "gpu_thread.RetireChannelAtBoundary(" in release
 assert "scheduler.RetireChannel(owner.get());" in release
@@ -369,7 +369,7 @@ print('Native GPU stack, stop/wake/join, creation failures and blocked-command t
 
 # Native channel retirement must use a distinct worker FIFO command: a draw's
 # TickWork may execute inside the scheduler's shared epoch/execution leases.
-owner = (root / "vendor/encore-active/eden-core/src/video_core/gpu_vulkan.cpp").read_text()
+owner = (root / "vendor/encore-active/eden/src/video_core/gpu_vulkan.cpp").read_text()
 release = owner.split("void ReleaseChannel(Control::ChannelState& to_release) {", 1)[1].split("/// Binds a renderer", 1)[0]
 assert "gpu_thread.RetireChannelAtBoundary(" in release
 assert "scheduler.RetireChannel(owner.get());" in release

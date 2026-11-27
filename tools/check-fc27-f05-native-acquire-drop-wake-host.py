@@ -11,9 +11,9 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-CONSUMER = (ROOT / "vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp").read_text()
+CONSUMER = (ROOT / "vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp").read_text()
 PINNED = (ROOT / "vendor/sources/eden/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp").read_text()
-PRODUCER = (ROOT / "vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
+PRODUCER = (ROOT / "vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 assert 'list(APPEND core_sources "\x24{EDEN_MAINTAINED_NVNF_CONSUMER}")' in CMAKE
 

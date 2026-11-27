@@ -12,7 +12,7 @@ import sys
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-SOURCE=(ROOT/'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/container.cpp').read_text()
+SOURCE=(ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/core/container.cpp').read_text()
 CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
 BASELINE=(ROOT/'vendor/sources/eden/src/core/hle/service/nvdrv/core/container.cpp').read_text()
 start='void Container::CloseSession(SessionId session_id) {'

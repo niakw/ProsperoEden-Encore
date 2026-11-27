@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = ROOT / "vendor/encore-active/eden-core/src/video_core/engines"
+BASE = ROOT / "vendor/encore-active/eden/src/video_core/engines"
 QUIET = (BASE / "puller.cpp").read_text()
 DEV = (BASE / "puller_dev.cpp").read_text()
 PARITY = (ROOT / "tools/check-maintained-guest-gpu-sync.py").read_text()

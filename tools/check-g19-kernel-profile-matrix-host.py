@@ -152,7 +152,7 @@ file(WRITE "${PORT_BUILD_DIR}/selected.txt" "${g19_selected}")
             print(live_result.stdout[-3000:], live_result.stderr[-5000:])
             raise AssertionError("G19 direct selection failed: " + name)
         live_sources = (select_stage / "selected.txt").read_text().split(";")
-        owned_kernel = root / "vendor/encore-active/eden-core/src/core/hle/kernel"/(
+        owned_kernel = root / "vendor/encore-active/eden/src/core/hle/kernel"/(
             "kernel_standard.cpp")
         assert live_sources.count(str(owned_kernel)) == 1, name
         assert "hle/kernel/kernel.cpp" not in live_sources
@@ -168,7 +168,7 @@ file(WRITE "${PORT_BUILD_DIR}/selected.txt" "${g19_selected}")
     # Compare maintained G19 translation units against historical CMake
     # output byte-for-byte; the active selector is migrated only afterwards.
     for name in ("standard", "dev"):
-        maintained = root/"vendor/encore-active/eden-core/src/core/hle/kernel"/(
+        maintained = root/"vendor/encore-active/eden/src/core/hle/kernel"/(
             "kernel_standard.cpp" if name == "standard" else "kernel_dev.cpp")
         assert historical_kernel(maintained) == units[name], "G19 maintained kernel drift " + name
     print("ENCORE_G19_MAINTAINED_KERNEL_PARITY_PASS profiles=2")

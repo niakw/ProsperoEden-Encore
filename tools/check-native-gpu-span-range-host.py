@@ -13,7 +13,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 source = (ROOT / "vendor/sources/eden/src/video_core/memory_manager.cpp").read_text()
-maintained = (ROOT / "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp").read_text()
+maintained = (ROOT / "vendor/encore-active/eden/src/video_core/memory_manager.cpp").read_text()
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 workflow = (ROOT / ".github/workflows/encore-core-preflight.yml").read_text()
 start = "const u8* MemoryManager::GetSpan(const GPUVAddr src_addr, const std::size_t size) const {"

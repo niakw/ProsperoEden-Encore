@@ -47,7 +47,7 @@ for file in ("dma_pusher.cpp", "dma_pusher_dev.cpp"):
         "GpuGuestMemory<Tegra::CommandHeader,"
     ) < step.index("ProcessCommands(headers);")
 nvdrv = (vendor / (
-    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/"
+    "encore-active/eden/src_gpu/core/hle/service/nvdrv/"
     "devices/nvhost_gpu.cpp"
 )).read_text()
 # The two ioctl owners now allocate only after validating entry counts and

@@ -3100,11 +3100,17 @@ if shipping_vendor in {"9d8b9c280a9907a9881abcc974a1fde248d73fec", "806252e96253
     # rather than a fragile count.
     if shipping_vendor == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
         expected_new_owners = {
-            "ns2-runtime/hle/core/hle/service/am/service/performance_functions.h",
+            "eden-core/overrides/core/native_renderer_lifetime.h",
         }
         assert new_owners == expected_new_owners and post_snapshot == expected_new_owners, (
             "Nov26 residual native owner drift",
             sorted(new_owners), sorted(post_snapshot))
+        residual_owner = active / "eden-core/overrides/core/native_renderer_lifetime.h"
+        assert subprocess.check_output(
+            ["git", "hash-object", str(residual_owner)], text=True
+        ).strip() == "2801e3656e754162522b9049208c607021f3e770", (
+            "Nov26 residual renderer-lifetime owner drift"
+        )
     else:
         assert len(new_owners) == 8 and post_snapshot == new_owners, (
             "Nov26 unclassified native owners", sorted(post_snapshot - new_owners))

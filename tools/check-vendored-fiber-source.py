@@ -8,7 +8,7 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 pinned = (root/"vendor/sources/eden/src/common/fiber.cpp").read_text()
-active = (root/"vendor/encore-active/eden-core/src/common/fiber.cpp").read_text()
+active = (root/"vendor/encore-active/eden/src/common/fiber.cpp").read_text()
 cmake = (root/"headless/CMakeLists.txt").read_text()
 first = "    to.impl->previous_fiber = weak_from.lock();"
 old = '    // "from" might no longer be valid if the thread was killed\n    if (auto from = weak_from.lock()) {'
@@ -31,7 +31,7 @@ for before, after in (
     assert expected.count(before) == 1
     expected = expected.replace(before, after)
 assert active == expected, "tracked fiber source differs beyond the reviewed stack/lifetime changes"
-assert 'set(EDEN_FIBER_ACTIVE "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/fiber.cpp")' in cmake
+assert 'set(EDEN_FIBER_ACTIVE "${PORT_ROOT}/vendor/encore-active/eden/src/common/fiber.cpp")' in cmake
 assert 'list(APPEND common_sources "${EDEN_FIBER_ACTIVE}")' in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/fiber.cpp"' not in cmake
 assert 'list(APPEND common_sources "${PORT_BUILD_DIR}/fiber.cpp")' not in cmake

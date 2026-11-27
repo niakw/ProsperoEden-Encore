@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
-active=root/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h"
+active=root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h"
 source=active.read_text()
 def extract(begin,end):
     a=source.index(begin)

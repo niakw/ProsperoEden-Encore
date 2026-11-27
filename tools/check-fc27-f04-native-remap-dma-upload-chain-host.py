@@ -35,7 +35,7 @@ methods=extract(cache,
     "template <class P>\nvoid TextureCache<P>::RefreshContents(",
     "\ntemplate <class P>\nImageViewId TextureCache<P>::CreateImageView(")
 write=extract(cache,"void TextureCache<P>::WriteMemory(DAddr cpu_addr, size_t size) {",
-              "\ntemplate <class P>\nbool TextureCache<P>::IsDownloadable(")
+              "\ntemplate <class P>\nvoid TextureCache<P>::WriteGpuMemory(")
 unmap=extract(cache,"void TextureCache<P>::UnmapGPUMemory(size_t as_id, GPUVAddr gpu_addr, size_t size) {",
               "\ntemplate <class P>\nbool TextureCache<P>::BlitImage(")
 alias=extract(cache,"void TextureCache<P>::SynchronizeAliases(ImageId image_id) {",

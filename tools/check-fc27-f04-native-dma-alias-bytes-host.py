@@ -46,7 +46,7 @@ selected_alias = section(selected_texture,
     "\ntemplate <class P>\nvoid TextureCache<P>::PrepareImage(")
 write = section(texture,
     "void TextureCache<P>::WriteMemory(DAddr cpu_addr, size_t size) {",
-    "\ntemplate <class P>\nbool TextureCache<P>::IsDownloadable(")
+    "\ntemplate <class P>\nvoid TextureCache<P>::WriteGpuMemory(")
 assert "if (image.modification_tick == modification_tick)" in alias
 assert "std::ranges::sort(aliased_images" in alias
 assert "CopyImage(image_id, aliased->id, aliased->copies);" in alias

@@ -9,7 +9,7 @@ import tempfile
 root=Path(__file__).resolve().parents[2]
 vroot=root/'vendor'
 if not (vroot/'encore-active').exists(): vroot=root.parent/'vendor'
-owner=(vroot/'encore-active/eden-core/src/core/hle/service/nvdrv/core/nvmap.cpp').read_text()
+owner=(vroot/'encore-active/eden/src/core/hle/service/nvdrv/core/nvmap.cpp').read_text()
 start='void NvMap::UnpinHandle(Handle::Id handle) {'
 end='\nvoid NvMap::DuplicateHandle('
 assert owner.count(start)==owner.count(end)==1

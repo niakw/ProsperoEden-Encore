@@ -14,9 +14,9 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parent.parent
 VENDOR = "https://raw.githubusercontent.com/niakw/Prospero.Eden-Encore-vendor"
 FILES = (
-    ("encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp",
+    ("encore-active/eden/src/core/hle/service/aoc/addon_content_manager.cpp",
      "headless/nup_v1_aoc_service.cpp"),
-    ("encore-active/eden-core/src/core/file_sys/romfs_factory.cpp",
+    ("encore-active/eden/src/core/file_sys/romfs_factory.cpp",
      "headless/nup_v1_romfs_factory.cpp"),
 )
 

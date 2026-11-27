@@ -7,7 +7,7 @@ from pathlib import Path
 
 root=Path(__file__).resolve().parents[1]
 base=root/"vendor/sources/eden/src"
-active=root/"vendor/encore-active/eden-core/src"
+active=root/"vendor/encore-active/eden/src"
 cmake=(root/"headless/CMakeLists.txt").read_text()
 
 original=(base/"audio_core/sink/sink_details.cpp").read_text()

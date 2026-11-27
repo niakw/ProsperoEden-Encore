@@ -26,5 +26,5 @@ assert hashlib.sha1(git_blob).hexdigest() == "123f596ace3c09e589a8d7650013d83e57
 assert active.count(b"#undef ASSERT_MSG") == 1
 assert 'target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_JIT_ASSERT_ROOT}")' in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/jit-checks/common/assert.h"' not in cmake
-assert 'set(EDEN_JIT_ASSERT_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src")' in cmake
+assert 'set(EDEN_JIT_ASSERT_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")' in cmake
 print("VENDORED_JIT_ASSERT_PARITY_OK single maintained header, historical Git blob matched")

@@ -14,7 +14,7 @@ anchor = "#include <boost/container/small_vector.hpp>"
 assert original.count(anchor) == 1
 assert "#include <boost/version.hpp>" not in original
 assert active == original.replace(anchor, anchor + "\n#include <boost/version.hpp>")
-assert 'set(EDEN_SMALL_VECTOR_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src")' in cmake
+assert 'set(EDEN_SMALL_VECTOR_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")' in cmake
 assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_SMALL_VECTOR_ROOT}")' in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/small-vector/video_core/texture_cache/util.h"' not in cmake
 assert "#include <boost/version.hpp>" in active

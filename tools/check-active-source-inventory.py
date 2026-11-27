@@ -3092,7 +3092,14 @@ if shipping_vendor in {"9d8b9c280a9907a9881abcc974a1fde248d73fec", "806252e96253
         post_snapshot -= set(nov27_fc27_deferred_owners)
 
     new_owners = post_snapshot & selected_nov26_post_f07_additions
-    assert len(new_owners) == 8 and post_snapshot == new_owners, (
+    # The current FC27 #1518 successor classifies word_manager.h in its exact
+    # BufferCache hotpath ledger above, so seven of the historical eight
+    # unclassified Nov26 additions remain here. Earlier successors still keep
+    # the original count of eight.
+    expected_new_owners = (
+        7 if shipping_vendor == "9d8b9c280a9907a9881abcc974a1fde248d73fec" else 8
+    )
+    assert len(new_owners) == expected_new_owners and post_snapshot == new_owners, (
         "Nov26 unclassified native owners", sorted(post_snapshot - new_owners))
     assert not catalog_paths - set(physical), "Historical native source missing"
     for relative in selected_nov26_post_f07_additions:

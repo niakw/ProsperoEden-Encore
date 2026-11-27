@@ -1,7 +1,7 @@
-diff --git a/encore-active/eden-core/src/video_core/memory_manager.cpp b/encore-active/eden-core/src/video_core/memory_manager.cpp
+diff --git a/encore-active/eden/src/video_core/memory_manager.cpp b/encore-active/eden/src/video_core/memory_manager.cpp
 index b018babb791e0a72a042abeb56dc6f4587ba557b..f36837c70435a919fd8d51b46983707c634039cc 100644
---- a/encore-active/eden-core/src/video_core/memory_manager.cpp
-+++ b/encore-active/eden-core/src/video_core/memory_manager.cpp
+--- a/encore-active/eden/src/video_core/memory_manager.cpp
++++ b/encore-active/eden/src/video_core/memory_manager.cpp
 @@ -5,6 +5,8 @@
  // SPDX-License-Identifier: GPL-2.0-or-later
  

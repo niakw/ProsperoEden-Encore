@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-active = root / "vendor/encore-active/eden/src/dynarmic/backend/x64"
+active = root / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64"
 pinned = root / "vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/emit_x64.cpp"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 old = pinned.read_text()

@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-owned = root / "vendor/encore-active/eden/src/dynarmic/backend/x64"
+owned = root / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64"
 upstream = root / "vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64"
 read = lambda base, name: (base / name).read_text()
 cm = read(root / "headless", "CMakeLists.txt")

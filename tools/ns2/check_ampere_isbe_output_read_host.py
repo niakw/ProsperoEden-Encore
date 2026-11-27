@@ -12,7 +12,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 VENDOR = ROOT / "vendor"
-AMPERE = VENDOR / "encore-active/ns2-runtime/ampere"
+AMPERE = VENDOR / "encore-active/eden/srcpere"
 SHADER = VENDOR / "encore-active/eden-shader/src"
 
 decoder = (AMPERE / "shader_recompiler/frontend/ampere/native_stage_buffer.h").read_text()

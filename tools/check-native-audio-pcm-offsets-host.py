@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-source = (root / "vendor/encore-active/eden-core/src/audio_core/renderer/voice/voice_info.cpp").read_text()
+source = (root / "vendor/encore-active/eden/src/audio_core/renderer/voice/voice_info.cpp").read_text()
 begin = "constexpr bool PcmOffsetsWithinBuffer("
 assert source.count(begin) == 1
 helper = begin + source.split(begin, 1)[1].split("}\n} // namespace", 1)[0] + "}"

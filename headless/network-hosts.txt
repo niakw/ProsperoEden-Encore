@@ -1,10 +1,10 @@
 # Eden Encore — packaged DNS deny policy
-# Source of truth: niakw/nanodns-console-blocklist nanodns.ini
-# Source commit: 58bee7d6041246a5735639cfa99533f00bee1d68
-# Projection: [overrides] left-hand masks whose target is 0.0.0.0.
-# Do not edit policy entries here independently; update the NanoDNS source first.
+# Union policy: current nanoDNS-Encore nanodns.ini + retained legacy Encore denylist.
+# nanoDNS-Encore nanodns.ini blob: aef5a8afbd30d55fc96673e5a09c0c1e2a5bf066
+# Legacy Encore source commit: 2122553f6274730687abee227ffd6e2ebc6f9747
+# 233 unique hostname masks. This file is packaged as app0/network-hosts.txt.
 
-# SONY / PLAYSTATION / SIE
+# Current nanoDNS-Encore policy — 124 rules
 *playstation*
 *sony*
 *psndl*
@@ -17,12 +17,9 @@
 *scea*
 sie.com
 *.sie.com
-# Exact historical PlayStation CDN alias on shared Akamai infrastructure.
 a192.d.akamai.net
 psn.akadns99.net
 *.psn.akadns99.net
-
-# EPIC GAMES / FORTNITE / EASY ANTI-CHEAT
 epicgames.com
 *.epicgames.com
 epicgames.dev
@@ -35,8 +32,6 @@ easyanticheat.net
 *.easyanticheat.net
 easy.ac
 *.easy.ac
-
-# ROCKSTAR / TAKE-TWO / 2K
 rsgameservices.com
 *.rsgameservices.com
 rockstargames.com
@@ -49,8 +44,6 @@ take2games.com
 *.2k.com
 2kcoretech.online
 *.2kcoretech.online
-
-# CD PROJEKT / GOG
 gog.com
 *.gog.com
 gogcdn.net
@@ -67,14 +60,10 @@ cdprojektred.com
 *.cdprojektred.com
 cyberpunk.net
 *.cyberpunk.net
-
-# NINTENDO (Wii / DS / 3DS / Wii U / Switch / Switch 2 branded endpoints)
 *nintendo*
 *nintendowifi*
 wii.com
 *.wii.com
-
-# EA / EA SPORTS / ORIGIN
 ea.com
 *.ea.com
 ea.net
@@ -87,8 +76,6 @@ eaplay.com
 *.eaplay.com
 origin.com
 *.origin.com
-
-# UBISOFT
 ubisoft.com
 *.ubisoft.com
 ubi.com
@@ -97,14 +84,10 @@ ubisoftconnect.com
 *.ubisoftconnect.com
 ubi-services.com
 *.ubi-services.com
-
-# SEGA
 sega.com
 *.sega.com
 sega.co.jp
 *.sega.co.jp
-
-# XBOX (original / 360 / One / Series, including some legacy CDN aliases)
 xbox.com
 *.xbox.com
 xboxlive.com
@@ -134,8 +117,6 @@ xboxlive.ipv6.microsoft.com.akadns.net
 xboxservices.com.akadns.net
 *.xboxservices.com.akadns.net
 xboxlive.com-c.edgekey.net.globalredir.akadns.net
-
-# OTHER GAME PUBLISHERS / PC PLATFORMS
 steampowered.com
 *.steampowered.com
 steamcommunity.com
@@ -148,3 +129,114 @@ square-enix.com
 *.square-enix.com
 bandainamcoent.com
 *.bandainamcoent.com
+
+# Retained legacy Encore policy — 109 additional rules
+nintendo.com
+nintendo.net
+nintendo.jp
+nintendo.co.jp
+nintendo.co.uk
+nintendo-europe.com
+nintendowifi.net
+nintendo.es
+nintendo.co.kr
+nintendo.tw
+nintendo.com.hk
+nintendo.com.au
+nintendo.co.nz
+nintendo.at
+nintendo.be
+nintendods.cz
+nintendo.dk
+nintendo.de
+nintendo.fi
+nintendo.fr
+nintendo.gr
+nintendo.hu
+nintendo.it
+nintendo.nl
+nintendo.no
+nintendo.pt
+nintendo.ru
+nintendo.co.za
+nintendo.se
+nintendo.ch
+nintendo.pl
+nintendoswitch.com
+nintendoswitch.cn
+nintendoswitch.com.cn
+nintendo.eu
+scsi-upload-lp1.s3.us-west-2.amazonaws.com
+rocketleague.com
+psyonix.com
+fallguys.com
+codemasters.com
+microsoft.com
+minecraft.net
+minecraftservices.com
+mojang.com
+atlus.co.jp
+capcom.co.jp
+square-enix-games.com
+square-enix.co.jp
+fromsoftware.jp
+konami.com
+konami.net
+yugioh-card.com
+activision.com
+callofduty.com
+demonware.net
+demonware.com
+blizzard.com
+battle.net
+bethesda.net
+bethesda.com
+zenimax.com
+gearboxsoftware.com
+phoenix-api.wbagora.com
+wbgames.com
+wbplay.com
+warnerbrosgames.com
+ttgames.com
+koeitecmo.com
+koeitecmoamerica.com
+koeitecmo.co.jp
+gamecity.ne.jp
+level5.co.jp
+marvelous.co.jp
+nisamerica.com
+nippon1.co.jp
+spike-chunsoft.com
+spike-chunsoft.co.jp
+arcsystemworks.com
+arcsygames.com
+inticreates.com
+gungho.jp
+505games.com
+team17.com
+thqnordic.com
+plaion.com
+deep-silver.com
+tinybuild.com
+devolverdigital.com
+nacon.com
+maximumgames.com
+rawfury.com
+annapurnainteractive.com
+humblegames.com
+curvegames.com
+dotemu.com
+microids.com
+telltale.com
+jackboxgames.com
+jackbox.tv
+playdigious.com
+warframe.com
+digitalextremes.com
+deadbydaylight.com
+bhvr.com
+hirezstudios.com
+smitegame.com
+pokemon.com
+pokemon.co.jp
+pokemonunite.com

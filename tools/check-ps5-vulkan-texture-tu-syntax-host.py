@@ -54,7 +54,7 @@ def run() -> None:
         # the immutable upstream [[nodiscard]] void declaration (Clang warning).
         ROOT / "vendor/encore-active/eden/src",
         ROOT / "vendor/encore-active/eden-vulkan/include",
-        ROOT / "vendor/encore-active/ns2-astc/include",
+        ROOT / "vendor/encore-active/eden/src",
         ROOT / "vendor/encore-active/eden/src",
         ROOT / "vendor/sources/eden/src",
         pinned / "vulkanheaders/v1.4.345/include",

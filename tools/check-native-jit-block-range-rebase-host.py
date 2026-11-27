@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-impl=(root/"vendor/encore-active/eden-core/src/dynarmic/backend/block_range_information.cpp").read_text()
+impl=(root/"vendor/encore-active/eden/src/dynarmic/backend/block_range_information.cpp").read_text()
 start="template<typename P>\nvoid BlockRangeInformation<P>::AddRange("
 end="template class BlockRangeInformation<u32>;"
 assert impl.count(start)==impl.count(end)==1

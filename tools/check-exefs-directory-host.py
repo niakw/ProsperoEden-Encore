@@ -65,14 +65,14 @@ assert "symlink_status(folder / name, error)" in header
 # Native PS5 release compilation regression: CreateRomFS is declared only by
 # core/file_sys/romfs.h, not romfs_factory.h. The real maintained loader must
 # include its owning declaration, also with all NS2 flags OFF.
-native_extracted = (root / "vendor/encore-active/eden-core/src/core/loader/deconstructed_rom_directory.cpp").read_text()
+native_extracted = (root / "vendor/encore-active/eden/src/core/loader/deconstructed_rom_directory.cpp").read_text()
 native_romfs = (root / "vendor/sources/eden/src/core/file_sys/romfs.h").read_text()
 assert native_extracted.count('#include "core/file_sys/romfs.h"') == 1
 assert 'romfs = FileSys::CreateRomFS(std::move(extracted_romfs), nullptr);' in native_extracted
 assert 'VirtualFile CreateRomFS(VirtualDir dir, VirtualDir ext = nullptr);' in native_romfs
 # The selected native loader must route an extracted ExeFS/main to the
 # directory loader *before* generic NSO detection (rtld/sdk + NPDM identity).
-loader_cpp = (root / "vendor/encore-active/eden-core/src/core/loader/loader.cpp").read_text()
+loader_cpp = (root / "vendor/encore-active/eden/src/core/loader/loader.cpp").read_text()
 identify = loader_cpp.split("FileType IdentifyFile(FileSys::VirtualFile file) {", 1)[1].split("\n}\n", 1)[0]
 assert 'file->GetName() == "main"' in identify
 assert identify.count("IdentifyFileLoader<AppLoader_DeconstructedRomDirectory>(file)") == 1
@@ -750,7 +750,7 @@ int main() {
 """.replace("__ENCORE_SIZING_OWNER__", sizing).replace(
     "__ENCORE_EXACT_SIZE_OWNER__", exact_size).replace(
     "__ENCORE_NACP_OWNER__", nacp).replace("__ENCORE_COVERS_OWNER__", covers)
-stb_owner = root / "vendor/encore-active/eden-core/src/common/stb_image_png.cpp"
+stb_owner = root / "vendor/encore-active/eden/src/common/stb_image_png.cpp"
 stb_headers = root / "vendor/sources/eden/externals/stb"
 assert stb_owner.is_file() and (stb_headers / "stb_image.h").is_file()
 

@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-vendor = root / "vendor/encore-active/eden-core/src/core"
+vendor = root / "vendor/encore-active/eden/src/core"
 header = vendor / "file_sys/extracted_aoc_paths.h"
 wrapper = vendor / "file_sys/extracted_aoc.h"
 aoc = vendor / "hle/service/aoc/addon_content_manager.cpp"

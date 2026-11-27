@@ -12,9 +12,9 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[2]
-owner = root / "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp"
+owner = root / "vendor/encore-active/eden/src/video_core/memory_manager.cpp"
 source = owner.read_text()
-guard = root / "vendor/encore-active/eden-core/src/video_core/native_gpu_page_remap.h"
+guard = root / "vendor/encore-active/eden/src/video_core/native_gpu_page_remap.h"
 assert guard.is_file()
 assert '#include "native_gpu_page_remap.h"' in source
 assert source.count("Eden::GpuMemory::NeedsRasterizerUnmap(") == 2

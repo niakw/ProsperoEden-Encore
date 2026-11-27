@@ -161,7 +161,7 @@ def reverse_1952(text: str, native: bool) -> str:
 
 root = Path(__file__).resolve().parents[1]
 base = root / "vendor/sources/eden/src/core/core.cpp"
-active = root / "vendor/encore-active/eden-core/src/core"
+active = root / "vendor/encore-active/eden/src/core"
 oracle = root / "tools/fixtures/retired-g14-core.cmake"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 assert base.is_file() and oracle.is_file()

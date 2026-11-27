@@ -13,7 +13,7 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "vendor/encore-active/eden-core/src/audio_core/device/device_session.cpp"
+SOURCE = ROOT / "vendor/encore-active/eden/src/audio_core/device/device_session.cpp"
 START = "void DeviceSession::ReleaseBuffer(const AudioBuffer& buffer) const {"
 END = "\nbool DeviceSession::IsBufferConsumed"
 

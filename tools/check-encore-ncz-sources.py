@@ -8,7 +8,7 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 pinned=root/"vendor/sources/eden/src/core"
-active=root/"vendor/encore-active/eden-core/src/core"
+active=root/"vendor/encore-active/eden/src/core"
 pairs=[
  ("file_sys/submission_package.cpp","0ea323492b914f05d45548cf90b912e00e610431","Ncz::Open"),
  ("file_sys/card_image.cpp","593c561689f1790b8c8ab673f3dd44d3d790f553","Ncz::Open"),

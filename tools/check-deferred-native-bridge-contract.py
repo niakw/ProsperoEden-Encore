@@ -16,12 +16,12 @@ bridge=root/"headless/guest_write_deferred_bridge.cmake"
 code=bridge.read_text()
 legacy_bridge=root/"tools/fixtures/legacy-guest-write-deferred-bridge.cmake"
 legacy_code=legacy_bridge.read_text()
-maintained_m06 = root/"vendor/encore-active/eden-core/guest-bridge/memory_manager.cpp"
-maintained_m07 = root/"vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp"
-maintained_m08 = root/"vendor/encore-active/eden-core/guest-bridge/dma_pusher.cpp"
-maintained_m09 = root/"vendor/encore-active/eden-core/guest-bridge/maxwell_dma.cpp"
-maintained_m10 = root/"vendor/encore-active/eden-core/guest-bridge/kepler_compute.cpp"
-maintained_m11 = root/"vendor/encore-active/eden-core/guest-bridge/engine_upload.cpp"
+maintained_m06 = root/"vendor/encore-active/eden/src/video_core/memory_manager_deferred.cpp"
+maintained_m07 = root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp"
+maintained_m08 = root/"vendor/encore-active/eden/src/video_core/dma_pusher_deferred.cpp"
+maintained_m09 = root/"vendor/encore-active/eden/src/video_core/engines/maxwell_dma_deferred.cpp"
+maintained_m10 = root/"vendor/encore-active/eden/src/video_core/engines/kepler_compute_deferred.cpp"
+maintained_m11 = root/"vendor/encore-active/eden/src/video_core/engines/engine_upload_deferred.cpp"
 bridge_runtime = (legacy_code + "\n" + maintained_m06.read_text() +
                   "\n" + maintained_m07.read_text() +
                   "\n" + maintained_m08.read_text() +
@@ -233,7 +233,7 @@ for signature in (
 # M04: maintained complete header must equal its former two pinned rewrites.
 # Only the absolute CMake-specific include prefix is normalized to the
 # existing headless include directory of core and video_core.
-maintained_m04 = root/"vendor/encore-active/eden-core/guest-bridge/memory_manager.h"
+maintained_m04 = root/"vendor/encore-active/eden/src/video_core/memory_manager_deferred.h"
 pinned_m04 = (root/"vendor/sources/eden/src/video_core/memory_manager.h").read_text()
 assert pinned_m04.count("    void FlushCaching();") == 1
 assert pinned_m04.count("    Core::System& system;") == 1
@@ -287,7 +287,7 @@ assert pinned_dirty.count(dirty_nested) == 1
 expected_dirty = pinned_dirty.replace(dirty_entry,
     "    void Collect(PAddr address, size_t size) {\n        std::scoped_lock lk(guard);\n        TransformAddress t = BuildTransform(address, size);").replace(
     dirty_nested, "                    back_buffer.emplace_back(tmp);")
-maintained_dirty = root/"vendor/encore-active/eden-core/guest-bridge/gpu_dirty_memory_manager.h"
+maintained_dirty = root/"vendor/encore-active/eden/src/core/gpu_dirty_memory_manager_deferred.h"
 assert maintained_dirty.read_text() == expected_dirty, "M05 maintained source differs from generated source"
 assert 'configure_file("${EDEN_DEFERRED_DIRTY_HEADER}"' in code
 assert 'write_derived("${PORT_BUILD_DIR}/deferred-core/core/gpu_dirty_memory_manager.h"' not in code
@@ -408,9 +408,9 @@ if m07_source_blob(original_m07) == "6f3378f1bb611c74ecfe1f5cd37283137462012a":
         cwd=root / "vendor",
     )
     rasterizer_owner = root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp"
-    word_owner = root / "vendor/encore-active/eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h"
-    device_h = root / "vendor/encore-active/eden-core/overrides/core/device_memory_manager.h"
-    device_inc = root / "vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc"
+    word_owner = root / "vendor/encore-active/eden/src/video_core/buffer_cache/word_manager.h"
+    device_h = root / "vendor/encore-active/eden/src/core/device_memory_manager.h"
+    device_inc = root / "vendor/encore-active/eden/src/core/device_memory_manager.inc"
     for owner in (rasterizer_owner, word_owner, device_h, device_inc):
         assert owner.is_file(), owner
     rasterizer_text = rasterizer_owner.read_text()
@@ -804,7 +804,7 @@ assert '"${PORT_BUILD_DIR}/vulkan_rasterizer_deferred.cpp"' in code
 print("ENCORE_M07_MAINTAINED_VULKAN_PARITY_PASS")
 
 # M08: DEV G20 DMA source plus two exact former bridge flush insertions.
-g20_dev_dma = (root/"vendor/encore-active/eden-core/src/video_core/dma_pusher_dev.cpp").read_text()
+g20_dev_dma = (root/"vendor/encore-active/eden/src/video_core/dma_pusher_dev.cpp").read_text()
 m08_entry = "void DmaPusher::DispatchCalls() {"
 m08_fence = "    system.GPU().OnCommandListEnd();"
 assert g20_dev_dma.count(m08_entry) == g20_dev_dma.count(m08_fence) == 1
@@ -925,7 +925,7 @@ endfunction()
         assert "std::numeric_limits<u64>::max() - GetInteger(base)" in generated
         return generated
     shipping = root/"vendor/encore-active/eden/src/core/memory.cpp"
-    a32 = root/"vendor/encore-active/eden-core/src/core/memory.cpp"
+    a32 = root/"vendor/encore-active/eden/src/core/memory.cpp"
     native_default = generate_g13(shipping, stage, "shipping")
     native_a32 = generate_g13(a32, fake/"g13-a32", "a32")
     assert native_default != native_a32, "G13 A32 source identity lost"
@@ -942,7 +942,7 @@ set(PORT_ROOT "__ROOT__")
 set(EDEN_PORT_DIR "__ROOT__/headless")
 set(PROJECT_SOURCE_DIR "__ROOT__/vendor/sources/eden")
 set(PORT_BUILD_DIR "__STAGE__")
-set(EDEN_MAINTAINED_GPU_DMA "__ROOT__/vendor/encore-active/eden-core/src/video_core/dma_pusher_dev.cpp")
+set(EDEN_MAINTAINED_GPU_DMA "__ROOT__/vendor/encore-active/eden/src/video_core/dma_pusher_dev.cpp")
 add_library(video_core STATIC "@{CMAKE_CURRENT_SOURCE_DIR}/empty.cpp")
 add_library(core STATIC "@{CMAKE_CURRENT_SOURCE_DIR}/empty.cpp")
 set_property(TARGET core PROPERTY SOURCES "@{PORT_BUILD_DIR}/memory-ps5.cpp")
@@ -1011,8 +1011,8 @@ include("__BRIDGE__")
         actual_stage.mkdir()
         actual=project.replace(str(stage),str(actual_stage))
         actual=actual.replace(str(legacy_bridge),str(bridge))
-        native_path=(root/"vendor/encore-active/eden-core/src/core"/native_file)
-        deferred_path=(root/"vendor/encore-active/eden-core/guest-bridge"/deferred_file)
+        native_path=(root/"vendor/encore-active/eden/src/core"/native_file)
+        deferred_path=(root/"vendor/encore-active/eden/guest-bridge"/deferred_file)
         actual=actual.replace(
             'set_property(TARGET core PROPERTY SOURCES "${PORT_BUILD_DIR}/memory-ps5.cpp")',
             'set(EDEN_A32_FASTMEM '+('ON' if mode=="a32" else 'OFF')+')\n'

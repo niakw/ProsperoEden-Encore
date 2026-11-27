@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
-enum { MAX_RULES = 512, MAX_NAME = 255 };
+enum { MAX_RULES = 4096, MAX_NAME = 255 };
 static char rules[MAX_RULES][MAX_NAME + 1];
 static unsigned rule_count;
 static atomic_int ready = ATOMIC_VAR_INIT(0);

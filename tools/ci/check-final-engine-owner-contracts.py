@@ -10,7 +10,7 @@ root=Path(__file__).resolve().parents[2]
 paths={
  "sm": "vendor/encore-active/eden/src/core/hle/service/sm/sm.h",
  "thread": "vendor/encore-active/eden/src/core/hle/kernel/k_thread.h",
- "jit": "vendor/encore-active/eden/src/dynarmic/backend/x64/a64_interface_standard.cpp",
+ "jit": "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface_standard.cpp",
 }
 expected={
  "sm": "afaad1b58658c9fe7807756410b7f1a82d0e3c7d",

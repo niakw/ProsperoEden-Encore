@@ -27,7 +27,7 @@ def read(path: str) -> str:
 def check() -> None:
     # One real PS5 VFS owner, shared by NS1 and NS2. The 128-entry LRU
     # budget and Mesa's four database parts must ship together.
-    active_vfs = read('vendor/encore-active/eden-core/src/core/file_sys/vfs/vfs_real.cpp')
+    active_vfs = read('vendor/encore-active/eden/src/core/file_sys/vfs/vfs_real.cpp')
     pinned_vfs = read('vendor/sources/eden/src/core/file_sys/vfs/vfs_real.cpp')
     old_cap = 'constexpr size_t MaxOpenFiles = 8192;'
     ps5_cap = '''// PS5 has a substantially lower *effective* descriptor budget than
@@ -137,12 +137,12 @@ constexpr size_t MaxOpenFiles = 8192;
     memory=read('vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp')
     require('MapNative4K' in memory and 'UnmapNative4K' in memory,
             '4 KiB native GMMU memory source missing')
-    decoder=read('vendor/encore-active/eden-core/src/video_core/textures/decoders.cpp')
-    decoder_header=read('vendor/encore-active/eden-core/overrides/native-tiling/video_core/textures/decoders.h')
-    memory_header=read('vendor/encore-active/eden-core/overrides/native-tiling/video_core/memory_manager.h')
+    decoder=read('vendor/encore-active/eden/src/video_core/textures/decoders.cpp')
+    decoder_header=read('vendor/encore-active/eden/src/video_core/textures/decoders.h')
+    memory_header=read('vendor/encore-active/eden/src/video_core/memory_manager.h')
     pinned_memory_header=read('vendor/sources/eden/src/video_core/memory_manager.h')
-    i2m=read('vendor/encore-active/eden-core/src/video_core/engines/engine_upload.cpp')
-    blitter=read('vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp')
+    i2m=read('vendor/encore-active/eden/src/video_core/engines/engine_upload.cpp')
+    blitter=read('vendor/encore-active/eden/src/video_core/engines/sw_blitter/blitter.cpp')
     nvhost=read('vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp')
     channel_state=read('vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp')
     pinned_decoder_header=read('vendor/sources/eden/src/video_core/textures/decoders.h')
@@ -269,7 +269,7 @@ constexpr size_t MaxOpenFiles = 8192;
             '"${PORT_BUILD_DIR}/vulkan_rasterizer.cpp"' in vk_select,
             'production Vulkan renderer no longer uses maintained source')
     pinned=read('vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h')
-    selected=read('vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h')
+    selected=read('vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache_base.h')
     ampere=read('vendor/encore-active/ns2-runtime/shader_resource/include/video_core/buffer_cache/buffer_cache_base.h')
     require('NUM_STORAGE_BUFFERS = 16;' in pinned and
             'NUM_STORAGE_BUFFERS = 32;' in selected and

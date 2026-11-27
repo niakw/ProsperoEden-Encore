@@ -366,7 +366,7 @@ jobs:
             vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp; do
             clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
               -DPS5_NATIVE=1 \
-              -Ivendor/encore-active/eden-sync/overrides/h05-syncpoint \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden-core/overrides/h01-filesystem \
               -Ibuild-ns2-a64/fmt/include \
               -Ivendor/encore-active/ns2-runtime/self_controller \

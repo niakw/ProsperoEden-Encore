@@ -178,7 +178,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # SyncpointManager ABI BEFORE pinned Eden. Include the same root in this
     # real-TU compilation witness, otherwise GCC sees the obsolete upstream
     # header and reports CaptureNativeSyncpointLease as undeclared.
-    h05=ROOT/'vendor/encore-active/eden-sync/overrides/h05-syncpoint'
+    h05=ROOT/'vendor/encore-active/eden/src'
     h05_header=h05/'core/hle/service/nvdrv/core/syncpoint_manager.h'
     h05_cmake=(ROOT/'vendor/encore-active/eden-threading/native-hle-overrides.cmake').read_text()
     assert h05_header.is_file()

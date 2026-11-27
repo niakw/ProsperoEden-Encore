@@ -40,7 +40,7 @@ include("${PORT_ROOT}/vendor/encore-active/eden-threading/native-hle-overrides.c
 get_target_property(selected core SOURCES)
 # A native-only NVDRV pool replaces the pinned owner when PS5_NATIVE is ON.
 set(sync_pinned "hle/service/nvdrv/core/syncpoint_manager.cpp")
-set(sync_native "${PORT_ROOT}/vendor/encore-active/eden-sync/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp")
+set(sync_native "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp")
 list(FIND selected "${sync_pinned}" sync_pinned_pos)
 list(FIND selected "${sync_native}" sync_native_pos)
 if(PS5_NATIVE)
@@ -94,7 +94,7 @@ endforeach()
 # its syncpoint manager, before checking the selected maintained override.
 list(FIND selected "hle/service/nvdrv/core/syncpoint_manager.cpp" pinned_syncpoint_pos)
 list(FIND selected
-    "${PORT_ROOT}/vendor/encore-active/eden-sync/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp"
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp"
     active_syncpoint_pos)
 if(PS5_NATIVE)
     if(NOT pinned_syncpoint_pos EQUAL -1 OR active_syncpoint_pos EQUAL -1)
@@ -109,7 +109,7 @@ endif()
 get_target_property(include_dirs core INCLUDE_DIRECTORIES)
 if(PS5_NATIVE)
     list(FIND include_dirs
-       "${PORT_ROOT}/vendor/encore-active/eden-sync/src" sync_pos)
+       "${PORT_ROOT}/vendor/encore-active/eden/src" sync_pos)
     if(sync_pos EQUAL -1)
         message(FATAL_ERROR "Native synchronization header root missing")
     endif()

@@ -3127,7 +3127,7 @@ def has_exact_audit_path(relative):
         "vendor/encore-active/eden-backports/",
         "vendor/encore-active/eden-vulkan/", "vendor/encore-active/eden-gpu/",
         "vendor/encore-active/eden-threading/",
-        "vendor/encore-active/eden-sync/",
+        "vendor/encore-active/eden/",
         "vendor/encore-active/eden-shader/",
     ))
 shipping_manifest = json.loads((active / "eden-backports/manifest.json").read_text())

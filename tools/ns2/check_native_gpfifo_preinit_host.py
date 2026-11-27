@@ -241,7 +241,7 @@ print("P2_7_GPFIFO_PREFLIGHT_HOST_ALL_PASS",flush=True)
 
 # Execute the production lease retirement and pusher wait code, not a copy
 # of the predicate. Host and guest counters deliberately diverge.
-sync_src=(ROOT/"vendor/encore-active/eden-sync/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp").read_text()
+sync_src=(ROOT/"vendor/encore-active/eden/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp").read_text()
 lease_code=sync_src[ sync_src.index("void SyncpointManager::FreeSyncpoint("):sync_src.index("bool SyncpointManager::IsSyncpointAllocated(")]
 dma_src=(ROOT/"vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp").read_text()
 resume_code=dma_src[dma_src.index("bool DmaPusher::ResumeNativeAcquire() {"):dma_src.index("#endif\n\nvoid DmaPusher::DispatchCalls()")]

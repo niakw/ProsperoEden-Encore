@@ -455,7 +455,7 @@ Mesurer au moins :
 
 ### 9.1 Horizon et services
 
-Le moteur utilise la HLE (High-Level Emulation) pour les appels système et services. <code>V/sources/eden/src/core/hle/</code> est la racine principale ; <code>V/encore-active/eden-threading</code>, <code>eden-sync</code>, <code>eden-core</code> et <code>ns2-runtime</code> portent des adaptations.
+Le moteur utilise la HLE (High-Level Emulation) pour les appels système et services. <code>V/sources/eden/src/core/hle/</code> est la racine principale ; <code>V/encore-active/eden-threading</code>, <code>eden-core</code> et <code>ns2-runtime</code> portent des adaptations.
 
 | Groupe | Exemples et symptômes |
 |---|---|
@@ -534,7 +534,7 @@ flowchart TB
 
 **Vendor — upstreams** : <code>sources/eden</code>, <code>eden-cpm</code>, <code>ps5-mesa</code>, <code>opengl-mesa-26-2</code>, <code>ps5-payload-sdk-fork</code>, <code>ffmpeg</code>, <code>fmt</code>, <code>harfbuzz</code>, <code>libwebp</code>, <code>jxrlib</code>, <code>compiler-rt</code>, <code>zbic</code>, <code>ps5-fsr3-optical-flow</code>, <code>ps5-mihawkgen</code>, <code>ps5-vulkan-tools</code>, divers composants OpenGL et headers.
 
-**Vendor — adaptations** : <code>encore-active/eden</code>, <code>encore-active/eden-core</code>, <code>eden-gpu</code>, <code>eden-shader</code>, <code>eden-threading</code>, <code>eden-sync</code>, <code>eden-surface-lifecycle</code>, <code>eden-vulkan</code>, <code>eden-backports</code>, <code>eden-build</code>, <code>ns2-runtime</code>, <code>ns2-a64</code>, <code>ns2-astc</code>, <code>ns2-helpers</code>, <code>ps5-mesa</code>, <code>amd-fsr31</code>, <code>compiler-rt</code>.
+**Vendor — adaptations** : <code>encore-active/eden</code>, <code>encore-active/eden-core</code>, <code>eden-gpu</code>, <code>eden-shader</code>, <code>eden-threading</code>, <code>eden-surface-lifecycle</code>, <code>eden-vulkan</code>, <code>eden-backports</code>, <code>eden-build</code>, <code>ns2-runtime</code>, <code>ns2-a64</code>, <code>ns2-astc</code>, <code>ns2-helpers</code>, <code>ps5-mesa</code>, <code>amd-fsr31</code>, <code>compiler-rt</code>.
 
 Ces répertoires incluent du code tiers, du code maintenu, des aides et parfois des pistes de recherche. La liste des composants effectivement **liés au binaire** est déterminée par les sources sélectionnées à la révision exacte, pas par cette énumération.
 

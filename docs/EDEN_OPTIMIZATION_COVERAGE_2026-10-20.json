@@ -3895,7 +3895,7 @@
       "contract_evidence": "tools/install-vendored-surface-lifecycle.py"
     },
     {
-      "path": "vendor/encore-active/eden-sync/src/core/hle/kernel/k_synchronization_object.h",
+      "path": "vendor/encore-active/eden/src/core/hle/kernel/k_synchronization_object.h",
       "disposition": "historical_host_contract_reviewed",
       "contract_id": "H17",
       "prior_status": "HOST",

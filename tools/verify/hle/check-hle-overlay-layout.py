@@ -27,7 +27,7 @@ assert "if(PS5_NATIVE)" in module
 assert 'target_include_directories(core BEFORE PUBLIC "${_encore_sync_root}")' in module
 
 thread_root = root / "vendor/encore-active/eden-threading/src/core/hle/kernel"
-sync_root = root / "vendor/encore-active/eden-sync/src/core/hle/kernel"
+sync_root = root / "vendor/encore-active/eden/src/core/hle/kernel"
 for relative in (
     "k_thread.cpp", "k_thread.h", "k_slab_heap.h", "k_scheduler.cpp",
     "slab_helpers.h", "k_worker_task_manager.h",

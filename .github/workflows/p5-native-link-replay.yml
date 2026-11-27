@@ -96,10 +96,10 @@ jobs:
           db = json.loads((native / "compile_commands.json").read_text())
           expected = (
               "vendor/sources/ps5-fsr3-optical-flow/src/ps5_framegen.cpp",
-              "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp",
-              "vendor/encore-active/eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_atomic.cpp",
-              "vendor/encore-active/eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_memory.cpp",
-              "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp",
+              "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp",
+              "vendor/encore-active/eden/src/shader_recompiler/backend/glsl/emit_glsl_atomic.cpp",
+              "vendor/encore-active/eden/src/shader_recompiler/backend/glasm/emit_glasm_memory.cpp",
+              "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp",
               "vendor/sources/eden/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp",
           )
           for relative in expected:

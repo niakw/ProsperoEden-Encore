@@ -14,7 +14,7 @@ roots=['vendor/encore-active/ns2-runtime/gpu_access_svc',
        'vendor/encore-active/ns2-runtime/nvdrv',
        'vendor/sources/eden/src',
        'vendor/sources/fmt/include',
-       'vendor/encore-active/ns2-helpers/include']
+       'vendor/encore-active/eden/src']
 inc=['-I'+str(ROOT/r) for r in roots]
 assert all((ROOT/r).exists() for r in roots)
 if sys.platform=='darwin':

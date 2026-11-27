@@ -55,7 +55,7 @@ def run() -> None:
         ROOT / "vendor/encore-active/eden/src",
         ROOT / "vendor/encore-active/eden-vulkan/include",
         ROOT / "vendor/encore-active/ns2-astc/include",
-        ROOT / "vendor/encore-active/ns2-helpers/include",
+        ROOT / "vendor/encore-active/eden/src",
         ROOT / "vendor/sources/eden/src",
         pinned / "vulkanheaders/v1.4.345/include",
         pinned / "vulkanmemoryallocator/v3.3.0/include",

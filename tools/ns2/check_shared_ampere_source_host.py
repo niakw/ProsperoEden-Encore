@@ -85,7 +85,7 @@ includes=[ROOT/"vendor/encore-active/eden/src",
           ROOT/"vendor/encore-active/ns2-runtime/nvdrv_gpu",
           ROOT/"vendor/encore-active/ns2-runtime/gpu_dispatch",
           ROOT/"vendor/encore-active/ns2-runtime/hle",
-          ROOT/"vendor/encore-active/ns2-helpers/include"]
+          ROOT/"vendor/encore-active/eden/src"]
 includes+=sorted((deps/"boost/boost-1.90.0/libs").glob("*/include"))
 assert len(includes)>100
 cmd=[compiler,"-std=c++20","-O0","-fsyntax-only","-DPS5_NATIVE=1",

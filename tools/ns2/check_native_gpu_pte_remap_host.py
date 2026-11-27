@@ -277,7 +277,7 @@ with tempfile.TemporaryDirectory(prefix="eden-guest-gpu-remap-") as temp:
                 args=[compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                       "-fsanitize=undefined","-fno-sanitize-recover=all",
                       "-I",str(guard.parent),
-                      "-I",str(root/"vendor/encore-active/ns2-helpers/include")]
+                      "-I",str(root/"vendor/encore-active/eden/src")]
                 if batching:
                     args.append("-DEDEN_NS2_GPU_RANGE_BATCH=1")
                 result=subprocess.run([*args,str(unit),"-o",str(exe)],

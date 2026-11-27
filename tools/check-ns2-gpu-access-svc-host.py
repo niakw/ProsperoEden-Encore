@@ -10,7 +10,7 @@ vendor = root / "vendor/encore-active"
 base = vendor / "ns2-runtime/gpu_access_svc"
 src = (base / "core/hle/kernel/svc.cpp").read_text()
 helper = (base / "core/hle/kernel/ns2_gpu_memory_attribute.h").read_text()
-pid = (vendor / "ns2-helpers/include/core/loader/ns2_svc_trace.h").read_text()
+pid = (vendor / "eden/src/core/loader/ns2_svc_trace.h").read_text()
 recipe = (root / "headless/CMakeLists.txt").read_text()
 assert recipe.count("set(EDEN_SHARED_NS2_GPU_ACCESS_SVC ON)") == 1
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in recipe
@@ -148,7 +148,7 @@ with tempfile.TemporaryDirectory(prefix="encore-ns2-gpu-access-") as d:
     (p / "test.cpp").write_text(fixture)
     exe = p / "test"
     subprocess.run([compiler, "-std=c++20", "-Wall", "-Wextra", "-Werror",
-                    "-I", str(base), "-I", str(vendor / "ns2-helpers/include"),
+                    "-I", str(base), "-I", str(vendor / "eden/src"),
                     str(p / "test.cpp"), "-o", str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
 # Engine controls must exercise the exact *pinned* vendor witness. This is

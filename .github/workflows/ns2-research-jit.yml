@@ -75,7 +75,7 @@ jobs:
             -fsanitize=address,undefined -fno-sanitize-recover=all \
             -ffunction-sections -fdata-sections -Wl,--gc-sections \
             -Ibuild-ns2-jit/prefix/include \
-            -Ivendor/encore-active/ns2-helpers/include -Ivendor/encore-active/ns2-experimental/src -Iheadless/ns2 \
+            -Ivendor/encore-active/eden/src -Ivendor/encore-active/ns2-experimental/src -Iheadless/ns2 \
             -Ivendor/sources/eden/src/dynarmic/src -Ivendor/sources/eden/src \
             tools/ns2/test_program_metadata.cpp \
             vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp \

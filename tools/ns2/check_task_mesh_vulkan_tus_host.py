@@ -126,7 +126,7 @@ includes = [
     ROOT / "vendor/encore-active/ns2-runtime/hle",
     ACTIVE / "include",
     ROOT / "vendor/encore-active/ns2-astc/include",
-    ROOT / "vendor/encore-active/ns2-helpers/include",
+    ROOT / "vendor/encore-active/eden/src",
     ROOT / "vendor/encore-active/ns2-runtime/nvdrv_gpu",
     ROOT / "vendor/sources/eden/src",
     CPM / "vulkanheaders/v1.4.345/include",

@@ -73,7 +73,7 @@ with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
 project(UnifiedGpuOwners LANGUAGES CXX)
 set(PORT_ROOT "{root}")
 set(PORT_BUILD_DIR "{base}/derived")
-set(EDEN_NS2_CORE_HELPERS "{root}/vendor/encore-active/ns2-helpers/include")
+set(EDEN_NS2_CORE_HELPERS "{root}/vendor/encore-active/eden/src")
 set(EDEN_MAINTAINED_GPU_PULLER "{puller}")
 set(PS5_NATIVE ON)
 set(EDEN_PS5_VULKAN ON)

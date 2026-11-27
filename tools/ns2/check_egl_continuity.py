@@ -5,7 +5,7 @@ import hashlib
 
 ROOT = Path(__file__).resolve().parents[2]
 OWNER = ROOT / "vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc"
-HELPER = ROOT / "vendor/encore-active/ns2-helpers/include/core/ns2_egl_continuity_guard.h"
+HELPER = ROOT / "vendor/encore-active/eden/src/core/ns2_egl_continuity_guard.h"
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 
 def blob(t):

@@ -8,7 +8,7 @@ from native_astc_vendor_parity import normalized
 ROOT = Path(__file__).resolve().parents[2]
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 BASE = ROOT / "vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan"
-SHARED = ROOT / "vendor/encore-active/ns2-helpers/include"
+SHARED = ROOT / "vendor/encore-active/eden/src"
 assert 'option(EDEN_NS2_ASTC_LAYER_DECODE_EXPERIMENTAL' not in CMAKE
 assert '# N57: shared PS5 Vulkan ASTC layer decode' in CMAKE
 assert 'if(PS5_NATIVE AND EDEN_PS5_VULKAN)' in CMAKE

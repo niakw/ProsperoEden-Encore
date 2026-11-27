@@ -42,7 +42,7 @@ assert "python3 -B tools/ns2/check_native_sysmix_registry_host.py" in (
 assert "TryAppendOutputBlock(" not in files[0].read_text()
 assert "MarkFaulted(" not in files[0].read_text()
 
-includes = [AUDIO, SOURCE, ROOT / "vendor/encore-active/ns2-helpers/include",
+includes = [AUDIO, SOURCE, ROOT / "vendor/encore-active/eden/src",
             ROOT / "vendor/sources/fmt/include",
             ROOT / "vendor/sources/eden-cpm/opus/a3f0ec02b3/include"]
 boost = ROOT / "vendor/sources/eden-cpm/boost/boost-1.90.0/libs"

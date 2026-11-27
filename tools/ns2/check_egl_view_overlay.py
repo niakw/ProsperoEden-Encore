@@ -5,7 +5,7 @@ from native_astc_vendor_parity import normalized
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp"
-HEADER = ROOT / "vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_view_type_guard.h"
+HEADER = ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/ns2_view_type_guard.h"
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 src = SOURCE.read_text()
 assert "#ifdef EDEN_NS2_VIEW_DIMENSION_GUARD" in src

@@ -173,7 +173,7 @@ with tempfile.TemporaryDirectory(prefix="ns2-n73-cache-") as temporary:
             compiler,"-std=c++20","-O2","-Wall","-Wextra","-Werror",
             "-fsanitize=undefined","-fno-sanitize-recover=all",
             "-I",str(root),
-            "-I",str(vendor/"ns2-helpers/include"),
+            "-I",str(vendor/"eden/src"),
             "-I",str(vendor/"eden-vulkan/include"),
             str(sourcefile),"-o",str(exe),
         ],check=True)

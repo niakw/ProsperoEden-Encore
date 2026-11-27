@@ -79,7 +79,7 @@ def main() -> None:
             # program-metadata header, not the stale upstream Eden header.
             # Fetch the exact selected owner under the immutable gitlink.
             source_path = (
-                "encore-active/ns2-helpers/include/" + path
+                "encore-active/eden/src/" + path
                 if path == "core/file_sys/program_metadata.h"
                 else "sources/eden/src/" + path
             )

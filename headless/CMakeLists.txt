@@ -17,7 +17,7 @@ if(PS5_NATIVE)
 endif()
 if(EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_NS2_METADATA_OVERLAY "${PORT_ROOT}/vendor/encore-active/ns2-runtime/metadata")
-    set(EDEN_NS2_CORE_HELPERS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+    set(EDEN_NS2_CORE_HELPERS "${PORT_ROOT}/vendor/encore-active/eden/src")
     if(NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/file_sys/program_metadata.cpp"
        OR NOT EXISTS "${EDEN_NS2_CORE_HELPERS}/core/file_sys/program_metadata.h")
         message(FATAL_ERROR "Missing unified NS1/NS2 NPDM source/header")
@@ -2391,11 +2391,11 @@ if(PS5_NATIVE)
     if(NOT EXISTS "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")
         message(FATAL_ERROR "Maintained PS5 GPU memory manager owner missing")
     endif()
-    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/video_core/ns2_egl_gpu_range_batch.h")
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/ns2_egl_gpu_range_batch.h")
         message(FATAL_ERROR "Missing N51 vendor range-batching helper")
     endif()
     target_include_directories(video_core BEFORE PRIVATE
-        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     target_compile_definitions(video_core PRIVATE EDEN_NS2_GPU_RANGE_BATCH=1)
 endif()
 # R411: Eden #4473/#4477 are already applied once by the audited
@@ -2777,7 +2777,7 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     set(EDEN_NS2_ASTC_OWNER_ROOT
         "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
     set(EDEN_NS2_HELPERS_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_ns2_astc_file IN ITEMS
             "video_core/renderer_vulkan/vk_texture_cache.h"
             "video_core/renderer_vulkan/vk_compute_pass.h"
@@ -2842,7 +2842,7 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     set(EDEN_NS2_ASTC_OWNER_ROOT
         "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
     set(EDEN_NS2_HELPERS_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_ns2_astc_file IN ITEMS
             "video_core/texture_cache/image_base.h"
             "video_core/texture_cache/texture_cache_base.h"
@@ -2872,7 +2872,7 @@ endif()
 # The same maintained texture cache owner serves NS1 and NS2.
 if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     set(EDEN_NS2_N49_HELPER
-        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_view_type_guard.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan/ns2_view_type_guard.h")
     if(NOT EXISTS "${EDEN_NS2_N49_HELPER}")
         message(FATAL_ERROR "N49 maintained view-dimension guard missing")
     endif()
@@ -2881,7 +2881,7 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
         message(FATAL_ERROR "N49 native Vulkan source selection changed")
     endif()
     target_include_directories(video_core BEFORE PRIVATE
-        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     target_compile_definitions(video_core PRIVATE EDEN_NS2_VIEW_DIMENSION_GUARD=1)
 endif()
 # Lichii #2085 / build 341 + #2121: Switch 2 block-linear uploads and
@@ -3715,7 +3715,7 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_process_sources}")
     target_compile_definitions(core PRIVATE EDEN_NS2_PROCESS_RUN_GUARD=1)
     target_include_directories(core BEFORE PRIVATE
-        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
 endif()
 
 # P0.2: production A64 v8.1-v8.5 promotion for the unified PS5 JIT.
@@ -4531,13 +4531,13 @@ if(PS5_NATIVE)
     if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc")
         message(FATAL_ERROR "N50 maintained PS5 device-memory source missing")
     endif()
-    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include/core/ns2_egl_continuity_guard.h")
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden/src/core/ns2_egl_continuity_guard.h")
         message(FATAL_ERROR "Missing N50 vendor continuity helper")
     endif()
     target_include_directories(core BEFORE PRIVATE
-        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     target_include_directories(video_core BEFORE PRIVATE
-        "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     target_compile_definitions(core PRIVATE EDEN_NS2_DEVICE_CONTINUITY=1)
     target_compile_definitions(video_core PRIVATE EDEN_NS2_DEVICE_CONTINUITY=1)
 endif()

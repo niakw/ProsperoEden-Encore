@@ -6,7 +6,7 @@ import runpy
 
 ROOT = Path(__file__).resolve().parents[2]
 OWNER = ROOT / "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp"
-HELPER = ROOT / "vendor/encore-active/ns2-helpers/include/video_core/ns2_egl_gpu_range_batch.h"
+HELPER = ROOT / "vendor/encore-active/eden/src/video_core/ns2_egl_gpu_range_batch.h"
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 
 def blob(t: str) -> str:

@@ -195,7 +195,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
                   'kernel_wait64','gpu_access_svc','gpu_dispatch','nvdrv_gpu',
                   'nvdrv_as','gpu_session','graphics_supervisor','self_controller',
                   'hle','nvdrv','ampere')],
-              ROOT/'vendor/encore-active/ns2-helpers/include',
+              ROOT/'vendor/encore-active/eden/src',
               ROOT/'vendor/sources/eden/src',
               ROOT/'vendor/sources/fmt/include',
               ROOT/'vendor/sources/eden/src/dynarmic/src',

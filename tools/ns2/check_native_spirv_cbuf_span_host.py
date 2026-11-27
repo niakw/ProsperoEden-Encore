@@ -183,7 +183,7 @@ if boost.is_dir() and sirit.is_file() and spirv.is_file():
         ROOT/"vendor/sources/fmt/include",
         sirit.parents[1],spirv.parents[2],
         ROOT/"vendor/sources/eden-cpm/vulkanheaders/v1.4.345/include",
-        ROOT/"vendor/encore-active/ns2-helpers/include",
+        ROOT/"vendor/encore-active/eden/src",
         *sorted(boost.glob("*/include"))]
     extra=[]
     libc=Path("/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/usr/include/c++/v1")

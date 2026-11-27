@@ -114,7 +114,7 @@ with tempfile.TemporaryDirectory(prefix="n52-os-process-") as d:
                         "-fno-sanitize-recover=all",
                         "-DEDEN_NS2_PROCESS_RUN_GUARD=1",
                         "-I",str(root/"vendor/encore-active/ns2-runtime/metadata"),
-                        "-I",str(root/"vendor/encore-active/ns2-helpers/include"),
+                        "-I",str(root/"vendor/encore-active/eden/src"),
                         str(src),"-o",str(exe)],check=True)
         subprocess.run([str(exe)],check=True)
 print("N52_REAL_PROCESS_RUN_HOST_LIFECYCLE_PASS late_kprocess_close=1"

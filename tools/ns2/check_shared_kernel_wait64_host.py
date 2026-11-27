@@ -219,7 +219,7 @@ def main() -> None:
     sdk15=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')
     env=os.environ.copy()
     if sdk15.is_dir():env['SDKROOT']=str(sdk15)
-    includes=[KERNEL.parents[2],SVC_GPU.parents[2],ROOT/'vendor/encore-active/ns2-helpers/include',ROOT/'vendor/sources/eden/src',
+    includes=[KERNEL.parents[2],SVC_GPU.parents[2],ROOT/'vendor/encore-active/eden/src',ROOT/'vendor/sources/eden/src',
               deps/'fmt/12.1.0/include']+list((deps/'boost/boost-1.90.0/libs').glob('*/include'))
     actual=[KERNEL/'k_address_arbiter.cpp',ARB_SVC,SVC_GPU/'svc.cpp']
     compilers=list(dict.fromkeys(c for c in (shutil.which('clang++'),shutil.which('g++')) if c))

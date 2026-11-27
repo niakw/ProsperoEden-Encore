@@ -14,7 +14,7 @@ import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
 vendor=ROOT/"vendor"
-owner=(vendor/"encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp").read_text()
+owner=(vendor/"encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp").read_text()
 assert "struct BlockingBoundaryTrace" in owner and "EDEN_NS2_BLOCKING_BOUNDARY" in owner
 begin="void IGpuWorker::DestroySparseRegion("
 end="void IGpuWorker::ExecuteSparseMapRequests("
@@ -184,8 +184,8 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-sparse215-") as directory:
             exe=Path(directory)/(Path(cc).name+opt)
             command=[cc,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                      "-fsanitize=undefined","-fno-sanitize-recover=all",
-                     "-I"+str(vendor/"encore-active/ns2-runtime/hle"),
-                     "-I"+str(vendor/"encore-active/ns2-runtime/nvdrv"),
+                     "-I"+str(vendor/"encore-active/eden/src"),
+                     "-I"+str(vendor/"encore-active/eden/src"),
                      "-I"+str(vendor/"sources/eden/src"),
                      str(cpp),"-o",str(exe)]
             built=subprocess.run(command,capture_output=True,text=True,timeout=60,

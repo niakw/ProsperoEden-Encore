@@ -16,7 +16,7 @@ if(PS5_NATIVE)
     set(EDEN_REVIEWED_DUAL_NPDM ON)
 endif()
 if(EDEN_REVIEWED_DUAL_NPDM)
-    set(EDEN_NS2_METADATA_OVERLAY "${PORT_ROOT}/vendor/encore-active/ns2-runtime/metadata")
+    set(EDEN_NS2_METADATA_OVERLAY "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NS2_CORE_HELPERS "${PORT_ROOT}/vendor/encore-active/eden/src")
     if(NOT EXISTS "${EDEN_NS2_METADATA_OVERLAY}/core/file_sys/program_metadata.cpp"
        OR NOT EXISTS "${EDEN_NS2_CORE_HELPERS}/core/file_sys/program_metadata.h")
@@ -422,7 +422,7 @@ if(EDEN_NS2_SPARSE_BACKING)
     # Compile a maintained sparse-aware shared-memory implementation instead
     # of the uncommitted upstream zero-fill (first NS2 boot SIGSEGV).
     set(EDEN_NS2_SHARED_MEMORY_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/kernel/k_shared_memory.cpp")
     if(NOT EXISTS "${EDEN_NS2_SHARED_MEMORY_SOURCE}")
         message(FATAL_ERROR "Missing NS2 sparse shared-memory owner")
     endif()
@@ -1267,7 +1267,7 @@ endif()
 # existing fastmem/synchronization behavior are retained in this derivative.
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_MAINTAINED_CORE_SYSTEM
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/process/core/core.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/core.cpp")
 endif()
 if(NOT EXISTS "${EDEN_MAINTAINED_CORE_SYSTEM}")
     message(FATAL_ERROR "Missing maintained Core::System source")
@@ -1433,7 +1433,7 @@ if(PS5_NATIVE)
     foreach(p IN ITEMS
             "${EDEN_R23_UUID_ROOT}/src/common/uuid.cpp"
             "${EDEN_R23_UUID_ROOT}/include/common/uuid.h"
-            "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp")
+            "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/am/service/application_functions.cpp")
         if(NOT EXISTS "${p}")
             message(FATAL_ERROR "R23 #126 native UUID16 source/selected AM owner missing: ${p}")
         endif()
@@ -3574,7 +3574,7 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_SHARED_NS2_GPU_ACCESS_SVC ON)
 endif()
 if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)
-    set(EDEN_NS2_GPU_ACCESS_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_access_svc")
+    set(EDEN_NS2_GPU_ACCESS_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NS2_GPU_ACCESS_SOURCE "${EDEN_NS2_GPU_ACCESS_ROOT}/core/hle/kernel/svc.cpp")
     if(NOT EXISTS "${EDEN_NS2_GPU_ACCESS_SOURCE}" OR
        NOT EXISTS "${EDEN_NS2_GPU_ACCESS_ROOT}/core/hle/kernel/svc_types.h" OR
@@ -3613,7 +3613,7 @@ set(EDEN_SHARED_NS2_WAIT64 OFF)
 if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)
     set(EDEN_SHARED_NS2_WAIT64 ON)
     set(EDEN_NS2_WAIT64_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/kernel_wait64")
+        "${PORT_ROOT}/vendor/encore-active/eden/src_wait64")
     foreach(eden_ns2_wait_header IN ITEMS
             "core/hle/kernel/k_address_arbiter.h"
             "core/hle/kernel/k_process.h"
@@ -3678,7 +3678,7 @@ endif()
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND
    EDEN_SHARED_NS2_EXEFS)
     set(EDEN_NS2_NATIVE_PROCESS_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/os/process.cpp")
     if(NOT EXISTS "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")
         message(FATAL_ERROR "N52 maintained native Process::Run owner missing")
     endif()
@@ -3694,7 +3694,7 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND
     # KProcess must count the alias region in its process memory budget.
     # Select a complete source successor rather than mutating the pinned Eden TU.
     set(EDEN_NS2_KPROCESS_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/kernel/k_process.cpp")
     if(NOT EXISTS "${EDEN_NS2_KPROCESS_SOURCE}")
         message(FATAL_ERROR "N52 maintained NS2 KProcess memory-budget owner missing")
     endif()
@@ -3827,7 +3827,7 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_SHARED_NS2_KERNEL_HEAP ON)
 endif()
 if(EDEN_SHARED_NS2_KERNEL_HEAP)
-    set(EDEN_NS2_KERNEL_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/kernel")
+    set(EDEN_NS2_KERNEL_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     get_target_property(eden_ns2_kernel_sources core SOURCES)
     foreach(eden_ns2_kernel_owner IN ITEMS
             "hle/kernel/k_address_space_info.cpp"
@@ -3855,7 +3855,7 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_SHARED_NS2_AUDIO ON)
 endif()
 if(EDEN_SHARED_NS2_AUDIO)
-    set(EDEN_NS2_AUDIO_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/audio")
+    set(EDEN_NS2_AUDIO_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NS2_AUDIO_SOURCE "${EDEN_NS2_AUDIO_ROOT}/core/hle/service/audio/audio.cpp")
     if(NOT EXISTS "${EDEN_NS2_AUDIO_SOURCE}" OR
        NOT EXISTS "${EDEN_NS2_AUDIO_ROOT}/core/hle/service/audio/nx2_audio_user_client.h")
@@ -3894,9 +3894,9 @@ if(EDEN_SHARED_NS2_AM)
     if(NOT EDEN_REVIEWED_DUAL_NPDM)
         message(FATAL_ERROR "NS2 AM shared command 320 requires reviewed metadata")
     endif()
-    set(EDEN_NS2_AM_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am")
+    set(EDEN_NS2_AM_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     if(NOT EXISTS "${EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp"
-       OR NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.h")
+       OR NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/am/service/application_functions.h")
         message(FATAL_ERROR "Missing experimental NS2 AM implementation/header")
     endif()
     get_target_property(eden_ns2_am_sources core SOURCES)
@@ -3916,7 +3916,7 @@ endif()
 # global auto-stub fallback for unrelated NS2 commands.
 if(EDEN_SHARED_NS2_AM)
     set(EDEN_NS2_EARLY_HLE_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_ns2_early_hle_relative IN ITEMS
             "hle/service/am/service/application_proxy.cpp"
             "hle/service/am/service/application_proxy_service.cpp"
@@ -3957,7 +3957,7 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
     if(NOT EDEN_REVIEWED_DUAL_NPDM)
         message(FATAL_ERROR "Shared NS2 GPU capabilities need reviewed metadata")
     endif()
-    set(EDEN_NS2_NVDRV_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/nvdrv")
+    set(EDEN_NS2_NVDRV_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NS2_NVDRV_SOURCE
         "${EDEN_NS2_NVDRV_ROOT}/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp")
     if(NOT EXISTS "${EDEN_NS2_NVDRV_SOURCE}" OR
@@ -3977,7 +3977,7 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_nvdrv_sources}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_ROOT}")
     # The one native NVDRV owner handles NS1 Maxwell and NS2 Ampere channels.
-    set(EDEN_NS2_NVDRV_AS_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/nvdrv_as")
+    set(EDEN_NS2_NVDRV_AS_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src_as")
     set(EDEN_NS2_NVDRV_AS_SOURCE
         "${EDEN_NS2_NVDRV_AS_ROOT}/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp")
     if(NOT EXISTS "${EDEN_NS2_NVDRV_AS_SOURCE}" OR
@@ -3993,7 +3993,7 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
         "hle/service/nvdrv/devices/nvhost_as_gpu.cpp")
     list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_AS_SOURCE}")
     # Native GPFIFO/CMDDMA adapter: never replace the shipping source owner.
-    set(EDEN_NS2_NVDRV_GPU_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/nvdrv_gpu")
+    set(EDEN_NS2_NVDRV_GPU_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src_gpu")
     set(EDEN_NS2_NVDRV_GPU_SOURCE
         "${EDEN_NS2_NVDRV_GPU_ROOT}/core/hle/service/nvdrv/devices/nvhost_gpu.cpp")
     if(NOT EXISTS "${EDEN_NS2_NVDRV_GPU_SOURCE}" OR
@@ -4014,7 +4014,7 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
     # the same DMA engine methods, authenticated by live process generation.
     # Do not replace the shipping NS1 puller or alias Ampere 3D/compute.
     set(EDEN_NS2_NATIVE_GPU_PULLER
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/engines/puller.cpp")
     if(NOT EXISTS "${EDEN_NS2_NATIVE_GPU_PULLER}" OR
        NOT EXISTS "${EDEN_NS2_NVDRV_GPU_ROOT}/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h")
         message(FATAL_ERROR "Missing native NS2 DMA channel ownership or puller")
@@ -4037,7 +4037,7 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
     # P2.7: native semaphore parking must use exactly one scheduler implementation
     # and one set of ABI-matched Puller/DmaPusher/Scheduler declarations.
     set(EDEN_NS2_GPFIFO_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_dispatch")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NS2_GPFIFO_SCHEDULER
         "${EDEN_NS2_GPFIFO_ROOT}/video_core/control/scheduler.cpp")
     set(EDEN_NS2_GPFIFO_CHANNEL_STATE
@@ -4073,7 +4073,7 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
     # Research-only header and .cpp must be the SAME Puller class to keep
     # DmaPusher ABI consistent in every video_core translation unit.
     set(EDEN_NS2_GPU_DISPATCH_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_dispatch")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     if(NOT EXISTS "${EDEN_NS2_GPU_DISPATCH_ROOT}/video_core/engines/puller.h" OR
        NOT EXISTS "${EDEN_NS2_GPU_DISPATCH_ROOT}/video_core/native_ampere_macro_state.h" OR
        NOT EXISTS "${EDEN_NS2_GPU_DISPATCH_ROOT}/video_core/macro_turing.h")
@@ -4100,7 +4100,7 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
        NOT EDEN_SHARED_NS2_GPU_ACCESS_SVC)
         message(FATAL_ERROR "Native GPU session requires unified NVDRV and SVC 0x80 owners")
     endif()
-    set(EDEN_NS2_GPU_SESSION_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_session")
+    set(EDEN_NS2_GPU_SESSION_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NS2_GPU_SESSION_SOURCE
         "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_session.cpp")
     set(EDEN_NS2_GPU_WORKER_SOURCE
@@ -4112,7 +4112,7 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
        NOT EXISTS "${EDEN_NS2_GPU_SHARED_SOURCE}" OR
        NOT EXISTS "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_worker.h" OR
        NOT EXISTS "${EDEN_NS2_GPU_SESSION_ROOT}/core/hle/service/am/service/gpu_session.h" OR
-       NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_session_protocol.h")
+       NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session_protocol.h")
         message(FATAL_ERROR "Missing maintained NS2 GPU session source/protocol")
     endif()
     target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"
@@ -4130,7 +4130,7 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
     target_include_directories(core BEFORE PRIVATE
         "${EDEN_NS2_GPU_SESSION_ROOT}"
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
 endif()
 
 # Shared NS1/NS2 host video decoder: the native NS2 codec path reuses the
@@ -4139,7 +4139,7 @@ endif()
 # a decoded image when no decoder exists.
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/video_decoder")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_native_video_codec_file
         "${EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT}/video_core/host1x/h264_packet.h"
         "${EDEN_SHARED_NATIVE_VIDEO_CODEC_ROOT}/video_core/host1x/nx2_video_decoder.h"
@@ -4172,8 +4172,8 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     if(NOT EDEN_SHARED_NS2_AM)
         message(FATAL_ERROR "Native GraphicsSupervisor requires the shared AM owner")
     endif()
-    set(EDEN_NS2_SUPERVISOR_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/graphics_supervisor")
-    set(EDEN_NS2_SELF_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/self_controller")
+    set(EDEN_NS2_SUPERVISOR_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
+    set(EDEN_NS2_SELF_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_ns2_supervisor_file
         "${EDEN_NS2_SUPERVISOR_ROOT}/core/hle/service/am/service/graphics_supervisor.h"
         "${EDEN_NS2_SUPERVISOR_ROOT}/core/hle/service/am/service/graphics_supervisor.cpp"
@@ -4266,7 +4266,7 @@ endif()
 # for the already-reviewed native NS2 profile; NS1/non-native keeps Eden.
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_NS2_GAMECHAT_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gamechat/core/hle/service/friend/friend.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/friend/friend.cpp")
     if(NOT EXISTS "${EDEN_NS2_GAMECHAT_SOURCE}")
         message(FATAL_ERROR "Missing maintained NS2 GameChat friend service owner")
     endif()
@@ -4288,7 +4288,7 @@ endif()
 # append a second IPlatformServiceManager implementation.
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_NS2_FONT_SERVICE_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/font_service")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_ns2_font_file
         "${EDEN_NS2_FONT_SERVICE_ROOT}/core/hle/service/ns/platform_service_manager.cpp"
         "${EDEN_NS2_FONT_SERVICE_ROOT}/core/hle/service/ns/platform_service_manager.h"
@@ -4333,7 +4333,7 @@ if(EDEN_SHARED_NS2_AMPERE_CORE)
     # 15dd980 widens that selected ABI to 32 storage slots uniformly. Keep only
     # the reviewed Generic31 shader header from this alternate include tree.
     set(EDEN_NS2_SHADER_RESOURCE_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/shader_resource/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     if(NOT EXISTS "${EDEN_NS2_SHADER_RESOURCE_ROOT}/shader_recompiler/frontend/ir/attribute.h" OR
        NOT EXISTS "${EDEN_NS2_SHADER_RESOURCE_ROOT}/video_core/buffer_cache/buffer_cache_base.h")
         message(FATAL_ERROR "Missing native NS2 shader/texture resource headers")
@@ -4348,7 +4348,7 @@ if(EDEN_SHARED_NS2_AMPERE_CORE)
     target_include_directories(shader_recompiler BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
     target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
-    set(EDEN_NS2_AMPERE_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere")
+    set(EDEN_NS2_AMPERE_ROOT "${PORT_ROOT}/vendor/encore-active/eden/srcpere")
     set(EDEN_NS2_AMPERE_PROBE
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")
     foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h
@@ -4426,14 +4426,14 @@ if(EDEN_SHARED_NS2_AMPERE_CORE)
 endif()
 if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     set(EDEN_NS2_VULKAN_SHADER_BRIDGE
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp")
     if(NOT EXISTS "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
         message(FATAL_ERROR "Missing NS2 renderer-side SPIR-V compiler")
     endif()
     set(EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/srcpere/video_core/ns2_shader_spirv_compile.cpp")
     if(NOT EXISTS "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}" OR
-       NOT EXISTS "${PORT_ROOT}/vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.h")
+       NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden/srcpere/video_core/ns2_shader_spirv_compile.h")
         message(FATAL_ERROR "Missing verified NS2 GMMU-to-SPIR-V pipeline entrypoint")
     endif()
     # P2.3: SPIR-V indirect CBUF dispatch uses exactly the reflected native
@@ -4495,7 +4495,7 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns2_shader_sources}")
     target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
     target_sources(video_core PRIVATE "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}")
-    target_include_directories(video_core BEFORE PRIVATE "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
+    target_include_directories(video_core BEFORE PRIVATE "${PORT_ROOT}/vendor/encore-active/eden/src")
     # The single native PS5 runtime exposes the same Vulkan rasterizer
     # virtual methods. The real channel owner selects native QMD3 dispatch,
     # while legacy NS1 commands keep the maintained Maxwell dispatch.
@@ -4505,7 +4505,7 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     # when unrelated Vulkan consumers compile. Select the REVIEWED vendor
     # interface for every native PS5 compilation target.
     set(EDEN_NS2_RASTERIZER_INTERFACE
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/rasterizer_interface.h")
     if(NOT EXISTS "${EDEN_NS2_RASTERIZER_INTERFACE}")
         message(FATAL_ERROR "Missing reviewed native QMD3 RasterizerInterface ABI")
     endif()
@@ -4707,7 +4707,7 @@ if(PS5_NATIVE)
     set(EDEN_R23_SELF_CONTROLLER_HEADER
         "${PORT_ROOT}/headless/r23_self_controller_240_ps5.h")
     set(EDEN_R23_SELF_CONTROLLER_BASE
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/am/service/self_controller.h")
     if(NOT EXISTS "${EDEN_R23_SELF_CONTROLLER_HEADER}" OR
        NOT EXISTS "${EDEN_R23_SELF_CONTROLLER_BASE}")
         message(FATAL_ERROR "R23 NS2 self-controller header ABI input missing")
@@ -4839,7 +4839,7 @@ endif()
 # virtual holes. Select one reviewed research-only source with precommit guards.
 if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
     set(EDEN_R457_SPARSE_KERNEL_SRC
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/kernel/k_memory_manager.cpp")
     if(NOT EXISTS "${EDEN_R457_SPARSE_KERNEL_SRC}")
         message(FATAL_ERROR "R457 sparse physical native kernel owner missing")
     endif()
@@ -4863,7 +4863,7 @@ if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
     # Return private 2 MiB guest backing only after the guest page heap has
     # merged a complete free buddy block. Compile exactly one page-heap owner.
     set(EDEN_R457_SPARSE_PAGE_HEAP_SRC
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_page_heap.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/kernel/k_page_heap.cpp")
     if(NOT EXISTS "${EDEN_R457_SPARSE_PAGE_HEAP_SRC}")
         message(FATAL_ERROR "R457 sparse page-heap free-return owner missing")
     endif()
@@ -4885,7 +4885,7 @@ if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
     # Use the reviewed NS2-only kernel-slab precommit source, not the
     # original relative init_slab_setup.cpp and never compile two owners.
     set(EDEN_R457_SPARSE_SLAB_SRC
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/kernel/init/init_slab_setup.cpp")
     if(NOT EXISTS "${EDEN_R457_SPARSE_SLAB_SRC}")
         message(FATAL_ERROR "R457 NS2 sparse slab physical precommit owner missing")
     endif()
@@ -4959,7 +4959,7 @@ endif()
 # native PS5 core build, not an experimental alternative runtime.
 if(PS5_NATIVE)
     set(EDEN_NS2_AM_STRUCTURE_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am_structure")
+        "${PORT_ROOT}/vendor/encore-active/eden/src_structure")
     get_target_property(eden_ns2_am_structure_sources core SOURCES)
     foreach(eden_ns2_am_name IN ITEMS
             application_accessor
@@ -5004,7 +5004,7 @@ endif()
 # reviewed NS2 caller predicate in ServiceFrameworkBase::StubAllowed.
 if(PS5_NATIVE AND EDEN_SHARED_NS2_AM)
     set(EDEN_NS2_SERVICE_PARITY_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     get_target_property(eden_ns2_service_parity_sources core SOURCES)
     foreach(eden_ns2_service_relative IN ITEMS
             "caps/caps_u.cpp"
@@ -5085,18 +5085,22 @@ endif()
 # loader graph, firmware profile or external download.
 if(PS5_NATIVE)
     set(EDEN_NS2_NX_ARCHIVE_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/nx")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
+    set(EDEN_NS2_NX_FORMAT_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden/externals/nxformat")
     foreach(eden_nx_required IN ITEMS
             "core/loader/nx.cpp"
             "core/loader/nx.h"
             "core/loader/loader.h"
             "core/file_sys/nx_content.cpp"
-            "core/file_sys/decrypted_nca.h"
-            "nxformat/nx_reader.hpp"
-            "nxformat/nx_session.hpp"
-            "nxformat/LICENSE")
+            "core/file_sys/decrypted_nca.h")
         if(NOT EXISTS "${EDEN_NS2_NX_ARCHIVE_ROOT}/${eden_nx_required}")
             message(FATAL_ERROR "Missing real NX runtime source ${eden_nx_required}")
+        endif()
+    endforeach()
+    foreach(eden_nxformat_required IN ITEMS "nx_reader.hpp" "nx_session.hpp" "LICENSE")
+        if(NOT EXISTS "${EDEN_NS2_NX_FORMAT_ROOT}/${eden_nxformat_required}")
+            message(FATAL_ERROR "Missing real NxFormat source ${eden_nxformat_required}")
         endif()
     endforeach()
     if(NOT DEFINED EDEN_R23_STORAGE_HEADERS OR
@@ -5109,7 +5113,7 @@ if(PS5_NATIVE)
     target_include_directories(core BEFORE PUBLIC "${EDEN_R23_STORAGE_HEADERS}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NX_ARCHIVE_ROOT}")
     target_include_directories(core SYSTEM BEFORE PRIVATE
-        "${EDEN_NS2_NX_ARCHIVE_ROOT}/nxformat")
+        "${EDEN_NS2_NX_FORMAT_ROOT}")
     target_sources(core PRIVATE
         "${EDEN_NS2_NX_ARCHIVE_ROOT}/core/loader/nx.cpp"
         "${EDEN_NS2_NX_ARCHIVE_ROOT}/core/file_sys/nx_content.cpp")
@@ -5133,7 +5137,7 @@ if(PS5_NATIVE)
         endif()
     endfunction()
     set(eden_native_video_root "${PORT_ROOT}/vendor/encore-active/eden/src/video_core")
-    set(eden_native_dispatch_root "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_dispatch/video_core")
+    set(eden_native_dispatch_root "${PORT_ROOT}/vendor/encore-active/eden/src/video_core")
     eden_require_native_owner(video_core "${eden_native_video_root}/gpu_gl_native.cpp"
         "(^|/)(gpu|gpu_gl_native|gpu_gl_native_dev|gpu_gl_host|gpu_gl_host_dev|gpu_vulkan)[.]cpp$")
     eden_require_native_owner(video_core "${PORT_BUILD_DIR}/gpu_thread.cpp"

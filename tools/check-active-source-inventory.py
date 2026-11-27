@@ -3092,15 +3092,22 @@ if shipping_vendor in {"9d8b9c280a9907a9881abcc974a1fde248d73fec", "806252e96253
         post_snapshot -= set(nov27_fc27_deferred_owners)
 
     new_owners = post_snapshot & selected_nov26_post_f07_additions
-    # The current FC27 #1518 successor classifies word_manager.h in its exact
-    # BufferCache hotpath ledger above, so seven of the historical eight
-    # unclassified Nov26 additions remain here. Earlier successors still keep
-    # the original count of eight.
-    expected_new_owners = (
-        7 if shipping_vendor == "9d8b9c280a9907a9881abcc974a1fde248d73fec" else 8
-    )
-    assert len(new_owners) == expected_new_owners and post_snapshot == new_owners, (
-        "Nov26 unclassified native owners", sorted(post_snapshot - new_owners))
+    # On the current FC27 #1518 successor the complete seven-owner
+    # BCAT/Buffer-hotpath set is classified by its dedicated exact-blob ledger
+    # above, while DeviceMemoryManager is classified in the Nov27 deferred
+    # owner ledger. The only Nov26 addition intentionally left in this residual
+    # bucket is the AM performance interface header. Assert the exact set
+    # rather than a fragile count.
+    if shipping_vendor == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
+        expected_new_owners = {
+            "ns2-runtime/hle/core/hle/service/am/service/performance_functions.h",
+        }
+        assert new_owners == expected_new_owners and post_snapshot == expected_new_owners, (
+            "Nov26 residual native owner drift",
+            sorted(new_owners), sorted(post_snapshot))
+    else:
+        assert len(new_owners) == 8 and post_snapshot == new_owners, (
+            "Nov26 unclassified native owners", sorted(post_snapshot - new_owners))
     assert not catalog_paths - set(physical), "Historical native source missing"
     for relative in selected_nov26_post_f07_additions:
         path = active / relative
@@ -3116,7 +3123,8 @@ if shipping_vendor in {"9d8b9c280a9907a9881abcc974a1fde248d73fec", "806252e96253
         if p not in new_owners | set(pacing_headers) | set(nov27_fc27_deferred_owners)
     ]
     print("ENCORE_POST_F07_SELECTED_CATALOG_SEPARATION_PASS",
-          "historical=337 additions=43 native_unclassified=8 pacing_headers=2"
+          "historical=337 additions=43"
+          f" native_unclassified={len(new_owners)} pacing_headers=2"
           f" nov27_fc27_deferred={len(nov27_fc27_deferred_owners)}", flush=True)
 assert len(physical) == 337, ("Shipping source catalogue changed",len(physical),
     "unclassified=" + repr(sorted(set(physical) - catalog_paths)),

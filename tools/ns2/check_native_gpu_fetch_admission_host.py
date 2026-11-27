@@ -191,10 +191,6 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake
     assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake
     includes=[h05,native_tiling,nvdec_stage,ioctl_stage,shader,abi,native_dirty,ROOT/'headless',
-              *[ROOT/'vendor/encore-active/ns2-runtime'/n for n in (
-                  'kernel_wait64','gpu_access_svc','gpu_dispatch','nvdrv_gpu',
-                  'nvdrv_as','gpu_session','graphics_supervisor','self_controller',
-                  'hle','nvdrv','ampere')],
               ROOT/'vendor/encore-active/eden/src',
               ROOT/'vendor/sources/eden/src',
               ROOT/'vendor/sources/fmt/include',

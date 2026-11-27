@@ -1120,7 +1120,8 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
         # reviewed by vendor/tests/ns1_r23_18_tir_host.py. Keep the old
         # historical comparison below unchanged for all earlier vendors.
         if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d",
-                               "240550925b0ef097c24c3035c063bdceadd872de"}:
+                               "240550925b0ef097c24c3035c063bdceadd872de",
+                               "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
             assert actual == "c0312be09d81afb0064479179db794d2648560b9", (
                 "Unreviewed selected NS2 TextureCache", actual)
             selected_ns2 = (active / "ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()

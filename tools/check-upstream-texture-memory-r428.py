@@ -9,7 +9,7 @@ cmake = (root / "headless/CMakeLists.txt").read_text()
 # R428's texture header is now compiled from the versioned active fork.
 # Preserve the exact original header + Boost-version declaration instead of
 # preserving an obsolete generated-file assertion.
-active_header = (root / "vendor/encore-active/eden-core/src/video_core/texture_cache/util.h").read_text()
+active_header = (root / "vendor/encore-active/eden/src/video_core/texture_cache/util.h").read_text()
 original_header = (root / "vendor/sources/eden/src/video_core/texture_cache/util.h").read_text()
 assert active_header == original_header.replace(
     "#include <boost/container/small_vector.hpp>",
@@ -20,11 +20,11 @@ assert 'file(READ "${PROJECT_SOURCE_DIR}/src/video_core/texture_cache/util.h"' n
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/video_core/texture_cache/util.cpp"' not in cmake
 assert 'set(EDEN_MAINTAINED_TEXTURE_UTIL' in cmake
 assert 'Pinned Eden ASTC ConvertImage changed; requalify R428' not in cmake
-astc = (root / "vendor/encore-active/eden-core/src/video_core/texture_cache/util.cpp").read_text()
+astc = (root / "vendor/encore-active/eden/src/video_core/texture_cache/util.cpp").read_text()
 # Logging was moved to the maintained versioned unit. Keep R428's
 # bounded-flush semantics and assert exact pinned-source transformation parity,
 # instead of requiring the removed configure-time CMake generator.
-logging = (root / "vendor/encore-active/eden-core/src/common/logging.cpp").read_text()
+logging = (root / "vendor/encore-active/eden/src/common/logging.cpp").read_text()
 original_logging = (root / "vendor/sources/eden/src/common/logging.cpp").read_text()
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/common/logging.cpp"' not in cmake
 assert 'set(EDEN_MAINTAINED_LOGGING ' in cmake

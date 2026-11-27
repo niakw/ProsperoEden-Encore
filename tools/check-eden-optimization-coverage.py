@@ -2801,7 +2801,8 @@ if selected_nov26_vendor or gpu_table_vendor_pin in {"4354add020afac574198f63d87
                      if actual_buffer_hotpath_vendor in {
                          "b62f36238ca154a0e6ada2be9c65ffb0b5981d97",
                          "0506a211d82c880a49053c2ecb1b3129523dcbb0",
-                         "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}
+                         "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290",
+                         "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}
                      else "6aa751742d5b7337a5db5a5234ac6da34087a7b5"
                      if actual_buffer_hotpath_vendor == "240550925b0ef097c24c3035c063bdceadd872de"
                      else "7cd6744b4a352bc9fa84c2d01d126b71e0f12610"

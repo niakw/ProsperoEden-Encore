@@ -12,8 +12,8 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT/"vendor/encore-active/ns2-runtime/video_decoder/video_core/host1x/nx2_video_decoder.cpp"
-SERVICE=ROOT/"vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp"
+OWNER=ROOT/"vendor/encore-active/eden/src/video_core/host1x/nx2_video_decoder.cpp"
+SERVICE=ROOT/"vendor/encore-active/eden/src/core/hle/service/am/service/graphics_video_decoder_session.cpp"
 SYNC_OWNER=ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"
 SYNC_HEADER=ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h"
 assert "void SyncpointManager::IncrementGuest(" in SYNC_OWNER.read_text()
@@ -32,7 +32,7 @@ assert "m_decoder->Render(frame.picture," in service
 assert service.index("m_owner->WriteVideoSurface(next.id, *target, pixels)") < service.index(
     "syncpoints.IncrementGuest(m_syncpoint);")
 assert "if (!m_decoder->Render(frame.picture," in service
-GUEST_SURFACE=ROOT/"vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp"
+GUEST_SURFACE=ROOT/"vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp"
 surface_source=GUEST_SURFACE.read_text()
 surface_begin="bool IGraphicsSupervisor::WriteVideoSurface("
 surface_end="\n// 901 and 1001 are the SDK's video codec/server-context admission calls."
@@ -786,7 +786,7 @@ with tempfile.TemporaryDirectory(prefix="eden-h05-ffmpeg-pixels-") as temp:
                  "-Wno-unused-variable","-Wno-unused-function","-fsanitize=undefined",
                  "-fno-sanitize-recover=all",
                  "-I"+str(ROOT/"vendor/sources/eden/src"),
-                 "-I"+str(ROOT/"vendor/encore-active/ns2-runtime/video_decoder"),
+                 "-I"+str(ROOT/"vendor/encore-active/eden/src"),
                  str(src),str(SYNC_OWNER),"-o",str(exe),
                  "-pthread","-lavcodec","-lavutil","-lswscale","-lvulkan"]
             built=subprocess.run(cmd,text=True,capture_output=True,

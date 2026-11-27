@@ -10,12 +10,12 @@ root=Path(__file__).resolve().parents[2]
 vroot=root/'vendor'
 if not (vroot/'encore-active').exists():
     vroot=root.parent/'vendor'  # isolated sparse checkout only
-vroot=vroot/'encore-active/ns2-runtime'
-source=(vroot/'video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp').read_text()
-header=(vroot/'video_decoder/core/hle/service/am/service/graphics_video_decoder_session.h').read_text()
-supervisor=(vroot/'graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp').read_text()
-sh=(vroot/'graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h').read_text()
-backend=(vroot/'video_decoder/video_core/host1x/nx2_video_decoder.cpp').read_text()
+vroot=vroot/'encore-active/eden/src'
+source=(vroot/'core/hle/service/am/service/graphics_video_decoder_session.cpp').read_text()
+header=(vroot/'core/hle/service/am/service/graphics_video_decoder_session.h').read_text()
+supervisor=(vroot/'core/hle/service/am/service/graphics_supervisor.cpp').read_text()
+sh=(vroot/'core/hle/service/am/service/graphics_supervisor.h').read_text()
+backend=(vroot/'video_core/host1x/nx2_video_decoder.cpp').read_text()
 recipe=(root/'headless/CMakeLists.txt').read_text()
 for cmd in (902,905,906):
     assert f'{{{cmd}, &IGraphicsSupervisor::OpenVideoDecoderSession' in supervisor

@@ -38,7 +38,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          source_file="$GITHUB_WORKSPACE/vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp"
+          source_file="$GITHUB_WORKSPACE/vendor/encore-active/eden/src/core/hle/kernel/k_process.cpp"
           grep -Fq 'GetInteger(stack_bottom)' "$source_file"
           grep -Fq 'GetInteger(this->GetEntryPoint())' "$source_file"
 
@@ -47,7 +47,7 @@ jobs:
             build_dir="${build_ninja%/build.ninja}"
             target="$(ninja -C "$build_dir" -t targets all |
               sed 's/:.*$//' |
-              grep 'ns2-runtime/process/core/hle/kernel/k_process.cpp.o$' |
+              grep 'eden/src/core/hle/kernel/k_process.cpp.o$' |
               head -n1 || true)"
             [[ -n "$target" ]] || continue
             found=$((found + 1))
@@ -56,7 +56,7 @@ jobs:
             # to regenerate the entire native graph and require RADV staging.
             # Extract and run only the already-generated compiler command.
             command_line="$(ninja -C "$build_dir" -t commands "$target" |
-              grep -F 'ns2-runtime/process/core/hle/kernel/k_process.cpp' |
+              grep -F 'eden/src/core/hle/kernel/k_process.cpp' |
               grep -F ' -c ' |
               tail -n1)"
             [[ -n "$command_line" ]] || {

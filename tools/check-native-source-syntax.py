@@ -40,8 +40,8 @@ MAINTAINED_CORE_TARGETS = (
     # potentially stale upstream build-cache copy.
     "vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp",
     # Real PS5 kernel compilation of the process-aware cache SVC replacement.
-    "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_cache.cpp",
-    "vendor/encore-active/eden-core/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp",
+    "vendor/encore-active/eden/src/core/hle/kernel/svc/svc_cache.cpp",
+    "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp",
     "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp",
     "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/double_add.cpp",
     "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/double_multiply.cpp",
@@ -59,19 +59,19 @@ MAINTAINED_CORE_TARGETS = (
     "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp",
     "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp",
     "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
-    "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp",
-    "vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp",
+    "vendor/encore-active/eden/src/video_core/engines/fermi_2d_observed.cpp",
+    "vendor/encore-active/eden/src/video_core/engines/sw_blitter/blitter.cpp",
     "vendor/encore-active/eden/src/core/hle/kernel/k_condition_variable.cpp",
     "vendor/encore-active/eden/src/core/hle/kernel/k_scheduler.cpp",
-    "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp",
+    "vendor/encore-active/eden/src/video_core/memory_manager.cpp",
     # Native release fixes EDEN_PS5_OPENGL=ON, so this is the exact maintained
     # G21 GPU translation unit selected by CMake. Native run 43864640130 failed
     # here after 1200+ objects; keep it in the cheap real-PS5 compile preflight.
-    "vendor/encore-active/eden-core/src/video_core/gpu_gl_native.cpp",
-    "vendor/encore-active/eden-core/src/common/fiber.cpp",
+    "vendor/encore-active/eden/src/video_core/gpu_gl_native.cpp",
+    "vendor/encore-active/eden/src/common/fiber.cpp",
     # Real C++ failures in run 45030042024: NS2 GPU/AS/ctrl and common
     # Container TUs must see the same selected native headers as NVDRV.
-    "vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/container.cpp",
+    "vendor/encore-active/eden/src/core/hle/service/nvdrv/core/container.cpp",
     "vendor/encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp",
     "vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp",
     "vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",

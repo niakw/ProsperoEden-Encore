@@ -219,8 +219,9 @@ Loader::ResultStatus NupAppLoader::ValidateProgramIdentity(u64& program_id) cons
     if (!declared) return Loader::ResultStatus::ErrorNoExeFS;
     program_id = metadata.GetTitleID();
     // A base package identifies the exact program, including its program
-    // index. A standalone update carries the update title ID, so only its
-    // common base-program family can be compared with the loaded NPDM.
+    // index. An update carries the package title ID, while program1/exefs may
+    // contain its authenticated Switch 2 Edition counterpart, so compare the
+    // common base-program family with the loaded NPDM.
     // Lichii Switch 2 Edition: an NS1 base (01xxxxxxxxxxxxxx) may ship
     // a verified NS2 update executable (04xxxxxxxxxxxxxx, program index 1).
     // The low 56 bits must match the exact preceding NS1 program ID; never
@@ -233,7 +234,7 @@ Loader::ResultStatus NupAppLoader::ValidateProgramIdentity(u64& program_id) cons
         (program_id & PlatformMask) == 0x0400000000000000ULL &&
         (program_id & LowTitleMask) == ((declared->title_id + 1) & LowTitleMask);
     const bool matching_embedded_edition =
-        declared->kind == 1 && declared->standalone_update && metadata.IsSwitch2() &&
+        declared->kind == 1 && metadata.IsSwitch2() &&
         (declared->title_id & PlatformMask) == 0x0100000000000000ULL &&
         (program_id & PlatformMask) == 0x0400000000000000ULL &&
         (program_id & LowTitleMask) ==

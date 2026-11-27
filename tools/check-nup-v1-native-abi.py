@@ -41,6 +41,15 @@ def main() -> None:
     assert exefs.index("FindEmbeddedSwitch2Program(*mount_)") < exefs.index("if (newest_update)")
     assert "metadata.IsSwitch2()" in content
     assert "(packages[*newest].title_id >> 56) != 0x01" in content
+    embedded = content.split("std::optional<EmbeddedSwitch2Program> FindEmbeddedSwitch2Program", 1)[1].split("} // namespace", 1)[0]
+    assert "if (p.kind == 0) return std::nullopt" not in embedded
+    assert "base ? mount.PackageView(*base, ContentView::ExeFS)" in embedded
+    assert "!newest || base_exefs ||" in embedded
+    assert "standalone_update" not in embedded
+    loader = (ROOT / "headless/nup_v1_native_loader.cpp").read_text()
+    identity = loader.split("const bool matching_embedded_edition =", 1)[1].split("if ((declared->kind == 0", 1)[0]
+    assert "declared->kind == 1 && metadata.IsSwitch2()" in identity
+    assert "standalone_update" not in identity
     assert "embedded->program_id != *caller_program_id" in content
     romfs = content.split("FileSys::VirtualFile ContentSet::CreateRomFS(bool allow_upgrade_pack) const {", 1)[1].split(
         "FileSys::VirtualFile ContentSet::CreateAddOnRomFS(", 1)[0]

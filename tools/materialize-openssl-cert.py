@@ -14,7 +14,7 @@ if len(sys.argv) != 3:
     raise SystemExit("usage: materialize-openssl-cert.py <eden-cert.patch> <output-cert.h>")
 
 root = Path(__file__).resolve().parents[1]
-source = root / "vendor/encore-active/eden-build/openssl/cert.h"
+source = root / "vendor/encore-active/eden/openssl/cert.h"
 patch = Path(sys.argv[1])
 out = Path(sys.argv[2])
 if not source.is_file():

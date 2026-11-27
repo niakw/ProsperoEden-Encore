@@ -10,7 +10,7 @@ import shutil
 import subprocess
 
 root = Path(__file__).resolve().parents[1]
-active = root / "vendor/encore-active/eden-build/tooling/native"
+active = root / "vendor/encore-active/eden/tooling/native"
 pinned = (root / "third_party/app_heap.c").read_text()
 flat = (active / "app_heap_flat.c").read_text()
 arenas = (active / "app_heap_arenas.c").read_text()
@@ -46,7 +46,7 @@ assert arenas.startswith(pinned[:start]) and arenas.endswith(pinned[end:])
 historical = arenas[len(pinned[:start]):len(arenas)-len(pinned[end:])]
 assert git_blob(historical.encode()) == "939cba30d8838ffea10d307f27ca67b098d168cc", "arena fragment drift"
 assert 'write_derived("${PORT_BUILD_DIR}/app_heap.c"' not in cmake
-assert 'set(EDEN_ACTIVE_HEAP_DIR "${PORT_ROOT}/vendor/encore-active/eden-build/tooling/native")' in cmake
+assert 'set(EDEN_ACTIVE_HEAP_DIR "${PORT_ROOT}/vendor/encore-active/eden/tooling/native")' in cmake
 assert 'set(EDEN_HEAP_UNIT "app_heap_arenas.c")' in cmake
 assert 'set(EDEN_HEAP_UNIT "app_heap_flat.c")' in cmake
 assert '"${EDEN_HEAP_SOURCE}")' in cmake

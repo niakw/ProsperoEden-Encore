@@ -62,7 +62,7 @@ couverture ne s'additionne pas aux sites de génération CMake ci-dessous.
 
 Le header CA natif (`inline constexpr char kCert[]`, 147 certificats)
 est maintenu intégralement sous
-`vendor/encore-active/eden-build/openssl/cert.h`. Le script
+`vendor/encore-active/eden/openssl/cert.h`. Le script
 `tools/materialize-openssl-cert.py` vérifie l'identité de son contenu
 avec `vendor/sources/eden/.patch/openssl/0001-add-bundled-cert.patch`
 puis copie uniquement la version maintenue dans
@@ -85,13 +85,13 @@ et non les 458 scripts Python/shell/CMake du seul dossier `tools/`.
 | --- | --- | --- | --- |
 | `tools/prepare-build.sh` | **ACTIF**, orchestrateur `make prepare` | Arbre Eden jetable, dépendances et RADV | Sélection uniquement |
 | `tools/install-vendored-eden-backports.py` | **ACTIF**, copie vérifiée par manifest SHA | 83 fichiers suivis dans `encore-active/eden-backports` | Déjà matérialisé |
-| `tools/install-vendored-eden-build-flags.py` | **ACTIF**, deux recettes suivies | `encore-active/eden-build` | Déjà matérialisé |
+| `tools/install-vendored-eden-build-flags.py` | **ACTIF**, deux recettes suivies | `encore-active/eden` | Déjà matérialisé |
 | `tools/install-vendored-surface-lifecycle.py` | **ACTIF**, copie de source complète | `encore-active/eden-surface-lifecycle` | Déjà matérialisé |
 | `tools/install-vendored-radv.py` | **ACTIF**, copie de sources RADV maintenues | `encore-active/ps5-mesa` vers staging | Déjà matérialisé |
 | `tools/install-active-core-backports.py` | **ACTIF**, copie de sources maintenues avec replay temporaire de parité | **5 chemins** CPU/I-cache et HLE SM/audio sous `encore-active/eden-core` | **Migré** : sources installées jamais fabriquées par les patches |
 | `tools/refresh-eden-atomic-source-cache.py` | **ACTIF**, échange atomique d'un ancien cache identifié | Restaure archive épinglée, pas une nouvelle modification C++ | Maintenance de cache |
 | `tools/vendor-eden-cpm.py`, `tools/deps.py`, `tools/stage-vendored-opengl-deps.py` | **ACTIF** selon préparation et configuration | Copie d'entrées épinglées, non-patch de C++ | Dépendances |
-| `tools/build-headless-native.sh`, `tools/materialize-openssl-cert.py` | **ACTIF**, copie de l'en-tête CA maintenu dans `encore-active/eden-build/openssl/cert.h` | `cdeps/include/openssl/cert.h` en cache natif | Parité octet pour octet avec le patch Eden épinglé ; **pas** de transformation C++ pendant le build |
+| `tools/build-headless-native.sh`, `tools/materialize-openssl-cert.py` | **ACTIF**, copie de l'en-tête CA maintenu dans `encore-active/eden/openssl/cert.h` | `cdeps/include/openssl/cert.h` en cache natif | Parité octet pour octet avec le patch Eden épinglé ; **pas** de transformation C++ pendant le build |
 | `tools/build-radv-dependencies.sh` | **ACTIF**, remplace provisoirement deux paramètres du cross-file Meson pour `ccache` puis restaure sur `EXIT` | `tooling/radv/ps5-cross.ini` dans la dépendance externe | Override de configuration temporaire, **pas** une source RADV suivie |
 | `tools/radv-active-inputs.py` | **ACTIF**, vérifie/écrit l'empreinte des inputs compilés RADV | `EDEN_ACTIVE_INPUTS_SHA256` | Reçu de build, aucun patch C++ |
 | `tools/build-headless-host.sh` | **HÔTE SEUL**, remplace trois lignes FFmpeg dans le cache hôte | `externals/ffmpeg/CMakeLists.txt` en staging | Override de build hôte, **hors console** |
@@ -144,7 +144,7 @@ et vérifie la parité, sans prétendre valider le comportement console.
 ## Runtime de démarrage RADV : sélection directe
 
 Le profil natif RADV utilise désormais
-`vendor/encore-active/eden-build/tooling/native/app_crt_radv.cpp`
+`vendor/encore-active/eden/tooling/native/app_crt_radv.cpp`
 comme source C++ maintenue. La variante réplique exactement l'ancienne
 substitution de l'initialiseur IEEE dans le boilerplate épinglé et le
 CMake ne produit plus `radv_app_crt.cpp` au moment de la configuration.
@@ -264,7 +264,7 @@ dans la version normale.
 
 Les identifiants historiques `G01`, `G02`, `G03`, `G04`, `G05`, `G06`, `G07`, `G08`, `G09`, `G14`, `G15`, `G16`, `G17`, `G18` et `G20` sont retirés, avec G09 maintenu dans les unités A64 standard/partagée ; `G01`/`G02` sont retirés avec X09 (sources complètes `BlockOfCode` sous `encore-active`).
 L'identifiant historique `G22` est retiré : les deux variantes de l'allocateur
-sont maintenues sous `vendor/encore-active/eden-build/tooling/native/`.
+sont maintenues sous `vendor/encore-active/eden/tooling/native/`.
 Les IDs G01–G23 sont stables et ne sont pas renumérotés.
 
 

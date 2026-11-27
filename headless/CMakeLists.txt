@@ -3100,7 +3100,7 @@ if(PS5_NATIVE)
     set(native_template "${PORT_ROOT}/../ps5-native-app-boilerplate")
     # Compile one complete maintained allocator variant; never synthesize C here.
     option(EDEN_HEAP_ARENAS "Per-thread arenas inside the owned heap" ON)
-        set(EDEN_ACTIVE_HEAP_DIR "${PORT_ROOT}/vendor/encore-active/eden-build/tooling/native")
+        set(EDEN_ACTIVE_HEAP_DIR "${PORT_ROOT}/vendor/encore-active/eden/tooling/native")
     if(EDEN_HEAP_ARENAS)
         set(EDEN_HEAP_UNIT "app_heap_arenas.c")
     else()
@@ -3115,7 +3115,7 @@ if(PS5_NATIVE)
         # The native RADV startup is a complete, reviewed boilerplate override.
         # CMake selects it directly; no inline source rewriting.
         set(EDEN_MAINTAINED_RADV_CRT
-            "${PORT_ROOT}/vendor/encore-active/eden-build/tooling/native/app_crt_radv.cpp")
+            "${PORT_ROOT}/vendor/encore-active/eden/tooling/native/app_crt_radv.cpp")
         if(NOT EXISTS "${EDEN_MAINTAINED_RADV_CRT}")
             message(FATAL_ERROR "Missing maintained native RADV CRT")
         endif()

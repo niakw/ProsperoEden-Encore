@@ -31,6 +31,7 @@ assert not subprocess.check_output(
 
 # One layout contract, no per-revision SHA catalogue. sources/ is the frozen
 # dependency mirror; encore-active/ is the only maintained override tree.
+subprocess.check_call(["python3", "-B", "tools/check-source-tree-layout.py"], cwd=VENDOR)
 sources_readme = (SOURCES / "README.md").read_text(encoding="utf-8")
 active_readme = (ACTIVE / "README.md").read_text(encoding="utf-8")
 for marker in (
@@ -48,7 +49,7 @@ for marker in (
 # Functional roots that duplicated the Eden dependency are retired. A future
 # override must use encore-active/eden/<same upstream-relative path>, not
 # recreate a second family tree.
-retired_eden_roots = ("eden-gpu", "eden-sync", "eden-threading", "eden-shader")
+retired_eden_roots = ("eden-gpu", "eden-sync", "eden-threading", "eden-shader", "eden-build")
 for legacy in retired_eden_roots:
     assert not (ACTIVE / legacy).exists(), ("retired Encore root reintroduced", legacy)
 

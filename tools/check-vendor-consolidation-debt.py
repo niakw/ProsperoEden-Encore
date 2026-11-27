@@ -25,11 +25,10 @@ for dep in deps:
 for extra in ("eden-cpm", "boilerplate-setup-0"):
     assert extra in root_names, extra
 fork_names = {entry.name for entry in active.iterdir() if entry.is_dir()}
-for name in ("eden-backports", "eden-build", "eden-core", "eden-gpu",
-             "eden-vulkan", "ps5-mesa"):
+for name in ("eden-backports", "eden-core", "eden-vulkan", "ps5-mesa"):
     assert name in fork_names, f"missing active patched tree: {name}"
 assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in vulkan
-assert (active/"eden-build/src/CMakeLists.txt").is_file(), "missing maintained native CMake"
+assert (active/"eden/src/CMakeLists.txt").is_file(), "missing maintained native CMake"
 assert 'execute_process(COMMAND python3 "${PORT_ROOT}/tools/prepare-vulkan-port.py"' not in vulkan
 # Migration budget: historical ceilings (77/87/225) no longer protect a
 # consolidated source tree. Match the remaining reviewed CMake generation
@@ -2005,7 +2004,7 @@ print("VENDOR_MAINTAINED_KPROCESS_DEV_OWNER_PASS")
 
 # Xbyak writable alias uses a complete tagged header. Only the separate
 # code_source transformation remains indirect, explicitly inventoried.
-assert (active / "eden-build/third_party/xbyak/xbyak.h").is_file()
+assert (active / "eden-cpm/xbyak/v7.40.1/xbyak/xbyak.h").is_file()
 assert 'configure_file("${EDEN_MAINTAINED_XBYAK_HEADER}"' in (root / "headless/jit-alias.cmake").read_text()
 assert (root / "tools/check-maintained-xbyak-alias.py").is_file()
 print("VENDOR_MAINTAINED_XBYAK_OWNER_PASS")
@@ -2816,7 +2815,7 @@ radv_crt_original = (sources / "boilerplate/tooling/native/app_crt.cpp").read_te
 radv_old = 'extern "C" void _init()\n{'
 radv_new = 'extern "C" void ps5_fp_ieee();\nextern "C" void _init()\n{\n    ps5_fp_ieee();'
 assert radv_crt_original.count(radv_old) == 1
-assert (active / "eden-build/tooling/native/app_crt_radv.cpp").read_text() == radv_crt_original.replace(radv_old, radv_new)
+assert (active / "eden/tooling/native/app_crt_radv.cpp").read_text() == radv_crt_original.replace(radv_old, radv_new)
 assert 'set(eden_app_crt "${EDEN_MAINTAINED_RADV_CRT}")' in c
 assert 'write_derived("${eden_app_crt}"' not in c
 print("VENDOR_MAINTAINED_RADV_CRT_PARITY_PASS: pinned startup and native-only variant")

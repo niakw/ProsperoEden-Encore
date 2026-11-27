@@ -6,7 +6,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 original = root / "vendor/sources/eden/src/core/loader/nso.cpp"
-maintained = root / "vendor/encore-active/eden-core/src/core/loader/nso.cpp"
+maintained = root / "vendor/encore-active/eden/src/core/loader/nso.cpp"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 oracle = root / "tools/fixtures/retired-g15-nso.cmake"
 assert original.is_file() and maintained.is_file() and oracle.is_file()

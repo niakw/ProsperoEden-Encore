@@ -65,9 +65,8 @@ for name in ('dma_pusher.cpp','dma_pusher_dev.cpp'):
 # A fatal native fetch must stop the PS5 queue worker BEFORE its owning
 # fence can be marked complete. The actual threaded caller catches at the
 # pthread entry, records a permanent failure and wakes blocking submitters.
-worker=(ROOT/'vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp').read_text()
-dev_worker=(ROOT/'vendor/encore-active/eden-gpu/gpu_thread_dev.cpp').read_text()
-for active_worker in (worker,dev_worker):
+worker=(ROOT/'vendor/encore-active/eden/src/video_core/gpu_thread.cpp').read_text()
+for active_worker in (worker,):
     assert 'scheduler.Push(system.GPU(), submit_list->channel, std::move(submit_list->entries));' in active_worker
     assert 'Eden::RecordGpuFailure(std::current_exception());' in active_worker
     assert 'start->owner->stop_source.request_stop();' in active_worker
@@ -75,8 +74,8 @@ for active_worker in (worker,dev_worker):
     assert active_worker.index('scheduler.Push(system.GPU()') < active_worker.index('state.signaled_fence.store(next.fence,')
     assert active_worker.index('state.signaled_fence.store(next.fence,') < active_worker.index('} catch (const std::exception& error)')
     assert 'std::rethrow_exception(failure);' in active_worker
-assert 'gpu_thread_quiet.cpp' in cmake
-assert 'gpu_thread_dev.cpp' not in cmake  # no alternate GPU worker in unified PS5 build
+assert 'set(EDEN_GPU_WORKER "${EDEN_ACTIVE_EDEN}/src/video_core/gpu_thread.cpp")' in cmake
+assert 'gpu_thread_quiet.cpp' not in cmake and 'gpu_thread_dev.cpp' not in cmake
 
 compiler=shutil.which('clang++') or shutil.which('g++')
 assert compiler

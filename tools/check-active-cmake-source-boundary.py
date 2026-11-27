@@ -32,20 +32,9 @@ assert not subprocess.check_output(
 # One layout contract, no per-revision SHA catalogue. sources/ is the frozen
 # dependency mirror; encore-active/ is the only maintained override tree.
 subprocess.check_call(["python3", "-B", "tools/check-source-tree-layout.py"], cwd=VENDOR)
-sources_readme = (SOURCES / "README.md").read_text(encoding="utf-8")
-active_readme = (ACTIVE / "README.md").read_text(encoding="utf-8")
-for marker in (
-    "dépendances upstream figées",
-    "code maintenu par Eden Encore",
-):
-    assert marker in sources_readme, ("sources contract drift", marker)
-for marker in (
-    "override pur Eden Encore",
-    "même nom de dépendance, même chemin relatif",
-    "Règle pratique",
-):
-    assert marker in active_readme, ("encore-active contract drift", marker)
-
+# The vendor's source-layout checker is the single owner of README/layout
+# wording. Do not duplicate prose markers here: this engine gate only verifies
+# that the selected build graph obeys that canonical contract.
 # Functional roots that duplicated the Eden dependency are retired. A future
 # override must use encore-active/eden/<same upstream-relative path>, not
 # recreate a second family tree.
@@ -208,7 +197,7 @@ for path, code in (("native build", native_build),
 assert 'shutil.copyfile(maintained, tmp)' in (
     ROOT/"tools/install-active-core-backports.py").read_text()
 # SVC cache coherency is a real core TU replacement, not a no-op IPC stub.
-svc_cache = ROOT / "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_cache.cpp"
+svc_cache = ROOT / "vendor/encore-active/eden/src/core/hle/kernel/svc/svc_cache.cpp"
 assert svc_cache.is_file()
 svc_code = svc_cache.read_text(encoding="utf-8")
 assert 'list(FIND core_sources "hle/kernel/svc/svc_cache.cpp" eden_ns1_svc_cache_index)' in root_cmake

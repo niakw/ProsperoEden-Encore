@@ -12,7 +12,7 @@ import shutil, subprocess, tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
 PIN=(ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
-ACT=(ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp").read_text()
+ACT=(ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
 HDR=(ROOT/"vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h").read_text()
 CM=(ROOT/"headless/CMakeLists.txt").read_text()
 FAST=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()

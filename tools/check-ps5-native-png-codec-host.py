@@ -13,7 +13,7 @@ import tempfile
 import zlib
 
 root = Path(__file__).resolve().parents[1]
-owner = root / "vendor/encore-active/eden-core/src/common/stb_image_png.cpp"
+owner = root / "vendor/encore-active/eden/src/common/stb_image_png.cpp"
 header_root = root / "vendor/sources/eden/externals/stb"
 cmake = (root / "headless/CMakeLists.txt").read_text(encoding="utf-8")
 impl = owner.read_text(encoding="utf-8")

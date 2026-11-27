@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 PORT=ROOT/"headless/CMakeLists.txt"
 PINNED=ROOT/"vendor/sources/eden/src/video_core/buffer_cache/usage_tracker.h"
-OWNED=ROOT/"vendor/encore-active/eden-core/overrides/usage-tracker/video_core/buffer_cache/usage_tracker.h"
+OWNED=ROOT/"vendor/encore-active/eden/src/video_core/buffer_cache/usage_tracker.h"
 CMAKE=PORT.read_text()
 
 assert PINNED.is_file(), "upstream UsageTracker baseline missing"
@@ -19,7 +19,7 @@ assert OWNED.is_file(), "maintained UsageTracker must live in encore-active"
 assert "if(PS5_NATIVE)" in CMAKE
 for value in (
     'set(EDEN_PS5_USAGE_TRACKER_ROOT',
-    'vendor/encore-active/eden-core/overrides/usage-tracker',
+    'vendor/encore-active/eden/src',
     'if(EXISTS "${EDEN_PS5_USAGE_TRACKER_HEADER}")',
     'target_include_directories(video_core BEFORE PRIVATE',
     'message(STATUS "PS5 Vulkan: reviewed 64-byte UsageTracker header selected")',

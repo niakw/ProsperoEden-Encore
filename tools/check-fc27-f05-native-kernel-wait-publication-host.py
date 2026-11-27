@@ -9,7 +9,7 @@ import shutil, subprocess, tempfile
 
 root=Path(__file__).resolve().parents[1]
 k=root/"vendor/sources/eden/src/core/hle/kernel"
-producer=(root/"vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
+producer=(root/"vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
 event=(k/"k_event.cpp").read_text()
 readable=(k/"k_readable_event.cpp").read_text()
 sync=(k/"k_synchronization_object.cpp").read_text()

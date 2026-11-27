@@ -133,7 +133,7 @@ for overlay in ('vendor/encore-active/eden-core/include',
 # Compile the exact maintained NvMap final-free methods. Only the device
 # mapping backend is simulated; the exclusive ownership check, mutex,
 # destructive count, native retirement and weak lifetime are production C++.
-nvmap_source=(ROOT/'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/nvmap.cpp').read_text()
+nvmap_source=(ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/core/nvmap.cpp').read_text()
 start='std::optional<NvMap::FreeInfo> NvMap::FreeHandle('
 end='void NvMap::UnmapAllHandles('
 actual=nvmap_source[nvmap_source.index(start):nvmap_source.index(end)]

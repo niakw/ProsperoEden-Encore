@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[3]
-directory = root / "vendor/encore-active/eden-core/src/core/hle/kernel/svc"
+directory = root / "vendor/encore-active/eden/src/core/hle/kernel/svc"
 pinned = (root / "vendor/sources/eden/src/core/hle/kernel/svc/svc_ipc.cpp").read_text()
 standard = (directory / "svc_ipc_standard.cpp").read_text()
 developer = (directory / "svc_ipc.cpp").read_text()

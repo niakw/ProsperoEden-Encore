@@ -15,7 +15,7 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 NATIVE=ROOT/"vendor/encore-active/eden/src"
 text=(NATIVE/"video_core/engines/puller.cpp").read_text()
-dma_source=(ROOT/"vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp").read_text()
+dma_source=(ROOT/"vendor/encore-active/eden/src/video_core/dma_pusher.cpp").read_text()
 def dma_owner(begin,end):
     assert dma_source.count(begin)==1 and end in dma_source.split(begin,1)[1]
     return begin+dma_source.split(begin,1)[1].split(end,1)[0]

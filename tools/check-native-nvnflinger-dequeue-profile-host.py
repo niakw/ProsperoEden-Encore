@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-src = (ROOT / "vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
+src = (ROOT / "vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 header = (ROOT / "headless/performance.h").read_text()
 report = (ROOT / "headless/performance.cpp").read_text()

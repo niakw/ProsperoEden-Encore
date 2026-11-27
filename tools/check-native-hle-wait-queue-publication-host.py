@@ -12,10 +12,10 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-active=(ROOT/"vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.cpp").read_text()
+active=(ROOT/"vendor/encore-active/eden/src/core/hle/kernel/k_thread.cpp").read_text()
 pinned=(ROOT/"vendor/sources/eden/src/core/hle/kernel/k_thread.cpp").read_text()
 ci=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
-selector=(ROOT/"vendor/encore-active/eden-threading/native-hle-overrides.cmake").read_text()
+selector=(ROOT/"vendor/encore-active/eden/native-hle-overrides.cmake").read_text()
 assert "python3 -B tools/check-native-hle-wait-queue-publication-host.py" in ci
 assert '"hle/kernel/k_thread.cpp" "core/hle/kernel/k_thread.cpp"' in selector
 mark="    void KThread::BeginWait(KernelCore& kernel, KThreadQueue* queue) {"

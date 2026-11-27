@@ -64,8 +64,8 @@ def main()->None:
         stdlib=['-target','arm64-apple-macos15','-nostdinc++',
                 '-isystem',str(sdk26/'usr/include/c++/v1')]
     deps=ROOT/'vendor/sources/eden-cpm'
-    includes=[ROOT/'headless',CPU6,ROOT/'vendor/encore-active/ns2-runtime/kernel_wait64',
-              ROOT/'vendor/encore-active/ns2-runtime/gpu_access_svc',
+    includes=[ROOT/'headless',CPU6,ROOT/'vendor/encore-active/eden/src_wait64',
+              ROOT/'vendor/encore-active/eden/src',
               BASE,BASE/'dynarmic/src',ROOT/'vendor/sources/fmt/include',
               ROOT/'vendor/encore-active/eden/src',
               ROOT/'vendor/encore-active/eden/src/core/arm/dynarmic/g11',
@@ -125,7 +125,7 @@ def main()->None:
             assert original.count(old)==1,('pinned owner drift',name)
             expected=original.replace(old,replacement)
             actual=(out/'core'/name).read_text()
-            maintained=(ROOT/'vendor/encore-active/ns2-runtime/cpu6/maintained/core'/name).read_text()
+            maintained=(ROOT/'vendor/encore-active/eden/src/core'/name).read_text()
             assert actual==expected==maintained,('static CPU6 owner parity',name)
             # Mutation control: a wrong pinned upstream byte must never pass
             # the exact maintained-owner parity gate.

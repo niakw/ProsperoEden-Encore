@@ -6,7 +6,7 @@ import sys
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[2]
-vendor=root/"vendor/encore-active/eden-core"
+vendor=root/"vendor/encore-active/eden"
 clock=(vendor/"src/common/cpu_features.cpp").read_text()
 clock_header=(vendor/"include/common/cpu_features.h").read_text()
 timing_owner=(root/"vendor/sources/eden/src/core/core_timing.cpp").read_text()

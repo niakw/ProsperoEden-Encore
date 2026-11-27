@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compile the maintained BufferCache::FindBuffer with table/span boundary cases.
 
-The native owner is extracted verbatim; the historical desktop backport must
+The native owner is extracted verbatim; the frozen upstream baseline must
 remain untouched. This validates guest-buffer admission without a PS5 build.
 """
 from pathlib import Path
@@ -11,8 +11,8 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-active = (ROOT / "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
-backport = (ROOT / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
+active = (ROOT / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
+backport = (ROOT / "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 needle = "template <class P>\nBufferId BufferCache<P>::FindBuffer(DAddr device_addr, u32 size, bool sparse_compatible) {"
 assert active.count(needle) == backport.count(needle) == 1
 begin = active.index(needle)

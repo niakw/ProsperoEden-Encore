@@ -17,7 +17,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 ORIGINAL = ROOT / "vendor/sources/eden"
-ACTIVE = ROOT / "vendor/encore-active/eden-core"
+ACTIVE = ROOT / "vendor/encore-active/eden"
 PATCHES = (
     ROOT / "headless/backports/eden-dynarmic-icache-coherence.patch",
     ROOT / "headless/backports/eden-sm-host-wait.patch",

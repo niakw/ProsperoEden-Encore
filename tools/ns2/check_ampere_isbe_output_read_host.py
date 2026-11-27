@@ -13,7 +13,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 VENDOR = ROOT / "vendor"
 AMPERE = VENDOR / "encore-active/eden/src"
-SHADER = VENDOR / "encore-active/eden-shader/src"
+SHADER = VENDOR / "encore-active/eden/src"
 
 decoder = (AMPERE / "shader_recompiler/frontend/ampere/native_stage_buffer.h").read_text()
 lowerer = (AMPERE / "shader_recompiler/frontend/ampere/lower_to_maxwell.h").read_text()

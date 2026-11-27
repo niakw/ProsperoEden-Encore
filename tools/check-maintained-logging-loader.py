@@ -23,7 +23,7 @@ assert loader_text.count(new) == 1 and old not in loader_text
 assert loader_text.count("FileSys::CreateRomFS(own_romfs, nullptr)") == 1
 assert loader_text.count("FileSys::CreateRomFS(std::move(layered), nullptr)") == 1
 assert loader_text.count("FileSys::LayeredVfsDirectory::MakeLayeredDirectory(") == 1
-assert "UpdateCandidate" in loader_text and "candidate.depth >= 5" in loader_text
+assert "struct Candidate" in loader_text and "candidate.depth >= 5" in loader_text
 assert "cursor == game_root" in loader_text
 loader_git_blob = hashlib.sha1(
     b"blob " + str(len(loader_data)).encode() + b"\0" + loader_data

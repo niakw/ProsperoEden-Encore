@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-src = (root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+src = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 def selected(name, next_name):
     start = src.index("template <class P>\nvoid TextureCache<P>::" + name + "(")
     end = src.index("template <class P>\nvoid TextureCache<P>::" + next_name + "(", start)

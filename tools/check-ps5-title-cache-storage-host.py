@@ -7,7 +7,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 pinned = (root / "vendor/sources/eden/src/core/file_sys/savedata_factory.cpp").read_text()
-active = (root / "vendor/encore-active/eden-core/src/core/file_sys/savedata_factory.cpp").read_text()
+active = (root / "vendor/encore-active/eden/src/core/file_sys/savedata_factory.cpp").read_text()
 cmake = (root / "headless/CMakeLists.txt").read_text()
 old = "if (type == SaveDataType::Account || type == SaveDataType::Device) {"
 new = "if (type == SaveDataType::Account || type == SaveDataType::Device ||\n        type == SaveDataType::Cache) {"

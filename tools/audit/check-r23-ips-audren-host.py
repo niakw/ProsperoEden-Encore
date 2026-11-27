@@ -14,7 +14,7 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 V=ROOT/"vendor/sources/eden/src"
 IPS_ORIGINAL=V/"core/file_sys/ips_layer.cpp"
-IPS_OWNER=ROOT/"vendor/encore-active/eden-core/src/core/file_sys/ips_layer.cpp"
+IPS_OWNER=ROOT/"vendor/encore-active/eden/src/core/file_sys/ips_layer.cpp"
 AUDIO_ORIGINAL=V/"core/hle/service/audio/audio.cpp"
 AUDIO_OWNER=ROOT/"headless/r23_audren_debug_ps5.cpp"
 AUDIO_NS1_OWNER=ROOT/"headless/r23_audren_debug_ns1_ps5.cpp"

@@ -3,7 +3,7 @@
 from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 pinned = root / "vendor/sources/eden/src/core/hle/service"
-active = root / "vendor/encore-active/eden-core/src/core/hle/service"
+active = root / "vendor/encore-active/eden/src/core/hle/service"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 def once(source: str, old: str, new: str) -> str:
     assert source.count(old) == 1, ("pinned input changed", old[:80])

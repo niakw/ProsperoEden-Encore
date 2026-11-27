@@ -37,7 +37,7 @@ assert reviewed.replace(
     "    return attribute >= Attribute::Generic0X && attribute <= Attribute::Generic31W;",
     "    return attribute >= Attribute::Generic0X && attribute <= Attribute::Generic31X;") == pinned
 pinned_buffer=(ROOT/"vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
-selected_buffer=(ROOT/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
+selected_buffer=(ROOT/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
 alternate_buffer=(ROOT/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
 assert "NUM_STORAGE_BUFFERS = 16" in pinned_buffer
 assert "NUM_STORAGE_BUFFERS = 32" in selected_buffer

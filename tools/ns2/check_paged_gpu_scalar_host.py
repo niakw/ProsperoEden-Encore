@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = ROOT / "vendor/encore-active/eden-core/src/video_core"
+BASE = ROOT / "vendor/encore-active/eden/src/video_core"
 OWNER = (BASE / "memory_manager.cpp").read_text()
 HEADER = (BASE / "native_paged_scalar.h").read_text()
 assert '#include "native_paged_scalar.h"' in OWNER

@@ -29,7 +29,7 @@ assert extracted[0] == extracted[1], "native and deferred Vulkan remap checks dr
 
 for file in (
     VENDOR / "eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h",
-    VENDOR / "ns2-astc/include/video_core/texture_cache/texture_cache.h",
+    VENDOR / "eden/src/video_core/texture_cache/texture_cache.h",
 ):
     text = file.read_text()
     body = text.split("TextureCache<P>::PinNativeImageView(ImageViewId id)", 1)[1].split(

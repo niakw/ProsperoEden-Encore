@@ -4,9 +4,9 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 vendor = root / "vendor/encore-active"
-header = (vendor / "eden-core/include/common/uuid.h").read_text()
-implementation = (vendor / "eden-core/src/common/uuid.cpp").read_text()
-ns2 = (vendor / "ns2-runtime/am/core/hle/service/am/service/application_functions.cpp").read_text()
+header = (vendor / "eden/include/common/uuid.h").read_text()
+implementation = (vendor / "eden/src/common/uuid.cpp").read_text()
+ns2 = (vendor / "eden/src/core/hle/service/am/service/application_functions.cpp").read_text()
 
 def exactly_one(contents, fragment, path):
     if contents.count(fragment) != 1:

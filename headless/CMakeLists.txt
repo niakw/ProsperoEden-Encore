@@ -39,7 +39,7 @@ endif()
 
 # Scalar-memory source fragments still consumed by modules trigger configure.
 set(EDEN_SCALAR_INPUT_DIR
-    "${PORT_ROOT}/vendor/encore-active/eden-core/dynarmic/scalar")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")
 set(EDEN_SCALAR_INPUTS
     "${EDEN_SCALAR_INPUT_DIR}/scalar-memory-read.inc"
     "${EDEN_SCALAR_INPUT_DIR}/scalar-memory-write.inc")
@@ -60,7 +60,7 @@ file(MAKE_DIRECTORY "${PORT_BUILD_DIR}")
 # SlotVector's throwing-constructor repair has one tracked implementation.
 # Use a narrow header-only root to avoid shadowing unrelated pinned includes.
 set(EDEN_MAINTAINED_SLOT_VECTOR_ROOT
-    "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/slot-vector")
+    "${PORT_ROOT}/vendor/encore-active/eden/src")
 if(NOT EXISTS "${EDEN_MAINTAINED_SLOT_VECTOR_ROOT}/common/slot_vector.h")
     message(FATAL_ERROR "Missing maintained native SlotVector header")
 endif()
@@ -73,7 +73,7 @@ target_include_directories(video_core BEFORE PRIVATE "${EDEN_MAINTAINED_SLOT_VEC
 # pristine and select one narrow maintained header for every native consumer.
 if(PS5_NATIVE)
     set(EDEN_MAINTAINED_THREAD_WORKER_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/thread-worker")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_MAINTAINED_THREAD_WORKER_HEADER
         "${EDEN_MAINTAINED_THREAD_WORKER_ROOT}/common/thread_worker.h")
     if(NOT EXISTS "${EDEN_MAINTAINED_THREAD_WORKER_HEADER}")
@@ -117,7 +117,7 @@ if(PS5_NATIVE)
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/buffer-pages" "${EDEN_PORT_DIR}")
     # Shared native RangeSet and WordManager definitions for every consumer.
     set(EDEN_MAINTAINED_BUFFER_HOTPATH
-        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/buffer-hotpath")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(relative IN ITEMS common/range_sets.h common/range_sets.inc
             video_core/buffer_cache/word_manager.h)
         if(NOT EXISTS "${EDEN_MAINTAINED_BUFFER_HOTPATH}/${relative}")
@@ -135,7 +135,7 @@ endif()
 # intentionally has no such file and must continue to build identically.
 if(PS5_NATIVE)
     set(EDEN_PS5_USAGE_TRACKER_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/usage-tracker")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_PS5_USAGE_TRACKER_HEADER
         "${EDEN_PS5_USAGE_TRACKER_ROOT}/video_core/buffer_cache/usage_tracker.h")
     if(EXISTS "${EDEN_PS5_USAGE_TRACKER_HEADER}")
@@ -153,7 +153,7 @@ endif()
 # select its matching public API header for all video_core dependents.
 # Never edit vendor/sources/eden, nor allow half-selected old/new ABI.
 if(PS5_NATIVE)
-    set(EDEN_NVDEC_OWNER_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_NVDEC_OWNER_ROOT "${PORT_ROOT}/vendor/encore-active/eden")
     set(EDEN_NVDEC_MAINTAINED_SOURCE
         "${EDEN_NVDEC_OWNER_ROOT}/src/video_core/host1x/ffmpeg.cpp")
     set(EDEN_NVDEC_MAINTAINED_HEADER
@@ -1139,7 +1139,7 @@ if(PS5_NATIVE)
     # an atomic page-transition race only for the native target. Make this
     # sole-header override PUBLIC so consumers share one inline definition.
     set(EDEN_NATIVE_DIRTY_HEADER_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     if(NOT EXISTS "${EDEN_NATIVE_DIRTY_HEADER_ROOT}/core/gpu_dirty_memory_manager.h")
         message(FATAL_ERROR "Missing maintained native GPU dirty collector")
     endif()
@@ -1199,7 +1199,7 @@ endif()
 # as BOTH PS5 memory implementations. No duplicate audio TU or memory owner.
 if(PS5_NATIVE)
     set(EDEN_NS1_AUDIO_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core")
+        "${PORT_ROOT}/vendor/encore-active/eden")
     set(EDEN_NS1_AUDIO_HEADER
         "${EDEN_NS1_AUDIO_ROOT}/overrides/core/memory.h")
     set(EDEN_NS1_AUDIO_SOURCE
@@ -1428,7 +1428,7 @@ endif()
 # report a changed but unselected source as a console fix.
 if(PS5_NATIVE)
     set(EDEN_R23_UUID_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core")
+        "${PORT_ROOT}/vendor/encore-active/eden")
     set(EDEN_R23_UUID_INCLUDE "${PORT_BUILD_DIR}/r23-uuid16/include")
     foreach(p IN ITEMS
             "${EDEN_R23_UUID_ROOT}/src/common/uuid.cpp"
@@ -1480,7 +1480,7 @@ endif()
 # selected maintained rumble and NPad TUs are preserved intact.
 if(PS5_NATIVE)
     set(EDEN_R23_HIDCORE_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core")
+        "${PORT_ROOT}/vendor/encore-active/eden")
     set(EDEN_R23_HIDCORE_CPP
         "${EDEN_R23_HIDCORE_ROOT}/src/hid_core/hid_core.cpp")
     set(EDEN_R23_HIDCORE_HEADER
@@ -1535,7 +1535,7 @@ endif()
 # process-refcounted NVDEC registry with an upstream global bool.
 if(PS5_NATIVE)
     set(EDEN_R23_STORAGE_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core")
+        "${PORT_ROOT}/vendor/encore-active/eden")
     set(EDEN_R23_STORAGE_HEADERS "${PORT_BUILD_DIR}/r23-storage/include")
     foreach(eden_r23_storage_header IN ITEMS
             "core/hle/service/service.h"
@@ -1588,7 +1588,7 @@ endif()
 # Keep the code cache W^X writableAddress semantics from maintained PS5.
 if(PS5_NATIVE)
     set(EDEN_R23_POOL_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core")
+        "${PORT_ROOT}/vendor/encore-active/eden")
     set(EDEN_R23_POOL_UNIT
         "${EDEN_R23_POOL_ROOT}/src/dynarmic/backend/x64/constant_pool.cpp")
     set(EDEN_R23_POOL_HEADER
@@ -1795,7 +1795,7 @@ endif()
 # mod-root-null, and save owner selections above: no duplicate TU compilation.
 if(PS5_NATIVE)
     set(EDEN_R23_PARENT_FS_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core")
+        "${PORT_ROOT}/vendor/encore-active/eden")
     set(EDEN_R23_PARENT_FS_INCLUDES
         "${PORT_BUILD_DIR}/r23-parent-fs/include")
     foreach(eden_r23_fs_name IN ITEMS
@@ -2544,7 +2544,7 @@ endif() # EDEN_PS5_OPENGL renderer-specific owners
     # PS5 GPU queue/header are staged from the canonical encore-active/eden owner above.
     # Host-specific GPU header is a tracked source, not generated C++.
     set(EDEN_MAINTAINED_HOST_GPU_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/host-gpu/include/video_core/gpu_thread.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/gpu_thread.h")
     if(NOT EXISTS "${EDEN_MAINTAINED_HOST_GPU_HEADER}")
         message(FATAL_ERROR "Missing maintained host GPU header")
     endif()
@@ -2653,13 +2653,13 @@ if(PS5_NATIVE)
     set(EDEN_HOST1X_CDMA_SOURCE
         "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/cdma_pusher.cpp")
     set(EDEN_HOST1X_CDMA_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/cdma_pusher.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/cdma_pusher.h")
     set(EDEN_HOST1X_NVDEC_SOURCE
         "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/host1x/nvdec.cpp")
     set(EDEN_HOST1X_CONTROL_SOURCE
         "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/host1x/control.cpp")
     set(EDEN_HOST1X_CONTROL_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/host1x/control.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/host1x/control.h")
     foreach(eden_host1x_required IN ITEMS
         "${EDEN_HOST1X_CDMA_SOURCE}"
         "${EDEN_HOST1X_CDMA_HEADER}"
@@ -2703,7 +2703,7 @@ endif()
 # ABI. Select its matching pinned vendor header for ALL native consumers.
 # Keep this root narrow: only the Host1x syncpoint manager header is copied.
 set(EDEN_MAINTAINED_HOST1X_HEADER
-    "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.h")
 if(NOT EXISTS "${EDEN_MAINTAINED_HOST1X_HEADER}")
     message(FATAL_ERROR "Missing reviewed native Host1x syncpoint ABI header")
 endif()
@@ -2722,7 +2722,7 @@ if(PS5_NATIVE)
     set(EDEN_HOST1X_FD_SOURCE
         "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/host1x/host1x.cpp")
     set(EDEN_HOST1X_FD_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/host1x/host1x.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/host1x/host1x.h")
     if(NOT EXISTS "${EDEN_HOST1X_FD_SOURCE}" OR
        NOT EXISTS "${EDEN_HOST1X_FD_HEADER}")
         message(FATAL_ERROR "Missing maintained Host1x DeviceFD source/header pair")
@@ -2891,7 +2891,7 @@ endif()
 # enabled only after NativeGpuChannelRegistry authenticates an NS2 channel.
 if(PS5_NATIVE AND EDEN_PS5_VULKAN AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_NS2_NATIVE_TILING_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/native-tiling")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NS2_NATIVE_TILING_HEADER
         "${EDEN_NS2_NATIVE_TILING_ROOT}/video_core/textures/decoders.h")
     set(EDEN_NS2_MEMORY_MANAGER_HEADER
@@ -3245,7 +3245,7 @@ if(EDEN_SHARED_NS2_GUEST_COUNTER)
         message(FATAL_ERROR "N76 requires native PS5 with the reviewed dual-NPDM loader")
     endif()
     set(EDEN_N76_CLOCK_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core")
+        "${PORT_ROOT}/vendor/encore-active/eden")
     set(EDEN_N76_GUEST_COUNTER_HEADER
         "${EDEN_N76_CLOCK_ROOT}/include/encore/guest_counter_policy.h")
     set(EDEN_N76_NATIVE_CPU_SOURCE
@@ -4528,7 +4528,7 @@ endif()
 # End stale physical continuity before a GPU Map/Unmap, for both generations.
 # Reuse the one reviewed PS5 device-memory owner; no extra translation unit.
 if(PS5_NATIVE)
-    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc")
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden/src/core/device_memory_manager.inc")
         message(FATAL_ERROR "N50 maintained PS5 device-memory source missing")
     endif()
     if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden/src/core/ns2_egl_continuity_guard.h")
@@ -5068,7 +5068,7 @@ if(PS5_NATIVE)
     # The two maintained headers only add the legacy progress IPC member
     # and its friendship; the original vendor SDK remains immutable.
     set(EDEN_NATIVE_BCAT_HEADER_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/bcat")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_bcat_header IN ITEMS
             "core/hle/service/bcat/service_creator.h"
             "core/hle/service/bcat/backend/backend.h")

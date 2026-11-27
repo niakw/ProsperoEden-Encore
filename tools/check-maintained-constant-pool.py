@@ -4,7 +4,7 @@ from pathlib import Path
 import hashlib
 root = Path(__file__).resolve().parents[1]
 pinned = (root/"vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/constant_pool.cpp").read_text()
-maintained = (root/"vendor/encore-active/eden-core/src/dynarmic/backend/x64/constant_pool.cpp").read_text()
+maintained = (root/"vendor/encore-active/eden/src/dynarmic/backend/x64/constant_pool.cpp").read_text()
 selector = (root/"headless/jit-alias.cmake").read_text()
 # Unified R23 C00/R2 now uses an indexed pool in addition to the
 # independently reviewed writable alias. Replay the exact paired CPP ABI,
@@ -37,8 +37,8 @@ def git_blob(path):
     raw = path.read_bytes()
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
 
-header = root/"vendor/encore-active/eden-core/include/dynarmic/backend/x64/constant_pool.h"
-source = root/"vendor/encore-active/eden-core/src/dynarmic/backend/x64/constant_pool.cpp"
+header = root/"vendor/encore-active/eden/include/dynarmic/backend/x64/constant_pool.h"
+source = root/"vendor/encore-active/eden/src/dynarmic/backend/x64/constant_pool.cpp"
 expected = pinned.replace(before, after)
 header_blob = git_blob(header)
 if header_blob == "52842358e1e97821fb306c1dd384673caef58861":

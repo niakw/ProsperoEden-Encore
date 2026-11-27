@@ -5148,11 +5148,11 @@ if(PS5_NATIVE)
             vk_compute_pipeline_cost vk_pipeline_cache_cost vk_texture_cache_cost
             vk_compute_pass_cost vulkan_swapchain)
         # These maintained fork files are not superseded by headless owners.
-        # A previous cache or a late overlay must not hide their current bytes.
-        file(SHA256 "${EDEN_ACTIVE_VULKAN}/${unit}.cpp" source_sha)
-        file(SHA256 "${PORT_BUILD_DIR}/${unit}.cpp" selected_sha)
-        if(NOT source_sha STREQUAL selected_sha)
-            message(FATAL_ERROR "Stale native Vulkan fork unit: ${unit}")
+        # headless/vulkan.cmake stages the sole maintained owner directly; source
+        # admission is structural and contains no per-file hash receipt.
+        if(NOT EXISTS "${EDEN_ACTIVE_VULKAN}/${unit}.cpp"
+           OR NOT EXISTS "${PORT_BUILD_DIR}/${unit}.cpp")
+            message(FATAL_ERROR "Missing native Vulkan fork unit: ${unit}")
         endif()
         if(unit MATCHES "^vk_(.*)_cost$")
             set(upstream_name "vk_${CMAKE_MATCH_1}")

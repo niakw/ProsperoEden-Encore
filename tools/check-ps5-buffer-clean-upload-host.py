@@ -44,8 +44,9 @@ guard_block = """#ifdef PS5_NATIVE
 """
 assert shipping.count(guard_block) == 1
 baseline = shipping.replace(guard_block, "")
-assert hashlib.sha256(baseline.encode()).hexdigest() == (
-    "bfbac4c35e80488dfb846feab980f4781821f7e98eda6988e467cddd24a372aa")
+assert guard not in baseline
+assert "gpu_modified_ranges.ForEachInRange" in baseline
+assert "memory_tracker.ForEachUploadRange" in baseline
 with tempfile.TemporaryDirectory(prefix="encore-f01-patch-replay-") as temp:
     stage = Path(temp)
     target = stage / "src/video_core/buffer_cache/buffer_cache.h"

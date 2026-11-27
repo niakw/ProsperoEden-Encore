@@ -16,7 +16,7 @@ raster = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulka
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 cmake = (root / "headless/vulkan.cmake").read_text()
 assert '"${PORT_BUILD_DIR}/vk_compute_pipeline_cost.cpp"' in cmake
-assert 'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan")' in cmake
+assert 'set(EDEN_ACTIVE_VULKAN "${EDEN_ACTIVE_EDEN_SRC}/video_core/renderer_vulkan")' in cmake
 assert 'F01 PS5 per-thread reentrant compute descriptor storage' in generator
 assert 'F01 compute scratch reservation precedes both guest cache mutexes' in generator
 assert "#include <memory>" in src

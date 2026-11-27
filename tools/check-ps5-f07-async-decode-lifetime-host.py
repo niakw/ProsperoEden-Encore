@@ -20,7 +20,7 @@ end = "\ntemplate <class P>\nvoid TextureCache<P>::TickAsyncUnswizzle() {"
 assert active.count(start) == pinned.count(start) == 1
 assert active.count(end) == pinned.count(end) == 1
 method = active[active.index(start):active.index(end, active.index(start))]
-selected = (root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+selected = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 assert selected[selected.index(start):selected.index(end, selected.index(start))] == method, (
     "selected NS1/NS2 texture decode lifetime regressed against reviewed F07 owner")
 old_method = pinned[pinned.index(start):pinned.index(end, pinned.index(start))]

@@ -23,7 +23,7 @@ print("GUEST_TITLE_VERSION_SOURCE_PASS parity=guarded runtime-quiet=1")
 # Shipping PS5 uses the shared NS2 AM owner for BOTH generations. The
 # historical host/legacy owner above remains byte-identical.
 import hashlib
-selected = root/"vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp"
+selected = root/"vendor/encore-active/eden/src/core/hle/service/am/service/application_functions.cpp"
 raw = selected.read_bytes()
 # Reviewed NS2 AM diagnostic successor: HLE result stays unchanged and
 # the termination result now emits a bounded release marker.

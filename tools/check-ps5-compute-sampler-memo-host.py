@@ -13,7 +13,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 source = (ROOT / "vendor/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()
 generator = (ROOT / "tools/prepare-vulkan-port.py").read_text()
-texture = (ROOT / "vendor/encore-active/eden-backports/src/video_core/texture_cache/texture_cache.h").read_text()
+texture = (ROOT / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 raster = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
 assert '#include <array>' in source
 assert "F01 16-slot compute sampler memo limited to each Configure call" in generator

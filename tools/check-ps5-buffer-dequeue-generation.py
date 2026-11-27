@@ -11,8 +11,8 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-cpp_path = root / "vendor/encore-active/eden-backports/src/core/hle/service/nvnflinger/buffer_queue_core.cpp"
-hdr_path = root / "vendor/encore-active/eden-backports/src/core/hle/service/nvnflinger/buffer_queue_core.h"
+cpp_path = root / "vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_core.cpp"
+hdr_path = root / "vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_core.h"
 graphics_path = root / "headless/graphics.cpp"
 native_source = cpp_path.read_text()
 native_header = hdr_path.read_text()

@@ -9,7 +9,7 @@ OWNER=ROOT/"vendor/encore-active/ns2-astc/include"
 SCRATCH=OWNER/"common/scratch_buffer.h"
 TEXTURE=OWNER/"video_core/texture_cache/texture_cache.h"
 BASE_SCRATCH=ROOT/"vendor/sources/eden/src/common/scratch_buffer.h"
-BASE_TEXTURE=ROOT/"vendor/encore-active/eden-backports/src/video_core/texture_cache/texture_cache.h"
+BASE_TEXTURE=ROOT/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h"
 CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
 def once(src,old,new):
     assert src.count(old)==1, "maintained source owner drift: "+old[:70]

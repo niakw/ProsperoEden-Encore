@@ -146,7 +146,7 @@ overlay = vendor / "encore-active/eden-vulkan/vulkan-cache/video_core/texture_ca
 header = (overlay / "texture_cache_base.h").read_text()
 impl = (overlay / "texture_cache.h").read_text()
 upstream_header = (vendor / "sources/eden/src/video_core/texture_cache/texture_cache_base.h").read_text()
-backport_header = (vendor / "encore-active/eden-backports/src/video_core/texture_cache/texture_cache_base.h").read_text()
+backport_header = (vendor / "encore-active/eden/src/video_core/texture_cache/texture_cache_base.h").read_text()
 native_gate = "#ifdef PS5_NATIVE"
 for sym in ("AcquireNativeImageView", "AcquireNativeSampler"):
     assert sym in header and sym in impl, sym

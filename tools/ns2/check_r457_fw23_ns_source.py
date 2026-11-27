@@ -10,10 +10,10 @@ import json
 
 ROOT = Path(__file__).resolve().parents[2]
 original = ROOT / "vendor/sources/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp"
-shipping = ROOT / "vendor/encore-active/eden-backports/src/core/hle/service/ns/read_only_application_control_data_interface.cpp"
+shipping = ROOT / "vendor/encore-active/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp"
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 prepare = (ROOT / "tools/prepare-build.sh").read_text()
-manifest = json.loads((ROOT / "vendor/encore-active/eden-backports/manifest.json").read_text())
+manifest = json.loads((ROOT / "vendor/encore-active/eden/backports/manifest.json").read_text())
 
 def git_blob(path: Path) -> str:
     b = path.read_bytes()

@@ -167,7 +167,7 @@ print("F05_LIVE_DEQUEUE_DIAGNOSTIC_NOT_GUEST_PC_OR_FC27_LIVENESS_PROOF")
 # BufferQueueCore epoch/condition methods must agree with the active counter.
 # Merely testing an isolated RAII object cannot prove this runtime boundary.
 core_source = (
-    ROOT / "vendor/encore-active/eden-backports/src/core/hle/service/nvnflinger/buffer_queue_core.cpp"
+    ROOT / "vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_core.cpp"
 ).read_text()
 core_begin = "void BufferQueueCore::SignalDequeueCondition() {"
 core_end = "\ns32 BufferQueueCore::GetMinUndequeuedBufferCountLocked("

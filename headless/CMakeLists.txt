@@ -1671,7 +1671,7 @@ endif()
 # headers must have the same versioned owner; no extra service target.
 if(PS5_NATIVE)
     set(EDEN_R23_STPL_BACKPORT
-        "${PORT_ROOT}/vendor/encore-active/eden-backports/src/core/hle/service")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service")
     set(EDEN_R23_STPL_HEADER
         "${PORT_ROOT}/vendor/encore-active/eden-core/include/core/hle/service")
     set(EDEN_R23_STPL_INCLUDE "${PORT_BUILD_DIR}/r23-stpl/include")
@@ -1712,7 +1712,7 @@ endif()
 # prepared current backport and matching header. Never add a second NS TU.
 if(PS5_NATIVE)
     set(EDEN_R23_FW235_NS_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-backports/src/core/hle/service/ns")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/ns")
     set(EDEN_R23_FW235_NS_INCLUDE "${PORT_BUILD_DIR}/r23-fw235-ns/include")
     if(NOT EXISTS "${EDEN_R23_FW235_NS_SOURCE}/application_manager_interface.cpp"
        OR NOT EXISTS "${EDEN_R23_FW235_NS_SOURCE}/application_manager_interface.h")

@@ -16,7 +16,7 @@ pinned = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasteriz
 oracle = (root / "tools/prepare-vulkan-port.py").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 texture = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
-buffer = (root / "vendor/encore-active/eden-backports/src/video_core/buffer_cache/buffer_cache.h").read_text()
+buffer = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 anchor = "void RasterizerVulkan::AccelerateInlineToMemory("
 last = "\nstd::optional<FramebufferTextureInfo> RasterizerVulkan::AccelerateDisplay("
 def extract(text: str) -> str:

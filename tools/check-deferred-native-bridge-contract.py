@@ -911,7 +911,7 @@ endfunction()
         assert "const auto end_page = (addr + size - 1) >> YUZU_PAGEBITS;" in generated
         assert "std::numeric_limits<u64>::max() - GetInteger(base)" in generated
         return generated
-    shipping = root/"vendor/encore-active/eden-backports/src/core/memory.cpp"
+    shipping = root/"vendor/encore-active/eden/src/core/memory.cpp"
     a32 = root/"vendor/encore-active/eden-core/src/core/memory.cpp"
     native_default = generate_g13(shipping, stage, "shipping")
     native_a32 = generate_g13(a32, fake/"g13-a32", "a32")

@@ -167,7 +167,7 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     # The 83-source PS5 backport stages settings.h *together* with its
     # audited settings_enums.h. Mixing the old Enum (Accurate) with
     # pristine new settings.h (Strict) is an invalid hybrid ABI.
-    reviewed_settings=ROOT/"vendor/encore-active/eden-backports/src/common/settings.h"
+    reviewed_settings=ROOT/"vendor/encore-active/eden/src/common/settings.h"
     assert reviewed_settings.is_file()
     shutil.copyfile(reviewed_settings,enum_root/"common/settings.h")
     # The same audited 83-file source baseline changes fence_manager.h:
@@ -175,7 +175,7 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     # reviewed GPU fence settings ABI. Never mix those revisions.
     (enum_root/"video_core").mkdir(parents=True)
     shutil.copyfile(
-        ROOT/"vendor/encore-active/eden-backports/src/video_core/fence_manager.h",
+        ROOT/"vendor/encore-active/eden/src/video_core/fence_manager.h",
         enum_root/"video_core/fence_manager.h")
     active_present=ROOT/"vendor/encore-active/eden-vulkan/include/video_core/present.h"
     source_present=ROOT/"vendor/sources/eden/src/video_core/present.h"

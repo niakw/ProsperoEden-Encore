@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-backport = (root / "vendor/encore-active/eden-backports/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
+backport = (root / "vendor/encore-active/eden/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
 upstream = (root / "vendor/sources/eden/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
 maintained = (root / "vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
 decoder = (root / "vendor/encore-active/eden-core/src/video_core/textures/decoders.cpp").read_text()

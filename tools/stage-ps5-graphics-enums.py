@@ -70,7 +70,7 @@ def sha256(value: bytes) -> str:
 
 def approved_bytes() -> tuple[bytes, bytes]:
     original = ROOT / "vendor/sources/eden" / RELATIVE
-    reviewed = ROOT / "vendor/encore-active/eden-backports" / RELATIVE
+    reviewed = ROOT / "vendor/encore-active/eden" / RELATIVE
     source = original.read_bytes()
     base = reviewed.read_bytes()
     if sha256(source) != PINNED_UPSTREAM_SHA256:
@@ -177,10 +177,10 @@ def apply(stage: Path, check_only: bool = False) -> str:
     targets = (
         (RELATIVE, approved, extend_graphics_enums(approved.decode("utf-8")).encode("utf-8")),
         (FENCE_HEADER,
-         (ROOT / "vendor/encore-active/eden-backports" / FENCE_HEADER).read_bytes(),
+         (ROOT / "vendor/encore-active/eden" / FENCE_HEADER).read_bytes(),
          None),
         (FENCE_IMPL,
-         (ROOT / "vendor/encore-active/eden-backports" / FENCE_IMPL).read_bytes(),
+         (ROOT / "vendor/encore-active/eden" / FENCE_IMPL).read_bytes(),
          None),
     )
     targets = list(targets)
@@ -238,8 +238,8 @@ def self_test() -> None:
     assert extended.count("ENUM(ScalingFilter,") == 1
     assert extended.count("ENUM(AntiAliasing,") == 1
     assert extended.count("ENUM(GpuFenceBehavior,") == 1
-    fence_h = (ROOT / "vendor/encore-active/eden-backports" / FENCE_HEADER).read_text()
-    fence_cpp = (ROOT / "vendor/encore-active/eden-backports" / FENCE_IMPL).read_text()
+    fence_h = (ROOT / "vendor/encore-active/eden" / FENCE_HEADER).read_text()
+    fence_cpp = (ROOT / "vendor/encore-active/eden" / FENCE_IMPL).read_text()
     updated_h = extend_fence_header(fence_h)
     updated_cpp = extend_fence_implementation(fence_cpp)
     assert updated_h.count("bool IsGPUFenceBehaviorStrict();") == 1

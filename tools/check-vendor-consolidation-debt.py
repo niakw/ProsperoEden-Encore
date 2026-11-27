@@ -25,7 +25,7 @@ for dep in deps:
 for extra in ("eden-cpm", "boilerplate-setup-0"):
     assert extra in root_names, extra
 fork_names = {entry.name for entry in active.iterdir() if entry.is_dir()}
-for name in ("eden-backports", "eden-core", "eden-vulkan", "ps5-mesa"):
+for name in ("eden-core", "eden-vulkan", "ps5-mesa"):
     assert name in fork_names, f"missing active patched tree: {name}"
 assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in vulkan
 assert (active/"eden/src/CMakeLists.txt").is_file(), "missing maintained native CMake"
@@ -1434,7 +1434,7 @@ print("MAINTAINED_GL_TEXTURE_DEV_PARITY_PASS: bounded copy instrumentation")
 
 # A32 fastmem must derive from the *installed shipping backport*, not from
 # the original pinned Eden file that is overwritten before CMake configure.
-shipping_memory = (active / "eden-backports/src/core/memory.cpp").read_text()
+shipping_memory = (active / "eden/src/core/memory.cpp").read_text()
 a32_memory = (active / "eden-core/src/core/memory.cpp").read_text()
 old_fastmem_guard = "        if (process.IsApplication() && Settings::IsFastmemEnabled()) {"
 new_fastmem_guard = "        if (process.IsApplication() && !process.Is64Bit() && Settings::IsFastmemEnabled()) {"
@@ -1611,7 +1611,7 @@ print("MAINTAINED_RUMBLE_UNIT_PARITY_PASS selection=hid_core")
 # Exact old-source parity for NPad: this must reproduce the former build
 # generator applied to the immutable shipping-backport snapshot, not an
 # independently rewritten input implementation.
-npad_shipping = (active / "eden-backports/src/hid_core/resources/npad/npad.cpp").read_text()
+npad_shipping = (active / "eden/src/hid_core/resources/npad/npad.cpp").read_text()
 npad_old_pair = "        auto& controller = controller_data[aruid_index][controller_idx];\n        const auto is_connected = controller.device->IsConnected();"
 npad_new_pair = "        auto& controller = controller_data[aruid_index][controller_idx];\n        if (controller.device == nullptr) {\n            continue;  // ProsperoEden: this applet resource is not activated yet\n        }\n        const auto is_connected = controller.device->IsConnected();"
 npad_old_entry = "void NPad::ControllerUpdate(Kernel::KernelCore& kernel, Core::HID::ControllerTriggerType type, std::size_t controller_idx) {\n"
@@ -2637,7 +2637,7 @@ print("ENCORE_SHADER_CACHE_SOURCE_PARITY_PASS", "source and reader canonical")
 # The selected BSD source equals all five previous CMake instrumentation
 # replacements on top of the immutable shipping backport, modulo the
 # equivalent quoted header resolved through core's headless include path.
-bsd_shipping = (active / "eden-backports/src/core/hle/service/sockets/bsd.cpp").read_text()
+bsd_shipping = (active / "eden/src/core/hle/service/sockets/bsd.cpp").read_text()
 bsd_expected = '#include "network_audit.h"\n' + bsd_shipping
 bsd_replacements = [["    const Errno result = Translate(file_descriptors[fd]->socket->Connect(Translate(addr_in)));","    const Errno result = Translate(file_descriptors[fd]->socket->Connect(Translate(addr_in)));\n    if ((result == Errno::SUCCESS || result == Errno::ISCONN) && eden_network_audit_active()) {\n        const auto peer = Translate(addr_in);\n        const std::string host = Network::IPv4AddressToString(peer.ip) + \":\" + std::to_string(peer.portno);\n        eden_network_audit_event(\"guest\", \"connect\", host.c_str(), 0, 0);\n    }"],["    return Translate(file_descriptors[fd]->socket->Send(message, flags));","    const auto send_result = Translate(file_descriptors[fd]->socket->Send(message, flags));\n    if (send_result.first > 0 && eden_network_audit_active()) {\n        const std::string descriptor = \"fd:\" + std::to_string(fd);\n        eden_network_audit_event(\"guest\", \"tx\", descriptor.c_str(), send_result.first, 0);\n    }\n    return send_result;"],["    return Translate(file_descriptors[fd]->socket->SendTo(flags, message, p_addr_in));","    const auto sent = Translate(file_descriptors[fd]->socket->SendTo(flags, message, p_addr_in));\n    if (sent.first > 0 && eden_network_audit_active()) {\n        const std::string target = p_addr_in ? Network::IPv4AddressToString(p_addr_in->ip) + \":\" + std::to_string(p_addr_in->portno) : \"fd:\" + std::to_string(fd);\n        eden_network_audit_event(\"guest\", \"tx\", target.c_str(), sent.first, 0);\n    }\n    return sent;"],["    const auto [ret, bsd_errno] = Translate(descriptor.socket->Recv(flags, message));","    const auto [ret, bsd_errno] = Translate(descriptor.socket->Recv(flags, message));\n    if (ret > 0 && eden_network_audit_active()) {\n        const std::string descriptor = \"fd:\" + std::to_string(fd);\n        eden_network_audit_event(\"guest\", \"rx\", descriptor.c_str(), ret, 0);\n    }"],["    const auto [ret, bsd_errno] = Translate(descriptor.socket->RecvFrom(flags, message, p_addr_in));","    const auto [ret, bsd_errno] = Translate(descriptor.socket->RecvFrom(flags, message, p_addr_in));\n    if (ret > 0 && eden_network_audit_active()) {\n        const std::string target = p_addr_in ? Network::IPv4AddressToString(p_addr_in->ip) + \":\" + std::to_string(p_addr_in->portno) : \"fd:\" + std::to_string(fd);\n        eden_network_audit_event(\"guest\", \"rx\", target.c_str(), ret, 0);\n    }"]]
 for i, (needle, replacement) in enumerate(bsd_replacements):
@@ -2676,7 +2676,7 @@ print("MAINTAINED_GUEST_BSD_PARITY_PASS rewrites=5 shipping_backport=preserved")
 
 
 # Former CMake guest DNS substitutions are now a host-only equality oracle.
-dns_base = (active / "eden-backports/src/core/hle/service/sockets/sfdnsres.cpp").read_text()
+dns_base = (active / "eden/src/core/hle/service/sockets/sfdnsres.cpp").read_text()
 dns_first = dns_base.find("static const constexpr std::array blockedDomains = {")
 dns_last = dns_base.find("static NetDbError GetAddrInfoErrorToNetDbError")
 assert dns_first >= 0 and dns_last > dns_first
@@ -2822,7 +2822,7 @@ print("VENDOR_MAINTAINED_RADV_CRT_PARITY_PASS: pinned startup and native-only va
 
 # R437: the native BufferCache is a tracked header, never reassembled by CMake.
 r437_rel = "eden-core/src/video_core/buffer_cache/buffer_cache.h"
-r437_back = (active / "eden-backports/src/video_core/buffer_cache/buffer_cache.h").read_text()
+r437_back = (active / "eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 r437_before = ("    const auto size = buffer.SizeBytes();\n    if (insert) {\n"
                 "        total_used_memory += Common::AlignUp(size, 1024);")
 r437_after = ("    const auto size = buffer.SizeBytes();\n    if (insert) {\n"
@@ -3125,10 +3125,10 @@ def has_exact_audit_path(relative):
         "vendor/sources/eden/",
         "vendor/encore-active/eden/",
         "vendor/encore-active/eden-core/",
-        "vendor/encore-active/eden-backports/",
+        "vendor/encore-active/eden/",
         "vendor/encore-active/eden-vulkan/",
     ))
-shipping_manifest = json.loads((active / "eden-backports/manifest.json").read_text())
+shipping_manifest = json.loads((active / "eden/backports/manifest.json").read_text())
 shipping_build_recipes = {"src/common/CMakeLists.txt", "src/core/CMakeLists.txt"}
 assert shipping_build_recipes <= set(shipping_manifest["entries"])
 unmatched_patch_targets = sorted(path for path in all_patch_targets

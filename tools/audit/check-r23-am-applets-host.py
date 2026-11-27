@@ -9,7 +9,7 @@ base=root/"vendor/sources/eden/src/core/hle/service/am"
 orig_front=base/"frontend/applets.cpp"
 orig_creator=base/"service/library_applet_creator.cpp"
 new_front=root/"headless/r23_am_frontend_applets_ps5.cpp"
-new_creator=root/"vendor/encore-active/eden-backports/src/core/hle/service/am/service/library_applet_creator.cpp"
+new_creator=root/"vendor/encore-active/eden/src/core/hle/service/am/service/library_applet_creator.cpp"
 def gitblob(path):
     b=path.read_bytes()
     return hashlib.sha1(b"blob "+str(len(b)).encode()+b"\0"+b).hexdigest()

@@ -534,7 +534,7 @@ flowchart TB
 
 **Vendor — upstreams** : <code>sources/eden</code>, <code>eden-cpm</code>, <code>ps5-mesa</code>, <code>opengl-mesa-26-2</code>, <code>ps5-payload-sdk-fork</code>, <code>ffmpeg</code>, <code>fmt</code>, <code>harfbuzz</code>, <code>libwebp</code>, <code>jxrlib</code>, <code>compiler-rt</code>, <code>zbic</code>, <code>ps5-fsr3-optical-flow</code>, <code>ps5-mihawkgen</code>, <code>ps5-vulkan-tools</code>, divers composants OpenGL et headers.
 
-**Vendor — adaptations** : <code>encore-active/eden</code>, <code>eden-cpm</code>, <code>eden-core</code>, <code>eden-vulkan</code>, <code>eden-backports</code>, <code>ns2-runtime</code>, <code>ns2-astc</code>, <code>ns2-helpers</code>, <code>ps5-mesa</code>, <code>ps5-mihawkgen</code>, <code>amd-fsr31</code>, <code>compiler-rt</code>, <code>jxrlib</code>.
+**Vendor — adaptations** : <code>encore-active/eden</code>, <code>eden-cpm</code>, <code>eden-core</code>, <code>eden-vulkan</code>, <code>ns2-runtime</code>, <code>ns2-astc</code>, <code>ns2-helpers</code>, <code>ps5-mesa</code>, <code>ps5-mihawkgen</code>, <code>amd-fsr31</code>, <code>compiler-rt</code>, <code>jxrlib</code>.
 
 Ces répertoires incluent du code tiers, du code maintenu, des aides et parfois des pistes de recherche. La liste des composants effectivement **liés au binaire** est déterminée par les sources sélectionnées à la révision exacte, pas par cette énumération.
 

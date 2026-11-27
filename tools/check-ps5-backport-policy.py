@@ -8,7 +8,7 @@ script = (root / "tools/apply-eden-backports.sh").read_text()
 import json
 active = (root / "tools/install-active-core-backports.py").read_text()
 prepare = (root / "tools/prepare-build.sh").read_text()
-manifest = json.loads((root / "vendor/encore-active/eden-backports/manifest.json").read_text())
+manifest = json.loads((root / "vendor/encore-active/eden/backports/manifest.json").read_text())
 assert manifest["excluded_experimental"] == ["EDEN_EXPERIMENTAL_DUMMY_THREAD_WAITS"]
 assert 'python3 -B tools/install-active-core-backports.py "$eden" --repair-owned-cache' in prepare
 assert 'KNOWN_STALE_A64_SHA256 = "08ae577aa069b589faaa8cc6659baa66c80661d78abc15381907d63b343c17b0"' in active

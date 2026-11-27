@@ -41,7 +41,7 @@ owners = {
     "lm": (prefix+"lm/lm.cpp", 3, 10),
     "audio_device": (prefix+"audio/audio_device.cpp", 1, 22),
     "audio_renderer": (prefix+"audio/audio_renderer_manager.cpp", 1, 5),
-    "fsp": ("encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp", 1, 128),
+    "fsp": ("encore-active/eden/src/core/hle/service/filesystem/fsp/fsp_srv.cpp", 1, 128),
 }
 files = {}
 summary = {}

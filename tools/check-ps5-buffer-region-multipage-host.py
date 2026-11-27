@@ -12,7 +12,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 active = (root / "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
-backport = (root / "vendor/encore-active/eden-backports/src/video_core/buffer_cache/buffer_cache.h").read_text()
+backport = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 needle = "template <class P>\nbool BufferCache<P>::IsRegionRegistered(DAddr addr, size_t size) {"
 
 def method(source):

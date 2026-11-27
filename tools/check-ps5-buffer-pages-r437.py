@@ -6,7 +6,7 @@ root=Path(__file__).resolve().parents[1]
 cm=(root/'headless/CMakeLists.txt').read_text()
 r=(root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
 g=(root/'tools/prepare-vulkan-port.py').read_text()
-source=(root/'vendor/encore-active/eden-backports/src/video_core/buffer_cache/buffer_cache.h').read_text()
+source=(root/'vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h').read_text()
 maintained=(root/'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h').read_text()
 assert 'write_derived("${PORT_BUILD_DIR}/buffer-pages/video_core/buffer_cache/buffer_cache.h"' not in cm
 assert 'configure_file("${EDEN_MAINTAINED_BUFFER_PAGES}"' in cm

@@ -33,7 +33,7 @@ assert "last_usage_tick = 0;" in new and "#ifdef PS5_NATIVE" in new
 header=pinned.replace(old,new)
 # The selected shipping Vulkan fork must contain the same native header
 # replayed from the installed Eden backport (not merely a test-only mock).
-backport=(ROOT/"vendor/encore-active/eden-backports/src/video_core/renderer_vulkan/vk_buffer_cache.h").read_text()
+backport=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache.h").read_text()
 maintained=(ROOT/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h").read_text()
 assert backport.count(old)==1
 # Reverse only the five SHA-pinned R2 production insertions; otherwise

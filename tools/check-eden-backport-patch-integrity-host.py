@@ -64,7 +64,7 @@ def main():
         r'apply_one "\$root/headless/backports/([^"]+)" "\$eden/([^"]+)"',
         script))
     manifest = json.loads(
-        (ROOT / "vendor/encore-active/eden-backports/manifest.json").read_text())
+        (ROOT / "vendor/encore-active/eden/backports/manifest.json").read_text())
     receipts = manifest["shipping_receipts"]
     shipping = {p: name for p, name in calls.items() if name in receipts}
     assert len(receipts) >= 45

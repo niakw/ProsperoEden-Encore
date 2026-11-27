@@ -9,9 +9,9 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 native = (ROOT / 'vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc').read_text()
-backport = (ROOT / 'vendor/encore-active/eden-backports/src/core/device_memory_manager.inc').read_text()
+backport = (ROOT / 'vendor/encore-active/eden/src/core/device_memory_manager.inc').read_text()
 pinned = (ROOT / 'vendor/sources/eden/src/core/device_memory_manager.inc').read_text()
-header = (ROOT / 'vendor/encore-active/eden-backports/src/core/device_memory_manager.h').read_text()
+header = (ROOT / 'vendor/encore-active/eden/src/core/device_memory_manager.h').read_text()
 # Whole-unit parity retains all atomic, remap, range and ASID fixes. Restoring
 # only id_pool would compile while undoing the no-reuse/lifetime guarantees.
 span_start = backport.index('template <typename Traits>\nu8* DeviceMemoryManager<Traits>::GetSpan(')

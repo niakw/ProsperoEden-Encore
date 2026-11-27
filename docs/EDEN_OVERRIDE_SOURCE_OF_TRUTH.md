@@ -128,7 +128,7 @@ Le header natif `video_core/buffer_cache/buffer_cache.h`, initialement créé
 par substitutions dans CMake, est maintenant la version complète suivie dans
 `vendor/encore-active/eden-core/src/video_core/buffer_cache/`. La compilation
 PS5 sélectionne une copie identique de ce header ; la comparaison avec
-`eden-backports` et le témoin R437 empêchent le retour de l'ancien générateur.
+le snapshot de backports canonique sous `encore-active/eden` et le témoin R437 empêchent le retour de l'ancien générateur.
 Le helper applicatif `headless/buffer_pages.h` reste un composant distinct.
 
 ## Runtime RADV maintenu

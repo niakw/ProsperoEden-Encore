@@ -83,7 +83,7 @@ def derive() -> dict[str, tuple[bytes, bytes]]:
 KNOWN_STALE_A64_SHA256 = "08ae577aa069b589faaa8cc6659baa66c80661d78abc15381907d63b343c17b0"
 A64_OWNER = "src/core/arm/dynarmic/arm_dynarmic_64.cpp"
 SM_SOURCE_OWNER = "src/core/hle/service/sm/sm.cpp"
-SM_SHIPPING_SOURCE = ROOT / "vendor/encore-active/eden-backports" / SM_SOURCE_OWNER
+SM_SHIPPING_SOURCE = ROOT / "vendor/encore-active/eden" / SM_SOURCE_OWNER
 SM_SHIPPING_GIT_BLOB = "c75c5437dfae5176d25a9994ff8aa7164d8b6713"
 SM_SHUTDOWN_PREVIOUS_GIT_BLOB = "494ee50d2880a491b07c2b981193df1a686c696a"
 SM_FACTORY_RETIREMENT_GIT_BLOB = "34c7c85f1476a3ba819ad20b8a4f8150cca86e16"

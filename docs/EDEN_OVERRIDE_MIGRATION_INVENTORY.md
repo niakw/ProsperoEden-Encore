@@ -84,7 +84,7 @@ et non les 458 scripts Python/shell/CMake du seul dossier `tools/`.
 | Point d'entrée | Sélection / rôle | Source compilée ou sortie | Dette |
 | --- | --- | --- | --- |
 | `tools/prepare-build.sh` | **ACTIF**, orchestrateur `make prepare` | Arbre Eden jetable, dépendances et RADV | Sélection uniquement |
-| `tools/install-vendored-eden-backports.py` | **ACTIF**, copie vérifiée par manifest SHA | 83 fichiers suivis dans `encore-active/eden-backports` | Déjà matérialisé |
+| `tools/install-vendored-eden-backports.py` | **ACTIF**, copie vérifiée par manifest SHA | 83 fichiers suivis dans `encore-active/eden` | Déjà matérialisé |
 | `tools/install-vendored-eden-build-flags.py` | **ACTIF**, deux recettes suivies | `encore-active/eden` | Déjà matérialisé |
 | `tools/install-vendored-surface-lifecycle.py` | **ACTIF**, copie de source complète | `encore-active/eden-surface-lifecycle` | Déjà matérialisé |
 | `tools/install-vendored-radv.py` | **ACTIF**, copie de sources RADV maintenues | `encore-active/ps5-mesa` vers staging | Déjà matérialisé |
@@ -428,7 +428,7 @@ capture GPU. La compilation native et les essais console resteront requis.
   `vendor/encore-active/eden-core/src/core/memory.cpp` **uniquement**
   lorsque `EDEN_A32_FASTMEM` est activé. Elle reproduit exactement le
   correctif de garde 32 bits après installation de
-  `vendor/encore-active/eden-backports/src/core/memory.cpp`, pas après
+  `vendor/encore-active/eden/src/core/memory.cpp`, pas après
   lecture du fichier Eden non patché. Le test refuse toute dérive des
   octets de la version de production.
 
@@ -680,7 +680,7 @@ ni dans des modules indirects actifs, désormais au nombre de **0** :
   sous contrôle d'identité et de hash. Il modifie **l'arbre Eden fourni
   en argument** via `git apply` lorsqu'il est rejoué explicitement comme
   oracle historique. Le build courant installe, sans `git apply`, les
-  **sources complètes** versionnées dans `vendor/encore-active/eden-backports`
+  **sources complètes** versionnées dans `vendor/encore-active/eden`
   après vérification de leurs empreintes. L'appel à
   `eden-dummy-thread-waits.patch` est expérimental et OFF par défaut.
 - **2 patches cœur** (`eden-dynarmic-icache-coherence.patch` et
@@ -758,7 +758,7 @@ et de limiter CMake à la sélection.
 ## Couverture des cibles de patches
 
 Les **55 fichiers de patches** (53 rejoués, 2 installés dans le cœur actif) sont suivis dans ce registre. Le nombre de chemins touchés est recalculé directement depuis les entêtes de patches par le contrôle CI.
-Les backports livrés sous `vendor/encore-active/eden-backports/` sont désormais
+Les backports livrés sous `vendor/encore-active/eden/` sont désormais
 reconnus comme propriétaires. Les deux recettes CMake sont suivies via le
 manifeste versionné ; les quatre sources hors snapshot par `H49`
 (expérimental OFF), `H50`, `A08` et `A09` (SM/audio actifs).

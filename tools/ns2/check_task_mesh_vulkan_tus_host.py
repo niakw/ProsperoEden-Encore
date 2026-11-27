@@ -198,9 +198,9 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
     (graphics_stage / "settings_enums.h").write_text(
         graphics_enums, encoding="utf-8")
     reviewed_settings = (
-        ROOT / "vendor/encore-active/eden-backports/src/common/settings.h")
+        ROOT / "vendor/encore-active/eden/src/common/settings.h")
     reviewed_settings_impl = (
-        ROOT / "vendor/encore-active/eden-backports/src/common/settings.cpp")
+        ROOT / "vendor/encore-active/eden/src/common/settings.cpp")
     assert reviewed_settings.is_file() and reviewed_settings_impl.is_file()
     # Use the SAME audited, non-persistent cache overlay that the real
     # native prepare-build script installs. The upstream fence_manager.h

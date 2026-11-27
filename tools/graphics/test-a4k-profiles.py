@@ -41,7 +41,7 @@ def validate(root: Path, vendor: Path) -> None:
     pinned = (vendor / "sources/eden/src/common/settings_enums.h").read_text()
     assert "Anime4K3D" not in pinned and "FxaaPlus" not in pinned
     enum = enum_stage["extend_graphics_enums"](
-        (vendor / "encore-active/eden-backports/src/common/settings_enums.h").read_text())
+        (vendor / "encore-active/eden/src/common/settings_enums.h").read_text())
     native = (vendor / "encore-active/eden-vulkan/anime4k_3d.cpp").read_text()
     shaders = vendor / "encore-active/eden-vulkan/r09_anime4k_3d"
     assert all(f'"{i}"' in store for i in IDS), "Persisted A4K keys missing"

@@ -23,7 +23,7 @@ import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
 ORIGINAL=ROOT/'vendor/sources/eden'
-ACTIVE=ROOT/'vendor/encore-active/eden-backports'
+ACTIVE=ROOT/'vendor/encore-active/eden'
 PIN='5f142c7926d0c7fcbbd0ce30794d72f638a43b2a'
 EXPERIMENT=('EDEN_EXPERIMENTAL_DUMMY_THREAD_WAITS',)
 
@@ -55,11 +55,12 @@ def materialize(patched:Path)->None:
     spec={'pinned_eden_commit':PIN,'source':'tools/apply-eden-backports.sh',
           'entries':entries,'shipping_receipts':dict(sorted(receipts.items())),
           'excluded_experimental':list(EXPERIMENT)}
-    (ACTIVE/'manifest.json').write_text(json.dumps(spec,indent=2,sort_keys=True)+'\n')
+    (ACTIVE/'backports').mkdir(parents=True,exist_ok=True)
+    (ACTIVE/'backports/manifest.json').write_text(json.dumps(spec,indent=2,sort_keys=True)+'\n')
     print(f'MATERIALIZED_EDEN_BACKPORTS files={len(entries)} verified_patch_receipts={len(receipts)}')
 
 def lock()->dict:
-    data=json.loads((ACTIVE/'manifest.json').read_text())
+    data=json.loads((ACTIVE/'backports/manifest.json').read_text())
     if data['pinned_eden_commit']!=PIN:raise RuntimeError('Wrong pinned Eden revision')
     if set(data['excluded_experimental'])!=set(EXPERIMENT):raise RuntimeError('Shipping/experimental policy changed')
     return data

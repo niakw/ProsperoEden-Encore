@@ -15,7 +15,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 REL = Path("src/video_core/texture_cache/texture_cache.h")
-ACTIVE = ROOT / "vendor/encore-active/eden-backports"
+ACTIVE = ROOT / "vendor/encore-active/eden"
 MANIFEST = json.loads((ACTIVE / "manifest.json").read_text())
 SOURCE = ACTIVE / REL
 BYTES = SOURCE.read_bytes()

@@ -5,16 +5,14 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-base = root / "vendor/encore-active/eden-gpu"
-quiet = (base / "gpu_thread_quiet.cpp").read_text()
-dev = (base / "gpu_thread_dev.cpp").read_text()
+worker = (root / "vendor/encore-active/eden/src/video_core/gpu_thread.cpp").read_text()
 
 def method(source):
     start = source.index("u64 ThreadManager::PushCommand(")
     end = source.index("\n\n} // namespace VideoCommon::GPUThread", start)
     return source[start:end]
 
-for s in (quiet, dev):
+for s in (worker,):
     assert s.count('#include "gpu_failure.h"') == 2
     m = method(s)
     assert "const bool completed = state.cv.wait(completion_lk, completion_token" in m
@@ -119,7 +117,7 @@ int main() {
     Eden::ResetGpuFailureForTitle();
     assert(!Eden::PeekGpuFailure());
 }
-""".replace("__METHOD__", method(quiet))
+""".replace("__METHOD__", method(worker))
 with tempfile.TemporaryDirectory(prefix="eden-gpu-producer-") as d:
     src = Path(d) / "test.cpp"
     binary = Path(d) / "test"

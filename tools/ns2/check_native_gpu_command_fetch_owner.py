@@ -16,7 +16,7 @@ cmake = (root / "headless/CMakeLists.txt").read_text()
 assert '"${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher.cpp"' in cmake
 assert '"${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher_dev.cpp"' not in cmake
 assert '"${EDEN_MAINTAINED_GPU_DMA}"' in cmake
-owner = vendor / "encore-active/eden-core/src/video_core"
+owner = vendor / "encore-active/eden/src/video_core"
 for file in ("dma_pusher.cpp", "dma_pusher_dev.cpp"):
     source = (owner / file).read_text()
     step = source.split("bool DmaPusher::Step() {", 1)[1].split(
@@ -113,7 +113,7 @@ assert read.count("rasterizer->FlushRegion(dev_addr_base, copy_amount, which);")
 assert "memory.ReadBlockUnsafe(dev_addr_base, dest_buffer, copy_amount);" in read
 assert "std::memset(dest_buffer, 0, size);" in read
 for rasterizer in ("eden-vulkan/vulkan_rasterizer.cpp",
-                   "eden-core/guest-bridge/vulkan_rasterizer.cpp"):
+                   "eden-vulkan/vulkan_rasterizer.cpp"):
     source = (vendor / "encore-active" / rasterizer).read_text()
     flush = source.split("void RasterizerVulkan::FlushRegion(", 1)[1].split(
         "bool RasterizerVulkan::MustFlushRegion(", 1)[0]

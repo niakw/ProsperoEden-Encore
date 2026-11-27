@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PATCH = ROOT / "tools/ns2/p1_2_gpu_preinvalidate.patch"
 PREVIOUS_SHA = "b43eae6863527b47b98892f5bfa68b7f685c0b28"
 PATCH_SHA = "f778404d0de2bb98e1f68428113b4c4bffe1eafe"
-SOURCE = Path("encore-active/eden-core/src/video_core/memory_manager.cpp")
+SOURCE = Path("encore-active/eden/src/video_core/memory_manager.cpp")
 
 def blob(content: str) -> str:
     data = content.encode()

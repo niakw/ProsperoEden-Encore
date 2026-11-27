@@ -6,8 +6,8 @@ import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
 core=root/"vendor"
-source=(core/"encore-active/eden-core/src/video_core/engines/maxwell_dma.cpp").read_text()
-header=(core/"encore-active/eden-core/include/video_core/engines/maxwell_dma.h").read_text()
+source=(core/"encore-active/eden/src/video_core/engines/maxwell_dma.cpp").read_text()
+header=(core/"encore-active/eden/include/video_core/engines/maxwell_dma.h").read_text()
 decoder=(core/"sources/eden/src/video_core/textures/decoders.cpp").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
 assert "EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE" in cmake

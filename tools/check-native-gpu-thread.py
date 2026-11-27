@@ -65,7 +65,7 @@ assert "std::make_shared<std::vector<u8>>()" in owner
 if sys.argv[1:] == ['--source-only']:
     # Validate the maintained compiled worker without requiring a PS5 SDK,
     # generated cache or host C++ compilation.
-    native = (root / 'vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp').read_text()
+    native = (root / 'vendor/encore-active/eden/src/video_core/gpu_thread.cpp').read_text()
     assert native.count(native_pending_wait) == 1, (
         'Maintained release GPU worker lost native-channel wake/idle arbitration')
     assert native.count('::Eden::PublishGpuSubmissionSample(count);') == 1, (
@@ -113,8 +113,7 @@ for metric, call in (
 # The producer is outside the upstream worker body. Compare its complete
 # compiled TU to the selected maintained source, including failure propagation
 # and acquire loads, rather than normalizing an obsolete relaxed-load fragment.
-profile = 'dev' if development else 'quiet'
-maintained_worker = root / f'vendor/encore-active/eden-gpu/gpu_thread_{profile}.cpp'
+maintained_worker = root / 'vendor/encore-active/eden/src/video_core/gpu_thread.cpp'
 assert generated.read_bytes() == maintained_worker.read_bytes()
 producer = worker.split('u64 ThreadManager::PushCommand(', 1)[1].split('\n} // namespace', 1)[0]
 assert producer.count('TryEmplace(') == 1
@@ -168,7 +167,7 @@ assert body in untraced, 'GPU worker semantics changed beyond reviewed dispatch-
 
 assert 'stop_source.get_token()' in worker and 'thread.get_stop_token()' not in worker
 assert 'ThreadManager::~ThreadManager() { Stop(); }' in worker
-gpu = (root / 'vendor/encore-active/eden-core/src' / ('video_core/gpu_gl_native_dev.cpp' if development else 'video_core/gpu_gl_native.cpp')).read_text()
+gpu = (root / 'vendor/encore-active/eden/src' / ('video_core/gpu_gl_native_dev.cpp' if development else 'video_core/gpu_gl_native.cpp')).read_text()
 assert 'GPU::~GPU() { impl->NotifyShutdown(); }' in gpu
 shutdown = gpu.split('    void NotifyShutdown() {', 1)[1].split('    /// Obtain', 1)[0]
 assert 'sync_cv.notify_all();\n        }\n        gpu_thread.Stop();' in shutdown

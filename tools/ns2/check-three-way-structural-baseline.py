@@ -71,7 +71,7 @@ fsp_data = (V / owners["fsp"][0]).read_bytes()
 fsp_blob = hashlib.sha1(b"blob " + str(len(fsp_data)).encode() + b"\0" + fsp_data).hexdigest()
 assert fsp_blob == "58303a0bd66387244c44968a0878e2f7c821bc9f", (
     "Pinned Eglantine FSP source changed", fsp_blob)
-w = (V / "encore-active/eden-core/src/core/hle/service/am/window_system.cpp").read_text()
+w = (V / "encore-active/eden/src/core/hle/service/am/window_system.cpp").read_text()
 h = (V / "sources/eden/src/core/hle/service/am/window_system.h").read_text()
 desktop = (V / "sources/eden/src/core/hle/service/am/window_system.cpp").read_text()
 assert "if (m_applets.empty() && !m_exit_sent)" in w

@@ -15,7 +15,7 @@ root = Path(__file__).resolve().parents[1]
 snippet = (root / "vendor/tests/oracles/vulkan/vulkan_download_batch.inc").read_text()
 maintained = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
 assert snippet in maintained, "historical integration oracle drift"
-selected = (root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+selected = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 start = selected.index("void TextureCache<P>::DownloadMemory(DAddr")
 end = selected.index("template <class P>", start)
 method = selected[start:end]

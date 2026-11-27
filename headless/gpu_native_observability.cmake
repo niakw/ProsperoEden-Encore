@@ -20,7 +20,7 @@ target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")
 # The native PS5 target selects exactly one maintained CFG owner carrying the
 # bounded direct PRET implementation; no second shader CFG is compiled.
 set(EDEN_MAINTAINED_MAXWELL_CONTROL_FLOW
-    "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_MAXWELL_CONTROL_FLOW}")
     message(FATAL_ERROR "Missing maintained Maxwell control-flow source")
 endif()

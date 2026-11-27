@@ -921,7 +921,7 @@ list(APPEND eden_savedata_sources "${EDEN_MAINTAINED_SAVEDATA}")
 set_property(TARGET core PROPERTY SOURCES "${eden_savedata_sources}")
 # Use a maintained bounded shader local-memory translator, keeping the pinned source untouched.
 set(EDEN_MAINTAINED_SHADER_LOCAL
-    "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/load_store_local_shared.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/load_store_local_shared.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_SHADER_LOCAL}")
     message(FATAL_ERROR "Missing maintained shader local scratch translator")
 endif()
@@ -939,7 +939,7 @@ set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_shader_sources}")
 # source immutable and replace exactly one TU in the native PS5 target.
 if(PS5_NATIVE)
     set(EDEN_NS1_MAXWELL_ATOMIC_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp")
     if(NOT EXISTS "${EDEN_NS1_MAXWELL_ATOMIC_SOURCE}")
         message(FATAL_ERROR "Missing maintained NS1 Maxwell atomic translator")
     endif()
@@ -961,7 +961,7 @@ endif()
 # the measured Maxwell/Tesla floating condition-code relation to zero.
 if(PS5_NATIVE)
     set(EDEN_NS1_FP64_CC_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl")
     foreach(eden_ns1_fp64_cc_unit IN ITEMS double_add.cpp double_multiply.cpp)
         set(eden_ns1_fp64_cc_source "${EDEN_NS1_FP64_CC_ROOT}/${eden_ns1_fp64_cc_unit}")
         if(NOT EXISTS "${eden_ns1_fp64_cc_source}")
@@ -985,7 +985,7 @@ endif()
 # These sources set Z/N from the final post-SAT/FMZ value and preserve C/O.
 if(PS5_NATIVE)
     set(EDEN_NS1_FP32_CC_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl")
     foreach(eden_ns1_fp32_cc_unit IN ITEMS floating_point_add.cpp floating_point_multiply.cpp)
         set(eden_ns1_fp32_cc_source "${EDEN_NS1_FP32_CC_ROOT}/${eden_ns1_fp32_cc_unit}")
         if(NOT EXISTS "${eden_ns1_fp32_cc_source}")
@@ -1010,7 +1010,7 @@ endif()
 # current hardware evidence only covers a bounded set of exact words/cubes.
 if(PS5_NATIVE)
     set(EDEN_NS1_FLOAT_CC_EXTRA_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl")
     foreach(eden_ns1_float_cc_unit IN ITEMS
             floating_point_fused_multiply_add.cpp
             double_fused_multiply_add.cpp
@@ -1038,7 +1038,7 @@ endif()
 # GLASM remains explicit fail-closed, matching the reviewed upstream state.
 if(PS5_NATIVE)
     set(EDEN_NS1_SAMPLE_MASK_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler")
     set(eden_ns1_sample_mask_units
         backend/spirv/emit_spirv_context_get_set.cpp
         backend/spirv/spirv_emit_context.cpp
@@ -1072,7 +1072,7 @@ endif()
 # separate fail-closed concern and is not silently folded into this fix.
 if(PS5_NATIVE)
     set(EDEN_NS1_IMAGE_ATOMIC_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp")
     if(NOT EXISTS "${EDEN_NS1_IMAGE_ATOMIC_SOURCE}")
         message(FATAL_ERROR "Missing maintained NS1 SPIR-V image atomic emitter")
     endif()
@@ -1094,7 +1094,7 @@ endif()
 # constant indices plus feature-gated non-uniform dynamic indexing.
 if(PS5_NATIVE)
     set(EDEN_NS1_IMAGE_DESCRIPTOR_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp")
     if(NOT EXISTS "${EDEN_NS1_IMAGE_DESCRIPTOR_SOURCE}")
         message(FATAL_ERROR "Missing maintained NS1 SPIR-V image descriptor emitter")
     endif()
@@ -1117,7 +1117,7 @@ endif()
 # the PS5 RADV SPIR-V front end. No Title ID or shader-key special casing.
 if(PS5_NATIVE)
     set(EDEN_NS1_NAN_MINMAX_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_floating_point.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_floating_point.cpp")
     if(NOT EXISTS "${EDEN_NS1_NAN_MINMAX_SOURCE}")
         message(FATAL_ERROR "Missing NS1 numeric min/max SPIR-V emitter")
     endif()
@@ -1352,7 +1352,7 @@ endif()
 # stage the public IR declaration before video_core/shader_recompiler.
 if(PS5_NATIVE)
     set(EDEN_R23_FRAG_IR
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/ir_opt")
     set(EDEN_R23_FRAG_VK
         "${PORT_ROOT}/vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp")
     if(NOT EXISTS "${EDEN_R23_FRAG_IR}/passes.h"
@@ -1382,7 +1382,7 @@ endif()
 # headless/vulkan.cmake from this same branch's vendor commit.
 if(PS5_NATIVE)
     set(EDEN_R23_ATTRIBUTE_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler")
     set(EDEN_R23_ATTRIBUTE_HEADERS
         "${PORT_BUILD_DIR}/r23-attribute-handle/include")
     foreach(eden_r23_attr_header IN ITEMS
@@ -1933,7 +1933,7 @@ endif()
 # without a second replacement of ir_opt/texture_pass.cpp.
 if(PS5_NATIVE)
     set(EDEN_R23_PHI_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h")
     if(NOT EXISTS "${EDEN_R23_PHI_HEADER}")
         message(FATAL_ERROR "R23 #58 native resolver header missing")
     endif()
@@ -1978,7 +1978,7 @@ endif()
 # Do not switch the whole shader tree and do not modify the immutable source.
 if(PS5_NATIVE)
     set(EDEN_FC27_SSBO_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp")
     if(NOT EXISTS "${EDEN_FC27_SSBO_SOURCE}")
         message(FATAL_ERROR "FC27 SSBO maintained owner missing")
     endif()
@@ -1999,7 +1999,7 @@ endif()
 # Keep vendor/sources/eden immutable and select one reviewed maintained TU.
 if(PS5_NATIVE)
     set(EDEN_NS1_SSBO_ALIGNMENT_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp")
     if(NOT EXISTS "${EDEN_NS1_SSBO_ALIGNMENT_SOURCE}")
         message(FATAL_ERROR "NS1 SSBO alignment emitter missing")
     endif()
@@ -4558,7 +4558,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/nup_v1_runtime.cmake")
 # patch generation. Existing Maxwell paths retain their legacy behavior.
 if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     set(EDEN_NATIVE_TASK_MESH_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NATIVE_TASK_MESH_VULKAN_HEADERS
         "${PORT_ROOT}/vendor/encore-active/eden-vulkan/include")
     foreach(eden_mesh_header IN ITEMS
@@ -4639,7 +4639,7 @@ endif()
 # original remaining shader TUs and one additional geometry compaction unit.
 if(PS5_NATIVE)
     set(EDEN_R23_SUBGROUP_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler")
     foreach(eden_r23_subgroup_header IN ITEMS
             "backend/spirv/spirv_emit_context.h"
             "host_translate_info.h"
@@ -4801,7 +4801,7 @@ if(PS5_NATIVE)
     set(EDEN_PINNED_SHADER_CAS_ROOT
         "${PORT_ROOT}/vendor/sources/eden/src/shader_recompiler")
     set(EDEN_MAINTAINED_SHADER_CAS_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler")
     set(eden_native_cas_paths
         backend/spirv/emit_spirv_atomic.cpp
         frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp

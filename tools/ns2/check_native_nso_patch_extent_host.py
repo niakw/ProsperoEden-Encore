@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-SOURCE=ROOT/"vendor/encore-active/ns2-runtime/metadata/core/loader/nso.cpp"
+SOURCE=ROOT/"vendor/encore-active/eden/src/core/loader/nso.cpp"
 source=SOURCE.read_text()
 start="    // Apply patches if necessary\n    if (patched || full_image) {"
 end="\n#ifdef HAS_NCE\n    // If we are computing"

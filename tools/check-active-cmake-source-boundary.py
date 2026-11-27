@@ -101,6 +101,36 @@ for path in [ROOT/"headless/CMakeLists.txt", *sorted(module_paths)]:
             "active CMake references retired Encore root",
             str(path.relative_to(ROOT)), forbidden)
 
+# Active host gates and workflows are source consumers too. Historical fixtures
+# are deliberately excluded; executable checks must follow the same canonical
+# owner paths as the build graph so a directory migration cannot produce CI-only
+# FileNotFoundError failures.
+consumer_paths = {
+    *(ROOT/"tools").rglob("*.py"),
+    *(ROOT/"tools").rglob("*.sh"),
+    *(ROOT/".github/workflows").glob("*.yml"),
+    *(ROOT/".github/workflows").glob("*.yaml"),
+}
+consumer_paths = {
+    path for path in consumer_paths
+    if "fixtures" not in path.relative_to(ROOT).parts
+    and path != Path(__file__).resolve()
+}
+legacy_consumer_refs = []
+for path in sorted(consumer_paths):
+    source = path.read_text(encoding="utf-8")
+    for legacy in retired_eden_roots:
+        for forbidden in (
+            f"vendor/encore-active/{legacy}",
+            f"encore-active/{legacy}",
+        ):
+            if forbidden in source:
+                legacy_consumer_refs.append(
+                    (str(path.relative_to(ROOT)), forbidden)
+                )
+assert not legacy_consumer_refs, (
+    "active consumer references retired Encore root", legacy_consumer_refs)
+
 # All original upstream source CMake files live under vendor/sources/:
 # they are not maintained Encore CMake mutation owners. Every active
 # override under vendor/encore-active remains in module_paths and is checked.

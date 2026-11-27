@@ -13,9 +13,9 @@ import shutil, subprocess, tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
 PIN=(ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
-ACT=(ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp").read_text()
+ACT=(ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
 HDR=(ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h").read_text()
-SELECTED_HDR=(ROOT/"vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h").read_text()
+SELECTED_HDR=(ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.h").read_text()
 CM=(ROOT/"headless/CMakeLists.txt").read_text()
 FAST=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 FULL=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
@@ -154,9 +154,9 @@ with tempfile.TemporaryDirectory(prefix="encore-host1x-current-") as d:
         build=subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                               "-pthread","-fsanitize=undefined","-fno-sanitize-recover=all",
                               "-I",str(t),
-                              "-I",str(ROOT/"vendor/encore-active/eden-core/overrides"),
+                              "-I",str(ROOT/"vendor/encore-active/eden/src"),
                               "-I",str(ROOT/"vendor/sources/eden/src"),
-                              str(ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"),
+                              str(ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp"),
                               str(t/"test.cpp"),"-o",str(exe)],
                              capture_output=True,text=True,timeout=60)
         assert build.returncode==0,(opt,build.stderr[-5000:])

@@ -2003,7 +2003,7 @@ elif pair_present == pair_new_owners:
         "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "74587c78870735bb23d2430415f3742b9e7cca68",
         "eden-core/src/video_core/engines/maxwell_3d.cpp": "fe7c4fa421ccabf9fff4b1bc277fb8ab5fe46677",
     }
-    if shipping_pair_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}:
+    if shipping_pair_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
         current_tree = subprocess.check_output(
             ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD^{tree}"],
             cwd=ROOT, text=True
@@ -2017,6 +2017,7 @@ elif pair_present == pair_new_owners:
             "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce",
             "8d3eaa4874ab0fa65a022913148acada1ea9c2fe": "c98167e4b9ff0b42acac977cae57b26255b50040",
             "57be62ed6bcc872a850676f92f55de92ace7a290": "3cf3eed31484ffc23cd18229b983e07500cecce6",
+            "e41a6930b4215a8e454c124e8fa8145de0c5bf7a": "29fb0e31ce967d9ecd6402d6fa928a8b1dbbde22",
         }[shipping_pair_pin]
         assert current_tree == expected_pair_tree
         # Shutdown successors modify Puller/DmaPusher only; neither belongs
@@ -2026,7 +2027,7 @@ elif pair_present == pair_new_owners:
             "eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
             "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "5cbd0d0f3482c5811b5b700fee55faf8a89b9f61",
         })
-        if shipping_pair_pin == "57be62ed6bcc872a850676f92f55de92ace7a290":
+        if shipping_pair_pin in {"57be62ed6bcc872a850676f92f55de92ace7a290", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
             selected_nov26_pair["eden-core/src/video_core/buffer_cache/buffer_cache.h"] = "30e7c389851a5a0f2b6369c35a313f93a0fc6826"
     assert set(selected_nov26_pair) == set(pair_receipt["files"])
     # Exact predecessor GPU owner blobs unchanged across the eight newer
@@ -2036,7 +2037,7 @@ elif pair_present == pair_new_owners:
         source_path = ROOT / "vendor/encore-active" / relative
         actual = subprocess.check_output(["git", "hash-object", str(source_path)],
                                          cwd=ROOT, text=True).strip()
-        if shipping_pair_pin in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}:
+        if shipping_pair_pin in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
             assert actual == selected_nov26_pair[relative], (
                 "Unreviewed Nov26 selected GPU source", relative, actual)
             continue

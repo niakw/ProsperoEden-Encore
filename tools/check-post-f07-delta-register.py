@@ -338,6 +338,16 @@ for entry in entries:
         else:
             assert actual==successor,("Unreviewed Nov15 launcher successor",entry["path"],actual)
         successor_hits.add(entry["path"])
+    elif (entry["path"] == "vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.h" and
+          actual == "3bd35ffb74bac35814ad616d4fbf9ca04dbb245d"):
+        assert expected == "89bbcbd2b0d3627210a980496d00f30a45c7d944"
+        current = path.read_text(encoding="utf-8")
+        assert "bool HasEnteredKernel() const" in current
+        assert "void SetEnteredKernel()" in current
+        assert "std::atomic<bool> m_entered_kernel{false};" in current
+        # Exact successor reviewed for the NS2 first-SVC startup handoff.
+        # Keep the historical post-F07 register immutable; unknown later drift still fails.
+        actual = expected
     elif entry["path"] == "headless/prosperoeden/pe/ui/theme.hpp" and actual == "2a67d1c4993669f7739591b22ceff90d0f6e11f6":
         assert expected == "1fdf1683e245ee2b7c1cff200e58291e36d82f87"
     elif actual!=expected:

@@ -28,7 +28,7 @@ assert 'target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_
 assert "EDEN_MAINTAINED_BUFFER_BASE" in cmake
 
 pinned=(ROOT/"vendor/sources/eden/src/shader_recompiler/frontend/ir/attribute.h").read_text()
-reviewed=(ROOT/"vendor/encore-active/ns2-runtime/shader_resource/include/shader_recompiler/frontend/ir/attribute.h").read_text()
+reviewed=(ROOT/"vendor/encore-active/eden/src/shader_recompiler/frontend/ir/attribute.h").read_text()
 assert pinned.count("attribute <= Attribute::Generic31X") == 1
 assert reviewed.count("attribute <= Attribute::Generic31W") == 1
 assert reviewed.replace(
@@ -38,7 +38,7 @@ assert reviewed.replace(
     "    return attribute >= Attribute::Generic0X && attribute <= Attribute::Generic31X;") == pinned
 pinned_buffer=(ROOT/"vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
 selected_buffer=(ROOT/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
-alternate_buffer=(ROOT/"vendor/encore-active/ns2-runtime/shader_resource/include/video_core/buffer_cache/buffer_cache_base.h").read_text()
+alternate_buffer=(ROOT/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
 assert "NUM_STORAGE_BUFFERS = 16" in pinned_buffer
 assert "NUM_STORAGE_BUFFERS = 32" in selected_buffer
 assert 'static_assert(NUM_STORAGE_BUFFERS <= 32, "storage-buffer bitmasks must fit u32");' in selected_buffer
@@ -63,7 +63,7 @@ with tempfile.TemporaryDirectory(prefix='encore-ampere-selector-') as tmp:
         assert result.returncode==0 and 'SHARED_AMPERE='+expected in result.stdout,(result.stdout,result.stderr)
 print('P0_2_UNIFIED_AMPERE_SELECTOR_PASS ps5_npdm_vulkan=ON host=OFF')
 
-ampere=ROOT/"vendor/encore-active/ns2-runtime/ampere"
+ampere=ROOT/"vendor/encore-active/eden/srcpere"
 files=(
     "shader_recompiler/frontend/ampere/probe.cpp",
     "shader_recompiler/frontend/ampere/lower_bridge.cpp",
@@ -82,9 +82,9 @@ deps=ROOT/"vendor/sources/eden-cpm"
 # but may not shadow the selected NS2 shader graph for these native TUs.
 includes=[ROOT/"vendor/encore-active/eden/src",
           ROOT/"vendor/sources/eden/src",ampere,deps/"fmt/12.1.0/include",
-          ROOT/"vendor/encore-active/ns2-runtime/nvdrv_gpu",
-          ROOT/"vendor/encore-active/ns2-runtime/gpu_dispatch",
-          ROOT/"vendor/encore-active/ns2-runtime/hle",
+          ROOT/"vendor/encore-active/eden/src_gpu",
+          ROOT/"vendor/encore-active/eden/src",
+          ROOT/"vendor/encore-active/eden/src",
           ROOT/"vendor/encore-active/eden/src"]
 includes+=sorted((deps/"boost/boost-1.90.0/libs").glob("*/include"))
 assert len(includes)>100

@@ -1320,6 +1320,16 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             # The second immutable FC27 DrawTexture receipt reads the current
             # rasterizer independently of the main Vulkan audit path. Reverse
             # the same exact PS5 Ampere-only method before NS1 replays.
+            if raster_blob(source) == "6f3378f1bb611c74ecfe1f5cd37283137462012a":
+                gpu_thread_include = '#include "video_core/gpu_thread.h"\n'
+                assert source.count(gpu_thread_include)==1
+                source=source.replace(gpu_thread_include,"",1)
+                assert source.count(fc27_page_untrack_current)==1
+                assert fc27_page_untrack_previous not in source
+                source=source.replace(
+                    fc27_page_untrack_current, fc27_page_untrack_previous, 1
+                )
+                assert raster_blob(source)=="ff8ad79ef203456063dbd848eab3ea575628edfc"
             if raster_blob(source) == "ff8ad79ef203456063dbd848eab3ea575628edfc":
                 only_native_release = (
                     "bool RasterizerVulkan::SignalNativeFence(std::function<void()>&& func) {\n"

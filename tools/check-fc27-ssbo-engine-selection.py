@@ -320,6 +320,26 @@ if selected == "cb8635aa95da52de2dd10be9d1574425edc1eb18":
     }.items():
         assert blob(V / relative) == digest, ("Bananza successor SSBO drift", relative)
     expected.add(selected)
+# 27 Nov generic NS2 ownership + FC27 deferred page-untrack successor.
+# The SSBO owners themselves are unchanged; seal the complete tree plus the
+# shader owners and the runtime files that advanced since the last admitted pin.
+if selected == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "8f6e3f968a67652ae2f7036f07c295604b0f17fc"
+    for relative, digest in {
+        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
+        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "6f3378f1bb611c74ecfe1f5cd37283137462012a",
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "be946421279aa406151f8255cd7b74b88c996873",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "213dd0f37f23043fe16a5efb8e466b2a9b9979cb",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "fc4fe083664ba991a1002caa52384c662e3ef718",
+        "encore-active/eden-core/src/video_core/dma_pusher.cpp": "d42fbfe0a91f0e0598641ad9ca49ec9cf2d6a04f",
+        "tests/ns2_gpu_identity_mapping_source.py": "6ad2be5bdc7ba210634e77b08de6a82d729c103c",
+        "encore-active/eden-core/overrides/core/device_memory_manager.inc": "9283bd636ce0b1cae33b4e012c7de59c4220c261",
+    }.items():
+        assert blob(V / relative) == digest, ("27 Nov SSBO successor drift", relative)
+    expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"

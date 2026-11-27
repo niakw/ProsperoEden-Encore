@@ -241,7 +241,7 @@ assert 'DescType(*this, image_type, pointer_type, desc.count)' in sample_spirv_c
 assert sample_spirv_ctx.count('DescType(*this, image_type, pointer_type, desc.count)') >= 2
 assert 'CheckedTextureArrayIndex(EmitContext& ctx' in image_descriptor
 assert 'Image descriptor array index out of range' in image_descriptor
-assert 'Dynamic image descriptor requires non-uniform indexing support' in image_descriptor
+assert 'Native dynamic image descriptor requires non-uniform indexing support' in image_descriptor
 assert 'CheckedAtomicImageIndex(EmitContext& ctx' in image_atomic
 assert 'Atomic image descriptor array index out of range' in image_atomic
 assert 'Dynamic atomic image descriptor requires non-uniform indexing support' in image_atomic

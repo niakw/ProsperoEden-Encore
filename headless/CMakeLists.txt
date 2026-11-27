@@ -2746,7 +2746,7 @@ endif()
 # smaller NS1 scratch and resident GPU images retain their previous lifetime.
 if(PS5_NATIVE)
     set(EDEN_NS2_ASTC_OWNER_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_ns2_astc_owner IN ITEMS
             "common/scratch_buffer.h"
             "video_core/texture_cache/texture_cache.h")
@@ -2775,7 +2775,7 @@ endif()
 # preflight; no alternate renderer, title exception or research dependency.
 if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     set(EDEN_NS2_ASTC_OWNER_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NS2_HELPERS_ROOT
         "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_ns2_astc_file IN ITEMS
@@ -2811,7 +2811,7 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN AND EDEN_REVIEWED_DUAL_NPDM)
         message(FATAL_ERROR "R4 volume-slice research requires PS5 native Vulkan")
     endif()
     set(EDEN_R4_ACTIVE_TEXTURE_CACHE
-        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h")
     if(NOT EXISTS "${EDEN_R4_ACTIVE_TEXTURE_CACHE}")
         message(FATAL_ERROR "R4 N60 maintained TextureCache owner missing")
     endif()
@@ -2840,7 +2840,7 @@ endif()
 # by the same PS5/Vulkan condition and completes before this block.
 if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     set(EDEN_NS2_ASTC_OWNER_ROOT
-        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NS2_HELPERS_ROOT
         "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_ns2_astc_file IN ITEMS
@@ -4937,7 +4937,7 @@ endif()
 # Retain the complete shared header without changing texture cache semantics.
 if(PS5_NATIVE AND EDEN_PS5_VULKAN)
     set(EDEN_NATIVE_LAYERED_FRAMEBUFFER_HEADER
-        "${PORT_ROOT}/vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache.h")
     if(NOT EXISTS "${EDEN_NATIVE_LAYERED_FRAMEBUFFER_HEADER}")
         message(FATAL_ERROR "Missing native layered Vulkan Framebuffer ABI")
     endif()

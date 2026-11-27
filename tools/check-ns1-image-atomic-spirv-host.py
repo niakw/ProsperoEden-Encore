@@ -16,8 +16,8 @@ import sys
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "vendor/sources/eden/src"
 SHADER = SRC / "shader_recompiler"
-ACTIVE = ROOT / "vendor/encore-active/eden-shader/src"
-ACTIVE_INCLUDE = ROOT / "vendor/encore-active/eden-shader/include"
+ACTIVE = ROOT / "vendor/encore-active/eden/src"
+ACTIVE_INCLUDE = ROOT / "vendor/encore-active/eden/src"
 SIRIT = ROOT / "vendor/sources/eden-cpm/sirit/v1.0.5"
 HEADERS = ROOT / "vendor/sources/eden-cpm/spirv-headers/vulkan-sdk-1.4.341.0"
 FMT = ROOT / "vendor/sources/eden-cpm/fmt/12.1.0/include"

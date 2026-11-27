@@ -53,7 +53,7 @@ def main():
         r"(?:instructions/)?[^\s()/]+\.cpp", 18,
         ["sirit.cpp", "instructions/type.cpp"])
     overlay = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere"
-    mesh_root = ROOT / "vendor/encore-active/eden-shader/src"
+    mesh_root = ROOT / "vendor/encore-active/eden/src"
     # Use the SAME production shader headers and translation units as the
     # single PS5 CMake shader target. Mixed pinned headers with native TES
     # emitters cannot compile and do not represent a real ABI witness.

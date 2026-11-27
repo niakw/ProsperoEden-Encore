@@ -170,7 +170,7 @@ assert 'list(FILTER shader_cfg_sources EXCLUDE REGEX "frontend/maxwell/control_f
 assert 'write_derived("${PORT_BUILD_DIR}/maxwell_prmt_observed.cpp"' not in module
 
 control_pristine=(root/"vendor/sources/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
-control_actual=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
+control_actual=(root/"vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
 pret_flow_old='    case Opcode::PRET:\n        throw NotImplementedException("PRET flow analysis");\n'
 pret_flow_new='''    case Opcode::PRET:
         // GM107 PRET stores a return target in the PRET stack. Support the
@@ -200,15 +200,15 @@ assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in m
 # PIXLD.CovMask is a cross-file IR/backend contract. Keep the production
 # SPIR-V chain and its fail-closed GLASM sibling together in the existing
 # maintained-Maxwell gate instead of adding another standalone checker.
-sample_pixel=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp").read_text()
-sample_ir=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/ir/ir_emitter.cpp").read_text()
-sample_opcodes=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/ir/opcodes.inc").read_text()
-sample_info=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/shader_info.h").read_text()
-sample_collect=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/collect_shader_info_pass.cpp").read_text()
-sample_spirv=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp").read_text()
-sample_spirv_ctx=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
-sample_glsl=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_context_get_set.cpp").read_text()
-sample_glasm=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_context_get_set.cpp").read_text()
+sample_pixel=(root/"vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp").read_text()
+sample_ir=(root/"vendor/encore-active/eden/src/shader_recompiler/frontend/ir/ir_emitter.cpp").read_text()
+sample_opcodes=(root/"vendor/encore-active/eden/src/shader_recompiler/frontend/ir/opcodes.inc").read_text()
+sample_info=(root/"vendor/encore-active/eden/src/shader_recompiler/shader_info.h").read_text()
+sample_collect=(root/"vendor/encore-active/eden/src/shader_recompiler/ir_opt/collect_shader_info_pass.cpp").read_text()
+sample_spirv=(root/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp").read_text()
+sample_spirv_ctx=(root/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
+sample_glsl=(root/"vendor/encore-active/eden/src/shader_recompiler/backend/glsl/emit_glsl_context_get_set.cpp").read_text()
+sample_glasm=(root/"vendor/encore-active/eden/src/shader_recompiler/backend/glasm/emit_glasm_context_get_set.cpp").read_text()
 sample_cmake=(root/"headless/CMakeLists.txt").read_text()
 assert "case Mode::CovMask:" in sample_pixel and "ir.SampleMask()" in sample_pixel
 assert "U32 IREmitter::SampleMask()" in sample_ir
@@ -225,7 +225,7 @@ for sample_unit in (
     "frontend/maxwell/translate/impl/pixel_load.cpp",
 ):
     assert sample_unit in sample_cmake
-image_atomic=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp").read_text()
+image_atomic=(root/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp").read_text()
 assert "Id ImageAtomicCasU32(" in image_atomic
 assert "OpAtomicLoad(ctx.U32[1], pointer, scope, semantics)" in image_atomic
 assert "OpAtomicCompareExchange(ctx.U32[1], pointer, scope, semantics" in image_atomic
@@ -236,7 +236,7 @@ assert "old == 0 || old > limit ? limit : old - 1" in image_atomic
 assert 'throw NotImplementedException("Image indexing")' in image_atomic
 assert "backend/spirv/emit_spirv_image_atomic.cpp" in sample_cmake
 
-image_descriptor=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp").read_text()
+image_descriptor=(root/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp").read_text()
 assert 'DescType(*this, image_type, pointer_type, desc.count)' in sample_spirv_ctx
 assert sample_spirv_ctx.count('DescType(*this, image_type, pointer_type, desc.count)') >= 2
 assert 'CheckedTextureArrayIndex(EmitContext& ctx' in image_descriptor
@@ -249,7 +249,7 @@ assert 'ctx.OpAccessChain(def.pointer_type, def.id, idx)' in image_atomic
 assert 'ctx.uses_nonuniform_storage_image = true' in image_atomic
 assert 'ctx.uses_nonuniform_storage_texel_buffer = true' in image_atomic
 assert "backend/spirv/emit_spirv_image.cpp" in sample_cmake
-shared_cas=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp").read_text()
+shared_cas=(root/"vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp").read_text()
 assert "void TranslatorVisitor::ATOMS_cas(u64 insn)" in shared_cas
 assert "AtomsCasBcRz::Pair" in shared_cas
 assert "AtomsCasBcRz::ReplacementRz" in shared_cas

@@ -11,7 +11,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 PATCH = ROOT / "tools/ns2/p1_2_gpu_contiguous_range_cache.patch"
-SOURCE = Path("encore-active/eden-core/src/video_core/memory_manager.cpp")
+SOURCE = Path("encore-active/eden/src/video_core/memory_manager.cpp")
 BEFORE = "b018babb791e0a72a042abeb56dc6f4587ba557b"
 AFTER = "f36837c70435a919fd8d51b46983707c634039cc"
 

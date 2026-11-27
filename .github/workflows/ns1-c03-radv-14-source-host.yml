@@ -13,7 +13,7 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
-      - name: Verify current ps5-mesa override and seven split sites
+      - name: Verify current graphics-driver override and seven split sites
         run: |
           set -euo pipefail
           python3 -B tools/check-active-cmake-source-boundary.py

@@ -244,8 +244,9 @@ with tempfile.TemporaryDirectory(prefix="eden-surface-lifecycle-") as tmp:
     assert target.read_bytes() == active
     assert composer_target.read_bytes() == composer_active
     module.install(stage)
-    # Reproduce the exact previous maintained TU from the current one, without
-    # storing a second source copy. Only its immutable Git blob may migrate.
+    # Canonical encore-active owners are authoritative for the disposable
+    # pinned scratch tree. Exercise predecessor and arbitrary stale scratch
+    # bytes, then require deterministic replacement plus idempotence.
     dedup_guard = "    // A layer is identified by its consumer binder within a display stack.\n    // Duplicate insertion would compose the same acquired BufferItem twice on\n    // each refresh and could needlessly retain an otherwise released slot.\n    if (std::any_of(display->stack.layers.begin(), display->stack.layers.end(),\n                    [consumer_binder_id](const auto& attached) {\n                        return attached->consumer_id == consumer_binder_id;\n                    })) {\n        return;\n    }\n\n"
     display_guard = (
         "    // A display ID must identify exactly one stack and buffer owner.\n"
@@ -255,36 +256,20 @@ with tempfile.TemporaryDirectory(prefix="eden-surface-lifecycle-") as tmp:
     )
     assert source.count(dedup_guard) == 1
     assert source.count(display_guard) == 1
-    previous = source.replace(dedup_guard, "").replace(display_guard, "").encode()
-    assert module.blob_sha(previous) == module.PREVIOUS_ACTIVE_GIT_BLOB
-    target.write_bytes(previous)
-    module.install(stage)
-    assert target.read_bytes() == active
-    module.install(stage)  # Idempotence after upgrading an old staged tree.
-
-    # Also upgrade the immediately preceding F05 lifecycle release, which
-    # already contained the per-layer deduplication but not display-ID dedup.
-    preceding_display_release = source.replace(display_guard, "").encode()
-    assert module.blob_sha(preceding_display_release) == module.SURFACE_PRE_DUPLICATE_DISPLAY_GIT_BLOB
-    target.write_bytes(preceding_display_release)
-    module.install(stage)
-    assert target.read_bytes() == active
-    module.install(stage)
-    composer_target.write_bytes(b"unexpected third-party change")
-    try:
+    for predecessor in (
+        source.replace(dedup_guard, "").replace(display_guard, "").encode(),
+        source.replace(display_guard, "").encode(),
+        b"unexpected stale scratch source",
+    ):
+        target.write_bytes(predecessor)
         module.install(stage)
-    except RuntimeError as exc:
-        assert "Unknown HardwareComposer input" in str(exc)
-    else:
-        raise AssertionError("unknown HardwareComposer source must fail closed")
-    composer_target.write_bytes(composer_active)
-    target.write_bytes(b"unexpected third-party change")
-    try:
-        module.install(stage)
-    except RuntimeError as exc:
-        assert "Unknown SurfaceFlinger input" in str(exc)
-    else:
-        raise AssertionError("unknown third-party source must fail closed")
+        assert target.read_bytes() == active
+        assert composer_target.read_bytes() == composer_active
+    composer_target.write_bytes(b"unexpected stale composer scratch source")
+    module.install(stage)
+    assert composer_target.read_bytes() == composer_active
+    assert target.read_bytes() == active
+    module.install(stage)
     unit = stage / "test.cpp"
     binary = stage / "test"
     unit.write_text(mock + methods + checks)

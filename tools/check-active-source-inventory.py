@@ -2482,7 +2482,7 @@ if gpu_table_vendor_pin in {"bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87
 # F07 17-owner exact source table. Reuse that one immutable record on an
 # audit copy instead of comparing new handlers to obsolete early-HLE blobs.
 selected_nov26_hle_receipt = {}
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
+if shipping_vendor in {"9d8b9c280a9907a9881abcc974a1fde248d73fec", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
     import ast
     f07_hle_ast = ast.parse(
         (root / "tools/check-eden-optimization-coverage.py").read_text())
@@ -2519,7 +2519,7 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
     for path, blob in ns2_early_hle_receipts.items():
         raw = (active / path).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
+        if selected_nov26_hle_receipt:
             assert actual == selected_nov26_hle_receipt[path], (
                 "Nov26 selected NS2 HLE drift", path, actual)
             continue

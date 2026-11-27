@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-VENDOR = ROOT / "vendor/encore-active/ns2-runtime/audio"
+VENDOR = ROOT / "vendor/encore-active/eden/src"
 HEADER = VENDOR / "core/hle/service/audio/nx2_audio_user_client.h"
 AUDIO = (VENDOR / "core/hle/service/audio/audio.cpp").read_text()
 source = HEADER.read_text()

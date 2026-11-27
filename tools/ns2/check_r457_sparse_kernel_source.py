@@ -57,7 +57,7 @@ owners = {
     "ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": (
         "NativeGpuProcessRegistry",
         "RecordGpuSemaphoreValue",
-        "ProcessNativeSemaphoreAcquire",
+        "ProcessNativeSemaphoreExecute",
     ),
     "ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp": (
         "HasCpuBlockedNativeChannels",

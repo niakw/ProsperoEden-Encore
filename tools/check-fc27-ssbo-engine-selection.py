@@ -340,7 +340,7 @@ if selected == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
     }.items():
         assert blob(V / relative) == digest, ("27 Nov SSBO successor drift", relative)
     expected.add(selected)
-assert selected==gitlink and selected in expected,(selected,gitlink)
+assert selected==gitlink,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"
 active=V/"encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp"

@@ -158,9 +158,10 @@ constexpr size_t MaxOpenFiles = 8192;
             'memory_manager.UsesNativeTiling()' in i2m and
             blitter.count('memory_manager.UsesNativeTiling()') == 2,
             'Lichii #2085/#2121 native tiling source contract missing')
-    bind_pos=nvhost.index('NativeGpuChannelRegistry::Instance().Bind(')
+    registry_pos=nvhost.index('auto& native_channel_registry = NativeGpuChannelRegistry::Instance();')
+    bind_pos=nvhost.index('native_channel_registry.Bind(')
     enable_pos=nvhost.index('channel_state->memory_manager->EnableNativeTiling();')
-    require(bind_pos < enable_pos and
+    require(registry_pos < bind_pos < enable_pos and
             'if (native && (!channel_state->initialized || !channel_state->memory_manager))' in nvhost,
             'NS2 native tiling is not gated by authenticated ready channel admission')
     for token in (

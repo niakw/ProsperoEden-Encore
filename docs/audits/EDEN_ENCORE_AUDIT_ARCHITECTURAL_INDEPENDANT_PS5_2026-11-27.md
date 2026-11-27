@@ -154,7 +154,7 @@ Les appréciations sont qualitatives ; aucun score global ou pourcentage d'optim
 
 ## 15. Ordre des études après stabilisation
 
-Terminer d'abord les blocages NS2, les défauts FC27 et la fermeture propre. Pas de refonte parallèle du runtime pendant cette phase. Les priorités suivantes sont des hypothèses d'impact, non des résultats :
+Terminer d'abord les blocages NS2, les défauts FC27 et la fermeture propre. Pas de refonte parallèle du runtime pendant cette phase. Les priorités suivantes sont des hypothèses d'impact, non des résultats. Elles sont conditionnelles, non obligatoires (voir la règle d'arrêt de la section 19) :
 
 | ID | Chantier | Impact potentiel | Critère de décision |
 |---|---|---|---|
@@ -204,3 +204,27 @@ La complexité accumulée et l'écart entre couverture du code et résultats fon
 Restent explicitement hors couverture exhaustive : kernel/SVC/HLE, audio, stockage/I/O, loader, réseau, ABI GPU NS2 complète, shaders méthode par méthode, couverture MME64, capacités exactes RADV et PS5 Pro, qualification runtime sur les révisions examinées. Le prochain audit indépendant devra vérifier ces domaines ainsi que le couple moteur/vendor exact et les preuves matérielles.
 
 **Décision de cette revue : aucune modification runtime ; stabiliser d'abord, puis mesurer les pistes d'évolution.**
+
+## 19. Addendum — 27 novembre 2026 : rendement décroissant et risque de sur-ingénierie
+
+**Une architecture déjà avancée ne doit pas être refondue pour le seul bénéfice théorique d'une méthode supplémentaire.** Les pistes A01–A08 sont une réserve d'études conditionnelles, non une feuille de route obligatoire ni un registre de défauts à clôturer. L'architecture actuelle pourrait déjà être proche d'un optimum pratique pour certains titres ; ce n'est pas encore démontré.
+
+FC27 est un indicateur exigeant du runtime NS1 : JIT, GPU, shaders, mémoire, caches, synchronisations et présentation. Atteindre durablement 30 FPS réels (33,33 ms/image), sans micro-saccades, avec HUD et pause réactifs, fidélité visuelle, mémoire stable et fermeture propre constituerait une réussite majeure. Son plafond de 30 FPS ne démontre toutefois pas la proximité du maximum matériel ni l'optimalité de NS2. Mesurer la marge CPU/GPU, les percentiles de frametime, les scènes lourdes et plusieurs titres NS1/NS2 ; distinguer images invitées, répétitions et interpolation.
+
+| Piste | Décision conditionnelle | Risque sans preuve |
+|---|---|---|
+| JIT sparse actuel | Conserver | Régression mémoire/stabilité |
+| A01 — Barrières et drains | Corriger seulement les attentes coûteuses démontrées | Hazards et corruption graphique |
+| A02 — Recording GPU parallèle | Différer sauf saturation CPU/recording mesurée | Coordination et contention |
+| A03 — JIT sparse mutualisé | Différer sauf duplication coûteuse ou pression mémoire démontrée | Invalidations inter-cœurs, durée de vie des blocs |
+| A04 — Textures sparse | Étudier si résidence dense réellement limitante | Coût de gestion de résidence |
+| A05 — ASTC→BCn | Étudier si mémoire/bande passante limitantes | Perte de fidélité, coût du transcodage |
+| A06 — MME64 | Compléter les contrats nécessaires ; optimiser sur profil | Régression sémantique |
+| A07 — Zero-copy | Différer sauf copies significatives évitables | Layouts, ownership et durée de vie |
+| A08 — CCX, PGO, pipelines | Différer sauf bénéfice reproductible | Déséquilibre de charge |
+
+Ordre de décision : terminer la compatibilité NS2 et FC27 ; qualifier stabilité, fidélité et performances NS1/NS2 sur PS5 standard puis Pro ; mesurer la marge restante ; privilégier la simplification et la fiabilisation de l'existant. Ne rouvrir un chantier que sur preuve d'un besoin concret, avec référence avant/après, objectif mesurable, tests de non-régression et critère d'arrêt. Si le gain est négligeable, non reproductible ou obtenu au détriment de la fidélité, stabilité ou maintenabilité, conserver la solution actuelle.
+
+**Règle d'arrêt : lorsque les objectifs fonctionnels et de performances sont atteints, aucune optimisation spéculative n'est requise pour déclarer le chantier terminé.** La correction d'un contrat manquant ou d'un défaut de sécurité mémoire reste nécessaire indépendamment des FPS. Préserver un seul chemin de production et éviter les mécanismes redondants. Le meilleur choix est celui qui apporte un résultat vérifiable sur le matériel cible au moindre coût raisonnable de complexité.
+
+Cet addendum est une décision de stratégie technique, pas un nouveau résultat console. Aucun changement runtime n'en découle automatiquement.

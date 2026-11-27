@@ -992,7 +992,8 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
                 "86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86",
             "ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp":
                 ("a14b36725db0aa5caf9f1193abd51bd509d4ecc2"
-                 if boundary_vendor in {"2adfca5489b3f107847e0a1a9cdc06e497fc656f",
+                 if boundary_vendor in {"9d8b9c280a9907a9881abcc974a1fde248d73fec",
+                                        "2adfca5489b3f107847e0a1a9cdc06e497fc656f",
                                         "a47b6b20a8e7b7db748a82610a9b08685ba03eeb",
                                         "4b63376eb7057015d70295ecd7df4ce96be80607",
                                         "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}

@@ -28,14 +28,14 @@ OWNERS = (
 # reaches the native Maxwell-to-IR stage or uses the correct CBUF bank.
 MESH_STAGE_OWNERS = (
     ROOT / "vendor/encore-active/eden/src/video_core/shader_environment.cpp",
-    ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_environment.cpp",
-    ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp",
+    ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/maxwell_environment.cpp",
+    ROOT / "vendor/encore-active/eden/srcpere/video_core/native_shader_capture.cpp",
 )
 # The real SPIR-V mesh emitter must compile too. The previous six-TU
 # witness checked the pipeline but never parsed this stage-buffer lowering.
 MESH_SPIRV_OWNERS = (
     SHADER / "shader_recompiler/backend/spirv/emit_spirv_mesh.cpp",
-    ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+    ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
 )
 
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
@@ -87,19 +87,19 @@ assert 'IsShaderConfigEnabled(Maxwell::ShaderType::Geometry)' in stage_owner
 assert 'mesh_primitive_header' in stage_owner
 assert 'live_executable_stages' in (ACTIVE / "vk_pipeline_cache_cost.cpp").read_text()
 assert 'NativeMeshRegisterPipelineKey(' in (
-    ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_graphics_stage_policy.h"
+    ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/native_graphics_stage_policy.h"
 ).read_text()
 cache_owner = (ACTIVE / "vk_pipeline_cache_cost.cpp").read_text()
 assert cache_owner.count("NativeMeshSlotCbufBank(stage, has_task)") == 3
 assert cache_owner.count("NativeMeshGraphicsStageMaskSupported(") == 2
 assert "virtual bool DispatchNativeCompute(" in (
-    ROOT / "vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h"
+    ROOT / "vendor/encore-active/eden/src/video_core/rasterizer_interface.h"
 ).read_text()
 assert "virtual void OnCacheInvalidations(" in (
-    ROOT / "vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h"
+    ROOT / "vendor/encore-active/eden/src/video_core/rasterizer_interface.h"
 ).read_text()
 assert (
-    ROOT / "vendor/encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
+    ROOT / "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
 ).is_file()
 assert "DrawMeshTasksEXT(" in (ACTIVE / "vulkan_rasterizer.cpp").read_text()
 assert "StageFlag(const Shader::Info&" in (ACTIVE / "vk_graphics_pipeline_cost.cpp").read_text()
@@ -111,23 +111,23 @@ includes = [
     SHADER,
     # Native Maxwell/Ampere shader captures share this single reviewed
     # frontend root with the real renderer and pipeline-cache TUs.
-    ROOT / "vendor/encore-active/ns2-runtime/ampere",
+    ROOT / "vendor/encore-active/eden/srcpere",
     # The reviewed QMD3 command ABI is owned by the shared GPU dispatcher,
     # separate from the Ampere shader frontend. Match CMake's native roots.
-    ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch",
+    ROOT / "vendor/encore-active/eden/src",
     # Match the actual PS5_NATIVE video_core include order: the maintained
     # GPU/cache ABI overrides must win over the pinned Eden headers.
     ROOT / "vendor/encore-active/eden/src",
     # CMake stages the reviewed PS5-native RasterizerInterface into
     # PORT_BUILD_DIR/include; source-derived host syntax must select the same
     # virtual ABI before the pinned (pre-NS2) interface, never strip override.
-    ROOT / "vendor/encore-active/ns2-runtime/vulkan_abi",
+    ROOT / "vendor/encore-active/eden/src",
     # NVDRV process tickets are owned by the native HLE overlay, not nvdrv_gpu.
-    ROOT / "vendor/encore-active/ns2-runtime/hle",
+    ROOT / "vendor/encore-active/eden/src",
     ACTIVE / "include",
     ROOT / "vendor/encore-active/eden/src",
     ROOT / "vendor/encore-active/eden/src",
-    ROOT / "vendor/encore-active/ns2-runtime/nvdrv_gpu",
+    ROOT / "vendor/encore-active/eden/src_gpu",
     ROOT / "vendor/sources/eden/src",
     CPM / "vulkanheaders/v1.4.345/include",
     CPM / "vulkanmemoryallocator/v3.3.0/include",
@@ -160,7 +160,7 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
     native_abi_root = Path(scratch) / "native-abi"
     native_abi_dir = native_abi_root / "video_core"
     native_abi_dir.mkdir(parents=True)
-    native_abi_source = ROOT / "vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h"
+    native_abi_source = ROOT / "vendor/encore-active/eden/src/video_core/rasterizer_interface.h"
     shutil.copyfile(native_abi_source, native_abi_dir / "rasterizer_interface.h")
     staged_abi = (native_abi_dir / "rasterizer_interface.h").read_text()
     assert "virtual bool DispatchNativeCompute(" in staged_abi

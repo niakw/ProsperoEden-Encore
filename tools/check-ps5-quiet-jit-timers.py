@@ -14,7 +14,7 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 cmake=(root/"headless/CMakeLists.txt").read_text()
-source=(root/"vendor/encore-active/eden/src/dynarmic/backend/x64/a64_interface_standard.cpp").read_text()
+source=(root/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface_standard.cpp").read_text()
 start=source.index("        struct EdenCompileTimer {")
 timer_end="        } eden_compile_timer{unsigned(conf.processor_id)};"
 end=source.index(timer_end,start)+len(timer_end)

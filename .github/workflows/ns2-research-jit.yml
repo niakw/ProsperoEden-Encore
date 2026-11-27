@@ -39,20 +39,24 @@ jobs:
             cmake --build "build-ns2-jit/$pkg-build" --parallel 2
             cmake --install "build-ns2-jit/$pkg-build"
           done
-      - name: Copy research overlay into disposable vendor checkout
+      - name: Stage current A64 override without modifying frozen vendor sources
         shell: bash
         run: |
           set -euo pipefail
-          original=vendor/sources/eden/src/dynarmic/src/dynarmic
+          baseline=vendor/sources/eden/src/dynarmic
+          stage=build-ns2-jit/dynarmic
           overlay=vendor/encore-active/ns2-a64/dynarmic
+          rm -rf "$stage"
+          cp -a "$baseline" "$stage"
           cp vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp \
-             "$original/frontend/A64/translate/a64_translate.cpp"
+             "$stage/src/dynarmic/frontend/A64/translate/a64_translate.cpp"
           for path in frontend/A64/decoder/a64.h frontend/A64/decoder/a64.inc \
               frontend/A64/translate/impl/a64_branch.cpp \
               frontend/A64/translate/impl/impl.h \
               frontend/A64/translate/impl/load_store_exclusive.cpp; do
-            cp "$overlay/$path" "$original/$path"
+            cp "$overlay/$path" "$stage/src/dynarmic/$path"
           done
+          git -C vendor diff --quiet -- sources
       - name: Cross-assemble and package immutable public HOS AArch64 NSO0
         shell: bash
         run: |
@@ -105,7 +109,8 @@ jobs:
           set -euo pipefail
           cmake -S tools/ns2/jit-host -B build-ns2-jit/runtime -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/build-ns2-jit/prefix"
+            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/build-ns2-jit/prefix" \
+            -DDYN="$GITHUB_WORKSPACE/build-ns2-jit/dynarmic"
           cmake --build build-ns2-jit/runtime --target ns2_lse_jit_test ns2_public_nso_jit_test --parallel 2
       - name: Execute RETA/LDAPR/LSE and genuine NSO0 AArch64 SVC guest tests
         shell: bash

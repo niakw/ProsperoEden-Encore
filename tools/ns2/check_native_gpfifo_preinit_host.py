@@ -289,7 +289,12 @@ struct List {std::optional<Wait> native_syncpoint_wait;};
 struct DmaPusher {
     Puller puller;std::queue<List> dma_pushbuffer;Channel channel_state;
     System system;Rasterizer raster;Rasterizer* rasterizer=&raster;
+    unsigned cpu_unknown_resolutions{};
     bool ResumeNativeAcquire();
+    void NoteNativeAcquireResolved(bool gpu_produced) {
+        assert(!gpu_produced);
+        ++cpu_unknown_resolutions;
+    }
     [[noreturn]] void FailNativeSubmission(const char* reason) { throw std::runtime_error(reason); }
 };
 __RESUME__
@@ -308,13 +313,16 @@ int main(){
     assert(!d.ResumeNativeAcquire() && d.raster.polls==1);
     d.puller.ready=true;d.system.h.counter.host=7;
     assert(d.ResumeNativeAcquire() && d.raster.polls==2);
+    assert(d.cpu_unknown_resolutions==1);
     assert(d.ResumeNativeAcquire() && d.raster.polls==2);
+    assert(d.cpu_unknown_resolutions==1);
     d.dma_pushbuffer.pop();
     d.dma_pushbuffer.push({Wait{1,0,old}});
     d.system.h.counter.host=0xffffffffu;
     assert(!d.ResumeNativeAcquire());
     d.system.h.counter.host=0;
     assert(d.ResumeNativeAcquire());
+    assert(d.cpu_unknown_resolutions==2);
     d.dma_pushbuffer.pop();
     d.dma_pushbuffer.push({Wait{1,9,old}});
     m.FreeSyncpoint(1); m.syncpoints[1].reserved=true;
@@ -326,6 +334,7 @@ int main(){
     d.system.h.counter.host=9;
     d.system.h.counter.on_read=[&]{m.FreeSyncpoint(1);};
     try {d.ResumeNativeAcquire();assert(false);} catch(const std::runtime_error&){}
+    assert(d.cpu_unknown_resolutions==2);
     return 0;
 }
 '''.replace("__LEASE__",lease_code).replace("__RESUME__",resume_code)

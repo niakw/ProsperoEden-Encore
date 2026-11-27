@@ -205,7 +205,7 @@ if __name__ == "__main__":
         assert 'list(REMOVE_ITEM video_sources dma_pusher.cpp engines/puller.cpp)' in cmake_file
         assert 'list(APPEND video_sources "${EDEN_MAINTAINED_GPU_DMA}" "${EDEN_MAINTAINED_GPU_PULLER}")' in cmake_file
         assert 'write_derived("${PORT_BUILD_DIR}/dma_pusher.cpp"' not in cmake_file
-        active_gpu = Path(__file__).resolve().parents[1] / "vendor/encore-active/eden-core/src/video_core"
+        active_gpu = Path(__file__).resolve().parents[1] / "vendor/encore-active/eden/src/video_core"
         for unit in ("dma_pusher.cpp", "dma_pusher_dev.cpp",
                      "engines/puller.cpp", "engines/puller_dev.cpp"):
             assert (active_gpu / unit).is_file(), f"missing maintained GPU unit: {unit}"

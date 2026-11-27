@@ -14,8 +14,8 @@ assert 'arm_dynarmic_${bits}_${EDEN_G11_PLATFORM}_${EDEN_G11_PROFILE}.cpp' in cm
 assert 'if(NOT EXISTS "${EDEN_G11_SOURCE}")' in cmake
 assert 'list(REMOVE_ITEM core_sources "${relative}")' in cmake
 assert 'list(APPEND core_sources "${EDEN_G11_SOURCE}")' in cmake
-normal=(root/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_normal.cpp').read_text()
-dev=(root/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_dev.cpp').read_text()
+normal=(root/'vendor/encore-active/eden/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_normal.cpp').read_text()
+dev=(root/'vendor/encore-active/eden/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_dev.cpp').read_text()
 for code in (normal, dev):
     assert 'JitStartup::ConstructWithCapacityFallback(' in code
 assert 'Performance::SampleCpu(' not in normal

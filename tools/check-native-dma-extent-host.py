@@ -5,9 +5,9 @@ import shutil,subprocess,tempfile
 root=Path(__file__).resolve().parents[1]
 def read(p):return (root/p).read_text()
 pinned=read("vendor/sources/eden/src/video_core/engines/maxwell_dma.cpp")
-native=read("vendor/encore-active/eden-core/src/video_core/engines/maxwell_dma.cpp")
+native=read("vendor/encore-active/eden/src/video_core/engines/maxwell_dma.cpp")
 vulkan=read("vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp")
-bridge=read("vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp")
+bridge=read("vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp")
 cm=read("headless/CMakeLists.txt")
 wf=read(".github/workflows/encore-core-preflight.yml")
 # The merged NS1/NS2 MaxwellDMA has 18 major reviewed source groups over
@@ -363,7 +363,7 @@ else:
     assert expected==native
 assert "EDEN_MAINTAINED_MAXWELL_DMA" in cm
 assert 'target_include_directories(video_core BEFORE PUBLIC "${EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE}")' in cm
-header=(root/"vendor/encore-active/eden-core/include/video_core/engines/maxwell_dma.h").read_text()
+header=(root/"vendor/encore-active/eden/include/video_core/engines/maxwell_dma.h").read_text()
 assert "BitField<0, 16, u32> dst_components_raw" in header
 assert "i * 4" in header
 assert "remap.GetComponent(3)" in helper

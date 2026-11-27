@@ -29,7 +29,7 @@ def clean(source):
     return section[section.index("    if (!flags[Dirty::RenderTargets]) {"):]
 original=clean(backports)
 shadow=clean(native)
-selected=(root/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+selected=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 updated=clean(selected)
 assert updated == shadow, "selected native sparse render-target owner drift"
 assert "#include <bit>" in selected

@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp"
+OWNER=ROOT / "vendor/encore-active/eden/src/video_core/control/scheduler.cpp"
 source=OWNER.read_text()
 def extract(start: str, stop: str) -> str:
     assert source.count(start)==1 and source.count(stop)==1, (start, stop)

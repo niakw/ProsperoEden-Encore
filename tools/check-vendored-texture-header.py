@@ -8,7 +8,7 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 original = (root/"vendor/sources/eden/src/video_core/texture_cache/util.h").read_text()
-active = (root/"vendor/encore-active/eden-core/src/video_core/texture_cache/util.h").read_text()
+active = (root/"vendor/encore-active/eden/src/video_core/texture_cache/util.h").read_text()
 cmake = (root/"headless/CMakeLists.txt").read_text()
 anchor = "#include <boost/container/small_vector.hpp>"
 assert original.count(anchor) == 1

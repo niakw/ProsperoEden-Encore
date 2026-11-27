@@ -85,9 +85,9 @@ with tempfile.TemporaryDirectory(prefix="encore-active-tic-") as tmp:
 # already-executed host check to test the exact active SyncDescriptors body
 # and both real TIC/TSC guard expressions; no new build path or workflow.
 import shutil
-owner_path = root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h"
+owner_path = root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h"
 owner = owner_path.read_text()
-assert 'vendor/encore-active/ns2-astc/include' in cmake
+assert 'vendor/encore-active/eden/src' in cmake
 assert 'target_include_directories(video_core BEFORE PUBLIC' in cmake
 assert '"video_core/texture_cache/texture_cache.h"' in cmake
 start = owner.index("void TextureCache<P>::SynchronizeDescriptors(bool compute) {")

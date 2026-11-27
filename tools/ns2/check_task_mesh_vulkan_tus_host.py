@@ -27,7 +27,7 @@ OWNERS = (
 # GPU-source admission too: a graphics TU alone cannot prove that Mesh/Task
 # reaches the native Maxwell-to-IR stage or uses the correct CBUF bank.
 MESH_STAGE_OWNERS = (
-    ROOT / "vendor/encore-active/eden-core/src/video_core/shader_environment.cpp",
+    ROOT / "vendor/encore-active/eden/src/video_core/shader_environment.cpp",
     ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_environment.cpp",
     ROOT / "vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp",
 )
@@ -117,7 +117,7 @@ includes = [
     ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch",
     # Match the actual PS5_NATIVE video_core include order: the maintained
     # GPU/cache ABI overrides must win over the pinned Eden headers.
-    ROOT / "vendor/encore-active/eden-core/overrides",
+    ROOT / "vendor/encore-active/eden/src",
     # CMake stages the reviewed PS5-native RasterizerInterface into
     # PORT_BUILD_DIR/include; source-derived host syntax must select the same
     # virtual ABI before the pinned (pre-NS2) interface, never strip override.
@@ -225,12 +225,12 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
     buffer_overlay = Path(scratch) / "buffer-pages/video_core/buffer_cache"
     buffer_overlay.mkdir(parents=True)
     maintained_buffer = ROOT / (
-        "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h"
+        "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h"
     )
     assert maintained_buffer.is_file(), "R437 maintained BufferCache owner missing"
     shutil.copyfile(maintained_buffer, buffer_overlay / "buffer_cache.h")
     maintained_base = ROOT / (
-        "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h"
+        "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache_base.h"
     )
     assert maintained_base.is_file(), "R437 matching BufferCacheBase owner missing"
     base_contract = maintained_base.read_text()

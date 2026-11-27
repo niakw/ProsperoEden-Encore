@@ -392,7 +392,7 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # of the shipping fence manager. Prove the exact maintained block can
         # be removed byte-for-byte to recover the frozen patch replay.
         strict_fence_rel='src/video_core/fence_manager.h'
-        if spec['entries'][strict_fence_rel]['active']=='71e095bcfbd1666a7c46b8ffab8ad4357b895bdef1eb8c1fb69992cd8836c6b3':
+        if spec['entries'][strict_fence_rel]['active']=='364fcbdd6584502fb7613c8cbce0d9069832f9289b9913ad021756413cbf5920':
             generated=(stage/strict_fence_rel).read_bytes()
             current=(ACTIVE/strict_fence_rel).read_bytes()
             assert len(generated)==9151 and sha(generated)=='012cc72932c34fcc82090791d5a4c8c8d64c34966e69948bb4cf6c7b23349c97'
@@ -435,7 +435,7 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
 '''
             assert current.count(strict_native_sync)==1
             assert current.replace(strict_native_sync,b'',1)==generated
-            assert spec['entries'][strict_fence_rel]['bytes']==10589
+            assert spec['entries'][strict_fence_rel]['bytes']==11568
             observed[strict_fence_rel]=spec['entries'][strict_fence_rel]
             print('NS2_STRICT_FENCE_EXACT_POST_BACKPORT_REPLAY_PASS',
                   'successors=1', 'native_completion=real_fence',

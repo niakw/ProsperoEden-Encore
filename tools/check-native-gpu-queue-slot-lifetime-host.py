@@ -40,7 +40,7 @@ assert "producer.cv.wait(lock, stop_token" in canonical
 assert "python3 -B tools/check-native-gpu-queue-slot-lifetime-host.py" in workflow
 assert 'configure_file("${EDEN_GPU_QUEUE_HEADER}"' in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/include/common/bounded_threadsafe_queue.h"' not in cmake
-assert not (root / "vendor/encore-active/eden-core/gpu-injections/gpu_queue_stop_wait.inc").exists()
+assert not (root / "vendor/encore-active/eden/gpu-injections/gpu_queue_stop_wait.inc").exists()
 
 program = r"""
 #include <array>

@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-owner=ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp"
+owner=ROOT/"vendor/encore-active/eden/srcpere/shader_recompiler/backend/spirv/emit_spirv_image.cpp"
 source=owner.read_text()
 start="void CheckSingletonTextureIndex("
 end="\nId Texture("

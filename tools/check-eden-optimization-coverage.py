@@ -2118,7 +2118,7 @@ selected_nov26_hle = subprocess.check_output(
                   "80468e0dc9b88745a03a2968075d3dbc27102d3c",
                   "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8",
                   "e5ad6cebf5572d7045de9e48f4308cc2621eede1",
-                  "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}
+                  "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}
 ns2_early_hle_receipts = {
     "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp":
         "df3edaf42d0596c69eaa6fea18b33fc02c6bff3c",

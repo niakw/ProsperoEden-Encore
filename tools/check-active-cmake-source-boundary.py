@@ -29,6 +29,29 @@ assert not subprocess.check_output(
     ["git", "status", "--porcelain", "--untracked-files=no"], cwd=VENDOR, text=True
 ).strip(), "tracked vendor source is dirty"
 
+# One layout contract, no per-revision SHA catalogue. sources/ is the frozen
+# dependency mirror; encore-active/ is the only maintained override tree.
+sources_readme = (SOURCES / "README.md").read_text(encoding="utf-8")
+active_readme = (ACTIVE / "README.md").read_text(encoding="utf-8")
+for marker in (
+    "sources/ = dépendances upstream figées",
+    "encore-active/ = code maintenu par Eden Encore",
+):
+    assert marker in sources_readme, ("sources contract drift", marker)
+for marker in (
+    "override pur Eden Encore",
+    "même nom de dépendance, même chemin relatif",
+    "sources/ est la dépendance ; encore-active/ est notre code final",
+):
+    assert marker in active_readme, ("encore-active contract drift", marker)
+
+# Functional roots that duplicated the Eden dependency are retired. A future
+# override must use encore-active/eden/<same upstream-relative path>, not
+# recreate a second family tree.
+retired_eden_roots = ("eden-gpu", "eden-sync", "eden-threading", "eden-shader")
+for legacy in retired_eden_roots:
+    assert not (ACTIVE / legacy).exists(), ("retired Encore root reintroduced", legacy)
+
 root_cmake = (ROOT/"headless/CMakeLists.txt").read_text(encoding="utf-8")
 assert "vendor/encore-active" in root_cmake
 # P5: CMake defers only target wiring, never creating a subdirectory.
@@ -69,6 +92,14 @@ module_paths = {
     *(ROOT/"vendor/encore-active").rglob("CMakeLists.txt"),
 }
 module_paths.discard(ROOT/"headless/CMakeLists.txt")
+
+for path in [ROOT/"headless/CMakeLists.txt", *sorted(module_paths)]:
+    source = path.read_text(encoding="utf-8")
+    for legacy in retired_eden_roots:
+        forbidden = f"vendor/encore-active/{legacy}"
+        assert forbidden not in source, (
+            "active CMake references retired Encore root",
+            str(path.relative_to(ROOT)), forbidden)
 
 # All original upstream source CMake files live under vendor/sources/:
 # they are not maintained Encore CMake mutation owners. Every active

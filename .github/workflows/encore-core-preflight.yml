@@ -151,7 +151,7 @@ jobs:
             vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp \
             vendor/encore-active/ns2-runtime/nx/core/loader/nx.cpp \
             vendor/encore-active/ns2-runtime/nx/core/file_sys/nx_content.cpp \
-            vendor/encore-active/eden-core/src/core/loader/loader.cpp \
+            vendor/encore-active/eden/src/core/loader/loader.cpp \
             vendor/encore-active/ns2-runtime/hle/core/hle/service/acc/acc.cpp \
             vendor/encore-active/ns2-runtime/hle/core/hle/service/caps/caps_u.cpp \
             vendor/encore-active/ns2-runtime/hle/core/hle/service/caps/caps_su.cpp \
@@ -165,15 +165,15 @@ jobs:
               -DPS5_NATIVE=1 \
               -Ivendor/sources/fmt/include \
               -Ivendor/encore-active/eden/src \
-              -Ivendor/encore-active/eden-core/overrides/h01-filesystem \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/ns2-runtime/gamechat \
               -Ivendor/encore-active/ns2-runtime/graphics_supervisor \
               -Ivendor/encore-active/ns2-runtime/video_decoder \
               -Ivendor/encore-active/ns2-runtime/gpu_session \
               -Ivendor/encore-active/ns2-runtime/nvdrv_as \
               -Ivendor/encore-active/ns2-runtime/hle \
-              -Ivendor/encore-active/eden-core/include \
-              -Ivendor/encore-active/eden-core/overrides \
+              -Ivendor/encore-active/eden/include \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/ns2-runtime/nx \
               -Ivendor/encore-active/ns2-runtime/nx/nxformat \
               -Ivendor/sources/eden/externals/stb \

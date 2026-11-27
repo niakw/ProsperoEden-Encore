@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-VENDOR = ROOT / "vendor/encore-active/ns2-runtime/audio"
+VENDOR = ROOT / "vendor/encore-active/eden/src"
 HEADER = VENDOR / "core/hle/service/nx2_streamplay.h"
 content = HEADER.read_text()
 assert "GetGuestHidSharedMemory" in content

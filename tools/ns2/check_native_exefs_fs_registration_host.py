@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNER = ROOT / "vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp"
+OWNER = ROOT / "vendor/encore-active/eden/src/core/loader/deconstructed_rom_directory.cpp"
 source = OWNER.read_text()
 start = "    // RomFSFactory invokes ReadRomFS in its constructor"
 end = "\n}\n\nResultStatus AppLoader_DeconstructedRomDirectory::ReadRomFS("

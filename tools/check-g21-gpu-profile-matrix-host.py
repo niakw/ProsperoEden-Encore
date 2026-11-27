@@ -21,7 +21,7 @@ begin = 'file(READ "${PROJECT_SOURCE_DIR}/src/video_core/gpu.cpp" gpu_source)'
 finish = 'list(APPEND video_sources "${PORT_BUILD_DIR}/gpu.cpp")'
 assert legacy.count(begin) == legacy.count(finish) == 1
 body = begin + legacy.split(begin, 1)[1].split(finish, 1)[0] + finish
-selector_begin = 'set(EDEN_G21_GPU_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core")'
+selector_begin = 'set(EDEN_G21_GPU_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src/video_core")'
 selector_end = 'list(APPEND video_sources "${EDEN_MAINTAINED_G21_GPU}")'
 assert cmake.count(selector_begin) == cmake.count(selector_end) == 1
 selection = selector_begin + cmake.split(selector_begin, 1)[1].split(selector_end, 1)[0] + selector_end
@@ -79,7 +79,7 @@ endfunction()
             raise AssertionError("G21 CMake generation failed: " + name)
         actual = (stage / "gpu.cpp").read_text()
         selected = (stage / "g21_selected.txt").read_text()
-        expected_selected = (root/"vendor/encore-active/eden-core/src/video_core"/
+        expected_selected = (root/"vendor/encore-active/eden/src/video_core"/
             ("gpu_vulkan.cpp" if not gl else
              "gpu_gl_" + ("native" if native else "host") + ".cpp"))
         assert selected == str(expected_selected), (name, selected)
@@ -124,7 +124,7 @@ for profile, filename in owners.items():
         expected = expected.replace(
             '#include "' + str(root / "headless" / header) + '"',
             '#include "' + header + '"')
-    maintained = (root/"vendor/encore-active/eden-core/src/video_core"/filename).read_text()
+    maintained = (root/"vendor/encore-active/eden/src/video_core"/filename).read_text()
     # Historical G21 parity must stay byte-for-byte: for reviewed vendor
     # shutdown PR #112, accept only the exact pre-agreed raw Git blob, and
     # reconstruct the old destructor in memory for comparison. Do NOT

@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNER = (ROOT / "vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp").read_text()
+OWNER = (ROOT / "vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp").read_text()
 start = "NvResult nvhost_gpu::SubmitGPFIFOBase1("
 end = "\nNvResult nvhost_gpu::SubmitGPFIFOBase2("
 assert OWNER.count(start) == OWNER.count(end) == 1

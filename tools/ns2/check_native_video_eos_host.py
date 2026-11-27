@@ -9,8 +9,8 @@ import tempfile
 root=Path(__file__).resolve().parents[2]
 vroot=root/'vendor'
 if not (vroot/'encore-active').exists():vroot=root.parent/'vendor'
-header=vroot/'encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/native_video_eos.h'
-service=vroot/'encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp'
+header=vroot/'encore-active/eden/src/core/hle/service/am/service/native_video_eos.h'
+service=vroot/'encore-active/eden/src/core/hle/service/am/service/graphics_video_decoder_session.cpp'
 assert header.is_file() and service.is_file()
 source=service.read_text()
 assert '#include "core/hle/service/am/service/native_video_eos.h"' in source
@@ -61,7 +61,7 @@ with tempfile.TemporaryDirectory(prefix='eden-ns2-video-eos-') as directory:
             exe=Path(directory)/(Path(compiler).name+opt)
             args=[compiler,'-std=c++20',opt,'-Wall','-Wextra','-Werror',
                   '-fsanitize=undefined','-fno-sanitize-recover=all',
-                  '-I',str(vroot/'encore-active/ns2-runtime/video_decoder'),
+                  '-I',str(vroot/'encore-active/eden/src'),
                   str(cpp),'-o',str(exe)]
             compile=subprocess.run(args,capture_output=True,text=True,timeout=90,env=env)
             assert compile.returncode==0,(args,compile.stderr[-2400:])

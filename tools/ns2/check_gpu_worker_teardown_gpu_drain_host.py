@@ -124,7 +124,7 @@ cmake=(ROOT/'headless/CMakeLists.txt').read_text()
 assert 'set(EDEN_NATIVE_NVMAP_HEADER' in cmake
 assert 'vendor/sources/eden/src/core/hle/service/nvdrv/core/nvmap.h' in cmake
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_NVMAP_INCLUDE}")' in cmake
-for overlay in ('vendor/encore-active/eden-core/include',
+for overlay in ('vendor/encore-active/eden/include',
                 'vendor/encore-active/eden/src',
                 'vendor/encore-active/eden/src',
                 'vendor/encore-active/eden/src'):

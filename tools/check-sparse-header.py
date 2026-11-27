@@ -16,7 +16,7 @@ import sys
 
 build = pathlib.Path(sys.argv[1]).resolve()
 root = pathlib.Path(__file__).resolve().parents[1]
-canonical = root / 'vendor/encore-active/eden-core/src/common/sparse_large_vector.h'
+canonical = root / 'vendor/encore-active/eden/src/common/sparse_large_vector.h'
 copied = build / 'headless/sparse/common/sparse_large_vector.h'
 if not copied.is_file() or copied.read_bytes() != canonical.read_bytes():
     sys.exit('sparse header check failed: native copy differs from maintained canonical header')

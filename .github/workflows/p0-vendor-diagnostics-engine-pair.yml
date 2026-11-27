@@ -31,7 +31,7 @@ jobs:
           python3 -B vendor/tests/fc27_maxwell_prmt_operand_forms_source.py
           python3 -B vendor/tests/fc27_cpu_write_download_race_host.py
           python3 -B vendor/tests/fc27_gpu_page_sibling_preservation_host.py
-          test ! -e vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h
+          test ! -e vendor/encore-active/eden/src/core/deferred_cached_updates.h
           python3 -B vendor/tests/fc27_deferred_page_protection_host.py
           python3 -B vendor/tests/ns2_dynamic_texture_found_bit_limit_host.py
           python3 -B vendor/tests/ns2_duskbloods_tld4_imad_host.py

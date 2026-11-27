@@ -52,7 +52,7 @@ def run() -> None:
         ROOT / "headless",
         # Select the reviewed, byte-diff-pinned hygiene header instead of
         # the immutable upstream [[nodiscard]] void declaration (Clang warning).
-        ROOT / "vendor/encore-active/eden-header-hygiene/include",
+        ROOT / "vendor/encore-active/eden/src",
         ROOT / "vendor/encore-active/eden-vulkan/include",
         ROOT / "vendor/encore-active/ns2-astc/include",
         ROOT / "vendor/encore-active/ns2-helpers/include",

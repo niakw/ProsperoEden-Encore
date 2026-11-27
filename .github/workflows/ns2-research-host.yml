@@ -155,7 +155,7 @@ jobs:
               -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
               -Ivendor/encore-active/ns2-runtime/nvdrv_gpu \
               -Ivendor/encore-active/ns2-runtime/hle \
-              -Ivendor/encore-active/eden-header-hygiene/include \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
               -Iheadless \
@@ -185,7 +185,7 @@ jobs:
               -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
               -Ivendor/encore-active/ns2-runtime/nvdrv_gpu \
               -Ivendor/encore-active/ns2-runtime/hle \
-              -Ivendor/encore-active/eden-header-hygiene/include \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
               -Iheadless \
@@ -390,7 +390,7 @@ jobs:
           g++ -std=c++20 -fsyntax-only -Werror -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
             -Ivendor/encore-active/ns2-runtime/nvdrv \
-            -Ivendor/encore-active/eden-header-hygiene/include \
+            -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             vendor/encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp
@@ -407,7 +407,7 @@ jobs:
             -Ivendor/encore-active/ns2-runtime/nvdrv \
             -Ivendor/encore-active/ns2-runtime/hle \
             -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
-            -Ivendor/encore-active/eden-header-hygiene/include \
+            -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp
@@ -422,7 +422,7 @@ jobs:
               -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
               -Ivendor/encore-active/ns2-runtime/nvdrv_gpu \
               -Ivendor/encore-active/ns2-runtime/hle \
-              -Ivendor/encore-active/eden-header-hygiene/include \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
               vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp
@@ -437,7 +437,7 @@ jobs:
               -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
               -Ivendor/encore-active/ns2-runtime/nvdrv_gpu \
               -Ivendor/encore-active/ns2-runtime/hle \
-              -Ivendor/encore-active/eden-header-hygiene/include \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
               vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp
@@ -549,7 +549,7 @@ jobs:
             -Ivendor/encore-active/ns2-runtime/nvdrv_as \
             -Ivendor/encore-active/ns2-runtime/hle \
             -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
-            -Ivendor/encore-active/eden-header-hygiene/include \
+            -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp

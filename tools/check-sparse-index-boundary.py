@@ -8,7 +8,7 @@ Byte-for-byte parity with pinned source transformations is checked separately.
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-sparse = (root / "vendor/encore-active/eden-core/src/common/sparse_large_vector.h").read_text()
+sparse = (root / "vendor/encore-active/eden/src/common/sparse_large_vector.h").read_text()
 upstream = (root / "vendor/sources/eden/src/common/sparse_large_vector.h").read_text()
 old = 'if (index > alloc_size / sizeof(T)) {'
 new = 'if (index >= alloc_size / sizeof(T)) {'

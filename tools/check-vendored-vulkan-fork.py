@@ -3,8 +3,8 @@
 
 This is intentionally a current-architecture check, not a historical patch
 replay. Upstream Eden remains under vendor/sources/eden; maintained Vulkan
-owners live under vendor/encore-active until their canonical Eden-path migration
-is complete. No vendor commit/tree/blob allowlist decides source admission.
+owners live at their canonical paths under vendor/encore-active/eden. No vendor
+commit/tree/blob allowlist decides source admission.
 """
 from pathlib import Path
 import subprocess
@@ -23,7 +23,8 @@ root_cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 native_build = (ROOT / "tools/build-headless-native.sh").read_text()
 
 for token in (
-    'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan")',
+    'set(EDEN_ACTIVE_EDEN_SRC "${PORT_ROOT}/vendor/encore-active/eden/src")',
+    'set(EDEN_ACTIVE_VULKAN "${EDEN_ACTIVE_EDEN_SRC}/video_core/renderer_vulkan")',
     'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")',
 ):
     assert token in vulkan_cmake, ("native Vulkan owner selection drift", token)

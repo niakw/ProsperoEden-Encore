@@ -452,7 +452,32 @@ if selected == "cb8635aa95da52de2dd10be9d1574425edc1eb18":
         ).strip()
         assert actual == digest, ("Bananza successor R457 drift", rel, actual)
     reviewed_vendors.add(selected)
+# 27 Nov successor: FC27 page-untrack changes DeviceMemoryManager while the
+# sparse kernel/slab owners remain byte-identical. Authenticate the complete
+# tree and both the changed lifetime owner and unchanged R457 owners before
+# replaying the historical sparse receipt graph.
+if selected == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
+    assert subprocess.check_output(
+        ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "8f6e3f968a67652ae2f7036f07c295604b0f17fc"
+    for rel, digest in {
+        "encore-active/eden-core/overrides/core/device_memory_manager.inc": "9283bd636ce0b1cae33b4e012c7de59c4220c261",
+        "encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp": "2b5be4eba2500da2993db2ed1c86d44ddfa5554f",
+        "encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp": "130eb7bd53e29b816bb81fec3fa053a584cd4b6e",
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "be946421279aa406151f8255cd7b74b88c996873",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "213dd0f37f23043fe16a5efb8e466b2a9b9979cb",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "fc4fe083664ba991a1002caa52384c662e3ef718",
+        "encore-active/eden-core/src/video_core/dma_pusher.cpp": "d42fbfe0a91f0e0598641ad9ca49ec9cf2d6a04f",
+        "tests/ns2_gpu_identity_mapping_source.py": "6ad2be5bdc7ba210634e77b08de6a82d729c103c",
+    }.items():
+        actual = subprocess.check_output(
+            ["git", "-C", str(root/"vendor"), "hash-object", rel], text=True
+        ).strip()
+        assert actual == digest, ("27 Nov R457 successor drift", rel, actual)
+    reviewed_vendors.add(selected)
 assert pinned==selected and pinned in reviewed_vendors,(pinned,selected)
+if selected == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
+    selected = "3abd88bc1a3c334f53f345998b72e9cf8ae87abf"
 if selected == "cb8635aa95da52de2dd10be9d1574425edc1eb18":
     selected = "3abd88bc1a3c334f53f345998b72e9cf8ae87abf"
 if selected in {"5bb102629fa51c9198208e6139e27d57b05cb900", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
@@ -482,12 +507,17 @@ for path,expected in (
     ("vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp",
      "130eb7bd53e29b816bb81fec3fa053a584cd4b6e"),
     ("vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc",
-     "852a0272696c7ce182bc05aee92bc7cbb195446b" if selected in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"} else ("8acbdfe9ac970d24fecd334ca7b943f6bcd958f4" if pinned in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "daf493ce6e863397ec44bfae467c4f7533570477")),
+     "9283bd636ce0b1cae33b4e012c7de59c4220c261" if pinned == "9d8b9c280a9907a9881abcc974a1fde248d73fec"
+     else "852a0272696c7ce182bc05aee92bc7cbb195446b" if selected in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"} else ("8acbdfe9ac970d24fecd334ca7b943f6bcd958f4" if pinned in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "daf493ce6e863397ec44bfae467c4f7533570477")),
 ):
     # This vendor successor changes only native fence/manifest/FC27 witness;
     # its sparse DeviceMemory owner is byte-identical to the checked 95467b3a
     # predecessor, confirmed again by exact Git blob before accepting.
-    if pinned in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de", "5bb102629fa51c9198208e6139e27d57b05cb900", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a", "cb8635aa95da52de2dd10be9d1574425edc1eb18"} and (
+    if pinned == "9d8b9c280a9907a9881abcc974a1fde248d73fec" and (
+        path == "vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc"
+    ):
+        expected = "9283bd636ce0b1cae33b4e012c7de59c4220c261"
+    elif pinned in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de", "5bb102629fa51c9198208e6139e27d57b05cb900", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a", "cb8635aa95da52de2dd10be9d1574425edc1eb18"} and (
         path == "vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc"
     ):
         expected = "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4"

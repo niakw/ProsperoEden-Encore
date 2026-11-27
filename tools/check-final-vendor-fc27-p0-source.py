@@ -3103,6 +3103,38 @@ if actual_vendor_pin == "cb8635aa95da52de2dd10be9d1574425edc1eb18":
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == digest, ("Bananza successor graph drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
+# 27 Nov generic NS2 ownership + FC27 deferred page-untrack successor.
+# Seal the complete vendor tree and every owner changed by these two runtime
+# families before admitting the pin. Historical receipts below remain intact.
+if actual_vendor_pin == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
+    assert subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "8f6e3f968a67652ae2f7036f07c295604b0f17fc"
+    for relative, digest in {
+        "encore-active/eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h": "9cd73e0e8021ba82fb1ba6ae09f5fdd6976897bd",
+        "encore-active/eden-core/overrides/core/device_memory_manager.h": "54f2a710d33487a0d89babe9117be0193ebc2cf9",
+        "encore-active/eden-core/overrides/core/device_memory_manager.inc": "9283bd636ce0b1cae33b4e012c7de59c4220c261",
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "6f3378f1bb611c74ecfe1f5cd37283137462012a",
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "be946421279aa406151f8255cd7b74b88c996873",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp": "566d90c26b6093ec6ef419f82f507030e73edc0e",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.h": "5716069129cc871c0a3f43dc96e3eddd802d2501",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "fc4fe083664ba991a1002caa52384c662e3ef718",
+        "encore-active/eden-core/src/video_core/dma_pusher.cpp": "d42fbfe0a91f0e0598641ad9ca49ec9cf2d6a04f",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "213dd0f37f23043fe16a5efb8e466b2a9b9979cb",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.h": "c635d1a915aefbf44b53051c5cb41190e8e84be8",
+        "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h": "05d1672330130b99737cff73345a6683a0971e57",
+        "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "5518557a51354b57c213c48d320062512c9268f4",
+        "tests/ns2_gpu_identity_mapping_source.py": "6ad2be5bdc7ba210634e77b08de6a82d729c103c",
+        "tests/ns2_syncpt_bootstrap_source.py": "ae2f361bfab84cfc6a35f1fb811170f650f433ea",
+        "tests/fc27_deferred_page_protection_host.py": "36a3e0c1d350d0ef39a032285f0f5f9a2c904c2b",
+        "tests/fc27_gpu_page_sibling_preservation_host.py": "7e776b2d3269f1d27920d4d3fc3f381f8d7bc580",
+    }.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        assert actual == digest, ("27 Nov generic/FC27 successor drift", relative, actual)
+    REVIEWED_PINS.add(actual_vendor_pin)
 assert actual_vendor_pin==checked and actual_vendor_pin in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 if actual_vendor_pin == "57be62ed6bcc872a850676f92f55de92ace7a290":
     # Historical receipts below describe the unchanged 8d3 owner graph.

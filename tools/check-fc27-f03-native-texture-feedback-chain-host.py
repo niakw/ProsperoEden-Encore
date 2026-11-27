@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-tex=(ROOT/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+tex=(ROOT/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 pipeline=(ROOT/"vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 old=(ROOT/"tools/check-ps5-texture-channel-missing-mapping-host.py").read_text()
 cmake=(ROOT/"headless/vulkan.cmake").read_text()

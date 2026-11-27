@@ -12,7 +12,7 @@ assert "python3 -B tools/check-ps5-f07-find-image-single-pass-host.py" in fast a
 start="ImageId TextureCache<P>::FindImage(const ImageInfo& info, GPUVAddr gpu_addr,"
 a=native.index(start)
 shadow_body=native[a:native.index("\ntemplate <class P>",a)]
-selected=(root/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+selected=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 a=selected.index(start)
 body=selected[a:selected.index("\ntemplate <class P>",a)]
 assert body == shadow_body, "selected native FindImage diverged from reviewed single-pass owner"

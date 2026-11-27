@@ -1087,3 +1087,16 @@ Sources propriétaires croisées : [Khronos Vulkan — Profiling](https://docs.v
 **Inconnues qui exigent la prochaine console :** premier GPFIFO et première frame réels par titre NS2 ; résultat précis des commandes GSV/VI2 si MKW bloque encore ; producteur d'un éventuel `pending_native_acquire` Pokopia ; boot réel DK/Z-A ; pour FC27 p50/p95/p99, pauses >100 ms, HUD/textures, latence pause, cadence et crash de fermeture dans la même scène/cache. Les divergences D-03/D-04/D-07 restent conditionnelles à une signature de log absente ; D-02 reste volontairement strict. **Compatibilité exhaustive NS2 non revendiquée.**
 
 **Réconciliation de la matrice D :** D-05/D-06 (`aud:u`) et D-09 (`SET_OBJECT class 0`) sont désormais traités dans le runtime sélectionné ; D-08 a reçu le lot BufferCache ciblé ci-dessus. D-01 reste une différence d'architecture Ampere, D-02 un choix de synchronisation sûr, D-03/D-04/D-07 restent à ouvrir uniquement si une trace réelle les désigne. Aucun nouveau patch n'est justifié par le comparatif seul avant la prochaine campagne PS5.
+
+
+---
+
+## Contrôle post-console du 27/11/2026 — réconciliation R-02 / VI2 sans exception de titre
+
+🟢 **2026-11-27 — contrat source contrôlé.** La règle de ce document « compatibilité NS2 sans exception de titre » est désormais appliquée au chemin `PresentClientBuffer` du vendor `9d8b9c280a9907a9881abcc974a1fde248d73fec`. L'ancien branchement spécifique Donkey Kong Bananza a été retiré. La synchronisation décide entre fence courante et fence précédente à partir de l'état du producteur : progression du syncpoint, canaux natifs suspendus derrière une acquire et capacité du CPU invité à publier la release attendue.
+
+Ce comportement est la traduction directe de **R-02** : identifier le producteur d'une attente de sémaphore au lieu de la neutraliser. Le registre natif suit les releases GPU et leur époque ; `DmaPusher` distingue une acquire résolue par producteur GPU d'une dépendance CPU/indéterminée ; `Scheduler::HasCpuBlockedNativeChannels()` expose seulement les canaux effectivement parqués. Il n'existe pas de sélection par `ProgramId` dans cette politique. Les gardes source `de047ccb` / `42a10d25` empêchent le retour d'une exception Bananza/Ocarina dans ce chemin.
+
+🟢 **2026-11-27 — séparation testée / non testée contrôlée.** La campagne console de référence utilisait moteur `e9a910cc2eb527859905484dfdcb1dfd87daa5b9` + vendor `57be62ed6bcc872a850676f92f55de92ace7a290`. Elle ne contient donc ni la généralisation de Present, ni `334915ab` (GSV mode 0), ni la série de handoff premier SVC, ni le correctif NUP `c42ef6a`. Le résultat Bananza figé, le `PC=0x4` MKW et les chargements infinis ne peuvent pas être utilisés pour invalider ou valider ces successors.
+
+**Statut :** source/contrat et QA hôte contrôlés ; build PS5 et console du nouveau couple non validés au moment de cette note. Aucun titre n'est déclaré jouable sur cette base documentaire.

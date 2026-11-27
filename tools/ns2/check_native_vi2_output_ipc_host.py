@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp"
+SOURCE = ROOT / "vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp"
 source = SOURCE.read_text()
 
 def method(signature):
@@ -191,7 +191,7 @@ for key, value in members.items():
     code=code.replace("__" + key.upper() + "__",value)
 
 headers = [
-    "-I" + str(ROOT/"vendor/encore-active/ns2-runtime/hle"),
+    "-I" + str(ROOT/"vendor/encore-active/eden/src"),
     "-I" + str(ROOT/"vendor/sources/eden/src"),
 ]
 compilers=list(dict.fromkeys(filter(None,(shutil.which("clang++"),shutil.which("g++")))))

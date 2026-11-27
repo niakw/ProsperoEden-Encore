@@ -101,22 +101,48 @@ def normalize_g21_shutdown_source(filename: str, source: str) -> tuple[str, bool
             source = source.replace(newer, older, 1)
         assert git_blob(source) == "7720e5a347817e67c0a964d3a80644b01b99d733"
     current = git_blob(source)
-    # 2b60011: HasCpuBlockedNativeChannels is a reviewed NS2 scheduler
-    # observability/runtime query added after the G21 shutdown fix. Reverse
-    # only this exact method on the historical audit copy before replaying
-    # the immutable G21 lifetime receipt.
-    if filename == "gpu_vulkan.cpp" and current == "8d8df3b2603156793afc383fb8738b8aa9b343f8":
+    # 2b60011/b8cf8ef/413f9d2/bbbc9f3/b0275c1:
+    # HasCpuBlockedNativeChannels is the same reviewed NS2 scheduler query
+    # added to all five G21 owners after the shutdown fix. Reverse only this
+    # exact method on the historical audit copy, and require the exact
+    # predecessor blob for every owner before replaying the immutable receipt.
+    cpu_blocked_successors = {
+        "gpu_vulkan.cpp": (
+            "8d8df3b2603156793afc383fb8738b8aa9b343f8",
+            "2de0ed20172755c0dac82e7e4031232281c115f5",
+        ),
+        "gpu_gl_native.cpp": (
+            "490f6f08991ea30212c8ecaedbd314e6762ae02d",
+            "9347e606050ac450a1f98e3f5f462ccc982dc808",
+        ),
+        "gpu_gl_host.cpp": (
+            "3d3753176b512622b30204a4f1239e3b59c07b84",
+            "33fc3039d52a568585b7aa84cdf7e097aa339def",
+        ),
+        "gpu_gl_native_dev.cpp": (
+            "9a1135b76e2af5f1602def1d903f37be4b7bd4f1",
+            "091431333f6f05e7e81c691051d64771cab4a5dd",
+        ),
+        "gpu_gl_host_dev.cpp": (
+            "a70ea3cb604f2ea08a4b674bc33295fee56c4147",
+            "848ead02e3b128c498e0ac08232d391f6b8b4085",
+        ),
+    }
+    successor, predecessor = cpu_blocked_successors[filename]
+    if current == successor:
         cpu_blocked_query = """\
 bool GPU::HasCpuBlockedNativeChannels() const {
     return impl->scheduler.HasCpuBlockedNativeChannels();
 }
 
 """
-        assert source.count(cpu_blocked_query) == 1, "NS2 CPU-blocked channel query drift"
+        assert source.count(cpu_blocked_query) == 1, (
+            "NS2 CPU-blocked channel query drift", filename)
         source = source.replace(cpu_blocked_query, "", 1)
         current = git_blob(source)
-        assert current == "2de0ed20172755c0dac82e7e4031232281c115f5", (
-            "NS2 CPU-blocked query normalization changed unrelated GPU source", current)
+        assert current == predecessor, (
+            "NS2 CPU-blocked query normalization changed unrelated GPU source",
+            filename, current)
     if filename == "gpu_gl_native.cpp" and current == "7720e5a347817e67c0a964d3a80644b01b99d733":
         # Reconstruct only the immutable historical audit copy; production uses the new owner.
         for newer, older in (

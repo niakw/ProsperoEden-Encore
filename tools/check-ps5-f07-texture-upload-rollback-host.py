@@ -7,7 +7,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 s = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
-selected = (root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+selected = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 for marker in (
     "bool upload_completed = false;",
     "if (!upload_completed)",

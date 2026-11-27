@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-source=(ROOT/"vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp").read_text()
+source=(ROOT/"vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp").read_text()
 begin="void IGpuSession::RequestWorker("
 end="void IGpuSession::AcquireWorker("
 assert source.count(begin)==source.count(end)==1
@@ -159,7 +159,7 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-request-worker-") as temp:
             exe=Path(temp)/(Path(cc).name+opt)
             args=[cc,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                   "-fsanitize=undefined","-fno-sanitize-recover=all",
-                  "-I"+str(ROOT/"vendor/encore-active/ns2-runtime/hle"),
+                  "-I"+str(ROOT/"vendor/encore-active/eden/src"),
                   str(cpp),"-o",str(exe)]
             built=subprocess.run(args,capture_output=True,text=True,timeout=50,env=os.environ.copy())
             assert built.returncode==0,built.stderr[-4500:]

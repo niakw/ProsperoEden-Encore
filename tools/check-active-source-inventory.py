@@ -2076,8 +2076,16 @@ if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f3
     ]
     assert len(selected_nodes) == 1
     selected_nov26_gpu_pair = ast.literal_eval(selected_nodes[0])
-    if shipping_vendor == "240550925b0ef097c24c3035c063bdceadd872de":
-        # Three exact GPU owners differ from the preceding reviewed vendor;
+    if shipping_vendor in {"240550925b0ef097c24c3035c063bdceadd872de",
+                            "57be62ed6bcc872a850676f92f55de92ace7a290",
+                            "334915ab48a2beb33a5eb0639c5f2b8dd554fcae",
+                            "2adfca5489b3f107847e0a1a9cdc06e497fc656f",
+                            "a47b6b20a8e7b7db748a82610a9b08685ba03eeb",
+                            "4b63376eb7057015d70295ecd7df4ce96be80607",
+                            "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
+        # These reviewed successors retain the same selected 14-owner GPU
+        # graph, with exact per-owner blobs checked below. Do not infer parity
+        # from ancestry alone: bind each accepted vendor to its exact tree.
         # keep the other eleven and all full-blob assertions unchanged.
         actual_pair_vendor = subprocess.check_output(
             ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
@@ -2094,6 +2102,7 @@ if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f3
             "2adfca5489b3f107847e0a1a9cdc06e497fc656f": "7bc8f75516155e5fc926e9a979c7883c6d034a78",
             "a47b6b20a8e7b7db748a82610a9b08685ba03eeb": "a315cab23dd3ecf664da881de28dc1c0616e1b5f",
             "4b63376eb7057015d70295ecd7df4ce96be80607": "5d6c2eb980d7f3e1cef7070f476c821dbe60cff7",
+            "e41a6930b4215a8e454c124e8fa8145de0c5bf7a": "29fb0e31ce967d9ecd6402d6fa928a8b1dbbde22",
         }.get(actual_pair_vendor, "e40237d089b0a45f77d68ae281821c1a85ce9ca8")
         assert subprocess.check_output(
             ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],

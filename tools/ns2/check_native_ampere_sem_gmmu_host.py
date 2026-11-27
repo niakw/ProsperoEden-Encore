@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-vendor=ROOT/"vendor/encore-active/ns2-runtime/gpu_dispatch"
+vendor=ROOT/"vendor/encore-active/eden/src"
 source=(vendor/"video_core/engines/puller.cpp").read_text()
 begin="void Puller::ProcessNativeSemaphoreExecute("
 end="void Puller::ProcessSemaphoreAcquire("

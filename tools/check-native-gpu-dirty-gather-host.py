@@ -6,11 +6,11 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-active = ROOT / 'vendor/encore-active/eden-core/overrides/core/gpu_dirty_memory_manager.h'
+active = ROOT / 'vendor/encore-active/eden/src/core/gpu_dirty_memory_manager.h'
 pinned = (ROOT / 'vendor/sources/eden/src/core/gpu_dirty_memory_manager.h').read_text()
 assert pinned.count('namespace Core {') == 1
 for relative in ('vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp',
-                 'vendor/encore-active/eden-core/src/video_core/renderer_opengl/gl_rasterizer.cpp'):
+                 'vendor/encore-active/eden/src/video_core/renderer_opengl/gl_rasterizer.cpp'):
     callback = (ROOT / relative).read_text().split('::OnCacheInvalidation(', 1)[1]
     assert 'if (addr == 0 || size == 0)' in callback.split('\n}', 1)[0]
 assert 'if (size > 256 * 1024) return false;' in (ROOT / 'headless/image_pages.h').read_text()

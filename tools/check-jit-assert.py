@@ -6,7 +6,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 pinned = (root / 'vendor/sources/eden/src/common/assert.h').read_text() + '\n'
-maintained = (root / 'vendor/encore-active/eden-core/src/common/assert.h').read_text()
+maintained = (root / 'vendor/encore-active/eden/src/common/assert.h').read_text()
 assert maintained.startswith(pinned)
 macro = maintained[len(pinned):]
 source = r'''

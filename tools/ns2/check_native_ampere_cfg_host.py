@@ -28,7 +28,7 @@ for necessary in (
     "NS2 actual Maxwell CFG and IR handoff ABI: PASS",
 ):
     assert necessary in source, f"real CFG witness missing: {necessary}"
-shader=V/"encore-active/ns2-runtime/ampere"
+shader=V/"encore-active/eden/srcpere"
 eden=V/"sources/eden/src"
 srcs=[SOURCE,*[
     shader/("shader_recompiler/frontend/ampere/"+name)

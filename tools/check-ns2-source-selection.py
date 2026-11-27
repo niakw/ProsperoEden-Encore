@@ -134,7 +134,7 @@ constexpr size_t MaxOpenFiles = 8192;
             'target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_GPU_ACCESS_ROOT}")' in CMAKE and
             'EDEN_SHARED_NS2_WAIT64' in CMAKE,
             'shared SVC/Wait64 kernel owner missing')
-    memory=read('vendor/encore-active/eden/src_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp')
+    memory=read('vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp')
     require('MapNative4K' in memory and 'UnmapNative4K' in memory,
             '4 KiB native GMMU memory source missing')
     decoder=read('vendor/encore-active/eden/src/video_core/textures/decoders.cpp')
@@ -143,7 +143,7 @@ constexpr size_t MaxOpenFiles = 8192;
     pinned_memory_header=read('vendor/sources/eden/src/video_core/memory_manager.h')
     i2m=read('vendor/encore-active/eden/src/video_core/engines/engine_upload.cpp')
     blitter=read('vendor/encore-active/eden/src/video_core/engines/sw_blitter/blitter.cpp')
-    nvhost=read('vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp')
+    nvhost=read('vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp')
     channel_state=read('vendor/encore-active/eden/src/video_core/control/channel_state.cpp')
     pinned_decoder_header=read('vendor/sources/eden/src/video_core/textures/decoders.h')
     require('NativeGobOffset' in decoder and
@@ -177,7 +177,7 @@ constexpr size_t MaxOpenFiles = 8192;
         'list(APPEND video_sources "${EDEN_NS2_SW_BLITTER}")',
     ):
         require(token in CMAKE,'Lichii #2085 source owner not selected: '+token)
-    nvdrv=read('vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp')
+    nvdrv=read('vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp')
     require('ValidateChannelOwner(' in nvdrv and
             nvdrv.count('ValidateChannelOwner(fd, program_id)')>=2 and
             'SubmitGPFIFOImpl' in nvdrv and
@@ -249,7 +249,7 @@ constexpr size_t MaxOpenFiles = 8192;
             'NativeQmdReleaseTargetsMapped' in qmd,
             'QMD3 has lost its state and release-target validation')
     header=read('vendor/encore-active/eden/src/video_core/rasterizer_interface.h')
-    raster=read('vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp')
+    raster=read('vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp')
     require('virtual bool DispatchNativeCompute(const Tegra::NativeComputeLaunch&)' in header and
             'bool RasterizerVulkan::DispatchNativeCompute(' in raster and
             'CaptureNativeComputeShader(' in raster and

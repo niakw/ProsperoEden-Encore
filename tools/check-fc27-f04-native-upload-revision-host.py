@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-path = ROOT/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h"
+path = ROOT/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h"
 src = path.read_text()
 cmake = (ROOT/"headless/vulkan.cmake").read_text()
 fast = (ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()

@@ -6,7 +6,7 @@ import os, subprocess, sys, tempfile
 root=Path(__file__).resolve().parents[1]
 perf=(root/'headless/performance.h').read_text()
 report=(root/'headless/performance.cpp').read_text()
-active=(root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+active=(root/'vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp').read_text()
 oracle=(root/'tools/prepare-vulkan-port.py').read_text()
 start=perf.index('struct GuestCacheDomainTotals {')
 end=perf.index('// R310:',start)

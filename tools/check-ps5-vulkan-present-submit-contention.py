@@ -13,9 +13,9 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-swap=(root/"vendor/encore-active/eden-vulkan/vulkan_swapchain.cpp").read_text()
-scheduler=(root/"vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp").read_text()
-device=(root/"vendor/encore-active/eden-vulkan/vulkan_device.cpp").read_text()
+swap=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_swapchain.cpp").read_text()
+scheduler=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_scheduler.cpp").read_text()
+device=(root/"vendor/encore-active/eden/src/video_core/vulkan_common/vulkan_device.cpp").read_text()
 s=swap[swap.index("void Swapchain::Present(VkSemaphore render_semaphore) {"):]
 s=s[:s.index("\nbool Swapchain::")]
 b=s.index("std::unique_lock<std::mutex> lock{scheduler.submit_mutex, std::defer_lock};")

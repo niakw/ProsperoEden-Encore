@@ -12,7 +12,7 @@ def main():
     parser.add_argument("--vendor",type=Path,required=True)
     parser.add_argument("--header",type=Path)
     args=parser.parse_args()
-    shader=(args.vendor/"encore-active/eden-vulkan/r09_rdna2_nr/"
+    shader=(args.vendor/"encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/"
             "split_context_repack_rdna2.comp")
     text=shader.read_text(encoding="utf-8")
     for forbidden in ("cooperative_matrix","shader_float8",

@@ -4,7 +4,7 @@
 from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 included = (root / "vendor/tests/oracles/vulkan/vulkan_gc_downloads.inc").read_text()
-active = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+active = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 port = (root / "tools/prepare-vulkan-port.py").read_text()
 gc_begin = active.index("void TextureCache<P>::RunGarbageCollector() {")
 gc_end = active.index("\ntemplate <class P>", gc_begin)

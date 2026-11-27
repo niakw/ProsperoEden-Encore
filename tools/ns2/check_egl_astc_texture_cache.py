@@ -41,7 +41,7 @@ base = once((ACTIVE / "texture_cache_base.h").read_text(),
 # Vulkan native channel/pin ABI as the canonical Vulkan owner. Do NOT accept
 # arbitrary ASTC rewrites or update the historical N60 baseline hash: strip
 # only those reviewed additions and compare the legacy owner byte-for-byte.
-VULKAN = ROOT / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache"
+VULKAN = ROOT / "vendor/encore-active/eden/src/video_core/texture_cache"
 gate = "#ifdef PS5_NATIVE"
 
 def native_block(text: str, following: str) -> str:

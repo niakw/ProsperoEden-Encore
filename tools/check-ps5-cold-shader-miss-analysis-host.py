@@ -41,7 +41,7 @@ assert module.parse(["EDEN_VULKAN_SHADER_MISS kind=graphics key=0123456789abcdef
 assert module.parse(["EDEN_VULKAN_SHADER_MISS kind=graphics key=0123456789abcdef retry=0 success=1 cpu_ns=-1"]) == ([], 1)
 # Pin the parser's contract to the actual native emitter. The marker has
 # no frame ID, and the four callsites are cold/retry graphics/compute only.
-source = (root / "vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_text(
+source = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp").read_text(
     encoding="utf-8"
 )
 assert "EDEN_VULKAN_SHADER_MISS kind=%s key=%016llx retry=%u " in source

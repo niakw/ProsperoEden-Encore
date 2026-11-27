@@ -3,7 +3,7 @@
 from pathlib import Path
 import subprocess,tempfile,sys
 ROOT=Path(__file__).resolve().parents[2]
-SRC=ROOT/'vendor/encore-active/eden-vulkan/vulkan_memory_allocator.cpp'
+SRC=ROOT/'vendor/encore-active/eden/src/video_core/vulkan_common/vulkan_memory_allocator.cpp'
 HDR=ROOT/'vendor/encore-active/eden/src/video_core/vulkan_common/vulkan_memory_allocator.h'
 with tempfile.TemporaryDirectory(prefix='n62-vendor-') as td:
     temp=Path(td)

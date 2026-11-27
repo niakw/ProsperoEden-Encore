@@ -46,5 +46,5 @@ if __name__=="__main__":
     p.add_argument("--vendor",required=True,type=Path)
     p.add_argument("--header",type=Path)
     a=p.parse_args()
-    run(a.vendor/"encore-active/eden-vulkan/r09_rdna2_nr/"
+    run(a.vendor/"encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/"
         "preblock_pool_rdna2.comp",a.header)

@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-source=(root/"vendor/encore-active/eden-vulkan/vk_compute_pass_cost.cpp").read_text()
+source=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pass_cost.cpp").read_text()
 pinned=(root/"vendor/sources/eden/src/video_core/renderer_vulkan/vk_compute_pass.cpp").read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()
 begin="    compute_pass_descriptor_queue.Acquire(scheduler, 3);"

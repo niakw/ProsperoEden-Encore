@@ -16,8 +16,8 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-RENDER = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_renderer.cpp").read_text()
-PRESENT = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_present_manager.cpp").read_text()
+RENDER = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_renderer.cpp").read_text()
+PRESENT = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_manager.cpp").read_text()
 FAST = (ROOT / ".github/workflows/encore-core-fast-gate.yml").read_text()
 FULL = (ROOT / ".github/workflows/encore-core-preflight.yml").read_text()
 INVOCATION = "python3 -B tools/check-native-vulkan-renderer-handoff-host.py"

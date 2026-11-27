@@ -22,7 +22,27 @@ test "$(git config -f .gitmodules submodule.encore-overrides.update)" = none
 test ! -e encore-overrides/.git
 test ! -e vendor/.gitmodules
 test -f vendor/README.md
-test -f vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp
+test -f vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp
+test -f vendor/encore-active/eden/src/video_core/vulkan_common/vulkan_device.cpp
+test -f vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/probe.cpp
+test -f vendor/encore-active/eden/src/core/hle/kernel/k_address_arbiter.cpp
+test -f vendor/encore-active/eden/externals/amd-fsr31/LICENSE.txt
+for retired in ns2-runtime eden-vulkan amd-fsr31; do
+  test ! -e "vendor/encore-active/$retired" || {
+    echo "Retired vendor override root returned: $retired" >&2
+    exit 1
+  }
+done
+for alias in srcpere src_wait64 src_as src_gpu src_structure; do
+  test ! -e "vendor/encore-active/eden/$alias" || {
+    echo "Retired Eden alias returned: $alias" >&2
+    exit 1
+  }
+done
+if git grep -nE 'encore-active/(eden-vulkan|amd-fsr31|ns2-runtime)|encore-active/eden/(srcpere|src_wait64|src_as|src_gpu|src_structure)' --     headless tools .github extras ':(exclude)tools/check-vendor-submodule.sh'; then
+  echo "Retired active-source reference remains in engine build/gates" >&2
+  exit 1
+fi
 test -d vendor/sources/eden-cpm
 actual="$(git -C vendor rev-parse HEAD)"
 test "$actual" = "$expected" || { echo "Submodule SHA mismatch: $expected != $actual" >&2; exit 1; }

@@ -106,7 +106,7 @@ def main()->int:
         assert evidence in text, "Missing fail-closed VI2 payload owner: " + evidence
     # ioctl offset and buffer_offset are s64; the mapped address is u64.
     # Require rejection of negative user-provided values before conversion.
-    nvmap_source=(ROOT/"vendor/encore-active/eden/src_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp").read_text()
+    nvmap_source=(ROOT/"vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp").read_text()
     assert 'params.offset < 0 || params.buffer_offset < 0' in nvmap_source
     assert 'const u64 gpu_base = static_cast<u64>(params.offset);' in nvmap_source
     assert 'const u64 buffer_offset = static_cast<u64>(params.buffer_offset);' in nvmap_source

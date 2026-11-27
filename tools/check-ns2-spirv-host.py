@@ -52,18 +52,18 @@ def main():
         SIRIT / "src/CMakeLists.txt", "siritobj OBJECT",
         r"(?:instructions/)?[^\s()/]+\.cpp", 18,
         ["sirit.cpp", "instructions/type.cpp"])
-    overlay = ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere"
+    overlay = ROOT / "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere"
     mesh_root = ROOT / "vendor/encore-active/eden/src"
     # Use the SAME production shader headers and translation units as the
     # single PS5 CMake shader target. Mixed pinned headers with native TES
     # emitters cannot compile and do not represent a real ABI witness.
     native_owners = {
         "backend/spirv/spirv_emit_context.cpp":
-            ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+            ROOT / "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
         "backend/spirv/emit_spirv_context_get_set.cpp":
-            ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+            ROOT / "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
         "backend/spirv/emit_spirv_image.cpp":
-            ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
+            ROOT / "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
     }
     mesh_owners = (
         "backend/spirv/emit_spirv.cpp",
@@ -113,7 +113,7 @@ def main():
         ("ir_bridge", "renderer_spirv_bridge", "maxwell_environment", "maxwell_image", "lower_bridge", "probe")
     ] + [overlay / "capture.cpp",
          overlay / "translation_cache.cpp",
-         ROOT / "vendor/encore-active/eden/srcpere/video_core/ns2_shader_spirv_compile.cpp",
+         ROOT / "vendor/encore-active/eden/src/video_core/ns2_shader_spirv_compile.cpp",
          SRC / "common/settings_common.cpp",
          ROOT / "tools/ns2/jit-host/common_shim.cpp",
          ROOT / "tools/ns2/test_ampere_real_spirv.cpp"]
@@ -140,7 +140,7 @@ def main():
              "-ffunction-sections", "-fdata-sections", "-Wno-unused-parameter",
              "-pthread", "-I" + str(FMT),
               "-I" + str(mesh_root),
-             "-I" + str(ROOT / "vendor/encore-active/eden/srcpere"),
+             "-I" + str(ROOT / "vendor/encore-active/eden/src"),
              "-I" + str(ROOT / "vendor/encore-active/eden/src"),
              "-I" + str(ROOT / "vendor/encore-active/eden/src"), "-I" + str(SRC),
              "-I" + str(SRC / "dynarmic/src"),
@@ -213,7 +213,7 @@ def main():
     g07_exe = OUT / "ns2-g07-vulkan"
     run([cxx, "-std=c++20", "-O2", "-DFMT_HEADER_ONLY",
          "-I" + str(ROOT / "vendor/sources/fmt/include"),
-         "-I" + str(ROOT / "vendor/encore-active/eden/srcpere"),
+         "-I" + str(ROOT / "vendor/encore-active/eden/src"),
          "-I" + str(ROOT / "vendor/encore-active/eden/src"),
          "-I" + str(ROOT / "vendor/sources/eden/src"),
          str(ROOT / "tools/ns2/test_g07_real_vulkan_texel.cpp"),

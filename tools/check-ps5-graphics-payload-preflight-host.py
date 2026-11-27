@@ -12,9 +12,9 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-NATIVE = (ROOT / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+NATIVE = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 GENERATOR = (ROOT / "tools/prepare-vulkan-port.py").read_text()
-RASTER = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+RASTER = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 
 def extract(src, signature):
     assert src.count(signature) == 1

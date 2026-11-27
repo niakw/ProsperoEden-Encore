@@ -12,103 +12,103 @@ add_test(NAME test_fsr31_spirv_abi_parser
 # check actual model hashes, three independent CNN graphs and labels.
 # RDNA2 1x1 neural projection is one Vulkan compute primitive, not DLSS:
 # validate that no FP8 WMMA/cooperative matrix instruction leaked into SPIR-V.
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_raster_layout_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/fswin_raster_layout_rdna2.comp")
     add_test(NAME test_rdna2_nr_fswin_raster_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-fswin-raster-layout-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_window_repack_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/fswin_window_repack_rdna2.comp")
     add_test(NAME test_rdna2_nr_fswin_window_repack_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-fswin-window-repack-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_qkv_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/fswin_qkv_rdna2.comp")
     add_test(NAME test_rdna2_nr_fswin_qkv_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-fswin-qkv-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_upsample_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/fswin_upsample_rdna2.comp")
     add_test(NAME test_rdna2_nr_fswin_upsample_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-fswin-upsample-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/float_quantize_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/float_quantize_rdna2.comp")
     add_test(NAME test_rdna2_nr_float_quantize_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-float-quantize-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_downsample_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/fswin_downsample_rdna2.comp")
     add_test(NAME test_rdna2_nr_fswin_downsample_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-fswin-downsample-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_dense_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/fswin_dense_rdna2.comp")
     add_test(NAME test_rdna2_nr_fswin_dense_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-fswin-dense-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/vit_attention_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/vit_attention_rdna2.comp")
     add_test(NAME test_rdna2_nr_vit_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-vit-attention-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/ffwd3_group_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/ffwd3_group_rdna2.comp")
     add_test(NAME test_rdna2_nr_ffwd3_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-ffwd3-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/qkv_projection_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/qkv_projection_rdna2.comp")
     add_test(NAME test_rdna2_nr_qkv_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-qkv-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/window_attention_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/window_attention_rdna2.comp")
     add_test(NAME test_rdna2_nr_attention_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-attention-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/decoder_upsample_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/decoder_upsample_rdna2.comp")
     add_test(NAME test_rdna2_nr_decoder_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-decoder-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/noise_field_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/noise_field_rdna2.comp")
     add_test(NAME test_rdna2_nr_noise_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-noise-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/upsample_view_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/upsample_view_rdna2.comp")
     add_test(NAME test_rdna2_nr_upview_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-upview-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/repack_tokens_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/repack_tokens_rdna2.comp")
     add_test(NAME test_rdna2_nr_repack_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-repack-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/r09_rdna2_nr/fp8_proj_rdna2.comp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/fp8_proj_rdna2.comp")
     add_test(NAME test_rdna2_nr_spirv_baseline
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-nr-spv.py"
             --vendor "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor")
 endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden-vulkan/anime4k_3d.cpp")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../vendor/encore-active/eden/src/video_core/renderer_vulkan/anime4k_3d.cpp")
     add_test(NAME test_a4k_three_neural_profiles
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-a4k-profiles.py"
@@ -216,7 +216,7 @@ add_test(NAME test_neural_video_policy COMMAND test_neural_video_policy)
 add_executable(test_rdna2_nr_unet_skip_cache_policy
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_unet_skip_cache_policy.cpp")
 target_include_directories(test_rdna2_nr_unet_skip_cache_policy PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_unet_skip_cache_policy PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -243,7 +243,7 @@ add_executable(test_rdna2_nr_unet_upsample_edges
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_unet_upsample_edges.cpp")
 target_include_directories(test_rdna2_nr_unet_upsample_edges PRIVATE
     "${EDEN_ROOT}/extras/graphics"
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 target_compile_options(test_rdna2_nr_unet_upsample_edges PRIVATE
     -Wall -Wextra -UNDEBUG)
 add_test(NAME test_rdna2_nr_unet_upsample_edges
@@ -252,13 +252,13 @@ add_test(NAME test_rdna2_nr_unet_upsample_edges
     "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_small_1920x1080.txt")
 
 target_include_directories(test_rdna2_nr_fswin_output_view_policy PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 # R09: validate recovered full native graph structural manifests.
 # Decode EVERY native NR graph stage, no implicit skip.
 add_executable(test_rdna2_nr_native_graph_schedule
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_native_graph_schedule.cpp")
 target_include_directories(test_rdna2_nr_native_graph_schedule PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_native_graph_schedule PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -270,14 +270,14 @@ add_test(NAME test_rdna2_nr_native_graph_schedule
 add_executable(test_rdna2_nr_native_plan_corpus
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_native_plan_corpus.cpp")
 target_include_directories(test_rdna2_nr_native_plan_corpus PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_native_plan_corpus PRIVATE
     -Wall -Wextra -UNDEBUG)
 add_executable(test_rdna2_nr_unet_skip_map
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_unet_skip_map.cpp")
 target_include_directories(test_rdna2_nr_unet_skip_map PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_unet_skip_map PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -291,34 +291,34 @@ add_test(NAME test_rdna2_nr_native_plan_corpus
     "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_original_1920x1080.txt"
     "${EDEN_ROOT}/extras/graphics/fixtures/r09_nr_small_1920x1080.txt")
 target_include_directories(test_rdna2_nr_native_plan_bridge PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 eden_r08_test(test_rdna2_nr_fswin_raster_layout_policy)
 eden_r08_test(test_rdna2_nr_fswin_raster_host)
 target_include_directories(test_rdna2_nr_fswin_raster_host PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 eden_r08_test(test_rdna2_nr_e4m3_requantize)
 target_include_directories(test_rdna2_nr_e4m3_requantize PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 target_include_directories(test_rdna2_nr_fswin_plan PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 eden_r08_test(test_rdna2_nr_model_pack)
 target_include_directories(test_rdna2_nr_model_pack PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 eden_r08_test(test_rdna2_nr_model_file)
 target_include_directories(test_rdna2_nr_model_file PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 eden_r08_test(test_rdna2_nr_weight_decode)
 eden_r08_test(test_rdna2_nr_fswin_qkv_layout)
 target_include_directories(test_rdna2_nr_fswin_qkv_layout PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 eden_r08_test(test_rdna2_nr_fswin_bindings)
 target_include_directories(test_rdna2_nr_fswin_bindings PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 target_include_directories(test_rdna2_nr_weight_decode PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 eden_r08_test(test_rdna2_nr_tile_layout)
 target_include_directories(test_rdna2_nr_tile_layout PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 eden_r08_test(test_fsr1_sharpness_policy)
 eden_r08_test(test_sgsr_sharpness_policy)
 eden_r08_test(test_fxaa_quality_select "${EDEN_H}/fxaa_quality_select.cpp")
@@ -347,7 +347,7 @@ add_test(NAME test_fsr3_optical_pacing COMMAND test_fsr3_optical_pacing)
 add_executable(test_rdna2_nr_split_window_link
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_window_link.cpp")
 target_include_directories(test_rdna2_nr_split_window_link PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_split_window_link PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -361,7 +361,7 @@ add_test(NAME test_rdna2_nr_attention_descriptor_abi
 
 
 # Real RDNA2 ViT normalization compute shader (Vulkan 1.1 + SPIR-V ABI).
-if(EXISTS "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/r09_rdna2_nr/vit_qkv_norm_rdna2.comp")
+if(EXISTS "${EDEN_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/vit_qkv_norm_rdna2.comp")
     add_test(NAME test_rdna2_nr_vit_qkv_norm_spirv_abi
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/test-rdna2-vit-qkv-norm-spv.py"
@@ -373,7 +373,7 @@ endif()
 add_executable(test_rdna2_nr_vit_qkv_weight_loader
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_vit_qkv_weight_loader.cpp")
 target_include_directories(test_rdna2_nr_vit_qkv_weight_loader PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_vit_qkv_weight_loader PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -384,7 +384,7 @@ add_test(NAME test_rdna2_nr_vit_qkv_weight_loader
 add_executable(test_rdna2_nr_split_window_weight_loader
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_window_weight_loader.cpp")
 target_include_directories(test_rdna2_nr_split_window_weight_loader PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_split_window_weight_loader PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -396,7 +396,7 @@ add_test(NAME test_rdna2_nr_split_window_weight_loader
 add_executable(test_rdna2_nr_split_ffwd_weights
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_ffwd_weights.cpp")
 target_include_directories(test_rdna2_nr_split_ffwd_weights PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_split_ffwd_weights PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -413,7 +413,7 @@ add_test(NAME test_rdna2_nr_vit_epilogues_spirv_abi
 add_executable(test_rdna2_nr_split_residual_weights
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_residual_weights.cpp")
 target_include_directories(test_rdna2_nr_split_residual_weights PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_split_residual_weights PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -430,7 +430,7 @@ add_test(NAME test_rdna2_nr_split_context_repack_spirv_abi
 add_executable(test_rdna2_nr_split_block_policy
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_block_policy.cpp")
 target_include_directories(test_rdna2_nr_split_block_policy PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_split_block_policy PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -457,7 +457,7 @@ add_test(NAME test_rdna2_nr_split_projection_pool_spirv_abi
 add_executable(test_rdna2_nr_split_final_head_weights
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_final_head_weights.cpp")
 target_include_directories(test_rdna2_nr_split_final_head_weights PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_split_final_head_weights PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -469,7 +469,7 @@ add_test(NAME test_rdna2_nr_split_final_head_weights
 add_executable(test_rdna2_nr_split_native_routes_policy
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_split_native_routes_policy.cpp")
 target_include_directories(test_rdna2_nr_split_native_routes_policy PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_split_native_routes_policy PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -483,7 +483,7 @@ add_test(NAME test_rdna2_nr_split_native_routes_policy
 add_executable(test_rdna2_nr_vit_ffn_weight_loader
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_vit_ffn_weight_loader.cpp")
 target_include_directories(test_rdna2_nr_vit_ffn_weight_loader PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_vit_ffn_weight_loader PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -495,7 +495,7 @@ add_test(NAME test_rdna2_nr_vit_ffn_weight_loader
 add_executable(test_rdna2_nr_vit_native_route_policy
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_vit_native_route_policy.cpp")
 target_include_directories(test_rdna2_nr_vit_native_route_policy PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_vit_native_route_policy PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -508,7 +508,7 @@ add_test(NAME test_rdna2_nr_vit_native_route_policy
 add_executable(test_rdna2_nr_vit_boundary_repack_policy
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_vit_boundary_repack_policy.cpp")
 target_include_directories(test_rdna2_nr_vit_boundary_repack_policy PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include")
+    "${EDEN_ROOT}/vendor/encore-active/eden/src")
 target_compile_options(test_rdna2_nr_vit_boundary_repack_policy PRIVATE -Wall -Wextra -Werror -UNDEBUG)
 add_test(NAME test_rdna2_nr_vit_boundary_repack_policy
     COMMAND test_rdna2_nr_vit_boundary_repack_policy)
@@ -522,7 +522,7 @@ add_test(NAME test_rdna2_nr_vit_boundary_repack_spirv_abi
 add_executable(test_rdna2_nr_decoder_model_loader
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_decoder_model_loader.cpp")
 target_include_directories(test_rdna2_nr_decoder_model_loader PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_decoder_model_loader PRIVATE
     -Wall -Wextra -UNDEBUG)
@@ -548,7 +548,7 @@ add_test(NAME test_rdna2_nr_decoder_tile_linear_spirv_abi
 add_executable(test_rdna2_nr_bottleneck_route_policy
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_bottleneck_route_policy.cpp")
 target_include_directories(test_rdna2_nr_bottleneck_route_policy PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_bottleneck_route_policy PRIVATE
     -Wall -Wextra -Werror -UNDEBUG)
@@ -563,7 +563,7 @@ eden_r08_test(test_rdna2_nr_image_feature_policy)
 add_executable(test_rdna2_nr_image_feature_weights
     "${EDEN_ROOT}/extras/graphics/test_rdna2_nr_image_feature_weights.cpp")
 target_include_directories(test_rdna2_nr_image_feature_weights PRIVATE
-    "${EDEN_ROOT}/vendor/encore-active/eden-vulkan/include"
+    "${EDEN_ROOT}/vendor/encore-active/eden/src"
     "${EDEN_ROOT}/extras/graphics")
 target_compile_options(test_rdna2_nr_image_feature_weights PRIVATE
     -Wall -Wextra -Werror -UNDEBUG)

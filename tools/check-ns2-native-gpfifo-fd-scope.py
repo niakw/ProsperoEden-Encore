@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-BASE = ROOT / "vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices"
+BASE = ROOT / "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices"
 source = (BASE / "nvhost_gpu.cpp").read_text()
 # SwitchBrew retry ioctls are wire-compatible with the existing submit paths.
 # Ensure the active dispatch reuses the same bounded helpers, not a fake success.

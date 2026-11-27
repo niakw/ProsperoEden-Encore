@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-source=(ROOT/"vendor/encore-active/eden/srcpere/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
+source=(ROOT/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
 marker="void DefineGenericOutput("
 assert source.count(marker)==1
 body=source.split(marker,1)[1].split("\n}\n",1)[0]

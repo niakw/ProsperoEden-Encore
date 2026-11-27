@@ -11,7 +11,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 perf = (root / "headless/performance.h").read_text()
-pipeline = (root / "vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_text()
+pipeline = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp").read_text()
 gen = (root / "tools/prepare-vulkan-port.py").read_text()
 analyzer = (root / "tools/analyze-ps5-cold-shader-misses.py").read_text()
 # GPU-23: a native Vulkan integer color attachment must receive a signed

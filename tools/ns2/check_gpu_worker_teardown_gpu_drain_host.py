@@ -126,8 +126,8 @@ assert 'vendor/sources/eden/src/core/hle/service/nvdrv/core/nvmap.h' in cmake
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_NVMAP_INCLUDE}")' in cmake
 for overlay in ('vendor/encore-active/eden-core/include',
                 'vendor/encore-active/eden/src',
-                'vendor/encore-active/eden/src_as',
-                'vendor/encore-active/eden/src_gpu'):
+                'vendor/encore-active/eden/src',
+                'vendor/encore-active/eden/src'):
     assert not (ROOT/overlay/'core/hle/service/nvdrv/core/nvmap.h').exists(), overlay
 
 # Compile the exact maintained NvMap final-free methods. Only the device

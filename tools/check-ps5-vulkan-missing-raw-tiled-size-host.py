@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-SOURCE=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_present_layer.cpp").read_text()
+SOURCE=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_layer.cpp").read_text()
 GEN=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 start="#ifdef PS5_NATIVE\n    // An unmapped guest framebuffer has no tiled source to measure."
 end="    buffer.Flush();  // Both the upload and missing-memory clear need visibility."

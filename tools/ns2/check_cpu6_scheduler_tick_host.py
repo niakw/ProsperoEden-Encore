@@ -64,7 +64,7 @@ def main()->None:
         stdlib=['-target','arm64-apple-macos15','-nostdinc++',
                 '-isystem',str(sdk26/'usr/include/c++/v1')]
     deps=ROOT/'vendor/sources/eden-cpm'
-    includes=[ROOT/'headless',CPU6,ROOT/'vendor/encore-active/eden/src_wait64',
+    includes=[ROOT/'headless',CPU6,ROOT/'vendor/encore-active/eden/src',
               ROOT/'vendor/encore-active/eden/src',
               BASE,BASE/'dynarmic/src',ROOT/'vendor/sources/fmt/include',
               ROOT/'vendor/encore-active/eden/src',

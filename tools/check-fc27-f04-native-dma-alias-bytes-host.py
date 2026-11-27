@@ -15,7 +15,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 dma = (ROOT / "vendor/encore-active/eden/src/video_core/engines/maxwell_dma.cpp").read_text()
-texture = (ROOT / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+texture = (ROOT / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 fast = (ROOT / ".github/workflows/encore-core-fast-gate.yml").read_text()
 full = (ROOT / ".github/workflows/encore-core-preflight.yml").read_text()
 command = "python3 -B tools/check-fc27-f04-native-dma-alias-bytes-host.py"

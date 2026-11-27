@@ -4,7 +4,7 @@ from pathlib import Path
 import shutil, subprocess, tempfile
 
 root=Path(__file__).resolve().parents[1]
-src=(root/"vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+src=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()
 scope=src[src.index("GraphicsPipeline::ConfigureDraw("):src.index("GraphicsPipeline::~GraphicsPipeline()")]
 start=scope.index("    bool update_descriptors = true;")

@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 from test_dlss_nr_min_vendor_source_guard import Drift, compact, git, method, require
 
-PREFIX="encore-active/eden-vulkan/"
+PREFIX="encore-active/eden/src/video_core/renderer_vulkan/"
 PATHS={
     "tensors":PREFIX+"nr_rdna2_fswin_gpu_tensors.cpp",
     "runtime":PREFIX+"nr_rdna2_fswin_layer_runtime.cpp",

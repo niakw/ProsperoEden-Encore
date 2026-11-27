@@ -51,5 +51,5 @@ if __name__=="__main__":
     parser.add_argument("--vendor",required=True,type=Path)
     parser.add_argument("--header",type=Path)
     args=parser.parse_args()
-    validate(args.vendor/"encore-active/eden-vulkan/r09_rdna2_nr/"
+    validate(args.vendor/"encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/"
              "split_decoder_skip_repack_rdna2.comp",args.header)

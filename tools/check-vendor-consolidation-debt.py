@@ -3120,7 +3120,7 @@ def has_exact_audit_path(relative):
         "vendor/encore-active/eden/",
         "vendor/encore-active/eden/",
         "vendor/encore-active/eden/",
-        "vendor/encore-active/eden-vulkan/",
+        "vendor/encore-active/eden/src/video_core/renderer_vulkan/",
     ))
 shipping_manifest = json.loads((active / "eden/backports/manifest.json").read_text())
 shipping_build_recipes = {"src/common/CMakeLists.txt", "src/core/CMakeLists.txt"}

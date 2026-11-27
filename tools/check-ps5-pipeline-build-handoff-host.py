@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-source = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+source = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 begin = source.index("GraphicsPipeline::GraphicsPipeline(")
 end = source.index("\nvoid GraphicsPipeline::AddTransition(", begin)
 ctor = source[begin:end]
@@ -59,7 +59,7 @@ assert ctor.count("RunBuild();") >= 2
 # returns. The active native C++ and generated counterpart must drop their
 # member-held callable before invoking the completion-publishing callback.
 for owner in ("vk_graphics_pipeline_cost.cpp", "vk_compute_pipeline_cost.cpp"):
-    compiled_owner = (root / "vendor/encore-active/eden-vulkan" / owner).read_text()
+    compiled_owner = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan" / owner).read_text()
     callback = compiled_owner.split("::RunBuild() {", 1)[1].split("\n}", 1)[0]
     assert "auto task = std::move(build_task);" in callback, owner
     assert "build_task = nullptr;\n    task();" in callback, owner

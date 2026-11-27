@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-path = ROOT / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp"
+path = ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp"
 active = path.read_text()
 generator = (ROOT / "tools/prepare-vulkan-port.py").read_text()
 pinned = (ROOT / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp")

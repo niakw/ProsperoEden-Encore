@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-ACTIVE = ROOT / "vendor/encore-active/eden-vulkan"
+ACTIVE = ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan"
 SHADER = ROOT / "vendor/encore-active/eden/src"
 CPM = ROOT / "vendor/sources/eden-cpm"
 OWNERS = (
@@ -28,14 +28,14 @@ OWNERS = (
 # reaches the native Maxwell-to-IR stage or uses the correct CBUF bank.
 MESH_STAGE_OWNERS = (
     ROOT / "vendor/encore-active/eden/src/video_core/shader_environment.cpp",
-    ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/maxwell_environment.cpp",
-    ROOT / "vendor/encore-active/eden/srcpere/video_core/native_shader_capture.cpp",
+    ROOT / "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/maxwell_environment.cpp",
+    ROOT / "vendor/encore-active/eden/src/video_core/native_shader_capture.cpp",
 )
 # The real SPIR-V mesh emitter must compile too. The previous six-TU
 # witness checked the pipeline but never parsed this stage-buffer lowering.
 MESH_SPIRV_OWNERS = (
     SHADER / "shader_recompiler/backend/spirv/emit_spirv_mesh.cpp",
-    ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+    ROOT / "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
 )
 
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
@@ -87,7 +87,7 @@ assert 'IsShaderConfigEnabled(Maxwell::ShaderType::Geometry)' in stage_owner
 assert 'mesh_primitive_header' in stage_owner
 assert 'live_executable_stages' in (ACTIVE / "vk_pipeline_cache_cost.cpp").read_text()
 assert 'NativeMeshRegisterPipelineKey(' in (
-    ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/native_graphics_stage_policy.h"
+    ROOT / "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/native_graphics_stage_policy.h"
 ).read_text()
 cache_owner = (ACTIVE / "vk_pipeline_cache_cost.cpp").read_text()
 assert cache_owner.count("NativeMeshSlotCbufBank(stage, has_task)") == 3
@@ -111,7 +111,7 @@ includes = [
     SHADER,
     # Native Maxwell/Ampere shader captures share this single reviewed
     # frontend root with the real renderer and pipeline-cache TUs.
-    ROOT / "vendor/encore-active/eden/srcpere",
+    ROOT / "vendor/encore-active/eden/src",
     # The reviewed QMD3 command ABI is owned by the shared GPU dispatcher,
     # separate from the Ampere shader frontend. Match CMake's native roots.
     ROOT / "vendor/encore-active/eden/src",
@@ -127,7 +127,7 @@ includes = [
     ACTIVE / "include",
     ROOT / "vendor/encore-active/eden/src",
     ROOT / "vendor/encore-active/eden/src",
-    ROOT / "vendor/encore-active/eden/src_gpu",
+    ROOT / "vendor/encore-active/eden/src",
     ROOT / "vendor/sources/eden/src",
     CPM / "vulkanheaders/v1.4.345/include",
     CPM / "vulkanmemoryallocator/v3.3.0/include",

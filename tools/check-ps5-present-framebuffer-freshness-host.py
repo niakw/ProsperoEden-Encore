@@ -11,9 +11,9 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-cache = (root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+cache = (root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 generator = (root/"tools/prepare-vulkan-port.py").read_text()
-raster = (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+raster = (root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 layer = (root/"headless/vulkan_present_layer_r24.cpp").read_text()
 fast = (root/".github/workflows/encore-core-fast-gate.yml").read_text()
 full = (root/".github/workflows/encore-core-preflight.yml").read_text()

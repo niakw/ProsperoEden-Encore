@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-active = root / "vendor/encore-active/eden-vulkan"
+active = root / "vendor/encore-active/eden/src/video_core/renderer_vulkan"
 hdir = active / "include/video_core/renderer_vulkan"
 cmake = (root/"headless/vulkan.cmake").read_text()
 workflow = (root/".github/workflows/encore-core-preflight.yml").read_text()

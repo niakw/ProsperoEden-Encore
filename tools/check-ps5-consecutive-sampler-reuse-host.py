@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-native = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+native = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 pinned = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.cpp").read_text()
 memo_marker = "    // Sampler table mapping is stable while the paired guest cache locks are"
 assert native.count(memo_marker) == 1

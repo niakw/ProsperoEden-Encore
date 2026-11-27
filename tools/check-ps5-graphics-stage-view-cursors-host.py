@@ -5,8 +5,8 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-cpp=(root/"vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
-hdr=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+cpp=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+hdr=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
 start=cpp.index("        num_image_elements += Shader::NumDescriptors(info->texture_buffer_descriptors);")
 end=cpp.index("        num_descriptor_entries += NumDescriptorEntries(*info);",start)
 ctor=cpp[start:end]

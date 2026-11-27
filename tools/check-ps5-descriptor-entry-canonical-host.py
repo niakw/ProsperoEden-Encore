@@ -6,10 +6,10 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_update_descriptor.h").read_text()
+header = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_update_descriptor.h").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
-pipeline = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+pipeline = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 assert "std::memcmp(last_descriptor_payload.data(), entries," in pipeline
 assert "check-ps5-descriptor-entry-canonical-host.py" in workflow
 assert '"#include <variant>"' in generator

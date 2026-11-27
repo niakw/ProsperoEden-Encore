@@ -6,7 +6,7 @@ import re
 
 ROOT=Path(__file__).resolve().parents[2]
 NATIVE=(ROOT/"headless/nr_dll_tensor_digests.h").read_text()
-VENDOR=(ROOT/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_model_manifest.h").read_text()
+VENDOR=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/nr_rdna2_model_manifest.h").read_text()
 for name,size in (("Original",599),("Compact",255)):
     expected={}
     path=ROOT/f"tools/graphics/r09_weights_{name.lower()}.sha256"

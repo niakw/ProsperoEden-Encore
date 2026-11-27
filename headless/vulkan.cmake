@@ -4,18 +4,48 @@ endif()
 # R342: compile our versioned patched Vulkan sources directly, not transient
 # string replacements applied at every CMake configure. Upstream originals
 # remain in vendor/sources/eden and their Git bundle; this tree is OUR fork.
-set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden-vulkan")
+set(EDEN_ACTIVE_EDEN_SRC "${PORT_ROOT}/vendor/encore-active/eden/src")
+set(EDEN_ACTIVE_VULKAN "${EDEN_ACTIVE_EDEN_SRC}/video_core/renderer_vulkan")
+set(EDEN_ACTIVE_VULKAN_COMMON "${EDEN_ACTIVE_EDEN_SRC}/video_core/vulkan_common")
 if(NOT EXISTS "${EDEN_ACTIVE_VULKAN}/vulkan_renderer.cpp")
-    message(FATAL_ERROR "Missing checked-in Encore Vulkan fork")
+    message(FATAL_ERROR "Missing canonical Encore Vulkan renderer owner")
 endif()
+# Stage canonical owners at the historical native build paths.  The build
+# directory is generated output; encore-active/eden remains the only source owner.
 file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")
+file(COPY "${EDEN_ACTIVE_VULKAN}/"
+    DESTINATION "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan"
+    FILES_MATCHING PATTERN "*.h")
+file(COPY "${EDEN_ACTIVE_VULKAN_COMMON}/"
+    DESTINATION "${PORT_BUILD_DIR}/include/video_core/vulkan_common"
+    FILES_MATCHING PATTERN "*.h")
+file(MAKE_DIRECTORY "${PORT_BUILD_DIR}/include/core/frontend"
+                    "${PORT_BUILD_DIR}/include/video_core")
+configure_file("${EDEN_ACTIVE_EDEN_SRC}/core/frontend/emu_window.h"
+    "${PORT_BUILD_DIR}/include/core/frontend/emu_window.h" COPYONLY)
+configure_file("${EDEN_ACTIVE_EDEN_SRC}/video_core/present.h"
+    "${PORT_BUILD_DIR}/include/video_core/present.h" COPYONLY)
+foreach(eden_vulkan_common_cpp IN ITEMS
+        vulkan_device.cpp vulkan_instance.cpp vulkan_library.cpp
+        vulkan_memory_allocator.cpp vulkan_wrapper.cpp)
+    if(NOT EXISTS "${EDEN_ACTIVE_VULKAN_COMMON}/${eden_vulkan_common_cpp}")
+        message(FATAL_ERROR "Missing canonical Vulkan common owner: ${eden_vulkan_common_cpp}")
+    endif()
+    configure_file("${EDEN_ACTIVE_VULKAN_COMMON}/${eden_vulkan_common_cpp}"
+        "${PORT_BUILD_DIR}/${eden_vulkan_common_cpp}" COPYONLY)
+endforeach()
+file(GLOB EDEN_RDNA2_PUBLIC_HEADERS CONFIGURE_DEPENDS
+    "${EDEN_ACTIVE_VULKAN}/rdna2_*.h")
+if(EDEN_RDNA2_PUBLIC_HEADERS)
+    file(COPY ${EDEN_RDNA2_PUBLIC_HEADERS} DESTINATION "${PORT_BUILD_DIR}/include")
+endif()
 # P5: the extracted native Eden cache can carry an older FixedPipelineState
 # header without the native forced-colour-resolve bit used by the maintained
 # Vulkan pipeline. Select the *pinned vendor source header* (same POD layout,
 # its reserved bit 22 now named) for ALL native consumers, not a CMake-generated
 # reconstruction or a local copy of the definition.
 set(EDEN_P5_FIXED_PIPELINE_HEADER
-    "${EDEN_ACTIVE_VULKAN}/include/video_core/renderer_vulkan/fixed_pipeline_state.h")
+    "${EDEN_ACTIVE_VULKAN}/fixed_pipeline_state.h")
 if(NOT EXISTS "${EDEN_P5_FIXED_PIPELINE_HEADER}")
     message(FATAL_ERROR "Missing pinned fixed pipeline state ABI header")
 endif()
@@ -62,8 +92,8 @@ configure_file("${EDEN_PORT_DIR}/vulkan_fxaa_r24.h"
 # R07: REAL AMD FSR 3.1.4 temporal upscaler shader passes (MIT SDK
 # source pinned in our vendor), never substituted with spatial FSR1.
 # Always compile in native PS5 video_core; release decisions are external.
-set(EDEN_AMD_FSR31_SOURCE_DIR "${PORT_ROOT}/vendor/encore-active/amd-fsr31")
-set(EDEN_AMD_FSR31_BACKEND_DIR "${PORT_ROOT}/vendor/encore-active/eden-vulkan")
+set(EDEN_AMD_FSR31_SOURCE_DIR "${PORT_ROOT}/vendor/encore-active/eden/externals/amd-fsr31")
+set(EDEN_AMD_FSR31_BACKEND_DIR "${EDEN_ACTIVE_VULKAN}")
 if(NOT EXISTS "${EDEN_AMD_FSR31_SOURCE_DIR}/LICENSE.txt")
     message(FATAL_ERROR "Missing versioned FidelityFX SDK FSR3.1.4 and MIT license in vendor")
 endif()
@@ -167,18 +197,18 @@ add_dependencies(video_core eden-r07-fsr31-shaders)
 # Descriptor pools in upstream Eden only allocate combined image-samplers;
 # FSR31 requires real SAMPLED_IMAGE and immutable SAMPLER descriptor counts.
 # Override the shared bank layout and pool allocator TOGETHER, not one alone.
-configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/include/video_core/renderer_vulkan/vk_descriptor_pool.h"
+configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/vk_descriptor_pool.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_descriptor_pool.h"
     COPYONLY)
 configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_temporal_upscaler.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_fsr3_upscaler.h"
     COPYONLY)
-configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/include/video_core/renderer_vulkan/fsr31_native_bridge.h"
+configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/fsr31_native_bridge.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/fsr31_native_bridge.h"
     COPYONLY)
 # R24 real Vulkan multisample colour shadow+resolve primitive (not yet wired
 # into guest pipeline sample selection; no active forced-MSAA menu).
-configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/include/video_core/renderer_vulkan/msaa_color_shadow_pass.h"
+configure_file("${EDEN_AMD_FSR31_BACKEND_DIR}/msaa_color_shadow_pass.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/msaa_color_shadow_pass.h"
     COPYONLY)
 list(REMOVE_ITEM video_sources renderer_vulkan/vk_descriptor_pool.cpp)
@@ -330,7 +360,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_PROJ_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-nr-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_PROJ_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/fp8_proj_rdna2.comp"
@@ -352,7 +382,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_REPACK_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-repack-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_REPACK_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/repack_tokens_rdna2.comp"
@@ -374,7 +404,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_UPVIEW_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-upview-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_UPVIEW_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/upsample_view_rdna2.comp"
@@ -396,7 +426,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_NOISE_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-noise-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_NOISE_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/noise_field_rdna2.comp"
@@ -417,7 +447,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_DECODER_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-decoder-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_DECODER_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/decoder_upsample_rdna2.comp"
@@ -462,7 +492,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_TEXTURE_PROXY_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${PORT_ROOT}/tools/graphics/test-rdna2-texture-proxy-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_TEXTURE_PROXY_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/texture_proxy_rdna2.comp"
@@ -485,7 +515,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_NOHISTORY_PRESENT_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${PORT_ROOT}/tools/graphics/test-rdna2-nohistory-present-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_NOHISTORY_PRESENT_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/nohistory_present_rdna2.comp"
@@ -507,7 +537,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_HDR_PROXY_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${PORT_ROOT}/tools/graphics/test-rdna2-hdr-proxy-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_HDR_PROXY_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/hdr_proxy_rdna2.comp"
@@ -529,7 +559,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_TEMPORAL_COMPOSE_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${PORT_ROOT}/tools/graphics/test-rdna2-temporal-compose-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_TEMPORAL_COMPOSE_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/temporal_compose_rdna2.comp"
@@ -552,7 +582,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_NR_NOHISTORY_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${PORT_ROOT}/tools/graphics/test-rdna2-nohistory-compose-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_NR_NOHISTORY_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/nohistory_compose_rdna2.comp"
@@ -710,7 +740,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_ATTN_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-attention-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_ATTN_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/window_attention_rdna2.comp"
@@ -731,7 +761,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_QKV_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-qkv-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_QKV_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/qkv_projection_rdna2.comp"
@@ -752,7 +782,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_FFWD3_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-ffwd3-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_FFWD3_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/ffwd3_group_rdna2.comp"
@@ -773,7 +803,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_VIT_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-vit-attention-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_VIT_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/vit_attention_rdna2.comp"
@@ -796,7 +826,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_VIT_QKV_NORM_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${PORT_ROOT}/tools/graphics/test-rdna2-vit-qkv-norm-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_VIT_QKV_NORM_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/vit_qkv_norm_rdna2.comp"
@@ -914,7 +944,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_FSWIN_DENSE_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-dense-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_FSWIN_DENSE_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/fswin_dense_rdna2.comp"
@@ -935,7 +965,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_FSWIN_QKV_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-qkv-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_FSWIN_QKV_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/fswin_qkv_rdna2.comp"
@@ -956,7 +986,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_FSWIN_REPACK_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-window-repack-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_FSWIN_REPACK_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/fswin_window_repack_rdna2.comp"
@@ -977,7 +1007,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_FSWIN_RASTER_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-raster-layout-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_FSWIN_RASTER_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/fswin_raster_layout_rdna2.comp"
@@ -998,7 +1028,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_FSWIN_DOWNSAMPLE_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-downsample-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_FSWIN_DOWNSAMPLE_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/fswin_downsample_rdna2.comp"
@@ -1019,7 +1049,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_FSWIN_UPSAMPLE_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-fswin-upsample-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_FSWIN_UPSAMPLE_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/fswin_upsample_rdna2.comp"
@@ -1040,7 +1070,7 @@ add_custom_command(
     OUTPUT "${EDEN_R09_RDNA2_FLOAT_QUANTIZE_HEADER}"
     COMMAND "${Python3_EXECUTABLE}"
         "${EDEN_PORT_DIR}/../tools/graphics/test-rdna2-float-quantize-spv.py"
-        --vendor "${EDEN_AMD_FSR31_BACKEND_DIR}/../.."
+        --vendor "${PORT_ROOT}/vendor"
         --header "${EDEN_R09_RDNA2_FLOAT_QUANTIZE_HEADER}"
     DEPENDS
         "${EDEN_AMD_FSR31_BACKEND_DIR}/r09_rdna2_nr/float_quantize_rdna2.comp"
@@ -1117,7 +1147,11 @@ configure_file("${EDEN_PORT_DIR}/vk_blit_screen_r08.h"
 # Do NOT register this full list again as CMAKE_CONFIGURE_DEPENDS: some of
 # these headers are already tracked by configure_file() above, and the
 # duplicate "missing CMake input" phony outputs make build.ninja unparseable.
-file(GLOB_RECURSE EDEN_VULKAN_FORK_FILES CONFIGURE_DEPENDS "${EDEN_ACTIVE_VULKAN}/*")
+file(GLOB_RECURSE EDEN_VULKAN_FORK_FILES CONFIGURE_DEPENDS
+    "${EDEN_ACTIVE_VULKAN}/*"
+    "${EDEN_ACTIVE_VULKAN_COMMON}/*"
+    "${EDEN_ACTIVE_EDEN_SRC}/video_core/present.h"
+    "${EDEN_ACTIVE_EDEN_SRC}/core/frontend/emu_window.h")
 # These shaders are build inputs; the five older .inc injections only
 # reconstruct the historical generator oracle and are NOT compiled here.
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
@@ -1125,7 +1159,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
 # R23 #2 + #18: selected EDS3 fixed state and mixed TIR color/depth
 # must share the same Vulkan fork, native copy and public texture-cache ABI.
 if(NOT EXISTS "${EDEN_ACTIVE_VULKAN}/fixed_pipeline_state.cpp"
-   OR NOT EXISTS "${EDEN_ACTIVE_VULKAN}/include/video_core/renderer_vulkan/vk_texture_cache.h")
+   OR NOT EXISTS "${EDEN_ACTIVE_VULKAN}/vk_texture_cache.h")
     message(FATAL_ERROR "R23 EDS3/TIR matched native Vulkan owners missing")
 endif()
 list(REMOVE_ITEM video_sources renderer_vulkan/fixed_pipeline_state.cpp)

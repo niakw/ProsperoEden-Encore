@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-active=(ROOT/"vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp").read_text()
+active=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache_cost.cpp").read_text()
 pinned=(ROOT/"vendor/sources/eden/src/video_core/renderer_vulkan/vk_buffer_cache.h").read_text()
 generator=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 tree=ast.parse(generator)
@@ -34,13 +34,13 @@ header=pinned.replace(old,new)
 # The selected shipping Vulkan fork must contain the same native header
 # replayed from the installed Eden backport (not merely a test-only mock).
 backport=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache.h").read_text()
-maintained=(ROOT/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h").read_text()
+maintained=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache.h").read_text()
 assert backport.count(old)==1
 # Reverse only the five SHA-pinned R2 production insertions; otherwise
 # the historical complete-header comparison rejects legitimate staging ABI.
 # Both the live full-header blob and every reversed hunk remain checked.
 from ns2.r2_source_normalizer import normalized
-assert maintained == (ROOT / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h").read_text()
+assert maintained == (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache.h").read_text()
 assert normalized(ROOT, "include/video_core/renderer_vulkan/vk_buffer_cache.h") == backport.replace(old,new)
 start=header.index("    void ResetUsageTracking() noexcept {")
 stop=header.index("    [[nodiscard]] u64 LastUsageTick()",start)

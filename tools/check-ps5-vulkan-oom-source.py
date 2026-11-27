@@ -9,7 +9,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 cmake = (root / "headless/vulkan.cmake").read_text(encoding="utf-8")
 original = (root / "vendor/sources/eden/src/video_core/vulkan_common/vulkan_memory_allocator.cpp").read_text(encoding="utf-8")
-fork = (root / "vendor/encore-active/eden-vulkan/vulkan_memory_allocator.cpp").read_text(encoding="utf-8")
+fork = (root / "vendor/encore-active/eden/src/video_core/vulkan_common/vulkan_memory_allocator.cpp").read_text(encoding="utf-8")
 
 assert 'vulkan_common/vulkan_memory_allocator.cpp' in cmake
 assert '"${PORT_BUILD_DIR}/vulkan_memory_allocator.cpp"' in cmake

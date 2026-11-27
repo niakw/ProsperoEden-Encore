@@ -319,7 +319,7 @@ print("ENCORE_M06_MAINTAINED_MEMORY_SOURCE_PARITY_PASS")
 # callbacks; the native renderer uses CanExecuteRecordedDraw() to enforce
 # the newer FIFO worker-bind latch. This is a deliberate integration variant,
 # not a reason to silently change the guest draw path.
-original_m07 = (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+original_m07 = (root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 # M07 was pinned before native MSAA. This later, independently reviewed
 # Vulkan overlay is exactly reversible; first match the currently SELECTED
 # vendor source blob, then revert its complete, context-anchored hunks.
@@ -407,7 +407,7 @@ if m07_source_blob(original_m07) == "6f3378f1bb611c74ecfe1f5cd37283137462012a":
         ["python3", "-B", "tools/check-source-tree-layout.py"],
         cwd=root / "vendor",
     )
-    rasterizer_owner = root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp"
+    rasterizer_owner = root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp"
     word_owner = root / "vendor/encore-active/eden/src/video_core/buffer_cache/word_manager.h"
     device_h = root / "vendor/encore-active/eden/src/core/device_memory_manager.h"
     device_inc = root / "vendor/encore-active/eden/src/core/device_memory_manager.inc"
@@ -544,7 +544,7 @@ if m07_selected_sha == "aa3ff8baf97f075d1adf44a9d19335c89403c8e1":
         if (
             subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"],
                                     text=True).strip() == "87b5a4d674e2a1616cd19b5234203e80920abcc4" or
-            (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text().find(
+            (root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text().find(
                 'core/deferred_cached_updates.h') >= 0
         ) else
         "18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2")
@@ -872,7 +872,7 @@ pins={
 for file, anchors in pins.items():
     text=(root/"vendor/sources/eden/src"/file).read_text()
     for needle in anchors:assert needle in text,(file,needle)
-vk=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+vk=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 for needle in ("bool RasterizerVulkan::OnCPUWrite(DAddr addr, u64 size) {",
                "GuestCacheLock(buffer_cache.mutex, false)",
                "GuestCacheLock(texture_cache.mutex, true)"):
@@ -982,7 +982,7 @@ include("__BRIDGE__")
     # DEV bridge is only staged; its historic GetFlushArea still carries a
     # typed trace object. The shipping Vulkan rasterizer has TWO callable
     # locks and is checked separately, never inferred from the DEV text.
-    shipping_vk = (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+    shipping_vk = (root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
     assert shipping_vk.count("GuestCacheLock(texture_cache.mutex, true)") >= 2
     assert "GuestCacheLock(buffer_cache.mutex, false)" in shipping_vk
     assert vk.count("GuestCacheLock(texture_cache.mutex, true)") == 1

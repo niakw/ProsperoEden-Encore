@@ -8,7 +8,7 @@ HEADER=ROOT/'vendor/encore-active/eden/src/video_core/texture_cache/ns2_astc_lay
 TEST=ROOT/'tools/ns2/test_egl_astc_layer_plan.cpp'
 SOURCE=(ROOT/'vendor/sources/eden/src/video_core/texture_cache/texture_cache.h').read_text()
 IMAGE=(ROOT/'vendor/sources/eden/src/video_core/texture_cache/image_base.h').read_text()
-VK=(ROOT/'vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp').read_text()
+VK=(ROOT/'vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp').read_text()
 for needle in ('void TextureCache<P>::WriteMemory(DAddr cpu_addr, size_t size)',
                'void TextureCache<P>::RefreshContents(Image& image, ImageId image_id)',
                'runtime.AccelerateImageUpload(image, staging,'):

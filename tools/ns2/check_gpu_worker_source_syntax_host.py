@@ -8,7 +8,7 @@ import sys
 
 ROOT=Path(__file__).resolve().parents[2]
 roots=['vendor/encore-active/eden/src',
-       'vendor/encore-active/eden/src_as',
+       'vendor/encore-active/eden/src',
        'vendor/encore-active/eden/src',
        'vendor/encore-active/eden/src',
        'vendor/encore-active/eden/src',

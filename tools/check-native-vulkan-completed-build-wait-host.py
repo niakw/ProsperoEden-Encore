@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC=(ROOT/"vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+SRC=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 GEN=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 start=SRC.index("        scheduler.Record([this](vk::CommandBuffer) {\n")
 end=SRC.index("\n        });",start) + len("\n        });")

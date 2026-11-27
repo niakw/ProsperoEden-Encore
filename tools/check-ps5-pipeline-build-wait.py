@@ -5,8 +5,8 @@ import os,subprocess,sys,tempfile
 
 root=Path(__file__).resolve().parents[1]
 paths=[
-    root/'vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp',
-    root/'vendor/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp',
+    root/'vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp',
+    root/'vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline_cost.cpp',
 ]
 generator=(root/'tools/prepare-vulkan-port.py').read_text()
 guards=[]

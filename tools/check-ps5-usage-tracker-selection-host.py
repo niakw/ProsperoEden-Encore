@@ -41,7 +41,7 @@ assert 'file(WRITE' not in block and 'file(COPY' not in block
 assert CMAKE.index('if(PS5_NATIVE)',begin)<CMAKE.index(
     'target_include_directories(video_core BEFORE PRIVATE',begin)
 assert "CanReorderUpload" in (
-    ROOT/"vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp").read_text()
+    ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache_cost.cpp").read_text()
 source=OWNED.read_text()
 assert "last_bit - first_bit + 1" in source
 assert "if (first_page == last_page) return false;" in source

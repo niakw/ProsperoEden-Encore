@@ -28,7 +28,7 @@ assert '"${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp"' in cmake
 assert "u32 game_frame_presents{1};" in header
 assert "MAX_FRAMES_IN_FLIGHT = 7;" in active
 assert "image_count = std::min<size_t>(swapchain.GetImageCount(), MAX_FRAMES_IN_FLIGHT);" in active
-swap=(root/"vendor/encore-active/eden-vulkan/vulkan_swapchain.cpp").read_text()
+swap=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_swapchain.cpp").read_text()
 assert "requested_image_count = (std::max)(requested_image_count, 3U);" in swap
 assert "image_count = static_cast<u32>(images.size());" in swap
 assert "std::jthread present_thread;" in header

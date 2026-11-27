@@ -9,8 +9,8 @@ p=argparse.ArgumentParser()
 p.add_argument("--vendor-root",type=Path,required=True)
 a=p.parse_args()
 root=Path(__file__).resolve().parents[2]
-src=(a.vendor_root/"encore-active/eden-vulkan/msaa_color_shadow_pass.cpp").read_text()
-hdr=(a.vendor_root/"encore-active/eden-vulkan/include/video_core/renderer_vulkan/msaa_color_shadow_pass.h").read_text()
+src=(a.vendor_root/"encore-active/eden/src/video_core/renderer_vulkan/msaa_color_shadow_pass.cpp").read_text()
+hdr=(a.vendor_root/"encore-active/eden/src/video_core/renderer_vulkan/msaa_color_shadow_pass.h").read_text()
 cmake=(root/"headless/vulkan.cmake").read_text()
 policy=(root/"extras/graphics/msaa_force_policy.h").read_text()
 

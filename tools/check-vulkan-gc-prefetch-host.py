@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-maintained = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text(encoding="utf-8")
+maintained = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text(encoding="utf-8")
 begin = maintained.index("void TextureCache<P>::RunGarbageCollector() {")
 end = maintained.index("\ntemplate <class P>", begin)
 gc = maintained[begin:end]

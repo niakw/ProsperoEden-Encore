@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-source=(root/"vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_text()
+source=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp").read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()
 begin="void PipelineCache::QueueVulkanPipelineCacheFlush() {"
 end="\n\nGraphicsPipeline* PipelineCache::CurrentGraphicsPipelineSlowPath() {"
@@ -31,7 +31,7 @@ assert method.count("flush_in_flight.store(false, std::memory_order_release);") 
 assert "struct ReleaseFlush" in method and "catch (const std::exception& error)" in method
 assert "flush_worker_failed.exchange(false, std::memory_order_acq_rel)" in method
 assert method.count("flush_worker_failed.store(true, std::memory_order_release)") == 2
-header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_pipeline_cache.h").read_text()
+header=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache.h").read_text()
 assert "std::atomic_bool flush_worker_failed{};" in header
 for name in ("F07 driver cache worker failure owner handoff state",
              "F07 restore failed cache flush quota on GPU owner",

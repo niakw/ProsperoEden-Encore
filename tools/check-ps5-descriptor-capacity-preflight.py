@@ -7,7 +7,7 @@ import sys
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-active = root / "vendor/encore-active/eden-vulkan"
+active = root / "vendor/encore-active/eden/src/video_core/renderer_vulkan"
 ring = (active / "vulkan_descriptor_buffer.cpp").read_text()
 cost = (active / "vk_descriptor_buffer_cost.cpp").read_text()
 header = (active / "include/video_core/renderer_vulkan/vk_descriptor_buffer.h").read_text()

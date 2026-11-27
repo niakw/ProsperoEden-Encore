@@ -106,7 +106,7 @@ if [[ "$run_engine" != "$expected_engine" ]]; then
 fi
 if [[ ! -f "$repo/headless/nr_dll_model_import.h" ||
       ! -f "$repo/tools/graphics/r09_private_model_import.cpp" ||
-      ! -f "$repo/vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_model_manifest.h" ]]; then
+      ! -f "$repo/vendor/encore-active/eden/src/video_core/renderer_vulkan/nr_rdna2_model_manifest.h" ]]; then
   echo "R09_MAC_REPO_NOT_UPDATED: update main and vendor before running." >&2
   exit 68
 fi
@@ -126,11 +126,11 @@ mkdir -p "$work/download" "$work/bin" "$work/docker-context"
 # avoiding empty container mounts or accidental uploads of user data.
 mkdir -p "$work/public/headless" "$work/public/extras/graphics" \
   "$work/public/tools/graphics" \
-  "$work/public/vendor/encore-active/eden-vulkan/include"
+  "$work/public/vendor/encore-active/eden/src"
 cp "$repo/headless/"*.h "$work/public/headless/"
 cp "$repo/extras/graphics/"*.h "$work/public/extras/graphics/"
-cp -R "$repo/vendor/encore-active/eden-vulkan/include/." \
-  "$work/public/vendor/encore-active/eden-vulkan/include/"
+cp -R "$repo/vendor/encore-active/eden/src/." \
+  "$work/public/vendor/encore-active/eden/src/"
 cp "$repo/tools/graphics/r09_private_model_import.cpp" \
   "$repo/tools/graphics/r09_authentic_preview_png.py" \
   "$work/public/tools/graphics/"
@@ -294,7 +294,7 @@ docker run --pull never --rm --init --platform linux/amd64 \
     test "$(uname -m)" = "x86_64"
     g++ -std=c++20 -O1 -Wall -Wextra -Werror \
       -I/repo/headless -I/repo/extras/graphics \
-      -I/repo/vendor/encore-active/eden-vulkan/include \
+      -I/repo/vendor/encore-active/eden/src \
       /repo/tools/graphics/r09_private_model_import.cpp \
       -o /private/bin/r09-private-model-import
     /private/bin/r09-private-model-import \

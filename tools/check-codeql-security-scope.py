@@ -58,7 +58,7 @@ for path in (
     "tools/ps-glyph-mod-discovery.py",
     "tools/check-guest-network-isolation.py",
     "tools/check-ps-glyph-curl-search.py",
-    "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp",
+    "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_scheduler.cpp",
     "vendor/encore-active/ps5-mesa/src/util/disk_cache_os.c",
     "vendor/sources/eden/src/video_core/renderer_vulkan/vk_scheduler.cpp",
     "vendor/sources/harfbuzz/src/hb-shape.cc",

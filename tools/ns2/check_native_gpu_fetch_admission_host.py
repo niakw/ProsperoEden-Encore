@@ -15,7 +15,7 @@ import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
 DMA=ROOT/'vendor/encore-active/eden/src/video_core'
-NATIVE=ROOT/'vendor/encore-active/eden/src_gpu'
+NATIVE=ROOT/'vendor/encore-active/eden/src'
 TEST=ROOT/'tools/ns2/test_native_gpu_fetch_admission.cpp'
 HELPER=NATIVE/'core/hle/service/nvdrv/devices/native_gpu_fetch_admission.h'
 assert HELPER.is_file() and TEST.is_file()
@@ -202,12 +202,12 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
            '-DPS5_NATIVE=1',
            *standard,*inc]
     sources=[DMA/'dma_pusher.cpp',DMA/'dma_pusher_dev.cpp',
-             ROOT/'vendor/encore-active/eden/src_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp',
+             ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp',
              ROOT/'vendor/encore-active/eden/src/video_core/memory_manager.cpp',
-             ROOT/'vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
+             ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
              ROOT/'vendor/encore-active/eden/src/video_core/engines/puller.cpp',
-             ROOT/'vendor/encore-active/eden/srcpere/video_core/native_shader_capture.cpp',
-             ROOT/'vendor/encore-active/eden/srcpere/video_core/ns2_shader_spirv_compile.cpp']
+             ROOT/'vendor/encore-active/eden/src/video_core/native_shader_capture.cpp',
+             ROOT/'vendor/encore-active/eden/src/video_core/ns2_shader_spirv_compile.cpp']
     def compile_owner(path:Path):
         # Ubuntu Clang 18 can crash in nested template instantiations of the
         # fully unified native NVDRV and shader source files (frontend exit

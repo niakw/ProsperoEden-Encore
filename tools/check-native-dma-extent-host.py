@@ -6,7 +6,7 @@ root=Path(__file__).resolve().parents[1]
 def read(p):return (root/p).read_text()
 pinned=read("vendor/sources/eden/src/video_core/engines/maxwell_dma.cpp")
 native=read("vendor/encore-active/eden/src/video_core/engines/maxwell_dma.cpp")
-vulkan=read("vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp")
+vulkan=read("vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp")
 bridge=read("vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp")
 cm=read("headless/CMakeLists.txt")
 wf=read(".github/workflows/encore-core-preflight.yml")

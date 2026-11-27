@@ -56,11 +56,11 @@ for required in (
   'vendor/encore-active/eden/src/core/loader/loader.cpp',
   'vendor/encore-active/eden/src/core/loader/nso.cpp',
   'vendor/encore-active/eden/src/core/hardware_properties.h',
-  'vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
+  'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
   'vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp',
   'vendor/encore-active/eden/src/video_core/engines/puller.cpp',
   'vendor/encore-active/eden/src/video_core/rasterizer_interface.h',
-  'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp',
+  'vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp',
   'headless/jit_memory_policy.h',
 ):
     assert (ROOT/required).is_file(),required
@@ -74,7 +74,7 @@ assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in rasterizer
 for producer in (
     'vendor/encore-active/eden/src/video_core/engines/puller.cpp',
     'vendor/encore-active/eden/src/video_core/dma_pusher.cpp',
-    'vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
+    'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
 ):
     owner=(ROOT/producer).read_text()
     assert '#ifdef PS5_NATIVE' in owner

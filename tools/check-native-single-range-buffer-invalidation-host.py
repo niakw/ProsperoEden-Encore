@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-src = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+src = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 def take(begin, end):
     return src[src.index(begin):src.index(end, src.index(begin))]
 inv = take("void RasterizerVulkan::InvalidateRegion(", "void RasterizerVulkan::InnerInvalidation(")

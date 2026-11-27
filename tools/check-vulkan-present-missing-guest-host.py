@@ -3,7 +3,7 @@
 from pathlib import Path
 import subprocess, shutil, tempfile
 ROOT=Path(__file__).resolve().parents[1]
-active=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_present_layer.cpp").read_text()
+active=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_layer.cpp").read_text()
 pinned=(ROOT/"vendor/sources/eden/src/video_core/renderer_vulkan/present/layer.cpp").read_text()
 generator=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 ci=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()

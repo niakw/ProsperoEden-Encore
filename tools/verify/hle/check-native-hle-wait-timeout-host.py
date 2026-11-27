@@ -15,7 +15,7 @@ import tempfile
 root = Path(__file__).resolve().parents[3]
 base = root / "vendor/sources/eden/src/core/hle/kernel/svc"
 native = root / "vendor/encore-active/eden/src/core/hle/kernel/svc"
-wait64_native = root / "vendor/encore-active/eden/src_wait64/core/hle/kernel/svc"
+wait64_native = root / "vendor/encore-active/eden/src/core/hle/kernel/svc"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 assert "python3 -B tools/verify/hle/check-native-hle-wait-timeout-host.py" in workflow

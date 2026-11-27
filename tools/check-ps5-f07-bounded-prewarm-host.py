@@ -12,7 +12,7 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 main=(root/"headless/main.cpp").read_text()
-shader=(root/"vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_text()
+shader=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp").read_text()
 gen=(root/"tools/prepare-vulkan-port.py").read_text()
 worker=(root/"vendor/sources/eden/src/common/thread_worker.h").read_text()
 begin="void PipelineCache::LoadDiskResources("

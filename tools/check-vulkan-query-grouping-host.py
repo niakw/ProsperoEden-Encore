@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-source = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_query_cache.cpp").read_text()
+source = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_query_cache.cpp").read_text()
 method = source.split("void QueryCacheRuntime::SyncValues(", 1)[1]
 start, end = "    impl->redirect_cache.clear();", "    // ObtainCPUBuffer takes a u32 length."
 active = start + method.split(start, 1)[1].split(end, 1)[0]

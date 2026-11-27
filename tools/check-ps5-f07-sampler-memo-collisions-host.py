@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-VULKAN = ROOT / "vendor/encore-active/eden-vulkan"
+VULKAN = ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan"
 graphics = (VULKAN / "vk_graphics_pipeline_cost.cpp").read_text()
 compute = (VULKAN / "vk_compute_pipeline_cost.cpp").read_text()
 generator = (ROOT / "tools/prepare-vulkan-port.py").read_text()

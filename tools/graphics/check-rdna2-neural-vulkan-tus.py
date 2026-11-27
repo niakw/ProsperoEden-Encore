@@ -15,7 +15,7 @@ import re
 import struct
 
 ROOT=Path(__file__).resolve().parents[2]
-ACTIVE=ROOT/"vendor/encore-active/eden-vulkan"
+ACTIVE=ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan"
 SHADER=ROOT/"vendor/encore-active/eden/src"
 CPM=ROOT/"vendor/sources/eden-cpm"
 # Compile every maintained R09 Vulkan C++ owner, not a hand-selected
@@ -33,14 +33,14 @@ INCLUDES=[
     ROOT/"extras/graphics",
     ROOT/"headless",
     SHADER,
-    ROOT/"vendor/encore-active/eden/srcpere",
+    ROOT/"vendor/encore-active/eden/src",
     ROOT/"vendor/encore-active/eden/src",
     ROOT/"vendor/encore-active/eden/src",
     ROOT/"vendor/encore-active/eden/src",
     ACTIVE/"include",
     ROOT/"vendor/encore-active/eden/src",
     ROOT/"vendor/encore-active/eden/src",
-    ROOT/"vendor/encore-active/eden/src_gpu",
+    ROOT/"vendor/encore-active/eden/src",
     ROOT/"vendor/sources/eden/src",
     CPM/"vulkanheaders/v1.4.345/include",
     CPM/"vulkanmemoryallocator/v3.3.0/include",
@@ -177,7 +177,7 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     shutil.copyfile(
         ROOT/"vendor/encore-active/eden/src/video_core/fence_manager.h",
         enum_root/"video_core/fence_manager.h")
-    active_present=ROOT/"vendor/encore-active/eden-vulkan/include/video_core/present.h"
+    active_present=ROOT/"vendor/encore-active/eden/src/video_core/present.h"
     source_present=ROOT/"vendor/sources/eden/src/video_core/present.h"
     assert active_present.read_bytes()==source_present.read_bytes(),(
         "R09 actual build present.h differs from Eden PresentFilters source")

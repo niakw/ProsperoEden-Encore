@@ -21,7 +21,7 @@ assert 'set(EDEN_A64_V81_V85_ACTIVE_ROOT' in CMAKE
 assert 'vendor/encore-active/eden/src/dynarmic/src' in CMAKE
 assert 'target_include_directories(dynarmic BEFORE PRIVATE' in CMAKE
 assert "EDEN_A64_V81_V85_OUTPUT_ROOT" not in CMAKE
-assert "encore-active/ns2-runtime/ldapr" not in CMAKE
+assert "encore-active/eden/ldapr" not in CMAKE
 assert all((ACTIVE / f).is_file() for f in FILES)
 validated = subprocess.run(
     ["cmake", f"-DEDEN_A64_V81_V85_ACTIVE_ROOT={ACTIVE_ROOT}", "-P", str(SCRIPT)],

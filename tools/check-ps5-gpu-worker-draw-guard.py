@@ -4,10 +4,10 @@ from pathlib import Path
 import os, subprocess, sys, tempfile
 
 root=Path(__file__).resolve().parents[1]
-header=(root/'vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h').read_text()
-raster=(root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+header=(root/'vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h').read_text()
+raster=(root/'vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp').read_text()
 generator=(root/'tools/prepare-vulkan-port.py').read_text()
-pipeline_cpp=(root/'vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp').read_text()
+pipeline_cpp=(root/'vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp').read_text()
 start=header.index('    [[nodiscard]] bool CanExecuteDraw() const noexcept {')
 end=header.index('\n    }',start)+len('\n    }')
 general_method=header[start:end]

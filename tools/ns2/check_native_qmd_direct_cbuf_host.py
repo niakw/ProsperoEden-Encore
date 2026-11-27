@@ -13,7 +13,7 @@ files=[root/'tools/ns2/test_native_qmd_direct_cbuf.cpp'] + [
     ir/(name+'.cpp') for name in ('basic_block','microinstruction','opcodes','value')]
 fmt=root/'build-ns2-a64/fmt/include'
 if not (fmt/'fmt/core.h').exists():fmt=root/'vendor/sources/fmt/include'
-includes=[fmt,root/'vendor/encore-active/eden/srcpere',
+includes=[fmt,root/'vendor/encore-active/eden/src',
           root/'vendor/sources/eden/src']
 # The local M1 build uses pinned modular CPM Boost; Linux CI has Boost headers
 # in the compiler's system search path. Do not vendor or rewrite either.
@@ -25,14 +25,14 @@ sdk=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')
 if sdk.exists():env['SDKROOT']=str(sdk)
 # The real Ampere IR normalizer must reject U64 immediate and computed
 # operands before calling Value::U32() or building SPIR-V access chains.
-header = (root/'vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/native_indirect_cbuf.h').read_text()
+header = (root/'vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/native_indirect_cbuf.h').read_text()
 assert 'bank_value.Type() != Shader::IR::Type::U32' in header
 assert 'offset_value.Type() != Shader::IR::Type::U32' in header
 assert 'index.Type() != Shader::IR::Type::U32' in header
 assert 'offset.Type() != Shader::IR::Type::U32' in header
 assert 'byte_offset.Type() != Shader::IR::Type::U32' in header
-atomic_header=(root/'vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/native_global_atomic_binding.h').read_text()
-bridge=(root/'vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp').read_text()
+atomic_header=(root/'vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/native_global_atomic_binding.h').read_text()
+bridge=(root/'vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp').read_text()
 assert 'NativeAtomic::Rewrite(ir)' in bridge
 assert 'Opcode::PackUint2x32' in atomic_header
 assert 'Opcode::GetCbufU32x2' in atomic_header

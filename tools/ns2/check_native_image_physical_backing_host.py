@@ -119,7 +119,7 @@ if sdk.is_dir():
     env["SDKROOT"] = str(sdk)
 includes = (
     ROOT / "vendor/sources/fmt/include",
-    ROOT / "vendor/encore-active/eden/srcpere",
+    ROOT / "vendor/encore-active/eden/src",
     ROOT / "vendor/encore-active/eden/src",
     ROOT / "vendor/sources/eden/src",
 )

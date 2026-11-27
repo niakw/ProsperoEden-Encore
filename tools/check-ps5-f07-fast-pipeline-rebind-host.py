@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-vulkan = root / "vendor/encore-active/eden-vulkan"
+vulkan = root / "vendor/encore-active/eden/src/video_core/renderer_vulkan"
 sched = (vulkan / "vulkan_scheduler.cpp").read_text()
 header = (vulkan / "include/video_core/renderer_vulkan/vk_scheduler.h").read_text()
 graphics = (vulkan / "vk_graphics_pipeline_cost.cpp").read_text()

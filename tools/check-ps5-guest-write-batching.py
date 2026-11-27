@@ -8,7 +8,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 text = (root / "headless/performance.h").read_text()
-source = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+source = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 oracle = (root / "tools/prepare-vulkan-port.py").read_text()
 begin = text.index("class BatchedGuestWriteTimer {")
 end = text.index("// Opt-in API wall times:", begin)

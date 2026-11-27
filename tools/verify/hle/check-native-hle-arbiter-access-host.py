@@ -13,7 +13,7 @@ import tempfile
 root = Path(__file__).resolve().parents[3]
 pinned_path = root / "vendor/sources/eden/src/core/hle/kernel/k_address_arbiter.cpp"
 threading_path = root / "vendor/encore-active/eden/src/core/hle/kernel/k_address_arbiter.cpp"
-active_path = root / "vendor/encore-active/eden/src_wait64/core/hle/kernel/k_address_arbiter.cpp"
+active_path = root / "vendor/encore-active/eden/src/core/hle/kernel/k_address_arbiter.cpp"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 module = (root / "vendor/encore-active/eden/native-hle-overrides.cmake").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()

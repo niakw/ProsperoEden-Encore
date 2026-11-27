@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-source = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+source = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 oracle = (root / "vendor/tests/oracles/vulkan/vulkan_gc_downloads.inc").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 

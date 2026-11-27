@@ -12,7 +12,7 @@ def main():
     parser.add_argument("--vendor",type=Path,required=True)
     parser.add_argument("--header",type=Path)
     args=parser.parse_args()
-    shader=(args.vendor/"encore-active/eden-vulkan/r09_rdna2_nr/"
+    shader=(args.vendor/"encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/"
             "vit_qkv_norm_rdna2.comp")
     source=shader.read_text(encoding="utf-8")
     for forbidden in ("GL_EXT_shader_explicit_arithmetic_types_float16",

@@ -43,9 +43,9 @@ for entry in components:
 # The native Compute path must share Vulkan BufferCache and TextureCache;
 # do not claim the current native path binds images: unsupported TIC/TSC
 # descriptors deliberately fail closed until a real cache handoff exists.
-rasterizer = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-compute = (ROOT / "vendor/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()
-qmd = (ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/native_qmd_compute_environment.h").read_text()
+rasterizer = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
+compute = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline_cost.cpp").read_text()
+qmd = (ROOT / "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/native_qmd_compute_environment.h").read_text()
 assert "DispatchNativeCompute" in rasterizer and "ConfigureNative" in rasterizer
 assert "ComputePipeline::ConfigureNative" in compute
 assert "BufferCache& buffer_cache" in compute

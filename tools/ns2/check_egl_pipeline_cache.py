@@ -5,7 +5,7 @@ import os
 import subprocess
 import tempfile
 ROOT=Path(__file__).resolve().parents[2]
-ORIG=ROOT/'vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp'
+ORIG=ROOT/'vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp'
 CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
 import hashlib
 before="        u32 cache_version;\n        file.read(magic_number.data(), magic_number.size())"

@@ -47,7 +47,7 @@ for file in ("dma_pusher.cpp", "dma_pusher_dev.cpp"):
         "GpuGuestMemory<Tegra::CommandHeader,"
     ) < step.index("ProcessCommands(headers);")
 nvdrv = (vendor / (
-    "encore-active/eden/src_gpu/core/hle/service/nvdrv/"
+    "encore-active/eden/src/core/hle/service/nvdrv/"
     "devices/nvhost_gpu.cpp"
 )).read_text()
 # The two ioctl owners now allocate only after validating entry counts and
@@ -171,7 +171,7 @@ if cache_blob in {"24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce
     assert "std::span<const BufferCopy>{copies.data(), count}, false" in buffer_cache
     assert "std::array<BufferCopy, 8>" not in download
 assert download.index("runtime.CopyBuffer(") < download.index("runtime.Finish();") < download.index(write_marker)
-runtime = (vendor / "encore-active/eden-vulkan/vk_buffer_cache_cost.cpp").read_text()
+runtime = (vendor / "encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache_cost.cpp").read_text()
 assert "void BufferCacheRuntime::Finish() {" in runtime
 assert "scheduler.Finish();" in runtime.split("void BufferCacheRuntime::Finish() {", 1)[1].split("}", 1)[0]
 assert (root / "tools/ns2/test_native_gpu_command_saferead.cpp").is_file()

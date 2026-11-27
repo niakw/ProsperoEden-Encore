@@ -7,7 +7,7 @@ import tempfile
 import ast
 
 root = Path(__file__).resolve().parents[1]
-src = (root / "vendor/encore-active/eden-vulkan/vk_multi_range_buffer_cost.cpp").read_text()
+src = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_multi_range_buffer_cost.cpp").read_text()
 gen = (root / "tools/prepare-vulkan-port.py").read_text()
 call = "python3 -B tools/check-ps5-f07-sparse-bind-coalescing-host.py"
 for workflow in ("encore-core-fast-gate.yml", "encore-core-preflight.yml"):

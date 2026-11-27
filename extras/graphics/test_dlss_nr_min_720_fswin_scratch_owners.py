@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 from test_dlss_nr_min_vendor_source_guard import Drift, compact, git, method, require, ordered
 
-ROOT="encore-active/eden-vulkan/"
+ROOT="encore-active/eden/src/video_core/renderer_vulkan/"
 FILES={
     "chain":"nr_rdna2_fswin_chain.cpp",
     "runtime":"nr_rdna2_fswin_layer_runtime.cpp",

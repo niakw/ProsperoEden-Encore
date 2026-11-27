@@ -11,7 +11,7 @@ if(NOT IS_ABSOLUTE "${ENCORE_R09_ROOT}")
     message(FATAL_ERROR "Provide absolute ENCORE_R09_ROOT")
 endif()
 set(_r09_vendor "${ENCORE_R09_ROOT}/vendor")
-set(_r09_active "${_r09_vendor}/encore-active/eden-vulkan")
+set(_r09_active "${_r09_vendor}/encore-active/eden/src/video_core/renderer_vulkan")
 set(_r09_shader_include "${CMAKE_BINARY_DIR}/r09-host-generated")
 # Derive the linked owner set from the shipping PS5 native source list.
 # Do NOT invent a synthetic 73rd source: split_to_vit_bridge is not linked.

@@ -14,7 +14,7 @@ import re
 import subprocess
 from pathlib import Path
 
-ROOT = "encore-active/eden-vulkan/"
+ROOT = "encore-active/eden/src/video_core/renderer_vulkan/"
 FILES = {
     "session": "nr_rdna2_frame_session.cpp",
     "run": "nr_rdna2_vit_run.cpp",

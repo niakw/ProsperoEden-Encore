@@ -4,7 +4,7 @@ from pathlib import Path
 import shutil, subprocess, tempfile
 root=Path(__file__).resolve().parents[1]
 def read(x):return (root/x).read_text()
-raster=read("vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp")
+raster=read("vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp")
 bridge=read("vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp")
 pinned=read("vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp")
 oracle=read("tools/prepare-vulkan-port.py")

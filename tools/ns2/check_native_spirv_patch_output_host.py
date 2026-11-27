@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-src=(ROOT/"vendor/encore-active/eden/srcpere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp").read_text()
+src=(ROOT/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp").read_text()
 start="void EmitSetPatch("
 stop="\nvoid EmitSetFragColor("
 assert src.count(start)==src.count(stop)==1

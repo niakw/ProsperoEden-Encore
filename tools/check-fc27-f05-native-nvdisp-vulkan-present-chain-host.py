@@ -28,8 +28,8 @@ assert cmd in fast and cmd in pre
 NV=(ROOT/"vendor/sources/eden/src/core/hle/service/nvdrv/devices/nvdisp_disp0.cpp").read_text()
 GPU=(ROOT/"vendor/sources/eden/src/video_core/gpu.cpp").read_text()
 SYNC=(ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
-RENDER=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_renderer.cpp").read_text()
-PRESENT=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_present_manager.cpp").read_text()
+RENDER=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_renderer.cpp").read_text()
+PRESENT=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_manager.cpp").read_text()
 cmake=(ROOT/"headless/vulkan.cmake").read_text()
 assert "vulkan_present_manager.cpp" in cmake and "vulkan_renderer.cpp" in cmake
 assert "renderer->Composite(composite_layers);" in GPU

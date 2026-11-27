@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNER = (ROOT / "vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp").read_text()
+OWNER = (ROOT / "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp").read_text()
 entry = OWNER.split("NvResult nvhost_gpu::SubmitGPFIFOImpl(", 1)[1].split(
     "Core::Memory::Memory& nvhost_gpu::GetSessionMemory(", 1)[0]
 start = "    const bool native = UsesNativeAbi(fd);"

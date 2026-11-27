@@ -10,7 +10,7 @@ import ast
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-active = (root / "vendor/encore-active/eden-vulkan/vulkan_query_cache.cpp").read_text()
+active = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_query_cache.cpp").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 base = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_query_cache.cpp").read_text()
 begin = active.split("    void FlushBeginTFB() {", 1)[1].split("    void FlushEndTFB() {", 1)[0]

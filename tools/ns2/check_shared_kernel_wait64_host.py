@@ -15,7 +15,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = ROOT/'vendor/sources/eden/src/core/hle/kernel'
-KERNEL = ROOT/'vendor/encore-active/eden/src_wait64/core/hle/kernel'
+KERNEL = ROOT/'vendor/encore-active/eden/src/core/hle/kernel'
 SVC_GPU = ROOT/'vendor/encore-active/eden/src/core/hle/kernel'
 SOURCE = KERNEL/'k_address_arbiter.cpp'
 ARB_SVC = KERNEL/'svc/svc_address_arbiter.cpp'

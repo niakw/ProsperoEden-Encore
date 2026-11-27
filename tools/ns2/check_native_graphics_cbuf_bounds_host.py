@@ -7,8 +7,8 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT/'vendor/encore-active/eden/srcpere/video_core/native_shader_capture.cpp'
-HEADER=ROOT/'vendor/encore-active/eden/srcpere/video_core/native_graphics_cbuf_bounds.h'
+OWNER=ROOT/'vendor/encore-active/eden/src/video_core/native_shader_capture.cpp'
+HEADER=ROOT/'vendor/encore-active/eden/src/video_core/native_graphics_cbuf_bounds.h'
 TEST=ROOT/'tools/ns2/test_native_graphics_cbuf_bounds.cpp'
 source=OWNER.read_text()
 assert source.count('NativeGraphicsCbufWordAdmissible(')==1

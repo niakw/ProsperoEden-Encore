@@ -13,9 +13,9 @@ root = Path(__file__).resolve().parents[1]
 perf = (root / "headless/performance.cpp").read_text()
 header = (root / "headless/performance.h").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
-scheduler = (root / "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp").read_text()
-graphics = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
-compute = (root / "vendor/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()
+scheduler = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_scheduler.cpp").read_text()
+graphics = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+compute = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline_cost.cpp").read_text()
 
 start = perf.index("void ProbeSchedulerOnce(const char* role) noexcept {")
 end = perf.index("\nvoid SetSecondaryPlacement(bool enabled)", start)

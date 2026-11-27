@@ -61,8 +61,8 @@ OWNERS = [
       "inline bool NeverHeld("
     ],
     "consumers": [
-      "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h",
-      "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp"
+      "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h",
+      "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp"
     ]
   },
   {
@@ -84,7 +84,7 @@ OWNERS = [
       "std::size_t Record("
     ],
     "consumers": [
-      "vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp"
+      "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp"
     ]
   },
   {
@@ -144,7 +144,7 @@ OWNERS = [
       "constexpr std::uint64_t OldestEvictionTick("
     ],
     "consumers": [
-      "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h"
+      "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h"
     ]
   },
   {
@@ -155,7 +155,7 @@ OWNERS = [
       "std::uint64_t Observe("
     ],
     "consumers": [
-      "vendor/encore-active/eden-vulkan/vulkan_device.cpp"
+      "vendor/encore-active/eden/src/video_core/vulkan_common/vulkan_device.cpp"
     ]
   }
 ]

@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 root = Path(__file__).resolve().parents[1]
-native_path = root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp"
+native_path = root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp"
 native = native_path.read_text()
 begin = native.index("void RasterizerVulkan::InnerInvalidation(")
 end = native.index("\nbool RasterizerVulkan::OnCPUWrite(", begin)

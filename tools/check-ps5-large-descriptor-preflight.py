@@ -61,7 +61,7 @@ assert 'descriptor_buffer_ring.PreflightCapacity(' in late[0]
 assert late[0].index('descriptor_buffer_ring.PreflightCapacity(') < late[0].rindex(
     'guest_descriptor_queue.PreflightExactGuestDraw(')
 # The versioned native source also keeps the last check before both mutexes.
-native = (root / 'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+native = (root / 'vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp').read_text()
 native_draw = native.split('void RasterizerVulkan::PrepareDraw(', 1)[1].split(
     'void RasterizerVulkan::Draw(', 1)[0]
 assert native_draw.count('guest_descriptor_queue.PreflightExactGuestDraw(') == 3

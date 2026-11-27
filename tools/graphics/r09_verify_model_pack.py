@@ -55,7 +55,7 @@ def policy_for(variant: str) -> ModelPolicy:
 
 
 def check_reference_manifest() -> None:
-    manifest = ROOT / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_model_manifest.h"
+    manifest = ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/nr_rdna2_model_manifest.h"
     text = manifest.read_text(encoding="utf-8")
     for variant, (count, _, symbol) in REFERENCE.items():
         block = re.search(

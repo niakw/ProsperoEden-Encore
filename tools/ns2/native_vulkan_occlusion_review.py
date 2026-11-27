@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERATOR = ROOT/"tools/prepare-vulkan-port.py"
-OWNER = ROOT/"vendor/encore-active/eden-vulkan/vulkan_query_cache.cpp"
+OWNER = ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_query_cache.cpp"
 TAG = "P2/P4 bounded native occlusion query bank lifetime"
 
 def strip_reviewed_close(source: str) -> str:

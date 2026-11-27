@@ -45,8 +45,8 @@ for stmt in tree.body:
         templates.append(stmt.value.value)
 assert len(templates)==1
 template=templates[0]
-RENDER=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_renderer.cpp").read_text()
-PRESENT=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_present_manager.cpp").read_text()
+RENDER=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_renderer.cpp").read_text()
+PRESENT=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_manager.cpp").read_text()
 def native(text,start):
     assert text.count(start)==1,start
     begin=text.index(start)

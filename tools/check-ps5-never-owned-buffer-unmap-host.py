@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-active=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+active=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 bridge=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp").read_text()
 start="void RasterizerVulkan::UnmapMemory("
 end="void RasterizerVulkan::ModifyGPUMemory("

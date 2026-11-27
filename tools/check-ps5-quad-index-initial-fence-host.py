@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-cost = (root / "vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp").read_text()
+cost = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache_cost.cpp").read_text()
 upstream = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_buffer_cache.cpp").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 

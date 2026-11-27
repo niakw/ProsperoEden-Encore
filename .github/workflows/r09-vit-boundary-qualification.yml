@@ -35,17 +35,17 @@ jobs:
           trap 'rm -rf "$stage"' EXIT
           mkdir -p "$stage/headless" "$stage/extras/graphics" \
             "$stage/tools/graphics" \
-            "$stage/vendor/encore-active/eden-vulkan/include"
+            "$stage/vendor/encore-active/eden/src"
           cp headless/*.h "$stage/headless/"
           cp extras/graphics/*.h "$stage/extras/graphics/"
-          cp -R vendor/encore-active/eden-vulkan/include/. \
-            "$stage/vendor/encore-active/eden-vulkan/include/"
+          cp -R vendor/encore-active/eden/src/. \
+            "$stage/vendor/encore-active/eden/src/"
           cp tools/graphics/r09_private_model_import.cpp \
             tools/graphics/r09_authentic_preview_png.py \
             "$stage/tools/graphics/"
           g++ -std=c++20 -O0 -Wall -Wextra -Werror \
             -I"$stage/headless" -I"$stage/extras/graphics" \
-            -I"$stage/vendor/encore-active/eden-vulkan/include" \
+            -I"$stage/vendor/encore-active/eden/src" \
             "$stage/tools/graphics/r09_private_model_import.cpp" \
             -o /tmp/r09-private-import-public
           set +e
@@ -113,7 +113,7 @@ jobs:
               fi
               "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -UNDEBUG \
                 -fsanitize=undefined -fno-sanitize-recover=all \
-                -Ivendor/encore-active/eden-vulkan/include -Iextras/graphics -Iheadless \
+                -Ivendor/encore-active/eden/src -Iextras/graphics -Iheadless \
                 "$source" \
                 -o ".build-r09-boundary/${unit}-$cxx"
               if [[ "$unit" == test_rdna2_nr_bottleneck_route_policy || \
@@ -139,7 +139,7 @@ jobs:
         run: |
           set -euo pipefail
           clang++ -std=c++20 -O1 -Wall -Wextra -Werror \
-            -Ivendor/encore-active/eden-vulkan/include \
+            -Ivendor/encore-active/eden/src \
             -Iextras/graphics \
             tools/graphics/r09_real_original_preflight.cpp \
             -o .build-r09-boundary/r09_real_original_preflight
@@ -150,7 +150,7 @@ jobs:
             tools/graphics/r09_real_original_preflight.cpp \
             extras/graphics/*.h \
             extras/graphics/fixtures/r09_nr_original_1920x1080.txt \
-            vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_*.h
+            vendor/encore-active/eden/src/video_core/renderer_vulkan/nr_rdna2_*.h
       - name: Preserve public-only CPU preflight source headers
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2 / Node 24
         with:
@@ -224,31 +224,31 @@ jobs:
             echo "R09 Mesa ICD path not listed by package; testing available Vulkan drivers"
           fi
           glslangValidator -V --target-env vulkan1.1 -S comp \
-            vendor/encore-active/eden-vulkan/r09_rdna2_nr/texture_proxy_rdna2.comp \
+            vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/texture_proxy_rdna2.comp \
             -o .build-r09-gpu/texture_proxy.spv
           # Test the production first-frame 16-channel FP16 encoder, after
           # real texture sampling, with a separate CPU pixel-level oracle.
           glslangValidator -V --target-env vulkan1.1 -S comp \
-            vendor/encore-active/eden-vulkan/r09_rdna2_nr/proxy_features_rdna2.comp \
+            vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/proxy_features_rdna2.comp \
             -o .build-r09-gpu/proxy_features.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/proxy_features.spv
           # The actual learned 16->32 feature projection is exercised on
           # tiny matrices with synthetic one-hot FP16 weights, not as a
           # substitute for an authentic Original/Compact inference.
           glslangValidator -V --target-env vulkan1.1 -S comp \
-            vendor/encore-active/eden-vulkan/r09_rdna2_nr/image_feature_rdna2.comp \
+            vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/image_feature_rdna2.comp \
             -o .build-r09-gpu/image_feature.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/image_feature.spv
           glslangValidator -V --target-env vulkan1.1 -S comp \
-            vendor/encore-active/eden-vulkan/r09_rdna2_nr/nohistory_compose_rdna2.comp \
+            vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/nohistory_compose_rdna2.comp \
             -o .build-r09-gpu/nohistory_compose.spv
           glslangValidator -V --target-env vulkan1.1 -S comp \
-            vendor/encore-active/eden-vulkan/r09_rdna2_nr/nohistory_present_rdna2.comp \
+            vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/nohistory_present_rdna2.comp \
             -o .build-r09-gpu/nohistory_present.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/texture_proxy.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/nohistory_compose.spv
           glslangValidator -V --target-env vulkan1.1 -S comp \
-            vendor/encore-active/eden-vulkan/r09_rdna2_nr/temporal_compose_rdna2.comp \
+            vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/temporal_compose_rdna2.comp \
             -o .build-r09-gpu/temporal_compose.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/temporal_compose.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/nohistory_present.spv
@@ -256,12 +256,12 @@ jobs:
           # packed E4M3FN and pre-quantization FP16 RAW, with an independent
           # identity-matrix CPU oracle. No extracted/proprietary weights.
           glslangValidator -V --target-env vulkan1.1 -S comp \
-            vendor/encore-active/eden-vulkan/r09_rdna2_nr/fswin_dense_rdna2.comp \
+            vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/fswin_dense_rdna2.comp \
             -o .build-r09-gpu/fswin_dense.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/fswin_dense.spv
           g++ -std=c++20 -O2 -Wall -Wextra -Werror \
             -Iheadless \
-            -Ivendor/encore-active/eden-vulkan/include \
+            -Ivendor/encore-active/eden/src \
             -Iextras/graphics \
             tools/graphics/r09_vulkan_fswin_smoke.cpp -lvulkan \
             -o .build-r09-gpu/r09_vulkan_fswin_smoke
@@ -297,7 +297,7 @@ jobs:
           # Validate the fourth learned FP16 channel and actual next-history
           # on the same Vulkan compute stack, twice: history reset/valid.
           glslangValidator -V --target-env vulkan1.1 -S comp \
-            vendor/encore-active/eden-vulkan/r09_rdna2_nr/temporal_compose_rdna2.comp \
+            vendor/encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/temporal_compose_rdna2.comp \
             -o .build-r09-gpu/temporal_compose.spv
           spirv-val --target-env vulkan1.1 .build-r09-gpu/temporal_compose.spv
           g++ -std=c++20 -O2 -Wall -Wextra -Werror \
@@ -339,8 +339,8 @@ jobs:
           # may be reproduced locally with an authentic private user pack.
           # No private binary or learned weight tensor is ever uploaded.
           mkdir -p .build-r09-gpu/lavapipe-kit/video_core/renderer_vulkan
-          cp vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_model_{manifest,pack,file}.h \
-             vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_tile_layout.h \
+          cp vendor/encore-active/eden/src/video_core/renderer_vulkan/nr_rdna2_model_{manifest,pack,file}.h \
+             vendor/encore-active/eden/src/video_core/renderer_vulkan/nr_rdna2_tile_layout.h \
              .build-r09-gpu/lavapipe-kit/video_core/renderer_vulkan/
           cp .build-r09-gpu/fswin_dense.spv .build-r09-gpu/lavapipe-kit/
           ldd "$driver" > .build-r09-gpu/lavapipe-kit/lavapipe-dependencies.txt

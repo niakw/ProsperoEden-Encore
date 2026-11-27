@@ -51,5 +51,5 @@ if __name__=="__main__":
     p.add_argument("--vendor",type=Path,required=True)
     p.add_argument("--header",type=Path)
     args=p.parse_args()
-    run(args.vendor/"encore-active/eden-vulkan/r09_rdna2_nr/"
+    run(args.vendor/"encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/"
         "decoder_fp32_to_fp16_rdna2.comp",args.header)

@@ -3,7 +3,7 @@
 from pathlib import Path
 import shutil, subprocess, tempfile
 root=Path(__file__).resolve().parents[1]
-src=(root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+src=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()
 a=src.index("void TextureCache<P>::TickFrame() {")
 b=src.index("    sentenced_images.Tick();",a)

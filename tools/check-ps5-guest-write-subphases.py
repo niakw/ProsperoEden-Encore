@@ -4,7 +4,7 @@ from pathlib import Path
 import os,subprocess,sys,tempfile
 
 root=Path(__file__).resolve().parents[1]
-active=(root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+active=(root/'vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp').read_text()
 generator=(root/'tools/prepare-vulkan-port.py').read_text()
 perf=(root/'headless/performance.h').read_text()
 report=(root/'headless/performance.cpp').read_text()

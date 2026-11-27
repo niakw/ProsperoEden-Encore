@@ -12,7 +12,7 @@ def main():
     ap.add_argument('--vendor',type=Path,required=True)
     ap.add_argument('--header',type=Path)
     args=ap.parse_args()
-    source=(args.vendor/'encore-active/eden-vulkan/r09_rdna2_nr/vit_boundary_repack_rdna2.comp')
+    source=(args.vendor/'encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/vit_boundary_repack_rdna2.comp')
     src=source.read_text()
     for unsafe in ('cooperative_matrix','GL_EXT_shader_8bit_storage','shader_float8','GL_EXT_shader_explicit_arithmetic_types_float16'):
         assert unsafe not in src,unsafe

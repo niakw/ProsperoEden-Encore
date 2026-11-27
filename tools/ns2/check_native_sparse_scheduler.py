@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 ROOT=Path(__file__).resolve().parents[2]
-V=ROOT/"vendor/encore-active/eden-vulkan"
+V=ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan"
 cpp=(V/"vulkan_scheduler.cpp").read_text()
 hdr=(V/"include/video_core/renderer_vulkan/vk_scheduler.h").read_text()
 a="// NS2 N72 BEGIN: serialized sparse Vulkan page submission"

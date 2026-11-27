@@ -7,7 +7,7 @@ rendering, link the console app, or authorize the runtime release flags.
 from pathlib import Path
 import os, subprocess, shutil, sys, tempfile
 r=Path(__file__).resolve().parents[2];deps=r/'vendor/sources/eden-cpm';sdk15=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk');sdk26=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk');env=os.environ.copy();env['SDKROOT']=str(sdk15)
-inc=['vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src_wait64','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src_gpu','vendor/encore-active/eden/src_as','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/srcpere','vendor/encore-active/eden/src','vendor/sources/eden/src','vendor/sources/fmt/include','vendor/sources/eden/src/dynarmic/src']
+inc=['vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/sources/eden/src','vendor/sources/fmt/include','vendor/sources/eden/src/dynarmic/src']
 # Match the one maintained IOCTL header staged into the native CMake include
 # overlay. The pinned Eden header lacks the InputCapacity template signature.
 ioctl=r/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
@@ -42,8 +42,8 @@ if sys.platform=='darwin' and sdk26.is_dir():
 flags+=['-I'+str(i) for i in inc if i.is_dir()]
 assert flags[0] and all((r/i).exists() for i in [
     'vendor/encore-active/eden/src',
-    'vendor/encore-active/eden/src_as',
-    'vendor/encore-active/eden/src_gpu',
+    'vendor/encore-active/eden/src',
+    'vendor/encore-active/eden/src',
     'vendor/encore-active/eden/src',
     'vendor/encore-active/eden/src',
     'vendor/encore-active/eden/src',
@@ -100,7 +100,7 @@ for forbidden in ('EDEN_NS2_GPU_SESSION_EXPERIMENTAL','EDEN_NS2_NVDRV_EXPERIMENT
                   'EDEN_FINAL_RELEASE_PROFILE'):
     assert forbidden not in cmake
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in cmake
-sources=['vendor/encore-active/eden/src_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp','vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp','vendor/encore-active/eden/src/video_core/engines/puller.cpp','vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp','vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp','vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp']
+sources=['vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp','vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp','vendor/encore-active/eden/src/video_core/engines/puller.cpp','vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp','vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp','vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp']
 def run(p):
     owner=r/p
     assert owner.is_file(),p

@@ -49,5 +49,5 @@ if __name__=="__main__":
     p.add_argument("--vendor",type=Path,required=True)
     p.add_argument("--header",type=Path)
     a=p.parse_args()
-    validate(a.vendor/"encore-active/eden-vulkan/r09_rdna2_nr/fswin_qkv_rdna2.comp",
+    validate(a.vendor/"encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/fswin_qkv_rdna2.comp",
              a.header)

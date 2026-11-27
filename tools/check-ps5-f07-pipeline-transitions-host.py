@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+header = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 begin = "    [[nodiscard]] GraphicsPipeline* Next(const GraphicsPipelineCacheKey& current_key) noexcept {"
 end = "\n\n    [[nodiscard]] bool IsBuilt() const noexcept {"
@@ -25,7 +25,7 @@ assert "transition_source.count(transition_next_old) != 1" in generator
 assert "transition_source.replace(transition_next_old, transition_next_new, 1)" in generator
 assert "transition_member_old" in generator and "transition_member_new" in generator
 assert "std::vector<GraphicsPipeline*> transitions;" in header
-source = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+source = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 append_begin = "void GraphicsPipeline::AddTransition(GraphicsPipeline* transition) {"
 append_end = "\n\n#ifdef PS5_NATIVE\nvoid GraphicsPipeline::PreflightDescriptorScratch() {"
 assert source.count(append_begin) == source.count(append_end) == 1

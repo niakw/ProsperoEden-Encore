@@ -10,8 +10,8 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-raster = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-cache = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+raster = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
+cache = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 oracle = (root / "tools/prepare-vulkan-port.py").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 begin = raster.index("bool RasterizerVulkan::OnCPUWrite(DAddr addr, u64 size) {")

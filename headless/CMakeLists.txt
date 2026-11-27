@@ -1354,7 +1354,7 @@ if(PS5_NATIVE)
     set(EDEN_R23_FRAG_IR
         "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/ir_opt")
     set(EDEN_R23_FRAG_VK
-        "${PORT_ROOT}/vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp")
     if(NOT EXISTS "${EDEN_R23_FRAG_IR}/passes.h"
        OR NOT EXISTS "${EDEN_R23_FRAG_IR}/vendor_workaround_pass.cpp"
        OR NOT EXISTS "${EDEN_R23_FRAG_VK}")
@@ -1414,7 +1414,7 @@ if(PS5_NATIVE)
             "include/video_core/renderer_vulkan/vk_graphics_pipeline.h"
             "include/video_core/renderer_vulkan/vk_rasterizer.h")
         if(NOT EXISTS
-           "${PORT_ROOT}/vendor/encore-active/eden-vulkan/${eden_r23_vulkan_file}")
+           "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan/${eden_r23_vulkan_file}")
             message(FATAL_ERROR "R23 #35 missing maintained Vulkan owner: ${eden_r23_vulkan_file}")
         endif()
     endforeach()
@@ -1652,7 +1652,7 @@ endif()
 # precede the pinned original for all three consumers, without another TU.
 if(PS5_NATIVE)
     set(EDEN_R23_TEXEL_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache.h")
     set(EDEN_R23_TEXEL_INCLUDE "${PORT_BUILD_DIR}/r23-texel/include")
     if(NOT EXISTS "${EDEN_R23_TEXEL_HEADER}")
         message(FATAL_ERROR "R23 #49 maintained Vulkan texel buffer header missing")
@@ -2764,7 +2764,7 @@ endif()
 # The maintained vendor owner rejects truncated driver cache files without
 # modifying the successful cache read/write path or requiring a research flag.
 if(PS5_NATIVE AND EDEN_PS5_VULKAN)
-    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp")
+    if(NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp")
         message(FATAL_ERROR "N56 native Vulkan vendor owner missing")
     endif()
     target_compile_definitions(video_core PRIVATE EDEN_NS2_PIPELINE_CACHE_GUARD=1)
@@ -2804,8 +2804,8 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
 endif()
 
 # R4 native production: compile the actual N60 ASTC TextureCache
-# implementation (the source used by the PS5 renderer), NOT the shadowed
-# eden-vulkan/vulkan-cache copy. Explicit opt-in, default OFF on all builds.
+# implementation (the source used by the PS5 renderer), NOT the retired historical
+# Vulkan-cache shadow copy. Explicit opt-in, default OFF on all builds.
 if(PS5_NATIVE AND EDEN_PS5_VULKAN AND EDEN_REVIEWED_DUAL_NPDM)
     if(NOT PS5_NATIVE OR NOT EDEN_PS5_VULKAN)
         message(FATAL_ERROR "R4 volume-slice research requires PS5 native Vulkan")
@@ -3613,7 +3613,7 @@ set(EDEN_SHARED_NS2_WAIT64 OFF)
 if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)
     set(EDEN_SHARED_NS2_WAIT64 ON)
     set(EDEN_NS2_WAIT64_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden/src_wait64")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_ns2_wait_header IN ITEMS
             "core/hle/kernel/k_address_arbiter.h"
             "core/hle/kernel/k_process.h"
@@ -3977,7 +3977,7 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_nvdrv_sources}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_ROOT}")
     # The one native NVDRV owner handles NS1 Maxwell and NS2 Ampere channels.
-    set(EDEN_NS2_NVDRV_AS_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src_as")
+    set(EDEN_NS2_NVDRV_AS_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NS2_NVDRV_AS_SOURCE
         "${EDEN_NS2_NVDRV_AS_ROOT}/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp")
     if(NOT EXISTS "${EDEN_NS2_NVDRV_AS_SOURCE}" OR
@@ -3993,7 +3993,7 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
         "hle/service/nvdrv/devices/nvhost_as_gpu.cpp")
     list(APPEND eden_ns2_nvdrv_sources "${EDEN_NS2_NVDRV_AS_SOURCE}")
     # Native GPFIFO/CMDDMA adapter: never replace the shipping source owner.
-    set(EDEN_NS2_NVDRV_GPU_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src_gpu")
+    set(EDEN_NS2_NVDRV_GPU_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NS2_NVDRV_GPU_SOURCE
         "${EDEN_NS2_NVDRV_GPU_ROOT}/core/hle/service/nvdrv/devices/nvhost_gpu.cpp")
     if(NOT EXISTS "${EDEN_NS2_NVDRV_GPU_SOURCE}" OR
@@ -4348,7 +4348,7 @@ if(EDEN_SHARED_NS2_AMPERE_CORE)
     target_include_directories(shader_recompiler BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
     target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
-    set(EDEN_NS2_AMPERE_ROOT "${PORT_ROOT}/vendor/encore-active/eden/srcpere")
+    set(EDEN_NS2_AMPERE_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NS2_AMPERE_PROBE
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")
     foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h
@@ -4426,14 +4426,14 @@ if(EDEN_SHARED_NS2_AMPERE_CORE)
 endif()
 if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     set(EDEN_NS2_VULKAN_SHADER_BRIDGE
-        "${PORT_ROOT}/vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp")
     if(NOT EXISTS "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")
         message(FATAL_ERROR "Missing NS2 renderer-side SPIR-V compiler")
     endif()
     set(EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE
-        "${PORT_ROOT}/vendor/encore-active/eden/srcpere/video_core/ns2_shader_spirv_compile.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/ns2_shader_spirv_compile.cpp")
     if(NOT EXISTS "${EDEN_NS2_NATIVE_GPU_SPIRV_CAPTURE}" OR
-       NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden/srcpere/video_core/ns2_shader_spirv_compile.h")
+       NOT EXISTS "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/ns2_shader_spirv_compile.h")
         message(FATAL_ERROR "Missing verified NS2 GMMU-to-SPIR-V pipeline entrypoint")
     endif()
     # P2.3: SPIR-V indirect CBUF dispatch uses exactly the reflected native
@@ -4559,7 +4559,7 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     set(EDEN_NATIVE_TASK_MESH_ROOT
         "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_NATIVE_TASK_MESH_VULKAN_HEADERS
-        "${PORT_ROOT}/vendor/encore-active/eden-vulkan/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_mesh_header IN ITEMS
         shader_recompiler/backend/glasm/emit_glasm_instructions.h
         shader_recompiler/backend/glsl/emit_glsl_instructions.h
@@ -4959,7 +4959,7 @@ endif()
 # native PS5 core build, not an experimental alternative runtime.
 if(PS5_NATIVE)
     set(EDEN_NS2_AM_STRUCTURE_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden/src_structure")
+        "${PORT_ROOT}/vendor/encore-active/eden/src")
     get_target_property(eden_ns2_am_structure_sources core SOURCES)
     foreach(eden_ns2_am_name IN ITEMS
             application_accessor

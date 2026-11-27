@@ -9,7 +9,7 @@ import subprocess
 import hashlib
 import json
 
-OWNER = Path("vendor/encore-active/eden-vulkan")
+OWNER = Path("vendor/encore-active/eden/src/video_core/renderer_vulkan")
 ASTC = Path("vendor/encore-active/eden/src/video_core/renderer_vulkan")
 BASELINE = {
     "vk_texture_cache_cost.cpp": ("b2b08b577c3a3f9a4aeda10beb208a1b6d0a07e6",

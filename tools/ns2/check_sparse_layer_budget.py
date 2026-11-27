@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess,tempfile
 ROOT=Path(__file__).resolve().parents[2]
 N58=(ROOT/"vendor/encore-active/eden/src/video_core/vulkan_common/vulkan_device.h").read_text()
-N62=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_memory_allocator.cpp").read_text()
+N62=(ROOT/"vendor/encore-active/eden/src/video_core/vulkan_common/vulkan_memory_allocator.cpp").read_text()
 HEADER=ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/ns2_sparse_layer_budget.h"
 assert "sparseResidencyImage2D" in N58
 assert "VMA_ALLOCATION_CREATE_WITHIN_BUDGET_BIT" in N62

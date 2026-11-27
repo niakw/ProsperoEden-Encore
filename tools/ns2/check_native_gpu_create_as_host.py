@@ -11,7 +11,7 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 VENDOR=ROOT/"vendor"
 source=(VENDOR/"encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp").read_text()
-as_source=(VENDOR/"encore-active/eden/src_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp").read_text()
+as_source=(VENDOR/"encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp").read_text()
 def function(src, begin):
     assert src.count(begin)==1,begin
     return begin+src.split(begin,1)[1].split("\n}",1)[0]+"\n}"

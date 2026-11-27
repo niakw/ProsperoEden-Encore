@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-maintained = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text(encoding="utf-8")
+maintained = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text(encoding="utf-8")
 begin = maintained.index("void TextureCache<P>::RunGarbageCollector() {")
 end = maintained.index("\ntemplate <class P>", begin)
 gc = maintained[begin:end]
@@ -83,7 +83,7 @@ assert "if (!dirty || !image.aliased_images.empty()" in gc
 assert "image.HasScaled() || image.info.num_samples != 1" not in gc
 assert "Scaled textures use the SAME Image::DownloadMemory path" in gc
 assert "image.HasScaled() || image.info.num_samples != 1" not in (
-    root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h"
+    root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h"
 ).read_text()
 
 

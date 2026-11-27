@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-src=(ROOT/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+src=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp").read_text()
 generator=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 fast=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 pre=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()

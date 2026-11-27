@@ -14,8 +14,8 @@ p=argparse.ArgumentParser()
 p.add_argument("--vendor-root",type=Path,default=root/"vendor")
 args=p.parse_args()
 vendor=args.vendor_root
-sdk=vendor/"encore-active/amd-fsr31"
-backend=vendor/"encore-active/eden-vulkan"
+sdk=vendor/"encore-active/eden/externals/amd-fsr31"
+backend=vendor/"encore-active/eden/src/video_core/renderer_vulkan"
 cmake=(root/"headless/vulkan.cmake").read_text()
 generator=(root/"tools/graphics/build-fsr31-amd-shaders.py").read_text()
 upscaler=(backend/"fsr31_temporal_upscaler.cpp").read_text()

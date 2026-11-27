@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-src = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+src = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 gen = (root / "tools/prepare-vulkan-port.py").read_text()
 begin = "        // The worker must verify validity on EVERY draw:"
 end = "\n        cmdbuf.PushConstants"

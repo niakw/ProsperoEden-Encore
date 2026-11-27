@@ -3,7 +3,7 @@
 from pathlib import Path
 import shutil, subprocess, tempfile, ast
 root=Path(__file__).resolve().parents[1]
-native=(root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+native=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 pinned=(root/"vendor/sources/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 backports=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 gen=(root/"tools/prepare-vulkan-port.py").read_text()

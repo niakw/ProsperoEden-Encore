@@ -63,7 +63,7 @@ with tempfile.TemporaryDirectory(prefix='encore-ampere-selector-') as tmp:
         assert result.returncode==0 and 'SHARED_AMPERE='+expected in result.stdout,(result.stdout,result.stderr)
 print('P0_2_UNIFIED_AMPERE_SELECTOR_PASS ps5_npdm_vulkan=ON host=OFF')
 
-ampere=ROOT/"vendor/encore-active/eden/srcpere"
+ampere=ROOT/"vendor/encore-active/eden/src"
 files=(
     "shader_recompiler/frontend/ampere/probe.cpp",
     "shader_recompiler/frontend/ampere/lower_bridge.cpp",
@@ -82,7 +82,7 @@ deps=ROOT/"vendor/sources/eden-cpm"
 # but may not shadow the selected NS2 shader graph for these native TUs.
 includes=[ROOT/"vendor/encore-active/eden/src",
           ROOT/"vendor/sources/eden/src",ampere,deps/"fmt/12.1.0/include",
-          ROOT/"vendor/encore-active/eden/src_gpu",
+          ROOT/"vendor/encore-active/eden/src",
           ROOT/"vendor/encore-active/eden/src",
           ROOT/"vendor/encore-active/eden/src",
           ROOT/"vendor/encore-active/eden/src"]

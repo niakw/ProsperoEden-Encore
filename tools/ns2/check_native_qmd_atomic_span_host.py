@@ -10,7 +10,7 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 # Prove that the admitted masked IR flows through the real renderer owner
 # and its emitted SPIR-V index, rather than living only in this host test.
-ampere=ROOT/'vendor/encore-active/eden/srcpere'
+ampere=ROOT/'vendor/encore-active/eden/src'
 bridge=(ampere/'shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp').read_text()
 gpu_owner=(ampere/'video_core/ns2_shader_spirv_compile.cpp').read_text()
 atomic_owner=(ampere/'shader_recompiler/frontend/ampere/native_atomic_span.h').read_text()
@@ -39,7 +39,7 @@ srcs=[ROOT/'tools/ns2/test_native_qmd_atomic_span.cpp'] + [
     ir/(name+'.cpp') for name in ('basic_block','microinstruction','opcodes','value')]
 fmt=ROOT/'vendor/sources/fmt/include'
 boost=ROOT/'vendor/sources/eden-cpm/boost/boost-1.90.0/libs'
-includes=[fmt,ROOT/'vendor/encore-active/eden/srcpere',
+includes=[fmt,ROOT/'vendor/encore-active/eden/src',
           ROOT/'vendor/encore-active/eden/src',
           ROOT/'vendor/sources/eden/src',*sorted(boost.glob('*/include'))]
 env=os.environ.copy()

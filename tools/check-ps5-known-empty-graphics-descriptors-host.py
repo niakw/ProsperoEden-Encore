@@ -4,8 +4,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
-header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_update_descriptor.h").read_text()
-gfx=(root/"vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+header=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_update_descriptor.h").read_text()
+gfx=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 fn="    void AcquireKnownEmpty(bool use_descriptor_buffer_) noexcept {"
 assert header.count(fn)==1
 empty=header[header.index(fn):header.index("    template <typename WaitWorker>",header.index(fn))]

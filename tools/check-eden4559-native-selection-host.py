@@ -14,7 +14,7 @@ for marker in (
     'message(FATAL_ERROR "Missing maintained Eden #4559 BlitImageHelper owner")',
 ):
     assert marker in cm,marker
-active=V/"encore-active/eden-vulkan"
+active=V/"encore-active/eden/src/video_core/renderer_vulkan"
 assert (active/"blit_image.cpp").is_file()
 assert (active/"include/video_core/renderer_vulkan/blit_image.h").is_file()
 assert "const std::optional<VkRect2D>& scissor = std::nullopt" in (

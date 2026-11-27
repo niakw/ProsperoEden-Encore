@@ -52,13 +52,13 @@ MAINTAINED_CORE_TARGETS = (
     "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_min_max.cpp",
     # The shared native PS5 SPIR-V graph replaces these three NS1-owned TUs
     # with the NS2/Ampere versions; require the actual compiled owner once.
-    "vendor/encore-active/eden/srcpere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
-    "vendor/encore-active/eden/srcpere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+    "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+    "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
     "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp",
     "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp",
     "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp",
     "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp",
-    "vendor/encore-active/eden/srcpere/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
+    "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
     "vendor/encore-active/eden/src/video_core/engines/fermi_2d_observed.cpp",
     "vendor/encore-active/eden/src/video_core/engines/sw_blitter/blitter.cpp",
     "vendor/encore-active/eden/src/core/hle/kernel/k_condition_variable.cpp",
@@ -73,8 +73,8 @@ MAINTAINED_CORE_TARGETS = (
     # Container TUs must see the same selected native headers as NVDRV.
     "vendor/encore-active/eden/src/core/hle/service/nvdrv/core/container.cpp",
     "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp",
-    "vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp",
-    "vendor/encore-active/eden/src_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+    "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp",
+    "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
 )
 # Native release renderer TUs share the selected CMake ABI header overlay.
 # These use the pinned PS5 compiler's normal warning policy, not an extra

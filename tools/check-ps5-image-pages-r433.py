@@ -7,9 +7,9 @@ import subprocess
 import tempfile
 root = Path(__file__).resolve().parents[1]
 header = (root / "headless/image_pages.h").read_text()
-raster = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+raster = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 active_cache_path = root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h"
-shadow_cache_path = root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h"
+shadow_cache_path = root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h"
 cache = active_cache_path.read_text()
 shadow_cache = shadow_cache_path.read_text()
 cmake = (root / "headless/CMakeLists.txt").read_text()

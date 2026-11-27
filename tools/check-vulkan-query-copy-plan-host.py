@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-source = (ROOT / 'vendor/encore-active/eden-vulkan/vulkan_query_cache.cpp').read_text()
+source = (ROOT / 'vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_query_cache.cpp').read_text()
 start = source.index('void QueryCacheRuntime::SyncValues(')
 method = source[start:source.index('\n} // namespace Vulkan', start)]
 # Preserve the exact preceding implementation as an allocation/locking witness.

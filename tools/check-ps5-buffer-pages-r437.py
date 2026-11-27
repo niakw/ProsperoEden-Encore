@@ -4,7 +4,7 @@ from pathlib import Path
 import shutil, subprocess, tempfile
 root=Path(__file__).resolve().parents[1]
 cm=(root/'headless/CMakeLists.txt').read_text()
-r=(root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+r=(root/'vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp').read_text()
 g=(root/'tools/prepare-vulkan-port.py').read_text()
 source=(root/'vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h').read_text()
 maintained=(root/'vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h').read_text()

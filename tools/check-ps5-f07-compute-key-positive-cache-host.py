@@ -11,8 +11,8 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-src = (root / "vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_text()
-header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_pipeline_cache.h").read_text()
+src = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp").read_text()
+header = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache.h").read_text()
 gen = (root / "tools/prepare-vulkan-port.py").read_text()
 
 begin = "#ifdef PS5_NATIVE\n    // Alternating successful compute shaders need no unordered-map hash"

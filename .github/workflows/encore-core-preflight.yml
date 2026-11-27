@@ -170,7 +170,7 @@ jobs:
               -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden/src \
-              -Ivendor/encore-active/eden/src_as \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden/include \
               -Ivendor/encore-active/eden/src \

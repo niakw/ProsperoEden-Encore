@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 from test_dlss_nr_min_vendor_source_guard import Drift, compact, git, method, require
 
-PATH="encore-active/eden-vulkan/nr_rdna2_frame_session.cpp"
+PATH="encore-active/eden/src/video_core/renderer_vulkan/nr_rdna2_frame_session.cpp"
 
 def guard(native: str) -> None:
     source=compact(native)

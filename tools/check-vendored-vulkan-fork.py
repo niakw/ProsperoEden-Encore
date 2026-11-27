@@ -11,7 +11,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 VENDOR = ROOT / "vendor"
-ACTIVE = VENDOR / "encore-active/eden-vulkan"
+ACTIVE = VENDOR / "encore-active/eden/src/video_core/renderer_vulkan"
 UPSTREAM = VENDOR / "sources/eden"
 
 subprocess.check_call(["python3", "-B", "tools/check-source-tree-layout.py"], cwd=VENDOR)
@@ -23,7 +23,7 @@ root_cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 native_build = (ROOT / "tools/build-headless-native.sh").read_text()
 
 for token in (
-    'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden-vulkan")',
+    'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan")',
     'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")',
 ):
     assert token in vulkan_cmake, ("native Vulkan owner selection drift", token)

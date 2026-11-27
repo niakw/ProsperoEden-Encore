@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 root = Path(__file__).resolve().parents[1]
-base = root / "vendor/encore-active/eden-vulkan"
+base = root / "vendor/encore-active/eden/src/video_core/renderer_vulkan"
 src = (base/"vk_compute_pipeline_cost.cpp").read_text()
 hdr = (base/"include/video_core/renderer_vulkan/vk_compute_pipeline.h").read_text()
 gen = (root/"tools/prepare-vulkan-port.py").read_text()

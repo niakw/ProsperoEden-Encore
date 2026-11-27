@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-AMPERE = ROOT / "vendor/encore-active/eden/srcpere"
+AMPERE = ROOT / "vendor/encore-active/eden/src"
 EDEN = ROOT / "vendor/sources/eden/src"
 PROBE = AMPERE / "shader_recompiler/frontend/ampere/probe.cpp"
 DECODER = AMPERE / "shader_recompiler/frontend/ampere/native_stage_buffer.h"

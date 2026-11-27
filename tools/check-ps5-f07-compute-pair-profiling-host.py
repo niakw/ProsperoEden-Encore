@@ -8,7 +8,7 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 perf = (root / "headless/performance.h").read_text()
 report = (root / "headless/performance.cpp").read_text()
-ras = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+ras = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 phases = ("ComputePairWait", "ComputePairHeld", "ComputeConfigure")
 names = ("compute_pair_wait", "compute_pair_held", "compute_configure")

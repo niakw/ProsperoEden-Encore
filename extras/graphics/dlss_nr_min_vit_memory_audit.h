@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Host-only Vit GPU requested-buffer byte accounting from the exact
 // NrRdna2FrameSession::State::MakeVitBuffers() implementation in pinned
-// vendor/encore-active/eden-vulkan/nr_rdna2_frame_session.cpp.
+// vendor/encore-active/eden/src/video_core/renderer_vulkan/nr_rdna2_frame_session.cpp.
 // NOT a VRAM residency measurement, an allocation guard or a pooling plan.
 // No GPU buffers are created and no runtime behavior is changed.
 #pragma once

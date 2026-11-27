@@ -38,8 +38,8 @@ assert "compute: blocked_callbacks=1 matched_cpu_key=1 wait_sum_ms=9.000 failed_
 assert "key=000000000000abcd waited_ms=9.000 usable=0 cold_cpu_ms=1.000" in out
 assert "totals are NOT" in out and "causality remains unmeasured" in out
 assert "worker_waits=0 malformed_waits=0" in mod.report(["other log"])
-graphics = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
-compute = (root / "vendor/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()
+graphics = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+compute = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline_cost.cpp").read_text()
 perf = (root / "headless/performance.h").read_text()
 for token in ('"graphics", key.Hash(), CanExecuteDraw()', '"compute", diagnostic_cache_key_hash, IsBound()'):
     assert token in graphics + compute

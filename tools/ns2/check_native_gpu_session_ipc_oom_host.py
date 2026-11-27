@@ -144,7 +144,7 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-ipc-resource-") as d:
             argv=[compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                   "-fsanitize=undefined","-fno-sanitize-recover=all",
                   "-I"+str(vendor/"encore-active/eden/src"),
-                  "-I"+str(vendor/"encore-active/eden/src_as"),
+                  "-I"+str(vendor/"encore-active/eden/src"),
                   str(src),"-o",str(exe)]
             build=subprocess.run(argv,capture_output=True,text=True,timeout=60,
                                  env=os.environ.copy())

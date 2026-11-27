@@ -52,7 +52,7 @@ def main():
     p.add_argument("--vendor",type=Path,required=True)
     p.add_argument("--output",type=Path)
     a=p.parse_args()
-    root=a.vendor/"encore-active/eden-vulkan"
+    root=a.vendor/"encore-active/eden/src/video_core/renderer_vulkan"
     compile_one(root,"vit_activation",("source","output_tensor"),4,a.output)
     compile_one(root,"vit_residual",
                 ("source","residual","gains","output_tensor"),6,a.output)

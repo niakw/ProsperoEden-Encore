@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-s = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+s = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 selected = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 for marker in (
     "bool upload_completed = false;",
@@ -424,7 +424,7 @@ print("F07_ACCELERATED_TEXTURE_READ_BOUNDS_PASS pooled_9of16=1 pooled_13of16=1 d
 
 # Extract both real buffer-cache staging wrappers. Compile their native and
 # desktop guards in a minimal C++ model, including short/null allocations.
-buffer_runtime=(root/"vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp").read_text()
+buffer_runtime=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache_cost.cpp").read_text()
 a="StagingBufferRef BufferCacheRuntime::UploadStagingBuffer(size_t size) {"
 b="VkFormat BufferCacheRuntime::TexelBufferFormat("
 assert buffer_runtime.count(a)==buffer_runtime.count(b)==1

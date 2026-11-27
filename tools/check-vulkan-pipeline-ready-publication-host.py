@@ -12,8 +12,8 @@ import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
 FILES=(
-    ROOT/"vendor/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp",
-    ROOT/"vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp",
+    ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline_cost.cpp",
+    ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp",
 )
 FAST=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 FULL=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()

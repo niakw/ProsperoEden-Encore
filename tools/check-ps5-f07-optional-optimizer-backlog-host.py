@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-source = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+source = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 fast = (root / ".github/workflows/encore-core-fast-gate.yml").read_text()
 pre = (root / ".github/workflows/encore-core-preflight.yml").read_text()

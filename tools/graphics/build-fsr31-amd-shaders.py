@@ -2,7 +2,7 @@
 """Compile AMD FidelityFX FSR 3.1.4 compute passes to validated SPIR-V.
 
 Inputs: unmodified MIT-licensed GPU shaders/headers vendored in
-vendor/encore-active/amd-fsr31 (tag v1.1.4, AMD commit c6efa6bf...).
+vendor/encore-active/eden/externals/amd-fsr31 (tag v1.1.4, AMD commit c6efa6bf...).
 Host tool only. Vulkan backend dispatch/source integration is separate.
 """
 from __future__ import annotations

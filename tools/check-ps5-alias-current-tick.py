@@ -34,7 +34,7 @@ with tempfile.TemporaryDirectory(prefix="eden-r321-alias-tick-") as tmp:
     # to the pinned R321 patch, or the valid canonical patch fails this test.
     assert body.index("boost::container::small_vector<const AliasedImage*, 8> aliased_images;") < body.index("if (image.modification_tick == modification_tick)")
     assert body.index("boost::container::small_vector<const AliasedImage*, 8> aliased_images;") < body.index("for (const AliasedImage& aliased")
-    native=(root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+    native=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
     generator=(root/"tools/prepare-vulkan-port.py").read_text()
     assert "F07 skip singleton native alias sort while preserving multi-alias order" in generator
     native_body=native[native.index("void TextureCache<P>::SynchronizeAliases("):]

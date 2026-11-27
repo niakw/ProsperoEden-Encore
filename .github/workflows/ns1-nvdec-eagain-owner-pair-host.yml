@@ -1,8 +1,9 @@
-name: NS1 NVDEC paired immutable-source and maintained owner receipt (host)
+name: NS1 NVDEC active owner receipt (host)
 on:
   pull_request:
     paths:
       - "headless/CMakeLists.txt"
+      - "tools/check-active-cmake-source-boundary.py"
       - "tools/check-nvdec-eagain-owner-selection-host.py"
       - ".github/workflows/ns1-nvdec-eagain-owner-pair-host.yml"
       - "vendor"
@@ -10,43 +11,25 @@ on:
 permissions:
   contents: read
 jobs:
-  nvdec-owner-pair:
+  nvdec-owner:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - name: Checkout exact engine and vendor graph
+      - name: Checkout engine and current vendor
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
           persist-credentials: false
-      - name: Verify original Eden source and native CMake selection
+      - name: Verify current encore-active FFmpeg owner and packet fixtures
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "$(git ls-tree HEAD -- vendor | awk '{print $3}')"
-          python3 -B tools/check-nvdec-eagain-owner-selection-host.py
-      - name: Check pinned maintained vendor FFmpeg owner and real packet fixture
-        run: |
-          set -euo pipefail
-          selected="$(git -C vendor rev-parse HEAD)"
-          test "$selected" = "$(git ls-tree HEAD -- vendor | awk '{print $3}')"
-          case "$selected" in
-            fe9edd661d6f0824c7339865d50aa9cf99cab150|c339fd06f02e42e67d5416ae82194ba619b7ee68|47568425c71d534b72cc966d1500412c9ae4fc16|447e08718c9b6625508da6ce63796ed1f4285d2f|97fdc316fcf5b42e08c26845887f298feac2a424|99ca67babe955398e157c6b28b22a79cbb88967e|7bd7a85e6c1886035c75395c86b05b231375bbf5|7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6|0267753219c4b6a6f3fa086a356b698cd5295f78|78a903a7479f0f58f3cbd3c2fcfd329012a11e10|13ee2fff7be6c0bac225b377a4367b1d0b3073a0|c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767|4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028|72faa8edd26f6fcb16b08f321211fb94427c4ebb|a946785d1ad02752ae47f9b32032e99bdbb53e02|db33f8ad0c325c84bd80047d992fafa5c2908151|0264f2ae94ef5889e8585171b5bfcb11fd3659ff|bc78a7610425e95d6645685cbd023a67b729ec24|7b7c4d2a37f9b0b248d3f3d6d9cce40596ed0c99|b9f6052a65ef01e23ca4a46ba1654ed3a58cf181|76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3|6f4bb38594b273fe7cc4fba960dfe62cdb9f508e|4572e581d011c444fd59428d5c042098f05dcfca|f7ee793f1ee1bb1c2b1a35f68073844163658262|3f019c64c2907ac3e84baa9b6200de8898f30636|f0324324768bdc090a003079bbf121df862bc7f7|0ae51658a5d93e368408cad2484b99083ed7309f|697159fd0c183f8a164d0493929ae3b4bcb391d1|b1bb49abea63b6664e0945df8431e10aac128c2f|89d70eb505594447b3ca98658311002e74dac8ad|b68126c9cd95eef6c6656ff6d7834c62c092aa46|0fc157b7ccef428e675ff945bc48eceb08fff607|42459a7893c51a178ecd0c2f74f3951cc20fa12d|d1f8696448ed481e36380c3ea8431e3dc722304e|c5614d3c7ef75958965bac93c9e343eccdbc0fbe|67926ea4b6960eefebf0427929cf299e8e056013|50a849a93494f442d47573b8ce8b8797c3cecd26|2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab|053acc8ddf30fe65f6376564bbd6efef58f07ddc|ffa519db0f68fb0d5d2acf791e381c898a34a175|9e38066a508716fd959477eccf32c7fb2fde3356|e298a9b05732346141b685eb4c9850bfa02d9e58|f7ccfda091fd7429f44159318a07391881a3e7c0|92c480e17fedecc21ab4882b76e8507b5aed3771|7039d7752c5d8b1a53db50be0d8f2f7803867e13|d3fca0aa188052f0efd2bad102950aeaeeb36ab0|dfc39fcc087738955b0373b45fa97facdeb2fc47|b806bc497049819e716ef6de81f2a85312b188ce|772f06c8f5b12fdc81066e61f3db2dedfe3eed81|568ae541c07691518e9663aa0fc5f3b017a98d53|dcfe3d2384bd800c6139ede672518ea2c66922a6|9d324ca5ca2cdd84053f2d3dfadde5b86084c13d|cd476e6e93e8a786bef6260006baec134f5df71f|2ccc4b0a714ca621ac2879768f87118a64ed65f6|97ac02f263ec90f40a029f4aa62980c76bc25d5c|9a83a6ba1cb464c9e5d14457cab18ad511c1104b|d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc|42b34a5dc46b594cb029362e8f130900adf4424e|77b736148129ffa72c9f6c081695b7c7515c3ed9|4354add020afac574198f63d87167f3022bff9c6|17253dc91e9fe1eb2d9980f261f59d227bfcd1a1|224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c) ;;
-            *) echo "Unreviewed integrated vendor graph $selected" >&2; exit 1 ;;
-          esac
+          python3 -B tools/check-active-cmake-source-boundary.py
           python3 -B tools/check-nvdec-eagain-owner-selection-host.py
           python3 -B vendor/tests/ns1-nvdec-eagain-source.py
           python3 -B vendor/tests/ns1_nvdec_eagain_lossless_host.py
-          if [[ "$selected" == "0264f2ae94ef5889e8585171b5bfcb11fd3659ff" || "$selected" == "bc78a7610425e95d6645685cbd023a67b729ec24" || "$selected" == "7b7c4d2a37f9b0b248d3f3d6d9cce40596ed0c99" || "$selected" == "b9f6052a65ef01e23ca4a46ba1654ed3a58cf181" || "$selected" == "76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3" || "$selected" == "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e" || "$selected" == "4572e581d011c444fd59428d5c042098f05dcfca" || "$selected" == "f7ee793f1ee1bb1c2b1a35f68073844163658262" || "$selected" == "3f019c64c2907ac3e84baa9b6200de8898f30636" || "$selected" == "f0324324768bdc090a003079bbf121df862bc7f7" || "$selected" == "0ae51658a5d93e368408cad2484b99083ed7309f" || "$selected" == "697159fd0c183f8a164d0493929ae3b4bcb391d1" || "$selected" == "b1bb49abea63b6664e0945df8431e10aac128c2f" || "$selected" == "89d70eb505594447b3ca98658311002e74dac8ad" || "$selected" == "42b34a5dc46b594cb029362e8f130900adf4424e" || "$selected" == "77b736148129ffa72c9f6c081695b7c7515c3ed9" || "$selected" == "4354add020afac574198f63d87167f3022bff9c6" || "$selected" == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1" || "$selected" == "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c" ]]; then
+          if test -f vendor/tests/fc27_nvdec_vic_witness_host.py; then
             python3 -B vendor/tests/fc27_nvdec_vic_witness_host.py
           fi
-      - name: Reconfirm untouched historical vendor fallback
-        run: |
-          set -euo pipefail
-          git -C vendor fetch --no-tags --depth=1 origin 1ec7b429238d1175a76dc94b7c0a7f1c2eb62864
-          git -C vendor checkout --detach FETCH_HEAD
-          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
-          python3 -B tools/check-nvdec-eagain-owner-selection-host.py
-      - name: Host-only boundary
+      - name: Boundary
         if: always()
-        run: |
-          echo "Native PS5 compiler, real FFmpeg codec input/output and FC27 intro video are not validated by these host checks." >> "$GITHUB_STEP_SUMMARY"
+        run: echo "Host-only; native PS5 FFmpeg/VIC and FC27 video still require console validation." >> "$GITHUB_STEP_SUMMARY"

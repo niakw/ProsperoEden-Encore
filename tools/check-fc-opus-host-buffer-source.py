@@ -16,17 +16,17 @@ checked=subprocess.check_output(["git","-C",str(VENDOR),"rev-parse","HEAD"],text
 assert selected==checked and selected in PINS,(selected,checked)
 
 owners={
- "encore-active/eden-core/src/audio_core/opus/decoder.cpp":
+ "encore-active/eden/src/audio_core/opus/decoder.cpp":
      "db2d133f00f85bf287fa9852061552ce1055a65c",
- "encore-active/eden-core/src/audio_core/opus/hardware_opus.cpp":
+ "encore-active/eden/src/audio_core/opus/hardware_opus.cpp":
      "bc65602591b35bb1c3e683953c35152bc5ac5f6e",
 }
 for path,expected in owners.items():
  actual=subprocess.check_output(["git","-C",str(VENDOR),"hash-object",path],text=True).strip()
  assert actual==expected,(path,expected,actual)
 
-decoder=(VENDOR/"encore-active/eden-core/src/audio_core/opus/decoder.cpp").read_text()
-hardware=(VENDOR/"encore-active/eden-core/src/audio_core/opus/hardware_opus.cpp").read_text()
+decoder=(VENDOR/"encore-active/eden/src/audio_core/opus/decoder.cpp").read_text()
+hardware=(VENDOR/"encore-active/eden/src/audio_core/opus/hardware_opus.cpp").read_text()
 assert decoder.count("std::max<u64>(transfer_memory_size, host_work_size)") == 2
 assert decoder.count("work_size + buffer_size") == 2
 assert decoder.count("* sizeof(s16)") >= 2

@@ -6,8 +6,8 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-native = (root / "vendor/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_native.cpp").read_text()
-host = (root / "vendor/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_host.cpp").read_text()
+native = (root / "vendor/encore-active/eden/src/dynarmic/backend/x64/emit_x64_native.cpp").read_text()
+host = (root / "vendor/encore-active/eden/src/dynarmic/backend/x64/emit_x64_host.cpp").read_text()
 key = "void EmitX64::InvalidateBasicBlocks("
 assert native.count(key) == host.count(key) == 1
 def method(source):

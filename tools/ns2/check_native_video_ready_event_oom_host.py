@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-source=(ROOT/"vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp").read_text()
+source=(ROOT/"vendor/encore-active/eden/src/core/hle/service/am/service/graphics_video_decoder_session.cpp").read_text()
 start="void IGraphicsVideoDecoderSession::GetEvent("
 end="\nbool IGraphicsVideoDecoderSession::EnsureSyncpoint("
 assert source.count(start)==source.count(end)==1

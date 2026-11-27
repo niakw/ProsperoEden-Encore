@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-SHADER=ROOT/'vendor/encore-active/ns2-runtime/ampere'
+SHADER=ROOT/'vendor/encore-active/eden/src'
 SOURCE=ROOT/'tools/ns2/test_ampere_scalar_alu_sources.cpp'
 LOWER=(SHADER/'shader_recompiler/frontend/ampere/lower_to_maxwell.h').read_text()
 assert 'case 0x307: case 0x907: case 0xb07: case 0xd07:' in LOWER

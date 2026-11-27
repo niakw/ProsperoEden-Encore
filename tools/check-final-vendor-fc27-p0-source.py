@@ -65,16 +65,16 @@ owners = {
         "device_memory.BeginDeferredCachedUpdates()",
         "deferred.ApplyAll()",
     ),
-    "ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": (
+    "eden/src/core/hle/service/am/service/graphics_supervisor.cpp": (
         "HasCpuBlockedNativeChannels",
         "m_previous_fence_id",
         "RegisterGuestAction",
     ),
-    "ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp": (
+    "eden/src/video_core/control/scheduler.cpp": (
         "HasCpuBlockedNativeChannels",
         "ResumePendingNative",
     ),
-    "ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": (
+    "eden/src/video_core/engines/puller.cpp": (
         "NativeGpuProcessRegistry",
         "RecordGpuSemaphoreValue",
         "ProcessNativeSemaphoreExecute",
@@ -87,7 +87,7 @@ for relative, markers in owners.items():
     for marker in markers:
         assert marker in source, (relative, marker)
 
-gsv = (ACTIVE / "ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp").read_text()
+gsv = (ACTIVE / "eden/src/core/hle/service/am/service/graphics_supervisor.cpp").read_text()
 for forbidden in (
     "DonkeyKongBananzaProgramId",
     "OcarinaOfTimeProgramId",

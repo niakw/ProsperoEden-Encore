@@ -10,7 +10,7 @@ root = Path(__file__).resolve().parents[2]
 vroot = root / 'vendor'
 if not (vroot / 'encore-active').exists():
     vroot = root.parent / 'vendor'  # sparse Mac checkout, not used in CI
-code_dir = vroot / 'encore-active/ns2-runtime/video_decoder/video_core/host1x'
+code_dir = vroot / 'encore-active/eden/src/video_core/host1x'
 header = (code_dir / 'nx2_video_decoder.h').read_text()
 backend = (code_dir / 'nx2_video_decoder.cpp').read_text()
 converter = (code_dir / 'h264_packet.h').read_text()

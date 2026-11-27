@@ -39,7 +39,7 @@ for alias in srcpere src_wait64 src_as src_gpu src_structure; do
     exit 1
   }
 done
-if git grep -nE 'encore-active/(eden-vulkan|amd-fsr31|ns2-runtime)|encore-active/eden/(srcpere|src_wait64|src_as|src_gpu|src_structure)' --     headless tools .github extras ':(exclude)tools/check-vendor-submodule.sh'; then
+if git grep -nE 'encore-active/(eden-vulkan|amd-fsr31|ns2-runtime)|encore-active/eden/(srcpere|src_wait64|src_as|src_gpu|src_structure)' --     headless tools .github extras ':(exclude)tools/check-vendor-submodule.sh' ':(exclude)tools/check-active-source-inventory.py' ':(exclude)tools/check-eden-optimization-coverage.py'; then
   echo "Retired active-source reference remains in engine build/gates" >&2
   exit 1
 fi

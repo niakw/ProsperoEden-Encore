@@ -67,7 +67,7 @@ owners = {
     ),
     "eden/src/core/hle/service/am/service/graphics_supervisor.cpp": (
         "HasCpuBlockedNativeChannels",
-        "m_previous_fence_id",
+        "m_previous_present_fence_id",
         "RegisterGuestAction",
     ),
     "eden/src/video_core/control/scheduler.cpp": (

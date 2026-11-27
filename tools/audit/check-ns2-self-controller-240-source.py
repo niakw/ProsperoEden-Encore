@@ -3,8 +3,8 @@
 from pathlib import Path
 import hashlib
 root = Path(__file__).resolve().parents[2]
-base = root / "vendor/encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.h"
-cpp = root / "vendor/encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.cpp"
+base = root / "vendor/encore-active/eden/src/core/hle/service/am/service/self_controller.h"
+cpp = root / "vendor/encore-active/eden/src/core/hle/service/am/service/self_controller.cpp"
 selected = root / "headless/r23_self_controller_240_ps5.h"
 cm = (root / "headless/CMakeLists.txt").read_text()
 def blob(data: bytes) -> str:

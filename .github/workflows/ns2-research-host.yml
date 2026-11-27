@@ -230,7 +230,7 @@ jobs:
             -Ibuild-ns2-a64/include \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/encore-active/eden/src/dynarmic/frontend/A64/translate/a64_translate.cpp
+            vendor/encore-active/eden/src/dynarmic/src/dynarmic/frontend/A64/translate/a64_translate.cpp
       - name: Exercise real NS2 ExeFS NSO0 preflight with GCC and Clang
         shell: bash
         run: |

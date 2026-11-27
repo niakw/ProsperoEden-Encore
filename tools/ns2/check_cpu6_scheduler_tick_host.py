@@ -18,8 +18,8 @@ ROOT=Path(__file__).resolve().parents[2]
 SCRIPT=ROOT/'headless/ns2_cpu6_source_bridge.cmake'
 BASE=ROOT/'vendor/sources/eden/src'
 CPU6=ROOT/'vendor/encore-active/ns2-runtime/cpu6'
-G11=ROOT/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_normal.cpp'
-G11_A32=ROOT/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11/arm_dynarmic_32_native_normal.cpp'
+G11=ROOT/'vendor/encore-active/eden/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_normal.cpp'
+G11_A32=ROOT/'vendor/encore-active/eden/src/core/arm/dynarmic/g11/arm_dynarmic_32_native_normal.cpp'
 CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
 FILES=('hle/kernel/global_scheduler_context.cpp',
        'arm/dynarmic/arm_dynarmic_32.cpp',
@@ -67,9 +67,9 @@ def main()->None:
     includes=[ROOT/'headless',CPU6,ROOT/'vendor/encore-active/ns2-runtime/kernel_wait64',
               ROOT/'vendor/encore-active/ns2-runtime/gpu_access_svc',
               BASE,BASE/'dynarmic/src',ROOT/'vendor/sources/fmt/include',
-              ROOT/'vendor/encore-active/eden-core/overrides',
-              ROOT/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11',
-              ROOT/'vendor/encore-active/eden-core/include',
+              ROOT/'vendor/encore-active/eden/src',
+              ROOT/'vendor/encore-active/eden/src/core/arm/dynarmic/g11',
+              ROOT/'vendor/encore-active/eden/include',
               deps/'xbyak/v7.40.1',
               *sorted((deps/'boost/boost-1.90.0/libs').glob('*/include'))]
     includes=['-I'+str(p) for p in includes if p.is_dir()]

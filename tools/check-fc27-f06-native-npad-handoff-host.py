@@ -12,12 +12,12 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-EMULATED = (ROOT / "vendor/encore-active/eden-core/src/hid_core/frontend/emulated_controller.cpp").read_text()
-NPAD = (ROOT / "vendor/encore-active/eden-core/src/hid_core/resources/npad/npad.cpp").read_text()
+EMULATED = (ROOT / "vendor/encore-active/eden/src/hid_core/frontend/emulated_controller.cpp").read_text()
+NPAD = (ROOT / "vendor/encore-active/eden/src/hid_core/resources/npad/npad.cpp").read_text()
 PAD = (ROOT / "headless/pad.cpp").read_text()
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
-assert "vendor/encore-active/eden-core/src/hid_core/frontend/emulated_controller.cpp" in CMAKE
-assert "vendor/encore-active/eden-core/src/hid_core/resources/npad/npad.cpp" in CMAKE
+assert "vendor/encore-active/eden/src/hid_core/frontend/emulated_controller.cpp" in CMAKE
+assert "vendor/encore-active/eden/src/hid_core/resources/npad/npad.cpp" in CMAKE
 assert 'virtual_button_params[Settings::NativeButton::Plus].Set("button", 10);' in EMULATED
 assert "Button::ButtonPlus, Button::ButtonMinus" in PAD
 assert "npad->fullkey_lifo.WriteNextEntry(pad_state);" in NPAD

@@ -1773,7 +1773,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
         # Reverse ONLY this exact method on the historical audit copy.
         # The real multi-channel scrub remains compiled unchanged.
         selected = core_owner.read_text()
-        if actual_vendor_pin in {"57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607"} and core_blob == "30e7c389851a5a0f2b6369c35a313f93a0fc6826":
+        if actual_vendor_pin in {"57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} and core_blob == "30e7c389851a5a0f2b6369c35a313f93a0fc6826":
             # FC27 successor: reverse ONLY the nine idempotent BufferCache
             # fast-guards on the audit copy. The compiled source remains
             # untouched; reconstructed bytes must equal the reviewed 8d3

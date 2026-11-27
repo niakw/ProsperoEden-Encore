@@ -7,10 +7,10 @@ rendering, link the console app, or authorize the runtime release flags.
 from pathlib import Path
 import os, subprocess, shutil, sys, tempfile
 r=Path(__file__).resolve().parents[2];deps=r/'vendor/sources/eden-cpm';sdk15=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk');sdk26=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk');env=os.environ.copy();env['SDKROOT']=str(sdk15)
-inc=['vendor/encore-active/eden/src','vendor/encore-active/eden-core/overrides/native-tiling','vendor/encore-active/ns2-runtime/kernel_wait64','vendor/encore-active/ns2-runtime/gpu_access_svc','vendor/encore-active/ns2-runtime/gpu_dispatch','vendor/encore-active/ns2-runtime/nvdrv_gpu','vendor/encore-active/ns2-runtime/nvdrv_as','vendor/encore-active/ns2-runtime/gpu_session','vendor/encore-active/ns2-runtime/graphics_supervisor','vendor/encore-active/ns2-runtime/video_decoder','vendor/encore-active/ns2-runtime/self_controller','vendor/encore-active/ns2-runtime/hle','vendor/encore-active/ns2-runtime/nvdrv','vendor/encore-active/ns2-runtime/ampere','vendor/encore-active/eden/src','vendor/sources/eden/src','vendor/sources/fmt/include','vendor/sources/eden/src/dynarmic/src']
+inc=['vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/ns2-runtime/kernel_wait64','vendor/encore-active/ns2-runtime/gpu_access_svc','vendor/encore-active/ns2-runtime/gpu_dispatch','vendor/encore-active/ns2-runtime/nvdrv_gpu','vendor/encore-active/ns2-runtime/nvdrv_as','vendor/encore-active/ns2-runtime/gpu_session','vendor/encore-active/ns2-runtime/graphics_supervisor','vendor/encore-active/ns2-runtime/video_decoder','vendor/encore-active/ns2-runtime/self_controller','vendor/encore-active/ns2-runtime/hle','vendor/encore-active/ns2-runtime/nvdrv','vendor/encore-active/ns2-runtime/ampere','vendor/encore-active/eden/src','vendor/sources/eden/src','vendor/sources/fmt/include','vendor/sources/eden/src/dynarmic/src']
 # Match the one maintained IOCTL header staged into the native CMake include
 # overlay. The pinned Eden header lacks the InputCapacity template signature.
-ioctl=r/'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
+ioctl=r/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
 assert ioctl.is_file() and 'template <size_t InputCapacity = 0' in ioctl.read_text()
 ioctl_temp=tempfile.TemporaryDirectory(prefix='encore-ioctl-')
 ioctl_dest=Path(ioctl_temp.name)/'core/hle/service/nvdrv/devices/ioctl_serialization.h'
@@ -19,7 +19,7 @@ shutil.copyfile(ioctl,ioctl_dest)
 # R457's compiled Host1x ABI is materialized by native CMake as a narrow
 # one-header include root. The generic h05-syncpoint path does not contain
 # the GSV's 64-bit guest-action API; syntax-check the selected shipping header.
-syncpoint=r/'vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h'
+syncpoint=r/'vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.h'
 assert syncpoint.is_file()
 syncpoint_text=syncpoint.read_text()
 for name in ('GetNativeGuestSyncpointValue', 'RegisterNativeGuestAction',
@@ -55,7 +55,7 @@ assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_A
 # This syntax gate must select the same MemoryManager public header as the
 # shipping PS5 graph. The NS2 NVDRV owner calls the syncpoint shim API
 # unconditionally, while pinned Eden does not expose that combined shim/tiling ABI.
-native_tiling=r/'vendor/encore-active/eden-core/overrides/native-tiling'
+native_tiling=r/'vendor/encore-active/eden/src'
 selected_mm=native_tiling/'video_core/memory_manager.h'
 assert selected_mm.is_file(), 'Shipping native-tiling MemoryManager header missing'
 mmh=selected_mm.read_text()
@@ -142,7 +142,7 @@ print('P2_7_NATIVE_QMD3_SINGLE_SHADER_CAPTURE_PASS native_abi=1 dispatch=1 redun
 # against the same DmaPusher/Puller headers and PS5-native Rasterizer ABI.
 # Checking the Puller alone misses a broken dispatch/resume boundary.
 native_gpfifo_owners = [
-    r/'vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp',
+    r/'vendor/encore-active/eden/src/video_core/dma_pusher.cpp',
     r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp',
     r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp',
 ]

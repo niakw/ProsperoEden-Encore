@@ -28,9 +28,9 @@ for token in (
 ):
     assert token in cmake, ("CMake native owner selector", token)
 
-prefix = "encore-active/ns2-runtime/hle/core/hle/service/"
+prefix = "encore-active/eden/src/core/hle/service/"
 owners = {
-    "am": ("encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp", 1, 74),
+    "am": ("encore-active/eden/src/core/hle/service/am/service/application_functions.cpp", 1, 74),
     "hid": (prefix+"hid/hid_server.cpp", 1, 235),
     "nifm": (prefix+"nifm/nifm.cpp", 5, 86),
     "acc": (prefix+"acc/acc.cpp", 24, 487),
@@ -80,8 +80,8 @@ assert "bool m_exit_sent{};" in h
 assert "if (m_applets.empty())" in desktop
 assert "m_exit_sent" not in desktop
 assert "z_index = this->IsOverlayOpenLocked(*applet) ? Overlay : Background;" in w
-npdm = (V / "encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp").read_text()
-kp = (V / "encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp").read_text()
+npdm = (V / "encore-active/eden/src/core/file_sys/program_metadata.cpp").read_text()
+kp = (V / "encore-active/eden/src/core/hle/kernel/k_process.cpp").read_text()
 assert "Eden::NS2::FindAcidBody(" in npdm
 assert "uses_extended_acid = false;" in npdm and "is_switch2 = false;" in npdm
 assert "if (metadata.IsSwitch2())" in kp

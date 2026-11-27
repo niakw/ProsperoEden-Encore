@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-PULLER = ROOT/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp'
+PULLER = ROOT/'vendor/encore-active/eden/src/video_core/engines/puller.cpp'
 DMA = ROOT/'vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp'
 DMA_DEV = ROOT/'vendor/encore-active/eden-core/src/video_core/dma_pusher_dev.cpp'
 START = 'void Puller::ProcessBindMethod(DmaPusher& dma_pusher, const MethodCall& method_call) {'

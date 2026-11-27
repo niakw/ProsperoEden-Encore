@@ -9,7 +9,7 @@ if(EDEN_GUEST_WRITE_BRIDGE_DEV)
 
     # M04 migrated: complete experimental header maintained in Encore.
     set(EDEN_DEFERRED_MEMORY_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/guest-bridge/memory_manager.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/memory_manager_deferred.h")
     if(NOT EXISTS "${EDEN_DEFERRED_MEMORY_HEADER}")
         message(FATAL_ERROR "Missing maintained experimental memory manager header")
     endif()
@@ -21,7 +21,7 @@ if(EDEN_GUEST_WRITE_BRIDGE_DEV)
     # M05: the synchronized dirty collector is a complete Encore-maintained
     # experimental header. No C++ lock rewriting is allowed in this module.
     set(EDEN_DEFERRED_DIRTY_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/guest-bridge/gpu_dirty_memory_manager.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/gpu_dirty_memory_manager_deferred.h")
     if(NOT EXISTS "${EDEN_DEFERRED_DIRTY_HEADER}")
         message(FATAL_ERROR "Missing maintained deferred dirty collector header")
     endif()
@@ -35,7 +35,7 @@ if(EDEN_GUEST_WRITE_BRIDGE_DEV)
     # M06 migrated: complete experimental translation unit is maintained
     # in encore-active. This recipe only selects/copies it.
     set(EDEN_DEFERRED_MEMORY_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/guest-bridge/memory_manager.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/memory_manager_deferred.cpp")
     if(NOT EXISTS "${EDEN_DEFERRED_MEMORY_SOURCE}")
         message(FATAL_ERROR "Missing maintained deferred memory manager source")
     endif()
@@ -45,7 +45,7 @@ if(EDEN_GUEST_WRITE_BRIDGE_DEV)
     # M07: the developer-only Vulkan replay variant is a full, maintained
     # source. The original Vulkan fork and normal build stay untouched.
     set(EDEN_DEFERRED_VULKAN_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp")
     if(NOT EXISTS "${EDEN_DEFERRED_VULKAN_SOURCE}")
         message(FATAL_ERROR "Missing maintained M07 deferred Vulkan source")
     endif()
@@ -56,9 +56,9 @@ if(EDEN_GUEST_WRITE_BRIDGE_DEV)
     # M08: source-complete DEV DMA processor based on G20's actual selected
     # maintained source. No synthetic PORT_BUILD_DIR/dma_pusher.cpp exists.
     set(EDEN_DEFERRED_DMA_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/guest-bridge/dma_pusher.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/dma_pusher_deferred.cpp")
     set(EDEN_EXPECTED_DEV_DMA_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/dma_pusher_dev.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/dma_pusher_dev.cpp")
     if(NOT EDEN_MAINTAINED_GPU_DMA STREQUAL EDEN_EXPECTED_DEV_DMA_SOURCE)
         message(FATAL_ERROR "Deferred DMA bridge requires G20 DEV maintained source")
     endif()
@@ -71,7 +71,7 @@ if(EDEN_GUEST_WRITE_BRIDGE_DEV)
     # The buffer clear fast path bypasses the old conditional DMA flush.
     # M09: select a complete experimental Encore-maintained source.
     set(EDEN_DEFERRED_MAXWELL_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/guest-bridge/maxwell_dma.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/engines/maxwell_dma_deferred.cpp")
     if(NOT EXISTS "${EDEN_DEFERRED_MAXWELL_SOURCE}")
         message(FATAL_ERROR "Missing maintained M09 guest bridge source")
     endif()
@@ -80,7 +80,7 @@ if(EDEN_GUEST_WRITE_BRIDGE_DEV)
 
     # M10: select a complete experimental Encore-maintained source.
     set(EDEN_DEFERRED_KEPLER_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/guest-bridge/kepler_compute.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/engines/kepler_compute_deferred.cpp")
     if(NOT EXISTS "${EDEN_DEFERRED_KEPLER_SOURCE}")
         message(FATAL_ERROR "Missing maintained M10 guest bridge source")
     endif()
@@ -91,7 +91,7 @@ if(EDEN_GUEST_WRITE_BRIDGE_DEV)
     # renderer draw/dispatch. Drain ahead of linear and tiled uploads alike.
     # M11: select a complete experimental Encore-maintained source.
     set(EDEN_DEFERRED_UPLOAD_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/guest-bridge/engine_upload.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/engines/engine_upload_deferred.cpp")
     if(NOT EXISTS "${EDEN_DEFERRED_UPLOAD_SOURCE}")
         message(FATAL_ERROR "Missing maintained M11 guest bridge source")
     endif()

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Audit the active CMake module boundary; prohibit C++ source fabrication.
+"""Audit the single vendor source-of-truth contract used by main.
 
-Pinned upstream vendor/sources CMake and historical tools/fixtures are not
-build-time Encore mutation owners. Resource generation G23 is explicitly
-allowed in the root; staging maintained full sources is permitted.
+Unmodified upstream inputs stay under vendor/sources. Every maintained Encore
+override lives under vendor/encore-active and CMake selects those tracked bytes
+directly; build-time C++ fabrication/patching is forbidden. The vendor checkout
+must match the engine gitlink, with no historical revision allowlist.
 """
 from pathlib import Path
 import re
@@ -11,7 +12,25 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
+VENDOR = ROOT / "vendor"
+ACTIVE = VENDOR / "encore-active"
+SOURCES = VENDOR / "sources"
+
+gitlink = subprocess.check_output(
+    ["git", "ls-tree", "HEAD", "vendor"], cwd=ROOT, text=True
+).split()
+assert len(gitlink) == 4 and gitlink[0] == "160000" and gitlink[1] == "commit"
+vendor_head = subprocess.check_output(
+    ["git", "rev-parse", "HEAD"], cwd=VENDOR, text=True
+).strip()
+assert vendor_head == gitlink[2], ("vendor checkout differs from engine gitlink", vendor_head, gitlink[2])
+assert ACTIVE.is_dir() and SOURCES.is_dir()
+assert not subprocess.check_output(
+    ["git", "status", "--porcelain", "--untracked-files=no"], cwd=VENDOR, text=True
+).strip(), "tracked vendor source is dirty"
+
 root_cmake = (ROOT/"headless/CMakeLists.txt").read_text(encoding="utf-8")
+assert "vendor/encore-active" in root_cmake
 # P5: CMake defers only target wiring, never creating a subdirectory.
 # The actual project(yuzu) hook registers the immutable source before DEFER.
 native_inject = (ROOT/"headless/inject.cmake").read_text(encoding="utf-8")
@@ -203,4 +222,5 @@ print("ENCORE_NS1_CAS_SOURCE_SELECTION_PASS native=1 maintained=1 unique=1 profi
 
 print(f"ENCORE_ACTIVE_CMAKE_SOURCE_BOUNDARY_PASS modules={checked} "
       f"pinned_upstream_modules={excluded_upstream_modules} "
+      "vendor_gitlink_match=1 active_source_of_truth=1 "
       "cpp_generators=0 resource_generators=1 nup_source_pair_split=1")

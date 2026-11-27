@@ -1,7 +1,7 @@
 # Eden Encore — Audit architectural indépendant PS5 / PS5 Pro
 
-**Date : 27 novembre 2026**  
-**Nature : revue statique indépendante des principaux chemins de production ; analyse uniquement.**  
+**Date : 27 novembre 2026**
+**Nature : revue statique indépendante des principaux chemins de production ; analyse uniquement.**
 **Périmètre : NS1 + NS2, PS5 standard comme cible minimale, PS5 Pro comme cible complémentaire.**
 
 ## 1. Méthode et limites

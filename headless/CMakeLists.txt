@@ -3740,12 +3740,12 @@ endif()
 # Unified NS2 six-core kernel owner; each process retains its physical
 # affinity and NS1 tick cadence. No DEV or roadmap profile selection.
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
-    set(EDEN_NS2_CPU6_ROOT "${PORT_ROOT}/vendor/encore-active/ns2-runtime/cpu6")
+    set(EDEN_NS2_CPU6_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_ns2_cpu6_header IN ITEMS
             "core/hardware_properties.h"
             "dynarmic/interface/exclusive_monitor.h")
         if(NOT EXISTS "${EDEN_NS2_CPU6_ROOT}/${eden_ns2_cpu6_header}")
-            message(FATAL_ERROR "Missing experimental NS2 6-core header ${eden_ns2_cpu6_header}")
+            message(FATAL_ERROR "Missing maintained NS2 6-core header ${eden_ns2_cpu6_header}")
         endif()
     endforeach()
     target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_CPU6_ROOT}")

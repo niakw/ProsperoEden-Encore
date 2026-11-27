@@ -2180,6 +2180,28 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
         "eden-core/src/video_core/gpu_gl_native_dev.cpp",
         "eden-core/src/video_core/gpu_vulkan.cpp",
     }
+    current_27nov_pair = {
+        "eden-core/overrides/core/gpu_dirty_memory_manager.h": "7769e314fbefeb8393e6d11b115c88bc0a8a0e58",
+        "eden-core/overrides/video_core/gpu.h": "89fba9a8591f0d2ca08f7cb7cafb8da709049c13",
+        "eden-core/overrides/video_core/rasterizer_interface.h": "294452f99eae33d623a85c5e4db18a850c2a84ba",
+        "eden-core/src/video_core/buffer_cache/buffer_cache.h": "30e7c389851a5a0f2b6369c35a313f93a0fc6826",
+        "eden-core/src/video_core/buffer_cache/buffer_cache_base.h": "fd9708571ef61c83c399042a5200c87b2e3784d6",
+        "eden-core/src/video_core/gpu_gl_native.cpp": "490f6f08991ea30212c8ecaedbd314e6762ae02d",
+        "eden-core/src/video_core/gpu_gl_native_dev.cpp": "9a1135b76e2af5f1602def1d903f37be4b7bd4f1",
+        "eden-core/src/video_core/gpu_vulkan.cpp": "8d8df3b2603156793afc383fb8738b8aa9b343f8",
+        "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "0d22781acbc4e0f32424beb6b0f494b6aa2b034f",
+        "eden-vulkan/vulkan_rasterizer.cpp": "6f3378f1bb611c74ecfe1f5cd37283137462012a",
+        "ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": "9169e95ec14559aa6466c68b7d1e1cd3f9e69557",
+        "ns2-runtime/gpu_dispatch/video_core/native_qmd.h": "a1e99602dbee8c4fc49108382b61ee8cd53af847",
+        "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "5cbd0d0f3482c5811b5b700fee55faf8a89b9f61",
+        "eden-core/src/video_core/engines/maxwell_3d.cpp": "fe7c4fa421ccabf9fff4b1bc277fb8ab5fe46677",
+    }
+    if shipping_vendor == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
+        assert set(current_27nov_pair) == set(pair_receipt["files"])
+        assert subprocess.check_output(
+            ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
+            text=True,
+        ).strip() == "8f6e3f968a67652ae2f7036f07c295604b0f17fc"
     for path, blob in pair_receipt["files"].items():
         source_path = active / path
         raw = source_path.read_bytes()
@@ -2193,10 +2215,15 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
             continue
         if fc27_p1_vendor:
             # Compare all fourteen merged native owners against immutable blobs.
-            # Known post-merge successors are reversed only on this audit copy,
-            # each behind an exact full-source SHA and byte-identical predecessor.
+            # The 27 Nov candidate is sealed as a complete 14-owner graph plus
+            # full vendor tree above; older successors keep their exact reverse
+            # replay into the frozen historical receipt below.
             data = (active / path).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+            if shipping_vendor == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
+                assert actual == current_27nov_pair[path], (
+                    "27 Nov selected GPU pair drift", path, actual)
+                continue
             data, actual = strict_completion_predecessor(path, data)
             stabilization_pair_blobs = {
                 "eden-core/overrides/core/gpu_dirty_memory_manager.h": "7769e314fbefeb8393e6d11b115c88bc0a8a0e58",

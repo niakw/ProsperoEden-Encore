@@ -3123,12 +3123,11 @@ for patch_name in sorted(patch_names):
 all_patch_targets = set().union(*patch_target_map.values())
 def has_exact_audit_path(relative):
     return any(prefix + relative in audit_paths for prefix in (
-        "vendor/sources/eden/", "vendor/encore-active/eden-core/",
+        "vendor/sources/eden/",
+        "vendor/encore-active/eden/",
+        "vendor/encore-active/eden-core/",
         "vendor/encore-active/eden-backports/",
-        "vendor/encore-active/eden-vulkan/", "vendor/encore-active/eden-gpu/",
-        "vendor/encore-active/eden/",
-        "vendor/encore-active/eden/",
-        "vendor/encore-active/eden-shader/",
+        "vendor/encore-active/eden-vulkan/",
     ))
 shipping_manifest = json.loads((active / "eden-backports/manifest.json").read_text())
 shipping_build_recipes = {"src/common/CMakeLists.txt", "src/core/CMakeLists.txt"}

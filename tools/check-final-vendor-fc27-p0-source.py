@@ -117,6 +117,14 @@ REVIEWED_PINS.add("bde537edf37e1f21e483993ca8582f44ff0f5555")
 REVIEWED_PINS.add("9de08e4f4bbb903e25f330dde7b8185e19e078a1")
 # Exactly reviewed VI2 availability-before-bind successor.
 REVIEWED_PINS.add("95467b3a42f208667ef8e06e6794f8a23dc2340d")
+# 27 Nov console-causal successors: GSV mode0 syncpoint semantics, current
+# Lichii/Eglantine thread-start handoff, and a host fixture include correction.
+# FC27/sparse owners remain independently byte-sealed below.
+REVIEWED_PINS.update({
+    "334915ab48a2beb33a5eb0639c5f2b8dd554fcae",
+    "2adfca5489b3f107847e0a1a9cdc06e497fc656f",
+    "a47b6b20a8e7b7db748a82610a9b08685ba03eeb",
+})
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 # The exact 26 Nov successor has 18 changed tracked files relative to
 # the previously admitted 45952eb6 profile. Verify the COMPLETE current tree and

@@ -97,6 +97,13 @@ reviewed_vendors.add("8026fcca228d0feda62ffd9625e16ee0429d621e")
 reviewed_vendors.add("887bf44af34999e8b6c5b63dc7c01c6c13b82c8f")
 reviewed_vendors.add("1a928783cce2c2692d8fe9fd958400a2de060bbf")
 reviewed_vendors.add("9632ac089f8b2d89a6856a42e8fb55206cdba1fa")
+# 27 Nov NS2 GSV/thread successors do not edit the sparse kernel/GMMU
+# publishers sealed by this script; admit them only with those blob checks.
+reviewed_vendors.update({
+    "334915ab48a2beb33a5eb0639c5f2b8dd554fcae",
+    "2adfca5489b3f107847e0a1a9cdc06e497fc656f",
+    "a47b6b20a8e7b7db748a82610a9b08685ba03eeb",
+})
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 selected=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],

@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-HEADER = ROOT / "vendor/encore-active/eden-gpu/include/common/bounded_threadsafe_queue.h"
+HEADER = ROOT / "vendor/encore-active/eden/src/common/bounded_threadsafe_queue.h"
 SOURCE = HEADER.read_text()
 assert "std::array<Slot, Capacity> m_data;" in SOURCE
 assert "std::destroy_at(std::addressof(m_data[pos].value));" in SOURCE

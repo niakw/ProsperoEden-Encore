@@ -17,7 +17,7 @@ root = Path(__file__).resolve().parents[1]
 original = (root / "vendor/sources/eden/src/common/bounded_threadsafe_queue.h").read_text()
 cmake = (root / "headless/CMakeLists.txt").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
-canonical_path = root / "vendor/encore-active/eden-gpu/include/common/bounded_threadsafe_queue.h"
+canonical_path = root / "vendor/encore-active/eden/src/common/bounded_threadsafe_queue.h"
 canonical = canonical_path.read_text()
 construct = "std::construct_at(std::addressof(m_data[pos]), std::forward<Args>(args)...);"
 live_construct = "std::construct_at(std::addressof(m_data[pos].value), std::forward<Args>(args)...);"
@@ -38,7 +38,7 @@ assert "std::destroy_at(std::addressof(m_data[cursor % Capacity].value));" in ca
 assert canonical.count("bool EmplaceWaitWithStopToken(") == 1
 assert "producer.cv.wait(lock, stop_token" in canonical
 assert "python3 -B tools/check-native-gpu-queue-slot-lifetime-host.py" in workflow
-assert 'configure_file("${EDEN_ACTIVE_GPU}/include/common/bounded_threadsafe_queue.h"' in cmake
+assert 'configure_file("${EDEN_GPU_QUEUE_HEADER}"' in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/include/common/bounded_threadsafe_queue.h"' not in cmake
 assert not (root / "vendor/encore-active/eden-core/gpu-injections/gpu_queue_stop_wait.inc").exists()
 

@@ -81,7 +81,7 @@ dma = (ROOT / "vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp").re
 dma_header = (OWNER / "video_core/dma_pusher.h").read_text()
 scheduler = (OWNER / "video_core/control/scheduler.cpp").read_text()
 scheduler_header = (OWNER / "video_core/control/scheduler.h").read_text()
-worker = (ROOT / "vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp").read_text()
+worker = (ROOT / "vendor/encore-active/eden/src/video_core/gpu_thread.cpp").read_text()
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 assert "command_resume_offset" in dma and "command_resume_offset" in dma_header
 # Header size must not depend on a per-TU PS5_NATIVE macro: core and video_core

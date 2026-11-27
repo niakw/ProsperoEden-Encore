@@ -6,8 +6,8 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-owned = root / "vendor/encore-active/eden-core/src/dynarmic/backend/x64"
-scalar = root / "vendor/encore-active/eden-core/dynarmic/scalar"
+owned = root / "vendor/encore-active/eden/src/dynarmic/backend/x64"
+scalar = root / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64"
 cm = (root / "headless/CMakeLists.txt").read_text()
 shared = (root / "headless/dynarmic/shared-jit.cmake").read_text()
 selector = (root / "headless/scalar-memory.cmake").read_text()

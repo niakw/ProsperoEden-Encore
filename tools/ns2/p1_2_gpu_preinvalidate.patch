@@ -1,7 +1,7 @@
-diff --git a/encore-active/eden-core/src/video_core/memory_manager.cpp b/encore-active/eden-core/src/video_core/memory_manager.cpp
+diff --git a/encore-active/eden/src/video_core/memory_manager.cpp b/encore-active/eden/src/video_core/memory_manager.cpp
 index b43eae686..b018babb7 100644
---- a/encore-active/eden-core/src/video_core/memory_manager.cpp
-+++ b/encore-active/eden-core/src/video_core/memory_manager.cpp
+--- a/encore-active/eden/src/video_core/memory_manager.cpp
++++ b/encore-active/eden/src/video_core/memory_manager.cpp
 @@ -115,12 +115,13 @@ GPUVAddr MemoryManager::PageTableOp(GPUVAddr gpu_addr, [[maybe_unused]] DAddr de
      if (entry_type == EntryType::Mapped) {
          page_table.ReserveRange(gpu_addr, size);

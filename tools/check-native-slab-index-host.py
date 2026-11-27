@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
-src=(root/"vendor/encore-active/eden-threading/src/core/hle/kernel/slab_helpers.h").read_text()
+src=(root/"vendor/encore-active/eden/src/core/hle/kernel/slab_helpers.h").read_text()
 assert src.count("kernel.SlabHeap<Derived>().GetObjectIndex(static_cast<const Derived*>(this));")==3
 assert "SlabHeap<Derived>(kernel).GetObjectIndex" not in src
 assert ".GetIndex(static_cast<const Derived*>(this))" not in src
@@ -84,7 +84,7 @@ with tempfile.TemporaryDirectory(prefix="eden-slab-index-") as temp:
  exe=d/"test"
  subprocess.run([compiler,"-std=c++20","-O1","-g","-pthread","-Wall","-Wextra",
  "-Werror","-fsanitize=address,undefined","-fno-sanitize-recover=all",
- "-I",str(d),"-I",str(root/"vendor/encore-active/eden-threading/src"),
+ "-I",str(d),"-I",str(root/"vendor/encore-active/eden/src"),
  str(d/"fixture.cpp"),"-o",str(exe)],check=True,timeout=90)
  subprocess.run([str(exe)],check=True,timeout=90)
 print("NATIVE_SLAB_INDEX_HOST_PASS all_three_helpers=1 correct_heap_accessor=1 asan_ubsan=1")

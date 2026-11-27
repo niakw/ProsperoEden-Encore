@@ -9,9 +9,9 @@ import shutil
 import subprocess
 import tempfile
 ROOT=Path(__file__).resolve().parents[1]
-ACTIVE=(ROOT/"vendor/encore-active/eden-threading/src/core/hle/kernel/k_condition_variable.cpp").read_text()
+ACTIVE=(ROOT/"vendor/encore-active/eden/src/core/hle/kernel/k_condition_variable.cpp").read_text()
 PINNED=(ROOT/"vendor/sources/eden/src/core/hle/kernel/k_condition_variable.cpp").read_text()
-SELECTOR=(ROOT/"vendor/encore-active/eden-threading/native-hle-overrides.cmake").read_text()
+SELECTOR=(ROOT/"vendor/encore-active/eden/native-hle-overrides.cmake").read_text()
 FAST=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 FULL=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 assert "k_condition_variable.cpp" in SELECTOR

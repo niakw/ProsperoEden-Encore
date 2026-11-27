@@ -11,10 +11,9 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-VENDOR=ROOT/'vendor/encore-active'
-RENDERERS=[VENDOR/'eden-vulkan/vulkan_rasterizer.cpp',
-           VENDOR/'eden-core/guest-bridge/vulkan_rasterizer.cpp']
-PIPELINE=(VENDOR/'eden-vulkan/vk_compute_pipeline_cost.cpp').read_text()
+VENDOR=ROOT/'vendor/encore-active/eden'
+RENDERERS=[VENDOR/'src/video_core/renderer_vulkan/vulkan_rasterizer.cpp']
+PIPELINE=(VENDOR/'src/video_core/renderer_vulkan/vk_compute_pipeline_cost.cpp').read_text()
 configure=PIPELINE.split('bool ComputePipeline::ConfigureNative(',1)[1].split(
     '\n#endif',1)[0]
 assert 'ObtainBufferOperation::MarkAsWritten' not in configure
@@ -52,7 +51,6 @@ for path in RENDERERS:
     assert native.index('if (!current_after_staging ||',check)<commit
     chunk=code.split(ANCHOR,1)[1].split(END,1)[0]
     blocks.append(ANCHOR+chunk)
-assert blocks[0]==blocks[1], 'real/native and deferred write commits drifted'
 assert 'if (!staged_buffer_mappings.Matches(' in blocks[0]
 assert 'ValidateGpuBufferMappings(' not in blocks[0]
 CPP=r'''
@@ -295,4 +293,4 @@ with tempfile.TemporaryDirectory(prefix='encore-write-commit-') as temp:
                   f'O{opt}', 'mappings=full', 'physical_remap=refused', 'interior_page=refused',
                   'missing_layout=refused', 'missing_image_pin=refused',
                   'wrong_image_kind=refused', 'invalid_texel_format=refused',
-                  'writes=known', 'owners=2',flush=True)
+                  'writes=known', 'owners=1',flush=True)

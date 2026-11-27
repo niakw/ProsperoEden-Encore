@@ -38,7 +38,12 @@ subprocess.check_call(["python3", "-B", "tools/check-source-tree-layout.py"], cw
 # Functional roots that duplicated the Eden dependency are retired. A future
 # override must use encore-active/eden/<same upstream-relative path>, not
 # recreate a second family tree.
-retired_eden_roots = ("eden-gpu", "eden-sync", "eden-threading", "eden-shader", "eden-core", "ns2-astc", "eden-build", "eden-backports")
+retired_eden_roots = (
+    "eden-gpu", "eden-sync", "eden-threading", "eden-shader", "eden-core",
+    "ns2-astc", "eden-build", "eden-backports", "eden-vulkan", "ns2-runtime",
+    "amd-fsr31",
+)
+retired_eden_subroots = ("srcpere", "src_wait64", "src_as", "src_gpu", "src_structure")
 for legacy in retired_eden_roots:
     assert not (ACTIVE / legacy).exists(), ("retired Encore root reintroduced", legacy)
 
@@ -122,13 +127,35 @@ for path in sorted(consumer_paths):
         for forbidden in (
             f"vendor/encore-active/{legacy}",
             f"encore-active/{legacy}",
+            f'"{legacy}/',
+            f"'{legacy}/",
         ):
             if forbidden in source:
                 legacy_consumer_refs.append(
                     (str(path.relative_to(ROOT)), forbidden)
                 )
+    for legacy in retired_eden_subroots:
+        for forbidden in (
+            f"vendor/encore-active/eden/{legacy}",
+            f"encore-active/eden/{legacy}",
+            f'"{legacy}/',
+            f"'{legacy}/",
+        ):
+            if forbidden in source:
+                legacy_consumer_refs.append(
+                    (str(path.relative_to(ROOT)), forbidden)
+                )
+    for forbidden in (
+        "encore-active/eden/src/dynarmic/backend/",
+        "encore-active/eden/src/dynarmic/frontend/",
+    ):
+        if forbidden in source:
+            legacy_consumer_refs.append(
+                (str(path.relative_to(ROOT)), forbidden)
+            )
 assert not legacy_consumer_refs, (
-    "active consumer references retired Encore root", legacy_consumer_refs)
+    "active consumer references retired/malformed Encore owner path",
+    legacy_consumer_refs)
 
 # All original upstream source CMake files live under vendor/sources/:
 # they are not maintained Encore CMake mutation owners. Every active

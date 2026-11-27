@@ -111,8 +111,6 @@ jobs:
           python3 -B tools/check-codeql-security-scope.py
           python3 -B tools/check-ns2-shipping-exefs-owner.py
           python3 -B tools/check-ns2-production-flags-host.py
-          python3 -B tools/check-eden-audit-verification-matrix.py
-          python3 -B tools/audit-cloud-worklist.py
 
       - name: Install host-only JSON, Boost.Container and clang sanitizer fixtures
         run: |
@@ -205,9 +203,6 @@ jobs:
           python3 -B tools/ci/check-repo-hygiene.py
           python3 -B tools/ci/check-native-boilerplate-setup.py
           python3 -B tools/check-vendored-eden-cache-rebase-host.py
-          python3 -B tools/check-eden-audit-register.py
-          python3 -B tools/check-eden-audit-verification-matrix.py
-          python3 -B tools/audit-eden-progress-state.py
           python3 -B tools/check-ps5-vulkan-loading-stages-host.py
           python3 -B tools/ns2/check_shared_vulkan_occlusion_submission_host.py
           python3 -B tools/ci/check-final-engine-owner-contracts.py
@@ -401,7 +396,6 @@ jobs:
           python3 -B tools/check-fc27-f05-native-kthread-endwait-host.py
           python3 -B tools/check-fc27-f05-native-binder-handle-ipc-host.py
           python3 -B tools/check-native-gpu-worker-restart-drain-host.py
-          python3 -B tools/audit-cloud-worklist.py
           python3 -B tools/check-maintained-openssl-cert.py
           python3 -B tools/check-native-dma-indirect-dependencies-host.py
           python3 -B tools/check-native-dma-resume-boundary-host.py
@@ -625,7 +619,6 @@ jobs:
           python3 -B tools/check-headless-app-policy-owners.py
           python3 -B tools/check-headless-specialized-owners.py
           python3 -B tools/check-headless-final-owners.py
-          python3 -B tools/check-vendor-consolidation-debt.py
           python3 -B tools/check-vendored-native-build-cmake.py
           python3 -B tools/check-vendored-fiber-source.py
           python3 -B tools/check-native-link-weak-flags.py

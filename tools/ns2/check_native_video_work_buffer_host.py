@@ -9,7 +9,7 @@ import tempfile
 root=Path(__file__).resolve().parents[2]
 vendor=root/'vendor'
 if not (vendor/'encore-active').exists():vendor=root.parent/'vendor'
-root_dir=vendor/'encore-active/ns2-runtime/video_decoder'
+root_dir=vendor/'encore-active/eden/src'
 header=root_dir/'core/hle/service/am/service/native_video_work_buffer.h'
 session_cpp=(root_dir/'core/hle/service/am/service/graphics_video_decoder_session.cpp').read_text()
 session_h=(root_dir/'core/hle/service/am/service/graphics_video_decoder_session.h').read_text()

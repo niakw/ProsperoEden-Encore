@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-source=(ROOT/'vendor/encore-active/eden-core/src/audio_core/sink/sink_stream.cpp').read_text()
+source=(ROOT/'vendor/encore-active/eden/src/audio_core/sink/sink_stream.cpp').read_text()
 start=source.index('void SinkStream::AppendBuffer(')
 current=source[start:source.index('\nstd::vector<s16> SinkStream::ReleaseBuffer',start)]
 old='        std::vector<s16> new_samples(samples.size() / system_channels * device_channels);'

@@ -15,7 +15,7 @@ root = Path(__file__).resolve().parents[1]
 port = (root/"tools/prepare-vulkan-port.py").read_text()
 wsi = (root/"tools/patch-radv-wsi.py").read_text()
 cmake = (root/"headless/CMakeLists.txt").read_text()
-reader = root/"vendor/encore-active/eden-core/src/video_core/shader_cache_reader.inc"
+reader = root/"vendor/encore-active/eden/src/video_core/shader_cache_reader.inc"
 checks = (root/"headless/shader_cache_check.cpp").read_text()
 host_builder = (root/"tools/build-headless-host.sh").read_text()
 

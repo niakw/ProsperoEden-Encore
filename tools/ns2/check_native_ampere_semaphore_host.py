@@ -77,7 +77,7 @@ assert "ProcessSemaphoreRelease(dma_pusher);" in puller
 assert "ProcessNativeSemaphoreExecute(dma_pusher, method_call.argument);" in puller
 # Real P2.7 channel suspension must keep the per-entry cursor, run other GPU
 # channels and retry CPU-released waits even when no new queue item arrives.
-dma = (ROOT / "vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp").read_text()
+dma = (ROOT / "vendor/encore-active/eden/src/video_core/dma_pusher.cpp").read_text()
 dma_header = (OWNER / "video_core/dma_pusher.h").read_text()
 scheduler = (OWNER / "video_core/control/scheduler.cpp").read_text()
 scheduler_header = (OWNER / "video_core/control/scheduler.h").read_text()

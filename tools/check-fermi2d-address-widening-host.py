@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-engines = root / "vendor/encore-active/eden-core/src/video_core/engines"
+engines = root / "vendor/encore-active/eden/src/video_core/engines"
 pinned = (root / "vendor/sources/eden/src/video_core/engines/fermi_2d.cpp").read_text()
 old = "auto address = src.Address() + config.src_x0 * bytes_per_pixel;"
 assert pinned.count(old) == 1

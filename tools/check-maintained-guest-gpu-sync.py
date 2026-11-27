@@ -4,7 +4,7 @@ from pathlib import Path
 import hashlib
 
 ROOT = Path(__file__).resolve().parents[1]
-ACTIVE = ROOT / "vendor/encore-active/eden-core/src/video_core"
+ACTIVE = ROOT / "vendor/encore-active/eden/src/video_core"
 DMA = (ROOT / "vendor/encore-active/eden/src/video_core/dma_pusher.cpp").read_text()
 PULLER = (ROOT / "vendor/sources/eden/src/video_core/engines/puller.cpp").read_text()
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()

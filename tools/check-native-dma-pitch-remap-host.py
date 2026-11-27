@@ -11,9 +11,9 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-source = (root / "vendor/encore-active/eden-core/src/video_core/engines/maxwell_dma.cpp").read_text()
+source = (root / "vendor/encore-active/eden/src/video_core/engines/maxwell_dma.cpp").read_text()
 cmake = (root / "headless/CMakeLists.txt").read_text()
-maintained_header = (root / "vendor/encore-active/eden-core/include/video_core/engines/maxwell_dma.h").read_text()
+maintained_header = (root / "vendor/encore-active/eden/include/video_core/engines/maxwell_dma.h").read_text()
 original_header = (root / "vendor/sources/eden/src/video_core/engines/maxwell_dma.h").read_text()
 assert "BitField<0, 16, u32> dst_components_raw" in maintained_header
 assert "BitField<0, 12, u32> dst_components_raw" in original_header

@@ -186,7 +186,7 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     cache=temp/"buffer-pages/video_core/buffer_cache"
     cache.mkdir(parents=True)
     for f in ("buffer_cache.h","buffer_cache_base.h"):
-        source=ROOT/"vendor/encore-active/eden-core/src/video_core/buffer_cache"/f
+        source=ROOT/"vendor/encore-active/eden/src/video_core/buffer_cache"/f
         assert source.is_file(),f
         shutil.copyfile(source,cache/f)
     # Linux lacks the FreeBSD cpu-set header present in PS5-native paths.

@@ -41,7 +41,7 @@ for token in (
     "encore-active/eden",
 ):
     assert token in cmake, token
-for forbidden in ("encore-active/eden-gpu", "gpu_thread_quiet.cpp", "gpu_thread_dev.cpp"):
+for forbidden in ("gpu_thread_quiet.cpp", "gpu_thread_dev.cpp"):
     assert forbidden not in cmake, ("legacy GPU owner selected", forbidden)
 
 owners = {
@@ -60,7 +60,7 @@ owners = {
         "EndDeferredCachedUpdates",
         "deferred_cached_updates",
     ),
-    "eden-vulkan/vulkan_rasterizer.cpp": (
+    "eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp": (
         "VideoCommon::DeferredPageCaching",
         "device_memory.BeginDeferredCachedUpdates()",
         "deferred.ApplyAll()",

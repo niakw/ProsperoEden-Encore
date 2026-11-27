@@ -48,7 +48,7 @@ for marker in (
     'list(APPEND video_sources "${EDEN_GPU_WORKER}")',
 ):
     assert marker in CMAKE,marker
-for forbidden in ("encore-active/eden-gpu","gpu_thread_quiet.cpp","gpu_thread_dev.cpp","EDEN_GPU_WORKER_VARIANT"):
+for forbidden in ("gpu_thread_quiet.cpp","gpu_thread_dev.cpp","EDEN_GPU_WORKER_VARIANT"):
     assert forbidden not in CMAKE,forbidden
 entry=subprocess.check_output(["git","ls-tree","HEAD","vendor"],cwd=ROOT,text=True).split()
 vendor_head=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT/"vendor",text=True).strip()

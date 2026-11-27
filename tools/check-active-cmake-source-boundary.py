@@ -101,10 +101,19 @@ consumer_paths = {
     *(ROOT/".github/workflows").glob("*.yml"),
     *(ROOT/".github/workflows").glob("*.yaml"),
 }
+# These two frozen F07 ledgers intentionally preserve historical vendor paths
+# and SHA-specific receipts. They are not invoked by the current build/preflight
+# graph; current source ownership is enforced by this gate and focused host
+# checks. Do not recreate retired vendor roots to satisfy old receipts.
+historical_receipt_scripts = {
+    ROOT/"tools/check-active-source-inventory.py",
+    ROOT/"tools/check-eden-optimization-coverage.py",
+}
 consumer_paths = {
     path for path in consumer_paths
     if "fixtures" not in path.relative_to(ROOT).parts
     and path != Path(__file__).resolve()
+    and path not in historical_receipt_scripts
 }
 legacy_consumer_refs = []
 for path in sorted(consumer_paths):

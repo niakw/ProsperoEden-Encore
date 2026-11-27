@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-PULLER = ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp"
+PULLER = ROOT / "vendor/encore-active/eden/src/video_core/engines/puller.cpp"
 source = PULLER.read_text()
 
 def fenced_body(marker):
@@ -181,7 +181,7 @@ with tempfile.TemporaryDirectory(prefix="eden-qmd-fence-fault-") as folder:
                     "-DPS5_NATIVE=1", "-fsanitize=undefined",
                     "-fno-sanitize-recover=all",
                     "-I"+str(ROOT/"headless"),
-                    "-I"+str(ROOT/"vendor/encore-active/ns2-runtime/gpu_dispatch"),
+                    "-I"+str(ROOT/"vendor/encore-active/eden/src"),
                     str(src), "-o", str(out)]
             built = subprocess.run(args, env=env, text=True,
                                    capture_output=True, timeout=45)

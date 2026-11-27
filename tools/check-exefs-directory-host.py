@@ -68,7 +68,13 @@ assert "symlink_status(folder / name, error)" in header
 native_extracted = (root / "vendor/encore-active/eden/src/core/loader/deconstructed_rom_directory.cpp").read_text()
 native_romfs = (root / "vendor/sources/eden/src/core/file_sys/romfs.h").read_text()
 assert native_extracted.count('#include "core/file_sys/romfs.h"') == 1
-assert 'romfs = FileSys::CreateRomFS(std::move(extracted_romfs), nullptr);' in native_extracted
+# Canonical extracted-title ownership now distinguishes self-contained update
+# RomFS, versioned layered RomFS and the base fallback. The retired
+# extracted_romfs temporary no longer exists.
+assert 'romfs = FileSys::CreateRomFS(own_romfs, nullptr);' in native_extracted
+assert 'romfs = FileSys::CreateRomFS(std::move(layered), nullptr);' in native_extracted
+assert 'romfs = FileSys::CreateRomFS(std::move(base_romfs), nullptr);' in native_extracted
+assert 'extracted_romfs' not in native_extracted
 assert 'VirtualFile CreateRomFS(VirtualDir dir, VirtualDir ext = nullptr);' in native_romfs
 # The selected native loader must route an extracted ExeFS/main to the
 # directory loader *before* generic NSO detection (rtld/sdk + NPDM identity).

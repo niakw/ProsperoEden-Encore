@@ -31,10 +31,10 @@ assert 'set(EDEN_G11_PROFILE normal)' in HEADLESS
 ARCHES={
  "A32":(
     "vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/a32_interface.cpp",
-    "vendor/encore-active/eden/src/dynarmic/backend/x64/a32_interface_native.cpp","u32"),
+    "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a32_interface_native.cpp","u32"),
  "A64":(
     "vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface.cpp",
-    "vendor/encore-active/eden/src/dynarmic/backend/x64/a64_interface_standard.cpp","u64"),
+    "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface_standard.cpp","u64"),
 }
 def extract(source:str,signature:str)->str:
     assert source.count(signature)==1,signature

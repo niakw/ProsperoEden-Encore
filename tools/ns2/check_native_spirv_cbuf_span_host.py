@@ -178,7 +178,7 @@ if boost.is_dir() and sirit.is_file() and spirv.is_file():
         # The actual native Task/Mesh graph selects the reviewed shader
         # interface before pinned Eden. TES patch levels use two distinct
         # Input variables; upstream's pre-NS2 header lacks those members.
-        ROOT/"vendor/encore-active/eden-shader/src",
+        ROOT/"vendor/encore-active/eden/src",
         ROOT/"vendor/sources/eden/src",
         ROOT/"vendor/sources/fmt/include",
         sirit.parents[1],spirv.parents[2],

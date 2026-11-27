@@ -109,7 +109,7 @@ assert "ThrowNotImplemented(Opcode::PRET);" not in prmt
 assert "ThrowNotImplemented(Opcode::JCAL);" in prmt
 
 pinned_control=(ROOT / "vendor/sources/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
-native_control=(ROOT / "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
+native_control=(ROOT / "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
 for control in (pinned_control,native_control):
     assert "if (pred == Predicate{false}) {\n        return false;\n    }" in control
     assert "case Opcode::BRA:\n    case Opcode::JMP:\n    case Opcode::RET:" in control
@@ -521,7 +521,7 @@ assert "write_derived(" not in cmake
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in cmake
-shared_atomic=(ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp").read_text()
+shared_atomic=(ROOT/"vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp").read_text()
 assert "void TranslatorVisitor::ATOMS_cas(u64 insn)" in shared_atomic
 assert "SharedAtomicCompareExchange" in shared_atomic
 assert "BitField<28, 2, AtomsCasBcRz> bc_rz;" in shared_atomic

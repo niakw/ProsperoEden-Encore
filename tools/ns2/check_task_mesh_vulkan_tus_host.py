@@ -16,7 +16,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 ACTIVE = ROOT / "vendor/encore-active/eden-vulkan"
-SHADER = ROOT / "vendor/encore-active/eden-shader/src"
+SHADER = ROOT / "vendor/encore-active/eden/src"
 CPM = ROOT / "vendor/sources/eden-cpm"
 OWNERS = (
     "vk_graphics_pipeline_cost.cpp",

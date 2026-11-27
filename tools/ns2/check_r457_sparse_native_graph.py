@@ -167,10 +167,10 @@ def main():
     if sha in {"7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6", "0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028", "72faa8edd26f6fcb16b08f321211fb94427c4ebb"}:
         relative = Path("shader_recompiler/frontend/ir/breadth_first_search.h")
         bfs_header = native/"headless/r23-shader-phi/include"/relative
-        vendor_header = ROOT/"vendor/encore-active/eden-shader/include"/relative
+        vendor_header = ROOT/"vendor/encore-active/eden/src"/relative
         if gitblob(bfs_header) != "194476705f21bd1c27f532fdd5cc04d99a3cd620" or gitblob(vendor_header) != "194476705f21bd1c27f532fdd5cc04d99a3cd620":
             raise RuntimeError("Wrong native adaptive BFS staged header")
-        texture = ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/texture_pass.cpp"
+        texture = ROOT/"vendor/encore-active/eden/src/shader_recompiler/ir_opt/texture_pass.cpp"
         if gitblob(texture) != "85c523e435ee8803ef3d2087567aa1a4b5d09369":
             raise RuntimeError("Unexpected conditional Phi texture pass owner")
         rows = [r for r in db if Path(r["file"]).parts[-3:] == ("shader_recompiler","ir_opt","texture_pass.cpp")]
@@ -208,7 +208,7 @@ def main():
         print("R457_NATIVE_HOST1X_NOTIFY_GRAPH_PASS exact_owner=1 unchanged_header=1",flush=True)
 
     if sha in {"13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028", "72faa8edd26f6fcb16b08f321211fb94427c4ebb"}:
-        geometry = ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate_program.cpp"
+        geometry = ROOT/"vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate_program.cpp"
         if gitblob(geometry) != "2cd894ab009c16a22d953d1cba9359c28ae22149":
             raise RuntimeError("Unreviewed emulated geometry mask source")
         rows = [r for r in db if Path(r["file"]).parts[-3:] == ("frontend","maxwell","translate_program.cpp")]
@@ -233,7 +233,7 @@ def main():
         print("R457_NATIVE_BLIT_LAYOUT_GRAPH_PASS exact_staged_owner=1",flush=True)
 
     if sha in {"4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028", "72faa8edd26f6fcb16b08f321211fb94427c4ebb"}:
-        phi = ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv.cpp"
+        phi = ROOT/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv.cpp"
         if gitblob(phi) != "b490f372d67f4aabf69aa2b29973835f662382db":
             raise RuntimeError("Unreviewed typed Phi emitter")
         rows = [r for r in db if Path(r["file"]).parts[-3:] == ("backend","spirv","emit_spirv.cpp")]

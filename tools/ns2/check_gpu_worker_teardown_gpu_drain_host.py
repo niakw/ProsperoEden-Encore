@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT/'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp'
+OWNER=ROOT/'vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp'
 source=OWNER.read_text()
 method=source.split('IGpuWorker::~IGpuWorker() {',1)[1].split(
     'Result IGpuWorker::HandleSyncRequest(',1)[0]
@@ -125,9 +125,9 @@ assert 'set(EDEN_NATIVE_NVMAP_HEADER' in cmake
 assert 'vendor/sources/eden/src/core/hle/service/nvdrv/core/nvmap.h' in cmake
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_NVMAP_INCLUDE}")' in cmake
 for overlay in ('vendor/encore-active/eden-core/include',
-                'vendor/encore-active/ns2-runtime/nvdrv',
-                'vendor/encore-active/ns2-runtime/nvdrv_as',
-                'vendor/encore-active/ns2-runtime/nvdrv_gpu'):
+                'vendor/encore-active/eden/src',
+                'vendor/encore-active/eden/src_as',
+                'vendor/encore-active/eden/src_gpu'):
     assert not (ROOT/overlay/'core/hle/service/nvdrv/core/nvmap.h').exists(), overlay
 
 # Compile the exact maintained NvMap final-free methods. Only the device

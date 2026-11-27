@@ -17,7 +17,7 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import test_real_kprocess_init_guest_rollback as kernel_host
 
-PROCESS_SOURCE=(ROOT/"vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp").read_text()
+PROCESS_SOURCE=(ROOT/"vendor/encore-active/eden/src/core/hle/service/os/process.cpp").read_text()
 CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
 assert 'set(EDEN_NS2_KPROCESS_SOURCE' in CMAKE
 assert 'ns2-runtime/process/core/hle/kernel/k_process.cpp' in CMAKE
@@ -325,7 +325,7 @@ with tempfile.TemporaryDirectory(prefix="eden-h01-joined-kernel-os-") as tmp:
     # but execute the exact CMake-selected NS2 KProcess, not the older eden-core
     # owner. Its OWNERS tuples have two fields, not three, and relying on that
     # list silently binds the wrong translation unit after the NS2 override.
-    selected = ROOT / "vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp"
+    selected = ROOT / "vendor/encore-active/eden/src/core/hle/kernel/k_process.cpp"
     assert selected.is_file() and 'set(EDEN_NS2_KPROCESS_SOURCE' in CMAKE
     for name,owner_path in [("shipping_ns2", selected)]:
         source=owner_path.read_text()

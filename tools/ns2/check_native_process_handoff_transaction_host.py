@@ -13,7 +13,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 VENDOR = ROOT / "vendor"
-PATH = VENDOR / "encore-active/ns2-runtime/process/core/hle/service/os/process.cpp"
+PATH = VENDOR / "encore-active/eden/src/core/hle/service/os/process.cpp"
 source = PATH.read_text()
 begin = "bool Process::Initialize(Loader::AppLoader& loader, Loader::ResultStatus& out_load_result) {"
 end = "\nvoid Process::Finalize() {"

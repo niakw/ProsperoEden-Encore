@@ -113,6 +113,7 @@ consumer_paths = {
 historical_receipt_scripts = {
     ROOT/"tools/check-active-source-inventory.py",
     ROOT/"tools/check-eden-optimization-coverage.py",
+    ROOT/"tools/check-vendor-consolidation-debt.py",
 }
 consumer_paths = {
     path for path in consumer_paths
@@ -121,30 +122,53 @@ consumer_paths = {
     and path not in historical_receipt_scripts
 }
 legacy_consumer_refs = []
+
+def is_negative_path_witness(line: str) -> bool:
+    stripped = line.strip()
+    return (
+        " not in " in line
+        or stripped.startswith("assert not ")
+        or "forbidden" in stripped
+        or "retired" in stripped and "assert" in stripped
+    )
+
 for path in sorted(consumer_paths):
     source = path.read_text(encoding="utf-8")
+    lines = source.splitlines()
     for legacy in retired_eden_roots:
         for forbidden in (
             f"vendor/encore-active/{legacy}",
             f"encore-active/{legacy}",
-            f'"{legacy}/',
-            f"'{legacy}/",
         ):
             if forbidden in source:
                 legacy_consumer_refs.append(
                     (str(path.relative_to(ROOT)), forbidden)
                 )
+        for line_no, line in enumerate(lines, 1):
+            if is_negative_path_witness(line):
+                continue
+            for forbidden in (f'"{legacy}/', f"'{legacy}/"):
+                if forbidden in line:
+                    legacy_consumer_refs.append(
+                        (f"{path.relative_to(ROOT)}:{line_no}", forbidden)
+                    )
     for legacy in retired_eden_subroots:
         for forbidden in (
             f"vendor/encore-active/eden/{legacy}",
             f"encore-active/eden/{legacy}",
-            f'"{legacy}/',
-            f"'{legacy}/",
         ):
             if forbidden in source:
                 legacy_consumer_refs.append(
                     (str(path.relative_to(ROOT)), forbidden)
                 )
+        for line_no, line in enumerate(lines, 1):
+            if is_negative_path_witness(line):
+                continue
+            for forbidden in (f'"{legacy}/', f"'{legacy}/"):
+                if forbidden in line:
+                    legacy_consumer_refs.append(
+                        (f"{path.relative_to(ROOT)}:{line_no}", forbidden)
+                    )
     for forbidden in (
         "encore-active/eden/src/dynarmic/backend/",
         "encore-active/eden/src/dynarmic/frontend/",

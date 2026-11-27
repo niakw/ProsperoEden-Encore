@@ -112,13 +112,13 @@ read = memory.split("void MemoryManager::ReadBlockImpl(", 1)[1].split(
 assert read.count("rasterizer->FlushRegion(dev_addr_base, copy_amount, which);") == 2
 assert "memory.ReadBlockUnsafe(dev_addr_base, dest_buffer, copy_amount);" in read
 assert "std::memset(dest_buffer, 0, size);" in read
-for rasterizer in ("eden-vulkan/vulkan_rasterizer.cpp",
-                   "eden-vulkan/vulkan_rasterizer.cpp"):
-    source = (vendor / "encore-active" / rasterizer).read_text()
-    flush = source.split("void RasterizerVulkan::FlushRegion(", 1)[1].split(
-        "bool RasterizerVulkan::MustFlushRegion(", 1)[0]
-    assert "texture_cache.DownloadMemory(addr, size);" in flush
-    assert "buffer_cache.DownloadMemory(addr, size);" in flush
+source = (
+    vendor / "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp"
+).read_text()
+flush = source.split("void RasterizerVulkan::FlushRegion(", 1)[1].split(
+    "bool RasterizerVulkan::MustFlushRegion(", 1)[0]
+assert "texture_cache.DownloadMemory(addr, size);" in flush
+assert "buffer_cache.DownloadMemory(addr, size);" in flush
 buffer_cache = (owner / "buffer_cache/buffer_cache.h").read_text()
 download = buffer_cache.split("void BufferCache<P>::DownloadBufferMemory(Buffer& buffer, DAddr", 1)[1].split(
     "void BufferCache<P>::DeleteBuffer(", 1)[0]

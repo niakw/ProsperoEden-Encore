@@ -5,9 +5,9 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-vendor = ROOT / "vendor/encore-active"
-entry = vendor / "eden-vulkan/vk_texture_cache_cost.cpp"
-hdr = vendor / "eden/src/video_core/renderer_vulkan/vk_texture_cache.h"
+vendor = ROOT / "vendor/encore-active/eden"
+entry = vendor / "src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp"
+hdr = vendor / "src/video_core/renderer_vulkan/vk_texture_cache.h"
 source = entry.read_text(encoding="utf-8")
 header = hdr.read_text(encoding="utf-8")
 begin = "// NS2 N73 BEGIN: one real cache-side VkImage sparse admission/bind/retire probe."
@@ -173,8 +173,8 @@ with tempfile.TemporaryDirectory(prefix="ns2-n73-cache-") as temporary:
             compiler,"-std=c++20","-O2","-Wall","-Wextra","-Werror",
             "-fsanitize=undefined","-fno-sanitize-recover=all",
             "-I",str(root),
-            "-I",str(vendor/"eden/src"),
-            "-I",str(vendor/"eden-vulkan/include"),
+            "-I",str(vendor/"src"),
+            "-I",str(vendor/"src"),
             str(sourcefile),"-o",str(exe),
         ],check=True)
         subprocess.run([str(exe)],check=True)

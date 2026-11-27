@@ -2087,6 +2087,10 @@ if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f3
             "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce",
         "8d3eaa4874ab0fa65a022913148acada1ea9c2fe": "c98167e4b9ff0b42acac977cae57b26255b50040",
             "57be62ed6bcc872a850676f92f55de92ace7a290": "3cf3eed31484ffc23cd18229b983e07500cecce6",
+            "334915ab48a2beb33a5eb0639c5f2b8dd554fcae": "d12a16c4408d19a520e06038bfd61426d62b6f07",
+            "2adfca5489b3f107847e0a1a9cdc06e497fc656f": "7bc8f75516155e5fc926e9a979c7883c6d034a78",
+            "a47b6b20a8e7b7db748a82610a9b08685ba03eeb": "a315cab23dd3ecf664da881de28dc1c0616e1b5f",
+            "4b63376eb7057015d70295ecd7df4ce96be80607": "5d6c2eb980d7f3e1cef7070f476c821dbe60cff7",
         }.get(actual_pair_vendor, "e40237d089b0a45f77d68ae281821c1a85ce9ca8")
         assert subprocess.check_output(
             ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
@@ -2096,7 +2100,11 @@ if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f3
             "eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
             "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "5cbd0d0f3482c5811b5b700fee55faf8a89b9f61",
         })
-        if actual_pair_vendor == "57be62ed6bcc872a850676f92f55de92ace7a290":
+        if actual_pair_vendor in {"57be62ed6bcc872a850676f92f55de92ace7a290",
+                                  "334915ab48a2beb33a5eb0639c5f2b8dd554fcae",
+                                  "2adfca5489b3f107847e0a1a9cdc06e497fc656f",
+                                  "a47b6b20a8e7b7db748a82610a9b08685ba03eeb",
+                                  "4b63376eb7057015d70295ecd7df4ce96be80607"}:
             selected_nov26_gpu_pair["eden-core/src/video_core/buffer_cache/buffer_cache.h"] = "30e7c389851a5a0f2b6369c35a313f93a0fc6826"
     assert set(selected_nov26_gpu_pair) == set(pair_receipt["files"])
     print("ENCORE_SELECTED_GPU_PAIR_RECEIPT_LOADED owners=14")

@@ -101,6 +101,22 @@ def normalize_g21_shutdown_source(filename: str, source: str) -> tuple[str, bool
             source = source.replace(newer, older, 1)
         assert git_blob(source) == "7720e5a347817e67c0a964d3a80644b01b99d733"
     current = git_blob(source)
+    # 2b60011: HasCpuBlockedNativeChannels is a reviewed NS2 scheduler
+    # observability/runtime query added after the G21 shutdown fix. Reverse
+    # only this exact method on the historical audit copy before replaying
+    # the immutable G21 lifetime receipt.
+    if filename == "gpu_vulkan.cpp" and current == "8d8df3b2603156793afc383fb8738b8aa9b343f8":
+        cpu_blocked_query = """\
+bool GPU::HasCpuBlockedNativeChannels() const {
+    return impl->scheduler.HasCpuBlockedNativeChannels();
+}
+
+"""
+        assert source.count(cpu_blocked_query) == 1, "NS2 CPU-blocked channel query drift"
+        source = source.replace(cpu_blocked_query, "", 1)
+        current = git_blob(source)
+        assert current == "2de0ed20172755c0dac82e7e4031232281c115f5", (
+            "NS2 CPU-blocked query normalization changed unrelated GPU source", current)
     if filename == "gpu_gl_native.cpp" and current == "7720e5a347817e67c0a964d3a80644b01b99d733":
         # Reconstruct only the immutable historical audit copy; production uses the new owner.
         for newer, older in (

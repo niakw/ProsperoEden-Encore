@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "vendor/encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_sysmix.cpp"
+SOURCE = ROOT / "vendor/encore-active/eden/src/core/hle/service/audio/nx2_sysmix.cpp"
 OWNER = SOURCE.read_text()
 CM = (ROOT / "headless/CMakeLists.txt").read_text()
 AUDIO = (SOURCE.parent / "audio.cpp").read_text()

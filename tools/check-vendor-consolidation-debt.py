@@ -1890,7 +1890,7 @@ for filename, original_blob in shared_jit_blobs.items():
         "duplicate shared JIT fragment or missing canonical owner", filename)
     check_canonical_git_object(source, original_blob, "JIT")
 shared_jit_selector = (root / "headless/dynarmic/shared-jit.cmake").read_text()
-assert 'set(EDEN_SHARED_JIT_DIR "${PORT_ROOT}/vendor/encore-active/eden-core/dynarmic/shared-jit")' in shared_jit_selector
+assert 'set(EDEN_SHARED_JIT_DIR "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")' in shared_jit_selector
 assert ('configure_file("${EDEN_SHARED_JIT_DIR}/jit_group.h"\n'
         '        "${PORT_BUILD_DIR}/include/dynarmic/backend/x64/jit_group.h" COPYONLY)') in shared_jit_selector
 assert 'file(READ "${EDEN_SHARED_JIT_DIR}/jit_group.h" eden_group_header)' not in shared_jit_selector
@@ -2754,7 +2754,7 @@ for relative in (
 staging = (root / "tools/prepare-build.sh").read_text()
 assert 'python3 -B tools/install-active-core-backports.py "$eden"' in staging
 active_core_installer = (root / "tools/install-active-core-backports.py").read_text()
-assert 'ACTIVE = ROOT / "vendor/encore-active/eden-core"' in active_core_installer
+assert 'ACTIVE = ROOT / "vendor/encore-active/eden"' in active_core_installer
 assert "shutil.copyfile(maintained, tmp)" in active_core_installer
 assert "maintained_bytes != new:" in active_core_installer
 assert "maintained_bytes.replace(header, b\"\").replace(" in active_core_installer
@@ -3124,7 +3124,7 @@ def has_exact_audit_path(relative):
     return any(prefix + relative in audit_paths for prefix in (
         "vendor/sources/eden/",
         "vendor/encore-active/eden/",
-        "vendor/encore-active/eden-core/",
+        "vendor/encore-active/eden/",
         "vendor/encore-active/eden/",
         "vendor/encore-active/eden-vulkan/",
     ))

@@ -136,7 +136,7 @@ list(FIND selected_video "control/scheduler.cpp" legacy_scheduler)
 if(NOT legacy_scheduler EQUAL -1)
     message(FATAL_ERROR "Pinned GPFIFO scheduler compiled beside native scheduler")
 endif()
-string(REGEX MATCHALL "ns2-runtime/gpu_dispatch/video_core/control/scheduler\\.cpp"
+string(REGEX MATCHALL "eden/src/video_core/control/scheduler\\.cpp"
     native_scheduler_owners "${selected_video}")
 list(LENGTH native_scheduler_owners native_scheduler_count)
 if(NOT native_scheduler_count EQUAL 1)
@@ -146,15 +146,17 @@ list(FIND selected_video "control/channel_state.cpp" legacy_channel_state)
 if(NOT legacy_channel_state EQUAL -1)
     message(FATAL_ERROR "Pinned channel_state compiled beside native NVK/M2MF owner")
 endif()
-string(REGEX MATCHALL "ns2-runtime/gpu_dispatch/video_core/control/channel_state\\.cpp"
+string(REGEX MATCHALL "eden/src/video_core/control/channel_state\\.cpp"
     native_channel_state_owners "${selected_video}")
 list(LENGTH native_channel_state_owners native_channel_state_count)
 if(NOT native_channel_state_count EQUAL 1)
     message(FATAL_ERROR "Expected exactly one native NVK/M2MF channel_state owner")
 endif()
 foreach(needle IN ITEMS
-    "ns2-runtime/nvdrv_gpu/" "ns2-runtime/nvdrv_as/"
-    "ns2-runtime/gpu_session/" "ns2-runtime/graphics_supervisor/")
+    "eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp"
+    "eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp"
+    "eden/src/core/hle/service/am/service/gpu_session.cpp"
+    "eden/src/core/hle/service/am/service/graphics_supervisor.cpp")
     string(FIND "${selected_core}" "${needle}" found)
     if(found LESS 0)
         message(FATAL_ERROR "Missing unified native core owner: ${needle}: ${selected_core}")
@@ -167,20 +169,22 @@ if(NOT legacy_pl_u EQUAL -1)
     message(FATAL_ERROR "Pinned pl:u owner compiled beside maintained font service")
 endif()
 string(REGEX MATCHALL
-    "ns2-runtime/font_service/core/hle/service/ns/platform_service_manager\\.cpp"
+    "eden/src/core/hle/service/ns/platform_service_manager\\.cpp"
     native_pl_u_owners "${selected_core}")
 list(LENGTH native_pl_u_owners native_pl_u_count)
 if(NOT native_pl_u_count EQUAL 1)
     message(FATAL_ERROR "Expected exactly one maintained pl:u owner")
 endif()
 string(REGEX MATCHALL
-    "ns2-runtime/font_service/core/hle/service/ns/font_merge\\.cpp"
+    "eden/src/core/hle/service/ns/font_merge\\.cpp"
     native_font_merge_owners "${selected_core}")
 list(LENGTH native_font_merge_owners native_font_merge_count)
 if(NOT native_font_merge_count EQUAL 1)
     message(FATAL_ERROR "Expected exactly one native font merge owner")
 endif()
-foreach(needle IN ITEMS "ns2-runtime/gpu_dispatch/" "ns2-runtime/ampere/")
+foreach(needle IN ITEMS
+    "eden/src/video_core/control/scheduler.cpp"
+    "eden/src/video_core/native_shader_capture.cpp")
     string(FIND "${selected_video}" "${needle}" found)
     if(found LESS 0)
         message(FATAL_ERROR "Missing unified native video owner: ${needle}")
@@ -194,8 +198,8 @@ endif()
 list(FIND selected_shader "backend/spirv/spirv_emit_context.cpp" legacy_emitter)
 list(FIND selected_shader "backend/spirv/emit_spirv_context_get_set.cpp" legacy_direct)
 list(FIND selected_shader "backend/spirv/emit_spirv_image.cpp" legacy_image)
-if(NOT selected_shader MATCHES "ns2-runtime/ampere/" OR
-   NOT selected_shader MATCHES "ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp" OR
+if(NOT selected_shader MATCHES "eden/src/shader_recompiler/" OR
+   NOT selected_shader MATCHES "eden/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp" OR
    NOT legacy_emitter EQUAL -1 OR NOT legacy_direct EQUAL -1 OR
    NOT legacy_image EQUAL -1)
     message(FATAL_ERROR "SPIR-V QMD3 owner not installed exactly once")

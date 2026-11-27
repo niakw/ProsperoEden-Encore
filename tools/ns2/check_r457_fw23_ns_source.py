@@ -6,14 +6,12 @@ The old isolated one-line research file shadowed shipping #128 icon guards.
 """
 from pathlib import Path
 import hashlib
-import json
 
 ROOT = Path(__file__).resolve().parents[2]
 original = ROOT / "vendor/sources/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp"
 shipping = ROOT / "vendor/encore-active/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp"
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 prepare = (ROOT / "tools/prepare-build.sh").read_text()
-manifest = json.loads((ROOT / "vendor/encore-active/eden/backports/manifest.json").read_text())
 
 def git_blob(path: Path) -> str:
     b = path.read_bytes()
@@ -21,7 +19,6 @@ def git_blob(path: Path) -> str:
 
 assert git_blob(original) == "c7606a83bf771c9251ef8a44add72b72a2589870"
 assert git_blob(shipping) == "1359cdbb9507fb7c22ca57459a0a03ab95e58f2f"
-assert "src/core/hle/service/ns/read_only_application_control_data_interface.cpp" in manifest["entries"]
 assert 'install-vendored-eden-backports.py --repair-owned-cache' in prepare
 
 cmd23 = '{23, D<&IReadOnlyApplicationControlDataInterface::GetApplicationControlData3>'

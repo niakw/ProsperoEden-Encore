@@ -31,12 +31,12 @@ jobs:
           mkdir -p build-ns2-a64
           for cxx in clang++ g++; do
             "${cxx}" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_lichii_nx2_generic_shader_regressions.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/probe.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/probe.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
               -o "build-ns2-a64/ampere-crossrepo-${cxx//+/}"
             "build-ns2-a64/ampere-crossrepo-${cxx//+/}"
           done
@@ -151,10 +151,10 @@ jobs:
               -Ivendor/encore-active/eden-vulkan/include \
               -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden-vulkan \
-              -Ivendor/encore-active/ns2-runtime/ampere \
-              -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
-              -Ivendor/encore-active/ns2-runtime/nvdrv_gpu \
-              -Ivendor/encore-active/ns2-runtime/hle \
+              -Ivendor/encore-active/eden/srcpere \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src_gpu \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
@@ -181,10 +181,10 @@ jobs:
               -Ivendor/encore-active/eden-vulkan/vulkan-cache \
               -Ivendor/encore-active/eden-vulkan/include \
               -Ivendor/encore-active/eden-vulkan \
-              -Ivendor/encore-active/ns2-runtime/ampere \
-              -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
-              -Ivendor/encore-active/ns2-runtime/nvdrv_gpu \
-              -Ivendor/encore-active/ns2-runtime/hle \
+              -Ivendor/encore-active/eden/srcpere \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src_gpu \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
@@ -201,8 +201,8 @@ jobs:
               "$cxx" -std=c++20 "-O${optimization}" -Wall -Wextra -Werror \
                 -fsanitize=undefined -fno-sanitize-recover=all \
                 -Ibuild-ns2-a64/fmt/include \
-                -Ivendor/encore-active/ns2-runtime/ampere \
-                -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
+                -Ivendor/encore-active/eden/srcpere \
+                -Ivendor/encore-active/eden/src \
                 -Ivendor/sources/eden/src \
                 tools/ns2/test_native_texture_gpu_owners.cpp -o "$output"
               UBSAN_OPTIONS=halt_on_error=1 "$output"
@@ -238,7 +238,7 @@ jobs:
           for compiler in clang++ g++; do
             "${compiler}" -std=c++20 -O2 -Wall -Wextra -Werror \
               -fsanitize=undefined -fno-sanitize-recover=all \
-              -Ivendor/encore-active/eden/src -Ivendor/encore-active/ns2-runtime/metadata \
+              -Ivendor/encore-active/eden/src -Ivendor/encore-active/eden/src \
               tools/ns2/test_nso_preflight.cpp \
               -o "build-ns2-a64/nso-preflight-${compiler//+/}"
             "build-ns2-a64/nso-preflight-${compiler//+/}"
@@ -250,7 +250,7 @@ jobs:
           for compiler in clang++ g++; do
             "${compiler}" -std=c++20 -O2 -Wall -Wextra -Werror \
               -fsanitize=undefined -fno-sanitize-recover=all \
-              -Ivendor/encore-active/eden/src -Ivendor/encore-active/ns2-runtime/metadata \
+              -Ivendor/encore-active/eden/src -Ivendor/encore-active/eden/src \
               tools/ns2/test_nso_process_handoff.cpp \
               -o "build-ns2-a64/handoff-${compiler//+/}"
             "build-ns2-a64/handoff-${compiler//+/}"
@@ -264,7 +264,7 @@ jobs:
           for compiler in clang++ g++; do
             "${compiler}" -std=c++20 -O2 -Wall -Wextra -Werror \
               -fsanitize=address,undefined -fno-sanitize-recover=all \
-              -Ivendor/encore-active/eden/src -Ivendor/encore-active/ns2-runtime/metadata \
+              -Ivendor/encore-active/eden/src -Ivendor/encore-active/eden/src \
               tools/ns2/test_kprocess_code_admission.cpp \
               -o "build-ns2-a64/kprocess-code-${compiler//+/}"
             "build-ns2-a64/kprocess-code-${compiler//+/}"
@@ -287,7 +287,7 @@ jobs:
             -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/svc.cpp
+            vendor/encore-active/eden/src/core/hle/kernel/svc.cpp
       - name: Syntax-check actual unified NPDM and ExeFS loader owners
         shell: bash
         run: |
@@ -295,9 +295,9 @@ jobs:
           # Exactly the source owners selected by the single PS5 CMake graph:
           # shared NS1/NS2 metadata + ExeFS and the reviewed native NSO loader.
           for source in \
-            vendor/encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp \
-            vendor/encore-active/ns2-runtime/metadata/core/loader/loader.cpp \
-            vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp \
+            vendor/encore-active/eden/src/core/file_sys/program_metadata.cpp \
+            vendor/encore-active/eden/src/core/loader/loader.cpp \
+            vendor/encore-active/eden/src/core/loader/deconstructed_rom_directory.cpp \
             vendor/encore-active/eden/src/core/loader/nso.cpp; do
             echo "Checking unified owner: ${source}"
             test -f "${source}"
@@ -305,7 +305,7 @@ jobs:
               -Ibuild-ns2-a64/fmt/include \
               -Iheadless \
               -Ivendor/encore-active/eden/src \
-              -Ivendor/encore-active/ns2-runtime/metadata \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
               "${source}"
@@ -318,10 +318,10 @@ jobs:
           clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
             -Ivendor/encore-active/eden/include \
-            -Ivendor/encore-active/ns2-runtime/am \
+            -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp
+            vendor/encore-active/eden/src/core/hle/service/am/service/application_functions.cpp
       - name: Ensure unverified NS2 AM graphics scaling prototype stays retired
         run: python3 -B tools/ns2/check_retired_am_graphics_scale.py
       - name: Syntax-check real Switch 2 GPU TIPC service owner
@@ -330,52 +330,52 @@ jobs:
           set -euo pipefail
           clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
-            -Ivendor/encore-active/ns2-runtime/gpu_session \
-            -Ivendor/encore-active/ns2-runtime/hle \
-            -Ivendor/encore-active/ns2-runtime/nvdrv_as \
-            -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
+            -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src_as \
+            -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp
+            vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp
           clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
-            -Ivendor/encore-active/ns2-runtime/gpu_session \
-            -Ivendor/encore-active/ns2-runtime/hle \
-            -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
-            -Ivendor/encore-active/ns2-runtime/nvdrv_as \
+            -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src_as \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp
+            vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp
           clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
-            -Ivendor/encore-active/ns2-runtime/gpu_session \
-            -Ivendor/encore-active/ns2-runtime/hle \
-            -Ivendor/encore-active/ns2-runtime/nvdrv_as \
-            -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
+            -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src_as \
+            -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp
+            vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker_shared.cpp
       - name: Syntax-check real NS2 SelfController and GraphicsSupervisor IPC services
         shell: bash
         run: |
           set -euo pipefail
           for source in \
-            vendor/encore-active/ns2-runtime/gamechat/core/hle/service/friend/friend.cpp \
-            vendor/encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.cpp \
-            vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp \
-            vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp; do
+            vendor/encore-active/eden/src/core/hle/service/friend/friend.cpp \
+            vendor/encore-active/eden/src/core/hle/service/am/service/self_controller.cpp \
+            vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp \
+            vendor/encore-active/eden/src/core/hle/service/am/service/graphics_video_decoder_session.cpp; do
             clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
               -DPS5_NATIVE=1 \
               -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden/src \
               -Ibuild-ns2-a64/fmt/include \
-              -Ivendor/encore-active/ns2-runtime/self_controller \
-              -Ivendor/encore-active/ns2-runtime/graphics_supervisor \
-              -Ivendor/encore-active/ns2-runtime/video_decoder \
-              -Ivendor/encore-active/ns2-runtime/gpu_session \
-              -Ivendor/encore-active/ns2-runtime/nvdrv_as \
-              -Ivendor/encore-active/ns2-runtime/hle \
-              -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src_as \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
               "${source}"
@@ -389,11 +389,11 @@ jobs:
           # Test this exact owner with a second real C++20 frontend instead.
           g++ -std=c++20 -fsyntax-only -Werror -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
-            -Ivendor/encore-active/ns2-runtime/nvdrv \
+            -Ivendor/encore-active/eden/src \
             -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp
+            vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp
       - name: Verify unmodified upstream Eden pin and two warning-free active headers
         run: python3 -B tools/install-eden-header-hygiene.py --verify
       - name: Syntax-check real process-scoped native GPFIFO channel owner (GCC)
@@ -402,15 +402,15 @@ jobs:
           set -euo pipefail
           g++ -std=c++20 -fsyntax-only -Werror -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
-            -Ivendor/encore-active/ns2-runtime/nvdrv_gpu \
-            -Ivendor/encore-active/ns2-runtime/nvdrv_as \
-            -Ivendor/encore-active/ns2-runtime/nvdrv \
-            -Ivendor/encore-active/ns2-runtime/hle \
-            -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
+            -Ivendor/encore-active/eden/src_gpu \
+            -Ivendor/encore-active/eden/src_as \
+            -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src \
             -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp
+            vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp
       - name: Syntax-check research Ampere DMA GPU puller owner (Clang and GCC)
         shell: bash
         run: |
@@ -419,13 +419,13 @@ jobs:
             "$cxx" -std=c++20 -fsyntax-only -Werror -Wno-unused-parameter \
               -Ibuild-ns2-a64/fmt/include \
               -Iheadless \
-              -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
-              -Ivendor/encore-active/ns2-runtime/nvdrv_gpu \
-              -Ivendor/encore-active/ns2-runtime/hle \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src_gpu \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
-              vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp
+              vendor/encore-active/eden/src/video_core/engines/puller.cpp
             # The ordinary host translation omits this conditional branch.
             # Prove the actual PS5 QMD3 -> mapped Ampere capture callback
             # remains syntactically linked to the genuine shader-reader ABI.
@@ -433,14 +433,14 @@ jobs:
               -DPS5_NATIVE=1 -DEDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL=1 \
               -Ibuild-ns2-a64/fmt/include \
               -Iheadless \
-              -Ivendor/encore-active/ns2-runtime/ampere \
-              -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
-              -Ivendor/encore-active/ns2-runtime/nvdrv_gpu \
-              -Ivendor/encore-active/ns2-runtime/hle \
+              -Ivendor/encore-active/eden/srcpere \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src_gpu \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
-              vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp
+              vendor/encore-active/eden/src/video_core/engines/puller.cpp
           done
       - name: Execute actual native Turing MME 96-bit methods (Clang/GCC UBSan)
         shell: bash
@@ -448,7 +448,7 @@ jobs:
           set -euo pipefail
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined \
-              -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
+              -Ivendor/encore-active/eden/src \
               tools/ns2/test_ampere_turing_macro.cpp \
               -o "build-ns2-a64/native-turing-mme-${cxx//+/}"
             "build-ns2-a64/native-turing-mme-${cxx//+/}"
@@ -459,7 +459,7 @@ jobs:
           set -euo pipefail
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_native_shader_texture_semantics.cpp \
               -o "build-ns2-a64/native-texture-shaders-${cxx//+/}"
@@ -472,7 +472,7 @@ jobs:
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O2 -Wall -Wextra -Werror -DFMT_HEADER_ONLY \
               -Ibuild-ns2-a64/fmt/include \
-              -Ivendor/encore-active/ns2-runtime/shader_resource/include \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src \
               tools/ns2/test_shader_generic31.cpp \
               -o "build-ns2-a64/generic31-${cxx//+/}"
@@ -484,7 +484,7 @@ jobs:
           set -euo pipefail
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined \
-              -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
+              -Ivendor/encore-active/eden/src \
               tools/ns2/test_native_qmd_scheduler.cpp \
               -o "build-ns2-a64/native-qmd3-${cxx//+/}"
             "build-ns2-a64/native-qmd3-${cxx//+/}"
@@ -504,8 +504,8 @@ jobs:
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined \
               -Ibuild-ns2-a64/fmt/include \
-              -Ivendor/encore-active/ns2-runtime/ampere \
-              -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
+              -Ivendor/encore-active/eden/srcpere \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src \
               tools/ns2/test_native_qmd_compute_environment.cpp \
               -o "build-ns2-a64/native-qmd3-environment-${cxx//+/}"
@@ -518,8 +518,8 @@ jobs:
           set -euo pipefail
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O2 -Wall -Wextra -Werror \
-              -Ivendor/encore-active/ns2-runtime/nvdrv_gpu \
-              -Ivendor/encore-active/ns2-runtime/hle \
+              -Ivendor/encore-active/eden/src_gpu \
+              -Ivendor/encore-active/eden/src \
               tools/ns2/test_native_ampere_channel.cpp \
               -o "build-ns2-a64/native-channel-${cxx//+/}"
             "build-ns2-a64/native-channel-${cxx//+/}"
@@ -533,8 +533,8 @@ jobs:
         run: |
           set -euo pipefail
           g++ -std=c++20 -O2 -Wall -Wextra \
-            -Ivendor/encore-active/ns2-runtime/hle \
-            -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
+            -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src \
             tools/ns2/test_native_gpu_submission.cpp \
             -o build-ns2-a64/native-gpfifo-test
           build-ns2-a64/native-gpfifo-test
@@ -546,13 +546,13 @@ jobs:
           set -euo pipefail
           g++ -std=c++20 -fsyntax-only -Werror -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
-            -Ivendor/encore-active/ns2-runtime/nvdrv_as \
-            -Ivendor/encore-active/ns2-runtime/hle \
-            -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
+            -Ivendor/encore-active/eden/src_as \
+            -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src \
             -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp
+            vendor/encore-active/eden/src_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp
       - name: Compile/run native GPU characteristics IOCTL host fixtures
         run: python3 tools/check-ns2-native-gpu-ioctl-host.py
       - name: P1.2 validate real NS2 NVDRV remap allocation bounds without console
@@ -578,10 +578,10 @@ jobs:
           set -euo pipefail
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O2 -Wall -Wextra -Werror \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_ampere_isa_probe.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/probe.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/probe.cpp \
               -o "build-ns2-a64/ampere-isa-${cxx//+/}"
             "build-ns2-a64/ampere-isa-${cxx//+/}"
           done
@@ -591,12 +591,12 @@ jobs:
           set -euo pipefail
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O1 -Wall -Werror -Wno-unused-parameter \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_ampere_lower_bridge.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/probe.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/probe.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
               -o "build-ns2-a64/ampere-lower-${cxx//+/}"
             "build-ns2-a64/ampere-lower-${cxx//+/}"
           done
@@ -607,7 +607,7 @@ jobs:
           mkdir -p build-ns2-a64
           for cxx in clang++ g++; do
             "${cxx}" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_ampere_native_register_shadow.cpp \
               -o "build-ns2-a64/ampere-register-shadow-${cxx//+/}"
@@ -620,10 +620,10 @@ jobs:
           mkdir -p build-ns2-a64
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -fsanitize=undefined -fno-sanitize-recover=all \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_ampere_warp_redux.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/probe.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/probe.cpp \
               -o "build-ns2-a64/ampere-warp-redux-$cxx"
             UBSAN_OPTIONS=halt_on_error=1 "build-ns2-a64/ampere-warp-redux-$cxx"
           done
@@ -638,7 +638,7 @@ jobs:
               -o "build-ns2-a64/egl-view-${cxx//+/}"
             "build-ns2-a64/egl-view-${cxx//+/}"
             "${cxx}" -std=c++20 -O1 -Wall -Wno-unused-parameter \
-              -Ivendor/encore-active/ns2-runtime/ampere -Ivendor/sources/eden/src \
+              -Ivendor/encore-active/eden/srcpere -Ivendor/sources/eden/src \
               tools/ns2/test_egl_ampere_ret.cpp \
               -o "build-ns2-a64/egl-ret-${cxx//+/}"
             "build-ns2-a64/egl-ret-${cxx//+/}"
@@ -693,10 +693,10 @@ jobs:
             -Ibuild-ns2-a64/fmt/include \
             -DEDEN_NS2_PROCESS_RUN_GUARD=1 \
             -Ivendor/encore-active/eden/src \
-            -Ivendor/encore-active/eden/src -Ivendor/encore-active/ns2-runtime/metadata \
+            -Ivendor/encore-active/eden/src -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp
+            vendor/encore-active/eden/src/core/hle/service/os/process.cpp
       - name: NS2 N51 native GPU PTE batching source parity and host oracle
         shell: bash
         run: |
@@ -726,12 +726,12 @@ jobs:
           set -euo pipefail
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -Wno-unused-parameter \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_ampere_maxwell_image.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/probe.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/probe.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
               -o "build-ns2-a64/ampere-image-${cxx//+/}"
             "build-ns2-a64/ampere-image-${cxx//+/}"
           done
@@ -741,14 +741,14 @@ jobs:
           set -euo pipefail
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O1 -Wall -Wextra -Wno-unused-parameter \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_ampere_gpu_capture.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/probe.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/translation_cache.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/capture.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/probe.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/translation_cache.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/capture.cpp \
               -o "build-ns2-a64/ampere-capture-${cxx//+/}"
             "build-ns2-a64/ampere-capture-${cxx//+/}"
           done
@@ -758,14 +758,14 @@ jobs:
           set -euo pipefail
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O1 -Wall -Wextra -Wno-unused-parameter \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_ampere_translation_cache.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/probe.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/translation_cache.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/capture.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/probe.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/translation_cache.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/capture.cpp \
               -o "build-ns2-a64/ampere-cache-${cxx//+/}"
             "build-ns2-a64/ampere-cache-${cxx//+/}"
           done
@@ -776,14 +776,14 @@ jobs:
           mkdir -p build-ns2-a64
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -Wno-unused-parameter -fsanitize=undefined -fno-sanitize-recover=all \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_native_lepc_capture.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/probe.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/translation_cache.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/capture.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/probe.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/translation_cache.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/capture.cpp \
               -o "build-ns2-a64/ampere-lepc-$cxx"
             UBSAN_OPTIONS=halt_on_error=1 "build-ns2-a64/ampere-lepc-$cxx"
           done
@@ -793,10 +793,10 @@ jobs:
           set -euo pipefail
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O1 -Wall -Wextra -Werror -pthread \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_ampere_cache_invalidation.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/translation_cache.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/translation_cache.cpp \
               -o "build-ns2-a64/ampere-invalidate-${cxx//+/}"
             "build-ns2-a64/ampere-invalidate-${cxx//+/}"
           done
@@ -807,13 +807,13 @@ jobs:
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O1 -Wall -Wextra -Wno-unused-parameter \
               -Ibuild-ns2-a64/fmt/include \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_ampere_maxwell_environment.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_environment.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/probe.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/maxwell_environment.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/probe.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
               -o "build-ns2-a64/ampere-environment-${cxx//+/}"
             "build-ns2-a64/ampere-environment-${cxx//+/}"
           done
@@ -824,9 +824,9 @@ jobs:
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -fsyntax-only -Wall -Wextra -Wno-unused-parameter \
               -Ibuild-ns2-a64/fmt/include \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/ir_bridge.cpp
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/ir_bridge.cpp
           done
       - name: Run NS2 standalone graphics stage admission (Clang and GCC)
         shell: bash
@@ -834,7 +834,7 @@ jobs:
           set -euo pipefail
           for cxx in clang++ g++; do
             "$cxx" -std=c++20 -O2 -Wall -Wextra -Werror -pedantic \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_native_graphics_stage_policy.cpp \
               -o "build-ns2-a64/ns2-graphics-stage-${cxx//+/}"
@@ -851,9 +851,9 @@ jobs:
           for cxx in clang++ g++; do
             "${cxx}" -std=c++20 -fsyntax-only -Wall -Wextra -Wno-unused-parameter \
               -Ibuild-ns2-a64/fmt/include \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp
           done
       - name: Test native GPU session generation tickets under contention
         shell: bash
@@ -861,8 +861,8 @@ jobs:
           set -euo pipefail
           for cxx in clang++ g++; do
             "${cxx}" -std=c++20 -O2 -Wall -Wextra -Werror -pthread \
-              -Ivendor/encore-active/ns2-runtime/hle \
-              -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src \
               tools/ns2/test_native_gpu_process_registry.cpp \
               -o "build-ns2-a64/ns2-registry-${cxx//+/}"
             "build-ns2-a64/ns2-registry-${cxx//+/}"
@@ -874,12 +874,12 @@ jobs:
           for cxx in clang++ g++; do
             "${cxx}" -std=c++20 -fsyntax-only -Wall -Wextra -Wno-unused-parameter \
               -Ibuild-ns2-a64/fmt/include \
-              -Ivendor/encore-active/ns2-runtime/ampere \
-              -Ivendor/encore-active/ns2-runtime/gpu_dispatch \
-              -Ivendor/encore-active/ns2-runtime/hle \
-              -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
+              -Ivendor/encore-active/eden/srcpere \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src \
-              vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.cpp
+              vendor/encore-active/eden/srcpere/video_core/ns2_shader_spirv_compile.cpp
           done
       - name: Execute actual Maxwell CFG and IR handoff spy (Clang and GCC)
         shell: bash
@@ -889,14 +889,14 @@ jobs:
             "${cxx}" -std=c++20 -O0 -g0 -DFMT_HEADER_ONLY \
               -Werror -Wno-unused-parameter -pthread \
               -Ibuild-ns2-a64/fmt/include \
-              -Ivendor/encore-active/ns2-runtime/ampere \
+              -Ivendor/encore-active/eden/srcpere \
               -Ivendor/sources/eden/src \
               tools/ns2/test_ampere_maxwell_cfg.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/ir_bridge.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/probe.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
-              vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/maxwell_environment.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/ir_bridge.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/probe.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/lower_bridge.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/maxwell_image.cpp \
+              vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/maxwell_environment.cpp \
               vendor/sources/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp \
               vendor/sources/eden/src/shader_recompiler/frontend/maxwell/decode.cpp \
               vendor/sources/eden/src/shader_recompiler/frontend/maxwell/opcodes.cpp \
@@ -916,19 +916,19 @@ jobs:
             fi
             g++ -std=c++20 -fsyntax-only -Wno-unused-parameter "${args[@]}" \
               -Ibuild-ns2-a64/fmt/include \
-              -Ivendor/encore-active/ns2-runtime/ampere \
-              -Ivendor/encore-active/ns2-runtime/nvdrv_gpu \
-              -Ivendor/encore-active/ns2-runtime/hle \
+              -Ivendor/encore-active/eden/srcpere \
+              -Ivendor/encore-active/eden/src_gpu \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
-              vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp
+              vendor/encore-active/eden/srcpere/video_core/native_shader_capture.cpp
           done
       - name: Compile and run Switch 1/2 content-format recognition fixtures
         shell: bash
         run: |
           set -euo pipefail
           g++ -std=c++20 -O2 -Wall -Wextra -Werror \
-            -Ivendor/encore-active/eden/src -Ivendor/encore-active/ns2-runtime/metadata \
+            -Ivendor/encore-active/eden/src -Ivendor/encore-active/eden/src \
             tools/ns2/test_content_formats.cpp \
             -o build-ns2-a64/ns2-content-format-test
           build-ns2-a64/ns2-content-format-test
@@ -954,10 +954,10 @@ jobs:
             -fsanitize=address,undefined -fno-sanitize-recover=all \
             -ffunction-sections -fdata-sections -Wl,--gc-sections \
             -Ibuild-ns2-a64/fmt/include \
-            -Ivendor/encore-active/eden/src -Ivendor/encore-active/ns2-runtime/metadata -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src -Ivendor/encore-active/eden/src -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src -Ivendor/sources/eden/src \
             tools/ns2/test_program_metadata.cpp \
-            vendor/encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp \
+            vendor/encore-active/eden/src/core/file_sys/program_metadata.cpp \
             -o build-ns2-a64/npdm-real-test
           ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 \
             build-ns2-a64/npdm-real-test

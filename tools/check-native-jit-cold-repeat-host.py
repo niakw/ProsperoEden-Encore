@@ -28,9 +28,9 @@ assert 'set(EDEN_G11_PROFILE normal)' in CMAKE
 
 ARCH={
  "A32":("vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/a32_interface.cpp",
-        "vendor/encore-active/eden/src/dynarmic/backend/x64/a32_interface_native.cpp"),
+        "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a32_interface_native.cpp"),
  "A64":("vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface.cpp",
-        "vendor/encore-active/eden/src/dynarmic/backend/x64/a64_interface_standard.cpp"),
+        "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface_standard.cpp"),
 }
 def extract(source,begin):
     assert source.count(begin)==1,begin

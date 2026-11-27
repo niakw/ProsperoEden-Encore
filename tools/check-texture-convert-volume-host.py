@@ -11,7 +11,7 @@ def method(path):
     start = text.index('void ConvertImage(')
     return text[start:text.index('\nboost::container::small_vector<BufferImageCopy, 16> FullDownloadCopies', start)]
 previous = method(ROOT / 'vendor/sources/eden/src/video_core/texture_cache/util.cpp')
-current = method(ROOT / 'vendor/encore-active/eden-core/src/video_core/texture_cache/util.cpp')
+current = method(ROOT / 'vendor/encore-active/eden/src/video_core/texture_cache/util.cpp')
 decoder = (ROOT / 'vendor/sources/eden/src/video_core/texture_cache/decode_bc.cpp').read_text()
 assert 'const u32 depth = copy.image_extent.depth;' in decoder
 assert 'for (u32 slice = 0; slice < depth; ++slice)' in decoder
@@ -238,7 +238,7 @@ print("NS1_LAYERED_CROSS_FORMAT_COPY_HOST_PASS active_owner=1 exact_helper=1 "
 
 # GPU-48: the active format lookup is a one-hunk successor of pinned Eden.
 format_original=(ROOT/"vendor/sources/eden/src/video_core/texture_cache/format_lookup_table.cpp").read_text()
-format_active=(ROOT/"vendor/encore-active/eden-core/src/video_core/texture_cache/format_lookup_table.cpp").read_text()
+format_active=(ROOT/"vendor/encore-active/eden/src/video_core/texture_cache/format_lookup_table.cpp").read_text()
 format_old="""    case Hash(TextureFormat::X8Z24, UNORM, UINT, UINT, UINT, LINEAR):
         return PixelFormat::X8_D24_UNORM;
 """

@@ -11,7 +11,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 pinned = (root / "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
-native = (root / "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
+native = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 start = "template <class P>\nvoid BufferCache<P>::SetUniformBuffersState("
 end = "\ntemplate <class P>\nvoid BufferCache<P>::SetComputeUniformBufferState("
 def method(src):

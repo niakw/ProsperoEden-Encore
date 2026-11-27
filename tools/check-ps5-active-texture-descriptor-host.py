@@ -5,9 +5,9 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-path = root / "vendor/encore-active/eden-core/src/video_core/texture_cache/util.cpp"
+path = root / "vendor/encore-active/eden/src/video_core/texture_cache/util.cpp"
 cmake = (root / "headless/CMakeLists.txt").read_text()
-assert '"${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/texture_cache/util.cpp"' in cmake
+assert '"${PORT_ROOT}/vendor/encore-active/eden/src/video_core/texture_cache/util.cpp"' in cmake
 assert 'list(APPEND video_sources "${EDEN_MAINTAINED_TEXTURE_UTIL}")' in cmake
 data = path.read_text()
 begin = data.index("bool IsValidEntry(")

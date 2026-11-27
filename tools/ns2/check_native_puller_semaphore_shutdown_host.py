@@ -13,8 +13,8 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 NATIVE = ROOT/'vendor/encore-active/eden/src/video_core/engines/puller.cpp'
-SHARED = ROOT/'vendor/encore-active/eden-core/src/video_core/engines/puller.cpp'
-DEV = ROOT/'vendor/encore-active/eden-core/src/video_core/engines/puller_dev.cpp'
+SHARED = ROOT/'vendor/encore-active/eden/src/video_core/engines/puller.cpp'
+DEV = ROOT/'vendor/encore-active/eden/src/video_core/engines/puller_dev.cpp'
 START = 'void Puller::ProcessSemaphoreAcquire(DmaPusher& dma_pusher) {'
 END = '\n/// Calls a GPU puller method.'
 

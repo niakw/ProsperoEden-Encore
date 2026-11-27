@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-source = (ROOT / "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
+source = (ROOT / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 
 
 def method(name):

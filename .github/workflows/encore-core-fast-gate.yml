@@ -189,7 +189,7 @@ on:
       - 'tools/check-native-indirect-null-binding-host.py'
       - 'vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/**'
       - 'vendor/encore-active/eden-backports/src/core/hle/service/nvnflinger/**'
-      - 'vendor/encore-active/eden-surface-lifecycle/**'
+      - 'vendor/encore-active/eden/**'
       - 'tools/check-surface-lifecycle.py'
       - 'tools/check-native-hardware-composer-liveness-host.py'
       - 'tools/install-vendored-surface-lifecycle.py'

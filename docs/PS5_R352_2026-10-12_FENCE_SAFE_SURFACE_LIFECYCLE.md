@@ -12,7 +12,7 @@ The ordinary `Container::CloseLayerLocked` does remove stacked layers, but `Cont
 
 The full `surface_flinger.cpp` translation unit is checked in at:
 
-`vendor/encore-active/eden-surface-lifecycle/src/core/hle/service/nvnflinger/surface_flinger.cpp`
+`vendor/encore-active/eden/src/core/hle/service/nvnflinger/surface_flinger.cpp`
 
 The pinned original stays untouched at `vendor/sources/eden/src/core/hle/service/nvnflinger/surface_flinger.cpp`. The standalone `tools/install-vendored-surface-lifecycle.py` installs the entire checked-in compiled source into the disposable Eden worktree, after the 43 existing shipping backports and before CMake. It checks the original git-blob SHA, the pinned Eden commit and rejects unexpected source drift.
 

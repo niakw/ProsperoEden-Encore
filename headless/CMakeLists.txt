@@ -1458,7 +1458,7 @@ endif()
 # retirement. Select exactly one full maintained native HWC source owner.
 if(PS5_NATIVE)
     set(EDEN_R23_HWC_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/hardware_composer.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvnflinger/hardware_composer.cpp")
     if(NOT EXISTS "${EDEN_R23_HWC_SOURCE}")
         message(FATAL_ERROR "R23 #64 native HWC visibility source missing")
     endif()

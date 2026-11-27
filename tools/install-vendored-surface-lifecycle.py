@@ -15,10 +15,10 @@ import shutil
 ROOT = Path(__file__).resolve().parents[1]
 PATH = Path("src/core/hle/service/nvnflinger/surface_flinger.cpp")
 ORIGINAL = ROOT / "vendor/sources/eden" / PATH
-ACTIVE = ROOT / "vendor/encore-active/eden-surface-lifecycle" / PATH
+ACTIVE = ROOT / "vendor/encore-active/eden" / PATH
 COMPOSER_PATH = Path("src/core/hle/service/nvnflinger/hardware_composer.cpp")
 COMPOSER_ORIGINAL = ROOT / "vendor/sources/eden" / COMPOSER_PATH
-COMPOSER_ACTIVE = ROOT / "vendor/encore-active/eden-surface-lifecycle" / COMPOSER_PATH
+COMPOSER_ACTIVE = ROOT / "vendor/encore-active/eden" / COMPOSER_PATH
 COMPOSER_ORIGINAL_GIT_BLOB = "5decb791e1bb1ab2420f386e3fdbdd2b8628a324"
 COMPOSER_PREVIOUS_ACTIVE_GIT_BLOB = "73374722816afae6c320e65e628d7112f1b832db"
 COMPOSER_PRE_REUSE_GIT_BLOB = "e44e5c085907f21b3397615286eb07b637377c83"

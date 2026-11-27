@@ -26,7 +26,7 @@ for extra in ("eden-cpm", "boilerplate-setup-0"):
     assert extra in root_names, extra
 fork_names = {entry.name for entry in active.iterdir() if entry.is_dir()}
 for name in ("eden-backports", "eden-build", "eden-core", "eden-gpu",
-             "eden-surface-lifecycle", "eden-vulkan", "ps5-mesa"):
+             "eden-vulkan", "ps5-mesa"):
     assert name in fork_names, f"missing active patched tree: {name}"
 assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in vulkan
 assert (active/"eden-build/src/CMakeLists.txt").is_file(), "missing maintained native CMake"

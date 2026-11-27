@@ -3877,7 +3877,7 @@
       "evidence": "Maintained shader recompiler LDL already checks original local byte address bounds, but still emitted a runtime ILessThan and two IR Select nodes for literal offsets accepted statically. Fast path returns v.ir.LoadLocal(word_offset) immediately after successful static bound; dynamic offsets continue safe index + value clamps and guard. Existing C++ sanitizer extraction strengthened with counters proving literal loads require no dynamic compare/Select while dynamic still does. Native graphics/pixel and FPS unverified."
     },
     {
-      "path": "vendor/encore-active/eden-surface-lifecycle/src/core/hle/service/nvnflinger/hardware_composer.cpp",
+      "path": "vendor/encore-active/eden/src/core/hle/service/nvnflinger/hardware_composer.cpp",
       "disposition": "new_source_issue_corrected",
       "contract_id": "N23",
       "prior_status": "SOURCE",
@@ -3885,7 +3885,7 @@
       "evidence": "23 October: native-maintained compositor source selected by staged installer, with exact pinned-original transformation and host replay of released versus still-acquired frame reuse. F03/F05 unresolved until full display progression and HUD are proven."
     },
     {
-      "path": "vendor/encore-active/eden-surface-lifecycle/src/core/hle/service/nvnflinger/surface_flinger.cpp",
+      "path": "vendor/encore-active/eden/src/core/hle/service/nvnflinger/surface_flinger.cpp",
       "disposition": "historical_native_selected_unit",
       "contract_id": "N06",
       "prior_status": "SOURCE",

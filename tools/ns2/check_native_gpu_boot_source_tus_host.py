@@ -155,11 +155,22 @@ dma_header = r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pus
 def git_blob(path):
     raw=path.read_bytes()
     return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-# Reviewed fence parking / AS revocation / H17 successors through d13311b3.
-assert git_blob(dma_owner) == '861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c'
-assert git_blob(dma_header) == '4cb9f79deeb56ab7397c6209939c94dffbb7575b'
+# Reviewed fence parking / AS revocation / H17 successors plus 8d3eaa48
+# inter-list callback lifetime hardening. Exact blobs only.
+assert git_blob(dma_owner) == '76eb30a7e58f17852069a05e2c12cd3c6521967f'
+assert git_blob(dma_header) == '4e4a1f23d89a7ace963a9249afa47a592cb4eb6e'
 dma_text=dma_owner.read_text()
 dma_header_text=dma_header.read_text()
+for token in (
+    'std::make_shared<NativeInterlistFenceState>()',
+    'native_interlist_fence = state;',
+    'SignalNativeFence([state]()',
+    'if (signal_sync && native_interlist_fence)',
+    'auto state = native_interlist_fence;',
+):
+    assert token in dma_text, ('NS2 inter-list fence lifetime drift', token)
+assert 'std::shared_ptr<NativeInterlistFenceState> native_interlist_fence;' in dma_header_text
+assert 'SignalNativeFence([this]()' not in dma_text
 for token in (
     'native_channel && command_resume_offset == 0',
     'header.addr != split_method_end',

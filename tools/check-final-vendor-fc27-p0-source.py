@@ -125,6 +125,7 @@ REVIEWED_PINS.update({
     "2adfca5489b3f107847e0a1a9cdc06e497fc656f",
     "a47b6b20a8e7b7db748a82610a9b08685ba03eeb",
     "4b63376eb7057015d70295ecd7df4ce96be80607",
+    "e41a6930b4215a8e454c124e8fa8145de0c5bf7a",
 })
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 # The exact 26 Nov successor has 18 changed tracked files relative to

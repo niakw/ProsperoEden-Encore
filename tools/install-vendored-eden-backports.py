@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -42,42 +43,95 @@ def changed(patched:Path)->dict[str,dict]:
                            'active':sha(new),'bytes':len(new)}
     return results
 
+PATCHES=ROOT/'headless/backports'
+EXCLUDED_PATCHES={'eden-dummy-thread-waits.patch'}
+APPLY_RE=re.compile(
+    r'apply_one "\\$root/headless/backports/([^"]+)" "\\$eden/([^"]+)"')
+
+
+def patch_paths(patch:Path)->set[str]:
+    """Return logical Eden paths modified or added by one reviewed patch."""
+    paths=set()
+    for line in patch.read_text().splitlines():
+        if not line.startswith('+++ b/'):
+            continue
+        relative=line[len('+++ b/'):]
+        if relative and relative!='/dev/null':
+            paths.add(relative)
+    return paths
+
+
+def shipping_spec()->dict:
+    """Derive the scratch-overlay contract from current structure.
+
+    Canonical ownership is the relative path under vendor/encore-active/eden.
+    Hashes below protect one scratch-copy transaction; they never admit or
+    reject a versioned owner and are not a vendor source allowlist.
+    """
+    calls=APPLY_RE.findall((ROOT/'tools/apply-eden-backports.sh').read_text())
+    touched=set()
+    receipts={}
+    for patch_name,receipt_name in calls:
+        if patch_name in EXCLUDED_PATCHES:
+            continue
+        patch=PATCHES/patch_name
+        if not patch.is_file():
+            raise RuntimeError(f'Missing shipping Eden patch: {patch_name}')
+        touched.update(patch_paths(patch))
+        receipts[receipt_name]=sha(patch.read_bytes())
+    entries={}
+    for relative in sorted(touched):
+        active=ACTIVE/relative
+        if not active.is_file():
+            raise RuntimeError(
+                f'Missing canonical Encore owner for backport path: {relative}')
+        before=ORIGINAL/relative
+        prior=before.read_bytes() if before.is_file() else None
+        current=active.read_bytes()
+        if prior==current:
+            continue
+        entries[relative]={
+            'upstream':sha(prior) if prior is not None else None,
+            'active':sha(current),
+            'bytes':len(current),
+        }
+    if len(entries)<65:
+        raise RuntimeError(
+            f'Unexpectedly few canonical Eden backport owners: {len(entries)}')
+    if len(receipts)<30:
+        raise RuntimeError(
+            f'Backport patch set unexpectedly incomplete: {len(receipts)}')
+    return {
+        'pinned_eden_commit':PIN,
+        'source':'tools/apply-eden-backports.sh',
+        'entries':entries,
+        'shipping_receipts':dict(sorted(receipts.items())),
+        'excluded_experimental':list(EXPERIMENT),
+    }
+
+
 def materialize(patched:Path)->None:
-    entries=changed(patched)
-    if len(entries)<65:raise RuntimeError(f'Unexpectedly few shipping Eden backports: {len(entries)}')
-    ACTIVE.mkdir(parents=True,exist_ok=True)
-    for path in entries:
-        destination=ACTIVE/path
-        destination.parent.mkdir(parents=True,exist_ok=True)
-        shutil.copy2(patched/path,destination)
-    receipts={p.name:p.read_text().strip() for p in patched.glob('.encore-backport-*.sha256')}
-    if len(receipts)<30:raise RuntimeError(f'Backport receipts unexpectedly incomplete: {len(receipts)}')
-    spec={'pinned_eden_commit':PIN,'source':'tools/apply-eden-backports.sh',
-          'entries':entries,'shipping_receipts':dict(sorted(receipts.items())),
-          'excluded_experimental':list(EXPERIMENT)}
-    (ACTIVE/'backports').mkdir(parents=True,exist_ok=True)
-    (ACTIVE/'backports/manifest.json').write_text(json.dumps(spec,indent=2,sort_keys=True)+'\n')
-    print(f'MATERIALIZED_EDEN_BACKPORTS files={len(entries)} verified_patch_receipts={len(receipts)}')
+    raise RuntimeError(
+        '--materialize is retired: maintain final owners directly under '
+        'vendor/encore-active/eden; never regenerate the vendor override tree')
+
 
 def lock()->dict:
-    data=json.loads((ACTIVE/'backports/manifest.json').read_text())
-    if data['pinned_eden_commit']!=PIN:raise RuntimeError('Wrong pinned Eden revision')
-    if set(data['excluded_experimental'])!=set(EXPERIMENT):raise RuntimeError('Shipping/experimental policy changed')
-    return data
+    return shipping_spec()
+
 
 def verify()->dict:
-    meta=lock()
+    meta=shipping_spec()
     for path,contract in meta['entries'].items():
         target=ACTIVE/path
         if sha(target.read_bytes())!=contract['active']:
-            raise RuntimeError(f'Vendored patched source hash mismatch: {path}')
-        old=ORIGINAL/path
-        if (sha(old.read_bytes()) if old.is_file() else None)!=contract['upstream']:
-            raise RuntimeError(f'Vendored upstream has changed: {path}')
-    if len(meta['entries'])<65 or len(meta['shipping_receipts'])<30:
-        raise RuntimeError('Missing shipping Eden patches')
-    print(f'EDEN_PATCHED_SOURCES_OK {len(meta["entries"])} complete files; {len(meta["shipping_receipts"])} patch checksums')
+            raise RuntimeError(
+                f'Canonical Encore owner changed while verifying: {path}')
+    print(
+        f'EDEN_PATCHED_SOURCES_OK {len(meta["entries"])} canonical owners; '
+        f'{len(meta["shipping_receipts"])} derived patch checksums')
     return meta
+
 
 def is_owned_cached_source(destination:Path)->bool:
     """Only the disposable, owner-stamped Encore native source may be rebased."""

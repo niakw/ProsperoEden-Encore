@@ -237,9 +237,9 @@ if selected == "05bf05a8dca75b3e12871ec886a810310cdf43d6":
             "23725030557268e6593c9e5f64cb063730b77787",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp":
             "ff8ad79ef203456063dbd848eab3ea575628edfc",
-        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h":
+        "encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h":
             "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
-        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp":
+        "encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp":
             "602d45b4d2ad872b138d62ce05f379b5e1103602",
     }.items():
         assert blob(V/relative) == receipt, ("FC27 SSBO exact vendor source drift", relative)
@@ -260,8 +260,8 @@ if selected == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab":
                                    text=True).strip() == "d56f1f3efcbe283d018b411289f36bd398905408"
     for relative, digest in {
         "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146",
-        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
-        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
+        "encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
+        "encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
     }.items():
         assert blob(V / relative) == digest, ("VI2 successor SSBO source drift",relative)
@@ -272,8 +272,8 @@ if selected in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a490
     for relative, digest in {
         "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "abd6757c20b4b7629f0d6e179999c2d6091a2825",
         "tests/ns2_gpu_identity_mapping_source.py": "23be79dbe84fc2f51a2db1fa741f6fd3c7e28daf",
-        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
-        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
+        "encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
+        "encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
         **({"encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee"} if selected == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else {}),
     }.items():
@@ -287,8 +287,8 @@ if selected in {"19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045d
         "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": ("4e4a1f23d89a7ace963a9249afa47a592cb4eb6e" if selected in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "4cb9f79deeb56ab7397c6209939c94dffbb7575b"),
         "encore-active/eden-core/src/video_core/dma_pusher.cpp": ("76eb30a7e58f17852069a05e2c12cd3c6521967f" if selected in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "ca642b98443901eee4f88b02850237f3eda623c8"),
         "tests/ns2_gpu_identity_mapping_source.py": ("787b18b8c9b2841874ceaea911947e533b59e198" if selected in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "dfe5b9d594d3e5f161872a18e227afe6f02a436d" if selected == "e5ad6cebf5572d7045de9e48f4308cc2621eede1" else "8340a1f3403bb57debbabcd193170034a30282a1"),
-        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
-        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
+        "encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
+        "encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
         "encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee",
         **({
@@ -310,8 +310,8 @@ if selected == "cb8635aa95da52de2dd10be9d1574425edc1eb18":
         "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "4e4a1f23d89a7ace963a9249afa47a592cb4eb6e",
         "encore-active/eden-core/src/video_core/dma_pusher.cpp": "76eb30a7e58f17852069a05e2c12cd3c6521967f",
         "tests/ns2_gpu_identity_mapping_source.py": "787b18b8c9b2841874ceaea911947e533b59e198",
-        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
-        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
+        "encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
+        "encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
         "encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee",
         "encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "30e7c389851a5a0f2b6369c35a313f93a0fc6826",
@@ -328,8 +328,8 @@ if selected == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip() == "8f6e3f968a67652ae2f7036f07c295604b0f17fc"
     for relative, digest in {
-        "encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
-        "encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
+        "encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
+        "encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "6f3378f1bb611c74ecfe1f5cd37283137462012a",
         "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "be946421279aa406151f8255cd7b74b88c996873",
         "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "213dd0f37f23043fe16a5efb8e466b2a9b9979cb",
@@ -342,8 +342,8 @@ if selected == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
     expected.add(selected)
 assert selected==gitlink,(selected,gitlink)
 
-bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"
-active=V/"encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp"
+bfs=V/"encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h"
+active=V/"encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp"
 pinned=V/"sources/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp"
 assert blob(bfs)=="fa5e7572ef99bba3db17154c63f60dddba7a87c6"
 assert blob(active)=="602d45b4d2ad872b138d62ce05f379b5e1103602"
@@ -353,7 +353,7 @@ assert blob(pinned)=="4ce1ff6c19c4937855d4460a515aec6a8a1e07e0"
 # replace only the global-memory pass and preserve the immutable original.
 for needle in (
     'set(EDEN_R23_PHI_HEADER',
-    'vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h',
+    'vendor/encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h',
     'set(EDEN_FC27_SSBO_SOURCE',
     'list(FIND eden_fc27_ssbo_sources "ir_opt/global_memory_to_storage_buffer_pass.cpp"',
     'list(REMOVE_ITEM eden_fc27_ssbo_sources "ir_opt/global_memory_to_storage_buffer_pass.cpp")',
@@ -372,7 +372,7 @@ assert "BreadthFirstSearchPruned(Value value" in header
 assert "BreadthFirstSearchPruned" not in pinned.read_text()
 
 # GPU-53: exact maintained SSBO emitter + shared native SPIR-V context.
-active_mem=V/"encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp"
+active_mem=V/"encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp"
 pinned_mem=V/"sources/eden/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp"
 active_ctx=V/"encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp"
 pinned_ctx=V/"sources/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp"
@@ -435,7 +435,7 @@ includes=[
     V/"encore-active/ns2-runtime/ampere",
     V/"encore-active/ns2-runtime/gpu_dispatch",
     V/"encore-active/ns2-runtime/hle",
-    V/"encore-active/eden-shader/src",
+    V/"encore-active/eden/src",
     V/"sources/eden/src",
     V/"sources/eden/src/dynarmic/src",
     cpm/"fmt/12.1.0/include",

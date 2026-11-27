@@ -12,10 +12,10 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-PRODUCER = (ROOT / "vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
+PRODUCER = (ROOT / "vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
 CONSUMER = (ROOT / "vendor/sources/eden/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp").read_text()
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
-assert 'vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp' in CMAKE
+assert 'vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp' in CMAKE
 assert 'core->connected_producer_listener = wake;' in PRODUCER
 assert 'wake->SetDelegate(listener);' in PRODUCER
 assert 'listener = core->connected_producer_listener;' in CONSUMER

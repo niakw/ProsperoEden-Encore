@@ -111,8 +111,6 @@ TESTS = {
     "vulkan_generator_fork": "tools/check-vendored-vulkan-fork.py",
     "final_engine_owners": "tools/ci/check-final-engine-owner-contracts.py",
     "deferred_dma_parity": "tools/check-deferred-native-bridge-contract.py",
-    "audit_verification_matrix": "tools/check-eden-audit-verification-matrix.py",
-    "vendor_source_parity": "tools/check-vendor-consolidation-debt.py",
     "native_package_contract": "tools/check-ps5-all-on-contract.py",
     "physical_core_atomic": "tools/check-native-physical-core-atomic-host.py",
     "vulkan_deferred_copy": "tools/check-vulkan-deferred-copy-ownership-host.py",

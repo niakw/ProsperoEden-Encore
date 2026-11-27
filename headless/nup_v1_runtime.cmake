@@ -53,7 +53,7 @@ foreach(eden_nup_pair IN ITEMS
 endforeach()
 set_property(TARGET core PROPERTY SOURCES "${eden_nup_runtime_sources}")
 set(eden_nup_extracted_aoc_headers
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/file_sys")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/file_sys")
 if(NOT EXISTS "${eden_nup_extracted_aoc_headers}/extracted_aoc.h")
     message(FATAL_ERROR "NUP AoC requires maintained existing extracted-aoc interface")
 endif()

@@ -98,7 +98,7 @@ endfunction()
 # This only copies tracked bytes into the native include overlay.
 if(PS5_NATIVE)
     set(EDEN_MAINTAINED_BUFFER_PAGES
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h")
     if(NOT EXISTS "${EDEN_MAINTAINED_BUFFER_PAGES}")
         message(FATAL_ERROR "Missing maintained R437 BufferCache header")
     endif()
@@ -108,7 +108,7 @@ if(PS5_NATIVE)
     # The reviewed R437 body adds an explicit GPU-write tick policy. Select
     # its matching template declarations, not the pinned pre-R437 ABI.
     set(EDEN_MAINTAINED_BUFFER_BASE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache_base.h")
     if(NOT EXISTS "${EDEN_MAINTAINED_BUFFER_BASE}")
         message(FATAL_ERROR "Missing matching native R437 BufferCache base declarations")
     endif()
@@ -194,7 +194,7 @@ endif()
 # remains valid; do not compile two independent VIC implementations.
 if(PS5_NATIVE)
     set(EDEN_VIC_MAINTAINED_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/vic.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/host1x/vic.cpp")
     if(EXISTS "${EDEN_VIC_MAINTAINED_SOURCE}")
         if(NOT EXISTS "${EDEN_NVDEC_MAINTAINED_SOURCE}" OR
            NOT EXISTS "${EDEN_NVDEC_MAINTAINED_HEADER}")
@@ -222,7 +222,7 @@ endif()
 # The texture-cache small-vector Boost version dependency is a complete
 # tracked header under vendor/encore-active, not a configure-time replacement.
 # Its only modification to the original is #include <boost/version.hpp>.
-set(EDEN_SMALL_VECTOR_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src")
+set(EDEN_SMALL_VECTOR_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
 if(NOT EXISTS "${EDEN_SMALL_VECTOR_ROOT}/video_core/texture_cache/util.h")
     message(FATAL_ERROR "Missing maintained texture-cache type header")
 endif()
@@ -231,7 +231,7 @@ target_include_directories(video_core BEFORE PRIVATE "${EDEN_SMALL_VECTOR_ROOT}"
 # synchronous PS5 storage flush for every error line. Keep regular buffer
 # flushes and the explicit Flush() API; only coalesce bursts to 100 ms.
 # Never edit the immutable Eden logging.cpp source.
-set(EDEN_MAINTAINED_LOGGING "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/logging.cpp")
+set(EDEN_MAINTAINED_LOGGING "${PORT_ROOT}/vendor/encore-active/eden/src/common/logging.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_LOGGING}")
     message(FATAL_ERROR "Missing maintained bounded logging source")
 endif()
@@ -245,7 +245,7 @@ list(APPEND eden_common_sources "${EDEN_MAINTAINED_LOGGING}")
 set_property(TARGET common PROPERTY SOURCES "${eden_common_sources}")
 # Lichii #957: one maintained common TU, exact last-byte page-table bound.
 # All builds share this fix; do not compile both explicit instantiations.
-set(EDEN_MAINTAINED_GPU_PAGE_TABLE "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp")
+set(EDEN_MAINTAINED_GPU_PAGE_TABLE "${PORT_ROOT}/vendor/encore-active/eden/src/common/multi_level_page_table.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")
     message(FATAL_ERROR "Missing maintained GPU multi-level page table")
 endif()
@@ -274,7 +274,7 @@ include("${PORT_ROOT}/vendor/encore-active/eden/native-hle-overrides.cmake")
 # The full JIT assertion header is versioned under vendor/encore-active.
 # It is byte-equivalent to the previous pinned header + guarded override;
 # only the Dynarmic target sees these exceptional-path assertion semantics.
-set(EDEN_JIT_ASSERT_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src")
+set(EDEN_JIT_ASSERT_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
 if(NOT EXISTS "${EDEN_JIT_ASSERT_ROOT}/common/assert.h")
     message(FATAL_ERROR "Missing maintained JIT assertions")
 endif()
@@ -353,7 +353,7 @@ endif()
 # the deprecation diagnostics or mutate the pinned source cache.
 if(PS5_NATIVE)
     set(EDEN_NATIVE_STRING_UTIL
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/string_util.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/common/string_util.cpp")
     if(NOT EXISTS "${EDEN_NATIVE_STRING_UTIL}")
         message(FATAL_ERROR "Maintained native string_util.cpp is missing")
     endif()
@@ -378,7 +378,7 @@ target_sources(common PRIVATE "${PORT_ROOT}/src/host_memory.cpp" "${PORT_ROOT}/s
 # genuine PNG scans. Do not link two stb implementations.
 if(PS5_NATIVE)
     set(EDEN_NATIVE_STB_CODECS
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/stb_image_png.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/common/stb_image_png.cpp")
     if(NOT EXISTS "${EDEN_NATIVE_STB_CODECS}")
         message(FATAL_ERROR "Missing maintained PS5 JPEG+PNG decoder")
     endif()
@@ -449,7 +449,7 @@ target_include_directories(common PRIVATE "${EDEN_PORT_DIR}")
 # Complete native sparse vector header is owned by Encore, not constructed
 # at configure time. Preserve the prior include-overlay selection order.
 set(EDEN_MAINTAINED_SPARSE_VECTOR
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/sparse_large_vector.h")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/common/sparse_large_vector.h")
 if(NOT EXISTS "${EDEN_MAINTAINED_SPARSE_VECTOR}")
     message(FATAL_ERROR "Missing maintained sparse vector header")
 endif()
@@ -460,7 +460,7 @@ configure_file("${EDEN_MAINTAINED_SPARSE_VECTOR}"
 # The fiber transition fix is a complete, versioned C++ translation unit.
 # It was previously regenerated by CMake string(REPLACE) at each configure.
 # The pinned original stays immutable in vendor/sources for audit/provenance.
-set(EDEN_FIBER_ACTIVE "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/fiber.cpp")
+set(EDEN_FIBER_ACTIVE "${PORT_ROOT}/vendor/encore-active/eden/src/common/fiber.cpp")
 if(NOT EXISTS "${EDEN_FIBER_ACTIVE}")
     message(FATAL_ERROR "Missing tracked Encore fiber source")
 endif()
@@ -715,7 +715,7 @@ get_target_property(core_sources core SOURCES)
 # G11 + X06: one complete Encore JIT translation unit per guest ISA.
 # G11's historical C++ transformations are retained as host-test fixtures only.
 set(EDEN_G11_INLINE_VALUE 0)
-set(EDEN_G11_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/arm/dynarmic/g11")
+set(EDEN_G11_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src/core/arm/dynarmic/g11")
 if(PS5_NATIVE)
     set(EDEN_G11_PLATFORM native)
 else()
@@ -741,7 +741,7 @@ foreach(bits 32 64)
         COMPILE_DEFINITIONS "EDEN_INLINE_EXCLUSIVES=${EDEN_G11_INLINE_VALUE}")
 endforeach()
 # G12: complete maintained PhysicalCore sources. No build-time C++ patches.
-set(EDEN_PHYSICAL_CORE_DIR "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/kernel")
+set(EDEN_PHYSICAL_CORE_DIR "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/kernel")
 set(EDEN_PHYSICAL_CORE_SOURCE "${EDEN_PHYSICAL_CORE_DIR}/physical_core_standard.cpp")
 if(NOT EXISTS "${EDEN_PHYSICAL_CORE_SOURCE}")
     message(FATAL_ERROR "Missing maintained PhysicalCore source ${EDEN_PHYSICAL_CORE_SOURCE}")
@@ -750,7 +750,7 @@ configure_file("${EDEN_PHYSICAL_CORE_SOURCE}" "${PORT_BUILD_DIR}/physical_core.c
 list(REMOVE_ITEM core_sources "hle/kernel/physical_core.cpp")
 list(APPEND core_sources "${PORT_BUILD_DIR}/physical_core.cpp")
 # Guest scheduler spin lock is maintained as a complete qualified source, not a CMake rewrite.
-set(eden_kernel_spin "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/kernel/k_spin_lock.cpp")
+set(eden_kernel_spin "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/kernel/k_spin_lock.cpp")
 if(NOT EXISTS "${eden_kernel_spin}")
     message(FATAL_ERROR "Missing maintained guest scheduler lock source")
 endif()
@@ -760,7 +760,7 @@ list(APPEND core_sources "${eden_kernel_spin}")
 # One source owns queue correctness and tracing in the native application.
 # Its profiling counters do not change the selected source graph.
 set(EDEN_MAINTAINED_PROFILE_DEQUEUE
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_PROFILE_DEQUEUE}")
     message(FATAL_ERROR "Missing maintained buffer queue producer source")
 endif()
@@ -769,7 +769,7 @@ list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_DEQUEUE}")
 # Consumer queue teardown must notify both host dequeue waiters and the
 # guest Binder handle. Keep pinned Eden unmodified and select one source owner.
 set(EDEN_MAINTAINED_NVNF_CONSUMER
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_NVNF_CONSUMER}")
     message(FATAL_ERROR "Missing maintained buffer queue consumer source")
 endif()
@@ -778,7 +778,7 @@ list(APPEND core_sources "${EDEN_MAINTAINED_NVNF_CONSUMER}")
 # The native app selects one maintained standard guest IPC unit.
 # The old development request-profiler source remains unselected.
 set(EDEN_MAINTAINED_SVC_IPC_STANDARD
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_ipc_standard.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/kernel/svc/svc_ipc_standard.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")
     message(FATAL_ERROR "Missing maintained normal IPC SVC source")
 endif()
@@ -789,7 +789,7 @@ list(APPEND core_sources "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")
 # Preserve the original Eden source for parity and select exactly one TU.
 if(PS5_NATIVE)
     set(EDEN_NS1_SVC_CACHE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_cache.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/kernel/svc/svc_cache.cpp")
     if(NOT EXISTS "${EDEN_NS1_SVC_CACHE}")
         message(FATAL_ERROR "Missing maintained NS1 SVC cache implementation")
     endif()
@@ -806,7 +806,7 @@ if(EDEN_A32_FASTMEM)
     # Maintain the native A32-only fastmem guard as versioned C++, not a
     # configure-time rewrite of that materialized source.
     set(EDEN_MAINTAINED_A32_MEMORY
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/memory.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/memory.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_A32_MEMORY}")
         message(FATAL_ERROR "Missing maintained A32 fastmem memory source")
     endif()
@@ -816,7 +816,7 @@ if(EDEN_A32_FASTMEM)
     # layouts with every module page out of 16 KiB phase with its backing. Keep the same
     # range with 16 KiB steps so module chunks can alias.
     set(EDEN_MAINTAINED_CODE_LOADER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/loader/deconstructed_rom_directory.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/loader/deconstructed_rom_directory.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_CODE_LOADER}")
         message(FATAL_ERROR "Missing maintained aligned code loader")
     endif()
@@ -833,7 +833,7 @@ foreach(eden_vfs_relative IN ITEMS
         "file_sys/fssystem/fssystem_nca_file_system_driver.cpp"
         "file_sys/romfs.cpp")
     set(eden_vfs_maintained
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/${eden_vfs_relative}")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/${eden_vfs_relative}")
     if(NOT EXISTS "${eden_vfs_maintained}")
         message(FATAL_ERROR "Missing maintained VFS bounds owner: ${eden_vfs_relative}")
     endif()
@@ -853,7 +853,7 @@ foreach(eden_ncz_relative IN ITEMS
         "loader/nsp.cpp"
         "file_sys/registered_cache.cpp")
     set(eden_ncz_maintained
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/${eden_ncz_relative}")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/${eden_ncz_relative}")
     if(NOT EXISTS "${eden_ncz_maintained}")
         message(FATAL_ERROR "Missing maintained NCZ integration: ${eden_ncz_relative}")
     endif()
@@ -871,7 +871,7 @@ foreach(eden_aoc_relative IN ITEMS
         "file_sys/romfs_factory.cpp"
         "hle/service/aoc/addon_content_manager.cpp")
     set(eden_aoc_maintained
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/${eden_aoc_relative}")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/${eden_aoc_relative}")
     if(NOT EXISTS "${eden_aoc_maintained}")
         message(FATAL_ERROR "Missing maintained extracted AOC source: ${eden_aoc_relative}")
     endif()
@@ -889,7 +889,7 @@ foreach(eden_plaintext_content_relative IN ITEMS
         "file_sys/content_archive.cpp"
         "file_sys/fssystem/fssystem_nca_reader.cpp")
     set(eden_plaintext_content_owner
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/${eden_plaintext_content_relative}")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/${eden_plaintext_content_relative}")
     if(NOT EXISTS "${eden_plaintext_content_owner}")
         message(FATAL_ERROR "Missing maintained plaintext NCA source: ${eden_plaintext_content_owner}")
     endif()
@@ -911,7 +911,7 @@ endif()
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # The guest title is the owner of a zero-ID cache storage request.
 set(EDEN_MAINTAINED_SAVEDATA
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/file_sys/savedata_factory.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/file_sys/savedata_factory.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_SAVEDATA}")
     message(FATAL_ERROR "Missing maintained per-title cache storage source")
 endif()
@@ -1163,7 +1163,7 @@ if(PS5_NATIVE)
     target_include_directories(video_core BEFORE PRIVATE "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")
     # G13/X05 consolidated: source-complete native memory units, no
     # source string manipulation and no generator under headless CMake.
-    set(EDEN_NATIVE_MEMORY_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src/core")
+    set(EDEN_NATIVE_MEMORY_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src/core")
     if(EDEN_A32_FASTMEM)
         set(EDEN_NATIVE_GUEST_SOURCE "${EDEN_NATIVE_MEMORY_ROOT}/memory_native_a32.cpp")
         set(eden_native_memory_owner "${EDEN_MAINTAINED_A32_MEMORY}")
@@ -1238,7 +1238,7 @@ endif()
 
 # Maintained service source: title metadata null handling plus a dev-only
 # witness of the version resolved from guest update content.
-set(EDEN_APP_FUNCTION_SOURCE "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/am/service/application_functions.cpp")
+set(EDEN_APP_FUNCTION_SOURCE "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/am/service/application_functions.cpp")
 if(NOT EXISTS "${EDEN_APP_FUNCTION_SOURCE}")
     message(FATAL_ERROR "Missing maintained guest application metadata service")
 endif()
@@ -1255,7 +1255,7 @@ target_sources(core PRIVATE "${PROJECT_SOURCE_DIR}/src/frontend_common/play_time
 # The Core::System overlay is a fully maintained Encore source in both profiles.
 # CMake only chooses and copies the exact variant; no configure-time C++ patches.
 set(EDEN_MAINTAINED_CORE_SYSTEM_ROOT
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core")
 if(PS5_NATIVE)
     set(EDEN_MAINTAINED_CORE_SYSTEM "${EDEN_MAINTAINED_CORE_SYSTEM_ROOT}/core_native.cpp")
 else()
@@ -1278,7 +1278,7 @@ get_target_property(core_sources core SOURCES)
 # existing build-tree path is preserved for its runtime and host consumers.
 if(PS5_NATIVE)
     set(EDEN_MAINTAINED_NATIVE_NSO
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/loader/nso.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/loader/nso.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_NATIVE_NSO}")
         message(FATAL_ERROR "Missing maintained native NSO loader")
     endif()
@@ -1293,7 +1293,7 @@ set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # RomFS builder parents are non-owning: the tracked source retains both
 # original shared_ptr-to-pointer replacements without CMake rewriting.
 set(EDEN_MAINTAINED_ROMFS_BUILDER
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/file_sys/fsmitm_romfsbuild.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/file_sys/fsmitm_romfsbuild.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_ROMFS_BUILDER}")
     message(FATAL_ERROR "Missing maintained RomFS builder source")
 endif()
@@ -1313,7 +1313,7 @@ set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # This IPS/pchtxt parser is a complete, audited Encore source; CMake only
 # selects it and must never mutate its functions during configuration.
 set(EDEN_MAINTAINED_IPS_LAYER
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/file_sys/ips_layer.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/file_sys/ips_layer.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_IPS_LAYER}")
     message(FATAL_ERROR "Missing maintained native IPS layer")
 endif()
@@ -1321,7 +1321,7 @@ endif()
 # .ips patch is named after the build ID in either case.
 # Native patch manager: select a complete Encore-maintained source, never mutate upstream C++ here.
 set(EDEN_MAINTAINED_PATCH_MANAGER
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/file_sys/patch_manager.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/file_sys/patch_manager.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_PATCH_MANAGER}")
     message(FATAL_ERROR "Missing maintained native patch manager")
 endif()
@@ -1512,7 +1512,7 @@ endif()
 # R23 #97: match applet overlay compositor to the selected native SGSR bypass.
 if(PS5_NATIVE)
     set(EDEN_R23_APPLET_WINDOW_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/am/window_system.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/am/window_system.cpp")
     if(NOT EXISTS "${EDEN_R23_APPLET_WINDOW_SOURCE}")
         message(FATAL_ERROR "R23 #97 matched applet WindowSystem source missing")
     endif()
@@ -1572,7 +1572,7 @@ endif()
 # must be replaced in exactly the same native source build graph.
 if(PS5_NATIVE)
     set(EDEN_R23_HID_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/include/hid_core/frontend/emulated_controller.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/include/hid_core/frontend/emulated_controller.h")
     if(NOT EXISTS "${EDEN_R23_HID_HEADER}")
         message(FATAL_ERROR "R23 #95 missing matched HID controller header")
     endif()
@@ -1625,9 +1625,9 @@ endif()
 # exactly one replacement common/cpu_features.cpp and stage its header.
 if(PS5_NATIVE)
     set(EDEN_R23_CLOCK
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/cpu_features.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/common/cpu_features.cpp")
     set(EDEN_R23_CLOCK_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/include/common/cpu_features.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/include/common/cpu_features.h")
     set(EDEN_R23_CLOCK_INCLUDE "${PORT_BUILD_DIR}/r23-clock/include")
     if(NOT EXISTS "${EDEN_R23_CLOCK}" OR NOT EXISTS "${EDEN_R23_CLOCK_HEADER}")
         message(FATAL_ERROR "R23 #114 maintained WallClock pair unavailable")
@@ -1673,7 +1673,7 @@ if(PS5_NATIVE)
     set(EDEN_R23_STPL_BACKPORT
         "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service")
     set(EDEN_R23_STPL_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/include/core/hle/service")
+        "${PORT_ROOT}/vendor/encore-active/eden/include/core/hle/service")
     set(EDEN_R23_STPL_INCLUDE "${PORT_BUILD_DIR}/r23-stpl/include")
     foreach(eden_r23_stpl_name IN ITEMS
             "ngc/ngc.cpp" "filesystem/fsp/fsp_srv.cpp")
@@ -1739,7 +1739,7 @@ endif()
 # One native source owner per original TU and one matching shared header.
 if(PS5_NATIVE)
     set(EDEN_R23_SSL_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/ssl")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/ssl")
     set(EDEN_R23_SSL_OVERLAY "${PORT_BUILD_DIR}/r23-ssl/include")
     foreach(eden_r23_ssl_file IN ITEMS ssl.cpp ssl_backend.h ssl_backend_openssl.cpp)
         if(NOT EXISTS "${EDEN_R23_SSL_ROOT}/${eden_r23_ssl_file}")
@@ -1768,7 +1768,7 @@ endif()
 # extends the native Vp9PictureInfo ABI and the .cpp consumes those fields.
 if(PS5_NATIVE)
     set(EDEN_R23_VP9_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/host1x")
     set(EDEN_R23_VP9_INCLUDE "${PORT_BUILD_DIR}/r23-vp9/include")
     if(NOT EXISTS "${EDEN_R23_VP9_ROOT}/codec_types.h"
        OR NOT EXISTS "${EDEN_R23_VP9_ROOT}/codecs/vp9.cpp")
@@ -1900,7 +1900,7 @@ endif()
 # full TU, never modify the immutable checked-out Eden source during CMake.
 if(PS5_NATIVE)
     set(EDEN_R23_CHEATS
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/memory/cheat_engine.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/memory/cheat_engine.cpp")
     if(NOT EXISTS "${EDEN_R23_CHEATS}")
         message(FATAL_ERROR "R23 #46 maintained cheat_engine.cpp source absent")
     endif()
@@ -1915,7 +1915,7 @@ if(PS5_NATIVE)
     # The runtime cheat API adds a mutex/DTO to the actual CheatEngine class.
     # Compile the selected TU with its matching header, never the pristine ABI.
     set(EDEN_R23_CHEATS_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/include/core/memory/cheat_engine.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/include/core/memory/cheat_engine.h")
     if(NOT EXISTS "${EDEN_R23_CHEATS_HEADER}")
         message(FATAL_ERROR "R23 #46 selected synchronized cheat_engine.h missing")
     endif()
@@ -2061,7 +2061,7 @@ endif()
 # (headless/display_refresh.h).
 # Encore's native VSync/compose correction is a complete maintained unit.
 set(EDEN_MAINTAINED_VI_CONDUCTOR
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/vi/conductor.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/vi/conductor.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_VI_CONDUCTOR}")
     message(FATAL_ERROR "Missing maintained VI conductor")
 endif()
@@ -2074,7 +2074,7 @@ set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # Nvdrv sessions borrow process memory until their final handles are unmapped.
 # Retain the process across that interval, including service shutdown ordering.
 set(EDEN_MAINTAINED_NVDRV_CONTAINER
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/container.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvdrv/core/container.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_NVDRV_CONTAINER}")
     message(FATAL_ERROR "Missing maintained nvdrv session container")
 endif()
@@ -2085,9 +2085,9 @@ set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # A valid NVDRV FD and a live session are prerequisites for Map/Free/Pin.
 # Select complete maintained owners, preserving the PS5 NVMap rollback.
 set(EDEN_MAINTAINED_NVDRV_NVMAP_CORE
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/nvmap.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvdrv/core/nvmap.cpp")
 set(EDEN_MAINTAINED_NVDRV_NVMAP_DEVICE
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvmap.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvmap.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_NVDRV_NVMAP_CORE}" OR
    NOT EXISTS "${EDEN_MAINTAINED_NVDRV_NVMAP_DEVICE}")
     message(FATAL_ERROR "Missing maintained NVDRV NVMap session owners")
@@ -2102,7 +2102,7 @@ list(APPEND core_sources
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # The shared NVDEC IOCTL must roll back earlier pins if a later handle fails.
 set(EDEN_MAINTAINED_NVDRV_NVDEC
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvhost_nvdec_common.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_nvdec_common.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_NVDRV_NVDEC}")
     message(FATAL_ERROR "Missing maintained NVDEC pin-rollback owner")
 endif()
@@ -2117,7 +2117,7 @@ set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # Finalize alone leaves both event references and its owner process open.
 # Use the same paired close as the other HID event owners.
 # Maintained full-source HID event lifetime correction; immutable upstream preserved.
-set(EDEN_HID_RESOURCE "${PORT_ROOT}/vendor/encore-active/eden-core/src/hid_core/resource_manager.cpp")
+set(EDEN_HID_RESOURCE "${PORT_ROOT}/vendor/encore-active/eden/src/hid_core/resource_manager.cpp")
 if(NOT EXISTS "${EDEN_HID_RESOURCE}")
     message(FATAL_ERROR "Missing maintained HID resource manager")
 endif()
@@ -2141,7 +2141,7 @@ set_property(TARGET hid_core PROPERTY SOURCES "${hid_sources}")
 # Keep the existing staged include priority, but never rewrite the header in CMake.
 set(ioctl_header "core/hle/service/nvdrv/devices/ioctl_serialization.h")
 set(EDEN_MAINTAINED_IOCTL
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/${ioctl_header}")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/${ioctl_header}")
 if(NOT EXISTS "${EDEN_MAINTAINED_IOCTL}")
     message(FATAL_ERROR "Missing maintained nvdrv ioctl serialization header")
 endif()
@@ -2161,7 +2161,7 @@ file(REMOVE "${PORT_BUILD_DIR}/include/core/hle/kernel/k_slab_heap.h")
 # Complete kernel page-table finalizer is maintained under encore-active.
 # No configure-time C++ lambda rewrites.
 set(EDEN_MAINTAINED_PAGE_TABLE
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/kernel/k_page_table_base.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/kernel/k_page_table_base.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_PAGE_TABLE}")
     message(FATAL_ERROR "Missing maintained page-table finalization source")
 endif()
@@ -2181,7 +2181,7 @@ set_property(TARGET core PROPERTY SOURCES "${page_table_core_sources}")
 # normal/DEV selection. Kernel shutdown calls RequestStop on both variants.
 set(server_header "core/hle/service/server_manager.h")
 set(EDEN_MAINTAINED_SERVER_ROOT
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service")
 set(EDEN_MAINTAINED_SERVER_HEADER "${EDEN_MAINTAINED_SERVER_ROOT}/server_manager.h")
 set(EDEN_MAINTAINED_SERVER_SOURCE "${EDEN_MAINTAINED_SERVER_ROOT}/server_manager.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_SERVER_HEADER}" OR
@@ -2201,7 +2201,7 @@ list(REMOVE_ITEM core_sources hle/service/server_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_SERVER_SOURCE}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # G19: compile exactly one complete kernel source from Encore.
-set(EDEN_MAINTAINED_KERNEL_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/kernel")
+set(EDEN_MAINTAINED_KERNEL_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/kernel")
 set(EDEN_MAINTAINED_KERNEL_SOURCE "${EDEN_MAINTAINED_KERNEL_ROOT}/kernel_standard.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_KERNEL_SOURCE}")
     message(FATAL_ERROR "Missing maintained G19 kernel source")
@@ -2219,7 +2219,7 @@ set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # Don't replace the vendor source tree or compile both old/new units.
 # Overlay only the two changed public headers, not the whole maintained root.
 if(PS5_NATIVE)
-    set(EDEN_OPUS_ACTIVE "${PORT_ROOT}/vendor/encore-active/eden-core/src")
+    set(EDEN_OPUS_ACTIVE "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_OPUS_HEADER_ROOT "${PORT_BUILD_DIR}/r23-opus/include")
     foreach(eden_opus_header IN ITEMS
             "audio_core/opus/hardware_opus.h"
@@ -2279,7 +2279,7 @@ endif()
 # Rumble fallback is a tracked, versioned C++ source rather than a
 # configure-time copy with substitutions. Preserve the hid_core source list.
 set(EDEN_MAINTAINED_RUMBLE_CONTROLLER
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/hid_core/frontend/emulated_controller.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/hid_core/frontend/emulated_controller.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_RUMBLE_CONTROLLER}")
     message(FATAL_ERROR "Missing maintained native rumble controller")
 endif()
@@ -2295,7 +2295,7 @@ set_property(TARGET hid_core PROPERTY SOURCES "${controller_sources}")
 # The active shipping NPad implementation plus the two original native
 # null-pointer guards are maintained directly; no CMake source mutation.
 set(EDEN_MAINTAINED_NPAD
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/hid_core/resources/npad/npad.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/hid_core/resources/npad/npad.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_NPAD}")
     message(FATAL_ERROR "Missing maintained native NPad controller")
 endif()
@@ -2317,20 +2317,20 @@ target_sources(audio_core PRIVATE "${EDEN_PORT_DIR}/audio.cpp")
 target_include_directories(audio_core PRIVATE "${EDEN_PORT_DIR}" "${pad_contract}" "${audio_contract}")
 # The native audio sink's exact pinned-source transform is maintained as C++.
 set(EDEN_MAINTAINED_SINK_DETAILS
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/audio_core/sink/sink_details.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/audio_core/sink/sink_details.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_SINK_DETAILS}")
     message(FATAL_ERROR "Missing maintained native audio sink")
 endif()
 # Keep native PCM queue/upmix/held-frame behavior in a tracked C++ source.
 set(EDEN_MAINTAINED_SINK_STREAM
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/audio_core/sink/sink_stream.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/audio_core/sink/sink_stream.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_SINK_STREAM}")
     message(FATAL_ERROR "Missing maintained native audio stream")
 endif()
 # A bitfield expression yields 0/1, so explicitly restore the SRC flag's bit position.
 # Preserve the source bitfield-position fix without regenerating this TU.
 set(EDEN_MAINTAINED_VOICE_INFO
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/audio_core/renderer/voice/voice_info.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/audio_core/renderer/voice/voice_info.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_VOICE_INFO}")
     message(FATAL_ERROR "Missing maintained voice source")
 endif()
@@ -2352,7 +2352,7 @@ endif()
 # The Vulkan factory is byte-identical to the pinned source; only the
 # OpenGL-only build requires a distinct maintained unit without Vulkan symbols.
 set(EDEN_MAINTAINED_GL_VIDEO_FACTORY
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/video_core_opengl.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/video_core_opengl.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_GL_VIDEO_FACTORY}")
     message(FATAL_ERROR "Missing maintained OpenGL-only video core factory")
 endif()
@@ -2362,7 +2362,7 @@ get_target_property(video_sources video_core SOURCES)
 # override in encore-active, and never build the pinned source alongside it.
 if(PS5_NATIVE)
     set(EDEN_MAINTAINED_DRAW_MANAGER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/engines/draw_manager.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/engines/draw_manager.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_DRAW_MANAGER}")
         message(FATAL_ERROR "Missing maintained indexed draw manager")
     endif()
@@ -2376,7 +2376,7 @@ if(PS5_NATIVE)
     # One maintained native source: address-span and granular-page bounds.
     # No C++ replacement string or helper module is evaluated at configure.
     set(EDEN_NATIVE_GPU_MEMORY_MANAGER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/memory_manager.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/memory_manager.cpp")
     if(NOT EXISTS "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")
         message(FATAL_ERROR "Missing Encore-maintained GPU memory manager")
     endif()
@@ -2475,7 +2475,7 @@ file(REMOVE "${PORT_BUILD_DIR}/include/video_core/buffer_cache/buffer_cache_base
 # Legacy text transformations are retained only in tools/fixtures.
 if(EDEN_PS5_OPENGL)
     set(EDEN_MAINTAINED_GL_BUFFER_CACHE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/renderer_opengl/gl_buffer_cache.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_opengl/gl_buffer_cache.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_GL_BUFFER_CACHE}")
         message(FATAL_ERROR "Missing maintained OpenGL buffer cache source")
     endif()
@@ -2485,7 +2485,7 @@ if(EDEN_PS5_OPENGL)
         # PS5 permits reading an ended query while another query is active.
         # Retain the upstream driver-specific workaround on all other builds.
         set(EDEN_MAINTAINED_GL_QUERY_CACHE
-            "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/renderer_opengl/gl_query_cache.cpp")
+            "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_opengl/gl_query_cache.cpp")
         if(NOT EXISTS "${EDEN_MAINTAINED_GL_QUERY_CACHE}")
             message(FATAL_ERROR "Missing maintained native OpenGL query cache")
         endif()
@@ -2495,7 +2495,7 @@ if(EDEN_PS5_OPENGL)
         # Guest draw instrumentation is selected from complete Encore sources.
     # Each profile selects one full translation unit; never splice C++ in CMake.
     set(EDEN_MAINTAINED_GL_RASTERIZER_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/renderer_opengl")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_opengl")
     set(EDEN_MAINTAINED_GL_RASTERIZER
         "${EDEN_MAINTAINED_GL_RASTERIZER_ROOT}/gl_rasterizer.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_GL_RASTERIZER}")
@@ -2509,7 +2509,7 @@ if(EDEN_PS5_OPENGL)
     if(PS5_NATIVE)
         # Native MacroJIT exception recovery is selected from Encore, not generated.
         set(EDEN_MAINTAINED_MACRO
-            "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/macro.cpp")
+            "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/macro.cpp")
         if(NOT EXISTS "${EDEN_MAINTAINED_MACRO}")
             message(FATAL_ERROR "Missing maintained native macro unit")
         endif()
@@ -2564,7 +2564,7 @@ if(EDEN_PS5_OPENGL)
     # G20: select maintained normal/DEV guest GPU command processor units.
     # The DMA input already contains the shipping #4473/#4477 backport.
     set(EDEN_MAINTAINED_GUEST_GPU_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core")
     set(EDEN_MAINTAINED_GPU_DMA "${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher.cpp")
     set(EDEN_MAINTAINED_GPU_PULLER "${EDEN_MAINTAINED_GUEST_GPU_ROOT}/engines/puller.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_GPU_DMA}" OR
@@ -2574,7 +2574,7 @@ if(EDEN_PS5_OPENGL)
     list(REMOVE_ITEM video_sources dma_pusher.cpp engines/puller.cpp)
     list(APPEND video_sources "${EDEN_MAINTAINED_GPU_DMA}" "${EDEN_MAINTAINED_GPU_PULLER}")
 endif()
-set(EDEN_G21_GPU_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core")
+set(EDEN_G21_GPU_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src/video_core")
 if(EDEN_PS5_OPENGL)
     if(PS5_NATIVE)
         set(EDEN_MAINTAINED_G21_GPU "${EDEN_G21_GPU_ROOT}/gpu_gl_native.cpp")
@@ -2595,9 +2595,9 @@ list(APPEND video_sources "${EDEN_MAINTAINED_G21_GPU}")
 # Shader cache tail recovery is maintained directly in Encore C++.
 # CMake selects the source; the adjacent .inc is a tracked, sole-owner header.
 set(EDEN_MAINTAINED_SHADER_ENVIRONMENT
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/shader_environment.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/shader_environment.cpp")
 set(EDEN_MAINTAINED_SHADER_READER
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/shader_cache_reader.inc")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/shader_cache_reader.inc")
 if(NOT EXISTS "${EDEN_MAINTAINED_SHADER_ENVIRONMENT}" OR
    NOT EXISTS "${EDEN_MAINTAINED_SHADER_READER}")
     message(FATAL_ERROR "Missing maintained shader cache recovery source")
@@ -2608,7 +2608,7 @@ endif()
 # The one-layer ASTC scratch optimization is a complete Encore source.
 # Keep the original pinned package immutable; CMake only selects this TU.
 set(EDEN_MAINTAINED_TEXTURE_UTIL
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/texture_cache/util.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/texture_cache/util.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_TEXTURE_UTIL}")
     message(FATAL_ERROR "Missing maintained ASTC texture utility")
 endif()
@@ -2617,7 +2617,7 @@ list(APPEND video_sources "${EDEN_MAINTAINED_TEXTURE_UTIL}")
 # GPU-48: keep the pinned Eden format table immutable and select the
 # maintained NS1 successor with Lichii #7's X8Z24 component tuple.
 set(EDEN_MAINTAINED_FORMAT_LOOKUP
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/texture_cache/format_lookup_table.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/texture_cache/format_lookup_table.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_FORMAT_LOOKUP}")
     message(FATAL_ERROR "Missing maintained texture format lookup")
 endif()
@@ -2630,7 +2630,7 @@ list(APPEND video_sources "${EDEN_MAINTAINED_SHADER_ENVIRONMENT}")
 # Complete native Maxwell DMA owner; the pinned source remains for host.
 if(PS5_NATIVE)
     set(EDEN_MAINTAINED_MAXWELL_DMA
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/engines/maxwell_dma.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/engines/maxwell_dma.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_MAXWELL_DMA}")
         message(FATAL_ERROR "Missing maintained native Maxwell DMA")
     endif()
@@ -2638,7 +2638,7 @@ if(PS5_NATIVE)
     # Leave immutable vendor/sources/eden headers untouched. Make the full
     # reviewed header visible to this target and its native consumers.
     set(EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/include")
     if(NOT EXISTS "${EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE}/video_core/engines/maxwell_dma.h")
         message(FATAL_ERROR "Missing maintained B0B5 Maxwell DMA ABI header")
     endif()
@@ -2651,13 +2651,13 @@ endif()
 # Keep immutable Eden inputs and select exact source/header peers for PS5.
 if(PS5_NATIVE)
     set(EDEN_HOST1X_CDMA_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/cdma_pusher.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/cdma_pusher.cpp")
     set(EDEN_HOST1X_CDMA_HEADER
         "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/cdma_pusher.h")
     set(EDEN_HOST1X_NVDEC_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/nvdec.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/host1x/nvdec.cpp")
     set(EDEN_HOST1X_CONTROL_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/control.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/host1x/control.cpp")
     set(EDEN_HOST1X_CONTROL_HEADER
         "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/host1x/control.h")
     foreach(eden_host1x_required IN ITEMS
@@ -2693,7 +2693,7 @@ endif()
 # Native N04: avoid invoking an already-ready Host1x callback under guard.
 # Select a complete maintained TU; never edit the pinned vendor checkout.
 set(EDEN_MAINTAINED_HOST1X_SYNCPOINT
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
     message(FATAL_ERROR "Missing maintained Host1x syncpoint source")
 endif()
@@ -2720,7 +2720,7 @@ list(APPEND video_sources "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
 # ABI-compatible public header; the pristine Eden sources are untouched.
 if(PS5_NATIVE)
     set(EDEN_HOST1X_FD_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/host1x.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/host1x/host1x.cpp")
     set(EDEN_HOST1X_FD_HEADER
         "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/host1x/host1x.h")
     if(NOT EXISTS "${EDEN_HOST1X_FD_SOURCE}" OR
@@ -2897,9 +2897,9 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_NS2_MEMORY_MANAGER_HEADER
         "${EDEN_NS2_NATIVE_TILING_ROOT}/video_core/memory_manager.h")
     set(EDEN_NS2_I2M_UPLOAD
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/engines/engine_upload.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/engines/engine_upload.cpp")
     set(EDEN_NS2_SW_BLITTER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/engines/sw_blitter/blitter.cpp")
     foreach(eden_ns2_tiling_owner IN ITEMS
         "${EDEN_NS2_NATIVE_TILING_HEADER}"
         "${EDEN_NS2_MEMORY_MANAGER_HEADER}"
@@ -2952,7 +2952,7 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN AND EDEN_REVIEWED_DUAL_NPDM)
             "R3 GOB16 requires an explicit native PS5 Vulkan research configuration")
     endif()
     set(EDEN_NS2_GOB16_DECODER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/textures/decoders.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/textures/decoders.cpp")
     if(NOT EXISTS "${EDEN_NS2_GOB16_DECODER}")
         message(FATAL_ERROR
             "R3 GOB16 maintained decoder missing at the checked out vendor pin")
@@ -2980,14 +2980,14 @@ if(PS5_NATIVE)
     # directly so every core/log/cache path remains inside its writable mount.
     # The native data/config/cache roots are a tracked C++ override.
     set(EDEN_MAINTAINED_NATIVE_PATHS
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/fs/path_util.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/common/fs/path_util.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_NATIVE_PATHS}")
         message(FATAL_ERROR "Missing maintained native filesystem path source")
     endif()
     get_target_property(common_sources common SOURCES)
     # Compile the native common thread-name diagnostic from maintained C++.
     set(EDEN_MAINTAINED_NATIVE_THREAD
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/thread.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/common/thread.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_NATIVE_THREAD}")
         message(FATAL_ERROR "Missing maintained common thread source")
     endif()
@@ -2997,7 +2997,7 @@ if(PS5_NATIVE)
     # was inside that leaf's branch, leaving frequency zero on this hardware.
     # Native invariant TSC fallback is maintained C++, not configure-time surgery.
     set(EDEN_MAINTAINED_NATIVE_CPU_FEATURES
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/cpu_features.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/common/cpu_features.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_NATIVE_CPU_FEATURES}")
         message(FATAL_ERROR "Missing maintained native CPU frequency source")
     endif()
@@ -3005,7 +3005,7 @@ if(PS5_NATIVE)
     list(APPEND common_sources "${EDEN_MAINTAINED_NATIVE_CPU_FEATURES}")
     # Native directory enumeration retains the prior helper verbatim.
     set(EDEN_MAINTAINED_NATIVE_FS
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/fs/fs.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/common/fs/fs.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_NATIVE_FS}")
         message(FATAL_ERROR "Missing maintained common filesystem source")
     endif()
@@ -3027,7 +3027,7 @@ if(PS5_NATIVE)
     # wrappers are completely silent when Detailed Logging is disabled.
     # The audited resolver is owned by Encore; no C++ substitutions in CMake.
     set(EDEN_MAINTAINED_GUEST_DNS
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/sockets/sfdnsres.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/sockets/sfdnsres.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_GUEST_DNS}")
         message(FATAL_ERROR "Missing maintained guest DNS resolver")
     endif()
@@ -3037,7 +3037,7 @@ if(PS5_NATIVE)
     # Guest socket audit instrumentation is a complete Encore-maintained source.
     # Preserve shipping BSD backports; do not rewrite C++ during configure.
     set(EDEN_MAINTAINED_GUEST_BSD
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/sockets/bsd.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/sockets/bsd.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_GUEST_BSD}")
         message(FATAL_ERROR "Missing maintained audited guest BSD source")
     endif()
@@ -3048,11 +3048,11 @@ if(PS5_NATIVE)
     # Native BISFactory declaration is kept in a narrowly scoped include root.
     # Do not expose the whole encore-core/src tree as an include override.
     set(EDEN_MAINTAINED_BIS_INCLUDE_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/include")
+        "${PORT_ROOT}/vendor/encore-active/eden/include")
     set(EDEN_MAINTAINED_BIS_HEADER
         "${EDEN_MAINTAINED_BIS_INCLUDE_ROOT}/core/file_sys/bis_factory.h")
     set(EDEN_MAINTAINED_BIS_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/file_sys/bis_factory.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/file_sys/bis_factory.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_BIS_HEADER}" OR NOT EXISTS "${EDEN_MAINTAINED_BIS_SOURCE}")
         message(FATAL_ERROR "Missing maintained native BISFactory pair")
     endif()
@@ -3063,7 +3063,7 @@ if(PS5_NATIVE)
     list(APPEND core_sources "${EDEN_MAINTAINED_BIS_SOURCE}")
     # Use the tracked source for native firmware lookup.
     set(EDEN_MAINTAINED_NATIVE_FILESYSTEM
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/filesystem/filesystem.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/filesystem/filesystem.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_NATIVE_FILESYSTEM}")
         message(FATAL_ERROR "Missing maintained native filesystem source")
     endif()
@@ -3071,7 +3071,7 @@ if(PS5_NATIVE)
     list(APPEND core_sources "${EDEN_MAINTAINED_NATIVE_FILESYSTEM}")
     # A single checked-in native socket-wakeup implementation; no CMake C++ rewrites.
     set(EDEN_NATIVE_NETWORK_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/internal_network/network.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/internal_network/network.cpp")
     if(NOT EXISTS "${EDEN_NATIVE_NETWORK_SOURCE}")
         message(FATAL_ERROR "Missing maintained native network source")
     endif()
@@ -3082,7 +3082,7 @@ if(PS5_NATIVE)
     list(REMOVE_ITEM core_sources internal_network/network_interface.cpp)
     # Native interface enumeration selects the maintained FreeBSD branch.
     set(EDEN_MAINTAINED_NATIVE_NET_INTERFACES
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/internal_network/network_interface.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/internal_network/network_interface.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_NATIVE_NET_INTERFACES}")
         message(FATAL_ERROR "Missing maintained native network interface source")
     endif()
@@ -3528,10 +3528,10 @@ if(EDEN_SHARED_NS2_EXEFS)
         message(FATAL_ERROR "NS2 ExeFS requires the reviewed dual-generation NPDM reader")
     endif()
     set(eden_ns2_loader_origin
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/loader/loader.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/loader/loader.cpp")
     if(PS5_NATIVE)
         set(eden_ns2_romdir_origin
-            "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/loader/deconstructed_rom_directory.cpp")
+            "${PORT_ROOT}/vendor/encore-active/eden/src/core/loader/deconstructed_rom_directory.cpp")
     else()
         set(eden_ns2_romdir_origin "loader/deconstructed_rom_directory.cpp")
     endif()
@@ -5047,7 +5047,7 @@ endif()
 # nullable VFS object. Directory enumeration reflects real BCAT contents.
 if(PS5_NATIVE)
     set(EDEN_NATIVE_BCAT_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/bcat")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/bcat")
     get_target_property(eden_native_bcat_sources core SOURCES)
     foreach(eden_bcat_name IN ITEMS service_creator delivery_cache_storage_service)
         set(eden_bcat_original "hle/service/bcat/${eden_bcat_name}.cpp")
@@ -5132,7 +5132,7 @@ if(PS5_NATIVE)
                 "Native ${target} owner mismatch: expected ${expected}; found ${owners}")
         endif()
     endfunction()
-    set(eden_native_video_root "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core")
+    set(eden_native_video_root "${PORT_ROOT}/vendor/encore-active/eden/src/video_core")
     set(eden_native_dispatch_root "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_dispatch/video_core")
     eden_require_native_owner(video_core "${eden_native_video_root}/gpu_gl_native.cpp"
         "(^|/)(gpu|gpu_gl_native|gpu_gl_native_dev|gpu_gl_host|gpu_gl_host_dev|gpu_vulkan)[.]cpp$")

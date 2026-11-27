@@ -17,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 ROOT=Path(__file__).resolve().parents[2]
 SCRIPT=ROOT/'headless/ns2_cpu6_source_bridge.cmake'
 BASE=ROOT/'vendor/sources/eden/src'
-CPU6=ROOT/'vendor/encore-active/ns2-runtime/cpu6'
+CPU6=ROOT/'vendor/encore-active/eden/src/core'
 G11=ROOT/'vendor/encore-active/eden/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_normal.cpp'
 G11_A32=ROOT/'vendor/encore-active/eden/src/core/arm/dynarmic/g11/arm_dynarmic_32_native_normal.cpp'
 CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()

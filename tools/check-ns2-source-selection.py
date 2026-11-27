@@ -87,17 +87,17 @@ constexpr size_t MaxOpenFiles = 8192;
             'EDEN_NS2_METADATA_OVERLAY' in CMAKE,
             'unified NS1/NS2 ExeFS owner missing')
     for path in (
-        'vendor/encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp',
-        'vendor/encore-active/ns2-runtime/metadata/core/loader/loader.cpp',
-        'vendor/encore-active/ns2-runtime/metadata/core/loader/nso.cpp',
-        'vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp',
+        'vendor/encore-active/eden/src/core/file_sys/program_metadata.cpp',
+        'vendor/encore-active/eden/src/core/loader/loader.cpp',
+        'vendor/encore-active/eden/src/core/loader/nso.cpp',
+        'vendor/encore-active/eden/src/core/loader/deconstructed_rom_directory.cpp',
     ):
         read(path)
 
     # CPU6 and GPU access are runtime properties of the recorded process,
     # not flags that permit native commands for a foreign NS1 owner.
-    cpu6=read('vendor/encore-active/ns2-runtime/cpu6/core/hardware_properties.h')
-    monitor=read('vendor/encore-active/ns2-runtime/cpu6/dynarmic/interface/exclusive_monitor.h')
+    cpu6=read('vendor/encore-active/eden/src/core/hardware_properties.h')
+    monitor=read('vendor/encore-active/eden/src/dynarmic/interface/exclusive_monitor.h')
     require('NUM_CPU_CORES = 6' in cpu6 and
             'MAX_NUM_CPU_CORES = 6' in monitor and
             'include("${CMAKE_CURRENT_LIST_DIR}/ns2_cpu6_source_bridge.cmake")' in CMAKE,
@@ -106,11 +106,11 @@ constexpr size_t MaxOpenFiles = 8192;
     require('A64BaselineBytes(std::size_t core)' in jit and
             'A32BaselineBytes(std::size_t core)' in jit,
             'six-core native JIT fallback is out-of-bounds')
-    process=read('vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp')
+    process=read('vendor/encore-active/eden/src/core/hle/service/os/process.cpp')
     require('EDEN_NS2_PROCESS_RUN_GUARD' in process and
             'target_compile_definitions(core PRIVATE EDEN_NS2_PROCESS_RUN_GUARD=1)' in CMAKE,
             'native process Run admission omitted')
-    kprocess=read('vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp')
+    kprocess=read('vendor/encore-active/eden/src/core/hle/kernel/k_process.cpp')
     require('if (metadata.IsSwitch2())' in kprocess and
             'm_page_table.GetHeapRegionSize() + m_page_table.GetAliasRegionSize()' in kprocess and
             'm_is_switch2' not in kprocess and
@@ -129,12 +129,12 @@ constexpr size_t MaxOpenFiles = 8192;
             'EDEN_MAIN_STACK_MAP' in kprocess and
             'EDEN_MAIN_THREAD_CONTEXT' in kprocess,
             'selected native KProcess stack/context receipts are not compiled')
-    svc=read('vendor/encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp')
+    svc=read('vendor/encore-active/eden/src/core/hle/kernel/svc.cpp')
     require('Eden::NS2::GpuAccess::Validate' in svc and
             'target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_GPU_ACCESS_ROOT}")' in CMAKE and
             'EDEN_SHARED_NS2_WAIT64' in CMAKE,
             'shared SVC/Wait64 kernel owner missing')
-    memory=read('vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp')
+    memory=read('vendor/encore-active/eden/src_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp')
     require('MapNative4K' in memory and 'UnmapNative4K' in memory,
             '4 KiB native GMMU memory source missing')
     decoder=read('vendor/encore-active/eden/src/video_core/textures/decoders.cpp')
@@ -143,8 +143,8 @@ constexpr size_t MaxOpenFiles = 8192;
     pinned_memory_header=read('vendor/sources/eden/src/video_core/memory_manager.h')
     i2m=read('vendor/encore-active/eden/src/video_core/engines/engine_upload.cpp')
     blitter=read('vendor/encore-active/eden/src/video_core/engines/sw_blitter/blitter.cpp')
-    nvhost=read('vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp')
-    channel_state=read('vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp')
+    nvhost=read('vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp')
+    channel_state=read('vendor/encore-active/eden/src/video_core/control/channel_state.cpp')
     pinned_decoder_header=read('vendor/sources/eden/src/video_core/textures/decoders.h')
     require('NativeGobOffset' in decoder and
             decoder.count('bool native_tiling')>=8 and
@@ -177,7 +177,7 @@ constexpr size_t MaxOpenFiles = 8192;
         'list(APPEND video_sources "${EDEN_NS2_SW_BLITTER}")',
     ):
         require(token in CMAKE,'Lichii #2085 source owner not selected: '+token)
-    nvdrv=read('vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp')
+    nvdrv=read('vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp')
     require('ValidateChannelOwner(' in nvdrv and
             nvdrv.count('ValidateChannelOwner(fd, program_id)')>=2 and
             'SubmitGPFIFOImpl' in nvdrv and
@@ -186,14 +186,14 @@ constexpr size_t MaxOpenFiles = 8192;
     require('EDEN_NS2_NVDRV_GPU_SOURCE' in CMAKE and
             'EDEN_NS2_NVDRV_AS_SOURCE' in CMAKE,
             'the native NVDRV drivers are not selected')
-    session=read('vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp')
-    supervisor=read('vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp')
+    session=read('vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp')
+    supervisor=read('vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp')
     require('EDEN_NS2_IPC owner=gpu_session' in session and
             'EDEN_NS2_IPC owner=graphics_supervisor' in supervisor and
             'EDEN_NS2_GPU_SESSION_SOURCE' in CMAKE and
             'EDEN_NS2_SUPERVISOR_ROOT' in CMAKE,
             'IPC native session/VI2 owners missing')
-    gamechat=read('vendor/encore-active/ns2-runtime/gamechat/core/hle/service/friend/friend.cpp')
+    gamechat=read('vendor/encore-active/eden/src/core/hle/service/friend/friend.cpp')
     require('RegisterNamedService("chat:u"' in gamechat and
             'class IChatSession final' in gamechat and 'class IChatService final' in gamechat and
             'EDEN_NS2_GAMECHAT_SOURCE' in CMAKE and
@@ -207,8 +207,8 @@ constexpr size_t MaxOpenFiles = 8192;
             'CalculateChatCameraImageLayout' in supervisor and
             'preference[6] != 0x38' in supervisor and 'ctx.AddMoveObject(client)' in supervisor,
             'MKW GameChat session/image-pool contract incomplete')
-    font=read('vendor/encore-active/ns2-runtime/font_service/core/hle/service/ns/platform_service_manager.cpp')
-    font_merge=read('vendor/encore-active/ns2-runtime/font_service/core/hle/service/ns/font_merge.cpp')
+    font=read('vendor/encore-active/eden/src/core/hle/service/ns/platform_service_manager.cpp')
+    font_merge=read('vendor/encore-active/eden/src/core/hle/service/ns/font_merge.cpp')
     for legacy in (
         '{0, D<&IPlatformServiceManager::RequestLoad>, "RequestLoad"}',
         '{1, D<&IPlatformServiceManager::GetLoadState>, "GetLoadState"}',
@@ -232,7 +232,7 @@ constexpr size_t MaxOpenFiles = 8192;
             'core/hle/service/ns/font_merge.cpp' in CMAKE and
             'target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_FONT_SERVICE_ROOT}")' in CMAKE,
             'reviewed NS2 font service is not the selected pl:u owner')
-    puller=read('vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp')
+    puller=read('vendor/encore-active/eden/src/video_core/engines/puller.cpp')
     require('NativeGpuChannelRegistry::Instance().IsNative(' in puller and
             'ProcessNativeComputeQmdAt(' in puller and
             'pusher.rasterizer->DispatchNativeCompute(*launch)' in puller and
@@ -243,12 +243,12 @@ constexpr size_t MaxOpenFiles = 8192;
             'EDEN_SHARED_NS2_AMPERE_CORE' in CMAKE and
             'EDEN_SHARED_NS2_SPIRV_COMPILER' in CMAKE,
             'unified Ampere SPIR-V sources not selected')
-    qmd=read('vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/native_qmd.h')
+    qmd=read('vendor/encore-active/eden/src/video_core/native_qmd.h')
     require('class NativeQmdScheduler' in qmd and
             'std::unordered_map<Address, State> states;' in qmd and
             'NativeQmdReleaseTargetsMapped' in qmd,
             'QMD3 has lost its state and release-target validation')
-    header=read('vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h')
+    header=read('vendor/encore-active/eden/src/video_core/rasterizer_interface.h')
     raster=read('vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp')
     require('virtual bool DispatchNativeCompute(const Tegra::NativeComputeLaunch&)' in header and
             'bool RasterizerVulkan::DispatchNativeCompute(' in raster and
@@ -270,7 +270,7 @@ constexpr size_t MaxOpenFiles = 8192;
             'production Vulkan renderer no longer uses maintained source')
     pinned=read('vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h')
     selected=read('vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache_base.h')
-    ampere=read('vendor/encore-active/ns2-runtime/shader_resource/include/video_core/buffer_cache/buffer_cache_base.h')
+    ampere=read('vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache_base.h')
     require('NUM_STORAGE_BUFFERS = 16;' in pinned and
             'NUM_STORAGE_BUFFERS = 32;' in selected and
             'NUM_STORAGE_BUFFERS = 32;' in ampere and

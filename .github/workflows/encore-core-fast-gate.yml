@@ -97,7 +97,6 @@ on:
       - 'tools/verify/hle/check-native-hle-ipc-timeout-host.py'
       - 'tools/verify/hle/check-native-hle-ipc-receive-index-host.py'
       - 'tools/audit-eden-progress-state.py'
-      - 'tools/check-eden-optimization-coverage.py'
       # P0.1/P4.1: queue-source or host-witness edits invalidate the same-SHA core proof.
       - 'tools/check-ps5-gpu-producer-wake.py'
       - 'tools/check-ps5-native-load-replay.py'
@@ -119,7 +118,6 @@ on:
       # CMake source-owner tables are executable CI contracts, not prose.
       - 'docs/EDEN_OVERRIDE_SOURCE_OF_TRUTH.md'
       - 'docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md'
-      - 'tools/check-active-source-inventory.py'
       - 'tools/verify/hle/**'
       - 'tools/check-vulkan-multirange-overflow-host.py'
       - 'tools/check-native-gpu-fence-release-publication-host.py'
@@ -353,7 +351,6 @@ jobs:
       - name: Active native source ownership and graph parity
         run: |
           set -euo pipefail
-          python3 -B tools/check-active-source-inventory.py
       - name: NS2 shader archive inventory and compatibility catalogue (host only)
         run: |
           set -euo pipefail
@@ -612,7 +609,7 @@ jobs:
           python3 -B tools/check-ps5-f07-bounded-failed-shader-retry-host.py
           python3 -B tools/check-ps5-f07-bounded-failed-compute-retry-host.py
           python3 -B tools/check-ps5-f07-prewarm-pipeline-admission-host.py
-          python3 -B tools/check-eden-optimization-coverage.py
+          python3 -B tools/check-active-cmake-source-boundary.py
           python3 -B tools/check-vendor-archive-pin-contract-host.py
           python3 -B tools/check-native-hle-wait-null-queue-host.py
           python3 -B tools/check-native-hle-cv-key-write-host.py

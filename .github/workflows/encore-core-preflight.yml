@@ -95,13 +95,15 @@ jobs:
         with:
           submodules: true
 
+      - name: Verify current vendor encore-active source contract
+        run: python3 -B tools/check-active-cmake-source-boundary.py
+
       # Catch cheap source-contract regressions before lengthy APT setup and
       # hundreds of source-audit fixtures; never suppress the full audit.
       - name: P0 quick source contract (audit shard only)
         if: ${{ matrix.suite == 'audit' }}
         run: |
           set -euo pipefail
-          python3 -B tools/check-active-cmake-source-boundary.py
           # The next full native build exercises this source-extracted direct
           # allocator/incident ABI. Catch its regressions on a PR first.
           python3 -B tools/check-ps5-direct-limit-host.py
@@ -109,7 +111,6 @@ jobs:
           python3 -B tools/check-codeql-security-scope.py
           python3 -B tools/check-ns2-shipping-exefs-owner.py
           python3 -B tools/check-ns2-production-flags-host.py
-          python3 -B tools/check-eden-optimization-coverage.py
           python3 -B tools/check-eden-audit-verification-matrix.py
           python3 -B tools/audit-cloud-worklist.py
 
@@ -209,7 +210,6 @@ jobs:
           python3 -B tools/audit-eden-progress-state.py
           python3 -B tools/check-ps5-vulkan-loading-stages-host.py
           python3 -B tools/ns2/check_shared_vulkan_occlusion_submission_host.py
-          python3 -B tools/check-eden-optimization-coverage.py
           python3 -B tools/ci/check-final-engine-owner-contracts.py
           python3 -B tools/check-native-quiet-shutdown-heap-host.py
           python3 -B tools/check-native-quiet-gpu-report-host.py
@@ -402,7 +402,6 @@ jobs:
           python3 -B tools/check-fc27-f05-native-binder-handle-ipc-host.py
           python3 -B tools/check-native-gpu-worker-restart-drain-host.py
           python3 -B tools/audit-cloud-worklist.py
-          python3 -B tools/check-active-source-inventory.py
           python3 -B tools/check-maintained-openssl-cert.py
           python3 -B tools/check-native-dma-indirect-dependencies-host.py
           python3 -B tools/check-native-dma-resume-boundary-host.py

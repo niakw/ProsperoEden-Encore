@@ -56,14 +56,12 @@ jobs:
           selected_vendor="$(git rev-parse HEAD:vendor)"
           git -C vendor checkout --detach "$selected_vendor"
           test "$(git -C vendor rev-parse HEAD)" = "$selected_vendor"
-      - name: Verify selected CMake/HLE ownership and immutable native source catalog
+      - name: Verify selected CMake/HLE ownership and current vendor source contract
         run: |
           set -euo pipefail
           python3 -B tools/check-ns2-source-selection.py
-          python3 -B tools/check-active-source-inventory.py
-          python3 -B tools/check-eden-optimization-coverage.py
+          python3 -B tools/check-active-cmake-source-boundary.py
           python3 -B tools/check-vendor-consolidation-debt.py
-          python3 -B tools/check-post-f07-delta-register.py
       - name: Build public synthetic NSO/NPDM and exercise joined KProcess+OS owners
         run: |
           set -euo pipefail

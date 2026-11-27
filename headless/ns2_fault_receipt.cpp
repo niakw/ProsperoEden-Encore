@@ -76,7 +76,7 @@ bool AppendIncident(const char* path, std::uint64_t pid, std::uint64_t program_i
 
 #ifdef PS5_NATIVE
 // Strong C symbol paired with the optional weak callback from the selected
-// vendor ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp. The same path is
+// canonical vendor eden/src/core/hle/kernel/svc.cpp. The same path is
 // used by P0 recoverable OOM and previous-launch interruption receipts.
 extern "C" void eden_native_capture_ns2_svc_fault(
     std::uint64_t pid, std::uint64_t program_id, std::uint64_t fault_pc,

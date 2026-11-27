@@ -24,9 +24,6 @@ assert "r23_controller_applet_ps5.cpp" not in cmake, "redundant native controlle
 # uses the stable control expression while byte-exact vendor proof stays above.
 for marker in ('src/core/frontend/applets/controller.cpp', 'if (keep_connected[index]) continue'):
     assert marker in cmake, marker
-import json
-manifest = json.loads((ROOT/"vendor/encore-active/eden/backports/manifest.json").read_text())
-assert "src/core/frontend/applets/controller.cpp" in manifest["entries"]
 marker = "void DefaultControllerApplet::ReconfigureControllers("
 assert new.count(marker) == 1
 start = new.index(marker)

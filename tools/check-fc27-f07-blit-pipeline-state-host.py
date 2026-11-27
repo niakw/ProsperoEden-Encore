@@ -445,8 +445,8 @@ print("NS1_VULKAN_FRAMEBUFFER_DEVICE_LIMIT_HOST_PASS upstream_427=1 active_owner
 # GPU-49: Lichii #353 fragment-output component ownership. The guest's
 # color mask is necessary but not sufficient: Vulkan must also mask out
 # components the fragment shader never writes.
-shader_info=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/shader_info.h").read_text()
-collect_info=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/collect_shader_info_pass.cpp").read_text()
+shader_info=(root/"vendor/encore-active/eden/src/shader_recompiler/shader_info.h").read_text()
+collect_info=(root/"vendor/encore-active/eden/src/shader_recompiler/ir_opt/collect_shader_info_pass.cpp").read_text()
 gp_header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
 gp_source=(root/"vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 rast_header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h").read_text()

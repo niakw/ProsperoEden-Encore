@@ -128,7 +128,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # The selected NS2 shader enum and environment metadata must precede
     # the pinned NS1 Shader::Stage header for authenticated native 0xC797 TUs.
     # Keep this include order identical to the shared release compiler graph.
-    shader=ROOT/'vendor/encore-active/eden-shader/src'
+    shader=ROOT/'vendor/encore-active/eden/src'
     # Match the shipping PS5 graph: this header owns BOTH the authenticated
     # NS2 native tiling flag and Lichii #46 Host1x syncpoint shim. The
     # experimental deferred guest-write bridge must never mask it.

@@ -9,7 +9,7 @@ import hashlib
 
 root = Path(__file__).resolve().parents[1]
 upstream = (root / "vendor/sources/eden/src/common/assert.h").read_bytes()
-active = (root / "vendor/encore-active/eden-core/src/common/assert.h").read_bytes()
+active = (root / "vendor/encore-active/eden/src/common/assert.h").read_bytes()
 cmake = (root / "headless/CMakeLists.txt").read_text()
 prefix = upstream + b"\n"
 assert active.startswith(prefix), "maintained assertion header diverged from pinned base"

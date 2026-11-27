@@ -119,8 +119,8 @@ if sdk.is_dir():
     env["SDKROOT"] = str(sdk)
 includes = (
     ROOT / "vendor/sources/fmt/include",
-    ROOT / "vendor/encore-active/ns2-runtime/ampere",
-    ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch",
+    ROOT / "vendor/encore-active/eden/srcpere",
+    ROOT / "vendor/encore-active/eden/src",
     ROOT / "vendor/sources/eden/src",
 )
 boost_caches = sorted((Path.home() / ".cache").glob(

@@ -7,7 +7,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 vendor = root / "vendor/encore-active"
-base = vendor / "ns2-runtime/gpu_access_svc"
+base = vendor / "eden/src"
 src = (base / "core/hle/kernel/svc.cpp").read_text()
 helper = (base / "core/hle/kernel/ns2_gpu_memory_attribute.h").read_text()
 pid = (vendor / "eden/src/core/loader/ns2_svc_trace.h").read_text()
@@ -31,11 +31,11 @@ assert 'GpuAccessible = (1 << 5)' in svc_enum
 # svc_info.cpp in the PS5 native build uses these values (the upstream base
 # header lacks them). Only the GPU 0x20 bit may differ from the selected
 # baseline header.
-installed_svc = (vendor / "eden-backports/src/core/hle/kernel/svc_types.h").read_text()
+installed_svc = (vendor / "eden/src/core/hle/kernel/svc_types.h").read_text()
 # Six-core Switch 2 processes may query thread ticks on physical cores 4/5.
 # Preserve the legacy four-core range for non-extended processes.
-info_source = (vendor / "eden-backports/src/core/hle/kernel/svc/svc_info.cpp").read_text()
-cpu6_header = (vendor / "ns2-runtime/cpu6/core/hardware_properties.h").read_text()
+info_source = (vendor / "eden/src/core/hle/kernel/svc/svc_info.cpp").read_text()
+cpu6_header = (vendor / "eden/src/core/hardware_properties.h").read_text()
 assert "constexpr u32 NUM_CPU_CORES = 6;" in cpu6_header
 assert "GetPhysicalCoreMask();" in info_source
 assert "const u64 num_cpus = (physical_core_mask & (u64{3} << 4)) != 0" in info_source
@@ -53,7 +53,7 @@ assert svc_enum == expected_svc
 assert 'Unknown37 = 37' in svc_enum and 'Unknown38 = 38' in svc_enum
 # Native 4K worker research must run against the SAME persisted SVC 0x80
 # attribute. Never silently pin non-GPU guest pages or use trace-only SVC.
-worker = (vendor / "ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp").read_text()
+worker = (vendor / "eden/src/core/hle/service/am/service/gpu_worker.cpp").read_text()
 assert 'True(info.m_attribute & Kernel::KMemoryAttribute::GpuAccessible)' in worker
 assert 'LockForMapDeviceAddressSpace(' in worker
 # Source selected through the shared native owner, never an optional
@@ -93,7 +93,7 @@ assert 'inline void DumpRecent(' in pid
 assert 'entry.sequence.store(seq, std::memory_order_release);' in pid
 assert 'inline void ResetForTitle() noexcept' in pid
 assert 'active_pid.store(0, std::memory_order_release)' in pid
-core = (vendor / "ns2-runtime/process/core/core.cpp").read_text()
+core = (vendor / "eden/src/core/core.cpp").read_text()
 load = core.split('SystemResultStatus Load(System& system', 1)[1].split('InitializeKernel(system);', 1)[0]
 assert 'Eden::NS2::SvcTrace::ResetForTitle();' in load
 assert core.count('Eden::NS2::SvcTrace::ResetForTitle();') == 2

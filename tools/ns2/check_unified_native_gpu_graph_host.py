@@ -67,7 +67,7 @@ with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
         'backend/spirv/emit_spirv_image.cpp']
  for f in files:
   path=proj/f;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('int fake=0;\n')
- puller=root/'vendor/encore-active/eden-core/src/video_core/engines/puller.cpp'
+ puller=root/'vendor/encore-active/eden/src/video_core/engines/puller.cpp'
  assert puller.is_file(),puller
  body=f'''cmake_minimum_required(VERSION 3.24)
 project(UnifiedGpuOwners LANGUAGES CXX)

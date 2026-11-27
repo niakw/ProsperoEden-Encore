@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-source=(ROOT/'vendor/encore-active/eden-core/src/video_core/memory_manager.cpp').read_text()
+source=(ROOT/'vendor/encore-active/eden/src/video_core/memory_manager.cpp').read_text()
 pinned=(ROOT/'vendor/sources/eden/src/video_core/memory_manager.cpp').read_text()
 start='template <typename FuncMapped, typename FuncReserved, typename FuncUnmapped>\ninline void MemoryManager::MemoryOperation('
 end='\nvoid MemoryManager::ReadBlockImpl('

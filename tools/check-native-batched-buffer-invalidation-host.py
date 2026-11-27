@@ -19,7 +19,7 @@ assert "query_cache.InvalidateRegion(addr, size);" in method
 assert "pipeline_cache.InvalidateRegion(addr, size);" in method
 assert method.index("texture_cache.WriteMemory") < method.index("buffer_cache.WriteMemory") < method.index("query_cache.InvalidateRegion")
 # The conservative witness MUST publish before page-table registration.
-buffer_owner = (root / "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
+buffer_owner = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 reg = buffer_owner[buffer_owner.index("void BufferCache<P>::ChangeRegister("):]
 assert reg.index("::Eden::BufferPages::Mark(buffer.CpuAddr(), size);") < reg.index("page_table[page] = buffer_id;")
 # Important: marking an unregistered CPU range is unnecessary for a future

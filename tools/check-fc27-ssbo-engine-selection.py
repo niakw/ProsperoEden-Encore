@@ -175,7 +175,7 @@ if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b81562
         assert blob(V/"tests/ns2_gpu_identity_mapping_source.py") == ("e3fd286527e6c3ad7eca371a2d82b9b46837e9e4" if selected in {"435d508cdff3059001dc65cb9980d009ab8d6796", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "68c27deb4544d414cb7339fc4d093cabe8e61a47" if selected == "7f1d859a758e4061ecdc6b5d98bc1356a578fa23" else "cd96c85a45833525a1849b4ae1519e27e5b51913" if selected == "96c58f5e2edc6e91813e0b2d67b2699ff2785622" else "82ffabe603b97922195fcc08a0436077fd2b5eab" if selected == "1dac2565be0161e12c1f9f50613013acd5c6df4b" else "63291835bc54248fca84422d03ad01b91eb1637a" if selected in {"002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "e7c379db1f5d938e5c51a497451f20db142d5394" if selected == "a383ab6f52da989c2c5cd756e62165f0763e8e72" else "4818d6bf9c03e1e64e88af9fa0a91f2f94dd4c39" if selected in {"93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0"} else "3fa08a66de50756376be6905fee407e122868db3" if selected == "a44d4ecb17d9388f7428d7e56d21685054b38d99" else "9755354e5a49f50f75f1f04894686f7838f80ea8")
         if selected in {"93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"}:
             assert blob(V/"encore-active/eden/src/video_core/gpu_gl_native.cpp") == ("9347e606050ac450a1f98e3f5f462ccc982dc808" if selected in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "7720e5a347817e67c0a964d3a80644b01b99d733")
-        assert blob(V/"encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h") == "6e1d185f086969caef3dded1a4b383c34a4d8657"
+        assert blob(V/"encore-active/eden/src/core/hle/service/am/service/gpu_memory_registration.h") == "6e1d185f086969caef3dded1a4b383c34a4d8657"
     for relative, digest in {
         "encore-active/eden/src/core/hle/service/bcat/backend/backend.h":
             "8c93a3d6aef8a45f85cb9c2344e3427daff4d131",
@@ -185,11 +185,11 @@ if selected in {"12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b81562
             "9f98f2da3f865da69399467133436e64e4e4d67b",
         "encore-active/eden/src/core/hle/service/bcat/service_creator.cpp":
             "1635bc091413a2f118b166216f91410b6338686d",
-        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
+        "encore-active/eden/src/video_core/engines/puller.cpp":
             "576a9d697da398aa6f42901b1764aa7574155411",
-        "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+        "encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp":
             ("770290b8bbc610eb5fc5724b17211ba39dc9caa5" if selected in {"435d508cdff3059001dc65cb9980d009ab8d6796", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "065a9d1fbc2a5a2a397f8a0c448374f304c3fc64" if selected == "7f1d859a758e4061ecdc6b5d98bc1356a578fa23" else "0cb6fa9e2fca1252a74556b217cbbd08f8b86fa1" if selected == "96c58f5e2edc6e91813e0b2d67b2699ff2785622" else "51b3917310e5b29de1948695042596220fd23ee3" if selected == "1dac2565be0161e12c1f9f50613013acd5c6df4b" else "ebcb3c4de5e1406f98c1b3959aba90e1a4c3b813" if selected in {"a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "b1be989fb564a1c9ef269470ca5897af4491c9c2" if selected in {"b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d"} else "9c35b43bc4f61d67395897fb63fce57419bc3331"),
-        "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h":
+        "encore-active/eden/src/core/hle/service/nvdrv/devices/native_gpu_process_registry.h":
             "a22b96c04f6f06aef36c36857dcf124521ca2cb7",
     }.items():
         assert blob(V / relative) == digest, relative
@@ -219,11 +219,11 @@ if selected in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca15
 # Exact VI2-only successor; unchanged GPU owners retain historical receipts.
 if selected == "9de08e4f4bbb903e25f330dde7b8185e19e078a1":
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "5b4e01583d0687ba41e7a428668ee84c8b58c91e"
-    assert blob(V/"encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp") == "f32b7be9445f1888298fd7162c8126b8c0421f02"
+    assert blob(V/"encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp") == "f32b7be9445f1888298fd7162c8126b8c0421f02"
 # 26/11/2026: exact VI2 212-before-251 successor; no unrelated GPU changes.
 if selected == "95467b3a42f208667ef8e06e6794f8a23dc2340d":
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "626ba6d69bdca7c46ca6729556a185cc1ccbb615"
-    assert blob(V/"encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp") == "e10e0d333c3b0b6615f9c311c85fb3217134fe6a"
+    assert blob(V/"encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp") == "e10e0d333c3b0b6615f9c311c85fb3217134fe6a"
 # Exact 26/11 native semaphore-retirement successor. It changes no
 # Maxwell SPIR-V/SSBO owner; authenticate the complete vendor Git tree,
 # the PS5 rasterizer and the actual maintained shader owners before allowing
@@ -233,7 +233,7 @@ if selected == "05bf05a8dca75b3e12871ec886a810310cdf43d6":
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip() == "fce8c6e09f27364904886bfbdfca299fbc3e0780"
     for relative, receipt in {
-        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
+        "encore-active/eden/src/video_core/engines/puller.cpp":
             "23725030557268e6593c9e5f64cb063730b77787",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp":
             "ff8ad79ef203456063dbd848eab3ea575628edfc",
@@ -249,8 +249,8 @@ if selected == "240550925b0ef097c24c3035c063bdceadd872de":
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip() == "e40237d089b0a45f77d68ae281821c1a85ce9ca8"
     for relative, digest in {
-                "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "2bacc8ebdc1c09cd96a7c83d26f57035619f622c",
-                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "634f7a6fc5d27e13b39360c2d28ec961c4f36236",
+                "encore-active/eden/src/core/hle/service/am/service/native_image_layout.h": "2bacc8ebdc1c09cd96a7c83d26f57035619f622c",
+                "encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp": "634f7a6fc5d27e13b39360c2d28ec961c4f36236",
                 "tests/ns2_gpu_identity_mapping_source.py": "63339d64588f34597f081102d8f1a77ed861971e"
         }.items():
         assert blob(V / relative) == digest, ("GSV image-only SSBO successor drift",relative)
@@ -259,7 +259,7 @@ if selected == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab":
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"],
                                    text=True).strip() == "d56f1f3efcbe283d018b411289f36bd398905408"
     for relative, digest in {
-        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146",
+        "encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp": "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146",
         "encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
         "encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
@@ -270,12 +270,12 @@ if selected in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a490
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"],
                                    text=True).strip() == ("3b10204a86ef1e189052c2d068e195b4ac997539" if selected == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a")
     for relative, digest in {
-        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "abd6757c20b4b7629f0d6e179999c2d6091a2825",
+        "encore-active/eden/src/video_core/engines/puller.cpp": "abd6757c20b4b7629f0d6e179999c2d6091a2825",
         "tests/ns2_gpu_identity_mapping_source.py": "23be79dbe84fc2f51a2db1fa741f6fd3c7e28daf",
         "encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
         "encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
-        **({"encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee"} if selected == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else {}),
+        **({"encore-active/eden/src/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee"} if selected == "0506a211d82c880a49053c2ecb1b3129523dcbb0" else {}),
     }.items():
         assert blob(V / relative) == digest, ("Native unbind SSBO source drift", relative)
     expected.add(selected)
@@ -283,14 +283,14 @@ if selected in {"19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045d
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"],
                                    text=True).strip() == {"19a7bd41cdc0f942dd2b694818e2d2995eb99cf8": "6cabcba90de3515962623cd53d44667e0c6df04a", "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe": "c98167e4b9ff0b42acac977cae57b26255b50040", "57be62ed6bcc872a850676f92f55de92ace7a290": "3cf3eed31484ffc23cd18229b983e07500cecce6", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae": "d12a16c4408d19a520e06038bfd61426d62b6f07", "2adfca5489b3f107847e0a1a9cdc06e497fc656f": "7bc8f75516155e5fc926e9a979c7883c6d034a78", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb": "a315cab23dd3ecf664da881de28dc1c0616e1b5f", "4b63376eb7057015d70295ecd7df4ce96be80607": "5d6c2eb980d7f3e1cef7070f476c821dbe60cff7", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a": "29fb0e31ce967d9ecd6402d6fa928a8b1dbbde22"}[selected]
     for relative, digest in {
-        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
-        "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": ("4e4a1f23d89a7ace963a9249afa47a592cb4eb6e" if selected in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "4cb9f79deeb56ab7397c6209939c94dffbb7575b"),
+        "encore-active/eden/src/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
+        "encore-active/eden/src/video_core/dma_pusher.h": ("4e4a1f23d89a7ace963a9249afa47a592cb4eb6e" if selected in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "4cb9f79deeb56ab7397c6209939c94dffbb7575b"),
         "encore-active/eden/src/video_core/dma_pusher.cpp": ("76eb30a7e58f17852069a05e2c12cd3c6521967f" if selected in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "ca642b98443901eee4f88b02850237f3eda623c8"),
         "tests/ns2_gpu_identity_mapping_source.py": ("787b18b8c9b2841874ceaea911947e533b59e198" if selected in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "dfe5b9d594d3e5f161872a18e227afe6f02a436d" if selected == "e5ad6cebf5572d7045de9e48f4308cc2621eede1" else "8340a1f3403bb57debbabcd193170034a30282a1"),
         "encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
         "encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
-        "encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee",
+        "encore-active/eden/src/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee",
         **({
             "encore-active/eden/src/video_core/buffer_cache/buffer_cache.h": "30e7c389851a5a0f2b6369c35a313f93a0fc6826",
             "encore-active/eden/src/video_core/buffer_cache/usage_tracker.h": "60ff6c212708684b2444e4ce6a969a1c27994e39",
@@ -304,16 +304,16 @@ if selected == "cb8635aa95da52de2dd10be9d1574425edc1eb18":
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip() == "5b1b1dadc684d1c5a6a4d997a30bd66d5e36a58a"
     for relative, digest in {
-        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "adfe2e9a0671ea3cb41da43613ac97f3cda9fd32",
+        "encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp": "adfe2e9a0671ea3cb41da43613ac97f3cda9fd32",
         "tests/ns2_syncpt_bootstrap_source.py": "cdbffe062e6254dd480423723a7686fcba15ed69",
-        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
-        "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "4e4a1f23d89a7ace963a9249afa47a592cb4eb6e",
+        "encore-active/eden/src/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
+        "encore-active/eden/src/video_core/dma_pusher.h": "4e4a1f23d89a7ace963a9249afa47a592cb4eb6e",
         "encore-active/eden/src/video_core/dma_pusher.cpp": "76eb30a7e58f17852069a05e2c12cd3c6521967f",
         "tests/ns2_gpu_identity_mapping_source.py": "787b18b8c9b2841874ceaea911947e533b59e198",
         "encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
         "encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
-        "encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee",
+        "encore-active/eden/src/core/hle/service/audio/nx2_audio_user_client.h": "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee",
         "encore-active/eden/src/video_core/buffer_cache/buffer_cache.h": "30e7c389851a5a0f2b6369c35a313f93a0fc6826",
         "encore-active/eden/src/video_core/buffer_cache/usage_tracker.h": "60ff6c212708684b2444e4ce6a969a1c27994e39",
         "tests/ps5_buffer_usage_granularity_host.py": "72cd74292b8459a99d053be6d791e5187f1c3e71",
@@ -331,9 +331,9 @@ if selected == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
         "encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h": "fa5e7572ef99bba3db17154c63f60dddba7a87c6",
         "encore-active/eden/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp": "602d45b4d2ad872b138d62ce05f379b5e1103602",
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "6f3378f1bb611c74ecfe1f5cd37283137462012a",
-        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "be946421279aa406151f8255cd7b74b88c996873",
-        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "213dd0f37f23043fe16a5efb8e466b2a9b9979cb",
-        "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "fc4fe083664ba991a1002caa52384c662e3ef718",
+        "encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp": "be946421279aa406151f8255cd7b74b88c996873",
+        "encore-active/eden/src/video_core/engines/puller.cpp": "213dd0f37f23043fe16a5efb8e466b2a9b9979cb",
+        "encore-active/eden/src/video_core/dma_pusher.h": "fc4fe083664ba991a1002caa52384c662e3ef718",
         "encore-active/eden/src/video_core/dma_pusher.cpp": "d42fbfe0a91f0e0598641ad9ca49ec9cf2d6a04f",
         "tests/ns2_gpu_identity_mapping_source.py": "6ad2be5bdc7ba210634e77b08de6a82d729c103c",
         "encore-active/eden/src/core/device_memory_manager.inc": "9283bd636ce0b1cae33b4e012c7de59c4220c261",
@@ -374,7 +374,7 @@ assert "BreadthFirstSearchPruned" not in pinned.read_text()
 # GPU-53: exact maintained SSBO emitter + shared native SPIR-V context.
 active_mem=V/"encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp"
 pinned_mem=V/"sources/eden/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp"
-active_ctx=V/"encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp"
+active_ctx=V/"encore-active/eden/srcpere/shader_recompiler/backend/spirv/spirv_emit_context.cpp"
 pinned_ctx=V/"sources/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp"
 assert blob(active_mem)=="6e6994343df4a1e3930495f8fd575c4329bfa8c4"
 assert blob(pinned_mem)=="bef4421fedce6d66af1c6ff0c1dcc835e976eb33"
@@ -432,9 +432,9 @@ compiler=shutil.which("clang++-18") or shutil.which("clang++")
 assert compiler,"Clang required for GPU-53 syntax proof"
 cpm=V/"sources/eden-cpm"
 includes=[
-    V/"encore-active/ns2-runtime/ampere",
-    V/"encore-active/ns2-runtime/gpu_dispatch",
-    V/"encore-active/ns2-runtime/hle",
+    V/"encore-active/eden/srcpere",
+    V/"encore-active/eden/src",
+    V/"encore-active/eden/src",
     V/"encore-active/eden/src",
     V/"sources/eden/src",
     V/"sources/eden/src/dynarmic/src",

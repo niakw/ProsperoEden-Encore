@@ -51,9 +51,10 @@ static int canonical_name(const char* raw, char* output, int wildcard) {
     return n && is_valid_name(output, wildcard);
 }
 
-// Anchored glob: '*' is zero or more characters INSIDE a single DNS label.
-// Iterate hostname suffixes separately to grant implicit subdomain matching.
-static int glob_label_safe(const char* host, const char* pattern) {
+// NanoDNS masks use fnmatch-style '*' over the complete hostname.
+// The shipped policy contains no '?' or character classes, so this bounded
+// matcher implements exactly the subset used by nanodns.ini.
+static int glob_match(const char* host, const char* pattern) {
     const char* star = NULL;
     const char* retry = NULL;
     while (*host) {
@@ -63,7 +64,7 @@ static int glob_label_safe(const char* host, const char* pattern) {
         } else if (*pattern == *host) {
             ++pattern;
             ++host;
-        } else if (star && *retry && *retry != '.') {
+        } else if (star && *retry) {
             pattern = star + 1;
             host = ++retry;
         } else {
@@ -115,12 +116,7 @@ int eden_network_host_blocked(const char* host) {
     if (!atomic_load_explicit(&ready, memory_order_acquire)) return 1;
     char canonical[MAX_NAME + 1];
     if (!canonical_name(host, canonical, 0)) return 1;
-    for (const char* suffix = canonical; ; ) {
-        for (unsigned i = 0; i < rule_count; ++i)
-            if (glob_label_safe(suffix, rules[i])) return 1;
-        const char* dot = strchr(suffix, '.');
-        if (!dot) break;
-        suffix = dot + 1;
-    }
+    for (unsigned i = 0; i < rule_count; ++i)
+        if (glob_match(canonical, rules[i])) return 1;
     return 0;
 }

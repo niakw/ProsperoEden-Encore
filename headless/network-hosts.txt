@@ -1,175 +1,150 @@
-# Eden Encore — packaged domain denylist for launcher + emulated games
-# SPDX-License-Identifier: GPL-3.0-or-later
-# One hostname suffix or wildcard pattern per line; ASCII names only.
-# A plain 'ea.com' matches ea.com and ALL its subdomains (api.ea.com).
-# Wildcards '*' match any characters INSIDE ONE label, never a dot:
-#   *.*test.fr, *.test.* (examples, not active rules)
-# The file is installed as app0/network-hosts.txt. All other hostnames are allowed.
-#
-# Nintendo / network services
-nintendo.com
-nintendo.net
-nintendo.jp
-nintendo.co.jp
-nintendo.co.uk
-nintendo-europe.com
-nintendowifi.net
-nintendo.es
-nintendo.co.kr
-nintendo.tw
-nintendo.com.hk
-nintendo.com.au
-nintendo.co.nz
-nintendo.at
-nintendo.be
-nintendods.cz
-nintendo.dk
-nintendo.de
-nintendo.fi
-nintendo.fr
-nintendo.gr
-nintendo.hu
-nintendo.it
-nintendo.nl
-nintendo.no
-nintendo.pt
-nintendo.ru
-nintendo.co.za
-nintendo.se
-nintendo.ch
-nintendo.pl
-nintendoswitch.com
-nintendoswitch.cn
-nintendoswitch.com.cn
-nintendo.eu
-# Nintendo game cloud upload through third-party domain; DO NOT block whole AWS
-scsi-upload-lp1.s3.us-west-2.amazonaws.com
+# Eden Encore — packaged DNS deny policy
+# Source of truth: niakw/nanodns-console-blocklist nanodns.ini
+# Source commit: 58bee7d6041246a5735639cfa99533f00bee1d68
+# Projection: [overrides] left-hand masks whose target is 0.0.0.0.
+# Do not edit policy entries here independently; update the NanoDNS source first.
 
-# Epic and associated networks
+# SONY / PLAYSTATION / SIE
+*playstation*
+*sony*
+*psndl*
+*gaikai*
+*ribob01*
+*psn-rsc*
+*siedev*
+*sie-rd*
+*scei*
+*scea*
+sie.com
+*.sie.com
+# Exact historical PlayStation CDN alias on shared Akamai infrastructure.
+a192.d.akamai.net
+psn.akadns99.net
+*.psn.akadns99.net
+
+# EPIC GAMES / FORTNITE / EASY ANTI-CHEAT
 epicgames.com
+*.epicgames.com
 epicgames.dev
+*.epicgames.dev
 fortnite.com
+*.fortnite.com
 unrealengine.com
+*.unrealengine.com
 easyanticheat.net
+*.easyanticheat.net
 easy.ac
-rocketleague.com
-psyonix.com
-fallguys.com
+*.easy.ac
 
-# Electronic Arts
-ea.com
-ea.net
-easports.com
-easportsfc.com
-eaplay.com
-origin.com
-codemasters.com
-
-# Ubisoft, Rockstar, Take-Two
-ubisoft.com
-ubi.com
-ubisoftconnect.com
-ubi-services.com
+# ROCKSTAR / TAKE-TWO / 2K
 rsgameservices.com
+*.rsgameservices.com
 rockstargames.com
+*.rockstargames.com
 rockstarservices.com
+*.rockstarservices.com
 take2games.com
+*.take2games.com
 2k.com
+*.2k.com
 2kcoretech.online
+*.2kcoretech.online
 
-# Microsoft game services
-# Explicitly requested: this also blocks every subdomain of microsoft.com.
-microsoft.com
-minecraft.net
-minecraftservices.com
-mojang.com
-xboxlive.com
-xboxservices.com
-xbox.com
-
-# Japanese publishers and partners
-sega.com
-sega.co.jp
-atlus.co.jp
-capcom.com
-capcom.co.jp
-square-enix.com
-square-enix-games.com
-square-enix.co.jp
-bandainamcoent.com
-fromsoftware.jp
-konami.com
-konami.net
-yugioh-card.com
-
-# Activision Blizzard, Bethesda, Gearbox, Warner
-activision.com
-callofduty.com
-demonware.net
-demonware.com
-blizzard.com
-battle.net
-bethesda.net
-bethesda.com
-zenimax.com
-gearboxsoftware.com
-# Warner Bros. / Hogwarts Legacy online service; suffix includes API children.
-phoenix-api.wbagora.com
-wbgames.com
-wbplay.com
-warnerbrosgames.com
-ttgames.com
-
-# More console publishers
-koeitecmo.com
-koeitecmoamerica.com
-koeitecmo.co.jp
-gamecity.ne.jp
-level5.co.jp
-marvelous.co.jp
-nisamerica.com
-nippon1.co.jp
-spike-chunsoft.com
-spike-chunsoft.co.jp
-arcsystemworks.com
-arcsygames.com
-inticreates.com
-gungho.jp
-505games.com
-team17.com
-thqnordic.com
-plaion.com
-deep-silver.com
-tinybuild.com
-devolverdigital.com
-nacon.com
-maximumgames.com
-rawfury.com
-annapurnainteractive.com
-humblegames.com
-curvegames.com
-dotemu.com
-microids.com
-telltale.com
-jackboxgames.com
-jackbox.tv
-playdigious.com
-warframe.com
-digitalextremes.com
-deadbydaylight.com
-bhvr.com
-hirezstudios.com
-smitegame.com
-pokemon.com
-pokemon.co.jp
-pokemonunite.com
-
-# CD Projekt / GOG
-cdprojekt.com
-cdprojektred.com
-cdpred.services
-cyberpunk.net
+# CD PROJEKT / GOG
 gog.com
+*.gog.com
 gogcdn.net
+*.gogcdn.net
 gog-statics.com
+*.gog-statics.com
 gogalaxy.com
+*.gogalaxy.com
+cdpred.services
+*.cdpred.services
+cdprojekt.com
+*.cdprojekt.com
+cdprojektred.com
+*.cdprojektred.com
+cyberpunk.net
+*.cyberpunk.net
+
+# NINTENDO (Wii / DS / 3DS / Wii U / Switch / Switch 2 branded endpoints)
+*nintendo*
+*nintendowifi*
+wii.com
+*.wii.com
+
+# EA / EA SPORTS / ORIGIN
+ea.com
+*.ea.com
+ea.net
+*.ea.net
+easports.com
+*.easports.com
+easportsfc.com
+*.easportsfc.com
+eaplay.com
+*.eaplay.com
+origin.com
+*.origin.com
+
+# UBISOFT
+ubisoft.com
+*.ubisoft.com
+ubi.com
+*.ubi.com
+ubisoftconnect.com
+*.ubisoftconnect.com
+ubi-services.com
+*.ubi-services.com
+
+# SEGA
+sega.com
+*.sega.com
+sega.co.jp
+*.sega.co.jp
+
+# XBOX (original / 360 / One / Series, including some legacy CDN aliases)
+xbox.com
+*.xbox.com
+xboxlive.com
+*.xboxlive.com
+gamepass.com
+*.gamepass.com
+xboxservices.com
+*.xboxservices.com
+xboxlive.com.akadns.net
+*.xboxlive.com.akadns.net
+xboxlive.com.edgesuite.net
+*.xboxlive.com.edgesuite.net
+xboxlive.com.akamaized.net
+*.xboxlive.com.akamaized.net
+xboxlive.com.nsatc.net
+*.xboxlive.com.nsatc.net
+xboxlive.com-c.edgekey.net
+*.xboxlive.com-c.edgekey.net
+xboxlive.wns.windows.com
+xboxlive.download.akamai.com
+xcloud.dedicated.msn.com
+xsvc.microsoft.com
+*.xsvc.microsoft.com
+xboxrc.com
+*.xboxrc.com
+xboxlive.ipv6.microsoft.com.akadns.net
+xboxservices.com.akadns.net
+*.xboxservices.com.akadns.net
+xboxlive.com-c.edgekey.net.globalredir.akadns.net
+
+# OTHER GAME PUBLISHERS / PC PLATFORMS
+steampowered.com
+*.steampowered.com
+steamcommunity.com
+*.steamcommunity.com
+valvesoftware.com
+*.valvesoftware.com
+capcom.com
+*.capcom.com
+square-enix.com
+*.square-enix.com
+bandainamcoent.com
+*.bandainamcoent.com

@@ -23,7 +23,7 @@ assert "eden-ps5-guest-domain-filter.patch" in apply
 # The shipped guest resolver is a complete maintained source; the old
 # substring-domain blocker must not survive there. CMake merely selects it.
 cmake = (root / "headless/CMakeLists.txt").read_text()
-dns = (root / "vendor/encore-active/eden-core/src/core/hle/service/sockets/sfdnsres.cpp").read_text()
+dns = (root / "vendor/encore-active/eden/src/core/hle/service/sockets/sfdnsres.cpp").read_text()
 assert 'set(EDEN_MAINTAINED_GUEST_DNS' in cmake
 assert 'list(REMOVE_ITEM core_sources hle/service/sockets/sfdnsres.cpp)' in cmake
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_GUEST_DNS}")' in cmake
@@ -51,7 +51,7 @@ assert 'cp "$root/headless/network-hosts.txt" "$app/network-hosts.txt"' in packa
 # A commented example or a lookalike such as evilnintendo.com is not a rule.
 denylist = {line.strip().casefold() for line in hosts.splitlines()
             if line.strip() and not line.lstrip().startswith("#")}
-assert {"nintendo.com", "ea.com", "gogcdn.net"}.issubset(denylist)
+assert {"*nintendo*", "ea.com", "*.gogcdn.net", "*playstation*"}.issubset(denylist)
 
 # Native HTTPS remains available to Home and guest networking is enabled.
 assert 'Common::Net::MakeRequest("https://api.nlib.cc", endpoint)' in services

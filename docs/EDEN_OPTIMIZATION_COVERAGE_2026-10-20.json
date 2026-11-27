@@ -2446,7 +2446,7 @@
       "evidence": "Previously maintained complete source/profile or former generated source replay; contract B28: Canonical 147-certificate native TLS trust source, parity-proven byte-for-byte against pinned Eden patch and staged without C++ transformation; TLS execution on console unqualified. CI witness retained. No FPS claim."
     },
     {
-      "path": "vendor/encore-active/eden-build/third_party/xbyak/xbyak.h",
+      "path": "vendor/encore-active/eden-cpm/xbyak/v7.40.1/xbyak/xbyak.h",
       "disposition": "previously_integrated_source_change",
       "contract_id": "J40",
       "prior_status": "SOURCE",

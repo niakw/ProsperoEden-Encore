@@ -10,7 +10,7 @@ import subprocess
 
 root = Path(__file__).resolve().parents[1]
 original = (root/"vendor/sources/eden/src/CMakeLists.txt").read_text()
-active = (root/"vendor/encore-active/eden-build/src/CMakeLists.txt").read_text()
+active = (root/"vendor/encore-active/eden/src/CMakeLists.txt").read_text()
 installer = (root/"tools/install-vendored-eden-build-flags.py").read_text()
 stager = (root/"tools/prepare-build.sh").read_text()
 builder = (root/"tools/build-headless-native.sh").read_text()

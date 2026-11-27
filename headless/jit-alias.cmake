@@ -3,7 +3,7 @@ set(xbyak_root "${PROJECT_SOURCE_DIR}/.cache/cpm/xbyak/v7.40.1/xbyak")
 # Full Xbyak v7.40.1 header is maintained in Encore. Keep sibling
 # headers from the pinned CPM dependency; no C++ replacement in CMake.
 set(EDEN_MAINTAINED_XBYAK_HEADER
-    "${PORT_ROOT}/vendor/encore-active/eden-build/third_party/xbyak/xbyak.h")
+    "${PORT_ROOT}/vendor/encore-active/eden-cpm/xbyak/v7.40.1/xbyak/xbyak.h")
 if(NOT EXISTS "${EDEN_MAINTAINED_XBYAK_HEADER}")
     message(FATAL_ERROR "Missing maintained Xbyak writable alias header")
 endif()

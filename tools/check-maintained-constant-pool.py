@@ -62,5 +62,5 @@ assert 'file(READ "${PROJECT_SOURCE_DIR}/src/dynarmic/src/dynarmic/backend/x64/c
 # actual COPYONLY selection rather than requiring the retired generator.
 assert 'configure_file("${EDEN_MAINTAINED_XBYAK_HEADER}"' in selector
 assert 'write_derived("${PORT_BUILD_DIR}/include/xbyak/xbyak.h"' not in selector
-assert (root / "vendor/encore-active/eden-build/third_party/xbyak/xbyak.h").is_file()
+assert (root / "vendor/encore-active/eden-cpm/xbyak/v7.40.1/xbyak/xbyak.h").is_file()
 print("VENDOR_MAINTAINED_CONSTANT_POOL_PARITY_PASS: exact edit and compiled target")

@@ -587,7 +587,7 @@ promettre le comportement console ni activer la voie expérimentale.
 
 `headless/jit-alias.cmake` ne construit plus `xbyak.h` via huit
 substitutions. Le fichier complet, conservant sa licence originale, réside
-dans `vendor/encore-active/eden-build/third_party/xbyak/xbyak.h`.
+dans `vendor/encore-active/eden-cpm/xbyak/v7.40.1/xbyak/xbyak.h`.
 Un contrôle vérifie les huit modifications et, si le cache CPM épinglé
 est disponible, reconstruit l'ancien résultat pour comparer chaque octet.
 La modification historique `code_source` X09 est retirée : les variantes

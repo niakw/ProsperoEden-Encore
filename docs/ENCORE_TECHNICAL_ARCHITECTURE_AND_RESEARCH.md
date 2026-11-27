@@ -117,7 +117,7 @@ flowchart TB
 | Dynarmic | S/I | JIT ARM → hôte ; <code>V/sources/eden/src/dynarmic/</code> |
 | Dynarmic IR / frontend | S | Décodage et transformation de blocs ; sous-arbre <code>src/dynarmic/src/dynarmic/</code> |
 | Backend x64 | S | Émission native PS5, allocation de registres ; <code>V/encore-active/eden-core/src/dynarmic/backend/x64/</code> |
-| Xbyak | S | Encodeur JIT x86-64 ; <code>V/encore-active/eden-build/third_party/xbyak/</code> |
+| Xbyak | S | Encodeur JIT x86-64 ; <code>V/encore-active/eden-cpm/xbyak/v7.40.1/xbyak/</code> |
 | JIT cache / code invalidation | S/I | Durée de vie des blocs, alias RX/RW ; <code>E/headless/jit-*</code> |
 | CPU manager / core timing | S | Ordonnancement et horloge invités ; <code>src/core/cpu_manager.*</code>, <code>core_timing.*</code> |
 | Kernel HLE / SVC | S | Threads, processus, waits, sémaphores ; <code>src/core/hle/kernel/</code> |

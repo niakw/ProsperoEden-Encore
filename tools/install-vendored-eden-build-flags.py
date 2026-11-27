@@ -18,7 +18,7 @@ specs=(
 expected_sources=[]
 for relative,before,after in specs:
     original=root/"vendor/sources/eden"/relative
-    active=root/"vendor/encore-active/eden-build"/relative
+    active=root/"vendor/encore-active/eden"/relative
     old=original.read_bytes()
     assert old.count(before)==1, f"pinned source changed: {relative}"
     expected=old.replace(before,after)

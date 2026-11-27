@@ -19,6 +19,61 @@ _PS5_RANGE_API_BUFFER_BLOB = "c6bab56cbd4e58458d010e423d74df9f933a8f8d"
 # the audit text, not the native PS5 source. Diff against the exact pinned
 # predecessor and retain all nine source changes as a closed contract.
 _NOV20_BUFFER_BLOB = "d40082a0c849790d25a4d1d28e003087eefd84a1"
+_FC27_STAGE_FAST_GUARD_BUFFER_BLOB = "30e7c389851a5a0f2b6369c35a313f93a0fc6826"
+_FC27_STAGE_FAST_GUARD_PREDECESSOR_BLOB = "4577de4f63bc0393a1e14e89534d6f8aedf50d67"
+fc27_stage_fast_guard_reversal = [
+    ("""    auto& current = channel_state->uniform_buffers[stage][index];
+    if (current.device_addr == 0 && current.size == 0 && !current.buffer_id) [[likely]] {
+        return;
+    }
+    current = NULL_BINDING;""",
+     """    channel_state->uniform_buffers[stage][index] = NULL_BINDING;"""),
+    ("""    BindHostGraphicsUniformBuffers(stage);
+    if (channel_state->enabled_storage_buffers[stage] != 0) {
+        BindHostGraphicsStorageBuffers(stage);
+    }
+    if (channel_state->enabled_texture_buffers[stage] != 0) {
+        BindHostGraphicsTextureBuffers(stage);
+    }""",
+     """    BindHostGraphicsUniformBuffers(stage);
+    BindHostGraphicsStorageBuffers(stage);
+    BindHostGraphicsTextureBuffers(stage);"""),
+    ("""    BindHostComputeUniformBuffers();
+    if (channel_state->enabled_compute_storage_buffers != 0) {
+        BindHostComputeStorageBuffers();
+    }
+    if (channel_state->enabled_compute_texture_buffers != 0) {
+        BindHostComputeTextureBuffers();
+    }""",
+     """    BindHostComputeUniformBuffers();
+    BindHostComputeStorageBuffers();
+    BindHostComputeTextureBuffers();"""),
+    ("""    if (channel_state->enabled_uniform_buffer_masks == mask &&
+        channel_state->uniform_buffer_sizes == sizes) [[likely]] {
+        return;
+    }
+""", ""),
+    ("""    if (channel_state->enabled_storage_buffers[stage] == 0) {
+        return;
+    }
+""", ""),
+    ("""    if (channel_state->enabled_texture_buffers[stage] == 0) {
+        return;
+    }
+""", ""),
+    ("""    if (channel_state->enabled_uniform_buffer_masks[stage] == 0) [[likely]] {
+        return;
+    }
+""", ""),
+    ("""    if (channel_state->enabled_storage_buffers[stage] == 0) [[likely]] {
+        return;
+    }
+""", ""),
+    ("""    if (channel_state->enabled_texture_buffers[stage] == 0) [[likely]] {
+        return;
+    }
+""", ""),
+]
 nov20_buffer_reversal = [
     ("    // single-query clean CPU-write fast path and b13c4c1 sibling preservation.\n    // Only one page-wide GPU-ownership query is needed before the write.\n    // Keep its result for GPU-written sibling bytes: a second page query is\n    // necessary only after we actually removed an overlapping GPU-owned span.\n    const bool page_has_gpu_writes = keep_page_gpu_data && page_end > page_begin &&\n                                     IsRegionGpuModified(page_begin, page_end - page_begin);\n    if (keep_page_gpu_data && !page_has_gpu_writes) {", "    // single-query clean CPU-write fast path and b13c4c1 sibling preservation.\n    if (keep_page_gpu_data && page_end > page_begin &&\n        !IsRegionGpuModified(page_begin, page_end - page_begin)) {"),
     ("\n    const bool overlaps_cpu_write = IsRegionGpuModified(device_addr, size);\n    if (overlaps_cpu_write) {", "\n    if (IsRegionGpuModified(device_addr, size)) {"),
@@ -150,6 +205,17 @@ def restore_r437_without_production_r2(path: Path) -> str:
     actual = subprocess.check_output(
         ["git", "hash-object", str(path)], text=True).strip()
     source = path.read_text()
+    if actual == _FC27_STAGE_FAST_GUARD_BUFFER_BLOB:
+        # 27 Nov FC27 P1: reverse only the nine reviewed idempotent stage
+        # fast-guards on the audit copy. Runtime source remains untouched.
+        assert len(fc27_stage_fast_guard_reversal) == 9
+        for revised, historical in fc27_stage_fast_guard_reversal:
+            assert source.count(revised) == 1, "FC27 stage fast-guard hunk drift"
+            source = source.replace(revised, historical, 1)
+        raw = source.encode("utf-8")
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == _FC27_STAGE_FAST_GUARD_PREDECESSOR_BLOB, (
+            "FC27 stage fast-guard reversal changed unrelated BufferCache bytes")
     if actual == "4577de4f63bc0393a1e14e89534d6f8aedf50d67":
         # Replay only the reviewed GC batch delta on this historical audit copy.
         successor = "void BufferCache<P>::RunGarbageCollector() {\n    const bool aggressive_gc = total_used_memory >= critical_memory;\n    const u64 ticks_to_destroy = aggressive_gc ? 60 : 120;\n#ifdef PS5_NATIVE\n    // Before a buffer reaches the GC age, subtracting from this unsigned\n    // frame tick wraps to a huge LRU threshold. On startup/pressure bursts\n    // that wrongly evicts young buffers and can force guest downloads.\n    if (frame_tick < ticks_to_destroy) {\n        return;\n    }\n#endif\n#ifdef PS5_NATIVE\n    if constexpr (USE_MEMORY_MAPS && !IS_OPENGL) {\n        // Lichii batches GC readbacks rather than finishing the GPU once\n        // per dirty eviction. Keep the existing LRU age and eviction count.\n        constexpr u64 staging_budget = 16ULL * 1024 * 1024;\n        constexpr size_t max_regions = 4096;\n        std::array<BufferId, 64> candidates{};\n        size_t candidate_count = 0;\n        const size_t limit = aggressive_gc ? 64 : 32;\n        lru_cache.ForEachItemBelow(frame_tick - ticks_to_destroy, [&](BufferId id) {\n            if (candidate_count == limit) return true;\n            candidates[candidate_count++] = id;\n            return false;\n        });\n        struct Download {\n            BufferId id;\n            BufferCopy copy;\n        };\n        const auto download_batch = [&](std::span<const BufferId> ids) {\n            boost::container::small_vector<Download, 16> downloads;\n            u64 total = 0;\n            bool oversized = false;\n            for (const BufferId id : ids) {\n                const auto& buffer = slot_buffers[id];\n                // Plan without clearing GPU ownership. A staging allocation\n                // failure must leave the original buffers readable.\n                memory_tracker.ForEachDownloadRange(\n                    buffer.CpuAddr(), buffer.SizeBytes(), false,\n                    [&](u64 start, u64 bytes) {\n                        if (oversized) return;\n                        gpu_modified_ranges.ForEachInRange(start, bytes,\n                            [&](DAddr first, DAddr end) {\n                                if (oversized) return;\n                                const u64 size = end - first;\n                                if (size > staging_budget ||\n                                    downloads.size() == max_regions) {\n                                    oversized = true;\n                                    return;\n                                }\n                                const u64 aligned = (size + 63) & ~u64{63};\n                                if (aligned > staging_budget - total) {\n                                    oversized = true;\n                                    return;\n                                }\n                                downloads.push_back({id, BufferCopy{\n                                    .src_offset = first - buffer.CpuAddr(),\n                                    .dst_offset = total,\n                                    .size = size,\n                                }});\n                                total += aligned;\n                            });\n                    });\n                if (oversized) break;\n            }\n            if (oversized) {\n                // Do not grow the new batch's staging or metadata without\n                // bound. The existing single-buffer path handles rare large\n                // or highly fragmented evictions with its original contract.\n                for (const BufferId id : ids) {\n                    DownloadBufferMemory(slot_buffers[id]);\n                    DeleteBuffer(id);\n                }\n                return;\n            }\n            if (total) {\n                // Catch only allocation failure, before recording GPU copies.\n                // A failed retirement is not a recoverable allocation error.\n                std::optional<decltype(runtime.DownloadStagingBuffer(total))> staging;\n                try {\n                    staging.emplace(runtime.DownloadStagingBuffer(total));\n                } catch (const std::bad_alloc&) {\n                    return;\n                }\n                runtime.PreCopyBarrier();\n                for (size_t first = 0; first < downloads.size();) {\n                    const BufferId id = downloads[first].id;\n                    auto& buffer = slot_buffers[id];\n                    std::array<BufferCopy, 8> copies{};\n                    size_t count = 0;\n                    do {\n                        auto copy = downloads[first++].copy;\n                        copy.dst_offset += staging->offset;\n                        buffer.MarkUsage(copy.src_offset, copy.size);\n                        copies[count++] = copy;\n                    } while (first < downloads.size() && count < copies.size() &&\n                             downloads[first].id == id);\n                    runtime.CopyBuffer(staging->buffer, buffer,\n                        std::span<const BufferCopy>{copies.data(), count}, false);\n                }\n                runtime.PostCopyBarrier();\n                runtime.Finish();\n                // Keep the established pending CPU-write protection. Sample\n                // after retirement so writes queued during the wait are visible.\n                const auto cpu_written = PendingCpuWriteRanges();\n                for (const auto& download : downloads) {\n                    const auto& copy = download.copy;\n                    const auto& buffer = slot_buffers[download.id];\n                    WriteDownloadedMemory(cpu_written, buffer.CpuAddr() + copy.src_offset,\n                        staging->mapped_span.data() + copy.dst_offset, copy.size);\n                }\n            }\n            // Publish ownership only after every readback in this batch\n            // completed. Buffer allocations are page-aligned and disjoint.\n            for (const BufferId id : ids) {\n                auto& buffer = slot_buffers[id];\n                memory_tracker.ForEachDownloadRangeAndClear(\n                    buffer.CpuAddr(), buffer.SizeBytes(), [&](u64 start, u64 bytes) {\n                        ClearDownload(start, bytes);\n                        gpu_modified_ranges.Subtract(start, bytes);\n                    });\n                DeleteBuffer(id);\n            }\n        };\n        // Bound the nominal batch by the owners' sizes; the planner above\n        // independently caps the actual aligned readback size and region count.\n        for (size_t first = 0; first < candidate_count;) {\n            size_t end = first;\n            u64 bytes = 0;\n            do {\n                const u64 size = slot_buffers[candidates[end]].SizeBytes();\n                if (end != first && (bytes >= staging_budget ||\n                                     size > staging_budget - bytes)) break;\n                bytes += size;\n                ++end;\n            } while (end < candidate_count);\n            download_batch(std::span<const BufferId>{candidates.data() + first, end - first});\n            first = end;\n        }\n        return;\n    }\n#endif\n    int num_iterations = aggressive_gc ? 64 : 32;\n    const auto clean_up = [this, &num_iterations](BufferId buffer_id) {\n        if (num_iterations == 0) {\n            return true;\n        }\n        --num_iterations;\n        auto& buffer = slot_buffers[buffer_id];\n        DownloadBufferMemory(buffer);\n        DeleteBuffer(buffer_id);\n        return false;\n    };\n    lru_cache.ForEachItemBelow(frame_tick - ticks_to_destroy, clean_up);\n}"

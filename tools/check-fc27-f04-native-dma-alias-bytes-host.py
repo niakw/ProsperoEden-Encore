@@ -40,7 +40,7 @@ assert "width > (~u32{0}) / rows" in coalesce
 alias = section(texture,
     "void TextureCache<P>::SynchronizeAliases(ImageId image_id) {",
     "\ntemplate <class P>\nvoid TextureCache<P>::PrepareImage(")
-selected_texture = (ROOT / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+selected_texture = (ROOT / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 selected_alias = section(selected_texture,
     "void TextureCache<P>::SynchronizeAliases(ImageId image_id) {",
     "\ntemplate <class P>\nvoid TextureCache<P>::PrepareImage(")

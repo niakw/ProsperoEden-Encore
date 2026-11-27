@@ -45,7 +45,7 @@ for entry in components:
 # descriptors deliberately fail closed until a real cache handoff exists.
 rasterizer = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
 compute = (ROOT / "vendor/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()
-qmd = (ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_qmd_compute_environment.h").read_text()
+qmd = (ROOT / "vendor/encore-active/eden/srcpere/shader_recompiler/frontend/ampere/native_qmd_compute_environment.h").read_text()
 assert "DispatchNativeCompute" in rasterizer and "ConfigureNative" in rasterizer
 assert "ComputePipeline::ConfigureNative" in compute
 assert "BufferCache& buffer_cache" in compute

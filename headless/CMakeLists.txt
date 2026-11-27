@@ -2521,19 +2521,27 @@ endif() # EDEN_PS5_OPENGL renderer-specific owners
     # R345: PS5 compiles our versioned, complete GPU worker and queue sources.
     # No source-code string rewrites execute during native configuration.
     if(PS5_NATIVE)
-        set(EDEN_ACTIVE_GPU "${PORT_ROOT}/vendor/encore-active/eden-gpu")
-        set(EDEN_GPU_WORKER_VARIANT "gpu_thread_quiet.cpp")
+        # Canonical override contract: sources/eden is immutable; every local
+        # GPU-worker change lives at the same relative path under encore-active/eden.
+        set(EDEN_ACTIVE_EDEN "${PORT_ROOT}/vendor/encore-active/eden")
+        set(EDEN_GPU_WORKER "${EDEN_ACTIVE_EDEN}/src/video_core/gpu_thread.cpp")
+        set(EDEN_GPU_WORKER_HEADER "${EDEN_ACTIVE_EDEN}/src/video_core/gpu_thread.h")
+        set(EDEN_GPU_QUEUE_HEADER "${EDEN_ACTIVE_EDEN}/src/common/bounded_threadsafe_queue.h")
+        foreach(eden_gpu_owner IN ITEMS
+                "${EDEN_GPU_WORKER}" "${EDEN_GPU_WORKER_HEADER}" "${EDEN_GPU_QUEUE_HEADER}")
+            if(NOT EXISTS "${eden_gpu_owner}")
+                message(FATAL_ERROR "Missing canonical maintained GPU owner: ${eden_gpu_owner}")
+            endif()
+        endforeach()
         file(MAKE_DIRECTORY "${PORT_BUILD_DIR}/include/common" "${PORT_BUILD_DIR}/include/video_core")
-        configure_file("${EDEN_ACTIVE_GPU}/include/common/bounded_threadsafe_queue.h"
+        configure_file("${EDEN_GPU_QUEUE_HEADER}"
             "${PORT_BUILD_DIR}/include/common/bounded_threadsafe_queue.h" COPYONLY)
-        configure_file("${EDEN_ACTIVE_GPU}/include/video_core/gpu_thread.h"
+        configure_file("${EDEN_GPU_WORKER_HEADER}"
             "${PORT_BUILD_DIR}/include/video_core/gpu_thread.h" COPYONLY)
-        configure_file("${EDEN_ACTIVE_GPU}/${EDEN_GPU_WORKER_VARIANT}"
-            "${PORT_BUILD_DIR}/gpu_thread.cpp" COPYONLY)
         list(REMOVE_ITEM video_sources gpu_thread.cpp)
-        list(APPEND video_sources "${PORT_BUILD_DIR}/gpu_thread.cpp")
+        list(APPEND video_sources "${EDEN_GPU_WORKER}")
     else()
-    # PS5 GPU queue is already copied from the complete eden-gpu source above.
+    # PS5 GPU queue/header are staged from the canonical encore-active/eden owner above.
     # Host-specific GPU header is a tracked source, not generated C++.
     set(EDEN_MAINTAINED_HOST_GPU_HEADER
         "${PORT_ROOT}/vendor/encore-active/eden-core/host-gpu/include/video_core/gpu_thread.h")
@@ -2546,7 +2554,7 @@ endif() # EDEN_PS5_OPENGL renderer-specific owners
     endif()
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
 if(PS5_NATIVE)
-    list(FIND video_sources "${PORT_BUILD_DIR}/gpu_thread.cpp" eden_native_worker_selected)
+    list(FIND video_sources "${EDEN_GPU_WORKER}" eden_native_worker_selected)
     list(FIND video_sources "gpu_thread.cpp" eden_pinned_worker_selected)
     if(eden_native_worker_selected LESS 0 OR NOT eden_pinned_worker_selected LESS 0)
         message(FATAL_ERROR "Native GPU worker must be selected exactly from maintained source")

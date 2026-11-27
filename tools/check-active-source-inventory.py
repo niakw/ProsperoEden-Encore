@@ -56,6 +56,7 @@ if shipping_vendor in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca1
         "2adfca5489b3f107847e0a1a9cdc06e497fc656f": "7bc8f75516155e5fc926e9a979c7883c6d034a78",
         "a47b6b20a8e7b7db748a82610a9b08685ba03eeb": "a315cab23dd3ecf664da881de28dc1c0616e1b5f",
         "4b63376eb7057015d70295ecd7df4ce96be80607": "5d6c2eb980d7f3e1cef7070f476c821dbe60cff7",
+            "e41a6930b4215a8e454c124e8fa8145de0c5bf7a": "29fb0e31ce967d9ecd6402d6fa928a8b1dbbde22",
     }[shipping_vendor]
     for relative, digest in {
         "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp":
@@ -2062,7 +2063,7 @@ pair_present = pair_new_owners & set(physical_all)
 # Reuse F07's one fourteen-blob selected GPU receipt without importing
 # and executing that audit. Older vendor pins retain historical replay.
 selected_nov26_gpu_pair = {}
-if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"}:
+if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
     import ast
     f07_ast = ast.parse(
         (root / "tools/check-eden-optimization-coverage.py").read_text())
@@ -2106,7 +2107,8 @@ if shipping_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f3
                                   "334915ab48a2beb33a5eb0639c5f2b8dd554fcae",
                                   "2adfca5489b3f107847e0a1a9cdc06e497fc656f",
                                   "a47b6b20a8e7b7db748a82610a9b08685ba03eeb",
-                                  "4b63376eb7057015d70295ecd7df4ce96be80607"}:
+                                  "4b63376eb7057015d70295ecd7df4ce96be80607",
+                                  "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
             selected_nov26_gpu_pair["eden-core/src/video_core/buffer_cache/buffer_cache.h"] = "30e7c389851a5a0f2b6369c35a313f93a0fc6826"
     assert set(selected_nov26_gpu_pair) == set(pair_receipt["files"])
     print("ENCORE_SELECTED_GPU_PAIR_RECEIPT_LOADED owners=14")

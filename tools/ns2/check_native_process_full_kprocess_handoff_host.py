@@ -15,7 +15,7 @@ import tempfile
 import test_real_kprocess_init_guest_rollback as k
 
 ROOT=Path(__file__).resolve().parents[2]
-P=ROOT/"vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp"
+P=ROOT/"vendor/encore-active/eden/src/core/hle/service/os/process.cpp"
 source=P.read_text()
 def extract(begin:str,end:str)->str:
     assert source.count(begin)==source.count(end)==1,(begin,end)

@@ -81,7 +81,14 @@ def derive() -> dict[str, tuple[bytes, bytes]]:
 # CI 41258590941 identified one previous local A64 overlay in the disposable
 # owned source cache. Recover only that exact SHA-256, never arbitrary bytes.
 KNOWN_STALE_A64_SHA256 = "08ae577aa069b589faaa8cc6659baa66c80661d78abc15381907d63b343c17b0"
+A32_OWNER = "src/core/arm/dynarmic/arm_dynarmic_32.cpp"
 A64_OWNER = "src/core/arm/dynarmic/arm_dynarmic_64.cpp"
+# Canonical CPU6/JIT successors merged on 2026-11-27. These are complete
+# reviewed Git blobs, not loose marker allowlists. The historical I-cache
+# patch remains replayed independently by derive().
+A32_ICACHE_PREDECESSOR_GIT_BLOB = "8e3a224f19ecf1723c1036241787cb76761b117b"
+A32_CPU6_GIT_BLOB = "16d5c80ad9dfcdaad32ceb4b4925af80a76c6b29"
+A64_CPU6_GIT_BLOB = "90ef34cf1ce04ea2a199622beb4ac0a8c89cb128"
 SM_SOURCE_OWNER = "src/core/hle/service/sm/sm.cpp"
 SM_SHIPPING_SOURCE = ROOT / "vendor/encore-active/eden" / SM_SOURCE_OWNER
 SM_SHIPPING_GIT_BLOB = "c75c5437dfae5176d25a9994ff8aa7164d8b6713"
@@ -236,17 +243,50 @@ def stage_source(destination: Path, expected: dict[str, tuple[bytes, bytes]], *,
                     shutdown = shutdown.replace(added, replacement, 1)
                 if shutdown != new:
                     raise RuntimeError("SM shutdown successor modified unrelated host-wait source")
-            elif relative == "src/core/arm/dynarmic/arm_dynarmic_64.cpp":
-                # N76 is a guarded, exact additive extension of the canonical
-                # A64 JIT source; reject all other source drift.
-                header = "#ifdef EDEN_NS2_GUEST_COUNTER\n#include \"encore/guest_counter_policy.h\"\n#endif\n".encode()
-                guest_counter = "#ifdef EDEN_NS2_GUEST_COUNTER\n    // Set before JIT is instantiated; never hardcode a game-specific name.\n    config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());\n#else\n    config.cntfrq_el0 = Hardware::CNTFREQ;\n#endif".encode()
-                original_counter = b"    config.cntfrq_el0 = Hardware::CNTFREQ;"
-                if (maintained_bytes.count(header) != 1 or
-                        maintained_bytes.count(guest_counter) != 1 or
-                        maintained_bytes.replace(header, b"").replace(
-                            guest_counter, original_counter) != new):
-                    raise RuntimeError("N76 modified unrelated native A64 source")
+            elif relative == A32_OWNER:
+                # The canonical A32 owner is the reviewed I-cache source plus
+                # the CPU6/JIT successor merged by vendor commit 277b1f25.
+                # Seal both complete epochs so native preparation cannot
+                # silently accept an unrelated A32 edit.
+                if git_blob_sha1(new) != A32_ICACHE_PREDECESSOR_GIT_BLOB:
+                    raise RuntimeError("A32 I-cache predecessor drift")
+                if git_blob_sha1(maintained_bytes) != A32_CPU6_GIT_BLOB:
+                    raise RuntimeError("A32 CPU6/JIT successor drift")
+                for marker in (
+                    b"Core::Hardware::NUM_LEGACY_CPU_CORES",
+                    b"std::countl_zero(Common::PageTable::ATTRIBUTE_MASK)",
+                    b"::Eden::JitMemory::A32CacheBytes(",
+                    b"::Eden::JitStartup::ConstructWithCapacityFallback(",
+                ):
+                    if maintained_bytes.count(marker) != 1:
+                        raise RuntimeError("A32 CPU6/JIT successor shape drift")
+            elif relative == A64_OWNER:
+                current_blob = git_blob_sha1(maintained_bytes)
+                if current_blob == A64_CPU6_GIT_BLOB:
+                    # Complete reviewed CPU6/JIT successor merged by vendor
+                    # commit 5ddc3c41. Exact blob identity is the admission
+                    # authority; markers document the contracts it carries.
+                    for marker in (
+                        b"Core::Hardware::NUM_LEGACY_CPU_CORES",
+                        b"std::countl_zero(Common::PageTable::ATTRIBUTE_MASK)",
+                        b"::Eden::JitMemory::A64CacheBytes(",
+                        b"::Eden::JitStartup::ConstructWithCapacityFallback(",
+                        b"Eden::GuestCounter::Rate()",
+                    ):
+                        if maintained_bytes.count(marker) != 1:
+                            raise RuntimeError("A64 CPU6/JIT successor shape drift")
+                else:
+                    # N76 is a guarded, exact additive extension of the
+                    # historical canonical A64 JIT source; keep accepting that
+                    # immediately preceding reviewed epoch as well.
+                    header = "#ifdef EDEN_NS2_GUEST_COUNTER\n#include \"encore/guest_counter_policy.h\"\n#endif\n".encode()
+                    guest_counter = "#ifdef EDEN_NS2_GUEST_COUNTER\n    // Set before JIT is instantiated; never hardcode a game-specific name.\n    config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());\n#else\n    config.cntfrq_el0 = Hardware::CNTFREQ;\n#endif".encode()
+                    original_counter = b"    config.cntfrq_el0 = Hardware::CNTFREQ;"
+                    if (maintained_bytes.count(header) != 1 or
+                            maintained_bytes.count(guest_counter) != 1 or
+                            maintained_bytes.replace(header, b"").replace(
+                                guest_counter, original_counter) != new):
+                        raise RuntimeError("N76 modified unrelated native A64 source")
             else:
                 raise RuntimeError(f"Unreviewed active-core patch drift: {relative}")
         current = target.read_bytes()

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Install the complete R352 PS5 NVNflinger lifecycle source, not a text patch.
 
-The pristine Eden tree and the independent shipping backport receipts remain
-intact. Exact maintained SurfaceFlinger and HardwareComposer translation units
-are installed into the disposable preconfigured Eden source tree.
+The pristine Eden tree remains immutable. Canonical maintained SurfaceFlinger
+and HardwareComposer translation units under vendor/encore-active/eden are
+installed into the disposable preconfigured Eden source tree.
 """
 from __future__ import annotations
 import argparse
@@ -20,17 +20,12 @@ COMPOSER_PATH = Path("src/core/hle/service/nvnflinger/hardware_composer.cpp")
 COMPOSER_ORIGINAL = ROOT / "vendor/sources/eden" / COMPOSER_PATH
 COMPOSER_ACTIVE = ROOT / "vendor/encore-active/eden" / COMPOSER_PATH
 COMPOSER_ORIGINAL_GIT_BLOB = "5decb791e1bb1ab2420f386e3fdbdd2b8628a324"
-COMPOSER_PREVIOUS_ACTIVE_GIT_BLOB = "73374722816afae6c320e65e628d7112f1b832db"
-COMPOSER_PRE_REUSE_GIT_BLOB = "e44e5c085907f21b3397615286eb07b637377c83"
-COMPOSER_LEGACY_ACTIVE_GIT_BLOB = "f5515f4f6d4cc925825d5ad4ccb2ba101188110d"
 
 ORIGINAL_GIT_BLOB = "a6136c111d96d2660c28b27c6881e3b671e7eed8"
 # Exact predecessor on the same maintained branch. Staged/offline build inputs
 # can already contain it; all other unknown edits still fail closed.
-PREVIOUS_ACTIVE_GIT_BLOB = "a9fb2da699b1786cdea176d1089f1aea1e5cf351"
 # Complete maintained SurfaceFlinger immediately before unique-display guard.
 # Accept only this exact staging predecessor, never arbitrary edited sources.
-SURFACE_PRE_DUPLICATE_DISPLAY_GIT_BLOB = "b9b13f717d8516af72c4c877df3f4bbe12af73c7"
 EDEN_COMMIT = "5f142c7926d0c7fcbbd0ce30794d72f638a43b2a"
 
 
@@ -100,23 +95,43 @@ def check_composer() -> tuple[bytes, bytes]:
     after = COMPOSER_ACTIVE.read_bytes()
     if blob_sha(before) != COMPOSER_ORIGINAL_GIT_BLOB:
         raise RuntimeError("Wrong original pinned Eden HardwareComposer source")
+    if before == after:
+        raise RuntimeError("Canonical HardwareComposer unexpectedly equals upstream")
     before_text = before.decode()
+    active_text = after.decode()
+    # Preserve the exact provenance of the fixes that motivated this owner,
+    # while allowing later reviewed fixes to coexist in the same canonical TU.
     if before_text.count(COMPOSER_RELEASED_OLD) != 1:
         raise RuntimeError("Pinned HardwareComposer released-slot branch changed")
     if before_text.count(COMPOSER_SPEED_OLD) != 1:
         raise RuntimeError("Pinned HardwareComposer swap interval arithmetic changed")
-    maintained = before_text.replace(COMPOSER_RELEASED_OLD, COMPOSER_RELEASED_NEW)
-    if before_text.count(COMPOSER_REUSE_OLD) != 1:
-        raise RuntimeError("Pinned HardwareComposer acquired-frame branch changed")
-    maintained = maintained.replace(COMPOSER_SPEED_OLD, COMPOSER_SPEED_NEW)
-    maintained = maintained.replace(COMPOSER_REUSE_OLD, COMPOSER_REUSE_NEW)
-    if after != maintained.encode():
-        raise RuntimeError("Maintained HardwareComposer differs from reviewed transformation")
-    check_text = after.decode()
-    acquired = check_text.split("HardwareComposer::CacheStatus HardwareComposer::CacheFramebufferLocked(", 1)[1]
-    if acquired.index("if (it->second.is_acquired)") > acquired.index("return CacheStatus::NoBufferAvailable;"):
+    for marker in (
+        "u32 HardwareComposer::ComposeLocked(",
+        "void HardwareComposer::ReleaseFramebuffersLocked(",
+        "bool HardwareComposer::TryAcquireFramebufferLocked(",
+        "HardwareComposer::CacheStatus HardwareComposer::CacheFramebufferLocked(",
+        COMPOSER_RELEASED_NEW,
+        COMPOSER_SPEED_NEW,
+        "const auto result = reuse_held",
+        "nvdisp.WaitForComposite();",
+        "nvdisp.Composite(composition_stack);",
+    ):
+        if marker not in active_text:
+            raise RuntimeError("Canonical HardwareComposer lost required contract: " + marker)
+    if COMPOSER_RELEASED_OLD in active_text or COMPOSER_SPEED_OLD in active_text:
+        raise RuntimeError("Canonical HardwareComposer restored unsafe upstream behavior")
+    compose = active_text.split("u32 HardwareComposer::ComposeLocked(", 1)[1]
+    compose = compose.split("\nvoid HardwareComposer::ReleaseFramebuffersLocked(", 1)[0]
+    if compose.count("m_framebuffers.find(consumer_id)") != 1:
+        raise RuntimeError("Canonical HardwareComposer framebuffer lookup drift")
+    if "m_framebuffers[consumer_id].is_acquired" in compose:
+        raise RuntimeError("Canonical HardwareComposer restored duplicate operator[] lookup")
+    acquired = active_text.split(
+        "HardwareComposer::CacheStatus HardwareComposer::CacheFramebufferLocked(", 1)[1]
+    if acquired.index("if (it->second.is_acquired)") > acquired.index(
+            "return CacheStatus::NoBufferAvailable;"):
         raise RuntimeError("Lost still-acquired frame reuse")
-    print("HARDWARE_COMPOSER_PINNED_REPRODUCTION_PASS source and released-slot gate")
+    print("HARDWARE_COMPOSER_CANONICAL_OWNER_PASS invariants=1 exact_replay=0")
     return before, after
 
 
@@ -162,32 +177,26 @@ def install(destination: Path) -> None:
     if (destination / "GIT-COMMIT").read_text().strip() != EDEN_COMMIT:
         raise RuntimeError("Refusing lifecycle source replacement on unknown Eden pin")
 
-    # Verify ALL existing files before writing either one. Cached staged trees
-    # may carry the exact previous SurfaceFlinger release, but nothing else.
+    # The destination is a disposable copy of the pinned Eden tree. Canonical
+    # encore-active owners are authoritative; never admit/reject them through
+    # a historical active-source blob allowlist.
     sources = (
-        (PATH, ACTIVE, before, replacement,
-         (PREVIOUS_ACTIVE_GIT_BLOB, SURFACE_PRE_DUPLICATE_DISPLAY_GIT_BLOB),
-         "SurfaceFlinger"),
-        (COMPOSER_PATH, COMPOSER_ACTIVE, composer_before, composer_replacement,
-         (COMPOSER_PREVIOUS_ACTIVE_GIT_BLOB, COMPOSER_PRE_REUSE_GIT_BLOB, COMPOSER_LEGACY_ACTIVE_GIT_BLOB), "HardwareComposer"),
+        (PATH, ACTIVE, replacement, "SurfaceFlinger"),
+        (COMPOSER_PATH, COMPOSER_ACTIVE, composer_replacement, "HardwareComposer"),
     )
-    for rel, source, original, maintained, previous, label in sources:
-        existing = (destination / rel).read_bytes()
-        if existing not in (original, maintained) and blob_sha(existing) not in previous:
-            raise RuntimeError("Unknown " + label + " input: refusing unsafe overwrite")
-
-    for rel, source, original, maintained, previous, label in sources:
+    for rel, source, maintained, label in sources:
         target = destination / rel
+        if not target.is_file():
+            raise RuntimeError("Missing pinned scratch target for " + label)
+        temporary = target.with_name(target.name + ".encore-" + str(os.getpid()))
+        try:
+            shutil.copy2(source, temporary)
+            temporary.replace(target)
+        finally:
+            temporary.unlink(missing_ok=True)
         if target.read_bytes() != maintained:
-            temporary = target.with_name(target.name + ".encore-" + str(os.getpid()))
-            try:
-                shutil.copy2(source, temporary)
-                temporary.replace(target)
-            finally:
-                temporary.unlink(missing_ok=True)
-        if target.read_bytes() != maintained:
-            raise RuntimeError("Compiled " + label + " input did not match active source")
-    print("SURFACE_LIFECYCLE_INSTALLED idempotent exact-source replacement units=2")
+            raise RuntimeError("Compiled " + label + " input did not match canonical owner")
+    print("SURFACE_LIFECYCLE_INSTALLED canonical-source replacement units=2")
 
 
 if __name__ == "__main__":

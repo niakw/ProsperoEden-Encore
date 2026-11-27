@@ -407,8 +407,12 @@ for kind, name in (("dma", "dma_pusher"), ("puller", "engines/puller")):
             ):
                 assert marker in actual_owner, marker
         elif path == "dma_pusher.cpp" and git_blob(actual_owner) in {"5cf42158c7cc4462bc9a12a18b482cbd6de20bf8", "861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c", "76eb30a7e58f17852069a05e2c12cd3c6521967f"}:
-            if git_blob(actual_owner) in {"861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c", "76eb30a7e58f17852069a05e2c12cd3c6521967f"}:
+            if git_blob(actual_owner) == "861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c":
                 assert "rasterizer->ReleaseFences(true);" in actual_owner
+            if git_blob(actual_owner) == "76eb30a7e58f17852069a05e2c12cd3c6521967f":
+                # The reviewed shutdown successor replaced the blocking
+                # ReleaseFences(true) call with a cancellable strict fence.
+                assert "rasterizer->ReleaseFences(true);" not in actual_owner
             if git_blob(actual_owner) == "76eb30a7e58f17852069a05e2c12cd3c6521967f":
                 assert "std::make_shared<NativeInterlistFenceState>()" in actual_owner
                 assert "SignalNativeFence([state]()" in actual_owner

@@ -146,38 +146,38 @@ jobs:
           # Compile the PS5-selected appletOE, GameChat and GSV owners.
           # These are runtime C++ units, not extracted or generated mocks.
           for source in \
-            vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp \
-            vendor/encore-active/ns2-runtime/gamechat/core/hle/service/friend/friend.cpp \
-            vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp \
-            vendor/encore-active/ns2-runtime/nx/core/loader/nx.cpp \
-            vendor/encore-active/ns2-runtime/nx/core/file_sys/nx_content.cpp \
+            vendor/encore-active/eden/src/core/hle/service/am/service/application_proxy_service.cpp \
+            vendor/encore-active/eden/src/core/hle/service/friend/friend.cpp \
+            vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp \
+            vendor/encore-active/eden/src/core/loader/nx.cpp \
+            vendor/encore-active/eden/src/core/file_sys/nx_content.cpp \
             vendor/encore-active/eden/src/core/loader/loader.cpp \
-            vendor/encore-active/ns2-runtime/hle/core/hle/service/acc/acc.cpp \
-            vendor/encore-active/ns2-runtime/hle/core/hle/service/caps/caps_u.cpp \
-            vendor/encore-active/ns2-runtime/hle/core/hle/service/caps/caps_su.cpp \
-            vendor/encore-active/ns2-runtime/hle/core/hle/service/set/settings_server.cpp \
-            vendor/encore-active/ns2-runtime/hle/core/hle/service/mii/mii.cpp \
-            vendor/encore-active/ns2-runtime/hle/core/hle/service/lm/lm.cpp \
-            vendor/encore-active/ns2-runtime/hle/core/hle/service/audio/audio_device.cpp \
-            vendor/encore-active/ns2-runtime/hle/core/hle/service/audio/audio_renderer_manager.cpp \
-            vendor/encore-active/ns2-runtime/hle/core/hle/service/nifm/nifm.cpp; do
+            vendor/encore-active/eden/src/core/hle/service/acc/acc.cpp \
+            vendor/encore-active/eden/src/core/hle/service/caps/caps_u.cpp \
+            vendor/encore-active/eden/src/core/hle/service/caps/caps_su.cpp \
+            vendor/encore-active/eden/src/core/hle/service/set/settings_server.cpp \
+            vendor/encore-active/eden/src/core/hle/service/mii/mii.cpp \
+            vendor/encore-active/eden/src/core/hle/service/lm/lm.cpp \
+            vendor/encore-active/eden/src/core/hle/service/audio/audio_device.cpp \
+            vendor/encore-active/eden/src/core/hle/service/audio/audio_renderer_manager.cpp \
+            vendor/encore-active/eden/src/core/hle/service/nifm/nifm.cpp; do
             clang++-18 -std=c++20 -fsyntax-only -Wno-unused-parameter \
               -DPS5_NATIVE=1 \
               -Ivendor/sources/fmt/include \
               -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden/src \
-              -Ivendor/encore-active/ns2-runtime/gamechat \
-              -Ivendor/encore-active/ns2-runtime/graphics_supervisor \
-              -Ivendor/encore-active/ns2-runtime/video_decoder \
-              -Ivendor/encore-active/ns2-runtime/gpu_session \
-              -Ivendor/encore-active/ns2-runtime/nvdrv_as \
-              -Ivendor/encore-active/ns2-runtime/hle \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/src_as \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/encore-active/eden/include \
               -Ivendor/encore-active/eden/src \
-              -Ivendor/encore-active/ns2-runtime/nx \
-              -Ivendor/encore-active/ns2-runtime/nx/nxformat \
+              -Ivendor/encore-active/eden/src \
+              -Ivendor/encore-active/eden/externals/nxformat \
               -Ivendor/sources/eden/externals/stb \
-              -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
+              -Ivendor/encore-active/eden/src \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \
               "${source}"

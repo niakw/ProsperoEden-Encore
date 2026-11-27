@@ -18,7 +18,7 @@ import sys
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-rel = "vendor/encore-active/eden-threading/src/core/hle/kernel"
+rel = "vendor/encore-active/eden/src/core/hle/kernel"
 directory = root / rel
 expected_hashes = {
     "k_thread.h": "git:89bbcbd2b0d3627210a980496d00f30a45c7d944",
@@ -91,7 +91,7 @@ assert "m_context_guard.try_acquire()" not in retry + unload
 assert "DEBUG_ASSERT(!can_lock)" not in retry + unload
 
 cmake = (root / "headless/CMakeLists.txt").read_text()
-module = (root / "vendor/encore-active/eden-threading/native-hle-overrides.cmake").read_text()
+module = (root / "vendor/encore-active/eden/native-hle-overrides.cmake").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 native = (root / ".github/workflows/build-040-zbic.yml").read_text()
 

@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-source = (ROOT / "vendor/encore-active/eden-threading/src/core/hle/kernel/k_scheduler.cpp").read_text()
+source = (ROOT / "vendor/encore-active/eden/src/core/hle/kernel/k_scheduler.cpp").read_text()
 
 
 def method(begin, end):

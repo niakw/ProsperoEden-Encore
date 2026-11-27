@@ -17,7 +17,7 @@ native=(root/"vendor/encore-active/eden/src/core/hle/kernel/k_synchronization_ob
 cmake=(root/"headless/CMakeLists.txt").read_text()
 workflow=(root/".github/workflows/encore-core-preflight.yml").read_text()
 assert "python3 -B tools/verify/hle/check-native-hle-sync-unlink-host.py" in workflow
-module = (root/"vendor/encore-active/eden-threading/native-hle-overrides.cmake").read_text()
+module = (root/"vendor/encore-active/eden/native-hle-overrides.cmake").read_text()
 assert "native-hle-overrides.cmake" in cmake
 assert "eden/src" in module and "k_synchronization_object.h" in module
 

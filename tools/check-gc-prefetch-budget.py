@@ -56,7 +56,7 @@ for stop in (10, 20, 40):
 print("R442: prefetch/GC scan budget parity source + behavioral model PASS")
 
 # The native NS1/NS2 CMake overlay has its own GC implementation.
-selected = (root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+selected = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 begin = selected.index("void TextureCache<P>::RunGarbageCollector()")
 end = selected.index("\ntemplate <class P>", begin)
 active_gc = selected[begin:end]

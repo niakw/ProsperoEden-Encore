@@ -33,7 +33,7 @@
     "pre_kernel_generation": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/ns2-runtime/process/core/core.cpp": [
+        "vendor/encore-active/eden/src/core/core.cpp": [
           "EDEN_NS2_PREKERNEL_NPDM",
           "metadata.IsSwitch2()"
         ]
@@ -42,7 +42,7 @@
     "alias_memory_budget": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp": [
+        "vendor/encore-active/eden/src/core/hle/kernel/k_process.cpp": [
           "if (metadata.IsSwitch2())",
           "GetHeapRegionSize() + m_page_table.GetAliasRegionSize()"
         ]
@@ -55,7 +55,7 @@
           "set(EDEN_SHARED_NS2_A64_V81_V85 ON)",
           "target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_V81_V85=1)"
         ],
-        "vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp": [
+        "vendor/encore-active/eden/src/dynarmic/src/dynarmic/frontend/A64/translate/a64_translate.cpp": [
           "#if defined(EDEN_NS2_A64_V81_V85)",
           "load_store_atomic.cpp",
           "pointer_authentication.cpp",
@@ -70,11 +70,11 @@
     "ns2_alias_64g_vamm32": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/k_address_space_info.cpp": [
+        "vendor/encore-active/eden/src/core/hle/kernel/k_address_space_info.cpp": [
           ".size = 64_GiB           , .type = KAddressSpaceInfo::Type::Alias",
           ".size = 16_GiB"
         ],
-        "vendor/encore-active/eden-backports/src/core/hle/kernel/svc/svc_info.cpp": [
+        "vendor/encore-active/eden/src/core/hle/kernel/svc/svc_info.cpp": [
           "const u64 half = page_table.GetAliasRegionSize() / 2;",
           "GetInteger(page_table.GetAliasRegionStart()) + half"
         ],
@@ -109,7 +109,7 @@
           "set_property(SOURCE \"${EDEN_NS2_KPROCESS_SOURCE}\"",
           "TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS \"PS5_NATIVE=1\""
         ],
-        "vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp": [
+        "vendor/encore-active/eden/src/core/hle/kernel/k_process.cpp": [
           "EDEN_MAIN_STACK_MAP",
           "EDEN_MAIN_THREAD_CONTEXT"
         ]
@@ -118,7 +118,7 @@
     "cpu6": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/ns2-runtime/cpu6/core/hardware_properties.h": [
+        "vendor/encore-active/eden/src/core/hardware_properties.h": [
           "NUM_CPU_CORES = 6",
           "NUM_LEGACY_CPU_CORES = 4"
         ]
@@ -127,7 +127,7 @@
     "gmmu_native_4k": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": [
+        "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": [
           "MapNative4K",
           "UnmapNative4K"
         ]
@@ -136,7 +136,7 @@
     "ampere_engine_classes": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_context.h": [
+        "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/native_gpu_context.h": [
           "case 0xc797:",
           "case 0xc7c0:",
           "case 0xc7b5:",
@@ -147,11 +147,11 @@
     "qmd3_compute_dispatch": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": [
+        "vendor/encore-active/eden/src/video_core/engines/puller.cpp": [
           "ProcessNativeComputeQmdAt",
           "DispatchNativeCompute"
         ],
-        "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/native_qmd.h": [
+        "vendor/encore-active/eden/src/video_core/native_qmd.h": [
           "class NativeQmdScheduler"
         ]
       }
@@ -159,7 +159,7 @@
     "ampere_storage_32": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/ns2-runtime/shader_resource/include/video_core/buffer_cache/buffer_cache_base.h": [
+        "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache_base.h": [
           "NUM_STORAGE_BUFFERS = 32"
         ],
         "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h": [
@@ -170,11 +170,11 @@
     "texture_49bit_mapping": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp": [
+        "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp": [
           "NativeQmdTextureMetadata",
           "49-bit GMMU"
         ],
-        "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h": [
+        "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h": [
           "49-bit GMMU"
         ]
       }
@@ -185,7 +185,7 @@
         "headless/CMakeLists.txt": [
           "EDEN_NS2_ASTC_CACHE_BRIDGE=1"
         ],
-        "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h": [
+        "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h": [
           "EDEN_NS2_ASTC_CACHE_BRIDGE"
         ]
       }
@@ -193,7 +193,7 @@
     "disk_pipeline_prewarm": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp": [
+        "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp": [
           "kStartupPrewarmPipelines = 32",
           "EDEN_PS5_SHADER_PREWARM"
         ]
@@ -211,14 +211,14 @@
     "isbe_output_stage_read": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_stage_buffer.h": [
+        "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/native_stage_buffer.h": [
           "const bool output_read = !write && output && is_32 && !skew;",
           "(write != output && !output_read)"
         ],
-        "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/ir/opcodes.inc": [
+        "vendor/encore-active/eden/src/shader_recompiler/frontend/ir/opcodes.inc": [
           "OPCODE(IsbeReadOutput"
         ],
-        "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_mesh.cpp": [
+        "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_mesh.cpp": [
           "Id EmitIsbeReadOutput(EmitContext& ctx, Id address)"
         ]
       },
@@ -227,7 +227,7 @@
     "imad_negated_register_addend": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": [
+        "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h": [
           "Lichii 6df7441 / #2083",
           "(insn.words[2] & ~0xaffU) != 0x078e0000",
           "if (insn.Bits(75, 1) && addend != 255)"
@@ -241,7 +241,7 @@
     "hsetp2_cbuf": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": [
+        "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h": [
           "Lichii #1511 / 19be851d",
           "case 0x234: case 0x634:",
           "case 0x434: { // HSETP2.GEU.AND"
@@ -255,7 +255,7 @@
     "duskbloods_tld4_negated_cbuf_imad": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": [
+        "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h": [
           "Lichii #851 / cdeb7ace",
           "case 0x364:",
           "const bool negated_cbuf_addend = opcode == 0x624 && insn.Bits(63, 1);"
@@ -269,7 +269,7 @@
     "dynamic_texture_found_bit_limit": {
       "implemented": true,
       "owners": {
-        "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/texture_pass.cpp": [
+        "vendor/encore-active/eden/src/shader_recompiler/ir_opt/texture_pass.cpp": [
           "Upstream Lichii 5e33a765 / #1914",
           "DynamicDescriptorIndexLimit",
           "return is_bit_index(index) ? 32U : ~0U;"

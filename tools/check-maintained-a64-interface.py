@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-owner = root / "vendor/encore-active/eden/src/dynarmic/backend/x64"
+owner = root / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64"
 standard = (owner / "a64_interface_standard.cpp").read_text()
 shared = (owner / "a64_interface_shared.cpp").read_text()
 cmake = (root / "headless/CMakeLists.txt").read_text()

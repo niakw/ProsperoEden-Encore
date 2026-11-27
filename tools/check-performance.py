@@ -84,7 +84,7 @@ for bits in (32, 64):
                 assert 'if (!CheckMemoryAccess(vaddr' not in wrapper
 
 jit = (generated / 'a64_interface.cpp').read_text()
-interface_root = root / 'vendor/encore-active/eden/src/dynarmic/backend/x64'
+interface_root = root / 'vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64'
 selected = 'a64_interface_standard.cpp'
 assert jit == (interface_root / selected).read_text(), 'configured A64 owner differs'
 # Complete units now contain guarded batch/DEV code even when disabled.

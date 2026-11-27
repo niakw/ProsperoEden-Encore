@@ -52,14 +52,14 @@ for symbol in ('EDEN_SHARED_NS2_EXEFS','EDEN_SHARED_NS2_GUEST_COUNTER',
                'EDEN_NS2_NATIVE_GPU_PULLER','EDEN_NS2_RASTERIZER_INTERFACE'):
     assert symbol in CMAKE,('missing unified source owner',symbol)
 for required in (
-  'vendor/encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp',
-  'vendor/encore-active/ns2-runtime/metadata/core/loader/loader.cpp',
-  'vendor/encore-active/ns2-runtime/metadata/core/loader/nso.cpp',
-  'vendor/encore-active/ns2-runtime/cpu6/core/hardware_properties.h',
-  'vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
-  'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp',
-  'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp',
-  'vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h',
+  'vendor/encore-active/eden/src/core/file_sys/program_metadata.cpp',
+  'vendor/encore-active/eden/src/core/loader/loader.cpp',
+  'vendor/encore-active/eden/src/core/loader/nso.cpp',
+  'vendor/encore-active/eden/src/core/hardware_properties.h',
+  'vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
+  'vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp',
+  'vendor/encore-active/eden/src/video_core/engines/puller.cpp',
+  'vendor/encore-active/eden/src/video_core/rasterizer_interface.h',
   'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp',
   'headless/jit_memory_policy.h',
 ):
@@ -67,14 +67,14 @@ for required in (
 assert not any((ROOT/'vendor/encore-active/ns2-experimental').rglob('*.*'))
 assert 'EDEN_NS2_NATIVE_GPU_DISPATCH' not in CMAKE
 assert 'EDEN_NS2_NATIVE_VULKAN' not in CMAKE
-rasterizer=(ROOT/'vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h').read_text()
+rasterizer=(ROOT/'vendor/encore-active/eden/src/video_core/rasterizer_interface.h').read_text()
 assert 'virtual bool DispatchNativeCompute(const Tegra::NativeComputeLaunch&)' in rasterizer
 assert '#ifdef PS5_NATIVE' in rasterizer
 assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in rasterizer
 for producer in (
-    'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp',
+    'vendor/encore-active/eden/src/video_core/engines/puller.cpp',
     'vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp',
-    'vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
+    'vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
 ):
     owner=(ROOT/producer).read_text()
     assert '#ifdef PS5_NATIVE' in owner

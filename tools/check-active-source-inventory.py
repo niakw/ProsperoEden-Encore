@@ -951,7 +951,7 @@ static_assert(NUM_GRAPHICS_UNIFORM_BUFFERS <= 32, "fast bitmask must fit u32");"
 if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
     for relative, blob in {
         "eden-core/overrides/core/device_memory_manager.inc":
-            ("8acbdfe9ac970d24fecd334ca7b943f6bcd958f4" if shipping_vendor in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"} else "daf493ce6e863397ec44bfae467c4f7533570477"),
+            ("8acbdfe9ac970d24fecd334ca7b943f6bcd958f4" if shipping_vendor in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "daf493ce6e863397ec44bfae467c4f7533570477"),
         "eden-vulkan/vulkan_rasterizer.cpp":
             ("71d097b9a83028dfad9370792c905bb3bfccfd5a" if fc27_p1_vendor else
              "f23ad861761d53b59b8c83ae6003c089ae688060"
@@ -989,7 +989,8 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
                 ("a14b36725db0aa5caf9f1193abd51bd509d4ecc2"
                  if boundary_vendor in {"2adfca5489b3f107847e0a1a9cdc06e497fc656f",
                                         "a47b6b20a8e7b7db748a82610a9b08685ba03eeb",
-                                        "4b63376eb7057015d70295ecd7df4ce96be80607"}
+                                        "4b63376eb7057015d70295ecd7df4ce96be80607",
+                                        "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}
                  else "09ae2494b2b6f620a25ab549c06c69045a9fb73d"),
         }.items():
             raw = (active / relative).read_bytes()

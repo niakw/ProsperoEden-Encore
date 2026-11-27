@@ -400,27 +400,40 @@ def reverse_collected_batch_lock_successor(source):
 # the exact shipping successor and its coupled page-untrack owners, then
 # reverse ONLY the rasterizer hunk on this in-memory audit copy.
 if m07_source_blob(original_m07) == "6f3378f1bb611c74ecfe1f5cd37283137462012a":
-    vendor_pin = subprocess.check_output(
-        ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
-    ).strip()
-    assert vendor_pin == "9d8b9c280a9907a9881abcc974a1fde248d73fec"
-    assert subprocess.check_output(
-        ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "8f6e3f968a67652ae2f7036f07c295604b0f17fc"
-    for relative, expected in {
-        "encore-active/eden-vulkan/vulkan_rasterizer.cpp":
-            "6f3378f1bb611c74ecfe1f5cd37283137462012a",
-        "encore-active/eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h":
-            "9cd73e0e8021ba82fb1ba6ae09f5fdd6976897bd",
-        "encore-active/eden-core/overrides/core/device_memory_manager.h":
-            "54f2a710d33487a0d89babe9117be0193ebc2cf9",
-        "encore-active/eden-core/overrides/core/device_memory_manager.inc":
-            "9283bd636ce0b1cae33b4e012c7de59c4220c261",
-    }.items():
-        assert subprocess.check_output(
-            ["git", "-C", str(root/"vendor"), "hash-object", relative],
-            text=True,
-        ).strip() == expected, ("FC27 #1518 owner drift", relative)
+    # Current source admission is structural, not revision-based. The historical
+    # reverse oracle below may still use immutable source receipts, but no
+    # vendor commit/tree/blob hash decides whether today's owners are valid.
+    subprocess.check_call(
+        ["python3", "-B", "tools/check-source-tree-layout.py"],
+        cwd=root / "vendor",
+    )
+    rasterizer_owner = root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp"
+    word_owner = root / "vendor/encore-active/eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h"
+    device_h = root / "vendor/encore-active/eden-core/overrides/core/device_memory_manager.h"
+    device_inc = root / "vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc"
+    for owner in (rasterizer_owner, word_owner, device_h, device_inc):
+        assert owner.is_file(), owner
+    rasterizer_text = rasterizer_owner.read_text()
+    word_text = word_owner.read_text()
+    device_h_text = device_h.read_text()
+    device_inc_text = device_inc.read_text()
+    for marker in (
+        "Lichii #1518",
+        "VideoCommon::t_deferred_page_caching",
+        "device_memory.BeginDeferredCachedUpdates()",
+        "deferred.ApplyAll()",
+        "device_memory.EndDeferredCachedUpdates()",
+    ):
+        assert marker in rasterizer_text, marker
+    for marker in (
+        "class DeferredPageCaching",
+        "void ApplyAll()",
+        "inline thread_local DeferredPageCaching* t_deferred_page_caching",
+    ):
+        assert marker in word_text, marker
+    assert "void BeginDeferredCachedUpdates() noexcept" in device_h_text
+    assert "void EndDeferredCachedUpdates() noexcept" in device_h_text
+    assert "deferred_cached_updates" in device_inc_text
     current_page_untrack = "bool RasterizerVulkan::OnCPUWrite(DAddr addr, u64 size) {\n    ::Eden::Performance::BatchedGuestWriteTimer guest_write_timer;\n    const bool sample_guest_write = ::Eden::Performance::ShouldSampleGuestWrite();\n    DEBUG_ASSERT(addr != 0 || size != 0);\n    // Buffer and texture page evidence independently guards their mutexes.\n    // Shader invalidation always runs, even if neither cache ever owned a page.\n    if (!::Eden::BufferPages::NeverRegistered(addr, size)) {\n        // Lichii #1518, adapted to Encore's single GPU worker: changing host\n        // page protection can take microseconds and must not happen while the\n        // guest CPU owns buffer_cache.mutex. Only non-GPU-owner threads defer\n        // UNTRACK (-1) updates; tracking (+1) remains immediate. The device\n        // memory epoch keeps Unmap from recycling a backing before those\n        // deferred changes have landed.\n        static thread_local VideoCommon::DeferredPageCaching deferred;\n        const bool defer =\n            VideoCommon::t_deferred_page_caching == nullptr &&\n            !VideoCommon::GPUThread::IsWorkerThread();\n        bool gpu_modified = false;\n        bool apply_deferred = false;\n        {\n            ::Eden::Performance::CachePhaseTimer buffer_wait{\n                ::Eden::Performance::CachePhase::GuestWriteBufferWait,\n                sample_guest_write};\n            ::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);\n            buffer_wait.Stop();\n            std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};\n            ::Eden::Performance::CachePhaseTimer buffer_work{\n                ::Eden::Performance::CachePhase::GuestWriteBufferWork,\n                sample_guest_write};\n            if (defer) {\n                VideoCommon::t_deferred_page_caching = &deferred;\n            }\n            gpu_modified = buffer_cache.OnCPUWrite(addr, size);\n            if (!gpu_modified) {\n                (void)::Eden::BufferWriteAhead::MarkFollowingPages(\n                    static_cast<std::uint64_t>(addr),\n                    static_cast<std::uint64_t>(size),\n                    ::Eden::Performance::cpu_write_ahead.load(\n                        std::memory_order_relaxed),\n                    [&](std::uint64_t page, std::uint64_t span) {\n                        return buffer_cache.IsRegionRegistered(\n                            static_cast<DAddr>(page), span);\n                    },\n                    [&](std::uint64_t page, std::uint64_t span) {\n                        return buffer_cache.OnCPUWrite(\n                            static_cast<DAddr>(page), span);\n                    });\n            }\n            if (defer) {\n                VideoCommon::t_deferred_page_caching = nullptr;\n                if (!deferred.Empty()) {\n                    device_memory.BeginDeferredCachedUpdates();\n                    apply_deferred = true;\n                }\n            }\n        }\n        if (apply_deferred) {\n            deferred.ApplyAll();\n            device_memory.EndDeferredCachedUpdates();\n        }\n        if (gpu_modified) {\n            return true;\n        }\n    }\n    // ImagePages is monotonically published before texture slot insertion.\n    // Only never-held small ranges may skip the texture-cache mutex; unknown\n    // and previously registered pages retain the full invalidation path.\n    if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n        ::Eden::Performance::CachePhaseTimer texture_wait{\n            ::Eden::Performance::CachePhase::GuestWriteTextureWait, sample_guest_write};\n        ::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);\n        texture_wait.Stop();\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        ::Eden::Performance::CachePhaseTimer texture_work{\n            ::Eden::Performance::CachePhase::GuestWriteTextureWork, sample_guest_write};\n        texture_cache.WriteMemory(addr, size);\n    }\n    ::Eden::Performance::CachePhaseTimer shader_invalidate{\n        ::Eden::Performance::CachePhase::GuestWriteShaderInvalidate, sample_guest_write};\n    pipeline_cache.InvalidateRegion(addr, size);\n    return false;\n}\n"
     predecessor_page_untrack = "bool RasterizerVulkan::OnCPUWrite(DAddr addr, u64 size) {\n    ::Eden::Performance::BatchedGuestWriteTimer guest_write_timer;\n    const bool sample_guest_write = ::Eden::Performance::ShouldSampleGuestWrite();\n    DEBUG_ASSERT(addr != 0 || size != 0);\n    // Buffer and texture page evidence independently guards their mutexes.\n    // Shader invalidation always runs, even if neither cache ever owned a page.\n    if (!::Eden::BufferPages::NeverRegistered(addr, size)) {\n        ::Eden::Performance::CachePhaseTimer buffer_wait{\n            ::Eden::Performance::CachePhase::GuestWriteBufferWait, sample_guest_write};\n        ::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);\n        buffer_wait.Stop();\n        std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};\n        ::Eden::Performance::CachePhaseTimer buffer_work{\n            ::Eden::Performance::CachePhase::GuestWriteBufferWork, sample_guest_write};\n        if (buffer_cache.OnCPUWrite(addr, size)) {\n            return true;\n        }\n        (void)::Eden::BufferWriteAhead::MarkFollowingPages(\n            static_cast<std::uint64_t>(addr), static_cast<std::uint64_t>(size),\n            ::Eden::Performance::cpu_write_ahead.load(std::memory_order_relaxed),\n            [&](std::uint64_t page, std::uint64_t span) {\n                return buffer_cache.IsRegionRegistered(static_cast<DAddr>(page), span);\n            },\n            [&](std::uint64_t page, std::uint64_t span) {\n                return buffer_cache.OnCPUWrite(static_cast<DAddr>(page), span);\n            });\n    }\n    // ImagePages is monotonically published before texture slot insertion.\n    // Only never-held small ranges may skip the texture-cache mutex; unknown\n    // and previously registered pages retain the full invalidation path.\n    if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n        ::Eden::Performance::CachePhaseTimer texture_wait{\n            ::Eden::Performance::CachePhase::GuestWriteTextureWait, sample_guest_write};\n        ::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);\n        texture_wait.Stop();\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        ::Eden::Performance::CachePhaseTimer texture_work{\n            ::Eden::Performance::CachePhase::GuestWriteTextureWork, sample_guest_write};\n        texture_cache.WriteMemory(addr, size);\n    }\n    ::Eden::Performance::CachePhaseTimer shader_invalidate{\n        ::Eden::Performance::CachePhase::GuestWriteShaderInvalidate, sample_guest_write};\n    pipeline_cache.InvalidateRegion(addr, size);\n    return false;\n}\n"
     gpu_thread_include = '#include "video_core/gpu_thread.h"\n'

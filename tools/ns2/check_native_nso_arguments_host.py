@@ -14,7 +14,7 @@ import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
 VENDOR=ROOT/"vendor"
-owner=(VENDOR/"encore-active/ns2-runtime/metadata/core/loader/nso.cpp").read_text()
+owner=(VENDOR/"encore-active/eden/src/core/loader/nso.cpp").read_text()
 header=(VENDOR/"sources/eden/src/core/loader/nso.h").read_text()
 start="    // Both NS1 and NS2 use this fixed guest argument allocation."
 end="    // N3t: native NSO entry gate"

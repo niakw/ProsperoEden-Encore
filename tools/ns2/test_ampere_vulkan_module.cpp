@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
-#include "../../vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/native_qmd.h"
+#include "../../vendor/encore-active/eden/src/video_core/native_qmd.h"
 
 static void Require(bool ok, const char* detail) {
     if (!ok) { std::fprintf(stderr,"NS2 Vulkan module test: %s\n",detail); std::exit(1); }

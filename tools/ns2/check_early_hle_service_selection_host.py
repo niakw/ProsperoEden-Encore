@@ -24,7 +24,7 @@ for marker in (
     assert marker in cm,marker
 assert "global auto-stub fallback" in cm
 inc=[
-    ROOT/"vendor/encore-active/ns2-runtime/hle",
+    ROOT/"vendor/encore-active/eden/src",
     ROOT/"vendor/sources/eden/src",
     ROOT/"vendor/sources/eden/src/dynarmic/src",
     ROOT/"vendor/sources/fmt/include",
@@ -35,8 +35,8 @@ assert compiler
 flags=[compiler,"-std=c++20","-fsyntax-only","-Wno-unused-parameter","-DFMT_HEADER_ONLY","-DPS5_NATIVE=1"]
 flags += ["-I"+str(p) for p in inc if p.is_dir()]
 owners=[
-    V/"encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp",
-    V/"encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.cpp",
+    V/"encore-active/eden/src/core/hle/service/am/service/application_proxy.cpp",
+    V/"encore-active/eden/src/core/hle/service/hid/hid_server.cpp",
 ]
 for owner in owners:
     assert owner.is_file(),owner

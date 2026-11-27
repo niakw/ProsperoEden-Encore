@@ -38,28 +38,15 @@ for snippet in (real_os_initialize,real_os_finalize,real_os_run):
     assert "m_process" in snippet and "Finalize()" in snippet
 
 base=kernel_host.PREFIX
-# Extend only this joined NS2 fixture with the interfaces consumed by the
-# selected Switch-2 KProcess memory-budget code. The public fixture carries
-# the extended ACID body used by the maintained generation parser.
-base=base.replace(
-    "    bool arm64 = true;\n    ProgramAddressSpaceType address_type =",
-    "    bool arm64 = true;\n    bool switch2 = true;\n"
-    "    bool IsSwitch2() const { return switch2; }\n"
-    "    ProgramAddressSpaceType address_type =",
-    1)
-base=base.replace(
-    "    bool CanContain(u64,std::size_t,KMemoryState)const{return !fail_containment;}\n",
-    "    u64 GetHeapRegionSize() const { return 0x300000000ULL; }\n"
-    "    u64 GetAliasRegionSize() const { return 0x100000000ULL; }\n"
-    "    bool CanContain(u64,std::size_t,KMemoryState)const{return !fail_containment;}\n",
-    1)
-base=base.replace(
-    "    bool m_is_application=false;\n",
-    "    bool m_is_application=false;\n    u64 m_max_process_memory=0;\n",
-    1)
-assert "bool IsSwitch2() const" in base
-assert "GetHeapRegionSize() const" in base and "GetAliasRegionSize() const" in base
-assert "m_max_process_memory=0" in base
+# The shared KProcess fixture now owns the current Switch-2 memory-budget
+# interfaces. This joined scenario only flips the synthetic metadata identity
+# to NS2; never re-declare page-table or process members already in PREFIX.
+assert base.count("bool switch2 = false;") == 1
+base=base.replace("bool switch2 = false;", "bool switch2 = true;", 1)
+assert base.count("bool IsSwitch2() const { return switch2; }") == 1
+assert base.count("GetHeapRegionSize() const") == 1
+assert base.count("GetAliasRegionSize() const") == 1
+assert base.count("m_max_process_memory{};") == 1
 
 def replace_once(old,new):
     global base

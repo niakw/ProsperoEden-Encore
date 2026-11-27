@@ -11,7 +11,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-AUDIO = ROOT / "vendor/encore-active/ns2-runtime/audio"
+AUDIO = ROOT / "vendor/encore-active/eden/src"
 SOURCE = ROOT / "vendor/sources/eden/src"
 files = [
     AUDIO / "core/hle/service/audio/nx2_sysmix.cpp",

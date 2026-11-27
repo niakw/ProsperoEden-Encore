@@ -4,7 +4,7 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 pinned = (root / "vendor/sources/eden/src/core/hle/kernel/k_page_table_base.cpp").read_text()
-maintained = (root / "vendor/encore-active/eden-core/src/core/hle/kernel/k_page_table_base.cpp").read_text()
+maintained = (root / "vendor/encore-active/eden/src/core/hle/kernel/k_page_table_base.cpp").read_text()
 cm = (root / "headless/CMakeLists.txt").read_text()
 original = """        // Get physical pages.
         KPageGroup pg(m_system.Kernel(), m_block_info_manager);
@@ -50,5 +50,5 @@ assert 'file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/kernel/k_page_table_base.c
 assert 'list(REMOVE_ITEM page_table_core_sources hle/kernel/k_page_table_base.cpp)' in cm
 assert 'list(APPEND page_table_core_sources "${EDEN_MAINTAINED_PAGE_TABLE}")' in cm
 assert 'set_property(TARGET core PROPERTY SOURCES "${page_table_core_sources}")' in cm
-assert 'vendor/encore-active/eden-core/src/core/hle/kernel/k_page_table_base.cpp' in cm
+assert 'vendor/encore-active/eden/src/core/hle/kernel/k_page_table_base.cpp' in cm
 print("ENCORE_MAINTAINED_PAGE_TABLE_FINALIZE_PASS G16=retired parity=exact ns2_alias=64GiB obsolete_128GiB_ABI=absent")

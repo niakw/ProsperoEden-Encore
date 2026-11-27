@@ -118,6 +118,7 @@ def normalize_g21_shutdown_source(filename: str, source: str) -> tuple[str, bool
         ),
     }
     successor, predecessor = cpu_blocked_successors[filename]
+    current = git_blob(source)
     if current == successor:
         cpu_blocked_query = """\
 bool GPU::HasCpuBlockedNativeChannels() const {

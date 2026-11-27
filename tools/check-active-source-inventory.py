@@ -2956,12 +2956,12 @@ post_f07_bcat_buffer_hotpath_blobs = {
     "eden-core/overrides/bcat/core/hle/service/bcat/service_creator.h": "de582d12ef1025735a741817ac4e365f59789809",
     "eden-core/overrides/buffer-hotpath/common/range_sets.h": "1c90e08bc3c66731aa717e7b17b3249539848016",
     "eden-core/overrides/buffer-hotpath/common/range_sets.inc": "bd48ff5cb346981f0937cfddbb042f9100697fd2",
-    "eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h": "0992d01d0b4e262dd4b4a79633affa8b02529795",
+    "eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h": ("9cd73e0e8021ba82fb1ba6ae09f5fdd6976897bd" if shipping_vendor == "9d8b9c280a9907a9881abcc974a1fde248d73fec" else "0992d01d0b4e262dd4b4a79633affa8b02529795"),
     "eden-core/src/core/hle/service/bcat/delivery_cache_storage_service.cpp": "9f98f2da3f865da69399467133436e64e4e4d67b",
     "eden-core/src/core/hle/service/bcat/service_creator.cpp": "1635bc091413a2f118b166216f91410b6338686d"
 }
 post_f07_bcat_buffer_hotpath_present = set(post_f07_bcat_buffer_hotpath_blobs) & set(physical_all)
-if shipping_vendor in {"93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"}:
+if shipping_vendor == "9d8b9c280a9907a9881abcc974a1fde248d73fec" or shipping_vendor in {"93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a"}:
     assert post_f07_bcat_buffer_hotpath_present == set(post_f07_bcat_buffer_hotpath_blobs)
     for relative, expected in post_f07_bcat_buffer_hotpath_blobs.items():
         actual = subprocess.check_output(["git", "hash-object", str(active / relative)], text=True).strip()

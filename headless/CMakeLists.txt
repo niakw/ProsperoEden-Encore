@@ -3376,7 +3376,7 @@ endif()
         # maintained, GPL source adapter. NOTHING scans/decodes all images:
         # only EdenServices::wallpaper_path on the selected worker can call it.
         set(EDEN_JXR_ROOT "${PORT_ROOT}/vendor/sources/jxrlib")
-        set(EDEN_JXR_ADAPTER "${PORT_ROOT}/vendor/encore-active/ps5-jxr")
+        set(EDEN_JXR_ADAPTER "${PORT_ROOT}/vendor/encore-active/jxrlib")
         if(NOT EXISTS "${EDEN_JXR_ROOT}/LICENSE" OR
            NOT EXISTS "${EDEN_JXR_ADAPTER}/jxr_decoder.c" OR
            NOT EXISTS "${EDEN_JXR_ADAPTER}/jxr_decoder.h")

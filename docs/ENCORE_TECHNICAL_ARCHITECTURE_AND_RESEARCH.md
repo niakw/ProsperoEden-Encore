@@ -167,7 +167,7 @@ flowchart TB
 | DualSense / HID / overlay | S | <code>E/headless/</code>, <code>src/hid_core/</code> |
 | Launcher / bibliothèque / profils | S | <code>E/headless/prosperoeden/</code>, <code>E/encore-overrides</code> |
 | HarfBuzz / fontes / glyphes | S | <code>V/sources/harfbuzz</code>, <code>E/third_party/fonts</code> |
-| WebP / JXR | S | <code>V/sources/libwebp</code>, <code>jxrlib</code>, <code>V/encore-active/ps5-jxr/</code> |
+| WebP / JXR | S | <code>V/sources/libwebp</code>, <code>jxrlib</code>, <code>V/encore-active/jxrlib/</code> |
 | PS5 Payload SDK / CRT | S | <code>V/sources/ps5-payload-sdk-fork/</code>, <code>E/headless</code> |
 | Clang / LLD / compiler-rt | S/R | Toolchain et runtime natif ; <code>V/sources/compiler-rt</code>, overrides |
 | CMake / Ninja / CI | S | <code>E/headless/CMakeLists.txt</code>, <code>E/Makefile</code>, <code>.github/workflows/</code> |

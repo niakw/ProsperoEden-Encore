@@ -244,7 +244,7 @@ The vendored `sources/jxrlib/` snapshot is byte-for-byte sourced from
 [ProsperoGallery](https://github.com/AmineWallah/ProsperoGallery) at
 `ff728c83746d045fc3611e511ac2acb4a2b43e38`.
 An independently modified converter maintained under
-`vendor/encore-active/ps5-jxr/` contains adaptations of ProsperoGallery's
+`vendor/encore-active/jxrlib/` contains adaptations of ProsperoGallery's
 GPL-licensed tone mapping. The conversion occurs **only after the user
 selects** a JPEG XR wallpaper, and produces a local app-owned WebP cache;
 the original PS5 capture is not modified.

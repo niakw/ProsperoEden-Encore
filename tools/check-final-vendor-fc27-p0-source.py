@@ -50,12 +50,12 @@ owners = {
         "state.signaled_fence.store(next.fence, std::memory_order_release)",
         "Eden::RecordGpuFailure(std::current_exception())",
     ),
-    "eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h": (
+    "eden/src/video_core/buffer_cache/word_manager.h": (
         "class DeferredPageCaching",
         "delta < 0",
         "t_deferred_page_caching",
     ),
-    "eden-core/overrides/core/device_memory_manager.h": (
+    "eden/src/core/device_memory_manager.h": (
         "BeginDeferredCachedUpdates",
         "EndDeferredCachedUpdates",
         "deferred_cached_updates",

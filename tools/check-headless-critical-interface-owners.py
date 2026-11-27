@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 HEADLESS = ROOT / "headless"
-ENCORE = ROOT / "vendor/encore-active/eden-core/src"
+ENCORE = ROOT / "vendor/encore-active/eden/src"
 g11_a32 = ENCORE / "core/arm/dynarmic/g11/arm_dynarmic_32_native_normal.cpp"
 g11_a64_dev = ENCORE / "core/arm/dynarmic/g11/arm_dynarmic_64_native_dev.cpp"
 physical_core = ENCORE / "core/hle/kernel/physical_core_standard.cpp"

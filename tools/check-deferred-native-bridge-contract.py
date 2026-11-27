@@ -1140,13 +1140,13 @@ endif()
         "            !AddressSpaceContains(*current_page_table, addr, size)) {"
     )
     for owner, historic in (
-        ("eden-core/src/core/memory_native_standard.cpp", native_default),
-        ("eden-core/src/core/memory_native_a32.cpp", native_a32),
-        ("eden-core/guest-bridge/memory_ps5_standard.cpp", guest),
-        ("eden-core/guest-bridge/memory_ps5_a32.cpp", a32_guest)):
+        ("eden/src/core/memory_native_standard.cpp", native_default),
+        ("eden/src/core/memory_native_a32.cpp", native_a32),
+        ("eden/src/core/memory_native_standard_deferred.cpp", guest),
+        ("eden/src/core/memory_native_a32_deferred.cpp", a32_guest)):
         maintained = (root/"vendor/encore-active"/owner).read_text()
         baseline = normalize_native_legacy(historic)
-        if owner.startswith("eden-core/src/core/memory_native_"):
+        if owner.startswith("eden/src/core/memory_native_"):
             assert baseline.count(native_walk_old) == 1, (
                 "Historical native WalkBlock owner moved", owner)
             assert maintained.count(native_walk_guard) == 1, (
@@ -1162,7 +1162,7 @@ endif()
         # ZeroBlock's no-op-zero bypass. Reverse only their exact source
         # regions to compare against immutable G13/M12 history; retain the
         # real production checks independently.
-        if owner.startswith("eden-core/src/core/memory_native_"):
+        if owner.startswith("eden/src/core/memory_native_"):
             marker = "#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)"
             assert maintained.count(marker) == 3, ("NS2 sparse guard locations", owner)
             assert maintained.count('extern "C" bool EdenNs2EnsureGuestBackingReadable(') == 1
@@ -1235,7 +1235,7 @@ endif()
         # to BOTH selected memory backends. Reverse just this fixed addition
         # for the historical G13/M12 parity check; all older bytes remain
         # accounted for by the original source oracle.
-        if owner.startswith("eden-core/src/core/memory_native_"):
+        if owner.startswith("eden/src/core/memory_native_"):
             audio_readiness = """#ifdef PS5_NATIVE
 bool Memory::ReadyForAudioRead() const noexcept {
     // Guard the same selected page-table owner as native GetSpan.

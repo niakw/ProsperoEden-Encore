@@ -127,8 +127,8 @@ for variant in ("memory_native_standard.cpp", "memory_native_a32.cpp"):
     assert native_memory.count("::Eden::Performance::ShouldLogUnmappedAccess()") == 11, variant
     assert native_memory.count('LOG_ERROR(HW_Memory, "Unmapped ') == 11, variant
     assert '#include "performance.h"' in native_memory, variant
-for variant in ("memory_ps5_standard.cpp", "memory_ps5_a32.cpp"):
-    deferred_memory = read(f"vendor/encore-active/eden/guest-bridge/{variant}")
+for variant in ("memory_native_standard_deferred.cpp", "memory_native_a32_deferred.cpp"):
+    deferred_memory = read(f"vendor/encore-active/eden/src/core/{variant}")
     assert deferred_memory.count("::Eden::Performance::ShouldLogUnmappedAccess()") == 11, variant
     assert deferred_memory.count('LOG_ERROR(HW_Memory, "Unmapped ') == 11, variant
 print("ENCORE_NATIVE_MEMORY_CRASH_ONLY_LOG_SOURCE_PASS profiles=4 throttled_sites=11")

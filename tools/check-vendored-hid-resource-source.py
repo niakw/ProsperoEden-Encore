@@ -3,7 +3,7 @@
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 original=(root/"vendor/sources/eden/src/hid_core/resource_manager.cpp").read_text()
-maintained=(root/"vendor/encore-active/eden-core/src/hid_core/resource_manager.cpp").read_text()
+maintained=(root/"vendor/encore-active/eden/src/hid_core/resource_manager.cpp").read_text()
 old="input_event->Finalize(system.Kernel());"
 new="service_context.CloseEvent(input_event);"
 assert original.count(old)==1

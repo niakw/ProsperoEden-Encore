@@ -230,7 +230,7 @@ jobs:
             -Ibuild-ns2-a64/include \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
-            vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp
+            vendor/encore-active/eden/src/dynarmic/frontend/A64/translate/a64_translate.cpp
       - name: Exercise real NS2 ExeFS NSO0 preflight with GCC and Clang
         shell: bash
         run: |
@@ -298,7 +298,7 @@ jobs:
             vendor/encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp \
             vendor/encore-active/ns2-runtime/metadata/core/loader/loader.cpp \
             vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp \
-            vendor/encore-active/eden-core/src/core/loader/nso.cpp; do
+            vendor/encore-active/eden/src/core/loader/nso.cpp; do
             echo "Checking unified owner: ${source}"
             test -f "${source}"
             clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
@@ -317,7 +317,7 @@ jobs:
           set -euo pipefail
           clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
-            -Ivendor/encore-active/eden-core/include \
+            -Ivendor/encore-active/eden/include \
             -Ivendor/encore-active/ns2-runtime/am \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
@@ -367,7 +367,7 @@ jobs:
             clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
               -DPS5_NATIVE=1 \
               -Ivendor/encore-active/eden/src \
-              -Ivendor/encore-active/eden-core/overrides/h01-filesystem \
+              -Ivendor/encore-active/eden/src \
               -Ibuild-ns2-a64/fmt/include \
               -Ivendor/encore-active/ns2-runtime/self_controller \
               -Ivendor/encore-active/ns2-runtime/graphics_supervisor \
@@ -566,11 +566,11 @@ jobs:
           set -euo pipefail
           test -f headless/ncz.cpp
           test -f headless/ncz.h
-          test -f vendor/encore-active/eden-core/src/core/file_sys/submission_package.cpp
-          test -f vendor/encore-active/eden-core/src/core/loader/nsp.cpp
+          test -f vendor/encore-active/eden/src/core/file_sys/submission_package.cpp
+          test -f vendor/encore-active/eden/src/core/loader/nsp.cpp
           grep -Fq 'NCZBLOCK' headless/ncz.h
-          grep -Fq '::Eden::Ncz::Open(' vendor/encore-active/eden-core/src/core/file_sys/submission_package.cpp
-          grep -Fq '".ncz"' vendor/encore-active/eden-core/src/core/loader/nsp.cpp
+          grep -Fq '::Eden::Ncz::Open(' vendor/encore-active/eden/src/core/file_sys/submission_package.cpp
+          grep -Fq '".ncz"' vendor/encore-active/eden/src/core/loader/nsp.cpp
           grep -Fq 'NCZ/XCZ' headless/CMakeLists.txt
       - name: Compile and run real Ampere 128-bit ISA decoder (Clang and GCC)
         shell: bash
@@ -692,7 +692,7 @@ jobs:
           clang++ -std=c++20 -fsyntax-only -Wno-unused-parameter \
             -Ibuild-ns2-a64/fmt/include \
             -DEDEN_NS2_PROCESS_RUN_GUARD=1 \
-            -Ivendor/encore-active/eden-core/overrides/h01-filesystem \
+            -Ivendor/encore-active/eden/src \
             -Ivendor/encore-active/eden/src -Ivendor/encore-active/ns2-runtime/metadata \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \

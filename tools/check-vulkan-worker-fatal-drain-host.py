@@ -597,7 +597,14 @@ assert strict_native.index("uncommitted_operations.emplace_back(std::move(retire
 assert strict_native.count("syncpoint_manager.IncrementHost(value)") == 1
 assert "[this, value] { syncpoint_manager.IncrementHost(value); }" in strict_native
 assert "::Eden::RecordGpuFailure(std::current_exception());" in strict_native
-assert "bool SignalNativeSyncPoint(u32 value) override;" in (ROOT/"headless/vk_rasterizer_shutdown_ps5.h").read_text()
+native_fence = fences.split("    void SignalNativeFence(std::function<void()>&& complete) {", 1)[1].split("\n    // Native Ampere completion", 1)[0]
+assert "CreateFence(false)" in native_fence
+assert "SignalFence(" not in native_fence
+assert native_fence.index("uncommitted_operations.emplace_back(std::move(complete))") < native_fence.index("QueueFence(new_fence)") < native_fence.index("fences.push(std::move(new_fence))")
+assert "::Eden::RecordGpuFailure(std::current_exception());" in native_fence
+rasterizer_shutdown = (ROOT/"headless/vk_rasterizer_shutdown_ps5.h").read_text()
+assert "bool SignalNativeSyncPoint(u32 value) override;" in rasterizer_shutdown
+assert "bool SignalNativeFence(std::function<void()>&& func) override;" in rasterizer_shutdown
 assert 'configure_file("${EDEN_PORT_DIR}/vk_rasterizer_shutdown_ps5.h"' in cmake
 assert 'configure_file("${EDEN_PORT_DIR}/fence_manager_ps5.h"' in cmake
 print("NS2_STRICT_NATIVE_COMPLETION_SELECTED_SHUTDOWN_OVERLAYS_PASS")

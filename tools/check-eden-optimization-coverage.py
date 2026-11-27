@@ -2626,7 +2626,9 @@ post_f07_gpu_wait_owners = {
 if selected_nov26_vendor:
     post_f07_gpu_wait_owners.update({
         "headless/fence_manager_ps5.h":
-            "d88c7f24bd39fd15ea1092d3df370a5b6378bead",
+            "66a8fd0341ef51cbbe7db297ca928a0e5057eb59",
+        "headless/vk_rasterizer_shutdown_ps5.h":
+            "0248aa603bcacad542fab55da195e9225d8ca56f",
         "headless/vulkan_present_manager_ps5.cpp":
             "f25bd32e89e8047d96adf323653719fc358631b8",
     })

@@ -19,8 +19,8 @@ core_cmake = read("core/CMakeLists.txt")
 jit_emitter = read("dynarmic/src/dynarmic/backend/x64/emit_x64_memory.cpp.inc")
 jit_lookup = read("dynarmic/src/dynarmic/backend/x64/emit_x64_memory.h")
 port_cmake = (root / "headless/CMakeLists.txt").read_text()
-maintained_header = (root / "vendor/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_memory.h").read_text()
-maintained_body = (root / "vendor/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_memory_checked.cpp.inc").read_text()
+maintained_header = (root / "vendor/encore-active/eden/src/dynarmic/backend/x64/emit_x64_memory.h").read_text()
+maintained_body = (root / "vendor/encore-active/eden/src/dynarmic/backend/x64/emit_x64_memory_checked.cpp.inc").read_text()
 checked_a32 = maintained_header + "\n" + maintained_body
 jit_lookup = maintained_header
 jit_emitter = maintained_body
@@ -35,7 +35,7 @@ gpu_vic = read("video_core/host1x/vic.cpp")
 gpu_driver = read("video_core/gpu.cpp")
 nce = read("core/arm/nce/arm_nce.cpp")
 bridge_recipe = (root / "headless/guest_write_deferred_bridge.cmake").read_text()
-bridge_source = (root / "vendor/encore-active/eden-core/guest-bridge/memory_manager.cpp").read_text()
+bridge_source = (root / "vendor/encore-active/eden/src/video_core/memory_manager_deferred.cpp").read_text()
 # M06 is a maintained C++ translation unit; the source gate must inspect the
 # selected implementation as well as the (now selection-only) CMake recipe.
 expect_selected_m06 = 'configure_file("${EDEN_DEFERRED_MEMORY_SOURCE}"'
@@ -166,7 +166,7 @@ expect(maintained_header, "code.jnz(abort, code.T_NEAR);", "derived marked callb
 # Native A32 uses its own checked fastmem byte map. Protect() changes access
 # bits instead of mprotect for these aliases; the blocked path checks its PTE.
 expect(port_cmake, 'option(EDEN_A32_FASTMEM "A32 fastmem window with JIT fault recovery" ON)', "A32 fastmem build")
-native_a32_memory = (root / "vendor/encore-active/eden-core/src/core/memory.cpp").read_text()
+native_a32_memory = (root / "vendor/encore-active/eden/src/core/memory.cpp").read_text()
 expect(port_cmake, 'list(APPEND core_sources "${EDEN_MAINTAINED_A32_MEMORY}")',
        "A32 guarded maintained unit selection")
 expect(native_a32_memory, "!process.Is64Bit() && Settings::IsFastmemEnabled()",

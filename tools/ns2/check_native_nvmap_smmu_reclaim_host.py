@@ -8,9 +8,9 @@ import tempfile
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
-source = root / 'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/nvmap.cpp'
+source = root / 'vendor/encore-active/eden/src/core/hle/service/nvdrv/core/nvmap.cpp'
 if not source.exists():
-    source = root.parent / 'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/nvmap.cpp'
+    source = root.parent / 'vendor/encore-active/eden/src/core/hle/service/nvdrv/core/nvmap.cpp'
 body = source.read_text()
 start = '            std::size_t busy_candidates{};\n            while ((address = smmu.Allocate(aligned_up)) == 0) {'
 end = '\n\n            handle_description->d_address = address;'

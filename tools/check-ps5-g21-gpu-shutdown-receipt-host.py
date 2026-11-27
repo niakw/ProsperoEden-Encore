@@ -17,7 +17,7 @@ from ci.ps5_g21_gpu_shutdown_receipt import (
 )
 
 assert len(OLD) == len(REVIEWED) == 5
-base = ROOT / "vendor/encore-active/eden-core/src/video_core"
+base = ROOT / "vendor/encore-active/eden/src/video_core"
 candidates = []
 for filename in sorted(OLD):
     source = (base / filename).read_text()

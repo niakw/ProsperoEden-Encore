@@ -74,7 +74,7 @@ def main() -> None:
             "int main() { return 0; }\n", encoding="utf-8")
         (root / "mock-metadata.cpp").write_text(
             "int metadata() { return 0; }\n", encoding="utf-8")
-        maintained = root / "vendor/encore-active/eden-core/src/core/file_sys"
+        maintained = root / "vendor/encore-active/eden/src/core/file_sys"
         maintained.mkdir(parents=True)
         (maintained / "extracted_aoc.h").write_text("#pragma once\n", encoding="utf-8")
         content = TEMPLATE.replace("@NUP_ROOT@", ROOT.as_posix()).replace(

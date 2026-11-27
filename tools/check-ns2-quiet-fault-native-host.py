@@ -11,8 +11,8 @@ cmake = get("headless/CMakeLists.txt")
 hdr = get("headless/diagnostics.h")
 svc = get("vendor/encore-active/eden/src/core/hle/kernel/svc.cpp")
 ring = get("vendor/encore-active/eden/src/core/loader/ns2_svc_trace.h")
-std = get("vendor/encore-active/eden-core/src/core/hle/kernel/physical_core_standard.cpp")
-dev = get("vendor/encore-active/eden-core/src/core/hle/kernel/physical_core_dev.cpp")
+std = get("vendor/encore-active/eden/src/core/hle/kernel/physical_core_standard.cpp")
+dev = get("vendor/encore-active/eden/src/core/hle/kernel/physical_core_dev.cpp")
 assert '"${EDEN_PORT_DIR}/ns2_fault_receipt.cpp"' in cmake
 assert 'SOURCE "${EDEN_PORT_DIR}/ns2_fault_receipt.cpp" APPEND PROPERTY' in cmake
 assert 'extern "C" void eden_native_capture_ns2_svc_fault(' in src

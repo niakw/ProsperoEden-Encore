@@ -15,11 +15,11 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 base_file = ROOT / "tools/check-fc27-f06-native-npad-handoff-host.py"
 base_source = base_file.read_text()
-NPAD = (ROOT / "vendor/encore-active/eden-core/src/hid_core/resources/npad/npad.cpp").read_text()
-EMULATED = (ROOT / "vendor/encore-active/eden-core/src/hid_core/frontend/emulated_controller.cpp").read_text()
+NPAD = (ROOT / "vendor/encore-active/eden/src/hid_core/resources/npad/npad.cpp").read_text()
+EMULATED = (ROOT / "vendor/encore-active/eden/src/hid_core/frontend/emulated_controller.cpp").read_text()
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
-assert "vendor/encore-active/eden-core/src/hid_core/resources/npad/npad.cpp" in CMAKE
-assert "vendor/encore-active/eden-core/src/hid_core/frontend/emulated_controller.cpp" in CMAKE
+assert "vendor/encore-active/eden/src/hid_core/resources/npad/npad.cpp" in CMAKE
+assert "vendor/encore-active/eden/src/hid_core/frontend/emulated_controller.cpp" in CMAKE
 assert "npad->fullkey_lifo.WriteNextEntry(pad_state);" in NPAD
 assert "npad->system_ext_lifo.WriteNextEntry(libnx_state);" in NPAD
 

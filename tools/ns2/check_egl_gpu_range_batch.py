@@ -5,7 +5,7 @@ import hashlib
 import runpy
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNER = ROOT / "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp"
+OWNER = ROOT / "vendor/encore-active/eden/src/video_core/memory_manager.cpp"
 HELPER = ROOT / "vendor/encore-active/eden/src/video_core/ns2_egl_gpu_range_batch.h"
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 
@@ -38,7 +38,7 @@ if '#include "native_gpu_page_remap.h"' in t:
     assert blob(t) == "836c0653652957a996db89ba7a7d5c48db1350a8", (
         "GPU remap fix must recover the exact previous 49-bit GMMU owner")
     assert (ROOT / "tools/ns2/check_native_gpu_pte_remap_host.py").is_file()
-    assert (ROOT / "vendor/encore-active/eden-core/src/video_core/native_gpu_page_remap.h").is_file()
+    assert (ROOT / "vendor/encore-active/eden/src/video_core/native_gpu_page_remap.h").is_file()
 # N51 shares the canonical GPU memory owner with P1.2 (cross-page scalar
 # accesses and physical-backing continuity). Keep an *exact* allowlist of
 # independently reviewed owner blobs: the original N51 integration and its

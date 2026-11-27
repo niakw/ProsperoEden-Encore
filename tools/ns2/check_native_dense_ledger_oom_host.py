@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-SRC=(ROOT/'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp').read_text()
+SRC=(ROOT/'vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp').read_text()
 method=SRC.split('Result IGpuWorker::BackGpuOnlyRegion(',1)[1].split(
     'bool IGpuWorker::RetireGpuOnlyRegion(',1)[0]
 start='    decltype(m_dense_regions) pending_region;'

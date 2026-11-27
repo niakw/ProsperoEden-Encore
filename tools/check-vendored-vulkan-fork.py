@@ -25,10 +25,12 @@ native_build = (ROOT / "tools/build-headless-native.sh").read_text()
 for token in (
     'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden-vulkan")',
     'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")',
-    'file(SHA256 "${EDEN_ACTIVE_VULKAN}/${unit}.cpp" source_sha)',
-    'file(SHA256 "${PORT_BUILD_DIR}/${unit}.cpp" selected_sha)',
 ):
     assert token in vulkan_cmake, ("native Vulkan owner selection drift", token)
+
+assert "file(SHA256" not in vulkan_cmake
+assert "file(SHA256" not in root_cmake
+assert 'message(FATAL_ERROR "Missing native Vulkan fork unit: ${unit}")' in root_cmake
 
 # Historical source generators/replayers are not build inputs.
 for name, text_body in (
@@ -62,5 +64,5 @@ print(
     f"owners={len(required)}",
     "historical_replay=0",
     "revision_allowlists=0",
-    "selected_bytes_checked_by_cmake=1",
+    "selected_owner_structural=1",
 )

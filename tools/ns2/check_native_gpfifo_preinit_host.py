@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNER = (ROOT / "vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp").read_text()
+OWNER = (ROOT / "vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp").read_text()
 entry = OWNER.split("NvResult nvhost_gpu::SubmitGPFIFOImpl(", 1)[1].split(
     "Core::Memory::Memory& nvhost_gpu::GetSessionMemory(", 1)[0]
 start = "    const bool native = UsesNativeAbi(fd);"
@@ -213,7 +213,7 @@ int main() {
               "retired_fd=1 max_completion=64 ns1_unchanged=1 native_wait_queued=1 bad_syncpoint=1 lease_oom=1 channel_disable=1 unallocated_submit=1");
 }
 '''.replace("__ADMISSION__", admission)
-includes = ROOT / "vendor/encore-active/ns2-runtime/hle"
+includes = ROOT / "vendor/encore-active/eden/src"
 assert (includes/"core/hle/service/nvdrv/devices/native_gpu_submission.h").is_file()
 env = os.environ.copy()
 sdk = Path("/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk")

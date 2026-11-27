@@ -39,32 +39,32 @@ for marker in (
     assert marker in cmake, marker
 
 owners = {
-    "ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp": (
+    "eden/src/core/hle/kernel/k_memory_manager.cpp": (
         "EdenNs2CommitGuestBacking",
         "CommitKernelDirectGuestRange",
         "ResultOutOfMemory",
     ),
-    "ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp": (
+    "eden/src/core/hle/kernel/init/init_slab_setup.cpp": (
         "EdenNs2CommitGuestBacking",
         "TranslateSlabAddrToPhysical",
         "throw std::bad_alloc",
     ),
-    "eden-core/overrides/core/device_memory_manager.h": (
+    "eden/src/core/device_memory_manager.h": (
         "BeginDeferredCachedUpdates",
         "EndDeferredCachedUpdates",
         "deferred_cached_updates",
     ),
-    "ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": (
+    "eden/src/video_core/engines/puller.cpp": (
         "NativeGpuProcessRegistry",
         "RecordGpuSemaphoreValue",
         "ProcessNativeSemaphoreExecute",
     ),
-    "ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp": (
+    "eden/src/video_core/control/scheduler.cpp": (
         "HasCpuBlockedNativeChannels",
         "HasCpuBlockedNativeAcquire",
         "ResumePendingNative",
     ),
-    "ns2-runtime/gpu_dispatch/video_core/native_ampere_macro_state.h": (
+    "eden/src/video_core/native_ampere_macro_state.h": (
         "ExecuteStagedWithEffects",
         "MaxCodeWords",
         "MaxPendingMethods",

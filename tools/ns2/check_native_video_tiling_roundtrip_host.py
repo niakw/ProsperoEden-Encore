@@ -20,12 +20,12 @@ source=source_path.read_text()
 assert source.count('#include "video_core/gpu.h"')==1
 assert 'void SwizzleTexture(' in source and 'void UnswizzleTexture(' in source
 assert 'std::size_t CalculateSize(' in source
-service=(vendor/'encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp').read_text()
+service=(vendor/'encore-active/eden/src/core/hle/service/am/service/graphics_video_decoder_session.cpp').read_text()
 assert 'Tegra::Texture::CalculateSize(true, BytesPerPixel' in service
 assert 'Tegra::Texture::SwizzleTexture(tiled, pixels,' in service
 assert service.index('Tegra::Texture::SwizzleTexture(tiled, pixels,') < service.index('pixels.swap(tiled);')
 assert service.index('pixels.swap(tiled);') < service.index('if (!m_owner->WriteVideoSurface(next.id, *target, pixels))')
-layout=(vendor/'encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h').read_text()
+layout=(vendor/'encore-active/eden/src/core/hle/service/am/service/native_image_layout.h').read_text()
 assert 'const u64 pitch = ((width + 15) & ~u64{15}) * 4;' in layout
 assert 'const u64 bytes = std::max(u64{4096}, pitch * ((height + 127) & ~u64{127}));' in layout
 

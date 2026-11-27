@@ -245,7 +245,7 @@ ns2_selected_core = """if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         "${PORT_ROOT}/vendor/encore-active/eden/src/core/core.cpp")
 endif()"""
 assert cmake.count(ns2_selected_core) == 1, "NS2 Core owner or admission guard changed"
-assert cmake.count("ns2-runtime/process/core/core.cpp") == 1, (
-    "unexpected duplicate NS2 Core source selection")
+assert "ns2-runtime/process/core/core.cpp" not in cmake, (
+    "retired NS2 process root reintroduced")
 print("ENCORE_MAINTAINED_CORE_SYSTEM_PARITY_PASS G14=retired variants=2"
       " lichii1952=3 lichii1932=3 exact_reverse=3 ns2_release=1")

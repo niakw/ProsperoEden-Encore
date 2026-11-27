@@ -92,7 +92,7 @@ shared_core = (ROOT / 'vendor/encore-active/eden/src/core/core.cpp').read_text()
 selector = cmake.split('# The Core::System overlay is a fully maintained', 1)[1].split(
     '# RomFS builder parents', 1)[0]
 assert 'PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM' in selector
-assert 'ns2-runtime/process/core/core.cpp' in selector
+assert 'eden/src/core/core.cpp' in selector
 assert '#include "diagnostics.h"' in native_core and shared_core.startswith('#include "diagnostics.h"')
 assert 'IsSwitch2LaunchProgram(' in shared_core
 # The pre-kernel selector may preserve an already-identified NS2 extended ACID

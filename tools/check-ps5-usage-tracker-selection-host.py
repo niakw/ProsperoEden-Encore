@@ -7,7 +7,6 @@ are part of this contract.
 """
 from __future__ import annotations
 from pathlib import Path
-import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 PORT=ROOT/"headless/CMakeLists.txt"
@@ -27,7 +26,7 @@ for value in (
     'message(STATUS "PS5 Vulkan: pinned baseline UsageTracker header selected")',
     'set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS',
 ):
-assert value in CMAKE,value
+    assert value in CMAKE, value
 begin=CMAKE.index('# Eglantine #462: PS5 Vulkan BufferCache::CanReorderUpload')
 # The NVDEC source selector was added AFTER this independent Vulkan
 # header selector. Do not inadvertently count its extra native if()/endif().
@@ -53,8 +52,6 @@ assert "if (set_begin == pages.size()) return;" in source
 assert "pages.begin() + static_cast<std::ptrdiff_t>(set_begin)" in source
 assert "recent.fill({~u64{0}, 0});" in source
 assert "recent[recent_cursor++ % recent.size()] = {offset, size};" in source
-else:
-assert not OWNED.exists()
 print("PS5_USAGE_TRACKER_ENGINE_SELECTION_HOST_PASS "
       "candidate=1 upstream_baseline_present=1 "
       "source_owner=video_core BEFORE PRIVATE PS5_only=1 console=unverified")

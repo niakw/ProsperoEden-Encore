@@ -14,7 +14,7 @@ import sys
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-DMA=ROOT/'vendor/encore-active/eden-core/src/video_core'
+DMA=ROOT/'vendor/encore-active/eden/src/video_core'
 NATIVE=ROOT/'vendor/encore-active/ns2-runtime/nvdrv_gpu'
 TEST=ROOT/'tools/ns2/test_native_gpu_fetch_admission.cpp'
 HELPER=NATIVE/'core/hle/service/nvdrv/devices/native_gpu_fetch_admission.h'
@@ -132,7 +132,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # Match the shipping PS5 graph: this header owns BOTH the authenticated
     # NS2 native tiling flag and Lichii #46 Host1x syncpoint shim. The
     # experimental deferred guest-write bridge must never mask it.
-    native_tiling=ROOT/'vendor/encore-active/eden-core/overrides/native-tiling'
+    native_tiling=ROOT/'vendor/encore-active/eden/src'
     selected_mm=native_tiling/'video_core/memory_manager.h'
     assert selected_mm.is_file()
     mmh=selected_mm.read_text()
@@ -149,7 +149,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # graph COPYONLY-stages this maintained header ahead of pinned Eden; the
     # real MemoryManager TU reaches it through Host1x even though this gate
     # does not compile/link the decoder implementation itself.
-    nvdec_override=ROOT/'vendor/encore-active/eden-core/overrides'
+    nvdec_override=ROOT/'vendor/encore-active/eden/src'
     nvdec_ffmpeg=nvdec_override/'video_core/host1x/ffmpeg.h'
     assert nvdec_ffmpeg.is_file()
     assert 'set(EDEN_NVDEC_HEADER_DIR "${PORT_BUILD_DIR}/nvdec-eagain")' in cmake
@@ -164,7 +164,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # The actual native core target stages this maintained ioctl ABI header
     # ahead of pinned Eden. Without that copy, nvhost_gpu.cpp is compiled
     # against the obsolete template signature (no InputCapacity argument).
-    ioctl_owner=ROOT/'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
+    ioctl_owner=ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
     assert ioctl_owner.is_file()
     assert 'configure_file("${EDEN_MAINTAINED_IOCTL}"' in cmake
     assert 'target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")' in cmake
@@ -186,7 +186,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     assert 'include("${PORT_ROOT}/vendor/encore-active/eden/native-hle-overrides.cmake")' in cmake
     # Renderer mapping leases and guest-memory policy are supplied by
     # the shared native dirty-header root in the shipping compiler graph.
-    native_dirty=ROOT/'vendor/encore-active/eden-core/overrides'
+    native_dirty=ROOT/'vendor/encore-active/eden/src'
     assert (native_dirty/'core/native_renderer_lifetime.h').is_file()
     assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake
     assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake
@@ -207,7 +207,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
            *standard,*inc]
     sources=[DMA/'dma_pusher.cpp',DMA/'dma_pusher_dev.cpp',
              ROOT/'vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp',
-             ROOT/'vendor/encore-active/eden-core/src/video_core/memory_manager.cpp',
+             ROOT/'vendor/encore-active/eden/src/video_core/memory_manager.cpp',
              ROOT/'vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
              ROOT/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp',
              ROOT/'vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp',

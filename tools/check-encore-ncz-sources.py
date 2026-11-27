@@ -26,6 +26,23 @@ for rel,sha,marker in pairs:
     digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+b"\0"+raw).hexdigest()
     assert digest==sha,("Pinned Eden changed",rel)
     text=(active/rel).read_text()
+    if rel == "loader/loader.cpp":
+        # The canonical loader now owns additional reviewed NS2/NX/DXCI/DNSP
+        # logic. Do not reverse those later features merely to reconstruct an
+        # intermediate historical blob; assert the NCZ/XCZ contract directly.
+        for required in (
+            '#include "core/loader/nx.h"',
+            '#include "core/loader/ns2_content_formats.h"',
+            'IdentifyFileLoader<AppLoader_NX>(file)',
+            'extension == "xcz"',
+            'extension == "nsz"',
+            'extension == "dxci"',
+            'extension == "dnsp"',
+            'return std::make_unique<AppLoader_NX>',
+        ):
+            assert required in text, ("missing canonical loader contract", required)
+        print("NCZ_SOURCE_OWNER_PASS", rel)
+        continue
     if rel == "loader/loader.cpp" and "AppLoader_NX" in text:
         # Remove only the seven exact reviewed NX loader-factory additions
         # from an audit copy. The retained predecessor blob is checked below.

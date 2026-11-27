@@ -65,7 +65,7 @@ print("NS2_NATIVE_TIC_PIXEL_FORMAT_MAP_PASS shared=95 rejected=10 explicit_depth
 # P2.2 common owner boundary: Compute buffers and TIC image preflight must
 # share the SAME full-span 49-bit GMMU guard. No false Vulkan publication.
 native_header = (vendor / (
-    "encore-active/ns2-runtime/ampere/shader_recompiler/"
+    "encore-active/eden/srcpere/shader_recompiler/"
     "frontend/ampere/native_qmd_compute_environment.h"
 )).read_text()
 compute = (vendor / "encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()
@@ -183,7 +183,7 @@ print("NS2_NATIVE_TIC_U32_LAYOUT_BOUNDS_PASS no_truncated_view_offset=1")
 # Both native rasterizer variants must check the reflection-to-TIC/TSC
 # ownership order BEFORE capturing or publishing guest image descriptors.
 native_env = (vendor / (
-    "encore-active/ns2-runtime/ampere/shader_recompiler/"
+    "encore-active/eden/srcpere/shader_recompiler/"
     "frontend/ampere/native_qmd_compute_environment.h"
 )).read_text()
 # Capture and typed replay must enforce the EXACT same TIC budget/MSAA

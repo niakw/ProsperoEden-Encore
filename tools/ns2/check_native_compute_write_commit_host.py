@@ -266,8 +266,8 @@ int main() {
 boost_caches=sorted((Path.home()/'.cache').glob(
     'ps5-eden-*/source/.cache/cpm/boost/boost-*/libs'))
 includes=[ROOT/'vendor/sources/fmt/include',
-          ROOT/'vendor/encore-active/ns2-runtime/ampere',
-          ROOT/'vendor/encore-active/ns2-runtime/gpu_dispatch',
+          ROOT/'vendor/encore-active/eden/srcpere',
+          ROOT/'vendor/encore-active/eden/src',
           ROOT/'vendor/sources/eden/src']
 if boost_caches:
     includes.extend(sorted(p for p in boost_caches[-1].rglob('include')

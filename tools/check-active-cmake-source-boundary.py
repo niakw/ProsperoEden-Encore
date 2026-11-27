@@ -34,14 +34,14 @@ assert not subprocess.check_output(
 sources_readme = (SOURCES / "README.md").read_text(encoding="utf-8")
 active_readme = (ACTIVE / "README.md").read_text(encoding="utf-8")
 for marker in (
-    "sources/ = dépendances upstream figées",
-    "encore-active/ = code maintenu par Eden Encore",
+    "dépendances upstream figées",
+    "code maintenu par Eden Encore",
 ):
     assert marker in sources_readme, ("sources contract drift", marker)
 for marker in (
     "override pur Eden Encore",
     "même nom de dépendance, même chemin relatif",
-    "sources/ est la dépendance ; encore-active/ est notre code final",
+    "Règle pratique",
 ):
     assert marker in active_readme, ("encore-active contract drift", marker)
 

@@ -25,7 +25,7 @@ assert thread_entry["required_source_fragment"]=="std::vector<KThread*>& GetPend
 assert thread_entry["review_kind"]=="source_interface"
 assert len({e["path"] for e in entries})==len(entries)
 romfs=next(e for e in entries if e["path"] ==
-    "vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp")
+    "vendor/encore-active/eden/src/core/file_sys/romfs_factory.cpp")
 assert romfs["historical_reviewed_git_blob"] == "cd11cb32429efcceaf6b3e1144d495cce1569383"
 assert romfs["post_snapshot_git_blob"] == "4775cf98c3bfbc587402928bad424dcb471047a0"
 assert romfs["original_disposition"] == "new_source_issue_corrected"

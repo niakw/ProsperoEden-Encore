@@ -37,7 +37,7 @@ assert 'file(READ "${eden_cpu_memory_tu}" eden_cpu_memory)' not in c
 assert 'set(unmapped_log "LOG_ERROR(HW_Memory,' not in c
 assert 'if(NOT unmapped_count EQUAL 11)' not in c
 assert 'memory_native_standard.cpp' in c and 'memory_native_a32.cpp' in c
-assert (r/'vendor/encore-active/eden-core/src/core/memory_native_standard.cpp').read_text().count('ShouldLogUnmappedAccess()') == 11
+assert (r/'vendor/encore-active/eden/src/core/memory_native_standard.cpp').read_text().count('ShouldLogUnmappedAccess()') == 11
 assert 'set_property(SOURCE "${PROJECT_SOURCE_DIR}/src/video_core/host1x/gpu_device_memory_manager.cpp"' in c
 assert c.count('APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1"') >= 2
 assert 'validate_ps5_gpu_memory_mapping' in apply

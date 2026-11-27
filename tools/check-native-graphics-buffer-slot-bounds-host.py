@@ -6,10 +6,10 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-current = (root / "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
+current = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 base = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 base_hdr = (root / "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
-selected_base_hdr = (root / "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
+selected_base_hdr = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
 assert "constexpr u32 NUM_STORAGE_BUFFERS = 16;" in base_hdr
 assert "constexpr u32 NUM_STORAGE_BUFFERS = 32;" in selected_base_hdr
 assert 'static_assert(NUM_STORAGE_BUFFERS <= 32, "storage-buffer bitmasks must fit u32");' in selected_base_hdr

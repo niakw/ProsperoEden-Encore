@@ -87,7 +87,7 @@ assert 'EDEN_NS2_KERNEL_ROOT' in heap
 # A 12 GiB guest kernel cannot work if the memory layout is selected only
 # later by the ExeFS loader (after InitializeKernel). Use the maintained
 # native Core::System as the source ancestor, preserving NS1 optimizations.
-native_core = (ROOT / 'vendor/encore-active/eden-core/src/core/core_native.cpp').read_text()
+native_core = (ROOT / 'vendor/encore-active/eden/src/core/core_native.cpp').read_text()
 shared_core = (ROOT / 'vendor/encore-active/eden/src/core/core.cpp').read_text()
 selector = cmake.split('# The Core::System overlay is a fully maintained', 1)[1].split(
     '# RomFS builder parents', 1)[0]

@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
-core=(root/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
+core=(root/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 texture=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 active=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
 bridge=(root/"vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp").read_text()

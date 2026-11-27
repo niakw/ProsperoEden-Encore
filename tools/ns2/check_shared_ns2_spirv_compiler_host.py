@@ -33,8 +33,8 @@ assert 'set_property(TARGET shader_recompiler PROPERTY SOURCES' in section
 # NS1 SampleMask must survive selecting the shared native SPIR-V owners.
 ns2_context=(ROOT/'vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp').read_text()
 ns2_get=(ROOT/'vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp').read_text()
-ns1_context=(ROOT/'vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp').read_text()
-ns1_get=(ROOT/'vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp').read_text()
+ns1_context=(ROOT/'vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp').read_text()
+ns1_get=(ROOT/'vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp').read_text()
 sample_input='''    if (info.uses_sample_mask) {
         input_sample_mask = DefineInput(*this, TypeArray(U32[1], Const(1U)), false,
                                        spv::BuiltIn::SampleMask);
@@ -162,7 +162,7 @@ print("P2_2C_REAL_SPIRV_TEXEL_DESCRIPTOR_ARRAY_SOURCE_PASS scalar=unchanged poin
 # P2.4: non-generic tessellation patch levels are real shared SPIR-V
 # variables with distinct Input (TES) and Output (TCS) storage. Generic
 # patches retain the existing index and 4-component layout unchanged.
-stage_header=(ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h").read_text()
+stage_header=(ROOT/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.h").read_text()
 patch_emitter=(ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp").read_text()
 assert "Id input_tess_level_outer{};" in stage_header
 assert "Id input_tess_level_inner{};" in stage_header
@@ -233,7 +233,7 @@ includes=[
     native_root,
     ROOT/"vendor/encore-active/ns2-runtime/gpu_dispatch",
     ROOT/"vendor/encore-active/ns2-runtime/hle",
-    ROOT/"vendor/encore-active/eden-shader/src",
+    ROOT/"vendor/encore-active/eden/src",
     ROOT/"vendor/sources/eden/src",
     ROOT/"vendor/sources/eden/src/dynarmic/src",
     cpm/"fmt/12.1.0/include",

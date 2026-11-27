@@ -80,7 +80,7 @@ deps=ROOT/"vendor/sources/eden-cpm"
 # Real shipping shared shader headers define Task/Mesh and mesh-stage
 # metadata. The pinned Eden headers are deliberately retained for NS1,
 # but may not shadow the selected NS2 shader graph for these native TUs.
-includes=[ROOT/"vendor/encore-active/eden-shader/src",
+includes=[ROOT/"vendor/encore-active/eden/src",
           ROOT/"vendor/sources/eden/src",ampere,deps/"fmt/12.1.0/include",
           ROOT/"vendor/encore-active/ns2-runtime/nvdrv_gpu",
           ROOT/"vendor/encore-active/ns2-runtime/gpu_dispatch",

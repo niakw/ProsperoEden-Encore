@@ -53,7 +53,7 @@ constexpr size_t MaxOpenFiles = 8192;
             startup.index(parts) < startup.index('setenv("MESA_SHADER_CACHE_DIR"'),
             'Mesa multipart FD limit must precede RADV initialization')
     # PS5 native NS2-only HLE reply peer window, Lichii 9757e3b1.
-    selected_ipc = read('vendor/encore-active/eden-threading/src/core/hle/kernel/k_server_session.cpp')
+    selected_ipc = read('vendor/encore-active/eden/src/core/hle/kernel/k_server_session.cpp')
     for marker in ('AllowNs2PeerBeforeHleReply(kernel, client_thread);',
                    'std::chrono::microseconds{50}',
                    '(process->GetProgramId() >> 56) != 0x04',
@@ -62,7 +62,7 @@ constexpr size_t MaxOpenFiles = 8192;
     require('AllowNs2PeerBeforeHleReply' not in
             read('vendor/sources/eden/src/core/hle/kernel/k_server_session.cpp'),
             'Immutable kernel IPC source changed')
-    hle_select = read('vendor/encore-active/eden-threading/native-hle-overrides.cmake')
+    hle_select = read('vendor/encore-active/eden/native-hle-overrides.cmake')
     require('encore_replace_core_source(\n        "hle/kernel/k_server_session.cpp" "core/hle/kernel/k_server_session.cpp")' in hle_select,
             'Native PS5 CMake does not select NS2 peer owner')
     # No second runtime, switch by TitleID or release/DEV build selector.

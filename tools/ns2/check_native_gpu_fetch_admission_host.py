@@ -179,11 +179,11 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # header and reports CaptureNativeSyncpointLease as undeclared.
     h05=ROOT/'vendor/encore-active/eden/src'
     h05_header=h05/'core/hle/service/nvdrv/core/syncpoint_manager.h'
-    h05_cmake=(ROOT/'vendor/encore-active/eden-threading/native-hle-overrides.cmake').read_text()
+    h05_cmake=(ROOT/'vendor/encore-active/eden/native-hle-overrides.cmake').read_text()
     assert h05_header.is_file()
     assert 'CaptureNativeSyncpointLease(u32 id)' in h05_header.read_text()
     assert 'target_include_directories(core BEFORE PUBLIC "${_encore_h05_header_root}")' in h05_cmake
-    assert 'include("${PORT_ROOT}/vendor/encore-active/eden-threading/native-hle-overrides.cmake")' in cmake
+    assert 'include("${PORT_ROOT}/vendor/encore-active/eden/native-hle-overrides.cmake")' in cmake
     # Renderer mapping leases and guest-memory policy are supplied by
     # the shared native dirty-header root in the shipping compiler graph.
     native_dirty=ROOT/'vendor/encore-active/eden-core/overrides'

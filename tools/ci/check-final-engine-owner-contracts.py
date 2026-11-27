@@ -9,7 +9,7 @@ import hashlib
 root=Path(__file__).resolve().parents[2]
 paths={
  "sm": "vendor/encore-active/eden-core/src/core/hle/service/sm/sm.h",
- "thread": "vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.h",
+ "thread": "vendor/encore-active/eden/src/core/hle/kernel/k_thread.h",
  "jit": "vendor/encore-active/eden-core/src/dynarmic/backend/x64/a64_interface_standard.cpp",
 }
 expected={
@@ -94,8 +94,8 @@ if expected["thread"] == "3bd35ffb74bac35814ad616d4fbf9ca04dbb245d":
                       "void SetEnteredKernel()",
                       "std::atomic<bool> m_entered_kernel{false};"):
         assert invariant in header, invariant
-thread_cmake=(root/"vendor/encore-active/eden-threading/native-hle-overrides.cmake").read_text()
-scheduler=(root/"vendor/encore-active/eden-threading/src/core/hle/kernel/k_scheduler.cpp").read_text()
+thread_cmake=(root/"vendor/encore-active/eden/native-hle-overrides.cmake").read_text()
+scheduler=(root/"vendor/encore-active/eden/src/core/hle/kernel/k_scheduler.cpp").read_text()
 assert "if(EDEN_BLOCKING_GUEST_CONTEXT_LOCKS)" in thread_cmake
 assert 'target_include_directories(core BEFORE PUBLIC "${_encore_thread_root}")' in thread_cmake
 assert "m_context_guard.try_acquire()" in scheduler

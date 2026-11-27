@@ -269,7 +269,7 @@ endif()
 # Maintained HLE source selection lives with its code, not in this launcher.
 option(EDEN_BLOCKING_GUEST_CONTEXT_LOCKS
     "Use the paired upstream guest scheduler lock fixes" ON)
-include("${PORT_ROOT}/vendor/encore-active/eden-threading/native-hle-overrides.cmake")
+include("${PORT_ROOT}/vendor/encore-active/eden/native-hle-overrides.cmake")
 
 # The full JIT assertion header is versioned under vendor/encore-active.
 # It is byte-equivalent to the previous pinned header + guarded override;
@@ -3637,7 +3637,7 @@ if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)
             # while CMAKE_CURRENT_LIST_DIR in the module is canonical: compare
             # existing source files by real path, never by their spelling.
             get_filename_component(eden_wait64_reviewed_real
-                "${PORT_ROOT}/vendor/encore-active/eden-threading/src/core/${eden_wait64_owner}"
+                "${PORT_ROOT}/vendor/encore-active/eden/src/core/${eden_wait64_owner}"
                 REALPATH)
             foreach(eden_wait64_candidate IN LISTS eden_wait64_sources)
                 if(IS_ABSOLUTE "${eden_wait64_candidate}" AND

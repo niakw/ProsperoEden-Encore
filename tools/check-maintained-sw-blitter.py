@@ -13,8 +13,8 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 backport = (root / "vendor/encore-active/eden/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
 upstream = (root / "vendor/sources/eden/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
-maintained = (root / "vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
-decoder = (root / "vendor/encore-active/eden-core/src/video_core/textures/decoders.cpp").read_text()
+maintained = (root / "vendor/encore-active/eden/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
+decoder = (root / "vendor/encore-active/eden/src/video_core/textures/decoders.cpp").read_text()
 module = (root / "headless/gpu_native_observability.cmake").read_text()
 
 def git_blob(data: str) -> str:

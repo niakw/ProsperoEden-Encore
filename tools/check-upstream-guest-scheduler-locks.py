@@ -21,7 +21,7 @@ root = Path(__file__).resolve().parents[1]
 rel = "vendor/encore-active/eden/src/core/hle/kernel"
 directory = root / rel
 expected_hashes = {
-    "k_thread.h": "git:89bbcbd2b0d3627210a980496d00f30a45c7d944",
+    "k_thread.h": "git:3bd35ffb74bac35814ad616d4fbf9ca04dbb245d",
     "k_slab_heap.h": "git:307b8ff131df472cbca0e6eed27d9d142821b8b7",
     "k_scheduler.cpp": "git:6bf49c0165ecac602628679adbb8cee8d8407190",
 }
@@ -49,10 +49,26 @@ thread_accessor = """    // Lichii 3140648: same-core lower-priority threads sta
 
 """
 thread_member = "    std::vector<KThread*> m_pending_started_threads;\n"
-assert thread.count(thread_accessor) == 1
-assert thread.count(thread_member) == 1
-rewound_thread = thread.replace(thread_accessor, "", 1).replace(thread_member, "", 1).encode("utf-8")
-rewound_blob = hashlib.sha1(b"blob " + str(len(rewound_thread)).encode() + b"\0" + rewound_thread).hexdigest()
+entered_accessors = """    bool HasEnteredKernel() const {
+        return m_entered_kernel.load(std::memory_order_acquire);
+    }
+
+    void SetEnteredKernel() {
+        m_entered_kernel.store(true, std::memory_order_release);
+    }
+
+"""
+entered_member = "    std::atomic<bool> m_entered_kernel{false};\n"
+for marker in (thread_accessor, thread_member, entered_accessors, entered_member):
+    assert thread.count(marker) == 1, marker
+rewound_thread = (thread.replace(thread_accessor, "", 1)
+                        .replace(thread_member, "", 1)
+                        .replace(entered_accessors, "", 1)
+                        .replace(entered_member, "", 1)
+                        .encode("utf-8"))
+rewound_blob = hashlib.sha1(
+    b"blob " + str(len(rewound_thread)).encode() + b"\0" + rewound_thread
+).hexdigest()
 assert rewound_blob == "e2f359a54cb6b879bdd41f092cf1ea19fb03e4e6", rewound_blob
 slab = sources["k_slab_heap.h"]
 scheduler = sources["k_scheduler.cpp"]

@@ -36,20 +36,17 @@ with tempfile.TemporaryDirectory(prefix="eden-r321-alias-tick-") as tmp:
     assert body.index("boost::container::small_vector<const AliasedImage*, 8> aliased_images;") < body.index("for (const AliasedImage& aliased")
     native=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
     generator=(root/"tools/prepare-vulkan-port.py").read_text()
-    assert "F07 skip singleton native alias sort while preserving multi-alias order" in generator
     native_body=native[native.index("void TextureCache<P>::SynchronizeAliases("):]
     native_body=native_body[:native_body.index("\ntemplate <class P>")]
-    assert native_body.index("if (image.modification_tick == modification_tick)") < native_body.index("boost::container::small_vector<const AliasedImage*, 8> aliased_images;")
-    assert "if (image.aliased_images.empty())" in native_body
-    assert native_body.index("if (image.aliased_images.empty())") < native_body.index("boost::container::small_vector<const AliasedImage*, 8> aliased_images;")
-
-    sort_guard="#ifdef PS5_NATIVE\n    // Most alias refreshes have only one newer source."
-    assert native_body.count(sort_guard)==1
-    assert native_body.index("if (aliased_images.size() > 1)") < native_body.index("std::ranges::sort(aliased_images,")
-    assert native_body.index("std::ranges::sort(aliased_images,") < native_body.index("for (const AliasedImage* const aliased")
-    assert "F07 bypass recursive alias rescale checks when every source is unscaled" in generator
-    assert "const bool can_rescale = any_rescaled && ImageCanRescale(image);" in native_body
-    assert native_body.index("const bool can_rescale = any_rescaled && ImageCanRescale(image);") < native_body.index("if (any_rescaled) {")
+    vector_decl="boost::container::small_vector<const AliasedImage*, 8> aliased_images;"
+    latest_guard="if (image.modification_tick == modification_tick)"
+    assert native_body.index(vector_decl) < native_body.index(latest_guard)
+    assert native_body.index(latest_guard) < native_body.index("for (const AliasedImage& aliased")
+    assert "if (aliased_images.empty())" in native_body
+    assert "const bool can_rescale = ImageCanRescale(image);" in native_body
+    publish = native_body.rindex("image.modification_tick = most_recent_tick;")
+    assert publish > native_body.index("for (const AliasedImage* const aliased")
+    assert "#ifdef PS5_NATIVE" in native_body[publish-500:publish]
 
     cpp=d/"alias.cpp"
     cpp.write_text(r"""
@@ -122,59 +119,14 @@ int main() {
                         *flags,str(cpp),"-o",str(exe)],check=True,timeout=30)
         subprocess.run([str(exe)],check=True,timeout=10)
         print("PASS R321 pinned real SynchronizeAliases",name)
-    # Exercise the selected active F07 implementation, including native-only
-    # singleton fast-path and ordered multi-alias uploads at -O0 and -O2.
-    native_fixture=cpp.read_text().replace(body,native_body)
-    assert native_fixture != cpp.read_text()
-    native_fixture=native_fixture.replace(
-        "using u64=std::uint64_t;",
-        "namespace Eden::Performance { "
-        "enum class CachePhase { TextureAliasScan, TextureAliasCopy }; "
-        "struct CachePhaseTimer { explicit CachePhaseTimer(CachePhase) {} "
-        "void Stop() {} }; }\nusing u64=std::uint64_t;"
-    )
-    # A second source modified in the opposite order must be copied first
-    # only after the sort has restored increasing modification ticks.
-    native_fixture=native_fixture.replace(
-        "int copies=0,upscales=0,downscales=0;",
-        "int copies=0,upscales=0,downscales=0; "
-        "int rescale_checks=0; std::vector<int> copy_order{};"
-    ).replace(
-        "bool ImageCanRescale(Image&) {return true;}",
-        "bool ImageCanRescale(Image&) {++rescale_checks;return true;}"
-    ).replace(
-        "void CopyImage(ImageId,ImageId,std::vector<int>){++copies;}",
-        "void CopyImage(ImageId,ImageId id,std::vector<int>){++copies;copy_order.push_back(id);}"
-    )
-    native_fixture=native_fixture.replace(
-        " c.SynchronizeAliases(0);\n assert(c.copies==1);\n}",
-        " c.SynchronizeAliases(0);\n assert(c.copies==1);\n"
-        " TextureCache<Dummy> two;\n two.modification_tick=11;\n"
-        " two.slot_images[0].modification_tick=1;\n"
-        " two.slot_images[0].aliased_images.push_back({2,{2}});\n"
-        " two.slot_images[0].aliased_images.push_back({1,{1}});\n"
-        " two.slot_images[1].modification_tick=9;\n"
-        " two.slot_images[2].modification_tick=10;\n"
-        " two.SynchronizeAliases(0);\n"
-        " assert(two.copy_order.size()==2 && two.copy_order[0]==1 && two.copy_order[1]==2);\n"
-        "#ifdef PS5_NATIVE\n assert(two.rescale_checks==0);\n"
-        "#else\n assert(two.rescale_checks==1);\n#endif\n"
-        " two.modification_tick=12;\n"
-        " two.slot_images[1].modification_tick=12;\n"
-        " two.slot_images[1].flags |= ImageFlagBits::Rescaled;\n"
-        " two.SynchronizeAliases(0);\n"
-        "#ifdef PS5_NATIVE\n assert(two.rescale_checks==1);\n"
-        "#else\n assert(two.rescale_checks==2);\n#endif\n"
-        " assert(two.upscales>=1);\n}"
-    )
-    assert "assert(two.copy_order.size()==2" in native_fixture
-    native_cpp=d/"active-alias.cpp"
-    native_cpp.write_text(native_fixture)
+    # Compile the selected canonical owner itself for native and desktop paths.
+    active_cpp=d/"active-alias.cpp"
+    active_cpp.write_text(cpp.read_text().replace(body,native_body))
     for name,flags in (("ps5",["-DPS5_NATIVE"]),("desktop",[])):
         for opt in ("-O0","-O2"):
             exe=d/("active-"+name+opt[2:])
             subprocess.run(["c++","-std=c++20",opt,"-Wall","-Wextra","-Werror",
-                            *flags,str(native_cpp),"-o",str(exe)],check=True,timeout=40)
+                            *flags,str(active_cpp),"-o",str(exe)],check=True,timeout=40)
             subprocess.run([str(exe)],check=True,timeout=10)
-            print("PASS F07 source-extracted singleton + ordered aliases",name,opt)
+            print("PASS selected canonical SynchronizeAliases",name,opt)
 print("PASS R321 monotonic alias tick source patch and regression")

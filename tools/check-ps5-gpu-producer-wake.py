@@ -42,7 +42,7 @@ assert 'set(EDEN_ACTIVE_EDEN "${PORT_ROOT}/vendor/encore-active/eden")' in cmake
 assert 'set(EDEN_GPU_QUEUE_HEADER "${EDEN_ACTIVE_EDEN}/src/common/bounded_threadsafe_queue.h")' in cmake
 assert 'set(EDEN_GPU_WORKER "${EDEN_ACTIVE_EDEN}/src/video_core/gpu_thread.cpp")' in cmake
 assert 'list(APPEND video_sources "${EDEN_GPU_WORKER}")' in cmake
-assert 'file(READ "${PORT_ROOT}/vendor/encore-active/eden-core/gpu-injections/gpu_queue_stop_wait.inc"' not in cmake
+assert 'file(READ "${PORT_ROOT}/vendor/encore-active/eden/gpu-injections/gpu_queue_stop_wait.inc"' not in cmake
 
 cpp = r"""
 #include <array>

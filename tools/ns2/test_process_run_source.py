@@ -3,7 +3,7 @@
 from pathlib import Path
 import os,subprocess,tempfile
 root=Path(__file__).resolve().parents[2]
-owner=(root/'vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp').read_text()
+owner=(root/'vendor/encore-active/eden/src/core/hle/service/os/process.cpp').read_text()
 start=owner.index('bool Process::Run() {')
 end=owner.index('\nvoid Process::Terminate()',start)
 real=owner[start:end]
@@ -113,7 +113,7 @@ with tempfile.TemporaryDirectory(prefix="n52-os-process-") as d:
                         "-Wno-unused-variable","-Werror","-fsanitize=undefined",
                         "-fno-sanitize-recover=all",
                         "-DEDEN_NS2_PROCESS_RUN_GUARD=1",
-                        "-I",str(root/"vendor/encore-active/ns2-runtime/metadata"),
+                        "-I",str(root/"vendor/encore-active/eden/src"),
                         "-I",str(root/"vendor/encore-active/eden/src"),
                         str(src),"-o",str(exe)],check=True)
         subprocess.run([str(exe)],check=True)

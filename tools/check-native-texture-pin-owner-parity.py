@@ -8,7 +8,7 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 vendor = root / "vendor/encore-active"
-astc = (vendor / "ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+astc = (vendor / "eden/src/video_core/texture_cache/texture_cache.h").read_text()
 vulkan = (vendor / "eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
 start = "#ifdef PS5_NATIVE\n// NS2 and NS1 use one TextureCache channel map"
 end = "\ntemplate <class P>\nImageViewId TextureCache<P>::VisitImageView("

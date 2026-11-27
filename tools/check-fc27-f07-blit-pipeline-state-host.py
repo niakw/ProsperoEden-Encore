@@ -299,7 +299,7 @@ print("FC27_F07_RAW_BLIT_PIPELINE_INVALIDATION_PASS source_extracted=3 raw_blit_
 # and clears are clipped to that exact framebuffer layer count. Lichii #38 /
 # Eglantine #293 reproduced the old max-layer policy as a Vulkan validation
 # failure/device loss. Compile the selected policy under sanitizers.
-texture_header=(root/"vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h").read_text()
+texture_header=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache.h").read_text()
 texture_cpp=(root/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
 clear_source=raster
 assert "[[nodiscard]] u32 Layers() const noexcept" in texture_header

@@ -48,7 +48,7 @@ jobs:
           overlay=vendor/encore-active/ns2-a64/dynarmic
           rm -rf "$stage"
           cp -a "$baseline" "$stage"
-          cp vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp \
+          cp vendor/encore-active/eden/src/dynarmic/frontend/A64/translate/a64_translate.cpp \
              "$stage/src/dynarmic/frontend/A64/translate/a64_translate.cpp"
           for path in frontend/A64/decoder/a64.h frontend/A64/decoder/a64.inc \
               frontend/A64/translate/impl/a64_branch.cpp \

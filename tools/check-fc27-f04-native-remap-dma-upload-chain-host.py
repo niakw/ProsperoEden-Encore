@@ -17,7 +17,7 @@ import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
 cache=(ROOT/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
-dma=(ROOT/"vendor/encore-active/eden-core/src/video_core/engines/maxwell_dma.cpp").read_text()
+dma=(ROOT/"vendor/encore-active/eden/src/video_core/engines/maxwell_dma.cpp").read_text()
 base=(ROOT/"tools/check-fc27-f04-native-upload-revision-host.py").read_text()
 fast=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 pre=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()

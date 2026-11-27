@@ -14,7 +14,7 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 OWNER=ROOT/"vendor/encore-active/eden/src/video_core/host1x/nx2_video_decoder.cpp"
 SERVICE=ROOT/"vendor/encore-active/eden/src/core/hle/service/am/service/graphics_video_decoder_session.cpp"
-SYNC_OWNER=ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"
+SYNC_OWNER=ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp"
 SYNC_HEADER=ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h"
 assert "void SyncpointManager::IncrementGuest(" in SYNC_OWNER.read_text()
 assert "bool IsReadyGuest(u32 syncpoint_id, u32 expected_value) const" in SYNC_HEADER.read_text()

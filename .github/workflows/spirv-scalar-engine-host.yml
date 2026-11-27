@@ -20,7 +20,7 @@ jobs:
           python3 -B vendor/tests/ps5_spirv_scalar_real_sirit_host.py
           test "$(git hash-object vendor/encore-active/eden/src/shader_recompiler/frontend/ir/breadth_first_search.h)" = "fa5e7572ef99bba3db17154c63f60dddba7a87c6"
           python3 -B vendor/tests/ns1_r23_58_conditional_phi.py
-          test "$(git hash-object vendor/encore-active/eden-core/src/video_core/shader_environment.cpp)" = "2ed48cbbcc9b1c5ee963c78410a6e5caeeafaab1"
+          test "$(git hash-object vendor/encore-active/eden/src/video_core/shader_environment.cpp)" = "2ed48cbbcc9b1c5ee963c78410a6e5caeeafaab1"
           python3 -B vendor/tests/ps5_null_texture_environment_host.py
           test "$(git hash-object vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate_program.cpp)" = "2cd894ab009c16a22d953d1cba9359c28ae22149"
           python3 -B vendor/tests/ps5_geometry_passthrough_mask_host.py

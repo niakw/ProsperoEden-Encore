@@ -110,4 +110,4 @@ jobs:
           # PS5 command now: run 43864640130 previously reached 1200+ objects
           # before exposing its incomplete-type failure.
           python3 -B tools/check-native-source-syntax.py "$native" \
-            --only vendor/encore-active/eden-core/src/video_core/gpu_gl_native.cpp
+            --only vendor/encore-active/eden/src/video_core/gpu_gl_native.cpp

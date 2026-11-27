@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source": "vendor/encore-active/eden-core/src/core/file_sys/savedata_factory.cpp",
+  "source": "vendor/encore-active/eden/src/core/file_sys/savedata_factory.cpp",
   "baseline_blob": "021de7c7f2f3cee7d5ad6c6fa458a57fc23a8002",
   "active_blob": "0bda129d2d2bd0f61ffe57089c9d6da5c79c8f86",
   "hunks": [

@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 # a green test against sources/ alone previously missed the KProcess OOM bug.
 OWNERS = (
     ("canonical", ROOT / "vendor/sources/eden/src/core/hle/kernel/k_process.cpp"),
-    ("shipping", ROOT / "vendor/encore-active/eden-core/src/core/hle/kernel/k_process.cpp"),
+    ("shipping", ROOT / "vendor/encore-active/eden/src/core/hle/kernel/k_process.cpp"),
 )
 START = "Result KProcess::LoadFromMetadata("
 STOP = "\nvoid KProcess::LoadModule("

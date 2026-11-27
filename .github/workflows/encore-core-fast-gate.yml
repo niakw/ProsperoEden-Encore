@@ -77,7 +77,6 @@ on:
       - 'tools/check-ps5-radv-64bit-arithmetic-host.py'
       - 'tools/check-eden-backport-patch-integrity-host.py'
       - 'headless/backports/**'
-      - 'vendor/encore-active/eden/backports/manifest.json'
       - 'tools/check-native-quiet-shutdown-heap-host.py'
       - 'tools/check-native-fastmem-signal-install-host.py'
       - 'tools/check-sparse-zero-bounds-host.py'
@@ -295,7 +294,6 @@ on:
       - 'tools/check-ns2-*.py'
       - 'tools/check-eden-backport-patch-integrity-host.py'
       - 'headless/backports/**'
-      - 'vendor/encore-active/eden/backports/manifest.json'
       - 'tools/stage-ps5-graphics-enums.py'
       - '.github/workflows/encore-core-fast-gate.yml'
   pull_request:

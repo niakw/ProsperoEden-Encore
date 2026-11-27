@@ -6,7 +6,7 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 active=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-bridge=(root/"vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp").read_text()
+bridge=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp").read_text()
 start="void RasterizerVulkan::UnmapMemory("
 end="void RasterizerVulkan::ModifyGPUMemory("
 def get(s):
@@ -18,7 +18,7 @@ assert source.count("::Eden::BufferPages::NeverRegistered(addr, size)")==1
 assert source.index("texture_cache.UnmapMemory(addr, size)") < source.index("buffer_cache.WriteMemory(addr, size, false)") < source.index("pipeline_cache.OnCacheInvalidation(addr, size)")
 oracle=(root/"tools/prepare-vulkan-port.py").read_text()
 assert "The CPU Unmap path may skip ONLY buffer invalidation" in oracle
-owner=(root/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
+owner=(root/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 fragment=owner[owner.index("void BufferCache<P>::ChangeRegister("):]
 assert fragment.index("::Eden::BufferPages::Mark(buffer.CpuAddr(), size);") < fragment.index("page_table[page] = buffer_id;")
 tracker=(root/"vendor/sources/eden/src/video_core/buffer_cache/word_manager.h").read_text()

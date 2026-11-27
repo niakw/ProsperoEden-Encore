@@ -535,7 +535,7 @@ print("NS2_NATIVE_COMPUTE_FENCE_REGISTRATION_FALLBACK_PASS"
 # VkImageView on an assumed number of frames. The GPU completion semaphore
 # owns their final release, independently of the native compute fence owner.
 vk_runtime_header = (vendor / (
-    "encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h"
+    "encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache.h"
 )).read_text()
 vk_runtime = (vendor / "encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
 assert "void RetireGpuImage(Image&& image);" in vk_runtime_header
@@ -581,7 +581,7 @@ assert "image.PinNativeGpu()" in impl and "view.PinNativeGpu()" in impl
 assert "slot_samplers[id].PinNativeGpu()" in impl
 assert "pending.resource->CanRetireNativeGpu()" in vk_runtime
 native_cache_header = (vendor / (
-    "encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h"
+    "encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache.h"
 )).read_text()
 assert native_cache_header.count("bool CanRetireNativeGpu() const noexcept") == 3
 assert native_cache_header.count("std::shared_ptr<u8> PinNativeGpu()") == 3
@@ -622,7 +622,7 @@ print("NS2_NATIVE_VULKAN_TEXTURE_PIN_PASS cache=shared gpu_retire=leased"
 # The optional ASTC include root may shadow the canonical Vulkan cache
 # owner. Both must implement the same channel-identity, TIC/TSC acquisition
 # and fence-held image/view/sampler pin API, without removing ASTC features.
-astc_root = vendor / "encore-active/ns2-astc/include/video_core/texture_cache"
+astc_root = vendor / "encore-active/eden/src/video_core/texture_cache"
 vulkan_root = vendor / "encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache"
 astc_base = (astc_root / "texture_cache_base.h").read_text()
 astc_impl = (astc_root / "texture_cache.h").read_text()

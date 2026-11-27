@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-active = root / "vendor/encore-active/eden-core/src/dynarmic/backend/x64"
+active = root / "vendor/encore-active/eden/src/dynarmic/backend/x64"
 pinned = root / "vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64"
 cm = (root / "headless/CMakeLists.txt").read_text()
 shared_cmake = (root / "headless/dynarmic/shared-jit.cmake").read_text()
@@ -44,7 +44,7 @@ last = cm.index('set_property(TARGET dynarmic PROPERTY SOURCES "${jit_sources}")
 selection = cm[first:last]
 assert selection.count("get_target_property(jit_sources dynarmic SOURCES)") == 1
 selection = selection.replace("get_target_property(jit_sources dynarmic SOURCES)", 'set(jit_sources "")')
-assert "vendor/encore-active/eden-core/src/dynarmic/backend/x64" in selection
+assert "vendor/encore-active/eden/src/dynarmic/backend/x64" in selection
 assert shutil.which("cmake"), "CMake missing"
 with tempfile.TemporaryDirectory(prefix="eden-memory-unit-") as tmp:
     tmp = Path(tmp)

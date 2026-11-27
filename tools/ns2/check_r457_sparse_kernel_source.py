@@ -32,7 +32,7 @@ for marker in (
     "target_compile_definitions(common PRIVATE EDEN_NS2_SPARSE_BACKING=1)",
     "target_compile_definitions(core PRIVATE EDEN_NS2_SPARSE_BACKING=1)",
     "vendor/encore-active/ns2-runtime/sparse-residency",
-    "vendor/encore-active/eden-core/overrides",
+    "vendor/encore-active/eden/src",
     "set(EDEN_NS2_NATIVE_GPU_PULLER",
     "vendor/encore-active/ns2-runtime/gpu_dispatch",
 ):

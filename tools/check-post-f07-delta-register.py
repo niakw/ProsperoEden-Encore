@@ -18,7 +18,7 @@ assert len(entries)==44  # 43 earlier successors + reviewed Nov26 native directo
 # The additional vendor entry is a documented source-interface successor,
 # not a relaxation of historical F07 provenance or a console performance claim.
 thread_entry=next(e for e in entries if e["path"]==
-    "vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.h")
+    "vendor/encore-active/eden/src/core/hle/kernel/k_thread.h")
 assert thread_entry["historical_reviewed_git_blob"]=="e2f359a54cb6b879bdd41f092cf1ea19fb03e4e6"
 assert thread_entry["post_snapshot_git_blob"]=="89bbcbd2b0d3627210a980496d00f30a45c7d944"
 assert thread_entry["required_source_fragment"]=="std::vector<KThread*>& GetPendingStartedThreads()"
@@ -338,7 +338,7 @@ for entry in entries:
         else:
             assert actual==successor,("Unreviewed Nov15 launcher successor",entry["path"],actual)
         successor_hits.add(entry["path"])
-    elif (entry["path"] == "vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.h" and
+    elif (entry["path"] == "vendor/encore-active/eden/src/core/hle/kernel/k_thread.h" and
           actual == "3bd35ffb74bac35814ad616d4fbf9ca04dbb245d"):
         assert expected == "89bbcbd2b0d3627210a980496d00f30a45c7d944"
         current = path.read_text(encoding="utf-8")

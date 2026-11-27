@@ -10,7 +10,7 @@ def blob(path):
     return hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
 stream=V/"sources/eden-cpm/sirit/v1.0.5/src/stream.h"
 constant=V/"sources/eden-cpm/sirit/v1.0.5/src/instructions/constant.cpp"
-header=V/"encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h"
+header=V/"encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.h"
 assert blob(stream)=="31c2680c2f2c6977e5368e4a28262d8db611e3f8"
 assert blob(constant)=="612049c4f8e54db3e95f43f49e8407158ab0b9ac"
 assert blob(header)=="844a118358c874b0666aebda116c1d6a0c9a8ceb"

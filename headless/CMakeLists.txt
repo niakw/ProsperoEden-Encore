@@ -1949,11 +1949,11 @@ endif()
 # untouched; only the native PS5 shader target sees this reviewed pair.
 if(PS5_NATIVE)
     set(EDEN_FC27_SSA_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-shader")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler")
     set(EDEN_FC27_SSA_HEADER
-        "${EDEN_FC27_SSA_ROOT}/include/shader_recompiler/frontend/ir/basic_block.h")
+        "${EDEN_FC27_SSA_ROOT}/frontend/ir/basic_block.h")
     set(EDEN_FC27_SSA_SOURCE
-        "${EDEN_FC27_SSA_ROOT}/src/shader_recompiler/ir_opt/ssa_rewrite_pass.cpp")
+        "${EDEN_FC27_SSA_ROOT}/ir_opt/ssa_rewrite_pass.cpp")
     if(NOT EXISTS "${EDEN_FC27_SSA_HEADER}" OR NOT EXISTS "${EDEN_FC27_SSA_SOURCE}")
         message(FATAL_ERROR "FC27 SSA maintained owners missing")
     endif()

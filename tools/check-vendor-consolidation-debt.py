@@ -1901,7 +1901,7 @@ jit_state_anchor = "    std::array<u64, RSB_SIZE> rsb_codeptrs;\n"
 jit_state_added = "\n    // ProsperoEden: what generated code reads instead of embedding it, so that any core can run\n    // code another core compiled (jit_group.h): this core's callbacks and JIT object, TPIDR\n    // registers, exclusive monitor slots, configuration and fast dispatch table.\n    void* eden_callbacks = nullptr;\n    void* eden_jit = nullptr;\n    u64* eden_tpidr_el0 = nullptr;\n    const u64* eden_tpidrro_el0 = nullptr;\n    void* eden_exclusive_address = nullptr;\n    void* eden_exclusive_value = nullptr;\n    const void* eden_conf = nullptr;\n    void* eden_fast_dispatch = nullptr;\n"
 assert jit_state_pinned.count(jit_state_anchor) == 1, "Pinned A64JitState layout drift"
 jit_state_expected = jit_state_pinned.replace(jit_state_anchor, jit_state_anchor + jit_state_added)
-assert (active / "eden-core/dynarmic/shared-jit/a64_jitstate.h").read_text() == jit_state_expected, (
+assert (active / "eden/src/dynarmic/src/dynarmic/backend/x64/a64_jitstate.h").read_text() == jit_state_expected, (
     "Maintained A64JitState differs from historical M01 generation")
 assert ('configure_file("${EDEN_SHARED_JIT_DIR}/a64_jitstate.h"\n'
         '        "${PORT_BUILD_DIR}/include/${eden_jitstate_relative}" COPYONLY)') in shared_jit_selector
@@ -1911,7 +1911,7 @@ print("ENCORE_SHARED_JIT_STATE_PARITY_PASS M01 exact historical layout, direct m
 # M03 exact parity: the canonical callback translation unit reproduces
 # the previous generated includes, args registry and two call substitutions.
 callback_original = (sources / "eden/src/dynarmic/src/dynarmic/backend/x64/callback.cpp").read_text()
-callback_args = (active / "eden-core/dynarmic/shared-jit/jit_state_args.inc").read_text()
+callback_args = (active / "eden/src/dynarmic/src/dynarmic/backend/x64/jit_state_args.inc").read_text()
 callback_changes = (
     ("namespace Dynarmic::Backend::X64 {\n",
      "namespace Dynarmic::Backend::X64 {\n" + callback_args),
@@ -1925,7 +1925,7 @@ for before, after in callback_changes:
     assert callback_expected.count(before) == 1, ("Pinned shared-JIT callback anchor drift", before)
     callback_expected = callback_expected.replace(before, after)
 callback_expected = "#include <array>\n#include <atomic>\n#include <cstdlib>\n#include <optional>\n" + callback_expected
-assert (active / "eden-core/dynarmic/shared-jit/callback.cpp").read_text() == callback_expected, (
+assert (active / "eden/src/dynarmic/src/dynarmic/backend/x64/callback.cpp").read_text() == callback_expected, (
     "Maintained shared-JIT callback differs from M03 output")
 assert ('configure_file("${EDEN_SHARED_JIT_DIR}/callback.cpp"\n'
         '        "${PORT_BUILD_DIR}/callback.cpp" COPYONLY)') in shared_jit_selector
@@ -1951,15 +1951,15 @@ scalar_module = (root / "headless/scalar-memory.cmake").read_text()
 assert 'file(READ "${EDEN_SCALAR_INPUT_DIR}/scalar-memory-${lower}.inc" scalar_access)' not in scalar_module
 assert "set(memory_source" not in scalar_module
 for variant in ("standard", "checked"):
-    compiled = (active / f"eden-core/src/dynarmic/backend/x64/emit_x64_memory_{variant}.cpp.inc").read_text()
+    compiled = (active / f"eden/src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory_{variant}.cpp.inc").read_text()
     for direction in ("read", "write"):
-        oracle = (active / f"eden-core/dynarmic/scalar/scalar-memory-{direction}.inc").read_text()
+        oracle = (active / f"eden/src/dynarmic/src/dynarmic/backend/x64/scalar-memory-{direction}.inc").read_text()
         assert oracle in compiled, ("lost scalar fallback", variant, direction)
 assert not (root / "headless/checked-fastmem.cmake").exists()
 assert 'write_derived("' not in scalar_module
 assert 'list(APPEND jit_sources "${EDEN_MAINTAINED_SCALAR_BACKEND}/emit_x64_${unit}.cpp")' in scalar_module
 for unit in ("vector", "data_processing"):
-    assert (active / f"eden-core/src/dynarmic/backend/x64/emit_x64_{unit}.cpp").is_file()
+    assert (active / f"eden/src/dynarmic/src/dynarmic/backend/x64/emit_x64_{unit}.cpp").is_file()
 assert (root / "tools/check-maintained-scalar-emitters.py").is_file()
 # Both Fermi2D variants are full tracked sources; native CMake selects,
 # and the ordinary mode remains OFF for unqualified layered copies.
@@ -2073,7 +2073,7 @@ print("VENDOR_MAINTAINED_A64_V81_V85_TRANSLATOR_PARITY_PASS includes=3 guard=1")
 base_opt = (scalar_root / "ir/opt_passes.cpp").read_text()
 opt_anchor = "        case Op::LeastSignificantWord:\n            FoldLeastSignificantWord(inst);\n            break;"
 assert base_opt.count(opt_anchor) == 1
-fold_oracle = (active / "eden-core/dynarmic/scalar/scalar-fold.inc").read_text()
+fold_oracle = (active / "eden/src/dynarmic/src/dynarmic/backend/x64/scalar-fold.inc").read_text()
 scalar_expected = base_opt.replace(opt_anchor, opt_anchor + "\n" + fold_oracle)
 scalar_r23_previous = "    if (conf.HasOptimization(OptimizationFlag::GetSetElimination)) {"
 scalar_r23_checked = (
@@ -2288,8 +2288,8 @@ for filename, expected_blob in gpu_injection_blobs.items():
         unit = (active/"eden/src/video_core"/gpu_name).read_text()
         assert historic_wait in unit, ("G21 wait drift", gpu_name)
 # The old queue injection was redundant and has been removed outright:
-# the same stop-aware method has a single shipping owner in eden-gpu.
-assert not (active / "eden-core/gpu-injections/gpu_queue_stop_wait.inc").exists()
+# the same stop-aware method has a single shipping owner in canonical eden.
+assert not (active / "eden/src/video_core/gpu_queue_stop_wait.inc").exists()
 assert 'gpu_queue_stop_wait.inc' not in c
 queue_header = (active / "eden/src/common/bounded_threadsafe_queue.h").read_text()
 assert queue_header.count("bool EmplaceWaitWithStopToken(") == 1

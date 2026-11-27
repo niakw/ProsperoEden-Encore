@@ -2963,7 +2963,8 @@ for e in entries:
     if vendor_head in {
             "b62f36238ca154a0e6ada2be9c65ffb0b5981d97",
             "0506a211d82c880a49053c2ecb1b3129523dcbb0",
-            "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}:
+            "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290",
+            "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
         assert tree_sha == "b11ce08a796fc2cec7b16972245a2ab3e69245f0"
         current_source_changes = {
         "src/common/net/net.cpp": ("b359ea24cf97759de4e5599334a266190ae19ad480639c2400bdfc72d54bebc2", 9974,

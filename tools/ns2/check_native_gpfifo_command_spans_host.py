@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNER = ROOT/'vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp'
+OWNER = ROOT/'vendor/encore-active/eden/src_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp'
 source = OWNER.read_text()
 submit_begin = 'NvResult nvhost_gpu::SubmitGPFIFOImpl('
 submit_end = '\nCore::Memory::Memory& nvhost_gpu::GetSessionMemory('

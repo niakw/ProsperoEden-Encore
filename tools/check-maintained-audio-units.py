@@ -65,8 +65,28 @@ for old,new in rewrite_cases:
 assert (active/"audio_core/sink/sink_stream.cpp").read_text() == '#include <stdexcept>\n'+original
 assert 'set(EDEN_MAINTAINED_SINK_STREAM' in cmake
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_SINK_STREAM}")' in cmake
-assert 'list(REMOVE_ITEM audio_sources sink/sink_details.cpp sink/sink_stream.cpp renderer/voice/voice_info.cpp)' in cmake
-assert cmake.count('list(APPEND audio_sources "${EDEN_MAINTAINED_SINK_DETAILS}" "${EDEN_MAINTAINED_SINK_STREAM}" "${EDEN_MAINTAINED_VOICE_INFO}")')==1
+
+# NS2 audio REV?/REv? normalization is one maintained translation-unit
+# override. Authenticate it against the frozen source and require CMake to
+# remove the pinned owner before appending the active one.
+info_original=(base/"audio_core/renderer/behavior/info_updater.cpp").read_text()
+info_old="""    if (in_params->revision != behaviour_.GetUserRevision()) {
+        return Service::Audio::ResultInvalidUpdateInfo;
+    }"""
+info_new="""    // Switch 2 opens the renderer with an uppercase REV? tag but can
+    // submit update buffers tagged REv? for the same numeric revision.
+    // Compare the decoded revision number exactly as Lichii/Eglantine do;
+    // Switch 1 tags decode to the same value and keep their existing ABI.
+    if (GetRevisionNum(in_params->revision) !=
+        GetRevisionNum(behaviour_.GetUserRevision())) {
+        return Service::Audio::ResultInvalidUpdateInfo;
+    }"""
+assert info_original.count(info_old)==1
+assert (active/"audio_core/renderer/behavior/info_updater.cpp").read_text()==info_original.replace(info_old,info_new)
+assert 'set(EDEN_MAINTAINED_AUDIO_INFO_UPDATER' in cmake
+assert 'if(NOT EXISTS "${EDEN_MAINTAINED_AUDIO_INFO_UPDATER}")' in cmake
+assert 'renderer/behavior/info_updater.cpp)' in cmake
+assert cmake.count('"${EDEN_MAINTAINED_AUDIO_INFO_UPDATER}")')==1
 assert 'write_derived("${PORT_BUILD_DIR}/sink_stream.cpp"' not in cmake
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/audio_core/sink/sink_stream.cpp"' not in cmake
 print("MAINTAINED_AUDIO_STREAM_PARITY_PASS: historical rewrites, reusable scratch and selected source")

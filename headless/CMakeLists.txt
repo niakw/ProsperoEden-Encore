@@ -2337,9 +2337,25 @@ set(EDEN_MAINTAINED_VOICE_INFO
 if(NOT EXISTS "${EDEN_MAINTAINED_VOICE_INFO}")
     message(FATAL_ERROR "Missing maintained voice source")
 endif()
+# Switch 2 renderer creation uses REV? while update buffers can use REv?
+# for the same numeric revision. Select the maintained upstream-relative TU
+# that normalizes only this comparison; sources/eden remains immutable.
+set(EDEN_MAINTAINED_AUDIO_INFO_UPDATER
+    "${PORT_ROOT}/vendor/encore-active/eden/src/audio_core/renderer/behavior/info_updater.cpp")
+if(NOT EXISTS "${EDEN_MAINTAINED_AUDIO_INFO_UPDATER}")
+    message(FATAL_ERROR "Missing maintained NS2 audio revision source")
+endif()
 get_target_property(audio_sources audio_core SOURCES)
-list(REMOVE_ITEM audio_sources sink/sink_details.cpp sink/sink_stream.cpp renderer/voice/voice_info.cpp)
-list(APPEND audio_sources "${EDEN_MAINTAINED_SINK_DETAILS}" "${EDEN_MAINTAINED_SINK_STREAM}" "${EDEN_MAINTAINED_VOICE_INFO}")
+list(REMOVE_ITEM audio_sources
+    sink/sink_details.cpp
+    sink/sink_stream.cpp
+    renderer/voice/voice_info.cpp
+    renderer/behavior/info_updater.cpp)
+list(APPEND audio_sources
+    "${EDEN_MAINTAINED_SINK_DETAILS}"
+    "${EDEN_MAINTAINED_SINK_STREAM}"
+    "${EDEN_MAINTAINED_VOICE_INFO}"
+    "${EDEN_MAINTAINED_AUDIO_INFO_UPDATER}")
 set_property(TARGET audio_core PROPERTY SOURCES "${audio_sources}")
 if(PS5_NATIVE)
     target_link_libraries(eden-pad PUBLIC "${sdk}/target/lib/libScePad.so" "${sdk}/target/lib/libSceUserService.so")

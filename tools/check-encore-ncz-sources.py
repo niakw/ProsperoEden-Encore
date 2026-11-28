@@ -134,27 +134,25 @@ for rel,sha,marker in pairs:
         if '#include "ncz_vfs.h"' not in expected:
             expected='#include "ncz_vfs.h"\n'+expected
     if rel == "file_sys/registered_cache.cpp":
-        # R23 #113 adds parent-program resolution on top of the existing
-        # NCZ scanner. Reconstruct the exact prior checked NCZ source,
-        # preserving its pinned old vendor Git blob rather than waiving drift.
-        current_bytes=text.encode()
-        current_git=hashlib.sha1(
-            b"blob "+str(len(current_bytes)).encode()+b"\0"+current_bytes).hexdigest()
-        assert current_git=="2658884ef0332ec7dc579824d9c89925f9168891", (
-            "Unreviewed R23 parent scanner source", rel)
-        assert text.count("#include <limits>\n")==1
-        text=text.replace("#include <limits>\n","",1)
-        start="std::optional<u64> ContentProvider::GetParentApplicationId(u64 program_id) const {"
-        end="\nPlaceholderCache::PlaceholderCache("
-        assert text.count(start)==1 and text.count(end)==1
-        i=text.index(start)
-        j=text.index(end,i)
-        text=text[:i]+text[j+1:]
-        old_bytes=text.encode()
-        old_git=hashlib.sha1(
-            b"blob "+str(len(old_bytes)).encode()+b"\0"+old_bytes).hexdigest()
-        assert old_git=="618ff99d2121741c190a9fd3ae8d0fd45f7eb9fe", (
-            "Failed to reconstruct pre-R23 NCZ source", rel)
+        # registered_cache.cpp is now a shared maintained NS1 owner: R23 parent
+        # resolution and the reviewed NCM content-storage APIs live in the same
+        # file. Do not force those independent features back to an obsolete
+        # whole-file blob merely to prove NCZ support. Instead, pin the exact
+        # NCZ scanner delta plus the extracted-tree recursion guard here; the
+        # NCM/R23 contracts are covered by their dedicated host witnesses.
+        assert text.count(new) == 1, ("Missing reviewed NCZ scanner delta", rel)
+        assert text.count(old) == 0, ("Legacy packaged-only scanner returned", rel)
+        assert text.count(guarded) == 1, ("Extracted RomFS/ExeFS scan guard drift", rel)
+        for required in (
+            "ContentProvider::GetParentApplicationId(",
+            "PlaceholderCache::Revert(",
+            "RegisteredCache::ReadContent(",
+            "RegisteredCache::GetContentMeta(",
+            "RegisteredCache::GetRegisteredContentPath(",
+        ):
+            assert required in text, ("Reviewed shared registered-cache owner drift", required)
+        print("NCZ_SOURCE_OWNER_PASS", rel)
+        continue
     if rel == "file_sys/card_image.cpp":
         # Undo only two reviewed XCI guards for legacy NCZ comparison.
         current_bytes = text.encode()

@@ -50,9 +50,9 @@ owners = {
         "throw std::bad_alloc",
     ),
     "eden/src/core/device_memory_manager.h": (
-        "BeginDeferredCachedUpdates",
-        "EndDeferredCachedUpdates",
-        "deferred_cached_updates",
+        "UpdatePagesCachedBatch",
+        "mapping_guard",
+        "process_registry_guard",
     ),
     "eden/src/video_core/engines/puller.cpp": (
         "NativeGpuProcessRegistry",
@@ -76,6 +76,17 @@ for relative, markers in owners.items():
     text = path.read_text()
     for marker in markers:
         assert marker in text, (relative, marker)
+
+# Sparse backing does not depend on the withdrawn FC27 deferred-untrack
+# optimization. Keep active device memory on the synchronous publication path.
+device_owner = (ACTIVE / "eden/src/core/device_memory_manager.h").read_text()
+device_impl = (ACTIVE / "eden/src/core/device_memory_manager.inc").read_text()
+for forbidden in (
+    "BeginDeferredCachedUpdates",
+    "EndDeferredCachedUpdates",
+    "deferred_cached_updates",
+):
+    assert forbidden not in device_owner + device_impl, forbidden
 
 # Frozen dependencies are read-only inputs to this qualification.
 subprocess.run(["git", "diff", "--quiet", "--", "sources"], cwd=VENDOR, check=True)

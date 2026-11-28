@@ -51,19 +51,19 @@ owners = {
         "Eden::RecordGpuFailure(std::current_exception())",
     ),
     "eden/src/video_core/buffer_cache/word_manager.h": (
-        "class DeferredPageCaching",
-        "delta < 0",
-        "t_deferred_page_caching",
+        "tracker->UpdatePagesCachedBatch(coalesced, delta);",
+        "CollectChangedRanges",
+        "ApplyCollectedRanges",
     ),
     "eden/src/core/device_memory_manager.h": (
-        "BeginDeferredCachedUpdates",
-        "EndDeferredCachedUpdates",
-        "deferred_cached_updates",
+        "UpdatePagesCachedBatch",
+        "mapping_guard",
+        "process_registry_guard",
     ),
     "eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp": (
-        "VideoCommon::DeferredPageCaching",
-        "device_memory.BeginDeferredCachedUpdates()",
-        "deferred.ApplyAll()",
+        "GuestCacheLock(buffer_cache.mutex, false)",
+        "if (buffer_cache.OnCPUWrite(addr, size))",
+        "BufferWriteAhead::MarkFollowingPages",
     ),
     "eden/src/core/hle/service/am/service/graphics_supervisor.cpp": (
         "HasCpuBlockedNativeChannels",
@@ -87,6 +87,25 @@ for relative, markers in owners.items():
     for marker in markers:
         assert marker in source, (relative, marker)
 
+# FC27 rollback 2026-11-19/28: active production owners must remain on the
+# synchronous page-protection contract. The developer-only M07 replay source
+# is qualified separately and is not part of this production graph.
+for relative in (
+    "eden/src/video_core/buffer_cache/word_manager.h",
+    "eden/src/core/device_memory_manager.h",
+    "eden/src/core/device_memory_manager.inc",
+    "eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
+):
+    source = (ACTIVE / relative).read_text()
+    for forbidden in (
+        "DeferredPageCaching",
+        "t_deferred_page_caching",
+        "BeginDeferredCachedUpdates",
+        "EndDeferredCachedUpdates",
+        "deferred_cached_updates",
+    ):
+        assert forbidden not in source, (relative, "deferred page-protection regression", forbidden)
+
 gsv = (ACTIVE / "eden/src/core/hle/service/am/service/graphics_supervisor.cpp").read_text()
 for forbidden in (
     "DonkeyKongBananzaProgramId",
@@ -109,5 +128,5 @@ for test in (
 print(
     "CURRENT_VENDOR_RUNTIME_GRAPH_PASS "
     "gitlink=1 sources_frozen=1 encore_active=1 "
-    "fc27_page_untrack=1 ns2_generic_present=1 title_id_policy=0"
+    "fc27_page_protection=sync ns2_generic_present=1 title_id_policy=0"
 )

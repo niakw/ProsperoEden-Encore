@@ -5143,7 +5143,7 @@ if(PS5_NATIVE)
     set(eden_native_dispatch_root "${PORT_ROOT}/vendor/encore-active/eden/src/video_core")
     eden_require_native_owner(video_core "${eden_native_video_root}/gpu_gl_native.cpp"
         "(^|/)(gpu|gpu_gl_native|gpu_gl_native_dev|gpu_gl_host|gpu_gl_host_dev|gpu_vulkan)[.]cpp$")
-    eden_require_native_owner(video_core "${PORT_BUILD_DIR}/gpu_thread.cpp"
+    eden_require_native_owner(video_core "${eden_native_video_root}/gpu_thread.cpp"
         "(^|/)gpu_thread(_quiet|_dev)?[.]cpp$")
     eden_require_native_owner(video_core "${eden_native_dispatch_root}/control/scheduler.cpp"
         "(^|/)control/scheduler[.]cpp$")

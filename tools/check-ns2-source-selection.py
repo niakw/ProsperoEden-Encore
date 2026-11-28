@@ -194,11 +194,22 @@ constexpr size_t MaxOpenFiles = 8192;
             'EDEN_NS2_SUPERVISOR_ROOT' in CMAKE,
             'IPC native session/VI2 owners missing')
     gamechat=read('vendor/encore-active/eden/src/core/hle/service/friend/friend.cpp')
+    gamechat_interface=read('vendor/encore-active/eden/src/core/hle/service/friend/friend_interface.cpp')
+    gamechat_header=read('vendor/encore-active/eden/src/core/hle/service/friend/friend.h')
     require('RegisterNamedService("chat:u"' in gamechat and
             'class IChatSession final' in gamechat and 'class IChatService final' in gamechat and
+            'CreateDaemonSuspendSessionService(HLERequestContext& ctx)' in gamechat and
+            '{2, &Friend::CreateDaemonSuspendSessionService, "CreateDaemonSuspendSessionService"}' in gamechat_interface and
+            'void CreateDaemonSuspendSessionService(HLERequestContext& ctx);' in gamechat_header and
             'EDEN_NS2_GAMECHAT_SOURCE' in CMAKE and
-            'list(REMOVE_ITEM eden_ns2_gamechat_sources "hle/service/friend/friend.cpp")' in CMAKE,
-            'MKW 1.8.0 GameChat friend service is not selected')
+            'EDEN_NS2_GAMECHAT_INTERFACE_SOURCE' in CMAKE and
+            'EDEN_NS2_GAMECHAT_HEADER' in CMAKE and
+            'list(REMOVE_ITEM eden_ns2_gamechat_sources' in CMAKE and
+            '"hle/service/friend/friend_interface.cpp")' in CMAKE and
+            'list(APPEND eden_ns2_gamechat_sources' in CMAKE and
+            '"${EDEN_NS2_GAMECHAT_INTERFACE_SOURCE}")' in CMAKE and
+            'configure_file("${EDEN_NS2_GAMECHAT_HEADER}"' in CMAKE,
+            'MKW 1.8.0 GameChat/friend paired owner is not selected')
     for command in (601,602,1201,1202,1211,1212,1291):
         require(('{'+str(command)+', &IGraphicsSupervisor::') in supervisor,
                 'MKW GameChat/camera GSV command missing: '+str(command))

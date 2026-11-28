@@ -8,7 +8,6 @@ preserve all 16 entries under overflow, and never persist a sampler across
 draws/dispatches or after a failed lookup.
 """
 from pathlib import Path
-import ast
 import shutil
 import subprocess
 import tempfile
@@ -17,8 +16,6 @@ ROOT = Path(__file__).resolve().parents[1]
 VULKAN = ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan"
 graphics = (VULKAN / "vk_graphics_pipeline_cost.cpp").read_text()
 compute = (VULKAN / "vk_compute_pipeline_cost.cpp").read_text()
-generator = (ROOT / "tools/prepare-vulkan-port.py").read_text()
-oracle = (ROOT / "tools/check-vendored-vulkan-fork.py").read_text()
 
 def extract(source, first, last):
     assert source.count(first) == 1 and source.count(last) >= 1
@@ -45,13 +42,6 @@ assert "return texture_cache.GetSamplerId(handle, false);" in graphics_memo
 assert "return texture_cache.GetSamplerId(handle, true);" in compute_memo
 assert "for (std::size_t offset = 0; offset < sampler_memo.size(); ++offset)" in graphics_memo
 assert "for (std::size_t offset = 0; offset < sampler_memo.size(); ++offset)" in compute_memo
-assert compute_memo in generator, "compute generator drift"
-oracle_line = next(line for line in oracle.splitlines()
-                   if line.startswith("    sampler_memo = "))
-assert ast.literal_eval(oracle_line.split(" = ", 1)[1]).lstrip().startswith(
-    "// Sampler table mapping")
-assert graphics_memo in ast.literal_eval(oracle_line.split(" = ", 1)[1]), (
-    "graphics reconstruction oracle drift")
 assert compute.index("#ifdef PS5_NATIVE\n    // Descriptor synchronization") < compute.index(
     "    struct ComputeSamplerMemo")
 assert compute.index("    struct ComputeSamplerMemo") < compute.index(

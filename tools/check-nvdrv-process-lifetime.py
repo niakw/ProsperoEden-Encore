@@ -47,8 +47,8 @@ print('Generated nvdrv session ownership: shared sessions, dead external owner, 
 # Residual FD devices must be destroyed while their borrowed event/service
 # context still lives. Extract the actual production destructor, not a second
 # implementation of it. Reproduce the old implicit-member-order defect.
-module_source=(r/'vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp').read_text()
-module_header=(r/'vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv.h').read_text()
+module_source=(r/'vendor/encore-active/eden/src/core/hle/service/nvdrv/nvdrv.cpp').read_text()
+module_header=(r/'vendor/encore-active/eden/src/core/hle/service/nvdrv/nvdrv.h').read_text()
 assert module_header.index('FilesContainerType open_files;') < module_header.index('KernelHelpers::ServiceContext service_context;')
 destructor=module_source.split('Module::~Module()',1)[1].split('NvResult Module::VerifyFD',1)[0]
 assert 'device.reset();' in destructor

@@ -38,7 +38,7 @@ TARGETS = (
 MAINTAINED_CORE_TARGETS = (
     # The native Module owner is selected from the current vendor, not a
     # potentially stale upstream build-cache copy.
-    "vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp",
+    "vendor/encore-active/eden/src/core/hle/service/nvdrv/nvdrv.cpp",
     # Real PS5 kernel compilation of the process-aware cache SVC replacement.
     "vendor/encore-active/eden/src/core/hle/kernel/svc/svc_cache.cpp",
     "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp",

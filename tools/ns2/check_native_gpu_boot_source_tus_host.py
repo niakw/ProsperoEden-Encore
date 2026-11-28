@@ -82,7 +82,7 @@ assert 'EDEN_NS2_RASTERIZER_INTERFACE' in cmake
 # The actual PS5 target must use the same paired NVDRV declaration and
 # implementation as this host syntax probe. Otherwise GSV 1402 compiles here
 # but fails in the native build against the older pinned Eden class.
-native_nvdrv_dir=r/'vendor/sources/eden/src/core/hle/service/nvdrv'
+native_nvdrv_dir=r/'vendor/encore-active/eden/src/core/hle/service/nvdrv'
 for file in ('nvdrv_interface.h', 'nvdrv_interface.cpp'):
     assert 'InitializeForProcess' in (native_nvdrv_dir/file).read_text(), file
 for selected_owner in (

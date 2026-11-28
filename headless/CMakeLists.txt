@@ -1339,7 +1339,7 @@ set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # Eden include roots rather than modifying the immutable upstream SDK cache.
 if(PS5_NATIVE)
     set(EDEN_NATIVE_NVMAP_HEADER
-        "${PORT_ROOT}/vendor/sources/eden/src/core/hle/service/nvdrv/core/nvmap.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvdrv/core/nvmap.h")
     if(NOT EXISTS "${EDEN_NATIVE_NVMAP_HEADER}")
         message(FATAL_ERROR "NS2 native NVMap lifetime header missing")
     endif()
@@ -1848,7 +1848,7 @@ if(PS5_NATIVE)
              "${EDEN_R23_A32_OVERLAY}/dynarmic/${a32_path}" COPYONLY)
     endforeach()
     set(EDEN_R23_A32_DECODER_HEADER
-        "${PORT_ROOT}/vendor/sources/eden/src/dynarmic/src/dynarmic/frontend/A32/decoder/asimd.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/frontend/A32/decoder/asimd.h")
     if(NOT EXISTS "${EDEN_R23_A32_DECODER_HEADER}")
         message(FATAL_ERROR "R23 #11 pinned A32 decoder header moved")
     endif()
@@ -3782,7 +3782,7 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
        NOT EXISTS "${EDEN_N76_NATIVE_JIT_SOURCE}")
         message(FATAL_ERROR "CPU6 needs the existing N76/G11 native A64 owner")
     endif()
-    set(EDEN_CPU6_SOURCE_ROOT "${PORT_ROOT}/vendor/sources/eden/src")
+    set(EDEN_CPU6_SOURCE_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     set(EDEN_CPU6_A64_SOURCE "${EDEN_N76_NATIVE_JIT_SOURCE}")
     set(EDEN_CPU6_OUTPUT_ROOT "${PORT_BUILD_DIR}/ns2-cpu6")
     include("${CMAKE_CURRENT_LIST_DIR}/ns2_cpu6_source_bridge.cmake")
@@ -4215,7 +4215,7 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     # or the NS1 NVDRV initialization path. Select BOTH owners in the single
     # native PS5 binary, never just the GSV caller.
     set(EDEN_NS2_NVDRV_SESSION_ROOT
-        "${PORT_ROOT}/vendor/sources/eden/src/core/hle/service/nvdrv")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvdrv")
     set(EDEN_NS2_NVDRV_SESSION_HEADER
         "${EDEN_NS2_NVDRV_SESSION_ROOT}/nvdrv_interface.h")
     set(EDEN_NS2_NVDRV_SESSION_SOURCE
@@ -4780,7 +4780,7 @@ endif()
 # The PS5 production path uses the maintained SPIR-V OpAtomicCompareExchange.
 if(PS5_NATIVE)
     set(EDEN_PINNED_SHADER_CAS_ROOT
-        "${PORT_ROOT}/vendor/sources/eden/src/shader_recompiler")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler")
     set(EDEN_MAINTAINED_SHADER_CAS_ROOT
         "${PORT_ROOT}/vendor/encore-active/eden/src/shader_recompiler")
     set(eden_native_cas_paths
@@ -4893,7 +4893,7 @@ endif()
 # which already precedes the cached Eden source tree in both native targets.
 # Never patch the pinned tree, split ChannelState layouts or duplicate TUs.
 if(PS5_NATIVE)
-    set(EDEN_NATIVE_GPU_ABI_ROOT "${PORT_ROOT}/vendor/sources/eden/src")
+    set(EDEN_NATIVE_GPU_ABI_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_native_gpu_header IN ITEMS
             video_core/control/channel_state.h
             core/hle/service/nvdrv/core/container.h

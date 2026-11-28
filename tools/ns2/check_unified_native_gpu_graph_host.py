@@ -42,12 +42,12 @@ abi_end = '# The native rasterizer is the reviewed layered-clear implementation'
 assert cmake.count(abi_start) == 1 and cmake.count(abi_end) == 1
 abi_owner = cmake[cmake.index(abi_start):cmake.index(abi_end)]
 stub_relative = 'core/hle/service/nvdrv/devices/nx2_stub_device.h'
-module = root/'vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp'
-stub = root/'vendor/sources/eden/src'/stub_relative
+module = root/'vendor/encore-active/eden/src/core/hle/service/nvdrv/nvdrv.cpp'
+stub = root/'vendor/encore-active/eden/src'/stub_relative
 assert '#include "' + stub_relative + '"' in module.read_text()
 assert stub.is_file() and 'class nx2_stub_device final' in stub.read_text()
 assert abi_owner.count(stub_relative) == 1
-assert 'set(EDEN_NATIVE_GPU_ABI_ROOT "${PORT_ROOT}/vendor/sources/eden/src")' in abi_owner
+assert 'set(EDEN_NATIVE_GPU_ABI_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")' in abi_owner
 assert '"${PORT_BUILD_DIR}/include/${eden_native_gpu_header}" COPYONLY' in abi_owner
 assert 'target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")' in abi_owner
 with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
@@ -111,7 +111,7 @@ if(NOT EXISTS "${PORT_BUILD_DIR}/include/core/hle/service/nvdrv/devices/nx2_stub
     message(FATAL_ERROR "Native NVDRV TSG device header missing from selected ABI overlay")
 endif()
 file(SHA256 "${PORT_BUILD_DIR}/include/core/hle/service/nvdrv/devices/nx2_stub_device.h" stub_selected_sha)
-file(SHA256 "${PORT_ROOT}/vendor/sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h" stub_vendor_sha)
+file(SHA256 "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h" stub_vendor_sha)
 if(NOT stub_selected_sha STREQUAL stub_vendor_sha)
     message(FATAL_ERROR "Native NVDRV TSG header drift")
 endif()
@@ -120,7 +120,7 @@ list(FIND selected_core "hle/service/nvdrv/nvdrv.cpp" legacy_nvdrv_module)
 if(NOT legacy_nvdrv_module EQUAL -1)
     message(FATAL_ERROR "Pinned NVDRV Module compiled beside maintained lifetime owner")
 endif()
-string(REGEX MATCHALL "vendor/sources/eden/src/core/hle/service/nvdrv/nvdrv[.]cpp"
+string(REGEX MATCHALL "vendor/encore-active/eden/src/core/hle/service/nvdrv/nvdrv[.]cpp"
     native_nvdrv_module_owners "${selected_core}")
 list(LENGTH native_nvdrv_module_owners native_nvdrv_module_count)
 if(NOT native_nvdrv_module_count EQUAL 1)

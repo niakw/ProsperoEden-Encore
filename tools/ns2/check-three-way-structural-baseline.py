@@ -33,7 +33,7 @@ owners = {
     "am": ("encore-active/eden/src/core/hle/service/am/service/application_functions.cpp", 1, 74),
     "hid": (prefix+"hid/hid_server.cpp", 1, 235),
     "nifm": (prefix+"nifm/nifm.cpp", 5, 86),
-    "acc": (prefix+"acc/acc.cpp", 24, 487),
+    "acc": (prefix+"acc/acc.cpp", 24, 505),
     "caps_u": (prefix+"caps/caps_u.cpp", 1, 18),
     "caps_su": (prefix+"caps/caps_su.cpp", 1, 5),
     "set": (prefix+"set/settings_server.cpp", 1, 18),

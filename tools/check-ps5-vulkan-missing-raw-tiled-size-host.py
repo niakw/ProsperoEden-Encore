@@ -12,6 +12,8 @@ import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
 SOURCE=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_layer.cpp").read_text()
+SELECTED=(ROOT/"headless/vulkan_present_layer_r24.cpp").read_text()
+VULKAN_CMAKE=(ROOT/"headless/vulkan.cmake").read_text()
 GEN=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 start="#ifdef PS5_NATIVE\n    // An unmapped guest framebuffer has no tiled source to measure."
 end="    buffer.Flush();  // Both the upload and missing-memory clear need visibility."
@@ -22,6 +24,10 @@ assert segment.count("Tegra::Texture::UnswizzleTexture(")==1
 assert segment.count("std::fill(linear_span.begin(), linear_span.end(), u8{0});")==1
 assert segment.count("buffer.Flush();")==1
 assert "An unmapped guest framebuffer has no tiled source to measure." in GEN
+assert '"${EDEN_PORT_DIR}/vulkan_present_layer_r24.cpp"' in VULKAN_CMAKE
+selected_raw=SELECTED.split("void Layer::UpdateRawImage(",1)[1]
+assert "const u64 tiled_size{Tegra::Texture::CalculateSize(" in selected_raw
+assert "block_height_log2, 0, 1, framebuffer.native_tiling" in selected_raw
 assert segment.index("#ifdef PS5_NATIVE") < segment.index("if (host_ptr) {")
 assert segment.index("const u64 tiled_size") > segment.index("if (host_ptr) {")
 cpp=r"""

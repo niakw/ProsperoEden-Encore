@@ -13,7 +13,10 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 source=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_layer.cpp").read_text()
+selected=(root/"headless/vulkan_present_layer_r24.cpp").read_text()
+cmake=(root/"headless/vulkan.cmake").read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()
+assert '"${EDEN_PORT_DIR}/vulkan_present_layer_r24.cpp"' in cmake
 a="void Layer::SetAntiAliasPass(const Device& device) {"
 b="\nvoid Layer::ReleaseRawImages() {"
 assert source.count(a)==1 and source.count(b)==1
@@ -23,6 +26,11 @@ assert "requested_aa != Settings::AntiAliasing::Smaa" in method
 assert "#ifdef PS5_NATIVE" in method and "#else" in method
 assert "The old guard skipped" in generator
 assert method.index("return;") < method.index("scheduler.Finish();")
+selected_method=selected[selected.index("void Layer::SetAntiAliasPass("):selected.index("\nvoid Layer::ReleaseRawImages() {")]
+assert "anti_alias_extent.width" in selected_method
+assert "anti_alias_extent.height" in selected_method
+assert "std::holds_alternative<std::monostate>(anti_alias)" in selected_method
+assert selected_method.index("return;") < selected_method.index("scheduler.Finish();")
 cpp=r"""
 #include <cassert>
 #include <cstddef>

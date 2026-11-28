@@ -667,9 +667,13 @@ void Layer::UpdateRawImage([[maybe_unused]] RasterizerVulkan& rasterizer,
             device_memory.ReadBlock(framebuffer_addr, fragmented_source.data(), tiled_size);
             source = fragmented_source.data();
         }
+        // NvDisp marks only a live NS2 NvMap owner as native_tiling.
+        // Preserve that authenticated GOB layout through the actual PS5 R24
+        // presenter; NS1 keeps the default false Maxwell ordering.
         Tegra::Texture::UnswizzleTexture(
             linear_span, std::span(source, tiled_size),
-            bytes_per_pixel, framebuffer.width, framebuffer.height, 1, block_height_log2, 0);
+            bytes_per_pixel, framebuffer.width, framebuffer.height, 1,
+            block_height_log2, 0, 1, framebuffer.native_tiling);
 #else
     const u64 tiled_size{Tegra::Texture::CalculateSize(
         true, bytes_per_pixel, framebuffer.stride, framebuffer.height, 1, block_height_log2, 0)};

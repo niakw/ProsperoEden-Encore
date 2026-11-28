@@ -4,12 +4,20 @@ from pathlib import Path
 import subprocess, shutil, tempfile
 ROOT=Path(__file__).resolve().parents[1]
 active=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_layer.cpp").read_text()
+selected=(ROOT/"headless/vulkan_present_layer_r24.cpp").read_text()
+vulkan_cmake=(ROOT/"headless/vulkan.cmake").read_text()
 pinned=(ROOT/"vendor/sources/eden/src/video_core/renderer_vulkan/present/layer.cpp").read_text()
 generator=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 ci=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 assert "python3 -B tools/check-vulkan-present-missing-guest-host.py" in ci
 assert "Never upload recycled staging bytes" in generator
 assert "std::fill(linear_span.begin(), linear_span.end(), u8{0});" in active
+# The shipping PS5 graph replaces Eden's layer with R24. Keep this witness
+# tied to the owner that will actually execute on console.
+assert '"${EDEN_PORT_DIR}/vulkan_present_layer_r24.cpp"' in vulkan_cmake
+selected_raw=selected.split("void Layer::UpdateRawImage(",1)[1]
+assert "std::fill(linear_span.begin(), linear_span.end(), u8{0});" in selected_raw
+assert "block_height_log2, 0, 1, framebuffer.native_tiling" in selected_raw
 start="    if (host_ptr) {"
 stop="\n\n    const VkBufferImageCopy copy{"
 new_start="#ifdef PS5_NATIVE\n    // An unmapped guest framebuffer has no tiled source to measure."

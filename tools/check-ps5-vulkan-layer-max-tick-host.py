@@ -13,7 +13,10 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 native = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_layer.cpp").read_text()
+selected = (root / "headless/vulkan_present_layer_r24.cpp").read_text()
+cmake = (root / "headless/vulkan.cmake").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
+assert '"${EDEN_PORT_DIR}/vulkan_present_layer_r24.cpp"' in cmake
 def extract(start, end):
     assert native.count(start) == 1, (start, native.count(start))
     return native[native.index(start):native.index(end, native.index(start))].rstrip()
@@ -27,6 +30,11 @@ assert release.index("scheduler.Wait(*last_tick);") < release.index("raw_image_v
 assert release.index("raw_image_views.clear();") < release.index("raw_images.clear();")
 assert "#ifdef PS5_NATIVE" in release and "#else" in release
 assert generator.count(max_tick) >= 2
+selected_refresh=selected[selected.index("void Layer::RefreshResources("):selected.index("\nvoid Layer::SetAntiAliasPass(")]
+selected_release=selected[selected.index("void Layer::ReleaseRawImages() {"):selected.index("\nu64 Layer::CalculateBufferSize(")]
+assert max_tick in selected_refresh and "scheduler.Wait(*last_tick);" in selected_refresh
+assert max_tick in selected_release and "scheduler.Wait(*last_tick);" in selected_release
+assert "IsDeviceRetiredForShutdown()" in selected_release
 cpp = r"""
 #include <algorithm>
 #include <cassert>

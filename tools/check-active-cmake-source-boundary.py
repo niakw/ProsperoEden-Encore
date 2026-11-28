@@ -121,6 +121,25 @@ consumer_paths = {
     and path != Path(__file__).resolve()
     and path not in historical_receipt_scripts
 }
+
+# Follow structured source contracts loaded by active tools/workflows. This
+# catches stale owner paths hidden one level behind a JSON registry instead of
+# waiting for the downstream checker to fail. Dated F07 ledgers remain explicit
+# historical receipts and are not current source-selection contracts.
+historical_structured_receipts = {
+    ROOT/"docs/EDEN_OPTIMIZATION_COVERAGE_2026-10-20.json",
+    ROOT/"docs/EDEN_POST_F07_CHANGED_SOURCE_REGISTER_2026-11-08.json",
+}
+structured_contract_ref = re.compile(r"docs/[A-Za-z0-9_.\\/-]+[.]json")
+referenced_structured_contracts = set()
+for path in sorted(consumer_paths):
+    source = path.read_text(encoding="utf-8")
+    for relative in structured_contract_ref.findall(source):
+        candidate = ROOT / relative
+        if candidate.is_file() and candidate not in historical_structured_receipts:
+            referenced_structured_contracts.add(candidate)
+consumer_paths |= referenced_structured_contracts
+
 legacy_consumer_refs = []
 
 def is_negative_path_witness(line: str) -> bool:
@@ -333,5 +352,6 @@ print("ENCORE_NS1_CAS_SOURCE_SELECTION_PASS native=1 maintained=1 unique=1 profi
 
 print(f"ENCORE_ACTIVE_CMAKE_SOURCE_BOUNDARY_PASS modules={checked} "
       f"pinned_upstream_modules={excluded_upstream_modules} "
+      f"structured_contracts={len(referenced_structured_contracts)} "
       "vendor_gitlink_match=1 active_source_of_truth=1 "
       "cpp_generators=0 resource_generators=1 nup_source_pair_split=1")

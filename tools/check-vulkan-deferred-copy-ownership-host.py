@@ -299,7 +299,7 @@ for module, changes in edits.items():
         kind = 'VkBufferCopy' if module == 'vk_buffer_cache' else 'VkBufferImageCopy' if nested or index else 'VkImageCopy'
         captures.append((old.group(1), new.group(1), kind, nested, module == 'vk_buffer_cache' and index == 0))
 
-header = (active / 'include/video_core/renderer_vulkan/vk_scheduler.h').read_text()
+header = (active / 'vk_scheduler.h').read_text()
 chunk = header[header.index('    class Command {'):header.index('    struct State {')]
 # Fixture access sets the tail offset to force a failed Record before retry;
 # the actual allocation, move, execution and destruction bodies stay intact.

@@ -10,8 +10,8 @@ root = Path(__file__).resolve().parents[1]
 active = root / "vendor/encore-active/eden/src/video_core/renderer_vulkan"
 ring = (active / "vulkan_descriptor_buffer.cpp").read_text()
 cost = (active / "vk_descriptor_buffer_cost.cpp").read_text()
-header = (active / "include/video_core/renderer_vulkan/vk_descriptor_buffer.h").read_text()
-pipeline = (active / "include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+header = (active / "vk_descriptor_buffer.h").read_text()
+pipeline = (active / "vk_graphics_pipeline.h").read_text()
 raster = (active / "vulkan_rasterizer.cpp").read_text()
 oracle = (root / "tools/prepare-vulkan-port.py").read_text()
 

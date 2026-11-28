@@ -36,7 +36,7 @@ assert hashlib.sha1(b'blob ' + str(len(blob)).encode() + b'\0' + blob).hexdigest
 def draw(source):
     start = source.index('void WindowAdaptPass::Draw(')
     return source[start:source.index('\nVkDescriptorSetLayout WindowAdaptPass::GetDescriptorSetLayout', start)]
-header = (ACTIVE / 'include/video_core/renderer_vulkan/vk_scheduler.h').read_text()
+header = (ACTIVE / 'vk_scheduler.h').read_text()
 chunk = header[header.index('    class Command {'):header.index('    struct State {')].replace('private:', 'public:')
 record_start = '    template <typename T>\n        requires std::is_invocable_v<T, vk::CommandBuffer, vk::CommandBuffer>'
 record = header[header.index(record_start):header.index('    /// Returns the current command buffer tick.')]

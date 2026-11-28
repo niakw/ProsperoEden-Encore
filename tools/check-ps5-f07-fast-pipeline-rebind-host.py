@@ -8,7 +8,7 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 vulkan = root / "vendor/encore-active/eden/src/video_core/renderer_vulkan"
 sched = (vulkan / "vulkan_scheduler.cpp").read_text()
-header = (vulkan / "include/video_core/renderer_vulkan/vk_scheduler.h").read_text()
+header = (vulkan / "vk_scheduler.h").read_text()
 graphics = (vulkan / "vk_graphics_pipeline_cost.cpp").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 begin = "bool Scheduler::UpdateGraphicsPipeline(GraphicsPipeline* pipeline, bool optimized) {"
@@ -97,7 +97,7 @@ print("F07_PIPELINE_VARIANT_REBIND_PASS same_owner=1 transition=1 invalidation=1
 # the first-use driver handle is null. Its subsequent Draw/DrawIndirect worker
 # callbacks MUST use exactly the same validity rule, otherwise recovered HUD
 # draw calls are discarded despite a successful optimized rebuild.
-graphics_header = (vulkan / "include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+graphics_header = (vulkan / "vk_graphics_pipeline.h").read_text()
 admission_begin = "    [[nodiscard]] bool CanExecuteDraw() const noexcept {"
 admission_end = "\n\n    template <typename Spec>"
 assert graphics_header.count(admission_begin) == 1

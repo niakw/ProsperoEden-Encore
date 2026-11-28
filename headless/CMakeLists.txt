@@ -1411,8 +1411,8 @@ if(PS5_NATIVE)
     foreach(eden_r23_vulkan_file IN ITEMS
             "vk_graphics_pipeline_cost.cpp" "vk_pipeline_cache_cost.cpp"
             "vulkan_rasterizer.cpp"
-            "include/video_core/renderer_vulkan/vk_graphics_pipeline.h"
-            "include/video_core/renderer_vulkan/vk_rasterizer.h")
+            "vk_graphics_pipeline.h"
+            "vk_rasterizer.h")
         if(NOT EXISTS
            "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan/${eden_r23_vulkan_file}")
             message(FATAL_ERROR "R23 #35 missing maintained Vulkan owner: ${eden_r23_vulkan_file}")

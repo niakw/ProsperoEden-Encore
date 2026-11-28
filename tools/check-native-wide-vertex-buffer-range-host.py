@@ -7,7 +7,7 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 native=(root/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
-backport=(root/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
+backport=(root/"vendor/sources/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 start="template <class P>\nvoid BufferCache<P>::UpdateVertexBuffer(u32 index) {"
 end="\ntemplate <class P>"
 def extract(s):

@@ -8,7 +8,7 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 cache = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 raster = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
-legacy = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
+legacy = (root / "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 
 def method(source, signature, end="\ntemplate <class P>"):
     at = source.index(signature)

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""Compile actual selected device spans and registry; reject stale native forks."""
+"""Compile the selected canonical device spans and registry invariants."""
 from pathlib import Path
-import hashlib
 import shutil
 import subprocess
 import sys
@@ -9,122 +8,48 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 native = (ROOT / 'vendor/encore-active/eden/src/core/device_memory_manager.inc').read_text()
-backport = (ROOT / 'vendor/encore-active/eden/src/core/device_memory_manager.inc').read_text()
 pinned = (ROOT / 'vendor/sources/eden/src/core/device_memory_manager.inc').read_text()
 header = (ROOT / 'vendor/encore-active/eden/src/core/device_memory_manager.h').read_text()
-# Whole-unit parity retains all atomic, remap, range and ASID fixes. Restoring
-# only id_pool would compile while undoing the no-reuse/lifetime guarantees.
-span_start = backport.index('template <typename Traits>\nu8* DeviceMemoryManager<Traits>::GetSpan(')
-span_end = backport.index('template <typename Traits>\nvoid DeviceMemoryManager<Traits>::InnerGatherDeviceAddresses(', span_start)
-original_span_block = backport[span_start:span_end]
-old_return = '    return GetPointer<u8>(src_addr);'
-new_return = ('    // Reuse the validated physical backing instead of loading the page again.\n'
-              '    return GetPointerFromRaw<u8>((PAddr(backing - 1U) << page_bits) + (src_addr & page_mask));')
-assert original_span_block.count(old_return) == 2
-expected = backport[:span_start] + original_span_block.replace(old_return, new_return) + backport[span_end:]
-# N50 is an opt-in, additive GPU continuity guard. Preserve byte-exact
-# parity of the shipping NS1 device span/ASID owner after removing ONLY the
-# two reviewed guarded map/unmap insertions and its single include.
+
+# The canonical fold must retain the native GetSpan fix: once every physical
+# page was validated, never perform a second translated lookup that can observe
+# a remap between validation and pointer acquisition.
+span_start = native.index('template <typename Traits>\nu8* DeviceMemoryManager<Traits>::GetSpan(')
+span_end = native.index('template <typename Traits>\nvoid DeviceMemoryManager<Traits>::InnerGatherDeviceAddresses(', span_start)
+span_block = native[span_start:span_end]
+raw_return = ('return GetPointerFromRaw<u8>((PAddr(backing - 1U) << page_bits) + '
+              '(src_addr & page_mask));')
+assert span_block.count(raw_return) == 2, 'canonical GetSpan lost validated backing reuse'
+assert 'return GetPointer<u8>(src_addr);' not in span_block
+for marker_text in (
+    'size == 0 || src_addr >= device_as_size || size > device_as_size - src_addr',
+    'page_count > compressed_device_addr.size() - first_phys',
+    'AtomicLoadPhysical(tracked_entries[first_page + i]) != backing + i',
+):
+    assert span_block.count(marker_text) == 2, ('GetSpan bound/continuity guard drift', marker_text)
+
+# The canonical file also owns the NS2 continuity and renderer-lifetime
+# successors that used to live in a second override tree. Verify the actual
+# selected methods, not historical shadow copies.
 ns2_header = '#ifdef EDEN_NS2_DEVICE_CONTINUITY\n#include "core/ns2_egl_continuity_guard.h"\n#endif\n'
-ns2_cut_map = '''#ifdef EDEN_NS2_DEVICE_CONTINUITY
-    // End a previously tracked physical run before mapping state changes.
-    Eden::NS2::GpuMemory::CutContinuityAt(start_page_d,
-        [&](size_t index) { return AtomicLoadContinuity(tracked_entries[index]); },
-        [&](size_t index, u32 new_count) {
-            AtomicStoreContinuity(tracked_entries.GetUnchecked(index), new_count);
-        });
-#endif
-'''
-ns2_cut_unmap = '''#ifdef EDEN_NS2_DEVICE_CONTINUITY
-    Eden::NS2::GpuMemory::CutContinuityAt(start_page_d,
-        [&](size_t index) { return AtomicLoadContinuity(tracked_entries[index]); },
-        [&](size_t index, u32 new_count) {
-            AtomicStoreContinuity(tracked_entries.GetUnchecked(index), new_count);
-        });
-#endif
-'''
-assert native.count(ns2_header) == 1, 'N50 include duplicated or modified'
-assert native.count(ns2_cut_map) == 1, 'N50 map continuity block drifted'
-assert native.count(ns2_cut_unmap) == 1, 'N50 unmap continuity block drifted'
-# Vendor #194 adds FC27 deferred page-protection publication. Keep the live
-# native source intact: reverse exactly the reviewed additions in this
-# parity-only copy before checking the historical device-span/ASID contract.
-# Fail closed on any additional change to the selected vendor owner.
-def git_blob(text):
-    data = text.encode()
-    return hashlib.sha1(b'blob ' + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+assert native.count(ns2_header) == 1
+map_body = native.split('void DeviceMemoryManager<Traits>::Map(', 1)[1].split(
+    'void DeviceMemoryManager<Traits>::Unmap(', 1)[0]
+unmap_body = native.split('void DeviceMemoryManager<Traits>::Unmap(', 1)[1].split(
+    'template <typename Traits>\nvoid DeviceMemoryManager<Traits>::TrackContinuityImpl(', 1)[0]
+assert map_body.count('Eden::NS2::GpuMemory::CutContinuityAt(') == 1
+assert unmap_body.count('Eden::NS2::GpuMemory::CutContinuityAt(') == 1
+assert map_body.count('::Eden::NativeRendererLifetime::MappingCallbackLease lease;') == 1
+assert unmap_body.count('::Eden::NativeRendererLifetime::MappingCallbackLease lease;') == 1
+assert unmap_body.count('deferred_cached_updates.load(std::memory_order_acquire)') == 1
+assert map_body.index('std::shared_lock registry_lk(process_registry_guard);') < map_body.index(
+    'std::unique_lock lk(mapping_guard);')
 
-# R457 renderer lifetime: reverse the exact reviewed delta on the audit copy only.
-if git_blob(native) == "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4":
-    for newer, older in (
-        ("#ifdef PS5_NATIVE\n#include \"core/hle/kernel/board/nintendo/nx/k_system_control.h\"\n#include \"gpu_fault_rate_limit.h\"\n#include \"core/native_renderer_lifetime.h\"\n#endif\n\nnamespace Core {\n", "#ifdef PS5_NATIVE\n#include \"core/hle/kernel/board/nintendo/nx/k_system_control.h\"\n#include \"gpu_fault_rate_limit.h\"\n#endif\n\nnamespace Core {\n"),
-        ("    // renderer callback may itself gather translated GPU addresses.\n    lk.unlock();\n    if (replaced_gpu_mapping && device_inter != nullptr) {\n        const ::Eden::NativeRendererLifetime::MappingCallbackLease lease;\n        if (lease) {\n            device_inter->InvalidateRegion(address, size);\n            ::Eden::GpuFault::remap_cache_evictions.fetch_add(1, std::memory_order_relaxed);\n        }\n    }\n#endif\n}\n", "    // renderer callback may itself gather translated GPU addresses.\n    lk.unlock();\n    if (replaced_gpu_mapping && device_inter != nullptr) {\n        device_inter->InvalidateRegion(address, size);\n        ::Eden::GpuFault::remap_cache_evictions.fetch_add(1, std::memory_order_relaxed);\n    }\n#endif\n}\n"),
-        ("#endif\n    size_t start_page_d = address >> Memory::YUZU_PAGEBITS;\n    size_t num_pages = Common::AlignUp(size, Memory::YUZU_PAGESIZE) >> Memory::YUZU_PAGEBITS;\n    {\n#ifdef PS5_NATIVE\n        const ::Eden::NativeRendererLifetime::MappingCallbackLease lease;\n        if (lease)\n#endif\n        device_inter->InvalidateRegion(address, size);\n    }\n    std::scoped_lock lk(mapping_guard);\n\n    tracked_entries.CommitRegion(start_page_d, start_page_d + num_pages); // should already be committed, but just in case\n", "#endif\n    size_t start_page_d = address >> Memory::YUZU_PAGEBITS;\n    size_t num_pages = Common::AlignUp(size, Memory::YUZU_PAGESIZE) >> Memory::YUZU_PAGEBITS;\n    device_inter->InvalidateRegion(address, size);\n    std::scoped_lock lk(mapping_guard);\n\n    tracked_entries.CommitRegion(start_page_d, start_page_d + num_pages); // should already be committed, but just in case\n"),
-    ):
-        assert native.count(newer) == 1
-        native = native.replace(newer, older, 1)
-    assert git_blob(native) == "daf493ce6e863397ec44bfae467c4f7533570477"
-if git_blob(native) == 'daf493ce6e863397ec44bfae467c4f7533570477':
-    # Reviewed FC27 #194 rollback restored the exact pre-deferral device
-    # owner. Historical continuity/ASID source checks still run below.
-    assert not (ROOT / 'vendor/encore-active/eden/src/core/deferred_cached_updates.h').exists()
-    fc27_prior = native
-else:
-    assert git_blob(native) == '852a0272696c7ce182bc05aee92bc7cbb195446b', (
-        'FC27/NS2 selected device owner changed; review the new delta')
-    fc27_header = (ROOT / 'vendor/encore-active/eden/src/core/deferred_cached_updates.h').read_text()
-    assert git_blob(fc27_header) == '33262f511777cdd1b4a74ac0cd6dc39caa12c9d0'
-    fc27_include = '#include "core/deferred_cached_updates.h"' + chr(10)
-    fc27_wait = '''#ifdef PS5_NATIVE
-        // A guest CPU write may already have changed buffer-cache word state but
-        // deliberately publish its host page-protection decrement after dropping
-        // buffer_cache.mutex. InvalidateRegion orders us behind that cache lock;
-        // wait before removing backing so the deferred decrement cannot be lost
-        // against a later remap.
-        ::Eden::DeferredCachedUpdates::WaitForPublished();
-    #endif
-    '''
-    fc27_batch = '''#ifdef PS5_NATIVE
-        if (auto* deferred = ::Eden::DeferredCachedUpdates::active_collector) {
-            if (delta < 0) {
-                if (deferred->TryAdd(
-                        this,
-                        [](void* owner, std::span<const ::Eden::DeferredCachedUpdates::Range> runs,
-                           s32 run_delta) {
-                            static_cast<DeviceMemoryManager<Traits>*>(owner)
-                                ->UpdatePagesCachedBatch(runs, run_delta);
-                        },
-                        ranges, delta)) {
-                    return;
-                }
-            } else if (!deferred->Empty()) {
-                // Tracking must never lag behind the word state. Flush any older
-                // decrements synchronously before a +1/zero update, preserving the
-                // exact call order and falling back to the original locked path.
-                deferred->Flush();
-            }
-        }
-    #endif
-    '''
-    fc27_prior = native
-    for addition in (fc27_include, fc27_wait, fc27_batch):
-        assert fc27_prior.count(addition) == 1, 'FC27 page-publication hunk drift'
-        fc27_prior = fc27_prior.replace(addition, '', 1)
-    assert git_blob(fc27_prior) == 'daf493ce6e863397ec44bfae467c4f7533570477', (
-        'FC27 parity reversal changed unrelated native code')
-unqualified_native = (fc27_prior.replace(ns2_header, '', 1)
-                      .replace(ns2_cut_map, '', 1)
-                      .replace(ns2_cut_unmap, '', 1))
-assert unqualified_native == expected, 'Native device implementation drifted beyond the reviewed span reuse'
 assert 'id_pool' not in native + header
-map_body = native.split('void DeviceMemoryManager<Traits>::Map(', 1)[1].split('void DeviceMemoryManager<Traits>::Unmap(', 1)[0]
-assert map_body.index('std::shared_lock registry_lk(process_registry_guard);') < map_body.index('std::unique_lock lk(mapping_guard);')
-
 assert 'mutable std::shared_mutex process_registry_guard;' in header
 cmake = (ROOT / 'headless/CMakeLists.txt').read_text()
 assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake
 assert '"${EDEN_NATIVE_DIRTY_HEADER_ROOT}/core/device_memory_manager.inc"' in cmake
-
 
 def methods(text, start, end):
     assert text.count(start) == text.count(end) == 1

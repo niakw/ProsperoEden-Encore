@@ -1089,10 +1089,26 @@ _sync_prior=sync_receipt_source.replace(_sync_new,_sync_old,1).encode()
 assert hashlib.sha1(b"blob "+str(len(_sync_prior)).encode()+bytes([0])+_sync_prior).hexdigest()==\
        "103ed91c68bae0238f2a2ce181e3e292845c19c1"
 print("NS1_HOST1X_THROWING_ACTION_EXACT_REVERSE_PASS prior_blob=103ed91c running_cleanup=1")
-assert blob(SYNC_HDR)==("a62b9a9e8019c2df085fc9d393fcbd4207cd78d7" if sync_blob=="59ac07af5eab89e78b7089d1db58918f2506aafe" else "4f45e7ca10bef7fadf94b4d08a310dea953e7315")
+sync_hdr_blob=blob(SYNC_HDR)
+assert sync_hdr_blob in {
+    "a62b9a9e8019c2df085fc9d393fcbd4207cd78d7",
+    "4f45e7ca10bef7fadf94b4d08a310dea953e7315",
+    "989c0bce8f615174d395413960cbdf9ce4c1fd5f",
+}
 assert blob(CTRL_CPP)=="fcbf4e092f054724b9fd4731c8dfec9917cea27a"
 assert blob(CTRL_HDR)=="fc1c4e3d47bdcf8ef282da02410940432051fcca"
 SYNC_HEADER=SYNC_HDR.read_text()
+if sync_hdr_blob=="989c0bce8f615174d395413960cbdf9ce4c1fd5f":
+    for marker in (
+        "GetNativeGuestSyncpointValue(u32 id) const",
+        "IsNativeGuestActionReady(u64 current, u64 target, bool wide)",
+        "IsWrappingGuestActionReady(u32 current, u32 target)",
+        "RegisterWrappingGuestAction(u32 syncpoint_id, u32 target,",
+        "DeregisterWrappingGuestAction(u32 syncpoint_id, const ActionHandle& handle)",
+        "std::array<std::atomic<u64>, NUM_MAX_SYNCPOINTS> native_guest_counts{};",
+        "std::array<std::list<RegisteredAction>, NUM_MAX_SYNCPOINTS> wrapping_guest_actions;",
+    ):
+        assert marker in SYNC_HEADER, marker
 CTRL_SOURCE=CTRL_CPP.read_text()
 CTRL_HEADER=CTRL_HDR.read_text()
 assert "void WaitHost(u32 syncpoint_id, u32 expected_value, std::stop_token stop);" in SYNC_HEADER

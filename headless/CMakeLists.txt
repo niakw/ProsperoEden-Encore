@@ -1593,9 +1593,9 @@ if(PS5_NATIVE)
     set(EDEN_R23_POOL_ROOT
         "${PORT_ROOT}/vendor/encore-active/eden")
     set(EDEN_R23_POOL_UNIT
-        "${EDEN_R23_POOL_ROOT}/src/dynarmic/backend/x64/constant_pool.cpp")
+        "${EDEN_R23_POOL_ROOT}/src/dynarmic/src/dynarmic/backend/x64/constant_pool.cpp")
     set(EDEN_R23_POOL_HEADER
-        "${EDEN_R23_POOL_ROOT}/include/dynarmic/backend/x64/constant_pool.h")
+        "${EDEN_R23_POOL_ROOT}/src/dynarmic/src/dynarmic/backend/x64/constant_pool.h")
     if(NOT EXISTS "${EDEN_R23_POOL_UNIT}" OR NOT EXISTS "${EDEN_R23_POOL_HEADER}")
         message(FATAL_ERROR "Missing coherent R23 #33 native W^X constant pool pair")
     endif()

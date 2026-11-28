@@ -4265,24 +4265,43 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
 endif()
 
 # MKW 1.8.0 / update ExeFS 917504: nn::chat::Initialize blocks in SM
-# until chat:u exists. Select one complete maintained friend-process owner
-# for the already-reviewed native NS2 profile; NS1/non-native keeps Eden.
+# until chat:u exists. Select the complete maintained friend-process owner:
+# implementation, IServiceCreator dispatch table, and its matching declaration.
+# NS1/non-native keeps Eden.
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
-    set(EDEN_NS2_GAMECHAT_SOURCE
-        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/friend/friend.cpp")
-    if(NOT EXISTS "${EDEN_NS2_GAMECHAT_SOURCE}")
-        message(FATAL_ERROR "Missing maintained NS2 GameChat friend service owner")
-    endif()
+    set(EDEN_NS2_GAMECHAT_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/friend")
+    set(EDEN_NS2_GAMECHAT_SOURCE "${EDEN_NS2_GAMECHAT_ROOT}/friend.cpp")
+    set(EDEN_NS2_GAMECHAT_INTERFACE_SOURCE "${EDEN_NS2_GAMECHAT_ROOT}/friend_interface.cpp")
+    set(EDEN_NS2_GAMECHAT_HEADER "${EDEN_NS2_GAMECHAT_ROOT}/friend.h")
+    foreach(eden_ns2_gamechat_file
+        "${EDEN_NS2_GAMECHAT_SOURCE}"
+        "${EDEN_NS2_GAMECHAT_INTERFACE_SOURCE}"
+        "${EDEN_NS2_GAMECHAT_HEADER}")
+        if(NOT EXISTS "${eden_ns2_gamechat_file}")
+            message(FATAL_ERROR "Missing maintained NS2 GameChat friend owner: ${eden_ns2_gamechat_file}")
+        endif()
+    endforeach()
     get_target_property(eden_ns2_gamechat_sources core SOURCES)
     list(FIND eden_ns2_gamechat_sources
         "hle/service/friend/friend.cpp" eden_ns2_gamechat_friend_idx)
-    if(eden_ns2_gamechat_friend_idx EQUAL -1)
-        message(FATAL_ERROR "Pinned friend.cpp owner changed: re-audit NS2 GameChat service")
+    list(FIND eden_ns2_gamechat_sources
+        "hle/service/friend/friend_interface.cpp" eden_ns2_gamechat_interface_idx)
+    if(eden_ns2_gamechat_friend_idx EQUAL -1 OR eden_ns2_gamechat_interface_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned friend owner changed: re-audit NS2 GameChat service")
     endif()
-    list(REMOVE_ITEM eden_ns2_gamechat_sources "hle/service/friend/friend.cpp")
-    list(APPEND eden_ns2_gamechat_sources "${EDEN_NS2_GAMECHAT_SOURCE}")
+    list(REMOVE_ITEM eden_ns2_gamechat_sources
+        "hle/service/friend/friend.cpp"
+        "hle/service/friend/friend_interface.cpp")
+    list(APPEND eden_ns2_gamechat_sources
+        "${EDEN_NS2_GAMECHAT_SOURCE}"
+        "${EDEN_NS2_GAMECHAT_INTERFACE_SOURCE}")
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_gamechat_sources}")
-    message(STATUS "NS2 GameChat: chat:u friend service owner selected")
+    file(MAKE_DIRECTORY "${PORT_BUILD_DIR}/gamechat/core/hle/service/friend")
+    configure_file("${EDEN_NS2_GAMECHAT_HEADER}"
+        "${PORT_BUILD_DIR}/gamechat/core/hle/service/friend/friend.h" COPYONLY)
+    target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/gamechat")
+    message(STATUS "NS2 GameChat: complete chat:u/friend service owner selected")
 endif()
 
 # Native NS2 built-in font protocol (Lichii NX2 blocker #36).

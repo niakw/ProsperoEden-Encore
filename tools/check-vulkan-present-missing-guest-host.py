@@ -33,6 +33,11 @@ u64 CalculateSize(bool,u32 bpp,u32 stride,u32 height,u32,u32,u32){
     return static_cast<u64>(bpp)*stride*height;
 }
 void UnswizzleTexture(std::span<u8> dst,std::span<const u8> src,
+                      u32,u32,u32,u32,u32,u32){
+    ++unswizzles;assert(src.size()>=dst.size());
+    std::copy_n(src.begin(),dst.size(),dst.begin());
+}
+void UnswizzleTexture(std::span<u8> dst,std::span<const u8> src,
                       u32,u32,u32,u32,u32,u32,u32,bool native_tiling){
     ++unswizzles;assert(!native_tiling);assert(src.size()>=dst.size());
     std::copy_n(src.begin(),dst.size(),dst.begin());

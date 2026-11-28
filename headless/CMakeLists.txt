@@ -4989,6 +4989,7 @@ if(PS5_NATIVE AND EDEN_SHARED_NS2_AM)
         "${PORT_ROOT}/vendor/encore-active/eden/src")
     get_target_property(eden_ns2_service_parity_sources core SOURCES)
     foreach(eden_ns2_service_relative IN ITEMS
+            "caps/caps_manager.cpp"
             "caps/caps_u.cpp"
             "caps/caps_su.cpp"
             "set/settings_server.cpp"

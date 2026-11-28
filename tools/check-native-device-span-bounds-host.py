@@ -41,7 +41,12 @@ assert map_body.count('Eden::NS2::GpuMemory::CutContinuityAt(') == 1
 assert unmap_body.count('Eden::NS2::GpuMemory::CutContinuityAt(') == 1
 assert map_body.count('::Eden::NativeRendererLifetime::MappingCallbackLease lease;') == 1
 assert unmap_body.count('::Eden::NativeRendererLifetime::MappingCallbackLease lease;') == 1
-assert unmap_body.count('deferred_cached_updates.load(std::memory_order_acquire)') == 1
+# FC27 safety rollback 9fa7094d restores synchronous guest page protection.
+# Deferred cached-page epochs must therefore be absent from the selected owner.
+assert 'deferred_cached_updates' not in unmap_body
+assert 'std::this_thread::yield()' not in unmap_body
+assert unmap_body.index('device_inter->InvalidateRegion(address, size);') < unmap_body.index(
+    'std::scoped_lock lk(mapping_guard);')
 assert map_body.index('std::shared_lock registry_lk(process_registry_guard);') < map_body.index(
     'std::unique_lock lk(mapping_guard);')
 

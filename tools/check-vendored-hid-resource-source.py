@@ -12,8 +12,23 @@ old_period="// Correct npad_update_ns is 4ms this is overclocked to lower input 
 new_period="// Use the baseline 4 ms HID period rather than 1 ms overclocking.\n// Fewer input polling wakeups limit pressure on the guest event scheduler.\nconstexpr auto npad_update_ns = std::chrono::nanoseconds{4 * 1000 * 1000}; // 250 Hz"
 assert original.count(old_period)==1
 expected=original.replace(old,new).replace(old_period,new_period)
+cleanup = """    // The departing applet must not leave motion sampling behind.
+    if (console_six_axis) {
+        console_six_axis->StopSampling(aruid);
+    }
+    if (seven_six_axis) {
+        (void)seven_six_axis->FinalizeTransferMemory(aruid);
+    }
+"""
+for method in ("UnregisterAppletResourceUserId", "FreeAppletResourceId"):
+    anchor = f"void ResourceManager::{method}(u64 aruid) {{\n    std::scoped_lock lock{{shared_mutex}};"
+    replacement = f"void ResourceManager::{method}(u64 aruid) {{\n" + cleanup + "    std::scoped_lock lock{shared_mutex};"
+    assert expected.count(anchor)==1, method
+    expected=expected.replace(anchor,replacement,1)
 assert maintained==expected
 assert maintained.count(new)==1
+assert maintained.count("console_six_axis->StopSampling(aruid);")==2
+assert maintained.count("(void)seven_six_axis->FinalizeTransferMemory(aruid);")==2
 cmake=(root/"headless/CMakeLists.txt").read_text()
 assert "set(EDEN_HID_RESOURCE " in cmake
 assert 'list(FIND hid_sources resource_manager.cpp hid_resource_original)' in cmake

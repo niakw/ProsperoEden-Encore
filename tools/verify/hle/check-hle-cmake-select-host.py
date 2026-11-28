@@ -26,6 +26,8 @@ pinned = (
     "hle/kernel/svc/svc_synchronization.cpp",
     "hle/kernel/svc/svc_thread.cpp",
     "hle/service/nvdrv/core/syncpoint_manager.cpp",
+    "hle/service/friend/friend.cpp",
+    "hle/service/friend/friend_interface.cpp",
 )
 
 fixture = r"""
@@ -86,6 +88,25 @@ foreach(file IN ITEMS k_thread.cpp k_server_session.cpp k_scheduler.cpp k_condit
     else()
         if(pinned_pos EQUAL -1 OR NOT active_pos EQUAL -1)
             message(FATAL_ERROR "Pinned source wrong: ${file} pinned=${pinned_pos} active=${active_pos}")
+        endif()
+    endif()
+endforeach()
+
+# The unified Friend/GameChat owner is native-only as well. Exercise both
+# complete translation units so native-hle-overrides.cmake cannot silently
+# select a source that the fixture omitted from the pinned core list.
+foreach(friend_file IN ITEMS friend.cpp friend_interface.cpp)
+    set(friend_pinned "hle/service/friend/${friend_file}")
+    set(friend_native "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/friend/${friend_file}")
+    list(FIND selected "${friend_pinned}" friend_pinned_pos)
+    list(FIND selected "${friend_native}" friend_native_pos)
+    if(PS5_NATIVE)
+        if(NOT friend_pinned_pos EQUAL -1 OR friend_native_pos EQUAL -1)
+            message(FATAL_ERROR "Native Friend owner wrong: ${friend_file} pinned=${friend_pinned_pos} active=${friend_native_pos}")
+        endif()
+    else()
+        if(friend_pinned_pos EQUAL -1 OR NOT friend_native_pos EQUAL -1)
+            message(FATAL_ERROR "Non-native Friend owner wrong: ${friend_file} pinned=${friend_pinned_pos} active=${friend_native_pos}")
         endif()
     endif()
 endforeach()

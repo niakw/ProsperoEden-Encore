@@ -77,7 +77,12 @@ template <typename... Ts> std::string format(const char* p, const Ts&... vs) {
     auto close = cursor+1;
     while (p[close] && p[close] != '}') ++close;
     assert(p[close] == '}' && arg < args.size());
-    out += args[arg++];
+    auto value = args[arg++];
+    const std::string spec{p + cursor, close - cursor + 1};
+    if (spec == "{:04X}" && value.size() > 4) {
+      value = value.substr(value.size() - 4);
+    }
+    out += value;
     cursor = close + 1;
   }
   assert(arg == args.size());

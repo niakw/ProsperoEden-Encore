@@ -43,8 +43,15 @@ def affected() -> list[str]:
                 if not rel.startswith("src/") or ".." in Path(rel).parts:
                     raise RuntimeError(f"Invalid target in {patch}: {rel}")
                 names.add(rel)
-    if len(names) != 5:
-        raise RuntimeError(f"Expected exactly five core patch sources: {sorted(names)}")
+    expected = {
+        "src/core/arm/dynarmic/arm_dynarmic_32.cpp",
+        "src/core/arm/dynarmic/arm_dynarmic_64.cpp",
+        "src/core/hle/service/sm/sm.h",
+    }
+    if names != expected:
+        raise RuntimeError(
+            f"Unexpected historical core patch sources: got={sorted(names)} expected={sorted(expected)}"
+        )
     return sorted(names)
 
 

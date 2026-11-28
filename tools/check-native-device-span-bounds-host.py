@@ -209,7 +209,17 @@ with tempfile.TemporaryDirectory(prefix='encore-device-span-') as temp:
     folder = Path(temp)
     variants = [('pinned', old_spans, False), ('native', spans, True)]
     if not continuity:
-        variants.append(('secondary-lookup', original_span_block, True))
+        # Recreate only the retired secondary-lookup behavior from the current
+        # canonical methods. This keeps the negative race witness without
+        # depending on a deleted shadow owner or historical whole-file blob.
+        secondary_lookup_spans = spans.replace(
+            '    // Reuse the validated physical backing instead of loading the page again.\n'
+            '    return GetPointerFromRaw<u8>((PAddr(backing - 1U) << page_bits) + '
+            '(src_addr & page_mask));',
+            '    return GetPointer<u8>(src_addr);')
+        assert secondary_lookup_spans != spans
+        assert secondary_lookup_spans.count('return GetPointer<u8>(src_addr);') == 2
+        variants.append(('secondary-lookup', secondary_lookup_spans, True))
     for label, segment, current in variants:
         path, binary = folder / (label + '.cpp'), folder / label
         path.write_text(cpp.replace('__ATOMIC__', atomic_load).replace('__METHODS__', segment)

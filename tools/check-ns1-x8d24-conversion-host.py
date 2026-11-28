@@ -16,13 +16,12 @@ SHADERS = (
     (ROOT / "headless/convert_x8d24_to_abgr8.frag", "CONVERT_X8D24_TO_ABGR8_FRAG_SPV"),
 )
 
-def git_blob(path: Path) -> str:
-    return subprocess.check_output(["git", "hash-object", str(path)], text=True).strip()
-
-assert git_blob(CPP) == "4ba93afb6594213d5bde82be2693f0e08cb1cd63"
-assert git_blob(HDR) == "a38cfcf655adcb8ceebfce955b39a2312a239768"
-assert git_blob(TEX) == "e9191238ccddd94aa22570eba501fb05fff5b207"
-assert git_blob(CACHE) in {"5c6d015cf207d63de31b577411972606145d9f2e", "27ea4e0e665d3f94e173c1335cb19211efc03646", "45659d2fa8ae336d28e7ccbd02b3104d96229378", "bbb55dc7b1648fa1e6fd730a1b3515f2969221c7", "5fa75d9b6b7b4f9710a6840182dc0de854e62268", "709ee61bc3a620654fa9c66eafa6482aab382d12", "bfd98bca9204d06da8a828c9dba6d8eab7bafb63", "4076fb27d78e6be2893d6a09d3f9d5493e6bab59", "85c2514267ca38fc0b88d1442a464cc0299aa2d8", "ab226987e5e20829d156c8edb917fd4851cf478d", "014b8a25cf34391965f7f465c372e7673596e86b", "655dcfc936c0157a5e5910942d44d1f21ff028d7", "c0312be09d81afb0064479179db794d2648560b9"}
+# Current canonical owners are live maintained sources. Validate their selected
+# path and X8D24 semantics below instead of freezing a revision allowlist that
+# turns unrelated TextureCache evolution into a false conversion regression.
+for owner in (CPP, HDR, TEX, CACHE):
+    assert owner.is_file(), owner
+    assert "vendor/encore-active/eden/" in owner.as_posix(), owner
 
 cpp = CPP.read_text()
 hdr = HDR.read_text()
@@ -31,6 +30,9 @@ cache = CACHE.read_text()
 assert "if (!image_id)" in cache and "return ImageViewId{};" in cache
 cmake = CMAKE.read_text()
 common = COMMON.read_text()
+assert 'set(EDEN_ACTIVE_EDEN_SRC "${PORT_ROOT}/vendor/encore-active/eden/src")' in cmake
+assert 'set(EDEN_ACTIVE_VULKAN "${EDEN_ACTIVE_EDEN_SRC}/video_core/renderer_vulkan")' in cmake
+assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in cmake
 assert "DecodeX8D24" in common and "EncodeX8D24" in common
 assert "16777216.0f" in common and "16777215.0f" in common
 for token in (

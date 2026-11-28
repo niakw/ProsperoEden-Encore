@@ -36,8 +36,10 @@ assert "GpuGuestMemory<Tegra::CommandHeader," in step
 assert "GuestMemoryFlags::SafeRead" in step
 assert "GuestMemoryFlags::UnsafeRead" in step
 assert "#ifdef PS5_NATIVE" in step
-assert 'NativeGpuChannelRegistry::Instance().IsNative(&channel_state);' in step
-assert step.index('NativeGpuChannelRegistry::Instance().IsNative(&channel_state);') < step.index(
+compact_step = ''.join(step.split())
+native_channel_probe = 'NativeGpuChannelRegistry::Instance().IsNative(&channel_state);'
+assert native_channel_probe in compact_step
+assert compact_step.index(native_channel_probe) < compact_step.index(
     'GpuGuestMemory<Tegra::CommandHeader,')
 assert 'target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)' not in cmake
 assert 'EDEN_NS2_NATIVE_GPU_PULLER' in cmake

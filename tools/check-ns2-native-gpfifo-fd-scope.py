@@ -62,7 +62,10 @@ required_puller = (
 
 required_cpp = (
     "bool nvhost_gpu::UsesNativeAbi(DeviceFD fd) const {",
-    "return sessions.contains(fd) && native_generations.contains(fd);",
+    "const auto session_it = sessions.find(fd);",
+    "native_generations.contains(fd)",
+    "NativeGpuProcessRegistry::Instance().CaptureTicket(session->process)",
+    "native_generations.emplace(fd, ticket->generation);",
     "bool nvhost_gpu::NativeEpochCurrent(DeviceFD fd) const {",
     "native_generations.find(fd)",
     "NativeGpuProcessRegistry::Instance().IsCurrent(",

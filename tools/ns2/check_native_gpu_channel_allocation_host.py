@@ -44,7 +44,10 @@ def extract_method(signature):
     return code[begin:end]
 abi = extract_method('bool nvhost_gpu::UsesNativeAbi(DeviceFD fd) const')
 epoch = extract_method('bool nvhost_gpu::NativeEpochCurrent(DeviceFD fd) const')
-assert 'sessions.contains(fd) && native_generations.contains(fd)' in abi
+assert 'const auto session_it = sessions.find(fd);' in abi
+assert 'native_generations.contains(fd)' in abi
+assert 'NativeGpuProcessRegistry::Instance().CaptureTicket(session->process)' in abi
+assert 'native_generations.emplace(fd, ticket->generation);' in abi
 assert 'NativeGpuProcessRegistry::Instance().IsCurrent(' in epoch
 assert body.index('sessions.find(fd)') < body.index('program_id = process->GetProgramId();')
 assert '[[nodiscard]] NvResult ValidateChannelOwner(DeviceFD fd, u64& program_id) const;' in HEADER.read_text()
@@ -98,6 +101,11 @@ class NativeGpuProcessRegistry {
 public:
     struct Ticket { const FakeProcess* process; u64 generation; };
     static NativeGpuProcessRegistry& Instance() {static NativeGpuProcessRegistry one;return one;}
+    std::optional<Ticket> CaptureTicket(const FakeProcess* process) const {
+        auto it=owners.find(process);
+        if (it==owners.end()) return std::nullopt;
+        return Ticket{process,it->second};
+    }
     bool IsCurrent(Ticket ticket) const {
         auto it=owners.find(ticket.process);
         return it!=owners.end() && it->second==ticket.generation;
@@ -152,9 +160,12 @@ int main() {
     assert(gpu.ValidateChannelOwner(6,program)==NvResult::Success && program==1002);
     // A native FD may never initialise a shared channel from a foreign
     // legacy session, and a legacy FD must refuse the same native channel.
-    const auto generation=native_registry.Register(&native);
     gpu.sessions.emplace(7,20);
-    gpu.native_generations.emplace(7,generation);
+    assert(!gpu.UsesNativeAbi(7));
+    const auto generation=native_registry.Register(&native);
+    assert(gpu.UsesNativeAbi(7));
+    assert(gpu.native_generations.at(7)==generation);
+    assert(gpu.NativeEpochCurrent(7));
     program=sentinel;
     assert(gpu.ValidateChannelOwner(7,program)==NvResult::InvalidState);
     assert(program==sentinel);

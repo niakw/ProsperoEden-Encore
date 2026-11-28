@@ -117,6 +117,9 @@ public:
         return wide ? current >= target
                     : ((static_cast<u32>(current) - static_cast<u32>(target)) & 0x80000000U) == 0;
     }
+    static constexpr bool IsWrappingGuestActionReady(u32 current,u32 target) {
+        return ((current - target) & 0x80000000U) == 0;
+    }
     template<typename Func>
     ActionHandle RegisterGuestAction(u32 id,u32 expected,Func&& action) {
         if (id>=NUM_MAX_SYNCPOINTS) return {};
@@ -128,7 +131,8 @@ public:
     void IncrementGuest(u32);
 private:
     void Increment(std::atomic<u32>&,std::condition_variable&,
-                   std::list<RegisteredAction>&,std::optional<u32> = std::nullopt);
+                   std::list<RegisteredAction>&,std::optional<u32> = std::nullopt,
+                   std::list<RegisteredAction>* = nullptr);
     struct DueActions {
         std::list<RegisteredAction> pending;
         ActionHandle running{};
@@ -137,6 +141,7 @@ private:
     std::array<std::atomic<u32>,NUM_MAX_SYNCPOINTS> syncpoints_guest{};
     std::array<std::atomic<u64>,NUM_MAX_SYNCPOINTS> native_guest_counts{};
     std::array<std::list<RegisteredAction>,NUM_MAX_SYNCPOINTS> native_guest_actions;
+    std::array<std::list<RegisteredAction>,NUM_MAX_SYNCPOINTS> wrapping_guest_actions;
     std::array<std::list<RegisteredAction>,NUM_MAX_SYNCPOINTS> guest_action_storage;
     std::mutex guard;
     u64 last_action_id{};

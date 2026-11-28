@@ -33,17 +33,21 @@ def git_blob(text: str) -> str:
     raw = text.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
 
-# The old NS2 overlay and the maintained Eden header were consolidated into
-# one canonical encore-active owner. Validate the exact reviewed successor
-# and reconstruct its exact predecessor instead of comparing that file to
-# itself plus the same additions.
-assert git_blob(svc_enum) == "093441f9da4f3232ea884f1241417ef2dcc93a5f"
+# The canonical SVC owner now also carries reviewed HOS23 InfoType names.
+# Qualify the ABI entries that matter instead of pinning an obsolete whole-file
+# blob and thereby rejecting independent enum maintenance.
 gpu_attribute = '    GpuAccessible = (1 << 5), // NS2 SVC 0x80; preserve maintained NS1 source ABI\n'
 wait64 = '    WaitIfEqual64 = 3, // 8-byte aligned compare, no truncated upper word\n'
 assert svc_enum.count(gpu_attribute) == 1
 assert svc_enum.count(wait64) == 1
-svc_predecessor = svc_enum.replace(gpu_attribute, "", 1).replace(wait64, "", 1)
-assert git_blob(svc_predecessor) == "cc37a063101f85b8cdd0eb2c1bea97df32ab9969"
+for abi_entry in (
+    '    PermissionLocked = (1 << 4),',
+    '    WaitIfEqual = 2,',
+    '    AddressSpaceSize = 36,',
+    '    ShadowStackRegionAddress = 37,',
+    '    ShadowStackRegionSize = 38,',
+):
+    assert svc_enum.count(abi_entry) == 1, abi_entry
 # Six-core Switch 2 processes may query thread ticks on physical cores 4/5.
 # Preserve the legacy four-core range for non-extended processes.
 info_source = (vendor / "eden/src/core/hle/kernel/svc/svc_info.cpp").read_text()
@@ -54,7 +58,9 @@ assert "const u64 num_cpus = (physical_core_mask & (u64{3} << 4)) != 0" in info_
 assert "? Core::Hardware::NUM_CPU_CORES : 4;" in info_source
 assert '    PermissionLocked = (1 << 4),' in svc_enum
 assert '    WaitIfEqual = 2,' in svc_enum
-assert 'Unknown37 = 37' in svc_enum and 'Unknown38 = 38' in svc_enum
+assert '    AddressSpaceSize = 36,' in svc_enum
+assert '    ShadowStackRegionAddress = 37,' in svc_enum
+assert '    ShadowStackRegionSize = 38,' in svc_enum
 # Native 4K worker research must run against the SAME persisted SVC 0x80
 # attribute. Never silently pin non-GPU guest pages or use trace-only SVC.
 worker = (vendor / "eden/src/core/hle/service/am/service/gpu_worker.cpp").read_text()

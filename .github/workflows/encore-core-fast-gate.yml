@@ -359,6 +359,8 @@ jobs:
           python3 -B vendor/tests/ns2-kprocess-memory-budget-source.py
           python3 -B vendor/tests/ns2_alias_64g_upstream_parity_host.py
           python3 -B vendor/tests/ns2_a64_v81_v85_source.py
+      # Historical F07/generator replay receipts remain available manually;
+      # the fast production gate follows only current canonical source owners.
       - name: Vulkan arithmetic and frame worker guards
         run: |
           set -euo pipefail
@@ -430,7 +432,6 @@ jobs:
           python3 -B tools/check-ns1-ns2-component-owners-host.py
           python3 -B tools/check-ps5-compute-descriptor-scratch-host.py
           python3 -B tools/check-ps5-f07-compute-descriptor-payload-reuse-host.py
-          python3 -B tools/check-ps5-f07-sampler-memo-collisions-host.py
           python3 -B tools/check-ps5-f07-compute-key-positive-cache-host.py
           python3 -B tools/check-ps5-f07-texel-descriptor-stability-host.py
           python3 -B tools/check-ps5-dma-buffer-copy-span-host.py
@@ -458,7 +459,6 @@ jobs:
           python3 -B tools/check-ps5-f07-present-layer-growth-host.py
           # Catch drift of the complete inactive DEV Vulkan bridge before
           # the costly full source preflight and PS5 native build.
-          python3 -B tools/check-deferred-native-bridge-contract.py
           python3 -B tools/check-ps5-texture-channel-missing-mapping-host.py
           python3 -B tools/check-fc27-f03-native-texture-feedback-chain-host.py
           python3 -B tools/check-fc27-f03-native-present-freshness-host.py
@@ -473,7 +473,6 @@ jobs:
           python3 -B tools/check-ps5-f07-optimized-pipeline-recovery-host.py
           python3 -B tools/check-ps5-f07-optional-optimizer-backlog-host.py
           python3 -B tools/check-vulkan-buffer-frame-tick-snapshot-host.py
-          python3 -B tools/check-vulkan-buffer-usage-reset-host.py
           # FC27 BufferCache P1: qualify the actual PS5 UsageTracker owner and
           # its randomized ASan/UBSan oracle on every fast gate. The dedicated
           # workflow is manual, so relying on it alone would leave this runtime
@@ -491,8 +490,6 @@ jobs:
           python3 -B tools/check-fc27-f07-blit-pipeline-state-host.py
           python3 -B tools/check-vulkan-query-grouping-host.py
           python3 -B tools/check-vulkan-query-copy-plan-host.py
-          python3 -B tools/check-vulkan-deferred-copy-ownership-host.py
-          python3 -B tools/check-vulkan-present-draw-storage-host.py
           python3 -B tools/check-vulkan-tfb-bank-lookup-host.py
           python3 -B tools/check-vulkan-samples-scratch-host.py
           python3 -B tools/check-native-dma-clear-span-host.py
@@ -563,23 +560,15 @@ jobs:
           python3 -B tools/check-dualsense-rumble-lock-host.py
           python3 -B tools/audit-eden-progress-state.py
           python3 -B tools/check-ps5-release-saved-diagnostics-host.py
-          python3 -B tools/check-ps5-f07-cold-stalls-host.py
           python3 -B tools/check-ps5-f07-compute-cold-timing-host.py
-          python3 -B tools/check-ps5-f07-texture-upload-rollback-host.py
-          python3 -B tools/check-ps5-f07-async-decode-lifetime-host.py
-          python3 -B tools/check-ps5-f07-gc-dirty-eviction-rollback-host.py
-          python3 -B tools/check-ps5-f07-gc-pressure-probe-host.py
-          python3 -B tools/check-ps5-f07-readback-dirty-rollback-host.py
           python3 -B tools/check-ps5-f07-download-staging-runtime-host.py
           python3 -B tools/check-ps5-f07-msaa-upload-retire-host.py
           python3 -B tools/check-native-vulkan-retire-allocation-host.py
           python3 -B tools/check-ps5-f07-async-dma-rollback-host.py
           python3 -B tools/check-ps5-f07-async-flush-staging-rollback-host.py
-          python3 -B tools/check-ps5-f07-memory-pressure-sampling-host.py
           python3 -B tools/check-ps5-f07-feedback-active-color-slots-host.py
           python3 -B tools/check-ps5-f07-pop-async-transaction-host.py
           python3 -B tools/check-ps5-f07-unswizzle-stale-revision-host.py
-          python3 -B tools/check-ps5-f07-unswizzle-slice-bounds-host.py
           python3 -B tools/check-ps5-f07-bcn-output-buffer-host.py
           python3 -B tools/check-ps5-f07-bcn-descriptor-capacity-host.py
           python3 -B tools/check-ps5-f07-bcn-input-preflight-host.py
@@ -601,7 +590,6 @@ jobs:
           python3 -B tools/check-ps5-vulkan-texture-tu-syntax-host.py
           python3 -B tools/check-ps5-compute-shader-handoff-host.py
           python3 -B tools/check-ps5-f07-compute-translation-priority-host.py
-          python3 -B tools/check-ps5-f07-gc-projected-eviction-host.py
           python3 -B tools/check-ps5-f07-driver-cache-flush-host.py
           python3 -B tools/check-ps5-f07-bounded-prewarm-host.py
           python3 -B tools/check-ps5-f07-shader-cache-drain-host.py

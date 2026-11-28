@@ -4347,6 +4347,53 @@ if(EDEN_SHARED_NS2_AMPERE_CORE)
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
     target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
     set(EDEN_NS2_AMPERE_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
+
+    # P0 first-frame root-table owner: keep the maintained Maxwell3D header
+    # and translation unit as one ABI. The active BufferCache reads
+    # Maxwell3D::root_tables, so compiling the frozen TU beside the active
+    # header would silently leave 0x504/0x508 unhandled.
+    set(EDEN_NS2_MAXWELL3D_SOURCE
+        "${EDEN_NS2_AMPERE_ROOT}/video_core/engines/maxwell_3d.cpp")
+    set(EDEN_NS2_MAXWELL3D_HEADER
+        "${EDEN_NS2_AMPERE_ROOT}/video_core/engines/maxwell_3d.h")
+    set(EDEN_NS2_POSITION_PASS_SOURCE
+        "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/ir_opt/position_pass.cpp")
+    foreach(eden_ns2_root_owner IN ITEMS
+            "${EDEN_NS2_MAXWELL3D_SOURCE}"
+            "${EDEN_NS2_MAXWELL3D_HEADER}"
+            "${EDEN_NS2_POSITION_PASS_SOURCE}")
+        if(NOT EXISTS "${eden_ns2_root_owner}")
+            message(FATAL_ERROR "Missing maintained NS2 root-table owner: ${eden_ns2_root_owner}")
+        endif()
+    endforeach()
+
+    set(EDEN_NS2_MAXWELL3D_INCLUDE
+        "${PORT_BUILD_DIR}/ns2-maxwell3d/include")
+    configure_file("${EDEN_NS2_MAXWELL3D_HEADER}"
+        "${EDEN_NS2_MAXWELL3D_INCLUDE}/video_core/engines/maxwell_3d.h" COPYONLY)
+    target_include_directories(video_core BEFORE PRIVATE
+        "${EDEN_NS2_MAXWELL3D_INCLUDE}")
+
+    get_target_property(eden_ns2_maxwell_sources video_core SOURCES)
+    list(FIND eden_ns2_maxwell_sources
+        "engines/maxwell_3d.cpp" eden_ns2_maxwell_index)
+    if(eden_ns2_maxwell_index EQUAL -1)
+        message(FATAL_ERROR "Pinned Maxwell3D owner changed: re-audit NS2 root tables")
+    endif()
+    list(REMOVE_ITEM eden_ns2_maxwell_sources "engines/maxwell_3d.cpp")
+    list(APPEND eden_ns2_maxwell_sources "${EDEN_NS2_MAXWELL3D_SOURCE}")
+    set_property(TARGET video_core PROPERTY SOURCES "${eden_ns2_maxwell_sources}")
+
+    get_target_property(eden_ns2_position_sources shader_recompiler SOURCES)
+    list(FIND eden_ns2_position_sources
+        "ir_opt/position_pass.cpp" eden_ns2_position_index)
+    if(eden_ns2_position_index EQUAL -1)
+        message(FATAL_ERROR "Pinned position pass owner changed: re-audit NS2 blit constants")
+    endif()
+    list(REMOVE_ITEM eden_ns2_position_sources "ir_opt/position_pass.cpp")
+    list(APPEND eden_ns2_position_sources "${EDEN_NS2_POSITION_PASS_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns2_position_sources}")
+
     set(EDEN_NS2_AMPERE_PROBE
         "${EDEN_NS2_AMPERE_ROOT}/shader_recompiler/frontend/ampere/probe.cpp")
     foreach(eden_ampere_header IN ITEMS ampere_isa_table.h classify.h instruction.h probe.h

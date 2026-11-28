@@ -2779,34 +2779,42 @@ assert "current.write_text(derived)" in radv_builder
 assert "trap restore_cross_ini EXIT" in radv_builder
 assert 'tools/install-vendored-radv.py' in radv_builder
 
-# Maxwell conditional-render diagnostic: exact former generated DEV code.
+# Maxwell3D is now a production NS1/NS2 owner, not a DEV-generated fork.
+# Keep sources/ immutable and require one active header/TU pair selected by CMake.
 maxwell_pinned = (sources / "eden/src/video_core/engines/maxwell_3d.cpp").read_text()
-maxwell_old_accel = "    if (rasterizer->AccelerateConditionalRendering()) {\n        execute_on = true;\n        return;\n    }"
-maxwell_new_accel = "    if (rasterizer->AccelerateConditionalRendering()) {\n        execute_on = true;\n        ::Eden::Performance::CountCondition(0);\n        return;\n    }"
-maxwell_old_end = "    }\n    }\n}\n\nvoid Maxwell3D::ProcessCounterReset() {"
-maxwell_new_end = "    }\n    }\n    ::Eden::Performance::CountCondition(\n        regs.render_enable_override == Regs::RenderEnable::Override::AlwaysRender ? 1u :\n        regs.render_enable_override == Regs::RenderEnable::Override::NeverRender ? 2u :\n        3u + static_cast<unsigned>(regs.render_enable.mode) * 2u + (execute_on ? 1u : 0u));\n}\n\nvoid Maxwell3D::ProcessCounterReset() {"
-assert maxwell_pinned.count(maxwell_old_accel) == maxwell_pinned.count(maxwell_old_end) == 1
-maxwell_expected = '#include "performance.h"\n' + maxwell_pinned.replace(maxwell_old_accel, maxwell_new_accel).replace(maxwell_old_end, maxwell_new_end)
-maxwell_selected = (active / "eden/src/video_core/engines/maxwell_3d.cpp").read_text()
-cbbind_guard = """    // Lichii e6e03043 / current Eglantine: CB_BIND encodes a 5-bit slot,
-    // while Maxwell3D keeps only 18 constant-buffer entries per stage.
-    // Reject guest slots 18..31 before indexing the fixed-size state array.
-    if (bind_data.shader_slot >= Regs::MaxConstBuffers) {
-        return;
-    }
-"""
-if maxwell_selected != maxwell_expected:
-    # Vendor #163 is an upstream-confirmed safety successor. Reverse exactly
-    # its one guard in-memory before comparing the immutable generated owner.
-    assert maxwell_selected.count(cbbind_guard) == 1
-    assert subprocess.check_output(
-        ["git", "hash-object", str(active / "eden/src/video_core/engines/maxwell_3d.cpp")],
-        text=True).strip() == "fe7c4fa421ccabf9fff4b1bc277fb8ab5fe46677"
-    maxwell_selected = maxwell_selected.replace(cbbind_guard, "", 1)
-assert maxwell_selected == maxwell_expected
-assert 'list(APPEND video_sources "${EDEN_MAINTAINED_DEV_MAXWELL}")' not in c
+maxwell_active = (active / "eden/src/video_core/engines/maxwell_3d.cpp").read_text()
+maxwell_header = (active / "eden/src/video_core/engines/maxwell_3d.h").read_text()
+for forbidden in ('#include "performance.h"', "::Eden::Performance::CountCondition"):
+    assert forbidden not in maxwell_active, forbidden
+for marker in (
+    "if (bind_data.shader_slot >= Regs::MaxConstBuffers)",
+    "case RootTables::SelectMethod:",
+    "case RootTables::LoadMethod:",
+    "root_tables.tables[root_tables.selected][root_tables.offset / sizeof(u32)] = argument;",
+):
+    assert marker in maxwell_active, marker
+for marker in (
+    "struct RootTables {",
+    "static constexpr u32 SelectMethod = 0x504 / sizeof(u32);",
+    "static constexpr u32 LoadMethod = 0x508 / sizeof(u32);",
+    "std::array<std::array<u32, 64>, 8> tables{};",
+):
+    assert marker in maxwell_header, marker
+assert "RootTables" not in (sources / "eden/src/video_core/engines/maxwell_3d.h").read_text()
+for marker in (
+    'set(EDEN_NS2_MAXWELL3D_SOURCE',
+    'set(EDEN_NS2_MAXWELL3D_HEADER',
+    'set(EDEN_NS2_POSITION_PASS_SOURCE',
+    'list(FIND eden_ns2_maxwell_sources',
+    'list(REMOVE_ITEM eden_ns2_maxwell_sources "engines/maxwell_3d.cpp")',
+    'list(APPEND eden_ns2_maxwell_sources "${EDEN_NS2_MAXWELL3D_SOURCE}")',
+    'list(REMOVE_ITEM eden_ns2_position_sources "ir_opt/position_pass.cpp")',
+    'list(APPEND eden_ns2_position_sources "${EDEN_NS2_POSITION_PASS_SOURCE}")',
+):
+    assert marker in c, marker
 assert 'write_derived("${PORT_BUILD_DIR}/maxwell_3d.cpp"' not in c
-print("VENDOR_MAINTAINED_MAXWELL_DEV_PARITY_PASS: two render-condition instruments")
+print("VENDOR_MAINTAINED_MAXWELL_ROOT_TABLE_OWNER_PASS: active_header=1 active_tu=1 dev_instrumentation=0")
+
 # Native RADV startup: previously generated from the pinned boilerplate,
 # with one ps5_fp_ieee call before C++ static initializers.
 radv_crt_original = (sources / "boilerplate/tooling/native/app_crt.cpp").read_text()

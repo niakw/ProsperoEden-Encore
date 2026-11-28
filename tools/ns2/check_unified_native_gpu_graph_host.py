@@ -66,6 +66,8 @@ with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
         'hle/service/friend/friend.cpp',
         'control/scheduler.cpp',
         'control/channel_state.cpp',
+        'engines/maxwell_3d.cpp',
+        'ir_opt/position_pass.cpp',
         'backend/spirv/spirv_emit_context.cpp',
         'backend/spirv/emit_spirv_context_get_set.cpp',
         'backend/spirv/emit_spirv_image.cpp']
@@ -94,8 +96,10 @@ add_library(core STATIC dummy.cpp
     hle/service/am/service/self_controller.cpp
     hle/service/ns/platform_service_manager.cpp
     hle/service/friend/friend.cpp)
-add_library(video_core STATIC "{puller}" dummy.cpp control/scheduler.cpp control/channel_state.cpp)
+add_library(video_core STATIC "{puller}" dummy.cpp control/scheduler.cpp control/channel_state.cpp
+    engines/maxwell_3d.cpp)
 add_library(shader_recompiler STATIC dummy.cpp
+    ir_opt/position_pass.cpp
     backend/spirv/spirv_emit_context.cpp
     backend/spirv/emit_spirv_context_get_set.cpp
     backend/spirv/emit_spirv_image.cpp)
@@ -170,6 +174,29 @@ list(LENGTH native_channel_state_owners native_channel_state_count)
 if(NOT native_channel_state_count EQUAL 1)
     message(FATAL_ERROR "Expected exactly one native NVK/M2MF channel_state owner")
 endif()
+list(FIND selected_video "engines/maxwell_3d.cpp" legacy_maxwell3d)
+if(NOT legacy_maxwell3d EQUAL -1)
+    message(FATAL_ERROR "Pinned Maxwell3D compiled beside native root-table owner")
+endif()
+string(REGEX MATCHALL "vendor/encore-active/eden/src/video_core/engines/maxwell_3d[.]cpp"
+    native_maxwell3d_owners "${selected_video}")
+list(LENGTH native_maxwell3d_owners native_maxwell3d_count)
+if(NOT native_maxwell3d_count EQUAL 1)
+    message(FATAL_ERROR "Expected exactly one native Maxwell3D root-table owner")
+endif()
+list(FIND selected_shader "ir_opt/position_pass.cpp" legacy_position_pass)
+if(NOT legacy_position_pass EQUAL -1)
+    message(FATAL_ERROR "Pinned position pass compiled beside native blit-constant owner")
+endif()
+string(REGEX MATCHALL "vendor/encore-active/eden/src/shader_recompiler/ir_opt/position_pass[.]cpp"
+    native_position_owners "${selected_shader}")
+list(LENGTH native_position_owners native_position_count)
+if(NOT native_position_count EQUAL 1)
+    message(FATAL_ERROR "Expected exactly one native position/blit pass owner")
+endif()
+if(NOT EXISTS "${PORT_BUILD_DIR}/ns2-maxwell3d/include/video_core/engines/maxwell_3d.h")
+    message(FATAL_ERROR "Native Maxwell3D header ABI not staged")
+endif()
 foreach(needle IN ITEMS
     "eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp"
     "eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp"
@@ -236,5 +263,5 @@ message(STATUS "UNIFIED_NATIVE_GPU_SOURCE_GRAPH_PASS core=${selected_core}")
  if run.returncode:
   print('UNIFIED_NATIVE_GPU_SOURCE_GRAPH_FAIL',run.stdout[-1600:],run.stderr[-4000:])
  else:
-  print('UNIFIED_NATIVE_GPU_SOURCE_GRAPH_PASS NVDRV GPFIFO GPU_SESSION VI2 AMPERE SPIRV ONE_ABI')
+  print('UNIFIED_NATIVE_GPU_SOURCE_GRAPH_PASS NVDRV GPFIFO GPU_SESSION VI2 AMPERE ROOT_TABLES SPIRV ONE_ABI')
  raise SystemExit(run.returncode)

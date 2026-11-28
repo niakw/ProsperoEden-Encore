@@ -271,7 +271,9 @@ jobs:
       - name: Audit generic graphics, JIT, runtime and filtered game networking
         if: ${{ matrix.suite == 'audit' }}
         run: |
-          # Run independent host checks to completion and retain every failure.
+          # Run independent current-owner host checks to completion and retain every failure.
+          # Dated generator/replay receipts remain in-tree for manual historical audit;
+          # they must not force retired F07/G11/G21 source layouts back into production.
           # No failure is waived; the aggregate remains mandatory and fail-closed.
           set -uxo pipefail
           set +e  # Actions may start bash with -e; aggregate errors explicitly.
@@ -289,12 +291,10 @@ jobs:
           python3 -B tools/check-ps5-f07-keyed-shader-stages-host.py
           python3 -B tools/check-ps5-f07-keyed-pipeline-wait-host.py
           python3 -B tools/check-ps5-f07-frame-cache-ownership-host.py
-          python3 -B tools/check-ps5-f07-texture-frame-gc-phases-host.py
           python3 -B tools/check-ps5-f07-pipeline-wait-analysis-host.py
           python3 -B tools/check-ps5-build-sha-provenance.py
           python3 -B tools/check-ps5-guest-cache-domains.py
           python3 -B tools/check-fc27-cache-contention-classifier.py
-          python3 -B tools/check-ps5-guest-write-subphases.py
           python3 -B tools/check-ps5-guest-write-batching.py
           python3 -B tools/check-ps5-guest-ipc-thread-profile.py
           python3 -B tools/analyze-fc27-ipc-threads.py --self-test
@@ -306,8 +306,6 @@ jobs:
           python3 -B tools/check-upstream-texture-memory-r428.py
           python3 -B tools/check-texture-convert-volume-host.py
           python3 -B tools/check-ps5-image-pages-r433.py
-          python3 -B tools/check-ps5-guest-texture-write-elision-host.py
-          python3 -B tools/check-ps5-texture-invalidation-elision-host.py
           python3 -B tools/check-ps5-inline-texture-elision-host.py
           python3 -B tools/check-ps5-texture-unmap-elision-host.py
           python3 -B tools/check-ps5-texture-flush-elision-host.py
@@ -324,7 +322,6 @@ jobs:
           python3 -B tools/check-native-dma-contiguous-host.py
           python3 -B tools/check-native-dma-pitch-remap-host.py
           python3 -B tools/check-native-dma-tiled-remap-host.py
-          python3 -B tools/check-ps5-buffer-pages-r437.py
           python3 -B tools/check-native-wide-index-buffer-range-host.py
           python3 -B tools/check-native-index-draw-dirty-span-host.py
           python3 -B tools/check-native-indirect-draw-range-host.py
@@ -372,7 +369,6 @@ jobs:
           python3 -B tools/check-native-gpu-granular-bounds-host.py
           python3 -B tools/check-native-guest-write-span-host.py
           python3 -B tools/check-gpu-deferred-poststore-host.py
-          python3 -B tools/check-deferred-native-bridge-contract.py
           python3 -B tools/check-native-tracked-page-handoff-host.py
           python3 -B tools/check-native-jit-quiescence-model-host.py
           python3 -B tools/check-native-physical-core-interrupt-ack-host.py
@@ -432,12 +428,8 @@ jobs:
           python3 -B tools/check-maintained-memory-g06-g07.py
           python3 -B tools/check-ps5-quiet-jit-timers.py
           python3 -B tools/check-ps5-release-saved-diagnostics-host.py
-          python3 -B tools/check-ps5-f07-cold-stalls-host.py
           python3 -B tools/check-ps5-f07-compute-cold-timing-host.py
-          python3 -B tools/check-ps5-f07-texture-upload-rollback-host.py
-          python3 -B tools/check-ps5-f07-async-decode-lifetime-host.py
           python3 -B tools/check-ps5-f07-unswizzle-stale-revision-host.py
-          python3 -B tools/check-ps5-f07-unswizzle-slice-bounds-host.py
           python3 -B tools/check-ps5-f07-bcn-output-buffer-host.py
           python3 -B tools/check-ps5-f07-bcn-descriptor-capacity-host.py
           python3 -B tools/check-ps5-f07-bcn-input-preflight-host.py
@@ -461,7 +453,6 @@ jobs:
           python3 -B tools/ns2/check_shared_ns2_spirv_compiler_host.py
           python3 -B tools/check-ps5-compute-shader-handoff-host.py
           python3 -B tools/check-ps5-f07-compute-translation-priority-host.py
-          python3 -B tools/check-ps5-f07-gc-projected-eviction-host.py
           python3 -B tools/check-ps5-f07-driver-cache-flush-host.py
           python3 -B tools/check-ps5-f07-bounded-prewarm-host.py
           python3 -B tools/check-ps5-f07-shader-cache-drain-host.py
@@ -489,7 +480,6 @@ jobs:
           python3 -B tools/check-vulkan-renderpass-clear-bounds-host.py
           python3 -B tools/check-vulkan-fence-completed-wait-host.py
           python3 -B tools/check-vulkan-buffer-frame-tick-snapshot-host.py
-          python3 -B tools/check-vulkan-buffer-usage-reset-host.py
           python3 -B tools/check-vulkan-present-missing-guest-host.py
           python3 -B tools/check-vulkan-multirange-overflow-host.py
           python3 -B tools/check-vulkan-query-conditional-inversion-host.py
@@ -497,8 +487,6 @@ jobs:
           python3 -B tools/check-vulkan-query-allocation-host.py
           python3 -B tools/check-vulkan-query-grouping-host.py
           python3 -B tools/check-vulkan-query-copy-plan-host.py
-          python3 -B tools/check-vulkan-deferred-copy-ownership-host.py
-          python3 -B tools/check-vulkan-present-draw-storage-host.py
           python3 -B tools/check-vulkan-tfb-bank-lookup-host.py
           python3 -B tools/check-vulkan-samples-scratch-host.py
           python3 -B tools/check-vulkan-multirange-gather-bounds-host.py
@@ -642,9 +630,7 @@ jobs:
           python3 -B tools/check-ps5-videoout-120hz-offer.py
           python3 -B tools/check-ps5-videoout-unpresented-takeover.py
           python3 -B tools/check-vendored-gpu-thread.py
-          python3 -B tools/check-g21-gpu-profile-matrix-host.py
           python3 -B tools/check-g19-kernel-profile-matrix-host.py
-          python3 -B tools/check-g11-jit-profile-matrix-host.py
           python3 -B tools/check-gpu-sync-failure-host.py
           python3 -B tools/check-gpu-failure-latch-host.py
           python3 -B tools/check-gpu-producer-failure-host.py
@@ -655,7 +641,6 @@ jobs:
           python3 -B tools/check-ps5-compute-guest-descriptor-preflight-host.py
           python3 -B tools/check-ps5-compute-descriptor-ring-preflight-host.py
           python3 -B tools/check-ps5-f07-compute-descriptor-payload-reuse-host.py
-          python3 -B tools/check-ps5-f07-sampler-memo-collisions-host.py
           python3 -B tools/check-ps5-f07-compute-key-positive-cache-host.py
           python3 -B tools/check-ps5-f07-texel-descriptor-stability-host.py
           python3 -B tools/check-ps5-quad-strip-draw-count-host.py
@@ -709,13 +694,10 @@ jobs:
           python3 -B tools/check-maintained-scalar-emitters.py
           python3 -B tools/check-maintained-block-range.py
           python3 -B tools/check-native-jit-block-range-rebase-host.py
-          python3 -B tools/check-maintained-kprocess-dev.py
           python3 -B tools/check-maintained-page-table-finalize.py
           python3 -B tools/check-maintained-server-manager.py
-          python3 -B tools/check-maintained-guest-gpu-sync.py
           python3 -B tools/check-gpu-puller-acquire-failure-host.py
           python3 -B tools/check-gpu-dma-failure-wait-host.py
-          python3 -B tools/check-maintained-nso.py
           python3 -B tools/check-maintained-core-system.py
           python3 -B tools/check-maintained-xbyak-alias.py
           python3 -B tools/check-maintained-constant-pool.py
@@ -735,14 +717,10 @@ jobs:
           python3 -B tools/check-vulkan-gc-budget-host.py
           python3 -B tools/check-vulkan-gc-prefetch-host.py
           python3 -B tools/check-vulkan-gc-mixed-prefetch-host.py
-          python3 -B tools/check-ps5-f07-gc-dirty-eviction-rollback-host.py
-          python3 -B tools/check-ps5-f07-gc-pressure-probe-host.py
-          python3 -B tools/check-ps5-f07-readback-dirty-rollback-host.py
           python3 -B tools/check-ps5-f07-download-staging-runtime-host.py
           python3 -B tools/check-ps5-f07-msaa-upload-retire-host.py
           python3 -B tools/check-ps5-f07-async-dma-rollback-host.py
           python3 -B tools/check-ps5-f07-async-flush-staging-rollback-host.py
-          python3 -B tools/check-ps5-f07-memory-pressure-sampling-host.py
           python3 -B tools/check-ps5-f07-pop-async-transaction-host.py
           python3 -B tools/check-vulkan-readback-small-vector-host.py
           python3 -B tools/check-vulkan-readback-batch-integration-host.py

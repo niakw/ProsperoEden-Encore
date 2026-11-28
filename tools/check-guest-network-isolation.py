@@ -51,7 +51,7 @@ assert 'cp "$root/headless/network-hosts.txt" "$app/network-hosts.txt"' in packa
 # A commented example or a lookalike such as evilnintendo.com is not a rule.
 denylist = {line.strip().casefold() for line in hosts.splitlines()
             if line.strip() and not line.lstrip().startswith("#")}
-assert {"nintendo.com", "ea.com", "gogcdn.net"}.issubset(denylist)
+assert {"*nintendo*", "ea.com", "*.gogcdn.net", "*playstation*"}.issubset(denylist)
 
 # Native HTTPS remains available to Home and guest networking is enabled.
 assert 'Common::Net::MakeRequest("https://api.nlib.cc", endpoint)' in services

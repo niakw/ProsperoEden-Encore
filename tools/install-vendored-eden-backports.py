@@ -236,10 +236,28 @@ def replay()->None:
         observed=changed(stage)
         expected=set(spec['entries'])
         actual=set(observed)
-        if actual!=expected:
+        missing=expected-actual
+        extra=actual-expected
+        # A historical shipping patch may have been superseded by a reviewed
+        # canonical owner that deliberately restores the pinned upstream bytes
+        # (for example the final PS5 Strict fence helper). Keep the old patch
+        # replay immutable, but do not force its retired intermediate state
+        # back into vendor/encore-active. Only an exact upstream restoration is
+        # admitted as a canonical successor; every other extra owner fails.
+        canonical_successors=[]
+        unexpected_extra=[]
+        for rel in sorted(extra):
+            active=ACTIVE/rel
+            original=ORIGINAL/rel
+            if (active.is_file() and original.is_file() and
+                    active.read_bytes()==original.read_bytes()):
+                canonical_successors.append(rel)
+            else:
+                unexpected_extra.append(rel)
+        if missing or unexpected_extra:
             raise RuntimeError(
                 f'Patch replay owner set drift: '
-                f'missing={sorted(expected-actual)},extra={sorted(actual-expected)}')
+                f'missing={sorted(missing)},extra={sorted(unexpected_extra)}')
         receipts={p.name:p.read_text().strip()
                   for p in stage.glob('.encore-backport-*.sha256')}
         if receipts!=spec['shipping_receipts']:
@@ -248,7 +266,7 @@ def replay()->None:
             if not (ACTIVE/rel).is_file():
                 raise RuntimeError(f'Missing canonical owner after replay: {rel}')
         print(f'EDEN_COMPLETE_PATCH_REPLAY_OK files={len(actual)} '
-              f'receipts={len(receipts)} canonical_successors_allowed=1')
+              f'receipts={len(receipts)} canonical_successors={len(canonical_successors)}')
 
 if __name__=='__main__':
     arg=argparse.ArgumentParser()

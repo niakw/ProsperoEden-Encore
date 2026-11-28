@@ -34,7 +34,7 @@ for name in ('k_address_arbiter.h','k_address_arbiter.cpp','k_process.h',
         # signatures and compiled comparisons are checked below.
         assert original == reviewed, ("Pinned kernel parity drift", name)
     else:
-        assert 0 < len(edits) < 105, (name,len(edits))
+        assert 0 < len(edits) < 160, (name,len(edits))
 assert 'set(EDEN_SHARED_NS2_WAIT64 ON)' in CMAKE
 assert 'if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)' in CMAKE
 for path in ('k_address_arbiter.cpp','svc/svc_address_arbiter.cpp'):

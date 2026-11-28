@@ -25,9 +25,13 @@ for file in ("dma_pusher.cpp", "dma_pusher_dev.cpp"):
     assert "CommandList& command_list = dma_pushbuffer.front();" in step
     assert "ProcessCommands(command_list.prefetch_command_list);" in step
     assert "command_list.command_lists[dma_pushbuffer_subindex]" in step
-    # Eglantine's submission-time user-GPU-word cache is NOT in this
-    # maintained owner; do not port its snapshot-selection patch blindly.
-    assert "submitted_words" not in step and "submitted_offsets" not in step
+    # The canonical owner now carries the reviewed bounded submit-time snapshot
+    # for CPU-authored words. GPU-dirty/unknown dependency provenance invalidates
+    # it and the coherent SafeRead path remains authoritative.
+    assert "submitted_words" in step and "submitted_offsets" in step
+    assert "snapshot_epoch" in step and "use_snapshot" in step
+    assert "memory_manager.IsMemoryDirty(" in step
+    assert "native_snapshot_resume_safe" in step
     assert "GpuGuestMemory<Tegra::CommandHeader," in step
     assert "GuestMemoryFlags::SafeRead" in step
     assert "GuestMemoryFlags::UnsafeRead" in step

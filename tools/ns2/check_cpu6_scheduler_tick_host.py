@@ -34,9 +34,9 @@ assert 'list(FIND eden_cpu6_core_sources "${eden_cpu6_selected_source}" eden_cpu
 assert 'CPU6 must retain selected N76/G11 JIT source' in research
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in research
 assert 'EDEN_NS2_CPU6_EXPERIMENTAL' not in CMAKE
-assert 'NUM_CPU_CORES = 6' in (CPU6/'core/hardware_properties.h').read_text()
-assert 'NUM_LEGACY_CPU_CORES = 4' in (CPU6/'core/hardware_properties.h').read_text()
-assert 'MAX_NUM_CPU_CORES = 6' in (CPU6/'dynarmic/interface/exclusive_monitor.h').read_text()
+assert 'NUM_CPU_CORES = 6' in (CPU6/'hardware_properties.h').read_text()
+assert 'NUM_LEGACY_CPU_CORES = 4' in (CPU6/'hardware_properties.h').read_text()
+assert 'MAX_NUM_CPU_CORES = 6' in (ROOT/'vendor/encore-active/eden/src/dynarmic/interface/exclusive_monitor.h').read_text()
 
 
 def generate(src:Path,out:Path,jit:Path=G11)->subprocess.CompletedProcess[str]:

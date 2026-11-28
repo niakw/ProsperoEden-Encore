@@ -157,8 +157,8 @@ def git_blob(path):
     return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
 # Reviewed fence parking / AS revocation / H17 successors plus 8d3eaa48
 # inter-list callback lifetime hardening. Exact blobs only.
-assert git_blob(dma_owner) == '76eb30a7e58f17852069a05e2c12cd3c6521967f'
-assert git_blob(dma_header) == '4e4a1f23d89a7ace963a9249afa47a592cb4eb6e'
+assert git_blob(dma_owner) == 'd42fbfe0a91f0e0598641ad9ca49ec9cf2d6a04f'
+assert git_blob(dma_header) == 'fc4fe083664ba991a1002caa52384c662e3ef718'
 dma_text=dma_owner.read_text()
 dma_header_text=dma_header.read_text()
 for token in (

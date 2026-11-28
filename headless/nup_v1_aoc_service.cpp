@@ -95,34 +95,41 @@ IAddOnContentManager::IAddOnContentManager(Core::System& system_)
       service_context{system_, "aoc:u"} {
     // clang-format off
     static const FunctionInfo functions[] = {
-        {0, nullptr, "CountAddOnContentByApplicationId"},
-        {1, nullptr, "ListAddOnContentByApplicationId"},
+        {0, &IAddOnContentManager::RejectUnsupportedAocExtension, "CountAddOnContentByApplicationId"},
+        {1, &IAddOnContentManager::RejectUnsupportedAocExtension, "ListAddOnContentByApplicationId"},
         {2, D<&IAddOnContentManager::CountAddOnContent>, "CountAddOnContent"},
         {3, D<&IAddOnContentManager::ListAddOnContent>, "ListAddOnContent"},
-        {4, nullptr, "GetAddOnContentBaseIdByApplicationId"},
+        {4, &IAddOnContentManager::RejectUnsupportedAocExtension, "GetAddOnContentBaseIdByApplicationId"},
         {5, D<&IAddOnContentManager::GetAddOnContentBaseId>, "GetAddOnContentBaseId"},
-        {6, nullptr, "PrepareAddOnContentByApplicationId"},
+        {6, &IAddOnContentManager::RejectUnsupportedAocExtension, "PrepareAddOnContentByApplicationId"},
         {7, D<&IAddOnContentManager::PrepareAddOnContent>, "PrepareAddOnContent"},
         {8, D<&IAddOnContentManager::GetAddOnContentListChangedEvent>, "GetAddOnContentListChangedEvent"},
-        {9, &IAddOnContentManager::StubReplyZeroed, "GetAddOnContentLostErrorCode"},
+        {9, &IAddOnContentManager::RejectUnsupportedAocExtension, "GetAddOnContentLostErrorCode"},
         {10, D<&IAddOnContentManager::GetAddOnContentListChangedEventWithProcessId>, "GetAddOnContentListChangedEventWithProcessId"},
         {11, D<&IAddOnContentManager::NotifyMountAddOnContent>, "NotifyMountAddOnContent"},
         {12, D<&IAddOnContentManager::NotifyUnmountAddOnContent>, "NotifyUnmountAddOnContent"},
-        {13, &IAddOnContentManager::StubReplyZeroed, "IsAddOnContentMountedForDebug"},
+        {13, &IAddOnContentManager::RejectUnsupportedAocExtension, "IsAddOnContentMountedForDebug"},
         {50, D<&IAddOnContentManager::CheckAddOnContentMountStatus>, "CheckAddOnContentMountStatus"},
         {100, D<&IAddOnContentManager::CreateEcPurchasedEventManager>, "CreateEcPurchasedEventManager"},
         {101, D<&IAddOnContentManager::CreatePermanentEcPurchasedEventManager>, "CreatePermanentEcPurchasedEventManager"},
-        {110, &IAddOnContentManager::StubReplyInterface, "CreateContentsServiceManager"},
-        {200, &IAddOnContentManager::StubReplyZeroed, "SetRequiredAddOnContentsOnContentsAvailabilityTransition"},
-        {300, &IAddOnContentManager::StubReplyZeroed, "SetupHostAddOnContent"},
-        {301, &IAddOnContentManager::StubReplyZeroed, "GetRegisteredAddOnContentPath"},
-        {302, &IAddOnContentManager::StubReplyZeroed, "UpdateCachedList"},
+        {110, &IAddOnContentManager::RejectUnsupportedAocExtension, "CreateContentsServiceManager"},
+        {200, &IAddOnContentManager::RejectUnsupportedAocExtension, "SetRequiredAddOnContentsOnContentsAvailabilityTransition"},
+        {300, &IAddOnContentManager::RejectUnsupportedAocExtension, "SetupHostAddOnContent"},
+        {301, &IAddOnContentManager::RejectUnsupportedAocExtension, "GetRegisteredAddOnContentPath"},
+        {302, &IAddOnContentManager::RejectUnsupportedAocExtension, "UpdateCachedList"},
     };
     // clang-format on
 
     RegisterHandlers(functions);
 
     aoc_change_event = service_context.CreateEvent("GetAddOnContentListChanged:Event");
+}
+
+void IAddOnContentManager::RejectUnsupportedAocExtension(HLERequestContext& ctx) {
+    // Existing process-based DLC Count/List/BaseId/Prepare paths remain active.
+    // These application-id/debug/host/cache extensions lack a qualified backend.
+    IPC::ResponseBuilder rb{ctx, 2};
+    rb.Push(IPC::ResultNotSupported);
 }
 
 IAddOnContentManager::~IAddOnContentManager() {

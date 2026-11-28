@@ -266,37 +266,29 @@ index 6d70e9b..cb7cc89 100644
 diff --git a/src/core/hle/service/hid/hid_server.cpp b/src/core/hle/service/hid/hid_server.cpp
 --- a/src/core/hle/service/hid/hid_server.cpp
 +++ b/src/core/hle/service/hid/hid_server.cpp
-@@ -1432,19 +1432,20 @@
-         GetResourceManager()->GetPalma()->WritePalmaRgbLedPatternEntry(connection_handle, unknown));
- }
- 
--Result IHidServer::WritePalmaWaveEntry(Palma::PalmaConnectionHandle connection_handle,
--                                       Palma::PalmaWaveSet wave_set, u64 unknown, u64 t_mem_size,
--                                       u64 size, InCopyHandle<Kernel::KTransferMemory> t_mem) {
+@@ -1309,16 +1309,16 @@
+ Result IHidServer::WritePalmaWaveEntry(Palma::PalmaConnectionHandle connection_handle,
+                                        Palma::PalmaWaveSet wave_set, u64 unknown, u64 t_mem_size,
+                                        u64 size, InCopyHandle<Kernel::KTransferMemory> t_mem) {
 -    ASSERT_MSG(t_mem->GetSize() == t_mem_size, "t_mem has incorrect size");
--
--    LOG_WARNING(
--        Service_HID,
--        "called, connection_handle={}, wave_set={}, unknown={}, t_mem_size={}, size={}",
--        connection_handle.npad_id, wave_set, unknown, t_mem_size, size);
--
--    R_RETURN(GetResourceManager()->GetPalma()->WritePalmaWaveEntry(
--        connection_handle, wave_set, t_mem->GetSourceAddress(), t_mem_size));
--}
-+Result IHidServer::WritePalmaWaveEntry(Palma::PalmaConnectionHandle connection_handle,
-+                                       Palma::PalmaWaveSet wave_set, u64 unknown, u64 t_mem_size,
-+                                       u64 size, InCopyHandle<Kernel::KTransferMemory> t_mem) {
 +    R_UNLESS(t_mem.Get(), Kernel::ResultInvalidHandle);
 +    R_UNLESS(t_mem_size != 0 && (t_mem_size & 0xFFF) == 0 &&
 +                 t_mem->GetSize() == t_mem_size && size <= t_mem_size,
 +             Kernel::ResultInvalidSize);
-+
+ 
+-    LOG_WARNING(
+-        Service_HID,
+-        "(STUBBED) called, connection_handle={}, wave_set={}, unknown={}, t_mem_size={}, size={}",
+-        connection_handle.npad_id, wave_set, unknown, t_mem_size, size);
+-
+-    GetResourceManager()->GetPalma()->WritePalmaWaveEntry(connection_handle, wave_set,
+-                                                          t_mem->GetSourceAddress(), t_mem_size);
+-    R_SUCCEED();
 +    LOG_WARNING(Service_HID,
 +                "Palma wave backend unavailable, connection_handle={}, wave_set={}, unknown={}, "
 +                "t_mem_size={}, size={}",
 +                connection_handle.npad_id, wave_set, unknown, t_mem_size, size);
 +    R_RETURN(IPC::ResultNotSupported);
-+}
+ }
  
  Result IHidServer::SetPalmaDataBaseIdentificationVersion(
-     s32 database_id_version, Palma::PalmaConnectionHandle connection_handle) {

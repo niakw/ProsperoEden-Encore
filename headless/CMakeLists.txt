@@ -157,7 +157,7 @@ if(PS5_NATIVE)
     set(EDEN_NVDEC_MAINTAINED_SOURCE
         "${EDEN_NVDEC_OWNER_ROOT}/src/video_core/host1x/ffmpeg.cpp")
     set(EDEN_NVDEC_MAINTAINED_HEADER
-        "${EDEN_NVDEC_OWNER_ROOT}/overrides/video_core/host1x/ffmpeg.h")
+        "${EDEN_NVDEC_OWNER_ROOT}/src/video_core/host1x/ffmpeg.h")
     if(EXISTS "${EDEN_NVDEC_MAINTAINED_SOURCE}" AND
        EXISTS "${EDEN_NVDEC_MAINTAINED_HEADER}")
         get_target_property(eden_nvdec_video_sources video_core SOURCES)

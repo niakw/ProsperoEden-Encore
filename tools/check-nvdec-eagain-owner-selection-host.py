@@ -152,7 +152,7 @@ def check_vic_graph(native, maintained, pair, original_count=1, duplicate=False,
         active=root/"vendor/encore-active/eden"
         ff=active/"src/video_core/host1x/ffmpeg.cpp"
         vic=ff.with_name("vic.cpp")
-        hdr=active/"overrides/video_core/host1x/ffmpeg.h"
+        hdr=active/"src/video_core/host1x/ffmpeg.h"
         if maintained:
             vic.parent.mkdir(parents=True,exist_ok=True)
             vic.touch()

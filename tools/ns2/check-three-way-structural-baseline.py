@@ -34,14 +34,14 @@ owners = {
     "hid": (prefix+"hid/hid_server.cpp", 1, 235),
     "nifm": (prefix+"nifm/nifm.cpp", 5, 86),
     "acc": (prefix+"acc/acc.cpp", 24, 505),
-    "caps_u": (prefix+"caps/caps_u.cpp", 1, 18),
+    "caps_u": (prefix+"caps/caps_u.cpp", 1, 23),
     "caps_su": (prefix+"caps/caps_su.cpp", 1, 5),
     "set": (prefix+"set/settings_server.cpp", 1, 18),
     "mii": (prefix+"mii/mii.cpp", 3, 44),
     "lm": (prefix+"lm/lm.cpp", 3, 10),
     "audio_device": (prefix+"audio/audio_device.cpp", 1, 22),
     "audio_renderer": (prefix+"audio/audio_renderer_manager.cpp", 1, 5),
-    "fsp": ("encore-active/eden/src/core/hle/service/filesystem/fsp/fsp_srv.cpp", 1, 128),
+    "fsp": ("encore-active/eden/src/core/hle/service/filesystem/fsp/fsp_srv.cpp", 1, 134),
 }
 files = {}
 summary = {}
@@ -67,10 +67,18 @@ assert "ScratchSystemAccount" not in files["acc"], "Re-audit conditional scratch
 assert '{2, &ILogger::TransmitHashedLog, "TransmitHashedLog"}' in files["lm"]
 assert "if (process && (process->GetProgramId() >> 56) == 0x04)" in files["lm"]
 assert "IPC::ResponseBuilder rb{ctx, 2};" in files["lm"]
-fsp_data = (V / owners["fsp"][0]).read_bytes()
-fsp_blob = hashlib.sha1(b"blob " + str(len(fsp_data)).encode() + b"\0" + fsp_data).hexdigest()
-assert fsp_blob == "58303a0bd66387244c44968a0878e2f7c821bc9f", (
-    "Pinned Eglantine FSP source changed", fsp_blob)
+# The selected FSP owner now intentionally layers reviewed NS1/HOS additions
+# on top of the earlier Eglantine baseline. Pin the structural additions
+# directly instead of requiring the obsolete whole-file blob.
+for token in (
+    '{10, D<&FSP_SRV::OpenFileSystemWithId>, "OpenFileSystemWithId"}',
+    '{207, D<&FSP_SRV::OpenDataFileSystemByDataId>, "OpenDataFileSystemByDataId"}',
+    '{211, D<&FSP_SRV::OpenDataStorageByProgramIdForBatchRead>, "OpenDataStorageByProgramIdForBatchRead"}',
+    '{212, D<&FSP_SRV::OpenDataStorageWithProgramIndexForBatchRead>, "OpenDataStorageWithProgramIndexForBatchRead"}',
+    '{213, D<&FSP_SRV::OpenDataStorageByPathForBatchRead>, "OpenDataStorageByPathForBatchRead"}',
+    '{618, D<&FSP_SRV::GetProgramIdByPath>, "GetProgramId"}',
+):
+    assert token in files["fsp"], ("Reviewed FSP convergence drift", token)
 w = (V / "encore-active/eden/src/core/hle/service/am/window_system.cpp").read_text()
 h = (V / "sources/eden/src/core/hle/service/am/window_system.h").read_text()
 desktop = (V / "sources/eden/src/core/hle/service/am/window_system.cpp").read_text()
@@ -89,4 +97,4 @@ assert "m_page_table.GetHeapRegionSize() + m_page_table.GetAliasRegionSize()" in
 print("NS2_THREE_WAY_SELECTED_OWNER_SOURCE_PASS vendor=" + pinned[:12] +
       " tables=" + str(sum(x[0] for x in summary.values())) +
       " rows=" + str(sum(x[1] for x in summary.values())) +
-      " fsp_exact_eglantine=1 lm_ns1_abi_retained=1 window_ns1_overlay_retained=1")
+      " fsp_reviewed_convergence=1 lm_ns1_abi_retained=1 window_ns1_overlay_retained=1")

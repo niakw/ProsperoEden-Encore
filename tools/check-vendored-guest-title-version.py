@@ -25,10 +25,20 @@ print("GUEST_TITLE_VERSION_SOURCE_PASS parity=guarded runtime-quiet=1")
 import hashlib
 selected = root/"vendor/encore-active/eden/src/core/hle/service/am/service/application_functions.cpp"
 raw = selected.read_bytes()
-# Reviewed NS2 AM diagnostic successor: HLE result stays unchanged and
-# the termination result now emits a bounded release marker.
-assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest() == "9bfaa26664361994902d5b7f73d6a41ff0eadb07"
+# The shared AM owner now also contains reviewed NS1 lifecycle/service
+# implementations. Validate the required merged contracts directly instead
+# of pinning the obsolete pre-convergence whole-file blob.
 source = raw.decode()
+for marker in (
+    "Result IApplicationFunctions::RejectDebugOnlyCommand(",
+    "Result IApplicationFunctions::GetLimitedApplicationLicense(",
+    "Result IApplicationFunctions::GetDeviceSaveDataSizeMax(",
+    "Result IApplicationFunctions::RequestToShutdown(",
+    "Result IApplicationFunctions::TryPopFromNotificationStorageChannel(",
+    "Result IApplicationFunctions::RequestExitApplicationAndTryPopMessage(",
+):
+    assert marker in source, ("Shared AM convergence drift", marker)
+assert "Result IApplicationFunctions::Unknown330(" not in source
 # The merged native AM owner also exposes NS2 command 321 with one byte,
 # without changing the previously reviewed language response path.
 assert '{321, D<&IApplicationFunctions::Unknown321>, "Unknown321"}' in source
@@ -42,4 +52,4 @@ assert 'terminate_reports.fetch_add(1, std::memory_order_relaxed) < 32' in sourc
 assert 'm_applet->terminate_result = terminate_result;' in source
 assert 'set(EDEN_SHARED_NS2_AM ON)' in cmake
 assert 'list(APPEND eden_ns2_am_sources "${EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp")' in cmake
-print("SHARED_NATIVE_AM_LANGUAGE_REPLY_SOURCE_PASS exact_blob=1 real_return=1 bounded=32 native_execution=0")
+print("SHARED_NATIVE_AM_LANGUAGE_REPLY_SOURCE_PASS shared_owner_contract=1 real_return=1 bounded=32 native_execution=0")

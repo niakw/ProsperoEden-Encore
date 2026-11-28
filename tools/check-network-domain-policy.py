@@ -62,7 +62,8 @@ int main(int argc, char** argv) {
     no("raw.githubusercontent.com");
     no("youtube.com");
     yes("microsoft.com");
-    yes("login.microsoft.com");
+    // Bare NanoDNS masks are exact hostnames; they do not imply suffix matching.
+    no("login.microsoft.com");
     yes("pokemon.com");
     yes("www.pokemon.com");
     yes("api.phoenix-api.wbagora.com");

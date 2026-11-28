@@ -17,39 +17,43 @@ assert '"${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher.cpp"' in cmake
 assert '"${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher_dev.cpp"' not in cmake
 assert '"${EDEN_MAINTAINED_GPU_DMA}"' in cmake
 owner = vendor / "encore-active/eden/src/video_core"
-for file in ("dma_pusher.cpp", "dma_pusher_dev.cpp"):
-    source = (owner / file).read_text()
-    step = source.split("bool DmaPusher::Step() {", 1)[1].split(
-        "void DmaPusher::ProcessCommands(", 1
-    )[0]
-    assert "CommandList& command_list = dma_pushbuffer.front();" in step
-    assert "ProcessCommands(command_list.prefetch_command_list);" in step
-    assert "command_list.command_lists[dma_pushbuffer_subindex]" in step
-    # The canonical owner now carries the reviewed bounded submit-time snapshot
-    # for CPU-authored words. GPU-dirty/unknown dependency provenance invalidates
-    # it and the coherent SafeRead path remains authoritative.
-    assert "submitted_words" in step and "submitted_offsets" in step
-    assert "snapshot_epoch" in step and "use_snapshot" in step
-    assert "memory_manager.IsMemoryDirty(" in step
-    assert "native_snapshot_resume_safe" in step
-    assert "GpuGuestMemory<Tegra::CommandHeader," in step
-    assert "GuestMemoryFlags::SafeRead" in step
-    assert "GuestMemoryFlags::UnsafeRead" in step
-    assert "#ifdef PS5_NATIVE" in step
-    assert 'NativeGpuChannelRegistry::Instance().IsNative(&channel_state);' in step
-    assert step.index('NativeGpuChannelRegistry::Instance().IsNative(&channel_state);') < step.index(
-        'GpuGuestMemory<Tegra::CommandHeader,')
-    assert 'target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)' not in cmake
-    assert 'EDEN_NS2_NATIVE_GPU_PULLER' in cmake
-    assert (root / "tools/ns2/check_native_gpu_fence_policy_host.py").is_file()
-    assert 'const bool use_safe =' not in step
-    assert 'const bool explicit_sync = command_list.command_lists[dma_pushbuffer_subindex].sync;' in step
-    assert 'signal_sync = explicit_sync &&' in step
-    assert 'signal_sync = explicit_sync && user_sync;' in step
-    assert step.index('signal_sync = explicit_sync &&') < step.index('rasterizer->SignalFence(')
-    assert step.index("dma_state.dma_get = header.addr;") < step.index(
-        "GpuGuestMemory<Tegra::CommandHeader,"
-    ) < step.index("ProcessCommands(headers);")
+file = "dma_pusher.cpp"
+source = (owner / file).read_text()
+step = source.split("bool DmaPusher::Step() {", 1)[1].split(
+    "void DmaPusher::ProcessCommands(", 1
+)[0]
+assert "CommandList& command_list = dma_pushbuffer.front();" in step
+assert "ProcessCommands(command_list.prefetch_command_list);" in step
+assert "command_list.command_lists[dma_pushbuffer_subindex]" in step
+# The canonical owner now carries the reviewed bounded submit-time snapshot
+# for CPU-authored words. GPU-dirty/unknown dependency provenance invalidates
+# it and the coherent SafeRead path remains authoritative.
+assert "submitted_words" in step and "submitted_offsets" in step
+assert "snapshot_epoch" in step and "use_snapshot" in step
+assert "memory_manager.IsMemoryDirty(" in step
+assert "native_snapshot_resume_safe" in step
+assert "GpuGuestMemory<Tegra::CommandHeader," in step
+assert "GuestMemoryFlags::SafeRead" in step
+assert "GuestMemoryFlags::UnsafeRead" in step
+assert "#ifdef PS5_NATIVE" in step
+assert 'NativeGpuChannelRegistry::Instance().IsNative(&channel_state);' in step
+assert step.index('NativeGpuChannelRegistry::Instance().IsNative(&channel_state);') < step.index(
+    'GpuGuestMemory<Tegra::CommandHeader,')
+assert 'target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)' not in cmake
+assert 'EDEN_NS2_NATIVE_GPU_PULLER' in cmake
+assert (root / "tools/ns2/check_native_gpu_fence_policy_host.py").is_file()
+assert 'const bool use_safe =' not in step
+assert 'const bool explicit_sync = command_list.command_lists[dma_pushbuffer_subindex].sync;' in step
+assert 'signal_sync = explicit_sync &&' in step
+assert 'signal_sync = explicit_sync && user_sync;' in step
+assert step.index('signal_sync = explicit_sync &&') < step.index('rasterizer->SignalFence(')
+assert step.index("dma_state.dma_get = header.addr;") < step.index(
+    "GpuGuestMemory<Tegra::CommandHeader,"
+) < step.index("ProcessCommands(headers);")
+
+# The DEV shadow is intentionally not a production owner. Its existence must
+# never force production parity or resurrect a second native execution path.
+assert (owner / "dma_pusher_dev.cpp").is_file()
 nvdrv = (vendor / (
     "encore-active/eden/src/core/hle/service/nvdrv/"
     "devices/nvhost_gpu.cpp"
@@ -179,7 +183,7 @@ runtime = (vendor / "encore-active/eden/src/video_core/renderer_vulkan/vk_buffer
 assert "void BufferCacheRuntime::Finish() {" in runtime
 assert "scheduler.Finish();" in runtime.split("void BufferCacheRuntime::Finish() {", 1)[1].split("}", 1)[0]
 assert (root / "tools/ns2/test_native_gpu_command_saferead.cpp").is_file()
-print("P2_7_NATIVE_GPU_COMMAND_FETCH_OWNER_PASS real_dma=2"
+print("P2_7_NATIVE_GPU_COMMAND_FETCH_OWNER_PASS real_dma=1 selected_owner=dma_pusher.cpp"
       " guest_words=live_fetch synthetic_prefetch=fences_only"
       " upstream_submitted_snapshot=inapplicable"
       " gpu_write_readback=SOURCE_CHAIN_PRESENT hardware_completion=P5")

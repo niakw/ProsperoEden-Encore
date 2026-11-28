@@ -4283,16 +4283,19 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         endif()
     endforeach()
     get_target_property(eden_ns2_gamechat_sources core SOURCES)
-    list(FIND eden_ns2_gamechat_sources
-        "hle/service/friend/friend.cpp" eden_ns2_gamechat_friend_idx)
-    list(FIND eden_ns2_gamechat_sources
-        "hle/service/friend/friend_interface.cpp" eden_ns2_gamechat_interface_idx)
-    if(eden_ns2_gamechat_friend_idx EQUAL -1 OR eden_ns2_gamechat_interface_idx EQUAL -1)
-        message(FATAL_ERROR "Pinned friend owner changed: re-audit NS2 GameChat service")
+    list(LENGTH eden_ns2_gamechat_sources eden_ns2_gamechat_before)
+    # Earlier source substitutions can make a target source absolute. Remove
+    # exactly the two Eden friend translation units by their stable suffix,
+    # then replace both with the maintained paired owner.
+    list(FILTER eden_ns2_gamechat_sources EXCLUDE REGEX
+        "(^|/)hle/service/friend/(friend|friend_interface)\\.cpp$")
+    list(LENGTH eden_ns2_gamechat_sources eden_ns2_gamechat_after)
+    math(EXPR eden_ns2_gamechat_removed
+        "${eden_ns2_gamechat_before} - ${eden_ns2_gamechat_after}")
+    if(NOT eden_ns2_gamechat_removed EQUAL 2)
+        message(FATAL_ERROR
+            "Expected exactly two Eden friend owners, removed=${eden_ns2_gamechat_removed}")
     endif()
-    list(REMOVE_ITEM eden_ns2_gamechat_sources
-        "hle/service/friend/friend.cpp"
-        "hle/service/friend/friend_interface.cpp")
     list(APPEND eden_ns2_gamechat_sources
         "${EDEN_NS2_GAMECHAT_SOURCE}"
         "${EDEN_NS2_GAMECHAT_INTERFACE_SOURCE}")

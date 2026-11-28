@@ -21,7 +21,7 @@ for pattern in (
 ):
     assert pattern in rules, pattern
 for retained_legacy in (
-    "microsoft.com", "pokemon.com", "phoenix-api.wbagora.com",
+    "microsoft.com", "pokemon.com", "*.phoenix-api.wbagora.com",
     "scsi-upload-lp1.s3.us-west-2.amazonaws.com",
 ):
     assert retained_legacy in rules, retained_legacy
@@ -65,7 +65,8 @@ int main(int argc, char** argv) {
     yes("login.microsoft.com");
     yes("pokemon.com");
     yes("www.pokemon.com");
-    yes("phoenix-api.wbagora.com");
+    yes("api.phoenix-api.wbagora.com");
+    no("phoenix-api.wbagora.com");
     yes("scsi-upload-lp1.s3.us-west-2.amazonaws.com");
     no("other.s3.us-west-2.amazonaws.com");
     no("8.8.8.8");

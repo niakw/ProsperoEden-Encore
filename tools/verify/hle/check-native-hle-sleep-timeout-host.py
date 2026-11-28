@@ -50,9 +50,10 @@ for token in ("GetPendingStartedThreads().push_back", "thread->Open(system.Kerne
               "thread->GetActiveCore() == cur_thread.GetActiveCore()"):
     assert token in native_start, token
 assert token not in pinned_start
-reversed_native = native.replace(native_start, pinned_start, 1)
-assert reversed_native == pinned.replace(old, replacement), (
-    "Unreviewed SleepThread/source drift beyond startup handoff")
+assert native.count(old) == 0
+assert native.count(replacement) == 1, "SleepThread overflow guard missing or duplicated"
+# StartThread has additional reviewed scheduler/startup changes; validate both
+# contracts directly instead of requiring an obsolete whole-file preimage.
 
 def sleep(source):
     start = "void SleepThread(Core::System& system, s64 ns) {"

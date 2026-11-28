@@ -85,8 +85,12 @@ assert info_original.count(info_old)==1
 assert (active/"audio_core/renderer/behavior/info_updater.cpp").read_text()==info_original.replace(info_old,info_new)
 assert 'set(EDEN_MAINTAINED_AUDIO_INFO_UPDATER' in cmake
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_AUDIO_INFO_UPDATER}")' in cmake
-assert 'renderer/behavior/info_updater.cpp)' in cmake
-assert cmake.count('"${EDEN_MAINTAINED_AUDIO_INFO_UPDATER}")')==1
+assert cmake.count('renderer/behavior/info_updater.cpp') == 2  # set path + pinned removal
+assert cmake.count('list(APPEND audio_sources') == 1
+audio_append=cmake.split('list(APPEND audio_sources',1)[1].split(')',1)[0]
+assert audio_append.count('"${EDEN_MAINTAINED_AUDIO_INFO_UPDATER}"') == 1
+audio_remove=cmake.split('list(REMOVE_ITEM audio_sources',1)[1].split(')',1)[0]
+assert audio_remove.count('renderer/behavior/info_updater.cpp') == 1
 assert 'write_derived("${PORT_BUILD_DIR}/sink_stream.cpp"' not in cmake
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/audio_core/sink/sink_stream.cpp"' not in cmake
 print("MAINTAINED_AUDIO_STREAM_PARITY_PASS: historical rewrites, reusable scratch and selected source")

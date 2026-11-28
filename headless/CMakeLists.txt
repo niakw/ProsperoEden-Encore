@@ -4912,6 +4912,7 @@ if(PS5_NATIVE)
     set(EDEN_NATIVE_GPU_ABI_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")
     foreach(eden_native_gpu_header IN ITEMS
             video_core/control/channel_state.h
+            video_core/framebuffer_config.h
             core/hle/service/nvdrv/core/container.h
             core/hle/service/nvdrv/devices/nvdevice.h
             core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.h
@@ -4927,6 +4928,30 @@ if(PS5_NATIVE)
     # their cached source roots. Keep the same header identity everywhere.
     target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
+
+    # Native VI2 buffers travel through the common BufferQueue/NvDisp path.
+    # Select the maintained owner that derives FramebufferConfig.native_tiling
+    # from the NvMap session's authenticated KProcess. Exactly one nvdisp TU.
+    set(EDEN_NATIVE_NVDISP_SOURCE
+        "${EDEN_NATIVE_GPU_ABI_ROOT}/core/hle/service/nvdrv/devices/nvdisp_disp0.cpp")
+    if(NOT EXISTS "${EDEN_NATIVE_NVDISP_SOURCE}")
+        message(FATAL_ERROR "Missing native VI2/NvDisp presentation owner")
+    endif()
+    get_target_property(eden_native_nvdisp_units core SOURCES)
+    set(eden_native_nvdisp_owners "")
+    foreach(eden_native_nvdisp_unit IN LISTS eden_native_nvdisp_units)
+        if(eden_native_nvdisp_unit MATCHES
+                "(^|/)hle/service/nvdrv/devices/nvdisp_disp0[.]cpp$")
+            list(APPEND eden_native_nvdisp_owners "${eden_native_nvdisp_unit}")
+        endif()
+    endforeach()
+    list(LENGTH eden_native_nvdisp_owners eden_native_nvdisp_count)
+    if(NOT eden_native_nvdisp_count EQUAL 1)
+        message(FATAL_ERROR "Expected exactly one pinned NvDisp owner before native replacement")
+    endif()
+    list(REMOVE_ITEM eden_native_nvdisp_units ${eden_native_nvdisp_owners})
+    list(APPEND eden_native_nvdisp_units "${EDEN_NATIVE_NVDISP_SOURCE}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_native_nvdisp_units}")
 endif()
 
 # The native rasterizer is the reviewed layered-clear implementation and calls

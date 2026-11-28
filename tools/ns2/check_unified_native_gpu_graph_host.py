@@ -47,12 +47,16 @@ stub = root/'vendor/encore-active/eden/src'/stub_relative
 assert '#include "' + stub_relative + '"' in module.read_text()
 assert stub.is_file() and 'class nx2_stub_device final' in stub.read_text()
 assert abi_owner.count(stub_relative) == 1
+assert abi_owner.count('video_core/framebuffer_config.h') == 1
+assert 'set(EDEN_NATIVE_NVDISP_SOURCE' in abi_owner
+assert 'core/hle/service/nvdrv/devices/nvdisp_disp0.cpp' in abi_owner
 assert 'set(EDEN_NATIVE_GPU_ABI_ROOT "${PORT_ROOT}/vendor/encore-active/eden/src")' in abi_owner
 assert '"${PORT_BUILD_DIR}/include/${eden_native_gpu_header}" COPYONLY' in abi_owner
 assert 'target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")' in abi_owner
 with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
  base=Path(directory);proj=base/'source';proj.mkdir();(proj/'dummy.cpp').write_text('int dummy=0;\n')
  files=['hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp',
+        'hle/service/nvdrv/devices/nvdisp_disp0.cpp',
         'hle/service/nvdrv/devices/nvhost_as_gpu.cpp',
         'hle/service/nvdrv/devices/nvhost_gpu.cpp',
         'hle/service/nvdrv/nvdrv_interface.cpp',
@@ -82,6 +86,7 @@ set(EDEN_SHARED_NS2_AM ON)
 set(EDEN_SHARED_NS2_GPU_ACCESS_SVC ON)
 add_library(core STATIC dummy.cpp
     hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp
+    hle/service/nvdrv/devices/nvdisp_disp0.cpp
     hle/service/nvdrv/devices/nvhost_as_gpu.cpp
     hle/service/nvdrv/devices/nvhost_gpu.cpp
     hle/service/nvdrv/nvdrv_interface.cpp
@@ -125,6 +130,19 @@ string(REGEX MATCHALL "vendor/encore-active/eden/src/core/hle/service/nvdrv/nvdr
 list(LENGTH native_nvdrv_module_owners native_nvdrv_module_count)
 if(NOT native_nvdrv_module_count EQUAL 1)
     message(FATAL_ERROR "Expected exactly one native NVDRV Module owner")
+endif()
+list(FIND selected_core "hle/service/nvdrv/devices/nvdisp_disp0.cpp" legacy_nvdisp)
+if(NOT legacy_nvdisp EQUAL -1)
+    message(FATAL_ERROR "Pinned NvDisp compiled beside native GOB-aware owner")
+endif()
+string(REGEX MATCHALL "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvdisp_disp0[.]cpp"
+    native_nvdisp_owners "${selected_core}")
+list(LENGTH native_nvdisp_owners native_nvdisp_count)
+if(NOT native_nvdisp_count EQUAL 1)
+    message(FATAL_ERROR "Expected exactly one native NvDisp owner")
+endif()
+if(NOT EXISTS "${PORT_BUILD_DIR}/include/video_core/framebuffer_config.h")
+    message(FATAL_ERROR "Native FramebufferConfig ABI not staged")
 endif()
 get_target_property(selected_video video_core SOURCES)
 get_target_property(selected_shader shader_recompiler SOURCES)

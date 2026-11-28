@@ -32,7 +32,12 @@ def check_hunks(text, name):
             flush()
             active = False
         elif active:
-            if line.startswith(" "):
+            if line == "" and old == expected_old and new == expected_new:
+                # A blank separator between completed file/hunk sections is valid.
+                # Never accept it while the hunk counts are still incomplete.
+                flush()
+                active = False
+            elif line.startswith(" "):
                 old += 1
                 new += 1
             elif line.startswith("-"):

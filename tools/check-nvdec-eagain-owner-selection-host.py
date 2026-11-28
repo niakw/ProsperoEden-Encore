@@ -967,10 +967,10 @@ SYNC_HDR=V/"encore-active/eden/src/video_core/host1x/syncpoint_manager.h"
 CTRL_CPP=V/"encore-active/eden/src/video_core/host1x/control.cpp"
 CTRL_HDR=V/"encore-active/eden/src/video_core/host1x/control.h"
 sync_blob=blob(SYNC_CPP)
-assert sync_blob in {"eb5e2ea63652f020b6e14497080ba3339a9c983c", "59ac07af5eab89e78b7089d1db58918f2506aafe", "abe89b570a18508123a5c14c49cf5a43935f620c", "91b6600f302c7a1326c45ac151b60b19ca41c2c7"}
+assert sync_blob in {"eb5e2ea63652f020b6e14497080ba3339a9c983c", "59ac07af5eab89e78b7089d1db58918f2506aafe", "abe89b570a18508123a5c14c49cf5a43935f620c", "91b6600f302c7a1326c45ac151b60b19ca41c2c7", "c57be885565ff43214d0a7e8871c2b37dc8b79a6"}
 SYNC_SOURCE=SYNC_CPP.read_text()
 sync_receipt_source=SYNC_SOURCE
-if sync_blob=="91b6600f302c7a1326c45ac151b60b19ca41c2c7":
+if sync_blob in {"91b6600f302c7a1326c45ac151b60b19ca41c2c7", "c57be885565ff43214d0a7e8871c2b37dc8b79a6"}:
     wrapping_added="""SyncpointManager::ActionHandle SyncpointManager::RegisterWrappingGuestAction(
     u32 id, u32 target, std::function<void()>&& action) {
     if (id >= NUM_MAX_SYNCPOINTS) return {};
@@ -994,6 +994,8 @@ void SyncpointManager::DeregisterWrappingGuestAction(
 }
 
 """
+    if sync_blob=="c57be885565ff43214d0a7e8871c2b37dc8b79a6":
+        wrapping_added=wrapping_added.replace("            return wrapping_guest_actions[id]\n                .emplace_back(target, last_action_id, std::move(action))->id;\n", "            return wrapping_guest_actions[id]\n                .emplace_back(target, last_action_id, std::move(action)).id;\n")
     assert sync_receipt_source.count(wrapping_added)==1
     sync_receipt_source=sync_receipt_source.replace(wrapping_added,"",1)
     newer="""    Increment(syncpoints_guest[id], wait_guest_cv, guest_action_storage[id],

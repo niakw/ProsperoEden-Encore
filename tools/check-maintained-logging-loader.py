@@ -33,29 +33,59 @@ assert loader_git_blob == "bb99dccad28234f246395d4d010211a41d928763", (
 )
 
 logging = (base / "common/logging.cpp").read_text()
+maintained_logging_path = active / "common/logging.cpp"
+maintained_logging_data = maintained_logging_path.read_bytes()
+maintained_logging = maintained_logging_data.decode("utf-8")
+maintained_logging_git_blob = hashlib.sha1(
+    b"blob " + str(len(maintained_logging_data)).encode() + b"\0" + maintained_logging_data
+).hexdigest()
+assert maintained_logging_git_blob == "0a3a70c8f44fbfef2b126e35aedfd307b78ba67a", (
+    "maintained PS5 logging owner changed: repeat owner review",
+    maintained_logging_git_blob,
+)
+
+# The frozen vendor source remains the unmodified Eden baseline.
 old_flush = """            if (write_limit_exceeded)
                 enabled = false;
             file->Flush();"""
-new_flush = """            if (write_limit_exceeded)
-                enabled = false;
-            const auto flush_now = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now().time_since_epoch()).count();
-            if (write_limit_exceeded ||
-                flush_now - error_flushed_ms.load(std::memory_order_relaxed) >= 100) {
-                error_flushed_ms.store(flush_now, std::memory_order_relaxed);
-                file->Flush();
-            }"""
-field = "    std::optional<FS::IOFile> file;"
-assert logging.count(old_flush) == logging.count(field) == 1
-expected = ("#include <atomic>\n#include <chrono>\n" +
-            logging.replace(old_flush, new_flush).replace(
-                field, field + "\n    std::atomic<long long> error_flushed_ms{-1000};"))
-# Native output is console-only; preserve the exact quiet-backend fast path.
+assert logging.count(old_flush) == 1
+assert "eden_native_detailed_logging" not in logging
+assert "void RotatePs5() noexcept" not in logging
+
+# The canonical owner keeps the later host flush-throttling optimization.
+for needle in ("#include <atomic>", "#include <chrono>"):
+    assert maintained_logging.count(needle) >= 1, needle
+for needle in (
+    "flush_now - error_flushed_ms.load(std::memory_order_relaxed) >= 100",
+    "error_flushed_ms.store(flush_now, std::memory_order_relaxed);",
+    'std::atomic<long long> error_flushed_ms{-1000};',
+):
+    assert maintained_logging.count(needle) == 1, needle
+
+# PS5 detailed logging is opt-in and bounded. Preserve both the first segment
+# and rolling recent tail while avoiding formatting work when logging is off.
+for needle in (
+    'extern "C" bool eden_native_detailed_logging() noexcept;',
+    'extern "C" unsigned eden_native_logging_generation() noexcept;',
+    'if (!eden_native_detailed_logging()) return;',
+    'const auto generation = eden_native_logging_generation();',
+    'constexpr auto write_limit = 8_MiB;',
+    'void RotatePs5() noexcept {',
+    'first_filename += ".first.txt";',
+    '"[Eden Encore] log tail rotated; storage remains bounded\\n"',
+    'error_events == 1 || error_events % 64 == 0',
+):
+    assert needle in maintained_logging, needle
+assert maintained_logging.count("void RotatePs5() noexcept {") == 1
+assert maintained_logging.count("eden_native_logging_generation()") >= 2
+
+# Native console-only output retains its quiet-backend fast path in addition
+# to the detailed-logging gate; these are complementary, not alternatives.
 log_entry = "void FmtLogMessageImpl(Class log_class, Level log_level, const char* filename, unsigned int line_num, const char* function, fmt::string_view format, const fmt::format_args& args) {"
-native_guard = "\n#ifdef __OPENORBIS__\n    // Native builds have no file/debugger/logcat backend. When the only\n    // console backend is OFF, do not format messages that nobody can read.\n    // Toggling it back on preserves filtering and the existing log format.\n    if (logging_instance &&\n        !logging_instance->color_console_backend.enabled.load(std::memory_order_relaxed))\n        return;\n#endif"
-assert expected.count(log_entry) == 1
-expected = expected.replace(log_entry, log_entry + native_guard)
-assert (active / "common/logging.cpp").read_text() == expected
+fmt = maintained_logging[maintained_logging.index(log_entry):]
+assert fmt.index("#ifdef PS5_NATIVE") < fmt.index("#ifdef __OPENORBIS__")
+assert 'if (!eden_native_detailed_logging()) return;' in fmt
+assert '!logging_instance->color_console_backend.enabled.load(std::memory_order_relaxed)' in fmt
 
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_CODE_LOADER}")' in cmake
 assert 'list(APPEND eden_common_sources "${EDEN_MAINTAINED_LOGGING}")' in cmake

@@ -36,8 +36,10 @@ assert "GpuGuestMemory<Tegra::CommandHeader," in step
 assert "GuestMemoryFlags::SafeRead" in step
 assert "GuestMemoryFlags::UnsafeRead" in step
 assert "#ifdef PS5_NATIVE" in step
-assert 'NativeGpuChannelRegistry::Instance().IsNative(&channel_state);' in step
-assert step.index('NativeGpuChannelRegistry::Instance().IsNative(&channel_state);') < step.index(
+compact_step = ''.join(step.split())
+native_channel_probe = 'NativeGpuChannelRegistry::Instance().IsNative(&channel_state);'
+assert native_channel_probe in compact_step
+assert compact_step.index(native_channel_probe) < compact_step.index(
     'GpuGuestMemory<Tegra::CommandHeader,')
 assert 'target_compile_definitions(video_core PRIVATE EDEN_NS2_NATIVE_GPU_DISPATCH=1)' not in cmake
 assert 'EDEN_NS2_NATIVE_GPU_PULLER' in cmake
@@ -102,8 +104,23 @@ for helper in (
     "BuildIncrementWithWfiCommandList(params.fence)",
 ):
     assert helper in nvdrv
-assert "submitted_words" not in nvdrv
-assert "submitted_offsets" not in nvdrv
+# The canonical native submit owner now captures a bounded snapshot of
+# CPU-authored GPFIFO words at the ioctl boundary. This prevents a guest ring
+# refill after submit from changing the frame that the GPU worker executes.
+# GPU-dirty words remain invalid and keep the coherent SafeRead/live-fetch
+# path validated below; DmaPusher also rejects a stale snapshot epoch.
+for marker in (
+    "entries.submitted_words.resize(total_words)",
+    "entries.submitted_offsets.reserve(entries.command_lists.size())",
+    "entries.submitted_valid.assign(entries.command_lists.size(), 0)",
+    "entries.snapshot_epoch =",
+    "channel_state->payload->dma_pusher.NativeSnapshotEpoch()",
+    "channel_state->memory_manager->IsMemoryDirty(",
+    "channel_state->memory_manager->ReadBlockUnsafe(",
+):
+    assert marker in submit, marker
+assert submit.index("entries.submitted_words.resize(total_words)") < submit.index(lambda_marker)
+assert submit.index("entries.snapshot_epoch =") < submit.index(lambda_marker)
 
 # The real source chain is stronger than the older snapshot-only audit:
 # 1. A native NS2 channel always selects SafeRead for the live command span.

@@ -75,9 +75,27 @@ if sys.argv[1:] == ['--source-only']:
 
 cache = Path((root / '.local/headless-cache').read_text().strip())
 upstream = cache / 'source/src'
-generated = cache / 'native-local/headless/gpu_thread.cpp'
 source = (upstream / 'video_core/gpu_thread.cpp').read_text()
-worker = generated.read_text()
+maintained_worker = root / 'vendor/encore-active/eden/src/video_core/gpu_thread.cpp'
+worker = maintained_worker.read_text()
+
+# The canonical architecture compiles the maintained worker directly. Older
+# native build caches may still contain an unreferenced headless/gpu_thread.cpp
+# from the retired generated-source layout; never use that stale file as the
+# source oracle. Verify the actual Ninja compile edge instead.
+ninja = (cache / 'native-local/build.ninja').read_text()
+gpu_edges = [
+    line for line in ninja.splitlines()
+    if line.startswith('build ') and 'gpu_thread.cpp.o:' in line
+]
+assert len(gpu_edges) == 1, ('expected one native GPU worker compile edge', gpu_edges)
+gpu_input = gpu_edges[0].split(':', 1)[1]
+canonical_worker = str(maintained_worker.resolve())
+assert canonical_worker in gpu_input or 'vendor/encore-active/eden/src/video_core/gpu_thread.cpp' in gpu_input, (
+    'native build graph does not compile canonical GPU worker', gpu_edges[0])
+assert 'native-local/headless/gpu_thread.cpp' not in gpu_input, (
+    'retired generated GPU worker still selected by native build graph', gpu_edges[0])
+print('GPU_NATIVE_BUILD_GRAPH_OWNER_PASS owner=canonical generated_cache_ignored=1')
 body = source.split('thread = std::jthread([&](std::stop_token stop_token) {', 1)[1].split('\n    });', 1)[0]
 dispatch_call = '                scheduler.Push(system.GPU(), submit_list->channel, std::move(submit_list->entries));'
 development = 'EDEN_DEV_PROFILE:BOOL=ON' in (cache / 'native-local/CMakeCache.txt').read_text()
@@ -113,8 +131,8 @@ for metric, call in (
 # The producer is outside the upstream worker body. Compare its complete
 # compiled TU to the selected maintained source, including failure propagation
 # and acquire loads, rather than normalizing an obsolete relaxed-load fragment.
-maintained_worker = root / 'vendor/encore-active/eden/src/video_core/gpu_thread.cpp'
-assert generated.read_bytes() == maintained_worker.read_bytes()
+# The maintained source above is the exact translation unit selected by the
+# native build graph; no generated C++ parity file participates anymore.
 producer = worker.split('u64 ThreadManager::PushCommand(', 1)[1].split('\n} // namespace', 1)[0]
 assert producer.count('TryEmplace(') == 1
 assert producer.count('EmplaceWaitWithStopToken(') == 1

@@ -16,11 +16,12 @@ SHADERS = (
     (ROOT / "headless/convert_x8d24_to_abgr8.frag", "CONVERT_X8D24_TO_ABGR8_FRAG_SPV"),
 )
 
-# The vendor gitlink already authenticates the exact source tree.  Do not
-# re-admit current owners through a historical blob-SHA allowlist: validate
-# the canonical paths and the runtime contract this gate actually needs.
+# Current canonical owners are live maintained sources. Validate their selected
+# path and X8D24 semantics below instead of freezing a revision allowlist that
+# turns unrelated TextureCache evolution into a false conversion regression.
 for owner in (CPP, HDR, TEX, CACHE):
-    assert owner.is_file(), f"Missing canonical X8D24 owner: {owner}"
+    assert owner.is_file(), owner
+    assert "vendor/encore-active/eden/" in owner.as_posix(), owner
 
 cpp = CPP.read_text()
 hdr = HDR.read_text()
@@ -29,6 +30,9 @@ cache = CACHE.read_text()
 assert "if (!image_id)" in cache and "return ImageViewId{};" in cache
 cmake = CMAKE.read_text()
 common = COMMON.read_text()
+assert 'set(EDEN_ACTIVE_EDEN_SRC "${PORT_ROOT}/vendor/encore-active/eden/src")' in cmake
+assert 'set(EDEN_ACTIVE_VULKAN "${EDEN_ACTIVE_EDEN_SRC}/video_core/renderer_vulkan")' in cmake
+assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in cmake
 assert "DecodeX8D24" in common and "EncodeX8D24" in common
 assert "16777216.0f" in common and "16777215.0f" in common
 for token in (

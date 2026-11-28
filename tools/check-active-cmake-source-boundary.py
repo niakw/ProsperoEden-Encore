@@ -191,6 +191,8 @@ for path in sorted(consumer_paths):
     for forbidden in (
         "encore-active/eden/src/dynarmic/backend/",
         "encore-active/eden/src/dynarmic/frontend/",
+        "encore-active/eden/src/dynarmic/common/",
+        "encore-active/eden/src/dynarmic/ir/",
     ):
         if forbidden in source:
             legacy_consumer_refs.append(

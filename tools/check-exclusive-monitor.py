@@ -16,7 +16,7 @@ monitor = (dynarmic / 'dynarmic/backend/x64/exclusive_monitor.cpp').read_text()
 monitor = monitor.replace('#include "common/assert.h"', '')
 # The historical include fragment was retired when the full native unit
 # became its maintained owner. Exercise its actual compiler-atomic methods.
-lock_unit = (root / 'vendor/encore-active/eden/src/dynarmic/common/spin_lock_x64.cpp').read_text()
+lock_unit = (root / 'vendor/encore-active/eden/src/dynarmic/src/dynarmic/common/spin_lock_x64.cpp').read_text()
 lock_start = '// PS5 x64: retain the storage ABI'
 lock_end = '\n} // namespace Dynarmic'
 assert lock_unit.count(lock_start) == lock_unit.count(lock_end) == 1

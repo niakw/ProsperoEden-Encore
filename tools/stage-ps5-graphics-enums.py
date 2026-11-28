@@ -17,7 +17,8 @@ import shutil
 
 ROOT = Path(__file__).resolve().parents[1]
 PINNED_UPSTREAM_SHA256 = "f2a3ae93b4257611958fab5a0c652f89c8158d2e16da31fb196a27960cf467ba"
-SHIPPING_BACKPORT_SHA256 = "d617d9bd8882d6803fe885dd15302675b211a2e71e6c6faac18e549224aa1689"
+LEGACY_BACKPORT_SHA256 = "d617d9bd8882d6803fe885dd15302675b211a2e71e6c6faac18e549224aa1689"
+SHIPPING_CANONICAL_BLOB = "71affe639ac03a38a9fe42d692efa6ffadf83764"
 RELATIVE = Path("src/common/settings_enums.h")
 REPLACEMENTS = (
     ("ENUM(ScalingFilter, NearestNeighbor, Bilinear, Bicubic, Gaussian, Lanczos, ScaleForce, Fsr, Area, ZeroTangent, BSpline, Mitchell, Spline1, Mmpx, Sgsr, SgsrEdge);", "ENUM(ScalingFilter, NearestNeighbor, Bilinear, Bicubic, Gaussian, Lanczos, ScaleForce, Fsr, Area, ZeroTangent, BSpline, Mitchell, Spline1, Mmpx, Sgsr, SgsrEdge, Anime4K3D, Anime4KSoft, Anime4KDenoise);"),
@@ -36,18 +37,27 @@ def exact_replace(text: str, before: str, after: str, what: str) -> str:
 
 
 def extend_fence_header(text: str) -> str:
-    text = exact_replace(
-        text,
-        "GpuFenceBehavior::Accurate,\n                                                                 \"gpu_fence_behavior\"",
-        "GpuFenceBehavior::Strict,\n                                                                 \"gpu_fence_behavior\"",
-        "maximum supported fence behavior",
-    )
-    return exact_replace(
-        text,
-        "bool IsGPUFenceBehaviorAccurate();\n",
-        "bool IsGPUFenceBehaviorAccurate();\nbool IsGPUFenceBehaviorStrict();\n",
-        "fence strict declaration",
-    )
+    legacy_max = "GpuFenceBehavior::Accurate,\n                                                                 \"gpu_fence_behavior\""
+    canonical_max = "GpuFenceBehavior::Strict,\n                                                                 \"gpu_fence_behavior\""
+    legacy_decl = "bool IsGPUFenceBehaviorAccurate();\n"
+    canonical_decl = "bool IsGPUFenceBehaviorAccurate();\nbool IsGPUFenceBehaviorStrict();\n"
+    canonical = text.count(canonical_max) == 1 and text.count(canonical_decl) == 1
+    legacy = text.count(legacy_max) == 1 and text.count(legacy_decl) == 1 and "IsGPUFenceBehaviorStrict" not in text
+    if canonical:
+        return text
+    if not legacy:
+        raise RuntimeError("Unexpected reviewed PS5 fence ABI: header")
+    return text.replace(legacy_max, canonical_max, 1).replace(legacy_decl, canonical_decl, 1)
+
+
+def legacy_fence_header(text: str) -> str:
+    canonical_max = "GpuFenceBehavior::Strict,\n                                                                 \"gpu_fence_behavior\""
+    legacy_max = "GpuFenceBehavior::Accurate,\n                                                                 \"gpu_fence_behavior\""
+    canonical_decl = "bool IsGPUFenceBehaviorAccurate();\nbool IsGPUFenceBehaviorStrict();\n"
+    legacy_decl = "bool IsGPUFenceBehaviorAccurate();\n"
+    if text.count(canonical_max) != 1 or text.count(canonical_decl) != 1:
+        raise RuntimeError("Canonical PS5 fence header drift")
+    return text.replace(canonical_max, legacy_max, 1).replace(canonical_decl, legacy_decl, 1)
 
 
 def extend_fence_implementation(text: str) -> str:
@@ -56,36 +66,81 @@ def extend_fence_implementation(text: str) -> str:
         "    return values.gpu_fence_behavior.GetValue() == GpuFenceBehavior::Accurate;\n"
         "}\n"
     )
-    return exact_replace(
-        text, marker,
-        marker + (
-            "\nbool IsGPUFenceBehaviorStrict() {\n"
-            "    return values.gpu_fence_behavior.GetValue() == GpuFenceBehavior::Strict;\n"
-            "}\n"
-        ), "real fence strict implementation")
+    strict = (
+        "\nbool IsGPUFenceBehaviorStrict() {\n"
+        "    return values.gpu_fence_behavior.GetValue() == GpuFenceBehavior::Strict;\n"
+        "}\n"
+    )
+    if text.count(marker + strict) == 1:
+        return text
+    if text.count(marker) != 1 or "bool IsGPUFenceBehaviorStrict() {" in text:
+        raise RuntimeError("Unexpected reviewed PS5 fence ABI: implementation")
+    return text.replace(marker, marker + strict, 1)
+
+
+def legacy_fence_implementation(text: str) -> str:
+    marker = (
+        "bool IsGPUFenceBehaviorAccurate() {\n"
+        "    return values.gpu_fence_behavior.GetValue() == GpuFenceBehavior::Accurate;\n"
+        "}\n"
+    )
+    strict = (
+        "\nbool IsGPUFenceBehaviorStrict() {\n"
+        "    return values.gpu_fence_behavior.GetValue() == GpuFenceBehavior::Strict;\n"
+        "}\n"
+    )
+    if text.count(marker + strict) != 1:
+        raise RuntimeError("Canonical PS5 fence implementation drift")
+    return text.replace(marker + strict, marker, 1)
 
 
 def sha256(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
+
+def git_blob(value: bytes) -> str:
+    return hashlib.sha1(b"blob " + str(len(value)).encode() + b"\0" + value).hexdigest()
+
+
+def extend_graphics_enums(base_text: str) -> str:
+    legacy = all(base_text.count(before) == 1 and after not in base_text
+                 for before, after in REPLACEMENTS)
+    canonical = all(base_text.count(after) == 1 and before not in base_text
+                    for before, after in REPLACEMENTS)
+    if canonical:
+        return base_text
+    if not legacy:
+        raise RuntimeError("Unexpected reviewed graphics enum source ABI")
+    result = base_text
+    for before, after in REPLACEMENTS:
+        result = result.replace(before, after, 1)
+    return result
+
+
+def legacy_graphics_enums(canonical_text: str) -> str:
+    if not all(canonical_text.count(after) == 1 and before not in canonical_text
+               for before, after in REPLACEMENTS):
+        raise RuntimeError("Canonical graphics enum ABI drift")
+    result = canonical_text
+    for before, after in REPLACEMENTS:
+        result = result.replace(after, before, 1)
+    return result
+
+
 def approved_bytes() -> tuple[bytes, bytes]:
     original = ROOT / "vendor/sources/eden" / RELATIVE
     reviewed = ROOT / "vendor/encore-active/eden" / RELATIVE
     source = original.read_bytes()
-    base = reviewed.read_bytes()
+    canonical = reviewed.read_bytes()
     if sha256(source) != PINNED_UPSTREAM_SHA256:
         raise RuntimeError("Pinned Eden enum input drift: immutable source was modified")
-    if sha256(base) != SHIPPING_BACKPORT_SHA256:
-        raise RuntimeError("Audited 83-source Eden backport header drift")
-    return source, base
+    if git_blob(canonical) != SHIPPING_CANONICAL_BLOB:
+        raise RuntimeError("Canonical Encore graphics enum owner drift")
+    legacy = legacy_graphics_enums(canonical.decode("utf-8")).encode("utf-8")
+    if sha256(legacy) != LEGACY_BACKPORT_SHA256:
+        raise RuntimeError("Canonical graphics enum reverse delta changed legacy audited owner")
+    return source, canonical
 
-def extend_graphics_enums(base_text: str) -> str:
-    result = base_text
-    for before, after in REPLACEMENTS:
-        if result.count(before) != 1 or after in result:
-            raise RuntimeError("Unexpected reviewed graphics enum source ABI")
-        result = result.replace(before, after)
-    return result
 
 def validate_owned_stage(stage: Path) -> Path:
     if stage.is_symlink() or stage.name != "source":
@@ -172,110 +227,96 @@ def reviewed_warning_targets() -> list[tuple[Path, bytes, bytes]]:
 
 
 def apply(stage: Path, check_only: bool = False) -> str:
-    _, approved = approved_bytes()
+    _, canonical_enums = approved_bytes()
     _ = validate_owned_stage(stage)
-    targets = (
-        (RELATIVE, approved, extend_graphics_enums(approved.decode("utf-8")).encode("utf-8")),
-        (FENCE_HEADER,
-         (ROOT / "vendor/encore-active/eden" / FENCE_HEADER).read_bytes(),
-         None),
-        (FENCE_IMPL,
-         (ROOT / "vendor/encore-active/eden" / FENCE_IMPL).read_bytes(),
-         None),
-    )
-    targets = list(targets)
-    targets[1] = (targets[1][0], targets[1][1],
-                  extend_fence_header(targets[1][1].decode("utf-8")).encode("utf-8"))
-    targets[2] = (targets[2][0], targets[2][1],
-                  extend_fence_implementation(targets[2][1].decode("utf-8")).encode("utf-8"))
+
+    canonical_enum_text = extend_graphics_enums(canonical_enums.decode("utf-8"))
+    legacy_enum_bytes = legacy_graphics_enums(canonical_enum_text).encode("utf-8")
+
+    canonical_h_bytes = (ROOT / "vendor/encore-active/eden" / FENCE_HEADER).read_bytes()
+    canonical_cpp_bytes = (ROOT / "vendor/encore-active/eden" / FENCE_IMPL).read_bytes()
+    canonical_h_text = extend_fence_header(canonical_h_bytes.decode("utf-8"))
+    canonical_cpp_text = extend_fence_implementation(canonical_cpp_bytes.decode("utf-8"))
+
+    targets = [
+        (RELATIVE, legacy_enum_bytes, canonical_enum_text.encode("utf-8")),
+        (FENCE_HEADER, legacy_fence_header(canonical_h_text).encode("utf-8"),
+         canonical_h_text.encode("utf-8")),
+        (FENCE_IMPL, legacy_fence_implementation(canonical_cpp_text).encode("utf-8"),
+         canonical_cpp_text.encode("utf-8")),
+    ]
     targets.extend(reviewed_warning_targets())
-    # Inspect every target before writing any, so an unfamiliar build-cache
-    # change cannot partially install or bypass the reviewed source variant.
+
     pending = []
-    for relative, original, expected in targets:
+    for relative, legacy, expected in targets:
         dest = stage / relative
         if dest.is_symlink() or not dest.is_file() or not (
                 dest.resolve().is_relative_to(stage.resolve())):
-            raise RuntimeError("Unsafe PS5 fence/graphics owner: " + str(relative))
+            raise RuntimeError("Unsafe PS5 graphics/fence owner: " + str(relative))
         current = dest.read_bytes()
         if current == expected:
             continue
-        if current != original:
+        if current != legacy:
             raise RuntimeError("Unreviewed PS5 staged graphics/fence source: " + str(relative))
-        pending.append((dest, original, expected))
+        pending.append((dest, legacy, expected))
     if not pending:
         return "already-applied"
     if check_only:
-        raise RuntimeError("PS5 graphics/fence overlay not yet installed")
-    for dest, original, expected in pending:
+        raise RuntimeError("Canonical PS5 graphics/fence owners not yet staged")
+    for dest, legacy, expected in pending:
         tmp = dest.with_name(dest.name + ".encore-" + str(os.getpid()))
         if tmp.exists() or tmp.is_symlink():
             raise RuntimeError("Unexpected PS5 staged graphics temporary file")
         try:
             tmp.write_bytes(expected)
             shutil.copymode(dest, tmp)
-            if dest.read_bytes() != original:
+            if dest.read_bytes() != legacy:
                 raise RuntimeError("PS5 staged graphics source changed during installation")
             tmp.replace(dest)
         finally:
             tmp.unlink(missing_ok=True)
     return "installed"
 
+
 def self_test() -> None:
-    source, approved = approved_bytes()
-    extended = extend_graphics_enums(approved.decode("utf-8"))
-    # Strict already exists in the PINNED upstream Eden enum. The old
-    # 83-source backport omitted it, while upstream fence_manager.h still
-    # calls its real predicate. Only Encore's scaling/AA extras must be
-    # absent from original upstream; Strict must be present there.
+    source, canonical_enums = approved_bytes()
+    canonical_text = canonical_enums.decode("utf-8")
+    legacy_text = legacy_graphics_enums(canonical_text)
+    assert extend_graphics_enums(canonical_text) == canonical_text
+    assert extend_graphics_enums(legacy_text) == canonical_text
+
     upstream_enums = source.decode("utf-8")
-    assert not any(after in upstream_enums for before, after in REPLACEMENTS
-                   if "GpuFenceBehavior" not in before)
+    assert "Anime4K3D" not in upstream_enums and "FxaaPlus" not in upstream_enums
     assert "ENUM(GpuFenceBehavior, Default, Immediate, Balanced, Accurate, Strict);" in upstream_enums
-    assert "ENUM(GpuFenceBehavior, Default, Immediate, Balanced, Accurate);" in approved.decode("utf-8")
-    assert all(extended.count(after) == 1 for _,after in REPLACEMENTS)
-    assert all(extended.count(before) == 0 for before,_ in REPLACEMENTS)
-    assert extended.count("ENUM(ScalingFilter,") == 1
-    assert extended.count("ENUM(AntiAliasing,") == 1
-    assert extended.count("ENUM(GpuFenceBehavior,") == 1
-    fence_h = (ROOT / "vendor/encore-active/eden" / FENCE_HEADER).read_text()
-    fence_cpp = (ROOT / "vendor/encore-active/eden" / FENCE_IMPL).read_text()
-    updated_h = extend_fence_header(fence_h)
-    updated_cpp = extend_fence_implementation(fence_cpp)
-    assert updated_h.count("bool IsGPUFenceBehaviorStrict();") == 1
-    assert updated_h.count("GpuFenceBehavior::Strict,") == 1
-    assert updated_cpp.count("bool IsGPUFenceBehaviorStrict() {") == 1
-    assert "ENUM(GpuFenceBehavior, Default, Immediate, Balanced, Accurate, Strict);" in extended
-    for source, extend in ((updated_h, extend_fence_header),
-                           (updated_cpp, extend_fence_implementation)):
-        try:
-            extend(source)
-        except RuntimeError:
-            pass
-        else:
-            raise AssertionError("Already-patched fence owner accepted")
-    assert sha256(approved) == SHIPPING_BACKPORT_SHA256
-    try:
-        extend_graphics_enums(extended)
-    except RuntimeError:
-        pass
-    else:
-        raise AssertionError("Already-patched enums accepted as a new baseline")
-    # Exercise actual owned-cache installation, a repeated invocation,
-    # and refusal before modifying any target if one owner has drifted.
+    assert all(canonical_text.count(after) == 1 for _, after in REPLACEMENTS)
+    assert sha256(legacy_text.encode("utf-8")) == LEGACY_BACKPORT_SHA256
+    assert git_blob(canonical_enums) == SHIPPING_CANONICAL_BLOB
+
+    canonical_h = (ROOT / "vendor/encore-active/eden" / FENCE_HEADER).read_text()
+    canonical_cpp = (ROOT / "vendor/encore-active/eden" / FENCE_IMPL).read_text()
+    assert extend_fence_header(canonical_h) == canonical_h
+    assert extend_fence_implementation(canonical_cpp) == canonical_cpp
+    legacy_h = legacy_fence_header(canonical_h)
+    legacy_cpp = legacy_fence_implementation(canonical_cpp)
+    assert extend_fence_header(legacy_h) == canonical_h
+    assert extend_fence_implementation(legacy_cpp) == canonical_cpp
+
     import tempfile
     with tempfile.TemporaryDirectory(prefix="ps5-eden-headless.warning-test.") as temp:
         cache = Path(temp)
         (cache / "owner").write_text(str(ROOT.resolve()) + "\n")
         stage = cache / "source"
-        inputs = [(RELATIVE, approved, extended.encode()),
-                  (FENCE_HEADER, fence_h.encode(), updated_h.encode()),
-                  (FENCE_IMPL, fence_cpp.encode(), updated_cpp.encode())]
+        inputs = [
+            (RELATIVE, legacy_text.encode("utf-8"), canonical_enums),
+            (FENCE_HEADER, legacy_h.encode("utf-8"), canonical_h.encode("utf-8")),
+            (FENCE_IMPL, legacy_cpp.encode("utf-8"), canonical_cpp.encode("utf-8")),
+        ]
         inputs.extend(reviewed_warning_targets())
-        for relative, original, expected in inputs:
+        for relative, legacy, expected in inputs:
             dest = stage / relative
             dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_bytes(original)
+            dest.write_bytes(legacy)
+
         last = stage / inputs[-1][0]
         last.write_bytes(b"unreviewed source")
         try:
@@ -283,16 +324,16 @@ def self_test() -> None:
         except RuntimeError:
             pass
         else:
-            raise AssertionError("Unexpected warning owner accepted")
-        assert (stage / RELATIVE).read_bytes() == approved
+            raise AssertionError("Unexpected staged owner accepted")
+        assert (stage / RELATIVE).read_bytes() == legacy_text.encode("utf-8")
+
         last.write_bytes(inputs[-1][1])
         assert apply(stage) == "installed"
         assert apply(stage, check_only=True) == "already-applied"
         assert apply(stage) == "already-applied"
-        for relative, original, expected in inputs:
+        for relative, legacy, expected in inputs:
             assert (stage / relative).read_bytes() == expected
-        # Compile the actual staged terminal helper with its existing stub
-        # body. This is a signature/behavior witness, not a full JIT build.
+
         import subprocess
         terminal = (stage / "src/dynarmic/src/dynarmic/ir/basic_block.cpp").read_text()
         signature = "static std::string TerminalToString(const Term::Terminal&) noexcept {"
@@ -311,7 +352,8 @@ def self_test() -> None:
             subprocess.run([str(binary)], check=True, timeout=10)
     print("DYNARMIC_TERMINAL_WARNING_HOST_PASS actual_stub=1 unused_parameter=0 semantic_change=0")
     print("R457_WARNING_OWNER_STAGE_PASS owners=3 exact_vendor_blob=1 idempotent=1 failclosed=1")
-    print("PS5_GRAPHICS_ENUM_OVERLAY_PASS pinned=1 backport=1 abi=1 failclosed=1")
+    print("PS5_GRAPHICS_ENUM_CANONICAL_OWNER_PASS active_final=1 legacy_replay=1 abi=1 failclosed=1")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

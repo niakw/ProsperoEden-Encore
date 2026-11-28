@@ -4283,18 +4283,27 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         endif()
     endforeach()
     get_target_property(eden_ns2_gamechat_sources core SOURCES)
-    list(LENGTH eden_ns2_gamechat_sources eden_ns2_gamechat_before)
-    # Earlier source substitutions can make a target source absolute. Remove
-    # exactly the two Eden friend translation units by their stable suffix,
-    # then replace both with the maintained paired owner.
+
+    # friend_interface.cpp remains the canonical relative Eden unit.
+    list(FIND eden_ns2_gamechat_sources
+        "hle/service/friend/friend_interface.cpp" eden_ns2_gamechat_interface_idx)
+    if(eden_ns2_gamechat_interface_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned friend_interface.cpp owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns2_gamechat_sources
+        "hle/service/friend/friend_interface.cpp")
+
+    # friend.cpp may already be absolute after an earlier maintained-source
+    # substitution. Remove exactly one unit by its stable filename suffix.
+    list(LENGTH eden_ns2_gamechat_sources eden_ns2_gamechat_friend_before)
     list(FILTER eden_ns2_gamechat_sources EXCLUDE REGEX
-        "(^|/)hle/service/friend/(friend|friend_interface)\\.cpp$")
-    list(LENGTH eden_ns2_gamechat_sources eden_ns2_gamechat_after)
-    math(EXPR eden_ns2_gamechat_removed
-        "${eden_ns2_gamechat_before} - ${eden_ns2_gamechat_after}")
-    if(NOT eden_ns2_gamechat_removed EQUAL 2)
+        "(^|/)friend\\.cpp$")
+    list(LENGTH eden_ns2_gamechat_sources eden_ns2_gamechat_friend_after)
+    math(EXPR eden_ns2_gamechat_friend_removed
+        "${eden_ns2_gamechat_friend_before} - ${eden_ns2_gamechat_friend_after}")
+    if(NOT eden_ns2_gamechat_friend_removed EQUAL 1)
         message(FATAL_ERROR
-            "Expected exactly two Eden friend owners, removed=${eden_ns2_gamechat_removed}")
+            "Expected exactly one Eden friend.cpp owner, removed=${eden_ns2_gamechat_friend_removed}")
     endif()
     list(APPEND eden_ns2_gamechat_sources
         "${EDEN_NS2_GAMECHAT_SOURCE}"

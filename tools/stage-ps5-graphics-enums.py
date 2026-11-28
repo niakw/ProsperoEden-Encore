@@ -99,7 +99,7 @@ def sha256(value: bytes) -> str:
 
 
 def git_blob(value: bytes) -> str:
-    return hashlib.sha1(b"blob " + str(len(value)).encode() + b"\\0" + value).hexdigest()
+    return hashlib.sha1(b"blob " + str(len(value)).encode() + b"\0" + value).hexdigest()
 
 
 def extend_graphics_enums(base_text: str) -> str:

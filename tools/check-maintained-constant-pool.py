@@ -37,7 +37,7 @@ def git_blob(path):
     raw = path.read_bytes()
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
 
-header = root/"vendor/encore-active/eden/include/dynarmic/backend/x64/constant_pool.h"
+header = root/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/constant_pool.h"
 source = root/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/constant_pool.cpp"
 expected = pinned.replace(before, after)
 header_blob = git_blob(header)

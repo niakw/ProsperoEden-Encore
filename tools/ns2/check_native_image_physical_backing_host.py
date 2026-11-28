@@ -10,10 +10,9 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-VENDOR = ROOT / "vendor/encore-active"
+VENDOR = ROOT / "vendor/encore-active/eden"
 RENDERERS = (
-    VENDOR / "eden-vulkan/vulkan_rasterizer.cpp",
-    VENDOR / "eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    VENDOR / "src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 )
 START = "            if (current_after_staging && pinned_lifetime) {\n"
 END = "            }\n        }\n        // Texel buffer VkBufferViews"
@@ -25,11 +24,9 @@ for file in RENDERERS:
     extracted.append(START + body + "            }\n")
     assert "image.guest_gpu_address, image.guest_bytes," in extracted[-1]
     assert "*cpu != image.guest_cpu_address" in extracted[-1]
-assert extracted[0] == extracted[1], "native and deferred Vulkan remap checks drift"
 
 for file in (
-    VENDOR / "eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h",
-    VENDOR / "ns2-astc/include/video_core/texture_cache/texture_cache.h",
+    VENDOR / "src/video_core/texture_cache/texture_cache.h",
 ):
     text = file.read_text()
     body = text.split("TextureCache<P>::PinNativeImageView(ImageViewId id)", 1)[1].split(
@@ -45,8 +42,8 @@ for file in (
     assert body.index("*mapped_base != image.cpu_addr") < body.index(
         "auto image_pin = image.PinNativeGpu();"), file
 
-header = (VENDOR / "eden-vulkan/include/video_core/renderer_vulkan/vk_compute_pipeline.h").read_text()
-pipeline = (VENDOR / "eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()
+header = (VENDOR / "src/video_core/renderer_vulkan/vk_compute_pipeline.h").read_text()
+pipeline = (VENDOR / "src/video_core/renderer_vulkan/vk_compute_pipeline_cost.cpp").read_text()
 for field in ("guest_gpu_address", "guest_cpu_address", "guest_bytes"):
     assert field in header
     assert "image." + field in extracted[0] or field == "guest_bytes"
@@ -119,8 +116,7 @@ if sdk.is_dir():
     env["SDKROOT"] = str(sdk)
 includes = (
     ROOT / "vendor/sources/fmt/include",
-    ROOT / "vendor/encore-active/ns2-runtime/ampere",
-    ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch",
+    ROOT / "vendor/encore-active/eden/src",
     ROOT / "vendor/sources/eden/src",
 )
 boost_caches = sorted((Path.home() / ".cache").glob(
@@ -150,5 +146,5 @@ with tempfile.TemporaryDirectory(prefix="encore-native-image-remap-") as temp:
             check = subprocess.run([str(exe)], text=True, capture_output=True, env=env, timeout=15)
             assert check.returncode == 0, (compiler, check.stderr[-4000:])
             print("P2_2B_NATIVE_IMAGE_PHYSICAL_REMAP_PASS", Path(compiler).name,
-                  f"O{optimization}", "full_pages=checked", "owners=2",
+                  f"O{optimization}", "full_pages=checked", "owners=1",
                   "Vulkan_commands=not_executed", flush=True)

@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-SOURCE=ROOT/"vendor/encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_sysmix_user_service.h"
+SOURCE=ROOT/"vendor/encore-active/eden/src/core/hle/service/audio/nx2_sysmix_user_service.h"
 body=SOURCE.read_text()
 assert "std::map<u32, std::shared_ptr<SysmixOutput>> streams;" in body
 assert "if (buffer.size() % sizeof(u32) == 0 && buffer.size() <= 32 * sizeof(u32))" in body

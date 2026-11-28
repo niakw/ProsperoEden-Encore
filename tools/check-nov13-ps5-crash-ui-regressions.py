@@ -11,11 +11,11 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 read = lambda path: (root / path).read_text(encoding="utf-8")
-raster = read("vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp")
-scheduler_h = read("vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_scheduler.h")
-scheduler = read("vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp")
-buffer_cache = read("vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp")
-shared = read("vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp")
+raster = read("vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp")
+scheduler_h = read("vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_scheduler.h")
+scheduler = read("vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_scheduler.cpp")
+buffer_cache = read("vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache_cost.cpp")
+shared = read("vendor/encore-active/eden/src/core/hle/kernel/k_shared_memory.cpp")
 cmake = read("headless/CMakeLists.txt")
 lib = read("headless/prosperoeden/pe/ui/library.cpp")
 case = read("headless/prosperoeden/pe/ui/case_media_selection.hpp")

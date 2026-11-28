@@ -3,7 +3,7 @@
 # EDEN_REGALLOC_VERIFY remains enabled for non-native host qualifications.
 macro(eden_reg_alloc_sources)
     set(EDEN_MAINTAINED_REGALLOC
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend/x64")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")
     foreach(source IN ITEMS reg_alloc.h reg_alloc.cpp)
         if(NOT EXISTS "${EDEN_MAINTAINED_REGALLOC}/${source}")
             message(FATAL_ERROR "Missing maintained register allocator ${source}")

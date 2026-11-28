@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-header=(ROOT/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_update_descriptor.h").read_text()
+header=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_update_descriptor.h").read_text()
 generator=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 begin="    void AddTexelBuffer(VkBufferView texel_buffer) {"
 end="\n\n    void AddTexelBuffer(VkBufferView texel_buffer, VkDeviceAddress"

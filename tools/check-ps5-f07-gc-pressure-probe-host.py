@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-header = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+header = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 start = header.index("void TextureCache<P>::RunGarbageCollector() {")
 end = header.index("\ntemplate <class P>", start)

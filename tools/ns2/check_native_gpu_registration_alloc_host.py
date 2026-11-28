@@ -11,8 +11,8 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-PROCESS=ROOT/'vendor/encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h'
-CHANNEL=ROOT/'vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h'
+PROCESS=ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/native_gpu_process_registry.h'
+CHANNEL=ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h'
 CPP=ROOT/'tools/ns2/test_native_gpu_registration_alloc.cpp'
 for header in (PROCESS,CHANNEL):
     assert header.is_file()
@@ -28,8 +28,8 @@ assert compiler
 sdk=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')
 env=os.environ.copy()
 if sdk.is_dir():env['SDKROOT']=str(sdk)
-inc=['-I'+str(ROOT/'vendor/encore-active/ns2-runtime/hle'),
-     '-I'+str(ROOT/'vendor/encore-active/ns2-runtime/nvdrv_gpu')]
+inc=['-I'+str(ROOT/'vendor/encore-active/eden/src'),
+     '-I'+str(ROOT/'vendor/encore-active/eden/src')]
 with tempfile.TemporaryDirectory(prefix='encore-native-registry-alloc-') as work:
     for opt in (0,2):
         exe=Path(work)/f'gpu-registry-O{opt}'

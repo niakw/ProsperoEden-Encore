@@ -12,9 +12,9 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-raster = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-blit = (root / "vendor/encore-active/eden-vulkan/blit_image.cpp").read_text()
-sched = (root / "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp").read_text()
+raster = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
+blit = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/blit_image.cpp").read_text()
+sched = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_scheduler.cpp").read_text()
 gen = (root / "tools/prepare-vulkan-port.py").read_text()
 cmake = (root / "headless/vulkan.cmake").read_text()
 
@@ -299,8 +299,8 @@ print("FC27_F07_RAW_BLIT_PIPELINE_INVALIDATION_PASS source_extracted=3 raw_blit_
 # and clears are clipped to that exact framebuffer layer count. Lichii #38 /
 # Eglantine #293 reproduced the old max-layer policy as a Vulkan validation
 # failure/device loss. Compile the selected policy under sanitizers.
-texture_header=(root/"vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h").read_text()
-texture_cpp=(root/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+texture_header=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache.h").read_text()
+texture_cpp=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp").read_text()
 clear_source=raster
 assert "[[nodiscard]] u32 Layers() const noexcept" in texture_header
 assert "u32 layers = 1;" in texture_header
@@ -385,8 +385,8 @@ print("NS1_VULKAN_FRAMEBUFFER_LAYER_BOUNDS_HOST_PASS active_owner=1 min_attachme
 # GPU-47: Lichii #427 framebuffer-limit subset only. Do NOT import its
 # unrelated StreamBuffer padding. Source-seal the active Vulkan device limits
 # and framebuffer clamp, then test the policy under sanitizers.
-device_header=(root/"vendor/encore-active/eden-vulkan/include/video_core/vulkan_common/vulkan_device.h").read_text()
-texture_cpp=(root/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+device_header=(root/"vendor/encore-active/eden/src/video_core/vulkan_common/vulkan_device.h").read_text()
+texture_cpp=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp").read_text()
 for limit in ("FramebufferWidth","FramebufferHeight","FramebufferLayers"):
     assert f"FN_MAX_LIMIT_ELEM({limit})" in device_header
 for token in (
@@ -445,11 +445,11 @@ print("NS1_VULKAN_FRAMEBUFFER_DEVICE_LIMIT_HOST_PASS upstream_427=1 active_owner
 # GPU-49: Lichii #353 fragment-output component ownership. The guest's
 # color mask is necessary but not sufficient: Vulkan must also mask out
 # components the fragment shader never writes.
-shader_info=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/shader_info.h").read_text()
-collect_info=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/collect_shader_info_pass.cpp").read_text()
-gp_header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
-gp_source=(root/"vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
-rast_header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h").read_text()
+shader_info=(root/"vendor/encore-active/eden/src/shader_recompiler/shader_info.h").read_text()
+collect_info=(root/"vendor/encore-active/eden/src/shader_recompiler/ir_opt/collect_shader_info_pass.cpp").read_text()
+gp_header=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+gp_source=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+rast_header=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer.h").read_text()
 assert "std::array<u8, 8> frag_color_components{};" in shader_info
 for token in (
     "const u32 render_target{inst.Arg(0).U32()};",

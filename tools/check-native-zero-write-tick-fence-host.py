@@ -6,22 +6,24 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-source = (root/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
-backport = (root/"vendor/encore-active/eden-backports/src/video_core/buffer_cache/buffer_cache.h").read_text()
+source = (root/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 start="template <class P>\nvoid BufferCache<P>::SynchronizeBufferWrites("
-assert source.count(start) == backport.count(start) == 1
+assert source.count(start) == 1
 def method(s):
     i=s.index(start)
     return s[i:s.index("\ntemplate <class P>",i+len(start))]
 body=method(source)
-previous=method(backport)
 assert "buffer_tick != 0 && !runtime.IsFree(buffer_tick)" in body
-assert "buffer_tick != 0" not in previous
-assert body.replace(
+# The retired backport shadow is no longer a source owner. Reconstruct the
+# exact pre-fix method in memory so this regression remains fail-closed
+# without recreating duplicate maintained source trees.
+previous = body.replace(
     "        // New and never-GPU-written buffers have a zero fence tick.\n"
     "        // Scheduler::Wait(0) cannot wait; skip its IsFree semaphore probe.\n",
     "").replace("buffer_tick != 0 && !runtime.IsFree(buffer_tick)",
-                "!runtime.IsFree(buffer_tick)") == previous
+                "!runtime.IsFree(buffer_tick)")
+assert "buffer_tick != 0" not in previous
+assert previous != body
 program=r"""
 #include <cassert>
 #include <cstdint>

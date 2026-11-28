@@ -15,10 +15,10 @@ ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
 ORIG_SOURCE=V/"sources/eden/src/video_core/host1x/ffmpeg.cpp"
 ORIG_HEADER=V/"sources/eden/src/video_core/host1x/ffmpeg.h"
-CAND_SOURCE=V/"encore-active/eden-core/src/video_core/host1x/ffmpeg.cpp"
-CAND_HEADER=V/"encore-active/eden-core/overrides/video_core/host1x/ffmpeg.h"
+CAND_SOURCE=V/"encore-active/eden/src/video_core/host1x/ffmpeg.cpp"
+CAND_HEADER=V/"encore-active/eden/src/video_core/host1x/ffmpeg.h"
 ORIG_VIC=V/"sources/eden/src/video_core/host1x/vic.cpp"
-CAND_VIC=V/"encore-active/eden-core/src/video_core/host1x/vic.cpp"
+CAND_VIC=V/"encore-active/eden/src/video_core/host1x/vic.cpp"
 CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
 
 def blob(p):
@@ -149,10 +149,10 @@ def check_vic_graph(native, maintained, pair, original_count=1, duplicate=False,
         (root/"host1x").mkdir()
         (root/"host1x/vic.cpp").touch()
         (root/"other.cpp").touch()
-        active=root/"vendor/encore-active/eden-core"
+        active=root/"vendor/encore-active/eden"
         ff=active/"src/video_core/host1x/ffmpeg.cpp"
         vic=ff.with_name("vic.cpp")
-        hdr=active/"overrides/video_core/host1x/ffmpeg.h"
+        hdr=active/"src/video_core/host1x/ffmpeg.h"
         if maintained:
             vic.parent.mkdir(parents=True,exist_ok=True)
             vic.touch()
@@ -519,8 +519,8 @@ print("NS1_VIC_SSE_UNALIGNED_HOST_PASS NV12_unaligned=1 Pixel_stride8=1 "
 
 
 # GPU-35: exact C++ Host1x signed FD device-array guard, maintained owner.
-H1_CPP=V/"encore-active/eden-core/src/video_core/host1x/host1x.cpp"
-H1_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/host1x.h"
+H1_CPP=V/"encore-active/eden/src/video_core/host1x/host1x.cpp"
+H1_HDR=V/"encore-active/eden/src/video_core/host1x/host1x.h"
 H1_ORIG_CPP=V/"sources/eden/src/video_core/host1x/host1x.cpp"
 H1_ORIG_HDR=V/"sources/eden/src/video_core/host1x/host1x.h"
 assert blob(H1_CPP)=="1815363b19282be07bb4217dd01f369a38e53272"
@@ -693,8 +693,8 @@ print("NS1_HOST1X_DEVICE_FD_HOST_PASS active_source=1 ABI_unchanged=1 concurrent
 
 # GPU-36: actual native NVDEC submit preflight code, compiled in a focused
 # Clang sanitizer harness to reject untrusted ioctl sizes before allocation.
-NVD_PATH=V/"encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvhost_nvdec_common.cpp"
-assert blob(NVD_PATH)=="70c3b2ddb2559ccba27ecba7e49370394a4eafbc"
+NVD_PATH=V/"encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_nvdec_common.cpp"
+assert blob(NVD_PATH)=="3e726b66f49a0ce0b91039ce1f1f73baeb0f573b"
 NVD=NVD_PATH.read_text()
 assert "core.GetSession(sessions[fd])" not in NVD
 assert "params.syncpoint_count > params.fence_count" in NVD
@@ -799,9 +799,9 @@ print("NS1_NVDEC_SUBMIT_PREFLIGHT_HOST_PASS packet=1 command=1 truncated=1 "
 
 
 # GPU-37/38: source-verified worker teardown and register method bounds.
-CDMA_CPP=V/"encore-active/eden-core/src/video_core/cdma_pusher.cpp"
-CDMA_HDR=V/"encore-active/eden-core/overrides/video_core/cdma_pusher.h"
-NVDEC_CPP=V/"encore-active/eden-core/src/video_core/host1x/nvdec.cpp"
+CDMA_CPP=V/"encore-active/eden/src/video_core/cdma_pusher.cpp"
+CDMA_HDR=V/"encore-active/eden/src/video_core/cdma_pusher.h"
+NVDEC_CPP=V/"encore-active/eden/src/video_core/host1x/nvdec.cpp"
 assert blob(CDMA_CPP)=="91ace41154430a718cd163ceacd45b9607b63d43"
 assert blob(CDMA_HDR)=="72338d9e2c07f2ebe019450c8b608df802738449"
 assert blob(NVDEC_CPP)=="c83ac98215fcf196ec8b2927ec9a421ddf95c9f7"
@@ -959,10 +959,10 @@ print("NS1_HOST1X_CDMA_WORKER_HOST_PASS authentic_stop=1 derived_dtor=2 "
 # GPU-39: the Host1x join-before-release patch must interrupt an
 # unsignalled Control syncpoint wait when its device closes. Execute
 # the selected SyncpointManager/Control methods with std::stop_token.
-SYNC_CPP=V/"encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"
-SYNC_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h"
-CTRL_CPP=V/"encore-active/eden-core/src/video_core/host1x/control.cpp"
-CTRL_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/control.h"
+SYNC_CPP=V/"encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp"
+SYNC_HDR=V/"encore-active/eden/src/video_core/host1x/syncpoint_manager.h"
+CTRL_CPP=V/"encore-active/eden/src/video_core/host1x/control.cpp"
+CTRL_HDR=V/"encore-active/eden/src/video_core/host1x/control.h"
 sync_blob=blob(SYNC_CPP)
 assert sync_blob in {"eb5e2ea63652f020b6e14497080ba3339a9c983c", "59ac07af5eab89e78b7089d1db58918f2506aafe", "abe89b570a18508123a5c14c49cf5a43935f620c"}
 SYNC_SOURCE=SYNC_CPP.read_text()
@@ -1032,7 +1032,7 @@ assert "thread.get_stop_token()" in CDMA
 assert "EDEN_HOST1X_CONTROL_HEADER" in CMAKE and "host1x/control.cpp" in CMAKE
 assert 'list(REMOVE_ITEM video_sources host1x/syncpoint_manager.cpp)' in CMAKE
 assert 'list(REMOVE_ITEM video_sources "' in CMAKE
-assert 'encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h' in CMAKE
+assert 'encore-active/eden/src/video_core/host1x/syncpoint_manager.h' in CMAKE
 start=SYNC_SOURCE.index("void SyncpointManager::WaitHost(u32 id, u32 expected, std::stop_token stop) {")
 end=SYNC_SOURCE.index("\nvoid SyncpointManager::Increment(",start)
 native_wait=SYNC_SOURCE[start:end]

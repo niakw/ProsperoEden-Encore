@@ -10,10 +10,10 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-HEADER=ROOT/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/striped_wait.h"
+HEADER=ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/striped_wait.h"
 SOURCE=HEADER.read_text()
-GFX=(ROOT/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
-COMPUTE=(ROOT/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_compute_pipeline.h").read_text()
+GFX=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+COMPUTE=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline.h").read_text()
 CI=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 assert "python3 -B tools/check-native-vulkan-striped-wait-host.py" in CI
 assert "::Eden::StripedCondition build_condvar;" in GFX and "::Eden::StripedMutex build_mutex;" in GFX

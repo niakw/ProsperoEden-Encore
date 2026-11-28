@@ -24,8 +24,8 @@ old = (
     "? GetPointerSilent(addr) : nullptr;"
 )
 assert methods.count(old) == 2
-native_source = (root/"vendor/encore-active/eden-core/src/core/memory_native_standard.cpp").read_text()
-a32_source = (root/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp").read_text()
+native_source = (root/"vendor/encore-active/eden/src/core/memory_native_standard.cpp").read_text()
+a32_source = (root/"vendor/encore-active/eden/src/core/memory_native_a32.cpp").read_text()
 assert 'memory_native_standard.cpp' in cmake and 'memory_native_a32.cpp' in cmake
 assert 'write_derived("${eden_native_memory_tu}"' not in cmake
 for unit in (native_source, a32_source):

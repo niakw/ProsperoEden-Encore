@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-native=(root/"vendor/encore-active/eden-vulkan/vulkan_present_layer.cpp").read_text()
+native=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_layer.cpp").read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()
 start="    // ReleaseRawImages waited for every old timeline use."
 end="    raw_images.resize(image_count);"

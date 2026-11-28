@@ -11,16 +11,16 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-raster = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+raster = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 # The release CMake copies eden-vulkan; guest-bridge is not a TU owner.
 cmake = (root / "headless/vulkan.cmake").read_text()
-assert 'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden-vulkan")' in cmake
+assert 'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan")' in cmake
 assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in cmake
 assert '"${PORT_BUILD_DIR}/vulkan_rasterizer.cpp"' in cmake
 pinned = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp").read_text()
 oracle = (root / "tools/prepare-vulkan-port.py").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
-image_cache = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+image_cache = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 assert "python3 -B tools/check-ps5-texture-invalidation-elision-host.py" in workflow
 assert image_cache.index("::Eden::ImagePages::Mark(image.cpu_addr") < image_cache.index(
     "slot_map_views.insert(image.gpu_addr")

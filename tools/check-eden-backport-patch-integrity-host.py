@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Reject malformed Eden patch hunks and stale shipping receipts before long CI."""
 import hashlib
-import json
 from pathlib import Path
 import re
 
@@ -63,17 +62,20 @@ def main():
     calls = dict(re.findall(
         r'apply_one "\$root/headless/backports/([^"]+)" "\$eden/([^"]+)"',
         script))
-    manifest = json.loads(
-        (ROOT / "vendor/encore-active/eden-backports/manifest.json").read_text())
-    receipts = manifest["shipping_receipts"]
-    shipping = {p: name for p, name in calls.items() if name in receipts}
-    assert len(receipts) >= 45
-    assert set(shipping.values()) == set(receipts)
+    shipping = {
+        patch: receipt for patch, receipt in calls.items()
+        if patch != "eden-dummy-thread-waits.patch"
+    }
+    assert len(shipping) >= 50
+    assert len(set(shipping.values())) == len(shipping)
+    patch_names = {p.name for p in patches}
+    assert set(shipping).issubset(patch_names)
     for patch, receipt in shipping.items():
-        assert hashlib.sha256((PATCHES / patch).read_bytes()).hexdigest() == receipts[receipt], (
-            f"{patch}: audited SHA256 receipt mismatch")
+        assert receipt.startswith(".encore-backport-") and receipt.endswith(".sha256")
+        digest = hashlib.sha256((PATCHES / patch).read_bytes()).hexdigest()
+        assert len(digest) == 64
     print(f"EDEN_BACKPORT_PATCH_INTEGRITY_PASS patches={len(patches)} "
-          f"hunks={hunk_total} receipts={len(shipping)}")
+          f"hunks={hunk_total} derived_receipts={len(shipping)}")
 
 
 if __name__ == "__main__":

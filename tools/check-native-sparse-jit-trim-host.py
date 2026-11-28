@@ -12,7 +12,7 @@ import tempfile
 root=Path(__file__).resolve().parents[1]
 policy=root/"headless/jit-sparse-commit.h"
 native=(root/"src/memory_pages.cpp").read_text()
-jit=(root/"vendor/encore-active/eden-core/src/dynarmic/backend/x64/block_of_code_native.cpp").read_text()
+jit=(root/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/block_of_code_native.cpp").read_text()
 allocator=(root/"headless/jit-allocator.h").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
 assert "bool TrimSparseJitCode(void*, std::size_t live_code_end) noexcept;" in allocator

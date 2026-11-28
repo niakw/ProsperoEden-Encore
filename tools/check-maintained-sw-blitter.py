@@ -2,7 +2,7 @@
 """Exact selected Fermi2D blitter provenance and host UBSan/ASan geometry witness.
 
 Only the maintained vendor C++ is compiled by the native PS5 CMake path.
-The upstream/backport blobs remain historical baselines, not runtime fallbacks.
+The frozen upstream blob remains a historical baseline, not a runtime fallback.
 """
 from pathlib import Path
 import hashlib
@@ -11,19 +11,17 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-backport = (root / "vendor/encore-active/eden-backports/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
 upstream = (root / "vendor/sources/eden/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
-maintained = (root / "vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
-decoder = (root / "vendor/encore-active/eden-core/src/video_core/textures/decoders.cpp").read_text()
+maintained = (root / "vendor/encore-active/eden/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
+decoder = (root / "vendor/encore-active/eden/src/video_core/textures/decoders.cpp").read_text()
 module = (root / "headless/gpu_native_observability.cmake").read_text()
 
 def git_blob(data: str) -> str:
     payload = data.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(payload)).encode() + b"\0" + payload).hexdigest()
 
-assert upstream != backport
-assert git_blob(backport) == "f014de1b85eb1667024a7b5a7162d7c6307d80f6"
-assert "floor/ceil yield ordinary pixel coordinates" in backport
+assert upstream != maintained
+assert "floor/ceil yield ordinary pixel coordinates" in maintained
 assert git_blob(maintained) == "d5a5436cdc2414c53834a886cdaa4578b4dc8a94", (
     "Unreviewed shipping PS5 Fermi2D software blitter; historical predecessor was "
     "2c5aaf8fe19835dc72eee40f3c9eebc17f17350b")

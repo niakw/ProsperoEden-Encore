@@ -4,8 +4,8 @@ from pathlib import Path
 import hashlib
 
 ROOT = Path(__file__).resolve().parents[1]
-ACTIVE = ROOT / "vendor/encore-active/eden-core/src/video_core"
-DMA = (ROOT / "vendor/encore-active/eden-backports/src/video_core/dma_pusher.cpp").read_text()
+ACTIVE = ROOT / "vendor/encore-active/eden/src/video_core"
+DMA = (ROOT / "vendor/encore-active/eden/src/video_core/dma_pusher.cpp").read_text()
 PULLER = (ROOT / "vendor/sources/eden/src/video_core/engines/puller.cpp").read_text()
 CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 
@@ -406,9 +406,18 @@ for kind, name in (("dma", "dma_pusher"), ("puller", "engines/puller")):
                 "parked_methods.clear();",
             ):
                 assert marker in actual_owner, marker
-        elif path == "dma_pusher.cpp" and git_blob(actual_owner) in {"5cf42158c7cc4462bc9a12a18b482cbd6de20bf8", "861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c"}:
+        elif path == "dma_pusher.cpp" and git_blob(actual_owner) in {"5cf42158c7cc4462bc9a12a18b482cbd6de20bf8", "861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c", "76eb30a7e58f17852069a05e2c12cd3c6521967f"}:
             if git_blob(actual_owner) == "861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c":
                 assert "rasterizer->ReleaseFences(true);" in actual_owner
+            if git_blob(actual_owner) == "76eb30a7e58f17852069a05e2c12cd3c6521967f":
+                # The reviewed shutdown successor replaced the blocking
+                # ReleaseFences(true) call with a cancellable strict fence.
+                assert "rasterizer->ReleaseFences(true);" not in actual_owner
+            if git_blob(actual_owner) == "76eb30a7e58f17852069a05e2c12cd3c6521967f":
+                assert "std::make_shared<NativeInterlistFenceState>()" in actual_owner
+                assert "SignalNativeFence([state]()" in actual_owner
+                assert "if (signal_sync && native_interlist_fence)" in actual_owner
+                assert "SignalNativeFence([this]()" not in actual_owner
             # Reviewed shipping NS2 successor: queue revocation leases,
             # deferred SEM acquire, live GPFIFO mapping and GPU-fault
             # publication have extended the historical G20 snapshot.

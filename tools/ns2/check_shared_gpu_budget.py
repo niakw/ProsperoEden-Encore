@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 ROOT=Path(__file__).resolve().parents[2]
-native=ROOT/"vendor/encore-active/eden-vulkan/include"
+native=ROOT/"vendor/encore-active/eden/src"
 header=native/"video_core/renderer_vulkan/vk_shared_gpu_budget.h"
 s=header.read_text()
 assert "namespace Eden::Vulkan::MemoryPolicy" in s

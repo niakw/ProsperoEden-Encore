@@ -1,11 +1,10 @@
-name: R457 retained log source provenance and explicit native build token
+name: R457 current source and explicit native build token
 
 on:
   pull_request:
     paths:
-      - 'tools/check-post-f07-delta-register.py'
-      - 'tools/check-eden-optimization-coverage.py'
       - '.github/workflows/build-040-zbic.yml'
+      - 'tools/check-active-cmake-source-boundary.py'
       - 'tools/check-native-manual-run-isolation.py'
       - 'tools/check-ci-cache.py'
       - 'tools/ci/check-final-one-profile-source.py'
@@ -14,9 +13,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'tools/check-post-f07-delta-register.py'
-      - 'tools/check-eden-optimization-coverage.py'
       - '.github/workflows/build-040-zbic.yml'
+      - 'tools/check-active-cmake-source-boundary.py'
       - 'tools/check-native-manual-run-isolation.py'
       - 'tools/check-ci-cache.py'
       - 'tools/ci/check-final-one-profile-source.py'
@@ -25,7 +23,7 @@ on:
 permissions:
   contents: read
 jobs:
-  prove-exact-source-and-no-accidental-build:
+  prove-current-source-and-no-accidental-build:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -33,11 +31,8 @@ jobs:
         with:
           persist-credentials: false
           submodules: true
-          fetch-depth: 0
-      - name: Historical reviewed service blob (strict inverse source delta)
-        run: python3 -B tools/check-post-f07-delta-register.py
-      - name: Full post-F07 Nov15 and Nov16 source-history replay
-        run: python3 -B tools/check-eden-optimization-coverage.py
+      - name: Current vendor source contract
+        run: python3 -B tools/check-active-cmake-source-boundary.py
       - name: Workflow trigger isolation
         run: python3 -B tools/check-native-manual-run-isolation.py
       - name: Cache and build job concurrency

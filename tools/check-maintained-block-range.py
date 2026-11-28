@@ -8,7 +8,7 @@ from pathlib import Path
 import hashlib
 
 root = Path(__file__).resolve().parents[1]
-active = root / "vendor/encore-active/eden-core/src/dynarmic/backend"
+active = root / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend"
 selector = (root / "headless/CMakeLists.txt").read_text()
 
 def blob_id(path):

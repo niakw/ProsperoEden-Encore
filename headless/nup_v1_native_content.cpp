@@ -54,23 +54,26 @@ struct EmbeddedSwitch2Program {
     std::uint64_t program_id{};
 };
 
-// Lichii SelectProgram: a standalone Switch 1 update NUP may carry a Switch
-// 2 Edition as program1/exefs, even when the ordinary ExeFS is absent.
-// Never infer this from filenames: the embedded NPDM must identify the exact
-// NS2 program-index-1 counterpart of the packaged NS1 update.
+// Lichii SelectProgram: a Switch 1 update NUP with no base ExeFS may carry
+// a Switch 2 Edition as program1/exefs. The package need not be tagged as a
+// standalone update: that flag describes container topology, not the guest
+// program generation. Never infer this from filenames; the embedded NPDM must
+// identify the exact NS2 program-index-1 counterpart of the packaged NS1 update.
 std::optional<EmbeddedSwitch2Program> FindEmbeddedSwitch2Program(const Mount& mount) {
     const auto& packages = mount.Packages();
     std::optional<std::size_t> newest;
+    std::optional<std::size_t> base;
     for (std::size_t i = 0; i < packages.size(); ++i) {
         const auto& p = packages[i];
-        if (p.kind == 0) return std::nullopt; // only standalone updates
+        if (p.kind == 0 && !base) base = i;
         if (p.kind == 1 && (!newest || p.version > packages[*newest].version))
             newest = i;
     }
-    // Never select an older embedded edition over a newer ordinary update.
-    // Mirrors Lichii's FindBestUpdatePackage + SelectProgram precedence.
-    if (!newest || !packages[*newest].standalone_update ||
-        (packages[*newest].title_id >> 56) != 0x01)
+    // Match Lichii SelectProgram: program1/exefs is considered when no base
+    // ExeFS is actually present, not merely when no base package record exists.
+    const auto base_exefs =
+        base ? mount.PackageView(*base, ContentView::ExeFS) : FileSys::VirtualDir{};
+    if (!newest || base_exefs || (packages[*newest].title_id >> 56) != 0x01)
         return std::nullopt;
     const auto root = mount.PackageRoot(*newest);
     const auto program1 = root ? root->GetSubdirectory("program1") : FileSys::VirtualDir{};

@@ -11,7 +11,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 pinned = root / "vendor/sources/eden/src/video_core/memory_manager.cpp"
-maintained = root / "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp"
+maintained = root / "vendor/encore-active/eden/src/video_core/memory_manager.cpp"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 assert 'list(APPEND video_sources "${EDEN_NATIVE_GPU_MEMORY_MANAGER}")' in cmake

@@ -10,11 +10,11 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-ring = (root / "vendor/encore-active/eden-vulkan/vulkan_descriptor_buffer.cpp").read_text()
-ring_header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_descriptor_buffer.h").read_text()
-pipeline_header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
-pipeline_impl = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
-raster = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+ring = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_descriptor_buffer.cpp").read_text()
+ring_header = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_descriptor_buffer.h").read_text()
+pipeline_header = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+pipeline_impl = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+raster = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 
 # Native capability provenance: the release uses the vendored RADV driver,
@@ -22,7 +22,7 @@ workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 # These guards prove source reachability, NOT that an actual device enabled it.
 package = (root / "tools/build-package.sh").read_text()
 dev_flags = (root / "headless/dev_vulkan.h").read_text()
-device = (root / "vendor/encore-active/eden-vulkan/vulkan_device.cpp").read_text()
+device = (root / "vendor/encore-active/eden/src/video_core/vulkan_common/vulkan_device.cpp").read_text()
 radv = (root / "vendor/encore-active/ps5-mesa/src/amd/vulkan/radv_physical_device.c").read_text()
 assert "EDEN_PS5_VULKAN=ON EDEN_VULKAN_DRIVER=RADV" in package
 assert "inline bool disable_descriptor_buffer = false;" in dev_flags

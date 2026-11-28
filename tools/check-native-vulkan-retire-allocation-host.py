@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-source = (ROOT / "vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+source = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp").read_text()
 
 def method(first: str, following: str) -> str:
     assert source.count(first) == 1, ("runtime owner changed", first)

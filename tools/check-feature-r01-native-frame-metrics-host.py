@@ -11,8 +11,8 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 hdr = (ROOT / "headless/frame_metrics.h").read_text()
-render = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_renderer.cpp").read_text()
-present = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_present_manager.cpp").read_text()
+render = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_renderer.cpp").read_text()
+present = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_manager.cpp").read_text()
 perf = (ROOT / "headless/performance.cpp").read_text()
 main = (ROOT / "headless/main.cpp").read_text()
 cmake = (ROOT / "headless/vulkan.cmake").read_text()

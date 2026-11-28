@@ -12,7 +12,7 @@ def main():
     ap.add_argument("--vendor",type=Path,required=True)
     ap.add_argument("--header",type=Path)
     a=ap.parse_args()
-    source=(a.vendor/"encore-active/eden-vulkan/r09_rdna2_nr/"
+    source=(a.vendor/"encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/"
             "split_projection_pool_rdna2.comp")
     contents=source.read_text(encoding="utf-8")
     for forbidden in ("cooperative_matrix","GL_EXT_shader_8bit_storage",

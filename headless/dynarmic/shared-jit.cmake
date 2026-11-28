@@ -1,7 +1,7 @@
 # Experimental cross-core JIT: all state, callback and group units come from
 # complete maintained Encore sources. No C++ is reconstructed by CMake.
 
-set(EDEN_SHARED_JIT_DIR "${PORT_ROOT}/vendor/encore-active/eden-core/dynarmic/shared-jit")
+set(EDEN_SHARED_JIT_DIR "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")
 if(NOT EXISTS "${EDEN_SHARED_JIT_DIR}/jit_group.h")
     message(FATAL_ERROR "Missing Encore-maintained shared JIT code")
 endif()

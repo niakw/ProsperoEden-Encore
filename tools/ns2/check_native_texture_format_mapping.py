@@ -42,8 +42,7 @@ assert depth == [
 assert depth == surface[-len(depth):], "depth/stencil format set drift"
 
 for filename in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     source = (vendor / filename).read_text()
     native = source.split("class NativeQmdTextureMetadata final", 1)[1].split(
@@ -65,10 +64,10 @@ print("NS2_NATIVE_TIC_PIXEL_FORMAT_MAP_PASS shared=95 rejected=10 explicit_depth
 # P2.2 common owner boundary: Compute buffers and TIC image preflight must
 # share the SAME full-span 49-bit GMMU guard. No false Vulkan publication.
 native_header = (vendor / (
-    "encore-active/ns2-runtime/ampere/shader_recompiler/"
+    "encore-active/eden/src/shader_recompiler/"
     "frontend/ampere/native_qmd_compute_environment.h"
 )).read_text()
-compute = (vendor / "encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()
+compute = (vendor / "encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline_cost.cpp").read_text()
 assert "bool NativeQmdContiguousGpuSpan(" in native_header
 assert "sampler.min_lod_clamp.Value() > sampler.max_lod_clamp.Value()" in native_header, "native TSC LOD order guard missing"
 assert "tic.IsPitchLinear()" in native_header and "!tic.pitch_high.Value()" in native_header, "native pitch image admission guard missing"
@@ -92,8 +91,7 @@ assert "ForEachCapturedRecord(" in snapshot_body
 assert "const auto fresh = Capture(" not in snapshot_body
 assert "std::vector<NativeQmdImageTableRecord> captured;" in native_header
 for owner_path in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     code = (vendor / owner_path).read_text()
     assert "const auto before_binding = resource_owner->BuildResourcePlan(*compiled.info);" in code
@@ -117,8 +115,7 @@ assert "CaptureAdmissible(const NativeQmdResourcePlan&" in native_header
 assert "Shader::Ampere::NativeQmdContiguousGpuSpan(" in compute
 assert "for (u64 delta = 4096" not in compute, "duplicated GMMU guard reappeared"
 for filename in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     source = (vendor / filename).read_text()
     assert "tables.CaptureAdmissible(" in source, filename
@@ -142,11 +139,11 @@ print("NS2_NATIVE_TEXTURE_GMMU_SHARED_PASS mapping=49bit whole_span=1"
 
 # P2.2.2 native-only typed cache accessor overlay. Never mutate the pinned
 # upstream sources, shipping Eden backports or the original Maxwell ABI.
-overlay = vendor / "encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache"
+overlay = vendor / "encore-active/eden/src/video_core/texture_cache"
 header = (overlay / "texture_cache_base.h").read_text()
 impl = (overlay / "texture_cache.h").read_text()
 upstream_header = (vendor / "sources/eden/src/video_core/texture_cache/texture_cache_base.h").read_text()
-backport_header = (vendor / "encore-active/eden-backports/src/video_core/texture_cache/texture_cache_base.h").read_text()
+backport_header = (vendor / "encore-active/eden/src/video_core/texture_cache/texture_cache_base.h").read_text()
 native_gate = "#ifdef PS5_NATIVE"
 for sym in ("AcquireNativeImageView", "AcquireNativeSampler"):
     assert sym in header and sym in impl, sym
@@ -161,15 +158,14 @@ assert "return FindSampler(descriptor, true);" in impl
 assert "SamplerId TextureCache<P>::FindSampler(" in impl
 assert "ImageViewId TextureCache<P>::VisitImageView(" in impl
 assert "if (native_images.size() + native_texels.size() !=" in (
-    vendor / "encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+    vendor / "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 print("NS1_NS2_NATIVE_TEXTURE_CACHE_TYPED_OVERLAY_PASS owner=one"
       " upstream=immutable backports=immutable dispatch_images=closed")
 
 # Validate that every maintained Vulkan rasterizer refuses native TIC layer
 # offsets and layered image sizes that would narrow into u32 in the cache.
 for path in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     source = (vendor / path).read_text()
     start = source.split("const u64 layer_offset =", 1)[1].split(
@@ -180,10 +176,10 @@ for path in (
     assert "VideoCommon::CalculateGuestSizeInBytes(info)" in start, path
 print("NS2_NATIVE_TIC_U32_LAYOUT_BOUNDS_PASS no_truncated_view_offset=1")
 
-# Both native rasterizer variants must check the reflection-to-TIC/TSC
+# The canonical native rasterizer must check the reflection-to-TIC/TSC
 # ownership order BEFORE capturing or publishing guest image descriptors.
 native_env = (vendor / (
-    "encore-active/ns2-runtime/ampere/shader_recompiler/"
+    "encore-active/eden/src/shader_recompiler/"
     "frontend/ampere/native_qmd_compute_environment.h"
 )).read_text()
 # Capture and typed replay must enforce the EXACT same TIC budget/MSAA
@@ -194,8 +190,7 @@ assert "if (!NativeQmdTicLayoutSupported(tic)) return std::nullopt;" in native_e
 assert "if (!NativeQmdTicLayoutSupported(entry.tic)) return std::nullopt;" in native_env
 # Translate from the exact TIC layout policy used by capture/replay.
 for owner in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     native_owner = (vendor / owner).read_text()
     assert native_owner.count("NativeQmdTicLayoutSupported(entry)") == 1, owner
@@ -209,8 +204,7 @@ for fmt in ("R8_UINT", "R8_SINT", "R16_UINT", "R16_SINT", "R32_UINT", "R32G32_UI
     assert "Shader::ImageFormat::" + fmt in native_env, fmt
 assert "else if (tic_msaa)" in native_env and "Buffer images likewise cannot be multisampled" in native_env, "native buffer/storage MSAA guard missing"
 for owner in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     native_owner = (vendor / owner).read_text()
     typed_guard = "Shader::Ampere::NativeQmdTypedImageLayoutMatches("
@@ -226,8 +220,7 @@ assert "wrap_ok(sampler.wrap_u.Value())" in native_env
 assert "wrap_ok(sampler.wrap_v.Value())" in native_env
 assert "wrap_ok(sampler.wrap_p.Value())" in native_env
 for path in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     owner = (vendor / path).read_text()
     guard = "NativeQmdImageLayoutMatches(*compiled.info, *resources)"
@@ -247,8 +240,7 @@ assert "&channel_state->gpu_memory == &expected_memory" in impl
 # deliberately compare the same identity while still holding that lock.
 assert impl.count("NativeChannelMatches(expected_compute, expected_memory)") == 0
 for source_path in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     caller = (vendor / source_path).read_text()
     assert "texture_cache.NativeChannelMatches(" in caller
@@ -259,8 +251,7 @@ print("NS2_TEXTURE_CACHE_CHANNEL_GMMU_OWNER_PASS engine=exact gmmu=exact"
       " both_native_cache_apis=guarded images_only_fence_owned=1")
 
 for path in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     bridge = (vendor / path).read_text()
     locked = bridge.split("std::scoped_lock lock{texture_cache.mutex};", 1)[1]
@@ -274,11 +265,10 @@ print("NS2_TIC_TSC_LOCKED_SNAPSHOT_PASS same_channel=required snapshot=second_re
 # A captured TIC/TSC snapshot can become stale WHILE Vulkan descriptor
 # staging records pending commands, even though both the engine ticket and
 # CBUF plan remain valid. The FINAL check must happen after ConfigureNative
-# releases BufferCache.mutex and before a GPU dispatch is queued. Both
-# maintained renderers require the exact same graphics/image guest policy.
+# releases BufferCache.mutex and before a GPU dispatch is queued. The
+# maintained renderer requires the exact graphics/image guest policy.
 for path in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     bridge = (vendor / path).read_text()
     configure = bridge.index('if (!pipeline->ConfigureNative(')
@@ -297,7 +287,7 @@ for path in (
     assert bridge.index('ObtainBufferOperation::MarkAsWritten', texture_final) < dispatch
     assert bridge.index('if (!current_after_staging ||', texture_final) < bridge.index(
         'ObtainBufferOperation::MarkAsWritten', texture_final)
-print('NS2_TIC_TSC_POST_STAGE_REVALIDATION_PASS owners=2'
+print('NS2_TIC_TSC_POST_STAGE_REVALIDATION_PASS owners=1'
       ' raw_records=stable lock=held gpu_dispatch=after_recheck')
 
 # A real TICEntry/TSCEntry decode boundary follows guest admission; it
@@ -310,8 +300,7 @@ assert "src.tsc_index != (linked_tsc ? raw : (raw >> 20))" in native_env
 assert "std::memcpy(&entry.tic, src.tic_words.data(), sizeof(entry.tic))" in native_env
 assert "std::memcpy(&sampler, src.tsc_words.data(), sizeof(sampler))" in native_env
 for path in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     bridge = (vendor / path).read_text()
     assert bridge.index("tables.CaptureAdmissible(") < bridge.index(
@@ -431,8 +420,7 @@ generic_fence = (vendor / "sources/eden/src/video_core/fence_manager.h").read_te
 assert "if (!delay_fence) {" in generic_fence
 assert "func();" in generic_fence
 for path in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     bridge = (vendor / path).read_text()
     # Initial TIC admission still requires contiguous full-span mappings.
@@ -468,8 +456,7 @@ assert "constexpr bool NativeQmdMipChainMinimumBytes(" in native_env
 assert "kNativeQmdMaxContiguousBytes - minimum" in native_env
 print("NS2_NATIVE_TIC_FULL_MIP_BUDGET_PASS full_chain=1 layered=1 generator_parity=required")
 for path in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     renderer = (vendor / path).read_text()
     assert "VideoCommon::ImageType::Buffer" in renderer, path
@@ -501,8 +488,7 @@ assert "fences.SyncOperation(" in native_env
 assert "gpu_scheduler->Wait(tick);" in native_env
 assert "fences.SignalReference();" in native_env
 for path in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     code = (vendor / path).read_text()
     assert code.count("RetainNativeComputeUntilGpuTick(") == 4, path
@@ -535,9 +521,9 @@ print("NS2_NATIVE_COMPUTE_FENCE_REGISTRATION_FALLBACK_PASS"
 # VkImageView on an assumed number of frames. The GPU completion semaphore
 # owns their final release, independently of the native compute fence owner.
 vk_runtime_header = (vendor / (
-    "encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h"
+    "encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache.h"
 )).read_text()
-vk_runtime = (vendor / "encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+vk_runtime = (vendor / "encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp").read_text()
 assert "void RetireGpuImage(Image&& image);" in vk_runtime_header
 assert "void RetireGpuImageView(ImageView&& view);" in vk_runtime_header
 assert "pending_retired_images" in vk_runtime_header
@@ -568,7 +554,7 @@ for site in ("void TextureCache<P>::InvalidateScale(", "void TextureCache<P>::De
     assert "runtime.RetireGpuImageView(" in block, site
 assert "runtime.RetireGpuImage(std::move(slot_images[image_id]));" in impl
 assert "if (native_images.size() + native_texels.size() !=" in (
-    vendor / "encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+    vendor / "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 print("NS1_NS2_VULKAN_IMAGE_TIMELINE_RETIREMENT_SOURCE_PASS"
       " views_before_images=1 OOM_fallback=wait_gpu image_dispatch=pin_guarded")
 
@@ -581,12 +567,12 @@ assert "image.PinNativeGpu()" in impl and "view.PinNativeGpu()" in impl
 assert "slot_samplers[id].PinNativeGpu()" in impl
 assert "pending.resource->CanRetireNativeGpu()" in vk_runtime
 native_cache_header = (vendor / (
-    "encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h"
+    "encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache.h"
 )).read_text()
 assert native_cache_header.count("bool CanRetireNativeGpu() const noexcept") == 3
 assert native_cache_header.count("std::shared_ptr<u8> PinNativeGpu()") == 3
 native_compute_header = (vendor / (
-    "encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_compute_pipeline.h"
+    "encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline.h"
 )).read_text()
 assert "struct NativeComputeImageBinding {" in native_compute_header
 assert "std::span<const NativeComputeImageBinding> images" in native_compute_header
@@ -598,13 +584,12 @@ assert "num_descriptor_entries - images.size() - texels.size()" in compute
 assert "buffer_cache.runtime.BindTextureBuffer(" in compute
 assert "struct NativeComputeTexelBinding" in native_compute_header
 assert "texel.is_written" in (
-    vendor / "encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+    vendor / "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 assert "guest_descriptor_queue.AddSampledImage(item.view, item.sampler);" in compute
 assert "guest_descriptor_queue.AddImage(item.view);" in compute
 assert "resources.StageVulkanBufferBindings(" in compute and "with_images);" in compute
 for path in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     renderer = (vendor / path).read_text()
     assert "texture_cache.AcquireNativeImageView(" in renderer, path
@@ -622,8 +607,8 @@ print("NS2_NATIVE_VULKAN_TEXTURE_PIN_PASS cache=shared gpu_retire=leased"
 # The optional ASTC include root may shadow the canonical Vulkan cache
 # owner. Both must implement the same channel-identity, TIC/TSC acquisition
 # and fence-held image/view/sampler pin API, without removing ASTC features.
-astc_root = vendor / "encore-active/ns2-astc/include/video_core/texture_cache"
-vulkan_root = vendor / "encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache"
+astc_root = vendor / "encore-active/eden/src/video_core/texture_cache"
+vulkan_root = vendor / "encore-active/eden/src/video_core/texture_cache"
 astc_base = (astc_root / "texture_cache_base.h").read_text()
 astc_impl = (astc_root / "texture_cache.h").read_text()
 vulkan_base = (vulkan_root / "texture_cache_base.h").read_text()
@@ -656,11 +641,10 @@ print("NS2_ASTC_VULKAN_TEXTURE_CACHE_NATIVE_PARITY_PASS shared_api=1"
       " channel=locked image_view=pin sampler=pin astc_layer_bridge=preserved")
 
 # P2.4: successful native QMD compilation cannot authenticate shader source
-# only at capture time. Verify both dispatch owners replay its original bytes
+# only at capture time. Verify the dispatch owner replays its original bytes
 # after Vulkan descriptor staging, before ANY guest GPU-dirty side effects.
 for render_owner in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     source = (vendor / render_owner).read_text()
     final_cbuf = source.index("bool current_after_staging = false;")
@@ -669,14 +653,13 @@ for render_owner in (
     queued = source.index("cmdbuf.Dispatch(dim[0], dim[1], dim[2]);", final_cbuf)
     assert final_cbuf < replay < dirty < queued, render_owner
     assert "launch.program_address, VideoCommon::ReadNs2GpuShader" in source[replay:dirty]
-print("P2_4_NATIVE_COMPUTE_SHADER_FINAL_SOURCE_PASS owners=2"
+print("P2_4_NATIVE_COMPUTE_SHADER_FINAL_SOURCE_PASS owners=1"
       " order=post-staging-before-GPU-write")
 
 # P2.3: GMMU CPU backing must be authenticated both before and AFTER
 # ConfigureNative. A stable QMD CBUF descriptor is not a stable VkBuffer.
 for render_owner in (
-    "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
-    "encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp",
+    "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp",
 ):
     source = (vendor / render_owner).read_text()
     before = source.index("staged_buffer_mappings.Capture(")
@@ -686,5 +669,5 @@ for render_owner in (
     assert before < stage < after < dirty, render_owner
     assert "GpuToCpuAddress(address)" in source[before:stage]
     assert "GpuToCpuAddress(address)" in source[after:dirty]
-print("P2_3_NATIVE_QMD_BUFFER_PHYSICAL_REMAP_SOURCE_PASS owners=2"
+print("P2_3_NATIVE_QMD_BUFFER_PHYSICAL_REMAP_SOURCE_PASS owners=1"
       " P2_4_shader_precommit=preserved")

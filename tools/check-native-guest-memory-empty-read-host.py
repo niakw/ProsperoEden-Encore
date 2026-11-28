@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-active=(root/"vendor/encore-active/eden-core/overrides/core/guest_memory.h").read_text()
+active=(root/"vendor/encore-active/eden/src/core/guest_memory.h").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
 assert active.count("m_data_span = {};")==1
 assert active.count("m_span_valid = false;")==1

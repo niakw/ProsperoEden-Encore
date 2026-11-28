@@ -41,7 +41,7 @@ assert not weak_undefined, 'weak native imports survived static link:\n' + '\n'.
 sdk = root.parent/'mihawk-vulkan-review/.deps/native/ps5-payload-sdk'
 for name in ('libc++.a', 'libc++abi.a', 'libunwind.a'):
     subprocess.run(['cmp', str(cache/'sdk/target/lib'/name), str(sdk/'target/lib'/name)], check=True)
-crt_path = root/'vendor/encore-active/eden-build/tooling/native/app_crt_radv.cpp'
+crt_path = root/'vendor/encore-active/eden/tooling/native/app_crt_radv.cpp'
 records = json.loads((build/'compile_commands.json').read_text())
 crt_entries = [entry for entry in records
                if Path(entry['file']).name == 'app_crt_radv.cpp']

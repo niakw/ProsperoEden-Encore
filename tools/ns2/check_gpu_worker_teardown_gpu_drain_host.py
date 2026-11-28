@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT/'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp'
+OWNER=ROOT/'vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp'
 source=OWNER.read_text()
 method=source.split('IGpuWorker::~IGpuWorker() {',1)[1].split(
     'Result IGpuWorker::HandleSyncRequest(',1)[0]
@@ -124,16 +124,16 @@ cmake=(ROOT/'headless/CMakeLists.txt').read_text()
 assert 'set(EDEN_NATIVE_NVMAP_HEADER' in cmake
 assert 'vendor/sources/eden/src/core/hle/service/nvdrv/core/nvmap.h' in cmake
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_NVMAP_INCLUDE}")' in cmake
-for overlay in ('vendor/encore-active/eden-core/include',
-                'vendor/encore-active/ns2-runtime/nvdrv',
-                'vendor/encore-active/ns2-runtime/nvdrv_as',
-                'vendor/encore-active/ns2-runtime/nvdrv_gpu'):
+for overlay in ('vendor/encore-active/eden/include',
+                'vendor/encore-active/eden/src',
+                'vendor/encore-active/eden/src',
+                'vendor/encore-active/eden/src'):
     assert not (ROOT/overlay/'core/hle/service/nvdrv/core/nvmap.h').exists(), overlay
 
 # Compile the exact maintained NvMap final-free methods. Only the device
 # mapping backend is simulated; the exclusive ownership check, mutex,
 # destructive count, native retirement and weak lifetime are production C++.
-nvmap_source=(ROOT/'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/nvmap.cpp').read_text()
+nvmap_source=(ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/core/nvmap.cpp').read_text()
 start='std::optional<NvMap::FreeInfo> NvMap::FreeHandle('
 end='void NvMap::UnmapAllHandles('
 actual=nvmap_source[nvmap_source.index(start):nvmap_source.index(end)]

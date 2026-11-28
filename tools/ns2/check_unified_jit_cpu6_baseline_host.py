@@ -14,7 +14,7 @@ HEADER=ROOT/'headless/jit_memory_policy.h'
 assert HEADER.is_file()
 for bits in (32,64):
     for profile in ('normal','dev'):
-        source=(ROOT/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11'/
+        source=(ROOT/'vendor/encore-active/eden/src/core/arm/dynarmic/g11'/
                 f'arm_dynarmic_{bits}_native_{profile}.cpp').read_text()
         assert source.count(f'::Eden::JitMemory::A{bits}BaselineBytes(m_core_index)')==1
         assert f'kA{bits}Baseline[m_core_index]' not in source

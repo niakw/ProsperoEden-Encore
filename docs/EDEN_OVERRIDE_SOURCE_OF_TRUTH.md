@@ -115,7 +115,7 @@ remplace pas une vérification native sur console.
 ## Allocateur natif maintenu
 
 L'ancien générateur G22 de `app_heap.c` a été supprimé. Le compilateur
-sélectionne la source complète `eden-build/tooling/native/app_heap_arenas.c`
+sélectionne la source complète `eden/tooling/native/app_heap_arenas.c`
 (normale) ou `app_heap_flat.c` (sans arènes) directement dans
 `vendor/encore-active/`. Le diagnostic optionnel `heap_guard.h` est
 maintenu au même endroit ; `third_party/app_heap.c` demeure épinglé et
@@ -128,13 +128,13 @@ Le header natif `video_core/buffer_cache/buffer_cache.h`, initialement créé
 par substitutions dans CMake, est maintenant la version complète suivie dans
 `vendor/encore-active/eden-core/src/video_core/buffer_cache/`. La compilation
 PS5 sélectionne une copie identique de ce header ; la comparaison avec
-`eden-backports` et le témoin R437 empêchent le retour de l'ancien générateur.
+le snapshot de backports canonique sous `encore-active/eden` et le témoin R437 empêchent le retour de l'ancien générateur.
 Le helper applicatif `headless/buffer_pages.h` reste un composant distinct.
 
 ## Runtime RADV maintenu
 
 Le fichier de démarrage natif `app_crt_radv.cpp` est maintenu
-dans `vendor/encore-active/eden-build/tooling/native/` et choisi
+dans `vendor/encore-active/eden/tooling/native/` et choisi
 explicitement par le profil RADV ; la branche CMake ne transforme plus
 le boilerplate en C++.
 
@@ -333,7 +333,7 @@ corps sont inclus dans les deux variantes de
 ## Oracles Vulkan historiques
 
 Les cinq anciens fragments Vulkan ont été déplacés **sans modifier leurs blobs
-Git** vers `vendor/encore-active/eden-vulkan-oracles/`. Ils ne constituent
+Git** vers `vendor/tests/oracles/vulkan/`. Ils ne constituent
 pas une seconde version compilée de Vulkan : `tools/prepare-vulkan-port.py`
 ne les charge que pour reconstituer les sorties historiques, tandis que
 le binaire choisit exclusivement `vendor/encore-active/eden-vulkan/`.
@@ -415,7 +415,7 @@ les seules preuves disponibles sont des contrôles de source hôte.
 ## Xbyak maintenu en source complète
 
 Le header épinglé `xbyak.h` est maintenu sous
-`vendor/encore-active/eden-build/third_party/xbyak/` avec la licence
+`vendor/encore-active/eden-cpm/xbyak/v7.40.1/xbyak/` avec la licence
 BSD d'origine et les huit adaptations d'alias mémoire. CMake ne fait plus
 que le copier. Le module `jit-alias.cmake` conserve une modification
 indirecte de `code_source` (X09) retirée : les deux variantes complètes de `BlockOfCode` sont maintenues dans `encore-active`.

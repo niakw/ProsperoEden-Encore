@@ -9,7 +9,7 @@ import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
 vendor=ROOT/"vendor"
-root=vendor/"encore-active/ns2-runtime/gpu_session/core/hle/service/am/service"
+root=vendor/"encore-active/eden/src/core/hle/service/am/service"
 source=(root/"gpu_worker_shared.cpp").read_text()
 header=(root/"gpu_worker_shared.h").read_text()
 begin="std::shared_ptr<Nvidia::Devices::nvhost_as_gpu>\nGpuWorkerSharedState::FindOwnedAddressSpace("
@@ -116,7 +116,7 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-fd-identity-") as directory:
             executable = Path(directory) / (Path(compiler).name + opt)
             command = [compiler, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror",
                        "-fsanitize=undefined", "-fno-sanitize-recover=all",
-                       "-I" + str(vendor / "encore-active/ns2-runtime/hle"),
+                       "-I" + str(vendor / "encore-active/eden/src"),
                        str(src), "-o", str(executable)]
             build = subprocess.run(command, capture_output=True, text=True, timeout=60,
                                    env=os.environ.copy())

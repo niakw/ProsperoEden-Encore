@@ -8,10 +8,10 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-native = (ROOT / 'vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc').read_text()
-backport = (ROOT / 'vendor/encore-active/eden-backports/src/core/device_memory_manager.inc').read_text()
+native = (ROOT / 'vendor/encore-active/eden/src/core/device_memory_manager.inc').read_text()
+backport = (ROOT / 'vendor/encore-active/eden/src/core/device_memory_manager.inc').read_text()
 pinned = (ROOT / 'vendor/sources/eden/src/core/device_memory_manager.inc').read_text()
-header = (ROOT / 'vendor/encore-active/eden-backports/src/core/device_memory_manager.h').read_text()
+header = (ROOT / 'vendor/encore-active/eden/src/core/device_memory_manager.h').read_text()
 # Whole-unit parity retains all atomic, remap, range and ASID fixes. Restoring
 # only id_pool would compile while undoing the no-reuse/lifetime guarantees.
 span_start = backport.index('template <typename Traits>\nu8* DeviceMemoryManager<Traits>::GetSpan(')
@@ -26,7 +26,7 @@ expected = backport[:span_start] + original_span_block.replace(old_return, new_r
 # parity of the shipping NS1 device span/ASID owner after removing ONLY the
 # two reviewed guarded map/unmap insertions and its single include.
 ns2_header = '#ifdef EDEN_NS2_DEVICE_CONTINUITY\n#include "core/ns2_egl_continuity_guard.h"\n#endif\n'
-ns2_cut = '''#ifdef EDEN_NS2_DEVICE_CONTINUITY
+ns2_cut_map = '''#ifdef EDEN_NS2_DEVICE_CONTINUITY
     // End a previously tracked physical run before mapping state changes.
     Eden::NS2::GpuMemory::CutContinuityAt(start_page_d,
         [&](size_t index) { return AtomicLoadContinuity(tracked_entries[index]); },
@@ -35,8 +35,17 @@ ns2_cut = '''#ifdef EDEN_NS2_DEVICE_CONTINUITY
         });
 #endif
 '''
+ns2_cut_unmap = '''#ifdef EDEN_NS2_DEVICE_CONTINUITY
+    Eden::NS2::GpuMemory::CutContinuityAt(start_page_d,
+        [&](size_t index) { return AtomicLoadContinuity(tracked_entries[index]); },
+        [&](size_t index, u32 new_count) {
+            AtomicStoreContinuity(tracked_entries.GetUnchecked(index), new_count);
+        });
+#endif
+'''
 assert native.count(ns2_header) == 1, 'N50 include duplicated or modified'
-assert native.count(ns2_cut) == 2, 'N50 map/unmap continuity blocks drifted'
+assert native.count(ns2_cut_map) == 1, 'N50 map continuity block drifted'
+assert native.count(ns2_cut_unmap) == 1, 'N50 unmap continuity block drifted'
 # Vendor #194 adds FC27 deferred page-protection publication. Keep the live
 # native source intact: reverse exactly the reviewed additions in this
 # parity-only copy before checking the historical device-span/ASID contract.
@@ -58,12 +67,12 @@ if git_blob(native) == "8acbdfe9ac970d24fecd334ca7b943f6bcd958f4":
 if git_blob(native) == 'daf493ce6e863397ec44bfae467c4f7533570477':
     # Reviewed FC27 #194 rollback restored the exact pre-deferral device
     # owner. Historical continuity/ASID source checks still run below.
-    assert not (ROOT / 'vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h').exists()
+    assert not (ROOT / 'vendor/encore-active/eden/src/core/deferred_cached_updates.h').exists()
     fc27_prior = native
 else:
     assert git_blob(native) == '852a0272696c7ce182bc05aee92bc7cbb195446b', (
         'FC27/NS2 selected device owner changed; review the new delta')
-    fc27_header = (ROOT / 'vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h').read_text()
+    fc27_header = (ROOT / 'vendor/encore-active/eden/src/core/deferred_cached_updates.h').read_text()
     assert git_blob(fc27_header) == '33262f511777cdd1b4a74ac0cd6dc39caa12c9d0'
     fc27_include = '#include "core/deferred_cached_updates.h"' + chr(10)
     fc27_wait = '''#ifdef PS5_NATIVE
@@ -103,7 +112,9 @@ else:
         fc27_prior = fc27_prior.replace(addition, '', 1)
     assert git_blob(fc27_prior) == 'daf493ce6e863397ec44bfae467c4f7533570477', (
         'FC27 parity reversal changed unrelated native code')
-unqualified_native = fc27_prior.replace(ns2_header, '', 1).replace(ns2_cut, '', 2)
+unqualified_native = (fc27_prior.replace(ns2_header, '', 1)
+                      .replace(ns2_cut_map, '', 1)
+                      .replace(ns2_cut_unmap, '', 1))
 assert unqualified_native == expected, 'Native device implementation drifted beyond the reviewed span reuse'
 assert 'id_pool' not in native + header
 map_body = native.split('void DeviceMemoryManager<Traits>::Map(', 1)[1].split('void DeviceMemoryManager<Traits>::Unmap(', 1)[0]

@@ -10,10 +10,10 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-active = (root/"vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_text()
+active = (root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp").read_text()
 generator = (root/"tools/prepare-vulkan-port.py").read_text()
-graphics_h = (root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
-compute_h = (root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_compute_pipeline.h").read_text()
+graphics_h = (root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+compute_h = (root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline.h").read_text()
 # Keep the full selected predicate, including delayed optimized variant publication.
 # The worker's *recorded* draw binding is a distinct guard tested elsewhere.
 assert "if (!is_built.load(std::memory_order::acquire)) return false;" in graphics_h

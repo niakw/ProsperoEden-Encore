@@ -111,7 +111,7 @@ transfer_t jump_fcontext(fcontext_t target, void* data) {
         obj = folder / ('context-' + str(index) + '.o')
         subprocess.run([compiler, '-c', str(asm), '-o', str(obj)], check=True, timeout=30)
         objects.append(obj)
-    for label, source in (('old', old), ('active', ROOT / 'vendor/encore-active/eden-core/src/common/fiber.cpp')):
+    for label, source in (('old', old), ('active', ROOT / 'vendor/encore-active/eden/src/common/fiber.cpp')):
         binary = folder / label
         flags = ['-DOLD_STACK=1'] if label == 'old' else []
         subprocess.run([compiler, '-std=c++20', '-O2', '-Wall', '-Wextra', '-Werror', '-pthread',

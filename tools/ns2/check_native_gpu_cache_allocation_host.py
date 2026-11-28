@@ -13,10 +13,10 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-PULLER=ROOT/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp'
-SHADER=ROOT/'vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp'
-REGISTRY=ROOT/'vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h'
-PROCESS=ROOT/'vendor/encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h'
+PULLER=ROOT/'vendor/encore-active/eden/src/video_core/engines/puller.cpp'
+SHADER=ROOT/'vendor/encore-active/eden/src/video_core/native_shader_capture.cpp'
+REGISTRY=ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h'
+PROCESS=ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/native_gpu_process_registry.h'
 assert all(p.is_file() for p in (PULLER,SHADER,REGISTRY,PROCESS))
 
 def owner(source:Path,methods:tuple[str,...])->str:
@@ -141,8 +141,8 @@ with tempfile.TemporaryDirectory(prefix='encore-gpu-cache-alloc-') as temp:
         exe=Path(temp)/f'gpu-cache-O{opt}'
         command=[compiler,'-std=c++20',f'-O{opt}', '-Wall','-Wextra','-Werror',
                  '-fsanitize=undefined','-fno-sanitize-recover=all',
-                 '-I'+str(ROOT/'vendor/encore-active/ns2-runtime/hle'),
-                 '-I'+str(ROOT/'vendor/encore-active/ns2-runtime/nvdrv_gpu'),
+                 '-I'+str(ROOT/'vendor/encore-active/eden/src'),
+                 '-I'+str(ROOT/'vendor/encore-active/eden/src'),
                  str(generated),'-o',str(exe)]
         build=subprocess.run(command,capture_output=True,text=True,env=env,timeout=70)
         assert build.returncode==0,build.stderr[-5300:]

@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT/"vendor/encore-active/ns2-runtime/video_decoder/video_core/host1x/nx2_video_decoder.cpp"
+OWNER=ROOT/"vendor/encore-active/eden/src/video_core/host1x/nx2_video_decoder.cpp"
 PACKET=ROOT/"vendor/sources/eden/src/video_core/host1x/ffmpeg.cpp"
 source=OWNER.read_text()
 ffmpeg=PACKET.read_text()

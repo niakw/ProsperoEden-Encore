@@ -4,10 +4,10 @@ from pathlib import Path
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
-core=(root/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
-texture=(root/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
-active=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-bridge=(root/"vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp").read_text()
+core=(root/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
+texture=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
+active=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
+bridge=(root/"vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp").read_text()
 core_start=("bool BufferCache<P>::DMACopy(\n"
             "    GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written,\n"
             "    boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest) {")
@@ -29,7 +29,7 @@ def grab(s):
     return s[a:s.index(wrap_end,a)].rstrip()
 wrapper=grab(active)
 # Native P1 copies track GPU-owned image bytes and lock both cache domains.
-# The immutable guest-bridge fallback intentionally does neither.
+# The frozen upstream Vulkan fallback intentionally does neither.
 assert wrapper != grab(bridge)
 assert "return buffer_cache.DMACopy(src_address, dest_address, amount);" in grab(bridge)
 assert "buffer_cache.DMACopy(src_address, dest_address, amount, &copied_gpu_bytes," in wrapper

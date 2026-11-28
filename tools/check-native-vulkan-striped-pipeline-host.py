@@ -10,8 +10,9 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-active = root / "vendor/encore-active/eden-vulkan"
-hdir = active / "include/video_core/renderer_vulkan"
+active = root / "vendor/encore-active/eden/src/video_core/renderer_vulkan"
+hdir = active
+include_root = active.parents[1]
 cmake = (root/"headless/vulkan.cmake").read_text()
 workflow = (root/".github/workflows/encore-core-preflight.yml").read_text()
 assert "python3 -B tools/check-native-vulkan-striped-pipeline-host.py" in workflow
@@ -108,7 +109,7 @@ with tempfile.TemporaryDirectory(prefix="encore-striped-wait-") as d:
             binary=tmp/(Path(compiler).name+"-"+str(opt))
             subprocess.run([compiler,"-std=c++20","-O"+str(opt),"-pthread","-Wall",
                             "-Wextra","-Werror","-fsanitize=undefined",
-                            "-fno-sanitize-recover=all","-I",str(active/"include"),
+                            "-fno-sanitize-recover=all","-I",str(include_root),
                             str(src),"-o",str(binary)],check=True,timeout=50)
             output=subprocess.run([str(binary)],capture_output=True,text=True,
                                   timeout=20,check=True)

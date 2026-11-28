@@ -13,7 +13,7 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 pinned=(root/"vendor/sources/eden/src/core/guest_memory.h").read_text()
-native=(root/"vendor/encore-active/eden-core/overrides/core/guest_memory.h").read_text()
+native=(root/"vendor/encore-active/eden/src/core/guest_memory.h").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
 workflow=(root/".github/workflows/encore-core-preflight.yml").read_text()
 before="""    void Write(std::span<T> write_data) noexcept {

@@ -8,9 +8,9 @@ import hashlib
 
 root=Path(__file__).resolve().parents[2]
 paths={
- "sm": "vendor/encore-active/eden-core/src/core/hle/service/sm/sm.h",
- "thread": "vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.h",
- "jit": "vendor/encore-active/eden-core/src/dynarmic/backend/x64/a64_interface_standard.cpp",
+ "sm": "vendor/encore-active/eden/src/core/hle/service/sm/sm.h",
+ "thread": "vendor/encore-active/eden/src/core/hle/kernel/k_thread.h",
+ "jit": "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface_standard.cpp",
 }
 expected={
  "sm": "afaad1b58658c9fe7807756410b7f1a82d0e3c7d",
@@ -38,6 +38,11 @@ def gitblob(data: bytes)->str:
 # Every other SM blob still fails the digest assertion below.
 if gitblob((root/paths["sm"]).read_bytes()) == "7069439e66a6f28ffa56229e08906a21222e2801":
     expected["sm"] = "7069439e66a6f28ffa56229e08906a21222e2801"
+# The current NS2 first-SVC startup handoff extends the reviewed thread owner
+# without replacing any historical context/scheduler contract. Accept only the
+# exact reviewed blob; the semantic anchors are checked again below.
+if gitblob((root/paths["thread"]).read_bytes()) == "3bd35ffb74bac35814ad616d4fbf9ca04dbb245d":
+    expected["thread"] = "3bd35ffb74bac35814ad616d4fbf9ca04dbb245d"
 # Historical pre-pressure-rollback source: 26ae49088a528c4cf27712f639948604de2260d4.
 # Reviewed delta at new SHA: the two unprotected invalidate_entire_cache=true
 # writes on low JIT code-space and bad_alloc now use ClearCache(), which
@@ -84,8 +89,13 @@ for invariant in ("std::binary_semaphore m_context_guard{1};",
                   "std::vector<KThread*>& GetPendingStartedThreads()",
                   "std::vector<KThread*> m_pending_started_threads;"):
     assert invariant in header, invariant
-thread_cmake=(root/"vendor/encore-active/eden-threading/native-hle-overrides.cmake").read_text()
-scheduler=(root/"vendor/encore-active/eden-threading/src/core/hle/kernel/k_scheduler.cpp").read_text()
+if expected["thread"] == "3bd35ffb74bac35814ad616d4fbf9ca04dbb245d":
+    for invariant in ("bool HasEnteredKernel() const",
+                      "void SetEnteredKernel()",
+                      "std::atomic<bool> m_entered_kernel{false};"):
+        assert invariant in header, invariant
+thread_cmake=(root/"vendor/encore-active/eden/native-hle-overrides.cmake").read_text()
+scheduler=(root/"vendor/encore-active/eden/src/core/hle/kernel/k_scheduler.cpp").read_text()
 assert "if(EDEN_BLOCKING_GUEST_CONTEXT_LOCKS)" in thread_cmake
 assert 'target_include_directories(core BEFORE PUBLIC "${_encore_thread_root}")' in thread_cmake
 assert "m_context_guard.try_acquire()" in scheduler

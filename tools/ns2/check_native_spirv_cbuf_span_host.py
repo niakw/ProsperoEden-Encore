@@ -13,8 +13,8 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp"
-CBUF = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_indirect_cbuf.h"
+SRC = ROOT / "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp"
+CBUF = ROOT / "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/native_indirect_cbuf.h"
 SHARED = ROOT / "vendor/sources/eden/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp"
 source = SRC.read_text()
 assert "NativeSpirvCbufBoundsActive()" in source
@@ -174,16 +174,16 @@ boost=ROOT/"vendor/sources/eden-cpm/boost/boost-1.90.0/libs"
 sirit=ROOT/"vendor/sources/eden-cpm/sirit/v1.0.5/include/sirit/sirit.h"
 spirv=ROOT/"vendor/sources/eden-cpm/spirv-headers/vulkan-sdk-1.4.341.0/include/spirv/unified1/spirv.hpp11"
 if boost.is_dir() and sirit.is_file() and spirv.is_file():
-    includes=[ROOT/"vendor/encore-active/ns2-runtime/ampere",
+    includes=[ROOT/"vendor/encore-active/eden/src",
         # The actual native Task/Mesh graph selects the reviewed shader
         # interface before pinned Eden. TES patch levels use two distinct
         # Input variables; upstream's pre-NS2 header lacks those members.
-        ROOT/"vendor/encore-active/eden-shader/src",
+        ROOT/"vendor/encore-active/eden/src",
         ROOT/"vendor/sources/eden/src",
         ROOT/"vendor/sources/fmt/include",
         sirit.parents[1],spirv.parents[2],
         ROOT/"vendor/sources/eden-cpm/vulkanheaders/v1.4.345/include",
-        ROOT/"vendor/encore-active/ns2-helpers/include",
+        ROOT/"vendor/encore-active/eden/src",
         *sorted(boost.glob("*/include"))]
     extra=[]
     libc=Path("/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/usr/include/c++/v1")

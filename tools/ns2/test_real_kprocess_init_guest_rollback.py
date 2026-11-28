@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 # a green test against sources/ alone previously missed the KProcess OOM bug.
 OWNERS = (
     ("canonical", ROOT / "vendor/sources/eden/src/core/hle/kernel/k_process.cpp"),
-    ("shipping", ROOT / "vendor/encore-active/eden-core/src/core/hle/kernel/k_process.cpp"),
+    ("shipping", ROOT / "vendor/encore-active/eden/src/core/hle/kernel/k_process.cpp"),
 )
 START = "Result KProcess::LoadFromMetadata("
 STOP = "\nvoid KProcess::LoadModule("
@@ -96,7 +96,9 @@ struct ProgramMetadata {
     unsigned core = 0;
     int pool = 0;
     bool arm64 = true;
+    bool switch2 = false;
     ProgramAddressSpaceType address_type = ProgramAddressSpaceType::Is39Bit;
+    bool IsSwitch2() const { return switch2; }
     int GetPoolPartition() const { return pool; }
     bool Is64BitProgram() const { return arm64; }
     ProgramAddressSpaceType GetAddressSpaceType() const { return address_type; }
@@ -260,6 +262,8 @@ struct KPageTable {
     void SetProcessMemoryPermission(u64 addr,u32 size,Svc::MemoryPermission kind) {
         permissions.push_back({addr,size,kind});
     }
+    u64 GetHeapRegionSize() const { return 16ULL << 30; }
+    u64 GetAliasRegionSize() const { return 64ULL << 30; }
     void AllowDeviceMappingOfExecPages(){}
 };
 struct KCapabilities {
@@ -290,6 +294,7 @@ struct KProcess {
     bool interfaces_initialized=false;
     bool m_is_default_application_system_resource{},m_is_immortal{};
     u64 m_process_id{};
+    u64 m_max_process_memory{};
     KMemoryManager::Pool m_memory_pool=KMemoryManager::Pool::System;
     KSystemResource* m_system_resource{};
     KPageTable m_page_table;

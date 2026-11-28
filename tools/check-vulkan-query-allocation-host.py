@@ -25,7 +25,7 @@ def block(path):
 
 
 pinned = block(ROOT / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_query_cache.cpp")
-active = block(ROOT / "vendor/encore-active/eden-vulkan/vulkan_query_cache.cpp")
+active = block(ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_query_cache.cpp")
 assert "reserve(" not in pinned
 assert active.index(".reserve(") < active.index("std::scoped_lock")
 for workflow in ("encore-core-preflight.yml", "encore-core-fast-gate.yml"):

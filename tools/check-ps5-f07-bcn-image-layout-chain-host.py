@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
-src=(root/"vendor/encore-active/eden-vulkan/vk_compute_pass_cost.cpp").read_text()
+src=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pass_cost.cpp").read_text()
 gen=(root/"tools/prepare-vulkan-port.py").read_text()
 begin=src.index("void BlockLinearUnswizzle3DPass::UnswizzleChunk(")
 method=src[begin:src.index("\n} // namespace Vulkan",begin)]

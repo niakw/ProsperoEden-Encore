@@ -15,7 +15,7 @@ root = Path(__file__).resolve().parents[1]
 header = (root / "vendor/sources/eden/src/core/hle/kernel/physical_core.h").read_text()
 pinned = (root / "vendor/sources/eden/src/core/hle/kernel/physical_core.cpp").read_text()
 cmake_source = (root / "headless/CMakeLists.txt").read_text()
-owned = root / "vendor/encore-active/eden-core/src/core/hle/kernel"
+owned = root / "vendor/encore-active/eden/src/core/hle/kernel"
 existing_fixture = root / "tools/check-native-physical-core-interrupt-ack-host.py"
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 assert "    bool m_is_interrupted{};" in header

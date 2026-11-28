@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-text=(ROOT/"vendor/encore-active/eden-core/src/common/sparse_large_vector.h").read_text()
+text=(ROOT/"vendor/encore-active/eden/src/common/sparse_large_vector.h").read_text()
 cmake=(ROOT/"headless/CMakeLists.txt").read_text()
 workflow=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 start="    void ZeroRegion(std::size_t start, std::size_t end_) noexcept {"

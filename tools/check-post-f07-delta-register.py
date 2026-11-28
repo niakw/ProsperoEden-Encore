@@ -18,14 +18,14 @@ assert len(entries)==44  # 43 earlier successors + reviewed Nov26 native directo
 # The additional vendor entry is a documented source-interface successor,
 # not a relaxation of historical F07 provenance or a console performance claim.
 thread_entry=next(e for e in entries if e["path"]==
-    "vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.h")
+    "vendor/encore-active/eden/src/core/hle/kernel/k_thread.h")
 assert thread_entry["historical_reviewed_git_blob"]=="e2f359a54cb6b879bdd41f092cf1ea19fb03e4e6"
 assert thread_entry["post_snapshot_git_blob"]=="89bbcbd2b0d3627210a980496d00f30a45c7d944"
 assert thread_entry["required_source_fragment"]=="std::vector<KThread*>& GetPendingStartedThreads()"
 assert thread_entry["review_kind"]=="source_interface"
 assert len({e["path"] for e in entries})==len(entries)
 romfs=next(e for e in entries if e["path"] ==
-    "vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp")
+    "vendor/encore-active/eden/src/core/file_sys/romfs_factory.cpp")
 assert romfs["historical_reviewed_git_blob"] == "cd11cb32429efcceaf6b3e1144d495cce1569383"
 assert romfs["post_snapshot_git_blob"] == "4775cf98c3bfbc587402928bad424dcb471047a0"
 assert romfs["original_disposition"] == "new_source_issue_corrected"
@@ -338,6 +338,16 @@ for entry in entries:
         else:
             assert actual==successor,("Unreviewed Nov15 launcher successor",entry["path"],actual)
         successor_hits.add(entry["path"])
+    elif (entry["path"] == "vendor/encore-active/eden/src/core/hle/kernel/k_thread.h" and
+          actual == "3bd35ffb74bac35814ad616d4fbf9ca04dbb245d"):
+        assert expected == "89bbcbd2b0d3627210a980496d00f30a45c7d944"
+        current = path.read_text(encoding="utf-8")
+        assert "bool HasEnteredKernel() const" in current
+        assert "void SetEnteredKernel()" in current
+        assert "std::atomic<bool> m_entered_kernel{false};" in current
+        # Exact successor reviewed for the NS2 first-SVC startup handoff.
+        # Keep the historical post-F07 register immutable; unknown later drift still fails.
+        actual = expected
     elif entry["path"] == "headless/prosperoeden/pe/ui/theme.hpp" and actual == "2a67d1c4993669f7739591b22ceff90d0f6e11f6":
         assert expected == "1fdf1683e245ee2b7c1cff200e58291e36d82f87"
     elif actual!=expected:

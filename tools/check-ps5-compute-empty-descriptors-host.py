@@ -5,9 +5,9 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-raster = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-compute = (root / "vendor/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()
-header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_compute_pipeline.h").read_text()
+raster = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
+compute = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline_cost.cpp").read_text()
+header = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline.h").read_text()
 oracle = (root / "tools/prepare-vulkan-port.py").read_text()
 assert "bool HasDescriptorEntries() const noexcept" in header
 assert "return num_descriptor_entries != 0;" in header
@@ -39,7 +39,7 @@ for name in ("texture_buffer_descriptors", "image_buffer_descriptors",
 assert compute.count("texture_cache.FillImageViews(std::span(views.data(), views.size()), true);") == 1
 assert "The empty view list cannot resolve/revive any TIC" not in compute
 assert "F07 bypass compute image-view resolution when no images are bound" not in oracle
-queue_header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_update_descriptor.h").read_text()
+queue_header = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_update_descriptor.h").read_text()
 assert "void AcquireKnownEmpty(bool use_descriptor_buffer_) noexcept" in queue_header
 
 test = r"""

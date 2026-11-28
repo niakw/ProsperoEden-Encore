@@ -10,12 +10,12 @@ start = "# N3m: compile a renderer-callable"
 end = "# N50: shared native PS5 device-memory"
 assert start in source and end in source
 selector = start + source.split(start,1)[1].split(end,1)[0]
-target = ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
+target = ROOT / "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp"
 assert target.is_file() and "target_sources(video_core PRIVATE" in selector
 # P2.2: production-selected native renderer obtains TIC metadata exclusively
 # from the authenticated QMD channel tables, not from fake defaults or a
 # second Switch 2 texture cache. This source witness is not PS5 runtime proof.
-rasterizer = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+rasterizer = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 native = rasterizer.split("bool RasterizerVulkan::DispatchNativeCompute(", 1)[1].split(
     "void RasterizerVulkan::DispatchCompute(", 1)[0]
 assert "class NativeQmdTextureMetadata final : public Shader::Environment" in rasterizer
@@ -35,7 +35,7 @@ assert "RetainNativeComputeUntilGpuTick(" in native
 # Verify the fork whose QMD3 dispatch is audited is the one actually copied
 # into the single PS5 video_core target, not the untouched old Eden TU.
 cmake_vulkan=(ROOT / "headless/vulkan.cmake").read_text()
-assert 'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden-vulkan")' in cmake_vulkan
+assert 'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_vulkan")' in cmake_vulkan
 assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in cmake_vulkan
 assert '"${PORT_BUILD_DIR}/vulkan_rasterizer.cpp"' in cmake_vulkan
 assert "NativeQmdTextureTables" in native

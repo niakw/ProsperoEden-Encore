@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-source = (root / "vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+source = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 begin = "        const VkImage temp_vk_image = runtime->AcquireMsaaScratchImage(image_ci);"
 end = "\n        auto vk_copies = TransformBufferImageCopies("

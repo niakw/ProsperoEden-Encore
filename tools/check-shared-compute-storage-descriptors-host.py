@@ -6,8 +6,9 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-VENDOR = ROOT / "vendor/encore-active/eden-vulkan"
-HEADER = VENDOR / "include/video_core/renderer_vulkan/vk_compute_storage_layout.h"
+VENDOR_SRC = ROOT / "vendor/encore-active/eden/src"
+VENDOR = VENDOR_SRC / "video_core/renderer_vulkan"
+HEADER = VENDOR / "vk_compute_storage_layout.h"
 CPP = (VENDOR / "vk_compute_pipeline_cost.cpp").read_text()
 GENERATOR = (ROOT / "tools/prepare-vulkan-port.py").read_text()
 assert HEADER.exists(), "pinned vendor lacks shared Compute storage layout"
@@ -103,7 +104,7 @@ for tool in ("clang++", "g++"):
             source.write_text(SOURCE)
             subprocess.run(
                 [compiler, "-std=c++20", "-Wall", "-Wextra", "-Werror",
-                 optimization, "-I", str(VENDOR / "include"),
+                 optimization, "-I", str(VENDOR_SRC),
                  str(source), "-o", str(binary)],
                 check=True, timeout=40,
             )

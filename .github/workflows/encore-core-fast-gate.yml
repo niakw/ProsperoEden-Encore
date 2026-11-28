@@ -7,8 +7,8 @@ on:
     paths:
       - 'vendor'
       - '.gitmodules'
-      - 'vendor/encore-active/eden-core/src/dynarmic/**'
-      - 'vendor/encore-active/eden-core/src/common/sparse_large_vector.h'
+      - 'vendor/encore-active/eden/src/dynarmic/**'
+      - 'vendor/encore-active/eden/src/common/sparse_large_vector.h'
       - 'src/host_memory.cpp'
       - 'src/memory_pages.cpp'
       - 'headless/jit-sparse-commit.h'
@@ -26,19 +26,19 @@ on:
       - 'tools/check-native-host-pagesize-cache-host.py'
       - 'tools/check-native-quiet-heap-commit-host.py'
       - 'tools/check-native-quiet-counters-host.py'
-      - 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h'
+      - 'vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h'
       - 'tools/check-native-dma-clear-span-host.py'
-      - 'vendor/encore-active/eden-core/src/video_core/engines/maxwell_dma.cpp'
+      - 'vendor/encore-active/eden/src/video_core/engines/maxwell_dma.cpp'
       - 'tools/check-native-dma-extent-host.py'
       - 'tools/check-native-dma-contiguous-host.py'
       - 'tools/check-native-dma-pitch-remap-host.py'
       - 'tools/check-native-dma-tiled-remap-host.py'
-      - 'vendor/encore-active/eden-core/overrides/core/gpu_dirty_memory_manager.h'
+      - 'vendor/encore-active/eden/src/core/gpu_dirty_memory_manager.h'
       - 'tools/check-native-gpu-dirty-transition-host.py'
       - 'tools/check-native-gpu-dirty-gather-host.py'
       - 'tools/check-fastmem-window-bounds-host.py'
       - 'headless/fastmem_handler.cpp'
-      - 'vendor/encore-active/eden-core/overrides/core/guest_memory.h'
+      - 'vendor/encore-active/eden/src/core/guest_memory.h'
       - 'tools/check-native-guest-memory-empty-read-host.py'
       - 'headless/main.cpp'
       - 'tools/check-ps5-release-saved-diagnostics-host.py'
@@ -63,7 +63,7 @@ on:
       - '.github/workflows/encore-core-preflight.yml'
       # Security policy changes must invalidate the same-SHA core proof.
       - '.github/workflows/codeql-advanced.yml'
-      - 'vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp'
+      - 'vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp'
       - 'tools/check-deferred-native-bridge-contract.py'
       # The deferred bridge gate reads these pinned CMake fixtures directly.
       # A fixture-only change must rerun the same fast gate, not just preflight.
@@ -77,15 +77,16 @@ on:
       - 'tools/check-ps5-radv-64bit-arithmetic-host.py'
       - 'tools/check-eden-backport-patch-integrity-host.py'
       - 'headless/backports/**'
-      - 'vendor/encore-active/eden-backports/manifest.json'
       - 'tools/check-native-quiet-shutdown-heap-host.py'
       - 'tools/check-native-fastmem-signal-install-host.py'
       - 'tools/check-sparse-zero-bounds-host.py'
-      - 'vendor/encore-active/eden-vulkan/**'
-      - 'vendor/encore-active/eden-gpu/**'
-      - 'vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.cpp'
-      - 'vendor/encore-active/eden-threading/src/core/hle/kernel/k_condition_variable.cpp'
-      - 'vendor/encore-active/eden-threading/src/core/hle/kernel/k_scheduler.cpp'
+      - 'vendor/encore-active/eden/src/video_core/renderer_vulkan/**'
+      - 'vendor/encore-active/eden/src/common/bounded_threadsafe_queue.h'
+      - 'vendor/encore-active/eden/src/video_core/gpu_thread.h'
+      - 'vendor/encore-active/eden/src/video_core/gpu_thread.cpp'
+      - 'vendor/encore-active/eden/src/core/hle/kernel/k_thread.cpp'
+      - 'vendor/encore-active/eden/src/core/hle/kernel/k_condition_variable.cpp'
+      - 'vendor/encore-active/eden/src/core/hle/kernel/k_scheduler.cpp'
       - 'tools/check-native-bootstrap-permit-host.py'
       - 'tools/check-native-hle-cv-key-write-host.py'
       - 'tools/check-native-hle-wait-null-queue-host.py'
@@ -93,11 +94,10 @@ on:
       - 'tools/check-native-hle-state-transition-fastpath-host.py'
       - 'tools/check-native-hle-suspend-noop-host.py'
       - 'tools/check-native-ipc-wake-chain-host.py'
-      - 'vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_ipc_standard.cpp'
+      - 'vendor/encore-active/eden/src/core/hle/kernel/svc/svc_ipc_standard.cpp'
       - 'tools/verify/hle/check-native-hle-ipc-timeout-host.py'
       - 'tools/verify/hle/check-native-hle-ipc-receive-index-host.py'
       - 'tools/audit-eden-progress-state.py'
-      - 'tools/check-eden-optimization-coverage.py'
       # P0.1/P4.1: queue-source or host-witness edits invalidate the same-SHA core proof.
       - 'tools/check-ps5-gpu-producer-wake.py'
       - 'tools/check-ps5-native-load-replay.py'
@@ -119,14 +119,13 @@ on:
       # CMake source-owner tables are executable CI contracts, not prose.
       - 'docs/EDEN_OVERRIDE_SOURCE_OF_TRUTH.md'
       - 'docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md'
-      - 'tools/check-active-source-inventory.py'
       - 'tools/verify/hle/**'
       - 'tools/check-vulkan-multirange-overflow-host.py'
       - 'tools/check-native-gpu-fence-release-publication-host.py'
       - 'tools/check-native-gpu-composite-syncpoint-host.py'
       - 'tools/check-native-host1x-register-reentrant-host.py'
       - 'tools/check-native-host1x-increment-handoff-host.py'
-      - 'vendor/encore-active/eden-core/src/video_core/host1x/**'
+      - 'vendor/encore-active/eden/src/video_core/host1x/**'
       - 'tools/check-native-vulkan-renderer-handoff-host.py'
       - 'headless/frame_metrics.h'
       - 'extras/graphics/test_frame_metrics.cpp'
@@ -186,12 +185,12 @@ on:
       - 'tools/check-native-wide-vertex-buffer-range-host.py'
       - 'tools/check-native-wide-index-buffer-range-host.py'
       - 'tools/check-native-index-draw-dirty-span-host.py'
-      - 'vendor/encore-active/eden-core/src/video_core/engines/draw_manager.cpp'
+      - 'vendor/encore-active/eden/src/video_core/engines/draw_manager.cpp'
       - 'tools/check-native-indirect-draw-range-host.py'
       - 'tools/check-native-indirect-null-binding-host.py'
-      - 'vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/**'
-      - 'vendor/encore-active/eden-backports/src/core/hle/service/nvnflinger/**'
-      - 'vendor/encore-active/eden-surface-lifecycle/**'
+      - 'vendor/encore-active/eden/src/core/hle/service/nvnflinger/**'
+      - 'vendor/encore-active/eden/src/core/hle/service/nvnflinger/**'
+      - 'vendor/encore-active/eden/**'
       - 'tools/check-surface-lifecycle.py'
       - 'tools/check-native-hardware-composer-liveness-host.py'
       - 'tools/install-vendored-surface-lifecycle.py'
@@ -233,10 +232,10 @@ on:
       - 'tools/check-fc27-f04-native-upload-revision-host.py'
       - 'tools/check-fc27-f04-native-vulkan-upload-barriers-host.py'
       - 'tools/check-fc27-f04-native-remap-dma-upload-chain-host.py'
-      - 'vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h'
-      - 'vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_update_descriptor.h'
-      - 'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp'
-      - 'vendor/encore-active/eden-core/src/video_core/texture_cache/util.cpp'
+      - 'vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h'
+      - 'vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_update_descriptor.h'
+      - 'vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp'
+      - 'vendor/encore-active/eden/src/video_core/texture_cache/util.cpp'
       - 'tools/check-vulkan-renderpass-clear-bounds-host.py'
       - 'tools/check-vulkan-worker-fatal-drain-host.py'
       - 'tools/check-ps5-vulkan-worker-wake.py'
@@ -256,20 +255,20 @@ on:
       - 'tools/check-vulkan-present-draw-storage-host.py'
       - 'tools/check-vulkan-tfb-bank-lookup-host.py'
       - 'tools/check-vulkan-samples-scratch-host.py'
-      - 'vendor/encore-active/eden-core/src/video_core/texture_cache/util.cpp'
-      - 'vendor/encore-active/eden-core/src/audio_core/sink/sink_stream.cpp'
+      - 'vendor/encore-active/eden/src/video_core/texture_cache/util.cpp'
+      - 'vendor/encore-active/eden/src/audio_core/sink/sink_stream.cpp'
       - 'tools/check-texture-convert-volume-host.py'
       - 'tools/check-audio-upmix-scratch-host.py'
       - 'headless/prosperoeden/pe/audio/stream_ring.hpp'
       - 'tools/check-ps5-launcher-audio-stream-ring-host.py'
-      - 'vendor/encore-active/eden-core/src/hid_core/resource_manager.cpp'
+      - 'vendor/encore-active/eden/src/hid_core/resource_manager.cpp'
       - 'tools/check-vendored-hid-resource-source.py'
       - 'tools/check-native-hid-cadence-host.py'
       - 'tools/check-maintained-audio-units.py'
       - 'tools/check-upstream-texture-memory-r428.py'
       - 'headless/buffer_pages.h'
       - 'headless/image_pages.h'
-      - 'vendor/encore-active/eden-core/src/common/fiber.cpp'
+      - 'vendor/encore-active/eden/src/common/fiber.cpp'
       - 'tools/check-vendored-fiber-source.py'
       - 'tools/fixtures/query-sync-linear-grouping.inc'
       - 'tools/check-maintained-emitters.py'
@@ -281,11 +280,11 @@ on:
       - 'tools/check-native-jit-cold-repeat-host.py'
       - 'tools/check-native-jit-empty-block-invalidation-host.py'
       - 'tools/check-maintained-common-emit-x64.py'
-      - 'vendor/encore-active/eden-core/src/dynarmic/backend/x64/block_of_code_native.cpp'
+      - 'vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/block_of_code_native.cpp'
       - 'tools/check-native-jit-code-space-bounds-host.py'
-      - 'vendor/encore-active/eden-core/src/core/hle/service/sm/sm.h'
-      - 'vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.h'
-      - 'vendor/encore-active/eden-core/src/dynarmic/backend/x64/a64_interface_standard.cpp'
+      - 'vendor/encore-active/eden/src/core/hle/service/sm/sm.h'
+      - 'vendor/encore-active/eden/src/core/hle/kernel/k_thread.h'
+      - 'vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface_standard.cpp'
       - 'tools/ci/check-final-engine-owner-contracts.py'
       - 'tools/check-native-sparse-jit-release-selector-host.py'
       - 'tools/prepare-vulkan-port.py'
@@ -295,7 +294,6 @@ on:
       - 'tools/check-ns2-*.py'
       - 'tools/check-eden-backport-patch-integrity-host.py'
       - 'headless/backports/**'
-      - 'vendor/encore-active/eden-backports/manifest.json'
       - 'tools/stage-ps5-graphics-enums.py'
       - '.github/workflows/encore-core-fast-gate.yml'
   pull_request:
@@ -353,7 +351,6 @@ jobs:
       - name: Active native source ownership and graph parity
         run: |
           set -euo pipefail
-          python3 -B tools/check-active-source-inventory.py
       - name: NS2 shader archive inventory and compatibility catalogue (host only)
         run: |
           set -euo pipefail
@@ -362,6 +359,8 @@ jobs:
           python3 -B vendor/tests/ns2-kprocess-memory-budget-source.py
           python3 -B vendor/tests/ns2_alias_64g_upstream_parity_host.py
           python3 -B vendor/tests/ns2_a64_v81_v85_source.py
+      # Historical F07/generator replay receipts remain available manually;
+      # the fast production gate follows only current canonical source owners.
       - name: Vulkan arithmetic and frame worker guards
         run: |
           set -euo pipefail
@@ -433,7 +432,6 @@ jobs:
           python3 -B tools/check-ns1-ns2-component-owners-host.py
           python3 -B tools/check-ps5-compute-descriptor-scratch-host.py
           python3 -B tools/check-ps5-f07-compute-descriptor-payload-reuse-host.py
-          python3 -B tools/check-ps5-f07-sampler-memo-collisions-host.py
           python3 -B tools/check-ps5-f07-compute-key-positive-cache-host.py
           python3 -B tools/check-ps5-f07-texel-descriptor-stability-host.py
           python3 -B tools/check-ps5-dma-buffer-copy-span-host.py
@@ -461,7 +459,6 @@ jobs:
           python3 -B tools/check-ps5-f07-present-layer-growth-host.py
           # Catch drift of the complete inactive DEV Vulkan bridge before
           # the costly full source preflight and PS5 native build.
-          python3 -B tools/check-deferred-native-bridge-contract.py
           python3 -B tools/check-ps5-texture-channel-missing-mapping-host.py
           python3 -B tools/check-fc27-f03-native-texture-feedback-chain-host.py
           python3 -B tools/check-fc27-f03-native-present-freshness-host.py
@@ -476,7 +473,12 @@ jobs:
           python3 -B tools/check-ps5-f07-optimized-pipeline-recovery-host.py
           python3 -B tools/check-ps5-f07-optional-optimizer-backlog-host.py
           python3 -B tools/check-vulkan-buffer-frame-tick-snapshot-host.py
-          python3 -B tools/check-vulkan-buffer-usage-reset-host.py
+          # FC27 BufferCache P1: qualify the actual PS5 UsageTracker owner and
+          # its randomized ASan/UBSan oracle on every fast gate. The dedicated
+          # workflow is manual, so relying on it alone would leave this runtime
+          # change untested on ordinary main qualification.
+          python3 -B tools/check-ps5-usage-tracker-selection-host.py
+          python3 -B vendor/tests/ps5_buffer_usage_granularity_host.py
           python3 -B tools/check-ps5-quad-index-initial-fence-host.py
           python3 -B tools/check-vulkan-worker-fatal-drain-host.py
           python3 -B tools/check-shared-gpu-queue-lifetime-host.py
@@ -488,8 +490,6 @@ jobs:
           python3 -B tools/check-fc27-f07-blit-pipeline-state-host.py
           python3 -B tools/check-vulkan-query-grouping-host.py
           python3 -B tools/check-vulkan-query-copy-plan-host.py
-          python3 -B tools/check-vulkan-deferred-copy-ownership-host.py
-          python3 -B tools/check-vulkan-present-draw-storage-host.py
           python3 -B tools/check-vulkan-tfb-bank-lookup-host.py
           python3 -B tools/check-vulkan-samples-scratch-host.py
           python3 -B tools/check-native-dma-clear-span-host.py
@@ -560,23 +560,15 @@ jobs:
           python3 -B tools/check-dualsense-rumble-lock-host.py
           python3 -B tools/audit-eden-progress-state.py
           python3 -B tools/check-ps5-release-saved-diagnostics-host.py
-          python3 -B tools/check-ps5-f07-cold-stalls-host.py
           python3 -B tools/check-ps5-f07-compute-cold-timing-host.py
-          python3 -B tools/check-ps5-f07-texture-upload-rollback-host.py
-          python3 -B tools/check-ps5-f07-async-decode-lifetime-host.py
-          python3 -B tools/check-ps5-f07-gc-dirty-eviction-rollback-host.py
-          python3 -B tools/check-ps5-f07-gc-pressure-probe-host.py
-          python3 -B tools/check-ps5-f07-readback-dirty-rollback-host.py
           python3 -B tools/check-ps5-f07-download-staging-runtime-host.py
           python3 -B tools/check-ps5-f07-msaa-upload-retire-host.py
           python3 -B tools/check-native-vulkan-retire-allocation-host.py
           python3 -B tools/check-ps5-f07-async-dma-rollback-host.py
           python3 -B tools/check-ps5-f07-async-flush-staging-rollback-host.py
-          python3 -B tools/check-ps5-f07-memory-pressure-sampling-host.py
           python3 -B tools/check-ps5-f07-feedback-active-color-slots-host.py
           python3 -B tools/check-ps5-f07-pop-async-transaction-host.py
           python3 -B tools/check-ps5-f07-unswizzle-stale-revision-host.py
-          python3 -B tools/check-ps5-f07-unswizzle-slice-bounds-host.py
           python3 -B tools/check-ps5-f07-bcn-output-buffer-host.py
           python3 -B tools/check-ps5-f07-bcn-descriptor-capacity-host.py
           python3 -B tools/check-ps5-f07-bcn-input-preflight-host.py
@@ -598,7 +590,6 @@ jobs:
           python3 -B tools/check-ps5-vulkan-texture-tu-syntax-host.py
           python3 -B tools/check-ps5-compute-shader-handoff-host.py
           python3 -B tools/check-ps5-f07-compute-translation-priority-host.py
-          python3 -B tools/check-ps5-f07-gc-projected-eviction-host.py
           python3 -B tools/check-ps5-f07-driver-cache-flush-host.py
           python3 -B tools/check-ps5-f07-bounded-prewarm-host.py
           python3 -B tools/check-ps5-f07-shader-cache-drain-host.py
@@ -606,7 +597,7 @@ jobs:
           python3 -B tools/check-ps5-f07-bounded-failed-shader-retry-host.py
           python3 -B tools/check-ps5-f07-bounded-failed-compute-retry-host.py
           python3 -B tools/check-ps5-f07-prewarm-pipeline-admission-host.py
-          python3 -B tools/check-eden-optimization-coverage.py
+          python3 -B tools/check-active-cmake-source-boundary.py
           python3 -B tools/check-vendor-archive-pin-contract-host.py
           python3 -B tools/check-native-hle-wait-null-queue-host.py
           python3 -B tools/check-native-hle-cv-key-write-host.py

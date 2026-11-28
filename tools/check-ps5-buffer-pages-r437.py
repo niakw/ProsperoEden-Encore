@@ -4,10 +4,10 @@ from pathlib import Path
 import shutil, subprocess, tempfile
 root=Path(__file__).resolve().parents[1]
 cm=(root/'headless/CMakeLists.txt').read_text()
-r=(root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+r=(root/'vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp').read_text()
 g=(root/'tools/prepare-vulkan-port.py').read_text()
-source=(root/'vendor/encore-active/eden-backports/src/video_core/buffer_cache/buffer_cache.h').read_text()
-maintained=(root/'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h').read_text()
+source=(root/'vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h').read_text()
+maintained=(root/'vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h').read_text()
 assert 'write_derived("${PORT_BUILD_DIR}/buffer-pages/video_core/buffer_cache/buffer_cache.h"' not in cm
 assert 'configure_file("${EDEN_MAINTAINED_BUFFER_PAGES}"' in cm
 assert 'target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/buffer-pages" "${EDEN_PORT_DIR}")' in cm
@@ -170,7 +170,7 @@ expected = expected.replace(no_channel_old, no_channel_new)
 # Compare every older R437 safeguard byte-for-byte with its source model.
 from r437_stage_overlay import restore_r437_without_production_r2
 maintained = restore_r437_without_production_r2(
-    root/'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h')
+    root/'vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h')
 assert maintained == expected, "R437 maintained header differs from reviewed transforms"
 assert maintained.count('::Eden::BufferPages::Mark(buffer.CpuAddr(), size);') == 1
 assert 'buffer-pages/video_core/buffer_cache/buffer_cache.h' in cm

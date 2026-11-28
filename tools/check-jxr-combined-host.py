@@ -8,7 +8,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 VENDOR = ROOT / "vendor"
 JXR = VENDOR / "sources/jxrlib"
-ADAPTER = VENDOR / "encore-active/ps5-jxr"
+ADAPTER = VENDOR / "encore-active/jxrlib"
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 groups = ("image/sys", "image/decode", "image/encode", "jxrgluelib")
 sources = []

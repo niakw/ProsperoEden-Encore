@@ -11,12 +11,12 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-OWNER = ROOT / "vendor/encore-active/eden-core"
+OWNER = ROOT / "vendor/encore-active/eden"
 FILES = {
-    "a32": OWNER / "src/dynarmic/backend/x64/a32_interface_native.cpp",
-    "a64": OWNER / "src/dynarmic/backend/x64/a64_interface_standard.cpp",
-    "shared": OWNER / "src/dynarmic/backend/x64/a64_interface_shared.cpp",
-    "shared_owner": OWNER / "dynarmic/shared-jit/jit_impl.inc",
+    "a32": OWNER / "src/dynarmic/src/dynarmic/backend/x64/a32_interface_native.cpp",
+    "a64": OWNER / "src/dynarmic/src/dynarmic/backend/x64/a64_interface_standard.cpp",
+    "shared": OWNER / "src/dynarmic/src/dynarmic/backend/x64/a64_interface_shared.cpp",
+    "shared_owner": OWNER / "src/dynarmic/src/dynarmic/backend/x64/jit_impl.inc",
     "legacy_a32": ROOT / "vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/a32_interface.cpp",
     "legacy_a64": ROOT / "vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface.cpp",
 }

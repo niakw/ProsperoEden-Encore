@@ -4,7 +4,7 @@ from pathlib import Path
 import shutil, subprocess, tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-src=(ROOT/"vendor/encore-active/eden-vulkan/vk_compute_pass_cost.cpp").read_text()
+src=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pass_cost.cpp").read_text()
 gen=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 pinned=(ROOT/"vendor/sources/eden/src/video_core/renderer_vulkan/vk_compute_pass.cpp").read_text()
 start=src.index("void BlockLinearUnswizzle3DPass::Unswizzle(")

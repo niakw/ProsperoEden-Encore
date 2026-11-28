@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-header = (root / "vendor/encore-active/eden-gpu/include/common/bounded_threadsafe_queue.h").read_text()
+header = (root / "vendor/encore-active/eden/src/common/bounded_threadsafe_queue.h").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 producer = header.split("bool EmplaceWaitWithStopToken(", 1)[1].split("\n\n    bool TryPop(", 1)[0]
 assert "python3 -B tools/check-native-gpu-queue-stop-fastpath-host.py" in workflow
@@ -35,8 +35,8 @@ assert "std::destroy_at(std::addressof(m_data[cursor % Capacity].value));" in he
 
 # Compile the actual native GPU producer and completion-notifier methods.
 # A 2-slot queue reproduces the 256-slot producer/consumer lock cycle.
-worker=(root/"vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp").read_text()
-worker_header=(root/"vendor/encore-active/eden-gpu/include/video_core/gpu_thread.h").read_text()
+worker=(root/"vendor/encore-active/eden/src/video_core/gpu_thread.cpp").read_text()
+worker_header=(root/"vendor/encore-active/eden/src/video_core/gpu_thread.h").read_text()
 assert "std::mutex completion_lock;" in worker_header
 producer_method="u64 ThreadManager::PushCommand("+worker.split("u64 ThreadManager::PushCommand(",1)[1].split("\n} // namespace",1)[0]
 notification=worker.split("            if (next.block) {",1)[1].split("\n            }",1)[0]

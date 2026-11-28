@@ -14,10 +14,9 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 # Extract the real producer method from the complete, shipping GPU header.
 # The old gpu_queue_stop_wait.inc has been retired; the selected full queue header is authoritative.
-active_gpu = root / "vendor/encore-active/eden-gpu"
-header = (active_gpu / "include/common/bounded_threadsafe_queue.h").read_text()
-quiet = (active_gpu / "gpu_thread_quiet.cpp").read_text()
-dev = (active_gpu / "gpu_thread_dev.cpp").read_text()
+active_gpu = root / "vendor/encore-active/eden/src"
+header = (active_gpu / "common/bounded_threadsafe_queue.h").read_text()
+worker = (active_gpu / "video_core/gpu_thread.cpp").read_text()
 cmake = (root / "headless/CMakeLists.txt").read_text()
 method_start = "    template <typename... Args>\n    bool EmplaceWaitWithStopToken("
 method_end = "\n\n    bool TryPop("
@@ -36,14 +35,14 @@ assert "std::array<Slot, Capacity> m_data;" in header
 assert header.count("std::construct_at(std::addressof(m_data[pos].value)") == 2
 assert header.count("std::destroy_at(std::addressof(m_data[pos].value));") == 1
 assert "std::destroy_at(std::addressof(m_data[cursor % Capacity].value));" in header
-for worker in (quiet, dev):
-    assert "state.queue.TryEmplace(std::move(command_data), fence, block)" in worker
-    assert "state.queue.EmplaceWaitWithStopToken(stop_source.get_token()," in worker
-assert 'set(EDEN_ACTIVE_GPU "${PORT_ROOT}/vendor/encore-active/eden-gpu")' in cmake
-assert 'configure_file("${EDEN_ACTIVE_GPU}/include/common/bounded_threadsafe_queue.h"' in cmake
-assert 'configure_file("${EDEN_ACTIVE_GPU}/${EDEN_GPU_WORKER_VARIANT}"' in cmake
-assert 'list(APPEND video_sources "${PORT_BUILD_DIR}/gpu_thread.cpp")' in cmake
-assert 'file(READ "${PORT_ROOT}/vendor/encore-active/eden-core/gpu-injections/gpu_queue_stop_wait.inc"' not in cmake
+for selected_worker in (worker,):
+    assert "state.queue.TryEmplace(std::move(command_data), fence, block)" in selected_worker
+    assert "state.queue.EmplaceWaitWithStopToken(stop_source.get_token()," in selected_worker
+assert 'set(EDEN_ACTIVE_EDEN "${PORT_ROOT}/vendor/encore-active/eden")' in cmake
+assert 'set(EDEN_GPU_QUEUE_HEADER "${EDEN_ACTIVE_EDEN}/src/common/bounded_threadsafe_queue.h")' in cmake
+assert 'set(EDEN_GPU_WORKER "${EDEN_ACTIVE_EDEN}/src/video_core/gpu_thread.cpp")' in cmake
+assert 'list(APPEND video_sources "${EDEN_GPU_WORKER}")' in cmake
+assert 'file(READ "${PORT_ROOT}/vendor/encore-active/eden/gpu-injections/gpu_queue_stop_wait.inc"' not in cmake
 
 cpp = r"""
 #include <array>

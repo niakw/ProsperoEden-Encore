@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-native = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+native = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 patch = (root / "headless/backports/eden-ps5-feedback-loop-no-depth-fastpath.patch").read_text()
 original_test = (root / "tools/check-ps5-feedback-loop-view-cache.py").read_text()
 start = native.index("void TextureCache<P>::CheckFeedbackLoop(")

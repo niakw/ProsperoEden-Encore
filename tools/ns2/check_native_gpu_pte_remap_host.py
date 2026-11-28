@@ -12,9 +12,9 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[2]
-owner = root / "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp"
+owner = root / "vendor/encore-active/eden/src/video_core/memory_manager.cpp"
 source = owner.read_text()
-guard = root / "vendor/encore-active/eden-core/src/video_core/native_gpu_page_remap.h"
+guard = root / "vendor/encore-active/eden/src/video_core/native_gpu_page_remap.h"
 assert guard.is_file()
 assert '#include "native_gpu_page_remap.h"' in source
 assert source.count("Eden::GpuMemory::NeedsRasterizerUnmap(") == 2
@@ -277,7 +277,7 @@ with tempfile.TemporaryDirectory(prefix="eden-guest-gpu-remap-") as temp:
                 args=[compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                       "-fsanitize=undefined","-fno-sanitize-recover=all",
                       "-I",str(guard.parent),
-                      "-I",str(root/"vendor/encore-active/ns2-helpers/include")]
+                      "-I",str(root/"vendor/encore-active/eden/src")]
                 if batching:
                     args.append("-DEDEN_NS2_GPU_RANGE_BATCH=1")
                 result=subprocess.run([*args,str(unit),"-o",str(exe)],

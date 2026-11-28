@@ -26,7 +26,7 @@ def category(path: str) -> tuple[int, str] | None:
         return (0, path)
     if "/source/src/video_core/texture_cache/" in path:
         return (1, path)
-    if "/vendor/encore-active/eden-vulkan/" in path:
+    if "/vendor/encore-active/eden/src/video_core/renderer_vulkan/" in path:
         return (2, path)
     if "/native-local/headless/" in path and path.endswith(".cpp"):
         return (3, path)

@@ -11,8 +11,8 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
-active = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+header = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+active = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 start = "    [[nodiscard]] bool IsBuilt() const noexcept {"
 end = "\n\n    template <typename Spec>"
@@ -72,9 +72,9 @@ with tempfile.TemporaryDirectory(prefix="encore-f07-pipeline-publication-") as f
 
 # Extract the exact graphics and compute wait scheduling snippets. The worker
 # command queue is FIFO across chunks, so only one wait per pipeline is needed.
-compute_source = (root / "vendor/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()
-compute_header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_compute_pipeline.h").read_text()
-scheduler_source = (root / "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp").read_text()
+compute_source = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline_cost.cpp").read_text()
+compute_header = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_compute_pipeline.h").read_text()
+scheduler_source = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_scheduler.cpp").read_text()
 assert "bool first_use_wait_recorded{};" in header
 assert "bool first_use_wait_recorded{};" in compute_header
 assert "work_queue.push(std::move(chunk));" in scheduler_source

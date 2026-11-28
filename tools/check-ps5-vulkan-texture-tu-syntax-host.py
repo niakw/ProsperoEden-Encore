@@ -18,7 +18,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-OWNER = ROOT / "vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp"
+OWNER = ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp"
 
 def require_file(path: Path) -> Path:
     assert path.is_file(), f"Missing pinned Vulkan owner/dependency: {path}"
@@ -52,10 +52,10 @@ def run() -> None:
         ROOT / "headless",
         # Select the reviewed, byte-diff-pinned hygiene header instead of
         # the immutable upstream [[nodiscard]] void declaration (Clang warning).
-        ROOT / "vendor/encore-active/eden-header-hygiene/include",
-        ROOT / "vendor/encore-active/eden-vulkan/include",
-        ROOT / "vendor/encore-active/ns2-astc/include",
-        ROOT / "vendor/encore-active/ns2-helpers/include",
+        ROOT / "vendor/encore-active/eden/src",
+        ROOT / "vendor/encore-active/eden/src",
+        ROOT / "vendor/encore-active/eden/src",
+        ROOT / "vendor/encore-active/eden/src",
         ROOT / "vendor/sources/eden/src",
         pinned / "vulkanheaders/v1.4.345/include",
         pinned / "vulkanmemoryallocator/v3.3.0/include",

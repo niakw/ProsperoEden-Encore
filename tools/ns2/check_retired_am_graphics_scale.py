@@ -13,7 +13,7 @@ script = (ROOT / "tools/build-headless-native.sh").read_text()
 retired_research = ROOT / ".github/workflows/ns2-native-ps5-research.yml"
 assert not retired_research.exists(), "Alternate research PS5 package workflow revived"
 host = (ROOT / ".github/workflows/ns2-research-host.yml").read_text()
-retired = ROOT / "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service"
+retired = ROOT / "vendor/encore-active/eden/src/core/hle/service/am/service"
 for name in ("application_proxy.cpp", "application_proxy.h",
              "graphics_scaling_parameters_functions.cpp",
              "graphics_scaling_parameters_functions.h"):

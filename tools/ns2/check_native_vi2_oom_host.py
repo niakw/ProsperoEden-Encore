@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[2]
-source=(root/'vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp').read_text()
+source=(root/'vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp').read_text()
 lease_start='    std::unique_ptr<u32> lease_token;'
 lease_end='    } catch (const std::bad_alloc&) {\n        // shared_ptr invoked our NVMap deleter if its allocation failed.\n        // Return an absent present image rather than unwinding through IPC.\n        return {};\n    }'
 assert source.count(lease_start)==1 and source.count(lease_end)==1

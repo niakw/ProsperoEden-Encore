@@ -15,7 +15,7 @@ from pathlib import Path
 
 from test_dlss_nr_min_vendor_source_guard import Drift, compact, git, method, require
 
-ROOT = "encore-active/eden-vulkan/"
+ROOT = "encore-active/eden/src/video_core/renderer_vulkan/"
 OWNERS = {
     "attention": "nr_rdna2_vit_attention.cpp",
     "normalize": "nr_rdna2_vit_qkv_norm.cpp",

@@ -47,7 +47,7 @@ for source, token in (
 # never CMake-generated replacements. Both ISA modes must retain the exact
 # pre-mask split, rather than depending on a diagnostic build flag.
 native_units = [
-    (root/"vendor/encore-active/eden-core/src/core"/name).read_text()
+    (root/"vendor/encore-active/eden/src/core"/name).read_text()
     for name in ("memory_native_standard.cpp", "memory_native_a32.cpp")
 ]
 for native in native_units:

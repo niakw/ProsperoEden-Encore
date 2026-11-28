@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-BASE = ROOT / "vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices"
+BASE = ROOT / "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices"
 source = (BASE / "nvhost_gpu.cpp").read_text()
 # SwitchBrew retry ioctls are wire-compatible with the existing submit paths.
 # Ensure the active dispatch reuses the same bounded helpers, not a fake success.
@@ -27,8 +27,8 @@ assert "case 0x1:" not in group0
 assert 'UNIMPLEMENTED_MSG("Unimplemented ioctl={:08X}", command.raw);' in ioctl1
 assert "return NvResult::NotImplemented;" in ioctl1.split("UNIMPLEMENTED_MSG", 1)[1]
 header = (BASE / "nvhost_gpu.h").read_text()
-native_puller = (ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp").read_text()
-native_mme_state = (ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/native_ampere_macro_state.h").read_text()
+native_puller = (ROOT / "vendor/encore-active/eden/src/video_core/engines/puller.cpp").read_text()
+native_mme_state = (ROOT / "vendor/encore-active/eden/src/video_core/native_ampere_macro_state.h").read_text()
 # BindObject must not change the active subchannel before native class
 # authentication, or a rejected Ampere bind can hijack subsequent methods.
 bind_source = native_puller.split("void Puller::ProcessBindMethod(", 1)[1].split(
@@ -145,7 +145,7 @@ kickoff = source.split("NvResult nvhost_gpu::SubmitGPFIFOBase1(", 1)[1].split(
     "NvResult nvhost_gpu::SubmitGPFIFOBase2(", 1)[0]
 kickoff_preflight = "NativeGpfifoGuestHeadersReadable("
 kickoff_read = "this->GetSessionMemory(fd).ReadBlock("
-guard = (ROOT / "vendor/encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_submission.h").read_text()
+guard = (ROOT / "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/native_gpu_submission.h").read_text()
 checks = [
     (kickoff_preflight in kickoff and kickoff_read in kickoff and
      kickoff.index(kickoff_preflight) < kickoff.index(kickoff_read) and

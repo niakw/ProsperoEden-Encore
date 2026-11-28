@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNER = ROOT / "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp"
+OWNER = ROOT / "vendor/encore-active/eden/src/video_core/memory_manager.cpp"
 source = OWNER.read_text()
 start = "size_t MemoryManager::MaxContinuousRange(GPUVAddr gpu_addr, size_t size) const {"
 end = "\nsize_t MemoryManager::GetMemoryLayoutSize("

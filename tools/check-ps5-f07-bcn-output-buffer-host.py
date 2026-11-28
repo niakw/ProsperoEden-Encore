@@ -4,7 +4,7 @@ from pathlib import Path
 import shutil, subprocess, tempfile
 
 root=Path(__file__).resolve().parents[1]
-active=(root/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+active=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp").read_text()
 pinned=(root/"vendor/sources/eden/src/video_core/renderer_vulkan/vk_texture_cache.cpp").read_text()
 gen=(root/"tools/prepare-vulkan-port.py").read_text()
 a="void Image::AllocateComputeUnswizzleBuffer("

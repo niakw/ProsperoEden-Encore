@@ -17,10 +17,10 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import test_real_kprocess_init_guest_rollback as kernel_host
 
-PROCESS_SOURCE=(ROOT/"vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp").read_text()
+PROCESS_SOURCE=(ROOT/"vendor/encore-active/eden/src/core/hle/service/os/process.cpp").read_text()
 CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
 assert 'set(EDEN_NS2_KPROCESS_SOURCE' in CMAKE
-assert 'ns2-runtime/process/core/hle/kernel/k_process.cpp' in CMAKE
+assert 'vendor/encore-active/eden/src/core/hle/kernel/k_process.cpp' in CMAKE
 assert 'list(REMOVE_ITEM eden_ns2_process_sources "hle/kernel/k_process.cpp")' in CMAKE
 assert 'list(APPEND eden_ns2_process_sources "${EDEN_NS2_KPROCESS_SOURCE}")' in CMAKE
 
@@ -38,28 +38,15 @@ for snippet in (real_os_initialize,real_os_finalize,real_os_run):
     assert "m_process" in snippet and "Finalize()" in snippet
 
 base=kernel_host.PREFIX
-# Extend only this joined NS2 fixture with the interfaces consumed by the
-# selected Switch-2 KProcess memory-budget code. The public fixture carries
-# the extended ACID body used by the maintained generation parser.
-base=base.replace(
-    "    bool arm64 = true;\n    ProgramAddressSpaceType address_type =",
-    "    bool arm64 = true;\n    bool switch2 = true;\n"
-    "    bool IsSwitch2() const { return switch2; }\n"
-    "    ProgramAddressSpaceType address_type =",
-    1)
-base=base.replace(
-    "    bool CanContain(u64,std::size_t,KMemoryState)const{return !fail_containment;}\n",
-    "    u64 GetHeapRegionSize() const { return 0x300000000ULL; }\n"
-    "    u64 GetAliasRegionSize() const { return 0x100000000ULL; }\n"
-    "    bool CanContain(u64,std::size_t,KMemoryState)const{return !fail_containment;}\n",
-    1)
-base=base.replace(
-    "    bool m_is_application=false;\n",
-    "    bool m_is_application=false;\n    u64 m_max_process_memory=0;\n",
-    1)
-assert "bool IsSwitch2() const" in base
-assert "GetHeapRegionSize() const" in base and "GetAliasRegionSize() const" in base
-assert "m_max_process_memory=0" in base
+# The shared KProcess fixture now owns the current Switch-2 memory-budget
+# interfaces. This joined scenario only flips the synthetic metadata identity
+# to NS2; never re-declare page-table or process members already in PREFIX.
+assert base.count("bool switch2 = false;") == 1
+base=base.replace("bool switch2 = false;", "bool switch2 = true;", 1)
+assert base.count("bool IsSwitch2() const { return switch2; }") == 1
+assert base.count("GetHeapRegionSize() const") == 1
+assert base.count("GetAliasRegionSize() const") == 1
+assert base.count("m_max_process_memory{};") == 1
 
 def replace_once(old,new):
     global base
@@ -325,7 +312,7 @@ with tempfile.TemporaryDirectory(prefix="eden-h01-joined-kernel-os-") as tmp:
     # but execute the exact CMake-selected NS2 KProcess, not the older eden-core
     # owner. Its OWNERS tuples have two fields, not three, and relying on that
     # list silently binds the wrong translation unit after the NS2 override.
-    selected = ROOT / "vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp"
+    selected = ROOT / "vendor/encore-active/eden/src/core/hle/kernel/k_process.cpp"
     assert selected.is_file() and 'set(EDEN_NS2_KPROCESS_SOURCE' in CMAKE
     for name,owner_path in [("shipping_ns2", selected)]:
         source=owner_path.read_text()

@@ -3,7 +3,7 @@
 # maintained sources. Keep only the memory_source callback transformations
 # above pending the separate memory emitter migration.
 set(EDEN_MAINTAINED_SCALAR_BACKEND
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend/x64")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")
 foreach(unit vector data_processing)
     if(NOT EXISTS "${EDEN_MAINTAINED_SCALAR_BACKEND}/emit_x64_${unit}.cpp")
         message(FATAL_ERROR "Missing maintained scalar emitter ${unit}")

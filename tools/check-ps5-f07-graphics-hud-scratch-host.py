@@ -10,8 +10,8 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-graphics = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
-texture = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+graphics = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+texture = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 start = graphics.index("struct GraphicsDescriptorScratch {")
 # The Task/Mesh Vulkan stage helper follows the scratch allocator. Keep the

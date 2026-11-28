@@ -258,6 +258,56 @@ apply_one "$root/headless/backports/eden-4473-4477.patch" "$eden/.encore-backpor
 apply_one "$root/headless/backports/eden-nvnflinger-dequeue-wakeup.patch" "$eden/.encore-backport-nvnflinger-wakeup.sha256" validate_nvnflinger_wakeup
 apply_one "$root/headless/backports/eden-4436-spinlock-mutex.patch" "$eden/.encore-backport-4436.sha256" validate_spinlock_mutex
 apply_one "$root/headless/backports/eden-fw23-services.patch" "$eden/.encore-backport-fw23.sha256" validate_fw23
+# The native NGC StreamPlay guard applies to the R23 HOS23 successor, not
+# to the frozen Eden/FW23 patch image. Reconstruct ONLY this reviewed NGC
+# successor from its exact, reversible fixture before replaying STPL.
+# The same staged bytes must match the maintained shipping source in --replay.
+prepare_r23_ngc_stpl_preimage() {
+python3 - "$eden" "$root" <<'PYR23NGC'
+from pathlib import Path
+import hashlib
+import json
+import sys
+
+eden, root = map(Path, sys.argv[1:])
+record = json.loads((root / "tools/fixtures/r23-fw23-backports-reverse.json").read_text())
+ngc = next(item for item in record["reviewed_fw23_sources"]
+           if item["path"] == "src/core/hle/service/ngc/ngc.cpp")
+path = eden / ngc["path"]
+source = path.read_bytes()
+sha = lambda value: hashlib.sha256(value).hexdigest()
+owner = (
+    '#if !defined(EDEN_NATIVE_SHARED_NS2_STPL_OWNER)\n'
+    '        server_manager->RegisterNamedService("stpl:u", '
+    'std::make_shared<IUserService>(system), 4);\n'
+    '#endif\n'
+)
+unguarded = (
+    '        server_manager->RegisterNamedService("stpl:u", '
+    'std::make_shared<IUserService>(system), 4);\n'
+)
+if len(source) == ngc["before_bytes"] and sha(source) == ngc["before_sha256"]:
+    content = source.decode("utf-8")
+    for hunk in ngc["hunks"]:
+        if content.count(hunk["before"]) != 1:
+            raise RuntimeError("R23 NGC preimage hunk drift")
+        content = content.replace(hunk["before"], hunk["after"], 1)
+    prepared = content.encode("utf-8")
+    if len(prepared) != ngc["after_bytes"] or sha(prepared) != ngc["after_sha256"]:
+        raise RuntimeError("R23 NGC prepared bytes differ from reviewed successor")
+    path.write_bytes(prepared)
+elif len(source) == ngc["after_bytes"] and sha(source) == ngc["after_sha256"]:
+    pass  # Exact R23 successor already staged.
+elif source.count(owner.encode()) == 1:
+    historical = source.replace(owner.encode(), unguarded.encode(), 1)
+    if len(historical) != ngc["after_bytes"] or sha(historical) != ngc["after_sha256"]:
+        raise RuntimeError("R23 NGC owner guard does not reverse exactly")
+else:
+    raise RuntimeError("Unknown R23 NGC replay source; refusing patch")
+print("R23_NGC_STPL_EXACT_PREIMAGE_PASS")
+PYR23NGC
+}
+prepare_r23_ngc_stpl_preimage
 # HOS23 NGC's legacy StreamPlay registration conflicts with shared audio.
 # Guard only the native shared owner, retaining NS1-only NGC behavior.
 validate_native_stpl_owner() {

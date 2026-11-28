@@ -11,7 +11,7 @@ import subprocess
 ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
 EXPECTED="dcfe3d2384bd800c6139ede672518ea2c66922a6"
-SOURCE=V/"encore-active/eden-core/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp"
+SOURCE=V/"encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp"
 TEST=V/"tests/fc27_maxwell_prmt_operand_forms_source.py"
 
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()

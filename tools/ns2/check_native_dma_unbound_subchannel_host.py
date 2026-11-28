@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNERS = ROOT / 'vendor/encore-active/eden-core/src/video_core'
+OWNERS = ROOT / 'vendor/encore-active/eden/src/video_core'
 START = 'void DmaPusher::CallMethod(u32 argument) {'
 END = '\nvoid DmaPusher::BindRasterizer('
 

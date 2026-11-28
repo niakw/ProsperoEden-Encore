@@ -6,8 +6,8 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-source=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-variant=(root/"vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp").read_text()
+source=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
+variant=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp").read_text()
 gen=(root/"tools/prepare-vulkan-port.py").read_text()
 needle="bool AccelerateDMA::DmaBufferImageCopy("
 a=source.index(needle)
@@ -36,7 +36,7 @@ assert prefix.index(fragment_guard) > prefix.index(lock_anchor)
 assert prefix.index(fragment_guard) < prefix.index("texture_cache.DmaImageId(")
 # Channel switch proof: the accelerator stores a reference to the rasterizer's
 # active GMMU pointer, not the GMMU captured during object construction.
-owner=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h").read_text()
+owner=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer.h").read_text()
 assert owner.count("Tegra::MemoryManager* const& gpu_memory;")==1
 assert owner.count("Scheduler& scheduler, Tegra::MemoryManager* const& gpu_memory);")==1
 assert "accelerate_dma(buffer_cache, texture_cache, scheduler, gpu_memory)" in source

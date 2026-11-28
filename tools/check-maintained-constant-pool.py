@@ -4,7 +4,7 @@ from pathlib import Path
 import hashlib
 root = Path(__file__).resolve().parents[1]
 pinned = (root/"vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/constant_pool.cpp").read_text()
-maintained = (root/"vendor/encore-active/eden-core/src/dynarmic/backend/x64/constant_pool.cpp").read_text()
+maintained = (root/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/constant_pool.cpp").read_text()
 selector = (root/"headless/jit-alias.cmake").read_text()
 # Unified R23 C00/R2 now uses an indexed pool in addition to the
 # independently reviewed writable alias. Replay the exact paired CPP ABI,
@@ -37,8 +37,8 @@ def git_blob(path):
     raw = path.read_bytes()
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
 
-header = root/"vendor/encore-active/eden-core/include/dynarmic/backend/x64/constant_pool.h"
-source = root/"vendor/encore-active/eden-core/src/dynarmic/backend/x64/constant_pool.cpp"
+header = root/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/constant_pool.h"
+source = root/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/constant_pool.cpp"
 expected = pinned.replace(before, after)
 header_blob = git_blob(header)
 if header_blob == "52842358e1e97821fb306c1dd384673caef58861":
@@ -62,5 +62,5 @@ assert 'file(READ "${PROJECT_SOURCE_DIR}/src/dynarmic/src/dynarmic/backend/x64/c
 # actual COPYONLY selection rather than requiring the retired generator.
 assert 'configure_file("${EDEN_MAINTAINED_XBYAK_HEADER}"' in selector
 assert 'write_derived("${PORT_BUILD_DIR}/include/xbyak/xbyak.h"' not in selector
-assert (root / "vendor/encore-active/eden-build/third_party/xbyak/xbyak.h").is_file()
+assert (root / "vendor/encore-active/eden-cpm/xbyak/v7.40.1/xbyak/xbyak.h").is_file()
 print("VENDOR_MAINTAINED_CONSTANT_POOL_PARITY_PASS: exact edit and compiled target")

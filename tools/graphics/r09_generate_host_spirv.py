@@ -18,7 +18,7 @@ def main() -> None:
     ap.add_argument("--vendor", type=Path, required=True)
     ap.add_argument("--output", type=Path, required=True)
     args = ap.parse_args()
-    root = args.vendor / "encore-active/eden-vulkan"
+    root = args.vendor / "encore-active/eden/src/video_core/renderer_vulkan"
     shaders = sorted((root / "r09_rdna2_nr").glob("*_rdna2.comp"))
     owners = sorted(root.glob("nr_rdna2_*.cpp"))
     if len(shaders) < 35 or len(owners) < 73:

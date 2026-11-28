@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-file = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+file = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 begin = file.index("void TextureCache<P>::FillImageViews(std::span<ImageViewInOut> views, bool compute, bool blacklist) {")
 end = file.index("\n}\n", begin) + 2
 actual = file[begin:end]

@@ -5,10 +5,10 @@ import argparse, shutil, subprocess, tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 VENDOR = ROOT / "vendor"
-CPP = VENDOR / "encore-active/eden-vulkan/blit_image.cpp"
-HDR = VENDOR / "encore-active/eden-vulkan/include/video_core/renderer_vulkan/blit_image.h"
-TEX = VENDOR / "encore-active/eden-vulkan/vk_texture_cache_cost.cpp"
-CACHE = VENDOR / "encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h"
+CPP = VENDOR / "encore-active/eden/src/video_core/renderer_vulkan/blit_image.cpp"
+HDR = VENDOR / "encore-active/eden/src/video_core/renderer_vulkan/blit_image.h"
+TEX = VENDOR / "encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp"
+CACHE = VENDOR / "encore-active/eden/src/video_core/texture_cache/texture_cache.h"
 CMAKE = ROOT / "headless/vulkan.cmake"
 COMMON = ROOT / "headless/x8d24_conversion.glsl"
 SHADERS = (

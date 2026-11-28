@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT/'vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp'
+OWNER=ROOT/'vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp'
 source=OWNER.read_text()
 begin='    void VsyncEvent(HLERequestContext& ctx) {'
 end='    void ConfigureNativeDisplayEvent(HLERequestContext& ctx) {'

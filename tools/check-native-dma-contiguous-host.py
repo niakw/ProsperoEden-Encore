@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
-source=(root/"vendor/encore-active/eden-core/src/video_core/engines/maxwell_dma.cpp").read_text()
+source=(root/"vendor/encore-active/eden/src/video_core/engines/maxwell_dma.cpp").read_text()
 start="constexpr bool CanCoalescePitchDma("
 assert source.count(start)==1
 body=start+source.split(start,1)[1].split("\n}\n\n// Signed 2D pitch geometry",1)[0]+"\n}"

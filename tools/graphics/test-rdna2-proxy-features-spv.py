@@ -53,5 +53,5 @@ if __name__=="__main__":
     p.add_argument("--vendor",required=True,type=Path)
     p.add_argument("--header",type=Path)
     opts=p.parse_args()
-    check(opts.vendor/"encore-active/eden-vulkan/r09_rdna2_nr/"
+    check(opts.vendor/"encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/"
           "proxy_features_rdna2.comp",opts.header)

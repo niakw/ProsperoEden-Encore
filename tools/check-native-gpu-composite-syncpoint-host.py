@@ -16,8 +16,8 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 NV = (ROOT/"vendor/sources/eden/src/core/hle/service/nvdrv/devices/nvdisp_disp0.cpp").read_text()
 GPU = (ROOT/"vendor/sources/eden/src/video_core/gpu.cpp").read_text()
-SYNC = (ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp").read_text()
-SYNC_HDR = (ROOT/"vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h").read_text()
+SYNC = (ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
+SYNC_HDR = (ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.h").read_text()
 FAST = (ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 FULL = (ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 NAME = "python3 -B tools/check-native-gpu-composite-syncpoint-host.py"

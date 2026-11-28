@@ -9,8 +9,8 @@ import sys
 import tempfile
 
 ROOT=Path(__file__).resolve().parent.parent
-HEADERS=ROOT/"vendor/encore-active/ns2-runtime/hle"
-NVDRV=ROOT/"vendor/encore-active/ns2-runtime/nvdrv"
+HEADERS=ROOT/"vendor/encore-active/eden/src"
+NVDRV=ROOT/"vendor/encore-active/eden/src"
 EDEN=ROOT/"vendor/sources/eden/src"
 SOURCE=ROOT/"tools/ns2/test_graphics_hle.cpp"
 EXPECTED=[
@@ -31,7 +31,7 @@ def main()->int:
         return 2
     # The real research-only supervisor, not just the standalone protocol,
     # handles creation/bind/destruction; no synthetic GPU work is advertised.
-    supervisor=ROOT/"vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp"
+    supervisor=ROOT/"vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp"
     text=supervisor.read_text()
     for command, method in ((111,"CreateNativeMemory"),(112,"DestroyNativeMemory"),(114,"BindNativeMemory")):
         assert '{'+str(command)+', &IGraphicsSupervisor::'+method in text
@@ -63,7 +63,7 @@ def main()->int:
     assert 'rb.PushCopyObjects(ctx,m_event->GetReadableEvent());' in vi_notify
     assert 'AddMoveObject' not in vi_notify
     assert 'readable->Open(kernel)' not in vi_notify
-    gpu_session=(ROOT/"vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp").read_text()
+    gpu_session=(ROOT/"vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp").read_text()
     gpu_notify=gpu_session.split('void IGpuSession::GetNotificationEvent(HLERequestContext& ctx) {',1)[1].split('IGpuSession::ResolveOpenedAddressSpace',1)[0]
     assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in gpu_notify
     assert 'ctx.AddMoveObject(readable);' in gpu_notify
@@ -106,7 +106,7 @@ def main()->int:
         assert evidence in text, "Missing fail-closed VI2 payload owner: " + evidence
     # ioctl offset and buffer_offset are s64; the mapped address is u64.
     # Require rejection of negative user-provided values before conversion.
-    nvmap_source=(ROOT/"vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp").read_text()
+    nvmap_source=(ROOT/"vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp").read_text()
     assert 'params.offset < 0 || params.buffer_offset < 0' in nvmap_source
     assert 'const u64 gpu_base = static_cast<u64>(params.offset);' in nvmap_source
     assert 'const u64 buffer_offset = static_cast<u64>(params.buffer_offset);' in nvmap_source
@@ -249,7 +249,7 @@ def main()->int:
     )[1].split('private:', 1)[0]
     assert 'handlers_tipc.contains(ctx.GetCommand())' in vi2_fallback
     assert 'Kernel::ResultNotImplemented.raw' in vi2_fallback
-    gpu_worker = (ROOT / 'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp').read_text()
+    gpu_worker = (ROOT / 'vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp').read_text()
     worker_fallback = gpu_worker.split(
         'Result IGpuWorker::HandleSyncRequest(Kernel::KServerSession& session,', 1
     )[1].split('namespace GW = GpuWorkerProtocol;', 1)[0]
@@ -262,7 +262,7 @@ def main()->int:
     assert 'rb.Push(unmapped);' not in worker_213
     for fw19 in (201, 202, 203, 204, 205, 207):
         assert ('{'+str(fw19)+', &IGpuWorker::') not in gpu_worker
-    gpu_session = (ROOT / 'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp').read_text()
+    gpu_session = (ROOT / 'vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp').read_text()
     gpu_fallback = gpu_session.split(
         'Result IGpuSession::HandleSyncRequest(Kernel::KServerSession& session,', 1
     )[1].split('static Result Translate(', 1)[0]
@@ -412,7 +412,7 @@ def main()->int:
     assert 'packet[0] == 16 + command && packet[1] == 0' in feature_admission
     assert 'ResultInvalidCombination.raw' in feature_admission
     # S2 control-GPU pause and scheduling options must fail closed exactly.
-    ctrl_gpu = (ROOT / 'vendor/encore-active/ns2-runtime/nvdrv/core/hle/'
+    ctrl_gpu = (ROOT / 'vendor/encore-active/eden/src/core/hle/'
                 'service/nvdrv/devices/nvhost_ctrl_gpu.cpp').read_text()
     for num, raw in ((0x10, '0xC0084710U'), (0x1e, '0xC010471EU')):
         case = ctrl_gpu.split(f'case 0x{num:x}: // Switch 2 ', 1)[1].split('case ', 1)[0]
@@ -429,7 +429,7 @@ def main()->int:
     assert 'CalculateFeatureImageRequirements(preference, packet[18])' in feature_sizer
     assert 'packet[1] == 17' in feature_sizer
     assert 'CreateNativeImage' not in feature_sizer
-    layout_source = (ROOT / 'vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h').read_text()
+    layout_source = (ROOT / 'vendor/encore-active/eden/src/core/hle/service/am/service/native_image_layout.h').read_text()
     for proof in ('case 1:', 'case 4:', 'case 5:', 'case 0x38:',
                   'const u64 count = std::max<u64>(requested_count, 1);',
                   'const u64 alignment = std::max<u64>(4096, 64 * block_rows);'):
@@ -477,7 +477,7 @@ def main()->int:
 
     # Native GameChat pools and decoder pools intentionally use different
     # 426/428 reply ABIs. Keep both contracts explicit.
-    layout_h = (ROOT / 'vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h').read_text()
+    layout_h = (ROOT / 'vendor/encore-active/eden/src/core/hle/service/am/service/native_image_layout.h').read_text()
     for snippet in ('native_gpu_layout{}', 'gpu_layout_code{}',
                     'block_height_log2{}', 'pitch_gobs{}'):
         assert snippet in layout_h, 'Missing GameChat native-image layout ABI: ' + snippet
@@ -573,7 +573,7 @@ def main()->int:
         'for (const auto& [image_id, image] : m_native_images.Records())',
     ):
         assert snippet in text, "Missing native image NVMap ownership: " + snippet
-    worker = (ROOT / 'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp').read_text()
+    worker = (ROOT / 'vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp').read_text()
     dense = worker.split('Result IGpuWorker::BackGpuOnlyRegion(',1)[1].split(
         'bool IGpuWorker::RetireGpuOnlyRegion(',1)[0]
     assert dense.index('pending_region.try_emplace(') < dense.index(

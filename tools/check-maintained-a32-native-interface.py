@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
 source=(root/"vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/a32_interface.cpp").read_text()
-maintained=root/"vendor/encore-active/eden-core/src/dynarmic/backend/x64/a32_interface_native.cpp"
+maintained=root/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a32_interface_native.cpp"
 cm=(root/"headless/CMakeLists.txt").read_text()
 prefix=(
   "#include <cstdio>\n#include <new>\n"

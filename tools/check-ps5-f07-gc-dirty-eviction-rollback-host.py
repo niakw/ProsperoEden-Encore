@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-source=(ROOT/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+source=(ROOT/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 generator=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 fast=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 pre=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
@@ -156,7 +156,7 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-dirty-gc-") as folder:
 print("F07_GC_DIRTY_EVICTION_ROLLBACK_PASS native_short=1 null=1 oom=1 no_delete=1 valid_finish=1 prefetched=1 desktop_original=1 O0=1 O2=1")
 
 # Exercise the actual CMake-selected PS5 cache, not only its shadow owner.
-selected=(ROOT/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+selected=(ROOT/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 start=selected.index("void TextureCache<P>::RunGarbageCollector() {")
 end=selected.index("\ntemplate <class P>",start)
 active=selected[start:end]

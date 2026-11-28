@@ -10,8 +10,8 @@ import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
 VENDOR=ROOT/"vendor"
-source=(VENDOR/"encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp").read_text()
-as_source=(VENDOR/"encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp").read_text()
+source=(VENDOR/"encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp").read_text()
+as_source=(VENDOR/"encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp").read_text()
 def function(src, begin):
     assert src.count(begin)==1,begin
     return begin+src.split(begin,1)[1].split("\n}",1)[0]+"\n}"
@@ -227,7 +227,7 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-as-owner-") as tmp:
             exe=Path(tmp)/(Path(cc).name+opt)
             argv=[cc,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                   "-fsanitize=undefined","-fno-sanitize-recover=all",
-                  "-I"+str(VENDOR/"encore-active/ns2-runtime/hle"),
+                  "-I"+str(VENDOR/"encore-active/eden/src"),
                   str(cpp),"-o",str(exe)]
             built=subprocess.run(argv,capture_output=True,text=True,timeout=65,env=os.environ.copy())
             assert built.returncode==0,built.stderr[-6500:]

@@ -19,7 +19,7 @@ assert 'string(REPLACE "    return TranslateHaltReason(m_jit->Run());"' not in c
 assert "EDEN_G11_PROFILE" in cmake
 
 def generated(bits: int) -> str:
-    owned = root/"vendor/encore-active/eden-core/src/core/arm/dynarmic/g11"
+    owned = root/"vendor/encore-active/eden/src/core/arm/dynarmic/g11"
     host_unit = (owned/f"arm_dynarmic_{bits}_host_dev.cpp").read_text()
     native_unit = (owned/f"arm_dynarmic_{bits}_native_dev.cpp").read_text()
     signature = f"HaltReason ArmDynarmic{bits}::RunThread(Kernel::KThread* thread) {{"

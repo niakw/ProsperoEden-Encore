@@ -14,8 +14,8 @@ import sys
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-DMA=ROOT/'vendor/encore-active/eden-core/src/video_core'
-NATIVE=ROOT/'vendor/encore-active/ns2-runtime/nvdrv_gpu'
+DMA=ROOT/'vendor/encore-active/eden/src/video_core'
+NATIVE=ROOT/'vendor/encore-active/eden/src'
 TEST=ROOT/'tools/ns2/test_native_gpu_fetch_admission.cpp'
 HELPER=NATIVE/'core/hle/service/nvdrv/devices/native_gpu_fetch_admission.h'
 assert HELPER.is_file() and TEST.is_file()
@@ -65,9 +65,8 @@ for name in ('dma_pusher.cpp','dma_pusher_dev.cpp'):
 # A fatal native fetch must stop the PS5 queue worker BEFORE its owning
 # fence can be marked complete. The actual threaded caller catches at the
 # pthread entry, records a permanent failure and wakes blocking submitters.
-worker=(ROOT/'vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp').read_text()
-dev_worker=(ROOT/'vendor/encore-active/eden-gpu/gpu_thread_dev.cpp').read_text()
-for active_worker in (worker,dev_worker):
+worker=(ROOT/'vendor/encore-active/eden/src/video_core/gpu_thread.cpp').read_text()
+for active_worker in (worker,):
     assert 'scheduler.Push(system.GPU(), submit_list->channel, std::move(submit_list->entries));' in active_worker
     assert 'Eden::RecordGpuFailure(std::current_exception());' in active_worker
     assert 'start->owner->stop_source.request_stop();' in active_worker
@@ -75,8 +74,8 @@ for active_worker in (worker,dev_worker):
     assert active_worker.index('scheduler.Push(system.GPU()') < active_worker.index('state.signaled_fence.store(next.fence,')
     assert active_worker.index('state.signaled_fence.store(next.fence,') < active_worker.index('} catch (const std::exception& error)')
     assert 'std::rethrow_exception(failure);' in active_worker
-assert 'gpu_thread_quiet.cpp' in cmake
-assert 'gpu_thread_dev.cpp' not in cmake  # no alternate GPU worker in unified PS5 build
+assert 'set(EDEN_GPU_WORKER "${EDEN_ACTIVE_EDEN}/src/video_core/gpu_thread.cpp")' in cmake
+assert 'gpu_thread_quiet.cpp' not in cmake and 'gpu_thread_dev.cpp' not in cmake
 
 compiler=shutil.which('clang++') or shutil.which('g++')
 assert compiler
@@ -124,16 +123,16 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # macro regime; normal host source-only checks do not exercise it.
     deps=ROOT/'vendor/sources/eden-cpm'
     # Select the shipping PS5 virtual rasterizer interface before desktop Eden.
-    abi=ROOT/'vendor/encore-active/ns2-runtime/vulkan_abi'
+    abi=ROOT/'vendor/encore-active/eden/src'
     assert (abi/'video_core/rasterizer_interface.h').is_file()
     # The selected NS2 shader enum and environment metadata must precede
     # the pinned NS1 Shader::Stage header for authenticated native 0xC797 TUs.
     # Keep this include order identical to the shared release compiler graph.
-    shader=ROOT/'vendor/encore-active/eden-shader/src'
+    shader=ROOT/'vendor/encore-active/eden/src'
     # Match the shipping PS5 graph: this header owns BOTH the authenticated
     # NS2 native tiling flag and Lichii #46 Host1x syncpoint shim. The
     # experimental deferred guest-write bridge must never mask it.
-    native_tiling=ROOT/'vendor/encore-active/eden-core/overrides/native-tiling'
+    native_tiling=ROOT/'vendor/encore-active/eden/src'
     selected_mm=native_tiling/'video_core/memory_manager.h'
     assert selected_mm.is_file()
     mmh=selected_mm.read_text()
@@ -150,7 +149,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # graph COPYONLY-stages this maintained header ahead of pinned Eden; the
     # real MemoryManager TU reaches it through Host1x even though this gate
     # does not compile/link the decoder implementation itself.
-    nvdec_override=ROOT/'vendor/encore-active/eden-core/overrides'
+    nvdec_override=ROOT/'vendor/encore-active/eden/src'
     nvdec_ffmpeg=nvdec_override/'video_core/host1x/ffmpeg.h'
     assert nvdec_ffmpeg.is_file()
     assert 'set(EDEN_NVDEC_HEADER_DIR "${PORT_BUILD_DIR}/nvdec-eagain")' in cmake
@@ -165,7 +164,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # The actual native core target stages this maintained ioctl ABI header
     # ahead of pinned Eden. Without that copy, nvhost_gpu.cpp is compiled
     # against the obsolete template signature (no InputCapacity argument).
-    ioctl_owner=ROOT/'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
+    ioctl_owner=ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
     assert ioctl_owner.is_file()
     assert 'configure_file("${EDEN_MAINTAINED_IOCTL}"' in cmake
     assert 'target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")' in cmake
@@ -178,25 +177,21 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # SyncpointManager ABI BEFORE pinned Eden. Include the same root in this
     # real-TU compilation witness, otherwise GCC sees the obsolete upstream
     # header and reports CaptureNativeSyncpointLease as undeclared.
-    h05=ROOT/'vendor/encore-active/eden-sync/overrides/h05-syncpoint'
+    h05=ROOT/'vendor/encore-active/eden/src'
     h05_header=h05/'core/hle/service/nvdrv/core/syncpoint_manager.h'
-    h05_cmake=(ROOT/'vendor/encore-active/eden-threading/native-hle-overrides.cmake').read_text()
+    h05_cmake=(ROOT/'vendor/encore-active/eden/native-hle-overrides.cmake').read_text()
     assert h05_header.is_file()
     assert 'CaptureNativeSyncpointLease(u32 id)' in h05_header.read_text()
     assert 'target_include_directories(core BEFORE PUBLIC "${_encore_h05_header_root}")' in h05_cmake
-    assert 'include("${PORT_ROOT}/vendor/encore-active/eden-threading/native-hle-overrides.cmake")' in cmake
+    assert 'include("${PORT_ROOT}/vendor/encore-active/eden/native-hle-overrides.cmake")' in cmake
     # Renderer mapping leases and guest-memory policy are supplied by
     # the shared native dirty-header root in the shipping compiler graph.
-    native_dirty=ROOT/'vendor/encore-active/eden-core/overrides'
+    native_dirty=ROOT/'vendor/encore-active/eden/src'
     assert (native_dirty/'core/native_renderer_lifetime.h').is_file()
     assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake
     assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake
     includes=[h05,native_tiling,nvdec_stage,ioctl_stage,shader,abi,native_dirty,ROOT/'headless',
-              *[ROOT/'vendor/encore-active/ns2-runtime'/n for n in (
-                  'kernel_wait64','gpu_access_svc','gpu_dispatch','nvdrv_gpu',
-                  'nvdrv_as','gpu_session','graphics_supervisor','self_controller',
-                  'hle','nvdrv','ampere')],
-              ROOT/'vendor/encore-active/ns2-helpers/include',
+              ROOT/'vendor/encore-active/eden/src',
               ROOT/'vendor/sources/eden/src',
               ROOT/'vendor/sources/fmt/include',
               ROOT/'vendor/sources/eden/src/dynarmic/src',
@@ -207,12 +202,12 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
            '-DPS5_NATIVE=1',
            *standard,*inc]
     sources=[DMA/'dma_pusher.cpp',DMA/'dma_pusher_dev.cpp',
-             ROOT/'vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp',
-             ROOT/'vendor/encore-active/eden-core/src/video_core/memory_manager.cpp',
-             ROOT/'vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
-             ROOT/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp',
-             ROOT/'vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp',
-             ROOT/'vendor/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.cpp']
+             ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp',
+             ROOT/'vendor/encore-active/eden/src/video_core/memory_manager.cpp',
+             ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
+             ROOT/'vendor/encore-active/eden/src/video_core/engines/puller.cpp',
+             ROOT/'vendor/encore-active/eden/src/video_core/native_shader_capture.cpp',
+             ROOT/'vendor/encore-active/eden/src/video_core/ns2_shader_spirv_compile.cpp']
     def compile_owner(path:Path):
         # Ubuntu Clang 18 can crash in nested template instantiations of the
         # fully unified native NVDRV and shader source files (frontend exit

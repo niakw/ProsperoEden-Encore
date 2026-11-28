@@ -7,10 +7,10 @@ rendering, link the console app, or authorize the runtime release flags.
 from pathlib import Path
 import os, subprocess, shutil, sys, tempfile
 r=Path(__file__).resolve().parents[2];deps=r/'vendor/sources/eden-cpm';sdk15=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk');sdk26=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk');env=os.environ.copy();env['SDKROOT']=str(sdk15)
-inc=['vendor/encore-active/eden-sync/overrides/h05-syncpoint','vendor/encore-active/eden-core/overrides/native-tiling','vendor/encore-active/ns2-runtime/kernel_wait64','vendor/encore-active/ns2-runtime/gpu_access_svc','vendor/encore-active/ns2-runtime/gpu_dispatch','vendor/encore-active/ns2-runtime/nvdrv_gpu','vendor/encore-active/ns2-runtime/nvdrv_as','vendor/encore-active/ns2-runtime/gpu_session','vendor/encore-active/ns2-runtime/graphics_supervisor','vendor/encore-active/ns2-runtime/video_decoder','vendor/encore-active/ns2-runtime/self_controller','vendor/encore-active/ns2-runtime/hle','vendor/encore-active/ns2-runtime/nvdrv','vendor/encore-active/ns2-runtime/ampere','vendor/encore-active/ns2-helpers/include','vendor/sources/eden/src','vendor/sources/fmt/include','vendor/sources/eden/src/dynarmic/src']
+inc=['vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/encore-active/eden/src','vendor/sources/eden/src','vendor/sources/fmt/include','vendor/sources/eden/src/dynarmic/src']
 # Match the one maintained IOCTL header staged into the native CMake include
 # overlay. The pinned Eden header lacks the InputCapacity template signature.
-ioctl=r/'vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
+ioctl=r/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/ioctl_serialization.h'
 assert ioctl.is_file() and 'template <size_t InputCapacity = 0' in ioctl.read_text()
 ioctl_temp=tempfile.TemporaryDirectory(prefix='encore-ioctl-')
 ioctl_dest=Path(ioctl_temp.name)/'core/hle/service/nvdrv/devices/ioctl_serialization.h'
@@ -19,7 +19,7 @@ shutil.copyfile(ioctl,ioctl_dest)
 # R457's compiled Host1x ABI is materialized by native CMake as a narrow
 # one-header include root. The generic h05-syncpoint path does not contain
 # the GSV's 64-bit guest-action API; syntax-check the selected shipping header.
-syncpoint=r/'vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h'
+syncpoint=r/'vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.h'
 assert syncpoint.is_file()
 syncpoint_text=syncpoint.read_text()
 for name in ('GetNativeGuestSyncpointValue', 'RegisterNativeGuestAction',
@@ -41,13 +41,13 @@ if sys.platform=='darwin' and sdk26.is_dir():
             '-isystem',str(sdk26/'usr/include/c++/v1')]
 flags+=['-I'+str(i) for i in inc if i.is_dir()]
 assert flags[0] and all((r/i).exists() for i in [
-    'vendor/encore-active/ns2-runtime/vulkan_abi',
-    'vendor/encore-active/ns2-runtime/nvdrv_as',
-    'vendor/encore-active/ns2-runtime/nvdrv_gpu',
-    'vendor/encore-active/ns2-runtime/gpu_dispatch',
-    'vendor/encore-active/ns2-runtime/gpu_session',
-    'vendor/encore-active/ns2-runtime/graphics_supervisor',
-    'vendor/encore-active/ns2-runtime/video_decoder']), 'Expected pinned NS2 source owners missing'
+    'vendor/encore-active/eden/src',
+    'vendor/encore-active/eden/src',
+    'vendor/encore-active/eden/src',
+    'vendor/encore-active/eden/src',
+    'vendor/encore-active/eden/src',
+    'vendor/encore-active/eden/src',
+    'vendor/encore-active/eden/src']), 'Expected pinned NS2 source owners missing'
 cmake=(r/'headless/CMakeLists.txt').read_text()
 assert 'configure_file("${EDEN_MAINTAINED_IOCTL}"' in cmake
 assert 'configure_file("${EDEN_MAINTAINED_HOST1X_HEADER}"' in cmake
@@ -55,7 +55,7 @@ assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_A
 # This syntax gate must select the same MemoryManager public header as the
 # shipping PS5 graph. The NS2 NVDRV owner calls the syncpoint shim API
 # unconditionally, while pinned Eden does not expose that combined shim/tiling ABI.
-native_tiling=r/'vendor/encore-active/eden-core/overrides/native-tiling'
+native_tiling=r/'vendor/encore-active/eden/src'
 selected_mm=native_tiling/'video_core/memory_manager.h'
 assert selected_mm.is_file(), 'Shipping native-tiling MemoryManager header missing'
 mmh=selected_mm.read_text()
@@ -100,7 +100,7 @@ for forbidden in ('EDEN_NS2_GPU_SESSION_EXPERIMENTAL','EDEN_NS2_NVDRV_EXPERIMENT
                   'EDEN_FINAL_RELEASE_PROFILE'):
     assert forbidden not in cmake
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in cmake
-sources=['vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp','vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp','vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp','vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp','vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp','vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp']
+sources=['vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp','vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp','vendor/encore-active/eden/src/video_core/engines/puller.cpp','vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp','vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp','vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp']
 def run(p):
     owner=r/p
     assert owner.is_file(),p
@@ -124,13 +124,13 @@ assert len(results)==6 and all(rc==0 for _,rc,_ in results), 'P0.2 NS2 native ow
 # earlier desktop-only TU probes did not instantiate DispatchNativeCompute.
 # The real Vulkan renderer owns shader capture; no duplicate diagnostic read
 # is permitted on the latency-sensitive GPU worker path.
-puller = r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp'
+puller = r/'vendor/encore-active/eden/src/video_core/engines/puller.cpp'
 body = puller.read_text()
 assert body.count('pusher.rasterizer->DispatchNativeCompute(*launch)') == 1
 assert 'CaptureNativeComputeShader(' not in body
 assert 'EDEN_NS2_COMPUTE_SHADER_CAPTURE' not in body
 assert 'if (sample && (!mapped || !release_targets_mapped))' in body
-abi = r/'vendor/encore-active/ns2-runtime/vulkan_abi'
+abi = r/'vendor/encore-active/eden/src'
 native_flags = [
     flags[0], '-I'+str(abi), '-I'+str(r/'headless'),
     *flags[1:], '-DPS5_NATIVE=1']
@@ -142,24 +142,35 @@ print('P2_7_NATIVE_QMD3_SINGLE_SHADER_CAPTURE_PASS native_abi=1 dispatch=1 redun
 # against the same DmaPusher/Puller headers and PS5-native Rasterizer ABI.
 # Checking the Puller alone misses a broken dispatch/resume boundary.
 native_gpfifo_owners = [
-    r/'vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp',
-    r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp',
-    r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp',
+    r/'vendor/encore-active/eden/src/video_core/dma_pusher.cpp',
+    r/'vendor/encore-active/eden/src/video_core/control/scheduler.cpp',
+    r/'vendor/encore-active/eden/src/video_core/control/channel_state.cpp',
 ]
 # Exact production receipt for the NVN2 split-method continuation fix.
 # The actual source TU is compiled below with PS5_NATIVE and the shipping
 # native DmaPusher ABI; these source seals prevent a same-pin semantic drift.
 import hashlib
 dma_owner = native_gpfifo_owners[0]
-dma_header = r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h'
+dma_header = r/'vendor/encore-active/eden/src/video_core/dma_pusher.h'
 def git_blob(path):
     raw=path.read_bytes()
     return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-# Reviewed fence parking / AS revocation / H17 successors through d13311b3.
-assert git_blob(dma_owner) == '861e85c5edf0fe0f1a15f2a5ad47a84d4eb0452c'
-assert git_blob(dma_header) == '4cb9f79deeb56ab7397c6209939c94dffbb7575b'
+# Reviewed fence parking / AS revocation / H17 successors plus 8d3eaa48
+# inter-list callback lifetime hardening. Exact blobs only.
+assert git_blob(dma_owner) == 'd42fbfe0a91f0e0598641ad9ca49ec9cf2d6a04f'
+assert git_blob(dma_header) == 'fc4fe083664ba991a1002caa52384c662e3ef718'
 dma_text=dma_owner.read_text()
 dma_header_text=dma_header.read_text()
+for token in (
+    'std::make_shared<NativeInterlistFenceState>()',
+    'native_interlist_fence = state;',
+    'SignalNativeFence([state]()',
+    'if (signal_sync && native_interlist_fence)',
+    'auto state = native_interlist_fence;',
+):
+    assert token in dma_text, ('NS2 inter-list fence lifetime drift', token)
+assert 'std::shared_ptr<NativeInterlistFenceState> native_interlist_fence;' in dma_header_text
+assert 'SignalNativeFence([this]()' not in dma_text
 for token in (
     'native_channel && command_resume_offset == 0',
     'header.addr != split_method_end',

@@ -14,8 +14,8 @@ import sys
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-CPP=ROOT/'vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp'
-HEADER=ROOT/'vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h'
+CPP=ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp'
+HEADER=ROOT/'vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.h'
 code=CPP.read_text()
 name='NvResult nvhost_gpu::ValidateChannelOwner(DeviceFD fd, u64& program_id) const'
 assert code.count(name)==1

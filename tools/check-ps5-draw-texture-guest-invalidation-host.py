@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-active=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+active=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 pinned=(root/"vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp").read_text()
 memory=(root/"vendor/sources/eden/src/video_core/memory_manager.cpp").read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()

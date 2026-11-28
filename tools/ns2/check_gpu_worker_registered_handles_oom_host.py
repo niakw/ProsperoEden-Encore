@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT/'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp'
+OWNER=ROOT/'vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp'
 method=OWNER.read_text().split('Result IGpuWorker::RegisterMemory(',1)[1].split(
     'Result IGpuWorker::ReleaseMemory(',1)[0]
 start='    try {\n        m_memory.reserve(MaxOwnedGpuMemoryHandles);'

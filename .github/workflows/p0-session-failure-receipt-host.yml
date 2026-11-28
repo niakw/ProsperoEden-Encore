@@ -6,7 +6,7 @@ on:
       - 'headless/main.cpp'
       - 'src/memory_pages.cpp'
       - 'tools/check-p0-session-failure-receipt-host.py'
-      - 'tools/check-eden-optimization-coverage.py'
+      - 'tools/check-active-cmake-source-boundary.py'
       - '.github/workflows/p0-session-failure-receipt-host.yml'
   push:
     branches: [main]
@@ -15,7 +15,7 @@ on:
       - 'headless/main.cpp'
       - 'src/memory_pages.cpp'
       - 'tools/check-p0-session-failure-receipt-host.py'
-      - 'tools/check-eden-optimization-coverage.py'
+      - 'tools/check-active-cmake-source-boundary.py'
       - '.github/workflows/p0-session-failure-receipt-host.yml'
 permissions:
   contents: read
@@ -28,7 +28,7 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
+      - name: Verify current vendor source contract
+        run: python3 -B tools/check-active-cmake-source-boundary.py
       - name: Actual C++ quiet receipt, append retention, kernel RC and sandbox rules O0/O2
         run: python3 -B tools/check-p0-session-failure-receipt-host.py
-      - name: Check immutable F07 header provenance after P0 reversible source delta
-        run: python3 -B tools/check-eden-optimization-coverage.py

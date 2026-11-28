@@ -3,7 +3,7 @@
 from pathlib import Path
 import shutil, subprocess, tempfile
 root=Path(__file__).resolve().parents[1]
-src=(root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+src=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()
 a=src.index("void TextureCache<P>::TickFrame() {")
 b=src.index("    sentenced_images.Tick();",a)
@@ -98,7 +98,7 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-gpu-budget-") as dir:
             assert ran.returncode==0,(native,opt,ran.stderr[-3200:])
 # Native BufferCache is a separately selected header in the PS5 CMake overlay.
 # Check the real source body rather than duplicating the cost guard in Python.
-buffer_src=(root/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
+buffer_src=(root/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 buffer_method=buffer_src.index("void BufferCache<P>::TickFrame() {")
 buffer_budget_begin=buffer_src.index("    // If we can obtain the memory info, use it instead of the estimate.",buffer_method)
 buffer_budget_end=buffer_src.index("    ++frame_tick;",buffer_budget_begin)

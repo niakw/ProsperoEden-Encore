@@ -7,14 +7,14 @@ import subprocess
 import sys
 
 ROOT=Path(__file__).resolve().parents[2]
-roots=['vendor/encore-active/ns2-runtime/gpu_access_svc',
-       'vendor/encore-active/ns2-runtime/nvdrv_as',
-       'vendor/encore-active/ns2-runtime/gpu_session',
-       'vendor/encore-active/ns2-runtime/hle',
-       'vendor/encore-active/ns2-runtime/nvdrv',
+roots=['vendor/encore-active/eden/src',
+       'vendor/encore-active/eden/src',
+       'vendor/encore-active/eden/src',
+       'vendor/encore-active/eden/src',
+       'vendor/encore-active/eden/src',
        'vendor/sources/eden/src',
        'vendor/sources/fmt/include',
-       'vendor/encore-active/ns2-helpers/include']
+       'vendor/encore-active/eden/src']
 inc=['-I'+str(ROOT/r) for r in roots]
 assert all((ROOT/r).exists() for r in roots)
 if sys.platform=='darwin':
@@ -28,7 +28,7 @@ if sys.platform=='darwin':
     sdk=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX27.0.sdk')
     assert sdk.exists(), 'C++20 std::jthread requires installed macOS SDK 27'
     args+=['-target','x86_64-apple-macosx15.0','-isysroot',str(sdk)]
-owner=ROOT/'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp'
+owner=ROOT/'vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp'
 args+=inc+[str(owner)]
 result=subprocess.run(args,env=dict(os.environ),capture_output=True,text=True,timeout=100)
 if result.returncode:

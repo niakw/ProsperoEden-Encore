@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-sparse = (root / "vendor/encore-active/eden-core/src/common/sparse_large_vector.h").read_text()
+sparse = (root / "vendor/encore-active/eden/src/common/sparse_large_vector.h").read_text()
 anchor = "    void DecommitPage(std::size_t index) noexcept {"
 assert sparse.count(anchor) == 1
 method = anchor + sparse.split(anchor, 1)[1].split(

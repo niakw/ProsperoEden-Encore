@@ -7,8 +7,8 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT/'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp'
-HEADER=ROOT/'vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_worker_protocol.h'
+OWNER=ROOT/'vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp'
+HEADER=ROOT/'vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker_protocol.h'
 source=OWNER.read_text()
 assert source.count('ledger.PrepareMapped(*request, staged_ledger)')==1
 assert source.count('m_mappings.SparseReservationPageShift(')==1
@@ -56,8 +56,8 @@ with tempfile.TemporaryDirectory(prefix='encore-gpu-worker-ledger-') as temp:
             cmd=[compiler,'-std=c++20',f'-O{opt}','-Wall','-Wextra',
                  '-Werror','-pedantic','-fsanitize=undefined',
                  '-fno-sanitize-recover=all',
-                 '-I'+str(ROOT/'vendor/encore-active/ns2-runtime/hle'),
-                 '-I'+str(ROOT/'vendor/encore-active/ns2-runtime/nvdrv'),
+                 '-I'+str(ROOT/'vendor/encore-active/eden/src'),
+                 '-I'+str(ROOT/'vendor/encore-active/eden/src'),
                  '-I'+str(ROOT/'vendor/sources/eden/src'),
                  str(ROOT/'tools/ns2/test_gpu_worker_staged_ledger.cpp'),
                  '-o',str(exe)]

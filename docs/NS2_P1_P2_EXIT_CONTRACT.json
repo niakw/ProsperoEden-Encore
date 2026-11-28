@@ -19,7 +19,7 @@
     {
       "id": "H01",
       "title": "NSO/ExeFS/NPDM load and process handoff",
-      "owner": "vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp",
+      "owner": "vendor/encore-active/eden/src/core/hle/service/os/process.cpp",
       "validators": [
         "tools/ns2/check_process_run_owner.py",
         "tools/ns2/test_process_run_source.py",
@@ -49,7 +49,7 @@
     {
       "id": "H02",
       "title": "49-bit GMMU and NVMap transactional mappings",
-      "owner": "vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+      "owner": "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
       "validators": [
         "tools/ns2/check_native_nvdrv_allocation_range_host.py",
         "tools/ns2/check_gpu_worker_staged_ledger_host.py",
@@ -76,7 +76,7 @@
     {
       "id": "H03",
       "title": "TIPC 214/216 4K and 64K sparse contract",
-      "owner": "vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp",
+      "owner": "vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp",
       "validators": [
         "tools/check-ns2-graphics-hle-host.py",
         "tools/ns2/check_gpu_worker_staged_ledger_host.py",
@@ -102,7 +102,7 @@
     {
       "id": "H04",
       "title": "VI2 graphics supervisor and display capabilities",
-      "owner": "vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
+      "owner": "vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp",
       "validators": [
         "tools/ns2/check_native_vi2_oom_host.py",
         "tools/ns2/check_native_vi2_vsync_oom_host.py",
@@ -127,7 +127,7 @@
     {
       "id": "H05",
       "title": "Decoder EOS, images and fences",
-      "owner": "vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp",
+      "owner": "vendor/encore-active/eden/src/core/hle/service/am/service/graphics_video_decoder_session.cpp",
       "validators": [
         "tools/ns2/check_native_video_decoder_ipc_host.py",
         "tools/ns2/check_native_video_eos_host.py",
@@ -156,7 +156,7 @@
     {
       "id": "H06",
       "title": "GPU IPC/TIPC command and handle ABI",
-      "owner": "vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp",
+      "owner": "vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp",
       "validators": [
         "tools/ns2/check_gpu_worker_source_syntax_host.py",
         "tools/ns2/check_gpu_worker_staged_ledger_host.py",
@@ -191,7 +191,7 @@
     {
       "id": "H07",
       "title": "NS1 Maxwell/shared-core regression safety",
-      "owner": "vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp",
+      "owner": "vendor/encore-active/eden/src/video_core/dma_pusher.cpp",
       "validators": [
         "tools/ns2/check_native_dma_unbound_subchannel_host.py",
         "tools/ns2/check_shared_a64_ldapr_host.py"
@@ -215,7 +215,7 @@
     {
       "id": "G01",
       "title": "SPIR-V texture-buffer descriptor arrays",
-      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
+      "owner": "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
       "validators": [
         "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
         "tools/ns2/check_native_spirv_descriptor_array_bounds_host.py",
@@ -240,7 +240,7 @@
     {
       "id": "G02",
       "title": "Transform-feedback outputs",
-      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+      "owner": "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
       "validators": [
         "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
         "tools/ns2/check_native_spirv_xfb_partition_host.py",
@@ -265,7 +265,7 @@
     {
       "id": "G03",
       "title": "Tessellation patch attributes and stages",
-      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+      "owner": "vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
       "validators": [
         "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
         "tools/ns2/check_native_spirv_patch_output_host.py",
@@ -290,7 +290,7 @@
     {
       "id": "G04",
       "title": "QMD3 direct and indirect CBUF indexing",
-      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_indirect_cbuf.h",
+      "owner": "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/native_indirect_cbuf.h",
       "validators": [
         "tools/ns2/check_native_qmd_direct_cbuf_host.py",
         "tools/ns2/check_native_spirv_cbuf_span_host.py"
@@ -314,7 +314,7 @@
     {
       "id": "G05",
       "title": "Ampere atomics and QMD SSBO range",
-      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_global_atomic_binding.h",
+      "owner": "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/native_global_atomic_binding.h",
       "validators": [
         "tools/ns2/check_native_qmd_atomic_span_host.py",
         "tools/check-ns2-spirv-host.py"
@@ -338,7 +338,7 @@
     {
       "id": "G06",
       "title": "SPIR-V global CAS/atomic lowering",
-      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_atomic_span.h",
+      "owner": "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/native_atomic_span.h",
       "validators": [
         "tools/ns2/check_native_qmd_atomic_span_host.py",
         "tools/ns2/check_shared_ns2_spirv_compiler_host.py",
@@ -363,7 +363,7 @@
     {
       "id": "G07",
       "title": "QMD3 TIC/TSC SSBO to real Vulkan Compute",
-      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_qmd_compute_environment.h",
+      "owner": "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/native_qmd_compute_environment.h",
       "validators": [
         "tools/ns2/check_native_compute_write_commit_host.py",
         "tools/ns2/check_native_image_physical_backing_host.py",
@@ -394,7 +394,7 @@
     {
       "id": "G08",
       "title": "Ampere ISA and CFG lowering",
-      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h",
+      "owner": "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h",
       "validators": [
         "tools/ns2/check_ampere_scalar_alu_sources_host.py",
         "tools/ns2/check_native_ampere_cfg_host.py"
@@ -418,7 +418,7 @@
     {
       "id": "G09",
       "title": "Task/Mesh pipeline link and geometry",
-      "owner": "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_graphics_stage_policy.h",
+      "owner": "vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/native_graphics_stage_policy.h",
       "validators": [
         "tools/ns2/check_task_mesh_vulkan_tus_host.py",
         "tools/ns2/check_native_graphics_cbuf_bounds_host.py",
@@ -443,7 +443,7 @@
     {
       "id": "G10",
       "title": "GPFIFO fences, semaphore park/replay and invalid methods",
-      "owner": "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp",
+      "owner": "vendor/encore-active/eden/src/video_core/engines/puller.cpp",
       "validators": [
         "tools/ns2/check_native_ampere_semaphore_host.py",
         "tools/ns2/check_native_gpu_invalid_bind_owner_host.py",

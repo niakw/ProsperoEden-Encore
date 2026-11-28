@@ -32,14 +32,14 @@ assert recipe.count("foreach(bits 32 64)") == 1
 # Production installs these qualified I-cache owners into the prepared
 # upstream tree BEFORE the native CMake recipe reads PROJECT_SOURCE_DIR.
 # Starting from raw vendor/sources/eden would silently drop J19/J20.
-backport_root = root/"vendor/encore-active/eden-core/src/core/arm/dynarmic"
+backport_root = root/"vendor/encore-active/eden/src/core/arm/dynarmic"
 pinned = {bits:(backport_root/f"arm_dynarmic_{bits}.cpp").read_text()
           for bits in (32,64)}
 assert "Core::InvalidateInstructionCacheRange" in pinned[64]
 assert '#include "core/arm/debug.h"' in pinned[64]
 assert pinned[32].count("m_cb->last_code_addr = u64(-1);") >= 2
 for bits in (32,64):
-    existing = (root/f"vendor/encore-active/eden-core/src/core/arm/dynarmic/arm_dynarmic_{bits}.cpp").read_text()
+    existing = (root/f"vendor/encore-active/eden/src/core/arm/dynarmic/arm_dynarmic_{bits}.cpp").read_text()
     assert "ConstructWithCapacityFallback" not in existing
     assert "if (!CheckMemoryAccess(vaddr" not in existing
 
@@ -221,7 +221,7 @@ file(WRITE "${PORT_BUILD_DIR}/selected.txt" "${g11_sources}")
                     # G11 candidate parity for every current CMake profile.
                     # Only absolute private includes and the compile-time
                     # inline/exclusive dispatch are normalized.
-                    owner = root/"vendor/encore-active/eden-core/src/core/arm/dynarmic/g11"/(
+                    owner = root/"vendor/encore-active/eden/src/core/arm/dynarmic/g11"/(
                         f"arm_dynarmic_{bits}_{'native' if native else 'host'}_{'dev' if dev else 'normal'}.cpp")
                     candidate = owner.read_text()
                     expected = src
@@ -314,7 +314,7 @@ endforeach()
                 assert len(live_sources) == 3, (label,live_sources)
                 assert live_sources.count(str(live/"empty.cpp")) == 1, (label,live_sources)
                 for bits in (32,64):
-                    expected_owner = root/"vendor/encore-active/eden-core/src/core/arm/dynarmic/g11"/(
+                    expected_owner = root/"vendor/encore-active/eden/src/core/arm/dynarmic/g11"/(
                         f"arm_dynarmic_{bits}_{'native' if native else 'host'}_normal.cpp")
                     assert live_sources.count(str(expected_owner)) == 1, (label,bits)
                     assert f"arm/dynarmic/arm_dynarmic_{bits}.cpp" not in live_sources

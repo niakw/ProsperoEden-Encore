@@ -15,8 +15,8 @@ import re
 import struct
 
 ROOT=Path(__file__).resolve().parents[2]
-ACTIVE=ROOT/"vendor/encore-active/eden-vulkan"
-SHADER=ROOT/"vendor/encore-active/eden-shader/src"
+ACTIVE=ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan"
+SHADER=ROOT/"vendor/encore-active/eden/src"
 CPM=ROOT/"vendor/sources/eden-cpm"
 # Compile every maintained R09 Vulkan C++ owner, not a hand-selected
 # subset that can silently miss a renderer/graph/weight source.
@@ -33,14 +33,14 @@ INCLUDES=[
     ROOT/"extras/graphics",
     ROOT/"headless",
     SHADER,
-    ROOT/"vendor/encore-active/ns2-runtime/ampere",
-    ROOT/"vendor/encore-active/ns2-runtime/gpu_dispatch",
-    ROOT/"vendor/encore-active/ns2-runtime/vulkan_abi",
-    ROOT/"vendor/encore-active/ns2-runtime/hle",
+    ROOT/"vendor/encore-active/eden/src",
+    ROOT/"vendor/encore-active/eden/src",
+    ROOT/"vendor/encore-active/eden/src",
+    ROOT/"vendor/encore-active/eden/src",
     ACTIVE/"include",
-    ROOT/"vendor/encore-active/ns2-astc/include",
-    ROOT/"vendor/encore-active/ns2-helpers/include",
-    ROOT/"vendor/encore-active/ns2-runtime/nvdrv_gpu",
+    ROOT/"vendor/encore-active/eden/src",
+    ROOT/"vendor/encore-active/eden/src",
+    ROOT/"vendor/encore-active/eden/src",
     ROOT/"vendor/sources/eden/src",
     CPM/"vulkanheaders/v1.4.345/include",
     CPM/"vulkanmemoryallocator/v3.3.0/include",
@@ -167,7 +167,7 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     # The 83-source PS5 backport stages settings.h *together* with its
     # audited settings_enums.h. Mixing the old Enum (Accurate) with
     # pristine new settings.h (Strict) is an invalid hybrid ABI.
-    reviewed_settings=ROOT/"vendor/encore-active/eden-backports/src/common/settings.h"
+    reviewed_settings=ROOT/"vendor/encore-active/eden/src/common/settings.h"
     assert reviewed_settings.is_file()
     shutil.copyfile(reviewed_settings,enum_root/"common/settings.h")
     # The same audited 83-file source baseline changes fence_manager.h:
@@ -175,9 +175,9 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     # reviewed GPU fence settings ABI. Never mix those revisions.
     (enum_root/"video_core").mkdir(parents=True)
     shutil.copyfile(
-        ROOT/"vendor/encore-active/eden-backports/src/video_core/fence_manager.h",
+        ROOT/"vendor/encore-active/eden/src/video_core/fence_manager.h",
         enum_root/"video_core/fence_manager.h")
-    active_present=ROOT/"vendor/encore-active/eden-vulkan/include/video_core/present.h"
+    active_present=ROOT/"vendor/encore-active/eden/src/video_core/present.h"
     source_present=ROOT/"vendor/sources/eden/src/video_core/present.h"
     assert active_present.read_bytes()==source_present.read_bytes(),(
         "R09 actual build present.h differs from Eden PresentFilters source")
@@ -186,7 +186,7 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
     cache=temp/"buffer-pages/video_core/buffer_cache"
     cache.mkdir(parents=True)
     for f in ("buffer_cache.h","buffer_cache_base.h"):
-        source=ROOT/"vendor/encore-active/eden-core/src/video_core/buffer_cache"/f
+        source=ROOT/"vendor/encore-active/eden/src/video_core/buffer_cache"/f
         assert source.is_file(),f
         shutil.copyfile(source,cache/f)
     # Linux lacks the FreeBSD cpu-set header present in PS5-native paths.

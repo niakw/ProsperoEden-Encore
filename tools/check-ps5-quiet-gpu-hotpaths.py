@@ -15,24 +15,19 @@ read = lambda p: (root / p).read_text(encoding="utf-8")
 perf = read("headless/performance.h")
 cmake = read("headless/CMakeLists.txt")
 generator = read("tools/prepare-vulkan-port.py")
-gpu_dev = read("vendor/encore-active/eden-gpu/gpu_thread_dev.cpp")
-gpu_quiet = read("vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp")
-gpu_header = read("vendor/encore-active/eden-gpu/include/video_core/gpu_thread.h")
+gpu_worker = read("vendor/encore-active/eden/src/video_core/gpu_thread.cpp")
+gpu_header = read("vendor/encore-active/eden/src/video_core/gpu_thread.h")
 
 assert "if (!detailed_gpu_profile.load(std::memory_order_relaxed)) {\n        mutex.lock();\n        return;\n    }" in perf
 assert "class DiagnosticTimer" in perf
 assert "if (totals) start = Common::g_wall_clock.GetTimeNS();" in perf
 assert "if (!totals) return;" in perf
 assert "std::chrono::nanoseconds start{};" in perf
-# The dev worker retains diagnostics; the quiet worker has none.
-assert 'set(EDEN_GPU_WORKER_VARIANT "gpu_thread_dev.cpp")' not in cmake
-assert 'set(EDEN_GPU_WORKER_VARIANT "gpu_thread_quiet.cpp")' in cmake
-assert 'configure_file("${EDEN_ACTIVE_GPU}/${EDEN_GPU_WORKER_VARIANT}"' in cmake
-for name in ("idle_timer", "dispatch_timer", "full_timer"):
-    assert "::Eden::Performance::DiagnosticTimer " + name in gpu_dev
-    assert "::Eden::Performance::Timer " + name not in gpu_dev
-    assert "::Eden::Performance::DiagnosticTimer " + name not in gpu_quiet
-assert "::Eden::Performance::DiagnosticTimer" not in gpu_quiet
+# One shipping worker: hot-path diagnostics belong to explicit performance
+# instrumentation, never to a second GPU implementation.
+assert 'set(EDEN_GPU_WORKER "${EDEN_ACTIVE_EDEN}/src/video_core/gpu_thread.cpp")' in cmake
+assert 'gpu_thread_dev.cpp' not in cmake and 'gpu_thread_quiet.cpp' not in cmake
+assert "::Eden::Performance::DiagnosticTimer" not in gpu_worker
 assert "::Eden::Performance::BatchedGuestWriteTimer guest_write_timer;" in generator
 for name in ("guest_read_timer", "drain_timer", "present_wait_timer"):
     assert "::Eden::Performance::DiagnosticTimer " + name in generator
@@ -44,11 +39,10 @@ assert "gpu_command_tick, gpu_command_flush, gpu_command_invalidate" in perf
 report = read("headless/performance.cpp")
 assert 'EDEN_GPU_COMMANDS frame=%u tick_calls=%llu' in report
 for kind in ("tick", "flush", "invalidate"):
-    assert '::Eden::Performance::DiagnosticTimer category_timer(::Eden::Performance::gpu_command_' + kind + ')' in gpu_dev
-    assert 'gpu_command_' + kind not in gpu_quiet
-# No diagnostic timer may alter queue depth, the restart/stop semantics,
+    assert 'gpu_command_' + kind not in gpu_worker
+# No diagnostic timer may alter queue depth, restart/stop semantics,
 # Vulkan profile choices or GPU emulation results.
-for selected_gpu in (gpu_dev, gpu_quiet):
+for selected_gpu in (gpu_worker,):
     assert 'std::this_thread::sleep_for(std::chrono::microseconds(100));' not in selected_gpu
     assert 'EmplaceWaitWithStopToken(stop_source.get_token()' in selected_gpu
     assert "state.queue.TryEmplace(std::move(command_data), fence, block)" in selected_gpu

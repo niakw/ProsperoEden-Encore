@@ -7,8 +7,8 @@ import tempfile
 import ast
 
 root = Path(__file__).resolve().parents[1]
-header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_scheduler.h").read_text()
-source = (root / "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp").read_text()
+header = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_scheduler.h").read_text()
+source = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_scheduler.cpp").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 ast.parse(generator)
 assert "unsigned queue_drain_waiters{};" in header

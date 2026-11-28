@@ -10,8 +10,8 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-SCHEDULER = ROOT/"vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp"
-QUERY = ROOT/"vendor/encore-active/eden-vulkan/vulkan_query_cache.cpp"
+SCHEDULER = ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_scheduler.cpp"
+QUERY = ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_query_cache.cpp"
 scheduler = SCHEDULER.read_text()
 query = QUERY.read_text()
 anchor = "void Scheduler::EndPendingOperations() {"

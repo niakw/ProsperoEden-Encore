@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 ROOT = Path(__file__).resolve().parents[2]
-HEADER = ROOT / "vendor/encore-active/ns2-helpers/include/video_core/renderer_vulkan/ns2_sparse_bind_transaction.h"
+HEADER = ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/ns2_sparse_bind_transaction.h"
 s = HEADER.read_text(encoding="utf-8")
 # The real Vulkan::Scheduler::BindSparseImage is mutable; the host stub must not
 # accidentally accept the previous const Queue& signature.
@@ -79,7 +79,7 @@ with tempfile.TemporaryDirectory(prefix="n69-sparse-native-") as tmp:
         subprocess.run([compiler, "-std=c++20", "-O2", "-Wall", "-Wextra",
                         "-Werror", "-fsanitize=undefined",
                         "-fno-sanitize-recover=all", "-I", str(d),
-                        "-I", str(ROOT / "vendor/encore-active/ns2-helpers/include"),
+                        "-I", str(ROOT / "vendor/encore-active/eden/src"),
                         str(src), "-o", str(exe)], check=True)
         subprocess.run([str(exe)], check=True)
 print("N69_REAL_VENDOR_VMA_BIND_OWNER_CLANG_GCC_UBSAN_PASS")

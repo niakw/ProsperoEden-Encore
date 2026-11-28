@@ -11,12 +11,12 @@ import shutil, subprocess, tempfile
 
 root=Path(__file__).resolve().parents[1]
 src=root/"vendor/sources/eden/src/core/hle/kernel"
-producer=(root/"vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
-consumer=(root/"vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp").read_text()
+producer=(root/"vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
+consumer=(root/"vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp").read_text()
 event=(src/"k_event.cpp").read_text()
 readable=(src/"k_readable_event.cpp").read_text()
 sync=(src/"k_synchronization_object.cpp").read_text()
-thread=(root/"vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.cpp").read_text()
+thread=(root/"vendor/encore-active/eden/src/core/hle/kernel/k_thread.cpp").read_text()
 queue=(src/"k_thread_queue.cpp").read_text()
 sync_header=(src/"k_synchronization_object.h").read_text()
 binder=(root/"vendor/sources/eden/src/core/hle/service/nvnflinger/hos_binder_driver.cpp").read_text()

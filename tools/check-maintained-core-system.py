@@ -161,7 +161,7 @@ def reverse_1952(text: str, native: bool) -> str:
 
 root = Path(__file__).resolve().parents[1]
 base = root / "vendor/sources/eden/src/core/core.cpp"
-active = root / "vendor/encore-active/eden-core/src/core"
+active = root / "vendor/encore-active/eden/src/core"
 oracle = root / "tools/fixtures/retired-g14-core.cmake"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 assert base.is_file() and oracle.is_file()
@@ -215,7 +215,7 @@ for native in (False, True):
 # the exact shipping blob here (also independently sealed by active-source,
 # R457 sparse and final FC27/P0 provenance gates) and verify the live lifetime
 # order directly rather than replaying an incomplete historical reverse chain.
-ns2 = (root / "vendor/encore-active/ns2-runtime/process/core/core.cpp").read_text()
+ns2 = (root / "vendor/encore-active/eden/src/core/core.cpp").read_text()
 # 20d278d9: release SM GPU factories before Services while kernel lives.
 assert git_blob(ns2) == "0f854ca3eab4dd0435d6ac58d401f8359301c168", (
     "reviewed current NS2 Core source drift")
@@ -242,10 +242,10 @@ assert shutdown_positions == sorted(shutdown_positions), (
 # Verify the exact conditional selection, not the pre-NS2 G14 exclusion.
 ns2_selected_core = """if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_MAINTAINED_CORE_SYSTEM
-        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/process/core/core.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/core.cpp")
 endif()"""
 assert cmake.count(ns2_selected_core) == 1, "NS2 Core owner or admission guard changed"
-assert cmake.count("ns2-runtime/process/core/core.cpp") == 1, (
-    "unexpected duplicate NS2 Core source selection")
+assert "ns2-runtime/process/core/core.cpp" not in cmake, (
+    "retired NS2 process root reintroduced")
 print("ENCORE_MAINTAINED_CORE_SYSTEM_PARITY_PASS G14=retired variants=2"
       " lichii1952=3 lichii1932=3 exact_reverse=3 ns2_release=1")

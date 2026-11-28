@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import tempfile
 ROOT=Path(__file__).resolve().parents[1]
-SOURCE=(ROOT/"vendor/encore-active/eden-vulkan/vk_multi_range_buffer_cost.cpp").read_text()
+SOURCE=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_multi_range_buffer_cost.cpp").read_text()
 PIN=(ROOT/"vendor/sources/eden/src/video_core/renderer_vulkan/vk_multi_range_buffer.cpp").read_text()
 GEN=(ROOT/"tools/prepare-vulkan-port.py").read_text()
 CI=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()

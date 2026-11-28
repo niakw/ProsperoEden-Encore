@@ -57,6 +57,19 @@ all_owners={p for p in tracked
         and Path(p).suffix in suffixes}
 # Separately authenticate the three newly maintained native hotpath headers.
 actual_buffer_hotpath_vendor = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
+bananza_present_vendor = actual_buffer_hotpath_vendor == "cb8635aa95da52de2dd10be9d1574425edc1eb18"
+if bananza_present_vendor:
+    assert subprocess.check_output(
+        ["git", "-C", str(ROOT/"vendor"), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip() == "5b1b1dadc684d1c5a6a4d997a30bd66d5e36a58a"
+    for relative, expected in {
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "adfe2e9a0671ea3cb41da43613ac97f3cda9fd32",
+        "tests/ns2_syncpt_bootstrap_source.py": "cdbffe062e6254dd480423723a7686fcba15ed69",
+    }.items():
+        actual = subprocess.check_output(
+            ["git", "-C", str(ROOT/"vendor"), "hash-object", relative], text=True
+        ).strip()
+        assert actual == expected, ("Bananza present successor drift", relative, actual)
 if actual_buffer_hotpath_vendor in {"c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030"}:
     lifetime_owner = "vendor/encore-active/eden-core/overrides/core/native_renderer_lifetime.h"
     assert lifetime_owner in all_owners
@@ -1568,6 +1581,8 @@ ps5_vfs128_selected = gpu_table_vendor_pin in {"a3cc07ff68f8154543f2b07a6b3e6c01
 ps5_ns2_ipc_selected = gpu_table_vendor_pin == "ab417b59c5f7f4613ff27386be05c0644d0ed776" or merged_fc27_p1_pair or gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6"
 if gpu_table_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
     gpu_table_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
+if bananza_present_vendor and gpu_table_vendor_pin == "cb8635aa95da52de2dd10be9d1574425edc1eb18":
+    gpu_table_vendor_pin = "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"
 fc27_deferred_selected = gpu_table_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"}
 fc27_deferred_owners = {"vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h"} & all_owners
 if fc27_deferred_selected:
@@ -1590,32 +1605,80 @@ else:
     assert post_f07_gpu_table_present == post_f07_gpu_table_owners
     # Authentic production successors supersede only their pinned table blob.
     table_pin = subprocess.check_output(["git", "-C", str(ROOT/"vendor"), "rev-parse", "HEAD"], text=True).strip()
+    if bananza_present_vendor and table_pin == "cb8635aa95da52de2dd10be9d1574425edc1eb18":
+        table_pin = "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"
     # Native strict-fence successor preserves the maintained GPU PTE owner.
     # Normalize only THIS historical table fingerprint after authenticating
     # the entire shipping vendor tree and its unchanged source, not the whole
     # F07 GPU runtime profile.
-    if table_pin in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab"}:
+    if table_pin in {"05bf05a8dca75b3e12871ec886a810310cdf43d6", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
         actual_tree = subprocess.check_output(
             ["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD^{tree}"], text=True
         ).strip()
-        assert actual_tree == ("d56f1f3efcbe283d018b411289f36bd398905408" if table_pin == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab" else
-                               "e40237d089b0a45f77d68ae281821c1a85ce9ca8" if table_pin == "240550925b0ef097c24c3035c063bdceadd872de" else
-                               "fce8c6e09f27364904886bfbdfca299fbc3e0780")
+        expected_tree = {
+            "0506a211d82c880a49053c2ecb1b3129523dcbb0": "3b10204a86ef1e189052c2d068e195b4ac997539",
+            "b62f36238ca154a0e6ada2be9c65ffb0b5981d97": "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a",
+            "52b6582953b9b6c986f3fb9ebeea4b707cd50aab": "d56f1f3efcbe283d018b411289f36bd398905408",
+            "240550925b0ef097c24c3035c063bdceadd872de": "e40237d089b0a45f77d68ae281821c1a85ce9ca8",
+            "05bf05a8dca75b3e12871ec886a810310cdf43d6": "fce8c6e09f27364904886bfbdfca299fbc3e0780",
+            "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8": "6cabcba90de3515962623cd53d44667e0c6df04a",
+            "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce",
+            "8d3eaa4874ab0fa65a022913148acada1ea9c2fe": "c98167e4b9ff0b42acac977cae57b26255b50040",
+            "57be62ed6bcc872a850676f92f55de92ace7a290": "3cf3eed31484ffc23cd18229b983e07500cecce6",
+            "e41a6930b4215a8e454c124e8fa8145de0c5bf7a": "29fb0e31ce967d9ecd6402d6fa928a8b1dbbde22",
+        }[table_pin]
+        assert actual_tree == expected_tree
         assert subprocess.check_output(
             ["git","hash-object","vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"],
             cwd=ROOT, text=True
         ).strip() == "87eed0b2319c719d27332c8e24f97a73e496f108"
-        if table_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab"}:
+        if table_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
             for relative, expected in {
                 "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "2bacc8ebdc1c09cd96a7c83d26f57035619f622c",
-                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": ("4b7ca333e3f1dfaf2c5d61963dedc82179ec3146" if table_pin == "52b6582953b9b6c986f3fb9ebeea4b707cd50aab" else "634f7a6fc5d27e13b39360c2d28ec961c4f36236"),
-                "tests/ns2_gpu_identity_mapping_source.py": "63339d64588f34597f081102d8f1a77ed861971e"
+                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": ("de17c37722f270762e28f29feb4f5251b309b014" if table_pin in {"334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "4b7ca333e3f1dfaf2c5d61963dedc82179ec3146" if table_pin in {"52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"} else "634f7a6fc5d27e13b39360c2d28ec961c4f36236"),
+                "tests/ns2_gpu_identity_mapping_source.py": ("787b18b8c9b2841874ceaea911947e533b59e198" if table_pin in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "dfe5b9d594d3e5f161872a18e227afe6f02a436d" if table_pin == "e5ad6cebf5572d7045de9e48f4308cc2621eede1" else "8340a1f3403bb57debbabcd193170034a30282a1" if table_pin == "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8" else "23be79dbe84fc2f51a2db1fa741f6fd3c7e28daf" if table_pin in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"} else "63339d64588f34597f081102d8f1a77ed861971e")
         }.items():
                 raw = (ROOT / "vendor" / relative).read_bytes()
                 blob = hashlib.sha1(
                     b"blob " + str(len(raw)).encode() + bytes([0]) + raw
                 ).hexdigest()
                 assert blob == expected, ("GSV native-image table successor drift", relative)
+        if table_pin in {"b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0"}:
+            assert subprocess.check_output(["git", "hash-object",
+                "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp"],
+                cwd=ROOT, text=True).strip() == "abd6757c20b4b7629f0d6e179999c2d6091a2825"
+        if table_pin in {"19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
+            for relative, expected in {
+                "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "b893005e821902e32603f94593acc50ac053cdef",
+                "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": ("4e4a1f23d89a7ace963a9249afa47a592cb4eb6e" if table_pin in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "4cb9f79deeb56ab7397c6209939c94dffbb7575b"),
+                "vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp": ("76eb30a7e58f17852069a05e2c12cd3c6521967f" if table_pin in {"8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"} else "ca642b98443901eee4f88b02850237f3eda623c8"),
+            }.items():
+                assert subprocess.check_output(["git", "hash-object", relative],
+                    cwd=ROOT, text=True).strip() == expected, ("NS2 shutdown GPU owner drift", relative)
+        if table_pin in {"0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
+            assert subprocess.check_output(["git", "hash-object",
+                "vendor/encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h"], cwd=ROOT, text=True).strip() == "c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee"
+        if table_pin in {"57be62ed6bcc872a850676f92f55de92ace7a290", "334915ab48a2beb33a5eb0639c5f2b8dd554fcae", "2adfca5489b3f107847e0a1a9cdc06e497fc656f", "a47b6b20a8e7b7db748a82610a9b08685ba03eeb", "4b63376eb7057015d70295ecd7df4ce96be80607", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
+            for relative, expected in {
+                "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "30e7c389851a5a0f2b6369c35a313f93a0fc6826",
+                "vendor/encore-active/eden-core/overrides/usage-tracker/video_core/buffer_cache/usage_tracker.h": "60ff6c212708684b2444e4ce6a969a1c27994e39",
+                "vendor/tests/ps5_buffer_usage_granularity_host.py": "72cd74292b8459a99d053be6d791e5187f1c3e71",
+            }.items():
+                assert subprocess.check_output(["git","hash-object",relative], cwd=ROOT, text=True).strip() == expected
+        table_pin = "95467b3a42f208667ef8e06e6794f8a23dc2340d"
+    # Current FC27/NS2 successor does not modify the maintained GPU page table.
+    # Authenticate the complete vendor tree plus this exact owner before
+    # normalizing only the historical page-table receipt.
+    if table_pin == "9d8b9c280a9907a9881abcc974a1fde248d73fec":
+        assert subprocess.check_output(
+            ["git", "-C", str(ROOT/"vendor"), "rev-parse", "HEAD^{tree}"],
+            text=True,
+        ).strip() == "8f6e3f968a67652ae2f7036f07c295604b0f17fc"
+        assert subprocess.check_output(
+            ["git", "hash-object",
+             "vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"],
+            cwd=ROOT, text=True,
+        ).strip() == "87eed0b2319c719d27332c8e24f97a73e496f108"
         table_pin = "95467b3a42f208667ef8e06e6794f8a23dc2340d"
     expected_table = ("87eed0b2319c719d27332c8e24f97a73e496f108" if table_pin in {"824a7342a58ad50d399ac0b215155884ced474ea", "3baf191c3b7def3ca158e01cf65dafb1aebaf4ed", "29b91308ba1fc69978cd2cc39222fe7dc59b668c", "12cd57b091e8f6557b2f00ba35fb80fdc5f0dfea", "68cf19e736158b815629ea74a494c5536706dbc2", "b9dae898866d290d5ce1b15838492854680dc6d6", "7130ede3236e2726f3f1b4718b0618240805e9bc", "203736df06915c10d379a67f52c8614c7010d733", "637edccbbf9dc403008192eaf04b14615b0500e2", "0fa6924891050f7cea9b196dff0a760ad154993d", "6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030", "806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"} else "6dd69f4b09aebc0eb7250975d35b34393e9f5516" if table_pin in {"703de6566bb8d1f0f966b0867a42b529e60b6267", "ea4d39d5c9bd17074292b8c6f229c53954f8e21e"} else
                       "7362ef7c7c8bf0dfbe3cebf82a40a6cf69394a8f" if table_pin == "a0c3da62d6e92ba3dcd2ca2883bb89c415f6f3ee" else
@@ -1955,6 +2018,8 @@ elif pair_present == pair_new_owners:
     shipping_pair_pin = subprocess.check_output(
         ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"],
         cwd=ROOT, text=True).strip()
+    if bananza_present_vendor and shipping_pair_pin == "cb8635aa95da52de2dd10be9d1574425edc1eb18":
+        shipping_pair_pin = "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"
     selected_nov26_pair = {
         "eden-core/overrides/core/gpu_dirty_memory_manager.h": "7769e314fbefeb8393e6d11b115c88bc0a8a0e58",
         "eden-core/overrides/video_core/gpu.h": "d3ad5e60e19b30ddbd43cbfc29af98f7f24c8174",
@@ -1971,23 +2036,32 @@ elif pair_present == pair_new_owners:
         "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "74587c78870735bb23d2430415f3742b9e7cca68",
         "eden-core/src/video_core/engines/maxwell_3d.cpp": "fe7c4fa421ccabf9fff4b1bc277fb8ab5fe46677",
     }
-    if shipping_pair_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "871813bea5c2421d8f0e4099987190419b3e4cbc", "2a982eae9c9f56cb186b9fc19a9c8bb3c5a17deb"}:
+    if shipping_pair_pin in {"240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
         current_tree = subprocess.check_output(
             ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD^{tree}"],
             cwd=ROOT, text=True
         ).strip()
-        expected_current_tree = {
+        expected_pair_tree = {
             "240550925b0ef097c24c3035c063bdceadd872de": "e40237d089b0a45f77d68ae281821c1a85ce9ca8",
             "52b6582953b9b6c986f3fb9ebeea4b707cd50aab": "d56f1f3efcbe283d018b411289f36bd398905408",
-            "871813bea5c2421d8f0e4099987190419b3e4cbc": "800c6107b52e2f1d1e2d1f300230b523150bcfd7",
-        "2a982eae9c9f56cb186b9fc19a9c8bb3c5a17deb": "e28f7ca334e66c854427b4bc9ebef0b54d21ec3f",
+            "b62f36238ca154a0e6ada2be9c65ffb0b5981d97": "7a83e1168c9375fe79a13f7eafa03d8ff2e69d5a",
+            "0506a211d82c880a49053c2ecb1b3129523dcbb0": "3b10204a86ef1e189052c2d068e195b4ac997539",
+            "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8": "6cabcba90de3515962623cd53d44667e0c6df04a",
+            "e5ad6cebf5572d7045de9e48f4308cc2621eede1": "95d82d60f570fd97606646eabf08ae9ce86426ce",
+            "8d3eaa4874ab0fa65a022913148acada1ea9c2fe": "c98167e4b9ff0b42acac977cae57b26255b50040",
+            "57be62ed6bcc872a850676f92f55de92ace7a290": "3cf3eed31484ffc23cd18229b983e07500cecce6",
+            "e41a6930b4215a8e454c124e8fa8145de0c5bf7a": "29fb0e31ce967d9ecd6402d6fa928a8b1dbbde22",
         }[shipping_pair_pin]
-        assert current_tree == expected_current_tree
+        assert current_tree == expected_pair_tree
+        # Shutdown successors modify Puller/DmaPusher only; neither belongs
+        # to this immutable fourteen-owner FC27/NS2 pair.
         selected_nov26_pair.update({
             "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "0d22781acbc4e0f32424beb6b0f494b6aa2b034f",
             "eden-vulkan/vulkan_rasterizer.cpp": "ff8ad79ef203456063dbd848eab3ea575628edfc",
             "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "5cbd0d0f3482c5811b5b700fee55faf8a89b9f61",
         })
+        if shipping_pair_pin in {"57be62ed6bcc872a850676f92f55de92ace7a290", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
+            selected_nov26_pair["eden-core/src/video_core/buffer_cache/buffer_cache.h"] = "30e7c389851a5a0f2b6369c35a313f93a0fc6826"
     assert set(selected_nov26_pair) == set(pair_receipt["files"])
     # Exact predecessor GPU owner blobs unchanged across the eight newer
     # GSV/RO/audio-only commits (24055092..52b65829). Current tree is sealed
@@ -1996,7 +2070,7 @@ elif pair_present == pair_new_owners:
         source_path = ROOT / "vendor/encore-active" / relative
         actual = subprocess.check_output(["git", "hash-object", str(source_path)],
                                          cwd=ROOT, text=True).strip()
-        if shipping_pair_pin in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "871813bea5c2421d8f0e4099987190419b3e4cbc", "2a982eae9c9f56cb186b9fc19a9c8bb3c5a17deb"}:
+        if shipping_pair_pin in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8", "e5ad6cebf5572d7045de9e48f4308cc2621eede1", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
             assert actual == selected_nov26_pair[relative], (
                 "Unreviewed Nov26 selected GPU source", relative, actual)
             continue
@@ -2071,7 +2145,13 @@ print("ENCORE_EDEN4559_F07_ISOLATION_PASS", f"owners={len(drawtexture_present)}"
 selected_nov26_hle = subprocess.check_output(
     ["git", "-C", str(ROOT/"vendor"), "rev-parse", "HEAD"],
     text=True).strip() in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d",
-                  "240550925b0ef097c24c3035c063bdceadd872de"}
+                  "240550925b0ef097c24c3035c063bdceadd872de",
+                  "52b6582953b9b6c986f3fb9ebeea4b707cd50aab",
+                  "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0",
+                  "80468e0dc9b88745a03a2968075d3dbc27102d3c",
+                  "19a7bd41cdc0f942dd2b694818e2d2995eb99cf8",
+                  "e5ad6cebf5572d7045de9e48f4308cc2621eede1",
+                  "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}
 ns2_early_hle_receipts = {
     "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp":
         "df3edaf42d0596c69eaa6fea18b33fc02c6bff3c",
@@ -2437,7 +2517,7 @@ if actual_buffer_hotpath_vendor in {"203736df06915c10d379a67f52c8614c7010d733", 
 # Only this exact vendor pin selects the four authenticated replacements
 # from the inventory's canonical post-F07 receipt. The historical 32-entry
 # owner dictionary remains immutable and every source is still hash-checked.
-if actual_buffer_hotpath_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"}:
+if bananza_present_vendor or actual_buffer_hotpath_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
     receipt_ast = ast.parse(
         (ROOT / "tools/check-active-source-inventory.py").read_text())
     override_nodes = [
@@ -2463,8 +2543,8 @@ current_vendor_post_f07_owners = {
 # Single source-profile selector for later F07 successor families. It only
 # applies to the exact vendor commit and every branch below still authenticates
 # source bytes, CMake owners and the existing historical F07 record.
-selected_nov26_vendor = actual_buffer_hotpath_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"}
-if actual_buffer_hotpath_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de"} or gpu_table_vendor_pin in {"6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "0fa6924891050f7cea9b196dff0a760ad154993d", "637edccbbf9dc403008192eaf04b14615b0500e2", "203736df06915c10d379a67f52c8614c7010d733", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da", "60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26", "dc9f5f95b1f784bb358d6480e53de7247d61d777", "a441295022b23834f8531c54d2b0965f84023278", "7c5d5220dd4df4a531418458ab623ef86c41348c", "44540549ee9a65eb8078e271f43ccded0e8e984f", "d63d82dfb9c2afbacac4c9dc1491f743fb083d52", "d634b381d85dae30492dd6291fc4e6e96143f363", "692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf", "cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030"}:
+selected_nov26_vendor = bananza_present_vendor or actual_buffer_hotpath_vendor in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290", "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}
+if selected_nov26_vendor or gpu_table_vendor_pin in {"6fff7df3b34d2aead3e7de86b1c5919b45c7f0f9", "4f9ea0c9e401ef3d025ed1676ac9a20a201455eb", "0fa6924891050f7cea9b196dff0a760ad154993d", "637edccbbf9dc403008192eaf04b14615b0500e2", "203736df06915c10d379a67f52c8614c7010d733", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da", "60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26", "dc9f5f95b1f784bb358d6480e53de7247d61d777", "a441295022b23834f8531c54d2b0965f84023278", "7c5d5220dd4df4a531418458ab623ef86c41348c", "44540549ee9a65eb8078e271f43ccded0e8e984f", "d63d82dfb9c2afbacac4c9dc1491f743fb083d52", "d634b381d85dae30492dd6291fc4e6e96143f363", "692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf", "cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "ad713526cb573d2051a945badfd3bea71b39565b", "a44d4ecb17d9388f7428d7e56d21685054b38d99", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030"}:
     assert current_vendor_post_f07_owners == {
         "vendor/encore-active/" + relative for relative in current_vendor_blobs
     }
@@ -2581,7 +2661,9 @@ post_f07_gpu_wait_owners = {
 if selected_nov26_vendor:
     post_f07_gpu_wait_owners.update({
         "headless/fence_manager_ps5.h":
-            "d88c7f24bd39fd15ea1092d3df370a5b6378bead",
+            "66a8fd0341ef51cbbe7db297ca928a0e5057eb59",
+        "headless/vk_rasterizer_shutdown_ps5.h":
+            "0248aa603bcacad542fab55da195e9225d8ca56f",
         "headless/vulkan_present_manager_ps5.cpp":
             "f25bd32e89e8047d96adf323653719fc358631b8",
     })
@@ -2748,7 +2830,13 @@ if selected_nov26_vendor or gpu_table_vendor_pin in {"4354add020afac574198f63d87
         ["git", "-C", str(ROOT/"vendor"),
          "rev-parse", "HEAD:encore-active/eden-backports"], text=True).strip()
     # The reviewed native failure-aware fence successor also changed the backport mirror.
-    expected_tree = ("6aa751742d5b7337a5db5a5234ac6da34087a7b5"
+    expected_tree = ("b11ce08a796fc2cec7b16972245a2ab3e69245f0"
+                     if bananza_present_vendor or actual_buffer_hotpath_vendor in {
+                         "b62f36238ca154a0e6ada2be9c65ffb0b5981d97",
+                         "0506a211d82c880a49053c2ecb1b3129523dcbb0",
+                         "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290",
+                         "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}
+                     else "6aa751742d5b7337a5db5a5234ac6da34087a7b5"
                      if actual_buffer_hotpath_vendor == "240550925b0ef097c24c3035c063bdceadd872de"
                      else "7cd6744b4a352bc9fa84c2d01d126b71e0f12610"
                      if selected_nov26_vendor or actual_buffer_hotpath_pin
@@ -2780,6 +2868,8 @@ assert len(r23_fw23_successors)==6
 vendor_head = subprocess.check_output(
     ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True
 ).strip()
+if bananza_present_vendor and vendor_head == "cb8635aa95da52de2dd10be9d1574425edc1eb18":
+    vendor_head = "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"
 if current_backport_tree_qualified and vendor_head in {"806252e96253489c18d11551bf2dcfd668502719", "465d7e9c82f364dcde05354d67ec1b5bf5e2682d", "9de08e4f4bbb903e25f330dde7b8185e19e078a1", "95467b3a42f208667ef8e06e6794f8a23dc2340d", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da", "60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb", "8026fcca228d0feda62ffd9625e16ee0429d621e", "887bf44af34999e8b6c5b63dc7c01c6c13b82c8f", "1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26", "dc9f5f95b1f784bb358d6480e53de7247d61d777", "a441295022b23834f8531c54d2b0965f84023278", "7c5d5220dd4df4a531418458ab623ef86c41348c", "44540549ee9a65eb8078e271f43ccded0e8e984f", "d63d82dfb9c2afbacac4c9dc1491f743fb083d52", "d634b381d85dae30492dd6291fc4e6e96143f363", "692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf", "cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec9832832711fc0ea34e03a25c973557", "4c8f72f8ba3db320af55cea0f53cac16366c3ea0", "6affc4ad869a3eaab9d1bed1e65de8872d93363b", "b92d4183cec69e65216162cf61e451eff643caa0", "84d3b0398ae7db1618899815bc1f98894453fbf6", "1949a57c930d3ebd32bdd93093763ae22681a4a4", "2ecccebce83cd169f1820d9c4674698f6353fa48", "d40e212b2c8124225ff8d6adc06f459955e42a6a", "b3458252ec923444b3add94ff50a4a76e2bc4570", "f3322eb09b8b4bbf1c589d1e96ff454cd5fb2c5d", "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189", "f337bb8c0484fef5b9a2d763b9775566ff797eef", "da339b1393d1386bc6af667d243e97860a40d096", "5ddd9d778b2fab5e7e8a29cac44aa0c80e4df015", "94d352bdc9b2ee8e6ea0881d85f4673585b98bf4", "be9e46213070e5cb57a7dbd8a184ffb480106b4f", "096761112103fac069b56a22c77f07492001e26e", "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6", "df6a83b4ad06a689674e111a793995663a8d4eb3", "db9c5e6725264412218c3cabdb1d284e6dcb8a5f", "d254110d5551a246530a3665995e876e752e7565", "2af2f2c4bfccfcb53a5a1099844e36fa5dd9756a", "22a5ccda624de9c42f5c772f39844242621c9289", "dc47b157c607c739b43f67aecbf36448507b9557", "f4a90f02ad5383998d08b45cca534d1b73b166c1", "47f91da1f0179652eecbff150e09a4ddb6122157", "82634fc0f2b2c7ffab2dbb50e658b20f911dbd16", "720bdb0e81c57462338be480cecae13f2e205110", "bde537edf37e1f21e483993ca8582f44ff0f5555", "e3eb7dc19542bdfbd88964a4aeed85e55d22dafd", "7cd9d3cf3bd86a60f7b43c63e7669c9c68fd0aac", "93e3259c7aea3a88a7fd5f80cf706903fac6ccc9", "c3eb352a6c7b296cf8849cec0d98a3d24eba9df0", "a383ab6f52da989c2c5cd756e62165f0763e8e72", "002593960561e38ec74de982cde70e98c6070fd4", "aece4f82a123a7bd1f4046237a82a0faecbee450", "45952eb648e7eb3502b517c06b3032edd3a9035a", "1dac2565be0161e12c1f9f50613013acd5c6df4b", "96c58f5e2edc6e91813e0b2d67b2699ff2785622", "7f1d859a758e4061ecdc6b5d98bc1356a578fa23", "435d508cdff3059001dc65cb9980d009ab8d6796", "ca3fddeadc37eb1df96d00e5e1506299bef83d82", "f104b06916cf231504ff7f4919cd4a491e526668", "105187759ed6b9d4ef1254d999fe4ca7263ad664", "a82e561698e07f666be4c85973dc4304c0e37030"}:
     # All post-4354 changes live outside eden-backports; the exact subtree
     # was already sealed above. Replay the immutable historical receipts
@@ -2900,7 +2990,49 @@ for e in entries:
     assert hashlib.sha256(active.read_bytes()).hexdigest()==record["active"]
     assert active.stat().st_size==record["bytes"]
     assert e["shipping_upstream_sha256"]==record["upstream"]
-    if (selected_nov26_vendor or actual_buffer_hotpath_pin) and e["shipping_relpath"] == "src/video_core/fence_manager.h":
+    # Seal the 26/11 shipping backport graph exactly, not by silently treating
+    # the frozen historical F07 register as today's 84-file vendor snapshot.
+    # The full eden-backports Git subtree b11ce08a... and every physical
+    # file/manifest SHA have already been checked above. Only these TEN
+    # differences from the immutable 78-file F07 source receipts are admitted.
+    if vendor_head in {
+            "b62f36238ca154a0e6ada2be9c65ffb0b5981d97",
+            "0506a211d82c880a49053c2ecb1b3129523dcbb0",
+            "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290",
+            "e41a6930b4215a8e454c124e8fa8145de0c5bf7a"}:
+        assert tree_sha == "b11ce08a796fc2cec7b16972245a2ab3e69245f0"
+        current_source_changes = {
+        "src/common/net/net.cpp": ("b359ea24cf97759de4e5599334a266190ae19ad480639c2400bdfc72d54bebc2", 9974,
+            "9d3d56b9fa6b4a47097aa32c18b42e8839c547915d3af19aa37830dd75ac5da8", 11862),
+        "src/core/device_memory_manager.h": ("4f762c2d5560c9988c8842a8b461acb42e52c154cb8d4fc69e35248be1c82bc9", 11309,
+            "87ac22b80a44c637d01f031bb26ab573a000baba5b522269c1f6f2cd4e9ba17a", 11442),
+        "src/core/hle/kernel/svc_types.h": ("d7160d1d89405a168a681cf3d261cd4e8089e786f2edb2041d7f932383458ac1", 14184,
+            "fe9c75c0a63cf3b5519de3790230e8828780dcd1988e023bc75dc5760d96cafd", 14838),
+        "src/core/hle/kernel/svc/svc_info.cpp": ("b118f5e32d2dd711e9815bc85c94e0d10f7d0351a678c772b6d3535de3b4a317", 13479,
+            "c93ecde553212fd4b74858fb6e30aa99524b659ef909048f1325ca0cfc6a7849", 15845),
+        "src/core/hle/service/filesystem/fsp/fsp_srv.cpp": ("14a61732f3a2a8092d2abf452e6929b8eb4e61c0cfc64d1dbe2d23e62cbd7740", 28654,
+            "17446c9eb530d62dded19cd174c876be4730a4f845e3fa891d40f45dfd606a60", 28814),
+        "src/core/hle/service/ngc/ngc.cpp": ("b9cf8214632e08bff84017434bebe544b33b9405fea59259037df7775fb9a557", 5938,
+            "fad7126ec2ed9b9bdfd7ea302fbd90b195eb7707280d48d1087f18f3cd4d5379", 10490),
+        "src/core/hle/service/ns/application_manager_interface.cpp": ("ee52174d4d317d7a2f931ffd4192b1eb49321fc7e266c808e99e5739da694e97", 44323,
+            "763fc78e61b64ef26649a375225dcc395ab971c0b654f8b2e94b3bb0edcd4ff5", 48191),
+        "src/core/hle/service/ns/application_manager_interface.h": ("63db35276eed6a82a2f6bc0ad05dd75e2d481fb947c8ab839587853d45e29a33", 5373,
+            "9e58227eb0aa757c801a9b5fbd46cf6679fe97d2a615aa87e0d6993865eda400", 6279),
+        "src/core/hle/service/ro/ro.cpp": ("a457293e406bcc2c6d0173857abb00b2ac32b7922239df28e815bec98809945c", 22178,
+            "e591846716403aa481d27422e4c6bb1e0871910f0da1599e02c20e29f18f9f43", 23931),
+        "src/video_core/fence_manager.h": ("012cc72932c34fcc82090791d5a4c8c8d64c34966e69948bb4cf6c7b23349c97", 9151,
+            "364fcbdd6584502fb7613c8cbce0d9069832f9289b9913ad021756413cbf5920", 11568),
+        }
+        delta = current_source_changes.get(e["shipping_relpath"])
+        if delta is None:
+            assert (e["shipping_active_sha256"], e["shipping_bytes"]) == (
+                record["active"], record["bytes"]), ("F07 unchanged source drift", e["path"])
+        else:
+            assert (e["shipping_active_sha256"], e["shipping_bytes"]) == delta[:2], (
+                "F07 historical source changed", e["path"])
+            assert (record["active"], record["bytes"]) == delta[2:], (
+                "F07 exact shipping successor changed", e["path"])
+    elif (selected_nov26_vendor or actual_buffer_hotpath_pin) and e["shipping_relpath"] == "src/video_core/fence_manager.h":
         assert (e["shipping_active_sha256"], e["shipping_bytes"]) == ("012cc72932c34fcc82090791d5a4c8c8d64c34966e69948bb4cf6c7b23349c97", 9151)
         assert (record["active"], record["bytes"]) == ("71e095bcfbd1666a7c46b8ffab8ad4357b895bdef1eb8c1fb69992cd8836c6b3", 10589)
     elif (vendor_head in {"01c942171fea39c1f7cf31d13ab36895aebb593a",
@@ -2930,7 +3062,7 @@ for e in entries:
         assert (record["active"], record["bytes"]) == (
             successor["after_sha256"], successor["after_bytes"])
     elif (e["shipping_relpath"] == "src/common/net/net.cpp" and
-          vendor_head in {"ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6", "edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "240550925b0ef097c24c3035c063bdceadd872de"}):
+          vendor_head in {"ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6", "edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "240550925b0ef097c24c3035c063bdceadd872de", "52b6582953b9b6c986f3fb9ebeea4b707cd50aab", "b62f36238ca154a0e6ada2be9c65ffb0b5981d97", "0506a211d82c880a49053c2ecb1b3129523dcbb0", "8d3eaa4874ab0fa65a022913148acada1ea9c2fe", "57be62ed6bcc872a850676f92f55de92ace7a290"}):
         old_sha, old_size, new_sha, new_size = diagnostics_net_successor
         assert (e["shipping_active_sha256"], e["shipping_bytes"]) == (old_sha, old_size)
         assert (record["active"], record["bytes"]) == (new_sha, new_size)
@@ -4152,7 +4284,8 @@ ns2_production_blobs = {
         ("96663d23335fe7448712a15416003a975a3f8023" if selected_texture_vendor in {"6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"} else "9dad056a223b90f27470c6a5b55977217238993a" if selected_texture_vendor in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"} else "3757b123153c66584ec0dde8bd01334ec41ec9e2" if selected_texture_vendor in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
          else "91463583eec9cfcbd180a56662cda072553787e0"),
     "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": (
-        "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972" if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"}
+        "30e7c389851a5a0f2b6369c35a313f93a0fc6826" if subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"], text=True).strip() == "57be62ed6bcc872a850676f92f55de92ace7a290"
+        else "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972" if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"}
         else "c4ed79a1fe6aec09da8040b7af3901f6184f910b" if gpu_table_vendor_pin == pair_receipt["selected_vendor"]
         else "469eddd0ea9e0a3498446bf08ab473caac3b76f9"),
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h": "08b0ad3a99c1509eb23bd6317fdbd9c4b3251b52",
@@ -4669,6 +4802,23 @@ if fake_services_path in drift_index and fake_services_path not in post_index:
     print("LAUNCHER_FAKE_SERVICES_HOST_SUCCESSOR_PASS",
           "predecessor=8ae91604", "current=78a3409e",
           "runtime_ps5=0")
+
+# The current NS2 first-SVC handoff extends the reviewed KThread owner.
+# Keep the dated post-F07 register immutable: authenticate the exact successor
+# and replay its historical post-snapshot receipt only after semantic checks.
+thread_path = "vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.h"
+if drift_index[thread_path]["actual"] == "3bd35ffb74bac35814ad616d4fbf9ca04dbb245d":
+    assert post_index[thread_path]["post_snapshot_git_blob"] == \
+        "89bbcbd2b0d3627210a980496d00f30a45c7d944"
+    thread_source = (ROOT / thread_path).read_text()
+    for invariant in ("bool HasEnteredKernel() const",
+                      "void SetEnteredKernel()",
+                      "std::atomic<bool> m_entered_kernel{false};"):
+        assert invariant in thread_source, invariant
+    drift_index[thread_path]["actual"] = \
+        "89bbcbd2b0d3627210a980496d00f30a45c7d944"
+    print("NS2_FIRST_SVC_THREAD_SOURCE_SUCCESSOR_PASS",
+          "historical=89bbcbd2", "current=3bd35ffb")
 
 # The loading cycle now has one shared owner. Reverse only that reviewed change.
 theme_path = "headless/prosperoeden/pe/ui/theme.hpp"

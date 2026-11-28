@@ -14,7 +14,7 @@ source=read("headless/main.cpp")
 cmake=read("headless/CMakeLists.txt")
 release_gate=read("tools/ci/check-release-experiments.py")
 jit=read("headless/jit-allocator.h")
-boc=read("vendor/encore-active/eden-core/src/dynarmic/backend/x64/block_of_code_native.cpp")
+boc=read("vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/block_of_code_native.cpp")
 assert "test_all_on:" not in workflow and "EDEN_TEST_ALL_ON" not in workflow
 assert "build/dev/PPSA99008" not in workflow
 assert 'bash tools/build-package.sh release-stage' in workflow

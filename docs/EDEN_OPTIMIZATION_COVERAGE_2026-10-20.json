@@ -2446,7 +2446,7 @@
       "evidence": "Previously maintained complete source/profile or former generated source replay; contract B28: Canonical 147-certificate native TLS trust source, parity-proven byte-for-byte against pinned Eden patch and staged without C++ transformation; TLS execution on console unqualified. CI witness retained. No FPS claim."
     },
     {
-      "path": "vendor/encore-active/eden-build/third_party/xbyak/xbyak.h",
+      "path": "vendor/encore-active/eden-cpm/xbyak/v7.40.1/xbyak/xbyak.h",
       "disposition": "previously_integrated_source_change",
       "contract_id": "J40",
       "prior_status": "SOURCE",
@@ -3877,7 +3877,7 @@
       "evidence": "Maintained shader recompiler LDL already checks original local byte address bounds, but still emitted a runtime ILessThan and two IR Select nodes for literal offsets accepted statically. Fast path returns v.ir.LoadLocal(word_offset) immediately after successful static bound; dynamic offsets continue safe index + value clamps and guard. Existing C++ sanitizer extraction strengthened with counters proving literal loads require no dynamic compare/Select while dynamic still does. Native graphics/pixel and FPS unverified."
     },
     {
-      "path": "vendor/encore-active/eden-surface-lifecycle/src/core/hle/service/nvnflinger/hardware_composer.cpp",
+      "path": "vendor/encore-active/eden/src/core/hle/service/nvnflinger/hardware_composer.cpp",
       "disposition": "new_source_issue_corrected",
       "contract_id": "N23",
       "prior_status": "SOURCE",
@@ -3885,7 +3885,7 @@
       "evidence": "23 October: native-maintained compositor source selected by staged installer, with exact pinned-original transformation and host replay of released versus still-acquired frame reuse. F03/F05 unresolved until full display progression and HUD are proven."
     },
     {
-      "path": "vendor/encore-active/eden-surface-lifecycle/src/core/hle/service/nvnflinger/surface_flinger.cpp",
+      "path": "vendor/encore-active/eden/src/core/hle/service/nvnflinger/surface_flinger.cpp",
       "disposition": "historical_native_selected_unit",
       "contract_id": "N06",
       "prior_status": "SOURCE",
@@ -3895,7 +3895,7 @@
       "contract_evidence": "tools/install-vendored-surface-lifecycle.py"
     },
     {
-      "path": "vendor/encore-active/eden-sync/src/core/hle/kernel/k_synchronization_object.h",
+      "path": "vendor/encore-active/eden/src/core/hle/kernel/k_synchronization_object.h",
       "disposition": "historical_host_contract_reviewed",
       "contract_id": "H17",
       "prior_status": "HOST",
@@ -3986,7 +3986,7 @@
       "evidence": "Previous audit host contract H15: Full host preflight #39026035356 SUCCESS; actual SleepThread original/native UBSan and pinned YieldType 0/-1/-2 PASS; CodeQL #39026019170 SUCCESS (C/C++, Python, Actions); no console or frozen gameplay proof"
     },
     {
-      "path": "vendor/encore-active/eden-vulkan-oracles/vulkan_download_batch.inc",
+      "path": "vendor/tests/oracles/vulkan/vulkan_download_batch.inc",
       "disposition": "preexisting_generated_or_inactive_unit",
       "contract_id": "V70",
       "prior_status": "SOURCE",
@@ -3995,7 +3995,7 @@
       "evidence": "Existing source owner audited for optimization relevance: vulkan_oracle_not_compiled; contract V70 Historical Vulkan readback batch oracle, no CMake source mutation. This is not a new runtime performance improvement."
     },
     {
-      "path": "vendor/encore-active/eden-vulkan-oracles/vulkan_gc_downloads.inc",
+      "path": "vendor/tests/oracles/vulkan/vulkan_gc_downloads.inc",
       "disposition": "preexisting_generated_or_inactive_unit",
       "contract_id": "V69",
       "prior_status": "SOURCE",
@@ -4004,7 +4004,7 @@
       "evidence": "Existing source owner audited for optimization relevance: vulkan_oracle_not_compiled; contract V69 Historical GPU texture-eviction oracle, verified against maintained Vulkan fork; not compiled. This is not a new runtime performance improvement."
     },
     {
-      "path": "vendor/encore-active/eden-vulkan-oracles/vulkan_hud_draw.inc",
+      "path": "vendor/tests/oracles/vulkan/vulkan_hud_draw.inc",
       "disposition": "preexisting_generated_or_inactive_unit",
       "contract_id": "V68",
       "prior_status": "SOURCE",
@@ -4013,7 +4013,7 @@
       "evidence": "Existing source owner audited for optimization relevance: vulkan_oracle_not_compiled; contract V68 Historical HUD draw oracle only; no independent CMake injection. This is not a new runtime performance improvement."
     },
     {
-      "path": "vendor/encore-active/eden-vulkan-oracles/vulkan_hud_prepare.inc",
+      "path": "vendor/tests/oracles/vulkan/vulkan_hud_prepare.inc",
       "disposition": "preexisting_generated_or_inactive_unit",
       "contract_id": "V67",
       "prior_status": "SOURCE",
@@ -4022,7 +4022,7 @@
       "evidence": "Existing source owner audited for optimization relevance: vulkan_oracle_not_compiled; contract V67 Historical HUD pipeline oracle only; executable renderer remains the maintained Vulkan fork. This is not a new runtime performance improvement."
     },
     {
-      "path": "vendor/encore-active/eden-vulkan-oracles/vulkan_loading.inc",
+      "path": "vendor/tests/oracles/vulkan/vulkan_loading.inc",
       "disposition": "preexisting_generated_or_inactive_unit",
       "contract_id": "V66",
       "prior_status": "SOURCE",

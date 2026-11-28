@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-src = (root / "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp").read_text()
+src = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_scheduler.cpp").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 start = "void Scheduler::AcquireNewChunk() {"
 end = "\n} // namespace Vulkan"

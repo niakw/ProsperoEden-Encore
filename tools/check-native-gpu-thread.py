@@ -13,7 +13,7 @@ root = Path(__file__).resolve().parents[1]
 
 def verify_g21_teardown():
     """Require current reviewed GPU lifetime fix; replay historic receipt only in memory."""
-    owner_dir = root / 'vendor/encore-active/eden-core/src/video_core'
+    owner_dir = root / 'vendor/encore-active/eden/src/video_core'
     normalized = {}
     for name in REVIEWED:
         source = (owner_dir / name).read_text()
@@ -54,7 +54,7 @@ native_pending_wait = """            if (scheduler.HasPendingNativeChannels()) {
 # The native build requires both renderers; the common GPU owner is selected by the GL branch.
 cmake = (root / "headless/CMakeLists.txt").read_text()
 assert 'set(EDEN_MAINTAINED_G21_GPU "${EDEN_G21_GPU_ROOT}/gpu_gl_native.cpp")' in cmake
-owner = (root / "vendor/encore-active/eden-core/src/video_core/gpu_gl_native.cpp").read_text()
+owner = (root / "vendor/encore-active/eden/src/video_core/gpu_gl_native.cpp").read_text()
 release = owner.split("void ReleaseChannel(Control::ChannelState& to_release) {", 1)[1].split("/// Binds a renderer", 1)[0]
 assert "gpu_thread.RetireChannelAtBoundary(" in release
 assert "scheduler.RetireChannel(owner.get());" in release
@@ -65,7 +65,7 @@ assert "std::make_shared<std::vector<u8>>()" in owner
 if sys.argv[1:] == ['--source-only']:
     # Validate the maintained compiled worker without requiring a PS5 SDK,
     # generated cache or host C++ compilation.
-    native = (root / 'vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp').read_text()
+    native = (root / 'vendor/encore-active/eden/src/video_core/gpu_thread.cpp').read_text()
     assert native.count(native_pending_wait) == 1, (
         'Maintained release GPU worker lost native-channel wake/idle arbitration')
     assert native.count('::Eden::PublishGpuSubmissionSample(count);') == 1, (
@@ -113,8 +113,7 @@ for metric, call in (
 # The producer is outside the upstream worker body. Compare its complete
 # compiled TU to the selected maintained source, including failure propagation
 # and acquire loads, rather than normalizing an obsolete relaxed-load fragment.
-profile = 'dev' if development else 'quiet'
-maintained_worker = root / f'vendor/encore-active/eden-gpu/gpu_thread_{profile}.cpp'
+maintained_worker = root / 'vendor/encore-active/eden/src/video_core/gpu_thread.cpp'
 assert generated.read_bytes() == maintained_worker.read_bytes()
 producer = worker.split('u64 ThreadManager::PushCommand(', 1)[1].split('\n} // namespace', 1)[0]
 assert producer.count('TryEmplace(') == 1
@@ -168,7 +167,7 @@ assert body in untraced, 'GPU worker semantics changed beyond reviewed dispatch-
 
 assert 'stop_source.get_token()' in worker and 'thread.get_stop_token()' not in worker
 assert 'ThreadManager::~ThreadManager() { Stop(); }' in worker
-gpu = (root / 'vendor/encore-active/eden-core/src' / ('video_core/gpu_gl_native_dev.cpp' if development else 'video_core/gpu_gl_native.cpp')).read_text()
+gpu = (root / 'vendor/encore-active/eden/src' / ('video_core/gpu_gl_native_dev.cpp' if development else 'video_core/gpu_gl_native.cpp')).read_text()
 assert 'GPU::~GPU() { impl->NotifyShutdown(); }' in gpu
 shutdown = gpu.split('    void NotifyShutdown() {', 1)[1].split('    /// Obtain', 1)[0]
 assert 'sync_cv.notify_all();\n        }\n        gpu_thread.Stop();' in shutdown
@@ -369,7 +368,7 @@ print('Native GPU stack, stop/wake/join, creation failures and blocked-command t
 
 # Native channel retirement must use a distinct worker FIFO command: a draw's
 # TickWork may execute inside the scheduler's shared epoch/execution leases.
-owner = (root / "vendor/encore-active/eden-core/src/video_core/gpu_vulkan.cpp").read_text()
+owner = (root / "vendor/encore-active/eden/src/video_core/gpu_vulkan.cpp").read_text()
 release = owner.split("void ReleaseChannel(Control::ChannelState& to_release) {", 1)[1].split("/// Binds a renderer", 1)[0]
 assert "gpu_thread.RetireChannelAtBoundary(" in release
 assert "scheduler.RetireChannel(owner.get());" in release

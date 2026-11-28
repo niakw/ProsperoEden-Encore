@@ -7,8 +7,8 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 cmake=(root/'headless/CMakeLists.txt').read_text()
 hid=(root/'vendor/sources/eden/src/hid_core/resources/npad/npad.cpp').read_text()
-normal=(root/'vendor/encore-active/eden-core/src/hid_core/resources/npad/npad.cpp').read_text()
-dev=(root/'vendor/encore-active/eden-core/src/hid_core/resources/npad/npad_pause_diag.cpp').read_text()
+normal=(root/'vendor/encore-active/eden/src/hid_core/resources/npad/npad.cpp').read_text()
+dev=(root/'vendor/encore-active/eden/src/hid_core/resources/npad/npad_pause_diag.cpp').read_text()
 input_src=(root/'headless/pad.cpp').read_text()
 pad_header=(root/'third_party/ps5_pad.hpp').read_text()
 assert 'set(EDEN_MAINTAINED_NPAD' in cmake

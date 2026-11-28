@@ -7,11 +7,11 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-raster = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+raster = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 upstream = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp").read_text()
-cost = (root / "vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp").read_text()
+cost = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache_cost.cpp").read_text()
 upstream_cost = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_buffer_cache.cpp").read_text()
 
 start = "DrawParams MakeDrawParams("

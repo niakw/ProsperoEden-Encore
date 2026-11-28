@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-HEADER=ROOT/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/native_qmd.h'
+HEADER=ROOT/'vendor/encore-active/eden/src/video_core/native_qmd.h'
 TEST=ROOT/'tools/ns2/test_native_qmd_allocation.cpp'
 REGRESSIONS=ROOT/'tools/ns2/test_native_qmd_scheduler.cpp'
 source=HEADER.read_text()

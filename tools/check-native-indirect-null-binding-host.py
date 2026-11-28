@@ -6,9 +6,9 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-cache = (root / "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
-raster = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-legacy = (root / "vendor/encore-active/eden-backports/src/video_core/buffer_cache/buffer_cache.h").read_text()
+cache = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
+raster = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
+legacy = (root / "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 
 def method(source, signature, end="\ntemplate <class P>"):
     at = source.index(signature)
@@ -35,13 +35,13 @@ assert draw.count("if (!buffer)") == draw.count("if (!draw_buffer)") == 1
 assert "buffer_cache.SetDrawIndirect(nullptr);" in draw
 # Both native OpenGL profiles also use this shared BufferCache getter.
 for profile in ("gl_rasterizer.cpp", "gl_rasterizer_dev.cpp"):
-    gl = (root / "vendor/encore-active/eden-core/src/video_core/renderer_opengl" / profile).read_text()
+    gl = (root / "vendor/encore-active/eden/src/video_core/renderer_opengl" / profile).read_text()
     gl_draw = method(gl, "void RasterizerOpenGL::DrawIndirect() {", "\nvoid RasterizerOpenGL::DrawTexture()")
     assert gl_draw.index("if (!buffer)") < gl_draw.index("buffer->Handle()"), profile
     assert gl_draw.index("if (!draw_buffer)") < gl_draw.index("draw_buffer->Handle()"), profile
 
 # Disabled post-store experiment must not reintroduce a null Vulkan submit.
-deferred = (root / "vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp").read_text()
+deferred = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp").read_text()
 guest_draw = method(deferred, "void RasterizerVulkan::DrawIndirect() {", "\nvoid RasterizerVulkan::DrawTexture()")
 # The native command worker checks the pipeline bound by ConfigureDraw;
 # the disabled guest-bridge keeps its original CanExecuteDraw accessor.

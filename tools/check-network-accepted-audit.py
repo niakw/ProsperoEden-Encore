@@ -43,8 +43,8 @@ assert 'if (eden_network_audit_active()' in observer or 'eden_network_audit_acti
 # Guest DNS/BSD audit code now belongs to full Encore-maintained sources.
 # Verify their actual native selection and that auditing never bypasses
 # either the guest-offline policy or accepted-packet delivery.
-dns=(root/"vendor/encore-active/eden-core/src/core/hle/service/sockets/sfdnsres.cpp").read_text()
-bsd=(root/"vendor/encore-active/eden-core/src/core/hle/service/sockets/bsd.cpp").read_text()
+dns=(root/"vendor/encore-active/eden/src/core/hle/service/sockets/sfdnsres.cpp").read_text()
+bsd=(root/"vendor/encore-active/eden/src/core/hle/service/sockets/bsd.cpp").read_text()
 for label, relative in (
     ("DNS", "sfdnsres.cpp"), ("BSD", "bsd.cpp"),
 ):

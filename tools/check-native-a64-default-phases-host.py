@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-A64 = ROOT / "vendor/encore-active/eden-core/src/dynarmic/backend/x64/a64_interface_standard.cpp"
+A64 = ROOT / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface_standard.cpp"
 text = A64.read_text()
 batch_anchor = "#if defined(EDEN_JIT_A64_BATCH)\n"
 assert text.count(batch_anchor) == 1

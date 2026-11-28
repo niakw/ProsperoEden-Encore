@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-src=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+src=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 b=src.index("    const auto select_pipeline = [&]() -> GraphicsPipeline* {")
 e=src.index("#ifdef PS5_NATIVE\n    // Waiting on an eight-frame-old",b)
 selected=src[b:e]
@@ -22,7 +22,7 @@ assert "pipeline->DescriptorEntryReservation()))" in selected
 assert selected.index("pipeline->HasDescriptorEntries()") < selected.index("PreflightGuestDraw(")
 assert selected.index("gpu_memory->FlushCaching();") > selected.index("PreflightGuestDraw(")
 assert selected.count("GraphicsDrawDrop::NoPipeline") == 3
-header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+header=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
 assert header.count("bool HasDescriptorEntries() const noexcept") == 1
 assert "return num_descriptor_entries != 0;" in header
 oracle=(root/"tools/prepare-vulkan-port.py").read_text()

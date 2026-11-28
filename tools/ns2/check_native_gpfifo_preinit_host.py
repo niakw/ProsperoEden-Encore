@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-OWNER = (ROOT / "vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp").read_text()
+OWNER = (ROOT / "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_gpu.cpp").read_text()
 entry = OWNER.split("NvResult nvhost_gpu::SubmitGPFIFOImpl(", 1)[1].split(
     "Core::Memory::Memory& nvhost_gpu::GetSessionMemory(", 1)[0]
 start = "    const bool native = UsesNativeAbi(fd);"
@@ -213,7 +213,7 @@ int main() {
               "retired_fd=1 max_completion=64 ns1_unchanged=1 native_wait_queued=1 bad_syncpoint=1 lease_oom=1 channel_disable=1 unallocated_submit=1");
 }
 '''.replace("__ADMISSION__", admission)
-includes = ROOT / "vendor/encore-active/ns2-runtime/hle"
+includes = ROOT / "vendor/encore-active/eden/src"
 assert (includes/"core/hle/service/nvdrv/devices/native_gpu_submission.h").is_file()
 env = os.environ.copy()
 sdk = Path("/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk")
@@ -241,9 +241,9 @@ print("P2_7_GPFIFO_PREFLIGHT_HOST_ALL_PASS",flush=True)
 
 # Execute the production lease retirement and pusher wait code, not a copy
 # of the predicate. Host and guest counters deliberately diverge.
-sync_src=(ROOT/"vendor/encore-active/eden-sync/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp").read_text()
+sync_src=(ROOT/"vendor/encore-active/eden/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp").read_text()
 lease_code=sync_src[ sync_src.index("void SyncpointManager::FreeSyncpoint("):sync_src.index("bool SyncpointManager::IsSyncpointAllocated(")]
-dma_src=(ROOT/"vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp").read_text()
+dma_src=(ROOT/"vendor/encore-active/eden/src/video_core/dma_pusher.cpp").read_text()
 resume_code=dma_src[dma_src.index("bool DmaPusher::ResumeNativeAcquire() {"):dma_src.index("#endif\n\nvoid DmaPusher::DispatchCalls()")]
 wait_cpp=r'''
 #include <atomic>
@@ -289,7 +289,12 @@ struct List {std::optional<Wait> native_syncpoint_wait;};
 struct DmaPusher {
     Puller puller;std::queue<List> dma_pushbuffer;Channel channel_state;
     System system;Rasterizer raster;Rasterizer* rasterizer=&raster;
+    unsigned cpu_unknown_resolutions{};
     bool ResumeNativeAcquire();
+    void NoteNativeAcquireResolved(bool gpu_produced) {
+        assert(!gpu_produced);
+        ++cpu_unknown_resolutions;
+    }
     [[noreturn]] void FailNativeSubmission(const char* reason) { throw std::runtime_error(reason); }
 };
 __RESUME__
@@ -308,13 +313,16 @@ int main(){
     assert(!d.ResumeNativeAcquire() && d.raster.polls==1);
     d.puller.ready=true;d.system.h.counter.host=7;
     assert(d.ResumeNativeAcquire() && d.raster.polls==2);
+    assert(d.cpu_unknown_resolutions==1);
     assert(d.ResumeNativeAcquire() && d.raster.polls==2);
+    assert(d.cpu_unknown_resolutions==1);
     d.dma_pushbuffer.pop();
     d.dma_pushbuffer.push({Wait{1,0,old}});
     d.system.h.counter.host=0xffffffffu;
     assert(!d.ResumeNativeAcquire());
     d.system.h.counter.host=0;
     assert(d.ResumeNativeAcquire());
+    assert(d.cpu_unknown_resolutions==2);
     d.dma_pushbuffer.pop();
     d.dma_pushbuffer.push({Wait{1,9,old}});
     m.FreeSyncpoint(1); m.syncpoints[1].reserved=true;
@@ -326,6 +334,7 @@ int main(){
     d.system.h.counter.host=9;
     d.system.h.counter.on_read=[&]{m.FreeSyncpoint(1);};
     try {d.ResumeNativeAcquire();assert(false);} catch(const std::runtime_error&){}
+    assert(d.cpu_unknown_resolutions==2);
     return 0;
 }
 '''.replace("__LEASE__",lease_code).replace("__RESUME__",resume_code)

@@ -6,8 +6,8 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-native = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-deferred = (root / "vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp").read_text()
+native = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
+deferred = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp").read_text()
 pinned = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp").read_text()
 state_flags = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_state_tracker.cpp").read_text()
 assert "FillBlock(tables[1], OFF(vertex_attrib_format), Regs::NumVertexAttributes, VertexInput);" in state_flags

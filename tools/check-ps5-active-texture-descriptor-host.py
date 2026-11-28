@@ -5,9 +5,9 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-path = root / "vendor/encore-active/eden-core/src/video_core/texture_cache/util.cpp"
+path = root / "vendor/encore-active/eden/src/video_core/texture_cache/util.cpp"
 cmake = (root / "headless/CMakeLists.txt").read_text()
-assert '"${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/texture_cache/util.cpp"' in cmake
+assert '"${PORT_ROOT}/vendor/encore-active/eden/src/video_core/texture_cache/util.cpp"' in cmake
 assert 'list(APPEND video_sources "${EDEN_MAINTAINED_TEXTURE_UTIL}")' in cmake
 data = path.read_text()
 begin = data.index("bool IsValidEntry(")
@@ -85,9 +85,9 @@ with tempfile.TemporaryDirectory(prefix="encore-active-tic-") as tmp:
 # already-executed host check to test the exact active SyncDescriptors body
 # and both real TIC/TSC guard expressions; no new build path or workflow.
 import shutil
-owner_path = root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h"
+owner_path = root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h"
 owner = owner_path.read_text()
-assert 'vendor/encore-active/ns2-astc/include' in cmake
+assert 'vendor/encore-active/eden/src' in cmake
 assert 'target_include_directories(video_core BEFORE PUBLIC' in cmake
 assert '"video_core/texture_cache/texture_cache.h"' in cmake
 start = owner.index("void TextureCache<P>::SynchronizeDescriptors(bool compute) {")

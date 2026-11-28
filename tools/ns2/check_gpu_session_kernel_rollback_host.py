@@ -14,7 +14,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 vendor = ROOT / "vendor"
-owner_path = vendor / "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp"
+owner_path = vendor / "encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp"
 owner = owner_path.read_text()
 session = (vendor / "sources/eden/src/core/hle/kernel/k_session.cpp").read_text()
 server = (vendor / "sources/eden/src/core/hle/service/server_manager.cpp").read_text()

@@ -7,7 +7,7 @@ import subprocess
 import sys
 source, output = map(Path, sys.argv[1:])
 port = Path(__file__).resolve().parents[1] / 'headless'
-vulkan_oracle = Path(__file__).resolve().parents[1] / 'vendor/encore-active/eden-vulkan-oracles'
+vulkan_oracle = Path(__file__).resolve().parents[1] / 'vendor/tests/oracles/vulkan'
 def adapt(relative, destination, replacements):
     text = (source / relative).read_text()
     for old, new in replacements:

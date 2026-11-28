@@ -11,8 +11,8 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 PIN = (ROOT / "vendor/sources/eden/src/core/hle/kernel/k_thread.cpp").read_text()
-ACTIVE = (ROOT / "vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.cpp").read_text()
-CMAKE = (ROOT / "vendor/encore-active/eden-threading/native-hle-overrides.cmake").read_text()
+ACTIVE = (ROOT / "vendor/encore-active/eden/src/core/hle/kernel/k_thread.cpp").read_text()
+CMAKE = (ROOT / "vendor/encore-active/eden/native-hle-overrides.cmake").read_text()
 ORACLE = (ROOT / "tools/verify/hle/check-hle-overlay-layout.py").read_text()
 FAST = (ROOT / ".github/workflows/encore-core-fast-gate.yml").read_text()
 FULL = (ROOT / ".github/workflows/encore-core-preflight.yml").read_text()

@@ -72,7 +72,7 @@ assert "return CacheStatus::CachedBufferReused;" in pinned_cache_method
 # compiled in ONE C++ fixture, not merely inspected independently.
 # The enqueue/slot/fence publication and listener callback are copied
 # verbatim out of the maintained QueueBuffer C++ (no Python model of either).
-producer_text = (root / "vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
+producer_text = (root / "vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
 producer_start = producer_text.index("Status BufferQueueProducer::QueueBuffer(")
 producer_stop = producer_text.index("\nvoid BufferQueueProducer::CancelBuffer(", producer_start)
 producer_method = producer_text[producer_start:producer_stop]

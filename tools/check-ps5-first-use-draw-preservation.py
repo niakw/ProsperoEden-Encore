@@ -11,8 +11,8 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-vk = (ROOT / "vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_text()
-gp = (ROOT / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+vk = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp").read_text()
+gp = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 generator = (ROOT / "tools/prepare-vulkan-port.py").read_text()
 start = vk.index("GraphicsPipeline* PipelineCache::BuiltPipeline(")
 stop = vk.index("std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline(", start)

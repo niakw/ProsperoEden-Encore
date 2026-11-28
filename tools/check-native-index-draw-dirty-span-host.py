@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-native_path = "vendor/encore-active/eden-core/src/video_core/engines/draw_manager.cpp"
+native_path = "vendor/encore-active/eden/src/video_core/engines/draw_manager.cpp"
 pinned_path = "vendor/sources/eden/src/video_core/engines/draw_manager.cpp"
 native = (root / native_path).read_text()
 pinned = (root / pinned_path).read_text()

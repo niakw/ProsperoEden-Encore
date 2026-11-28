@@ -11,12 +11,12 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-active = (ROOT/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-bridge = (ROOT/"vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp").read_text()
+active = (ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
+bridge = (ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp").read_text()
 pinned = (ROOT/"vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp").read_text()
 generator = (ROOT/"tools/prepare-vulkan-port.py").read_text()
-owner = (ROOT/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
-gmmu = (ROOT/"vendor/encore-active/eden-core/src/video_core/memory_manager.cpp").read_text()
+owner = (ROOT/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
+gmmu = (ROOT/"vendor/encore-active/eden/src/video_core/memory_manager.cpp").read_text()
 assert 'rasterizer->InvalidateRegion(dev_addr_base, copy_amount, which);' in (
     gmmu[gmmu.index("void MemoryManager::WriteBlockImpl("):
          gmmu.index("void MemoryManager::WriteBlock(", gmmu.index("void MemoryManager::WriteBlockImpl("))])

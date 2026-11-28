@@ -14,7 +14,7 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 cmake=(root/"headless/CMakeLists.txt").read_text()
-source=(root/"vendor/encore-active/eden-core/src/dynarmic/backend/x64/a64_interface_standard.cpp").read_text()
+source=(root/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface_standard.cpp").read_text()
 start=source.index("        struct EdenCompileTimer {")
 timer_end="        } eden_compile_timer{unsigned(conf.processor_id)};"
 end=source.index(timer_end,start)+len(timer_end)
@@ -101,8 +101,8 @@ with tempfile.TemporaryDirectory(prefix="eden-jit-quiet-timer-") as tmp:
 
 # R299: test the exact extracted shared-JIT dispatch-counter function in
 # addition to the CMake timer. These counters are diagnostics, not guest state.
-support=(root/"vendor/encore-active/eden-core/dynarmic/shared-jit/jit_group_support.inc").read_text()
-impl=(root/"vendor/encore-active/eden-core/dynarmic/shared-jit/jit_impl.inc").read_text()
+support=(root/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/jit_group_support.inc").read_text()
+impl=(root/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/jit_impl.inc").read_text()
 assert "if (!eden_native_detailed_logging || !eden_native_detailed_logging()) return;" in support
 assert "const bool timed = eden_native_detailed_logging && eden_native_detailed_logging();" in impl
 assert "const u64 start = timed ? EdenClockNs() : 0;" in impl

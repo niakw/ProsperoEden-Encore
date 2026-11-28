@@ -13,8 +13,8 @@ report = (root / "headless/performance.cpp").read_text()
 main = (root / "headless/main.cpp").read_text()
 ast.parse(generator)
 # R361: all early exit paths are counted with zero successful-draw atomics.
-p = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-graphics = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+p = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
+graphics = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 assert "enum class GraphicsDrawDrop : unsigned" in perf
 assert "if (!detailed_gpu_profile.load(std::memory_order_relaxed)) return;" in perf
 assert "graphics_draw_drop_totals" in perf
@@ -34,7 +34,7 @@ for phase, label, native in (
 ):
     assert phase in perf
     assert report.count('"' + label + '"') == 1
-    selected = (root / "vendor/encore-active/eden-vulkan" / native).read_text()
+    selected = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan" / native).read_text()
     site = selected.index("scheduler.Record([this](vk::CommandBuffer) {")
     callback = selected[site:selected.index("        });", site)]
     # Uncontended already-ready callbacks take the first lock-free exit.
@@ -57,7 +57,7 @@ for phase, label, native in (
 assert "GraphicsDrawDrop::DescriptorBufferFull" in generator
 assert "GraphicsDrawDrop::ConfigureRejected" in generator
 # R362 uses 1-in-16 timers without altering the guest cache lock lifetimes.
-p = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+p = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 for phase in ("StageTextureHandles", "BindTextureBuffers", "BindStageDescriptors",
               "StageHostBuffers", "StageImageDescriptors",
               "RefreshRenderTargets", "CheckFeedbackLoop", "CommitGraphicsDraw"):
@@ -181,7 +181,7 @@ print("PASS R310: cache hotpath sample 1/16, max/delta/reset/quiet, pinned locks
 
 # R355: the exact active renderer's cached storage must be isolated per thread
 # and safe for nested/reentrant ConfigureImpl calls.
-active = (root / "vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+active = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
 assert "GraphicsDescriptorScratchLease scratch;" in active
 assert "std::optional<GraphicsDescriptorScratchLease> reused" not in active
 assert "void GraphicsPipeline::PreflightDescriptorScratch()" in active
@@ -190,8 +190,8 @@ assert "scratch.samplers.reserve(num_textures)" in active
 assert "thread_local GraphicsDescriptorScratch graphics_descriptor_nested_scratch;" in active
 assert "graphics_descriptor_nested_scratch" in generator
 assert "if (!nested) current->in_use = false;" in active
-header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
-rasterizer = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+header = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+rasterizer = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 assert "void PreflightDescriptorScratch();" in header
 assert "pipeline->PreflightDescriptorScratch();" in rasterizer
 assert rasterizer.index("pipeline->PreflightDescriptorScratch();") < rasterizer.index(
@@ -283,7 +283,7 @@ with tempfile.TemporaryDirectory(prefix="eden-r355-scratch-") as d:
 print("PASS R355: graphics descriptor scratch reuses capacity, isolates nested calls and threads")
 
 # R360: exact rare under-lock ring exhaustion versus sampled ConfigureDraw.
-ring = (root / "vendor/encore-active/eden-vulkan/vk_descriptor_buffer_cost.cpp").read_text()
+ring = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_descriptor_buffer_cost.cpp").read_text()
 assert "DescriptorRingFinish" in perf
 assert '"descriptor_ring_finish"' in report
 assert "CachePhase::DescriptorRingFinish" in ring

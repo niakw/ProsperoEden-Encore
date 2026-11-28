@@ -12,9 +12,9 @@ assert 'if(NOT EDEN_REVIEWED_DUAL_NPDM)' in release
 assert 'set_property(TARGET core PROPERTY SOURCES' in release
 assert 'EDEN_NS2_EXEFS_EXPERIMENTAL' not in release
 for name in ('loader.cpp', 'deconstructed_rom_directory.cpp'):
-    assert (ROOT / 'vendor/encore-active/ns2-runtime/metadata/core/loader' / name).is_file()
-rom = (ROOT / "vendor/encore-active/ns2-runtime/metadata/core/loader/deconstructed_rom_directory.cpp").read_text()
-loader = (ROOT / "vendor/encore-active/ns2-runtime/metadata/core/loader/loader.cpp").read_text()
+    assert (ROOT / 'vendor/encore-active/eden/src/core/loader' / name).is_file()
+rom = (ROOT / "vendor/encore-active/eden/src/core/loader/deconstructed_rom_directory.cpp").read_text()
+loader = (ROOT / "vendor/encore-active/eden/src/core/loader/loader.cpp").read_text()
 for required in (
     "metadata.IsSwitch2()", "metadata.UsesExtendedAcid()",
     "Eden::NS2::ExeFS::PreflightNso",
@@ -49,13 +49,13 @@ for required in (
 assert 'set(EDEN_SHARED_NS2_AM ON)' in cmake
 assert 'if(EDEN_SHARED_NS2_AM)' in cmake
 assert 'option(EDEN_NS2_AM_EXPERIMENTAL' not in cmake
-am_file = (ROOT / "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp").read_text()
+am_file = (ROOT / "vendor/encore-active/eden/src/core/hle/service/am/service/application_functions.cpp").read_text()
 assert '{320, D<&IApplicationFunctions::GetScreenShotAndContinuousRecordingInitiallyEnabled>' in am_file
 assert "m_applet->screenshot_permission" in am_file
 assert "m_applet->game_play_recording_supported" in am_file
 assert 'if(EDEN_SHARED_NS2_NVDRV_CAPS)' in cmake
 assert 'set(EDEN_SHARED_NS2_NVDRV_CAPS ON)' in cmake
-nv = (ROOT / "vendor/encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp").read_text()
+nv = (ROOT / "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp").read_text()
 assert "command.raw == 0xc0e04705U || command.raw == 0xc0e84705U" in nv
 assert "WriteNativeCharacteristicsIoctlReply(" in nv
 nv_selector = cmake.split('# The native GPU-characteristics IOCTL owner is additive:', 1)[1].split(
@@ -72,7 +72,7 @@ heap = cmake.split('# Shared kernel heap admission for Switch 2:', 1)[1].split(
 assert 'set(EDEN_SHARED_NS2_KERNEL_HEAP ON)' in heap
 assert 'PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM' in heap
 assert 'set_property(TARGET core PROPERTY SOURCES' in heap
-kernel_root = ROOT / 'vendor/encore-active/ns2-runtime/kernel/core/hle/kernel'
+kernel_root = ROOT / 'vendor/encore-active/eden/src/core/hle/kernel'
 addr = (kernel_root / 'k_address_space_info.cpp').read_text()
 svc = (kernel_root / 'svc/svc_physical_memory.cpp').read_text()
 assert '.size = 16_GiB' in addr and 'KAddressSpaceInfo::Type::Heap' in addr
@@ -87,12 +87,12 @@ assert 'EDEN_NS2_KERNEL_ROOT' in heap
 # A 12 GiB guest kernel cannot work if the memory layout is selected only
 # later by the ExeFS loader (after InitializeKernel). Use the maintained
 # native Core::System as the source ancestor, preserving NS1 optimizations.
-native_core = (ROOT / 'vendor/encore-active/eden-core/src/core/core_native.cpp').read_text()
-shared_core = (ROOT / 'vendor/encore-active/ns2-runtime/process/core/core.cpp').read_text()
+native_core = (ROOT / 'vendor/encore-active/eden/src/core/core_native.cpp').read_text()
+shared_core = (ROOT / 'vendor/encore-active/eden/src/core/core.cpp').read_text()
 selector = cmake.split('# The Core::System overlay is a fully maintained', 1)[1].split(
     '# RomFS builder parents', 1)[0]
 assert 'PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM' in selector
-assert 'ns2-runtime/process/core/core.cpp' in selector
+assert 'eden/src/core/core.cpp' in selector
 assert '#include "diagnostics.h"' in native_core and shared_core.startswith('#include "diagnostics.h"')
 assert 'IsSwitch2LaunchProgram(' in shared_core
 # The pre-kernel selector may preserve an already-identified NS2 extended ACID
@@ -131,7 +131,7 @@ assert shared_core.count('Eden::NS2::SvcTrace::ResetForTitle();') == 2
 assert shared_core.index('kernel.Shutdown();') < shared_core.index('Eden::NS2::SvcTrace::ResetForTitle();', shared_core.index('kernel.Shutdown();'))
 assert 'bool extended_memory_layout' not in shared_core
 # Real aud:u manager bridge is additive and shares maintained NS1 audio HLE.
-audio_root = ROOT / 'vendor/encore-active/ns2-runtime/audio/core/hle/service/audio'
+audio_root = ROOT / 'vendor/encore-active/eden/src/core/hle/service/audio'
 audio = (audio_root / 'audio.cpp').read_text()
 client = (audio_root / 'nx2_audio_user_client.h').read_text()
 audio_select = cmake.split('# Shared Switch 2 audio user + virtual device + real Sysmix stream service.', 1)[1].split(
@@ -175,11 +175,17 @@ assert 'Result SetEngagedBatch(std::span<const u32> ids' in (
     audio_root / 'nx2_sysmix_user_service.h').read_text()
 for name in ('audout:u', 'audren:u', 'audin:u', 'audctl', 'hwopus'):
     assert audio.count('RegisterNamedService("' + name + '"') == 1, name
-for command, method, manager in (
-    (1, 'GetAudioOutManager', 'IAudioOutManager'),
-    (2, 'GetAudioRendererManager', 'IAudioRendererManager')):
+for command, method, manager, service in (
+    (0, 'GetAudioInManager', 'IAudioInManager', 'audin:u'),
+    (1, 'GetAudioOutManager', 'IAudioOutManager', 'audout:u'),
+    (2, 'GetAudioRendererManager', 'IAudioRendererManager', 'audren:u')):
     assert '{' + str(command) + ', &INx2AudioUserClient::' + method in client
-    assert 'rb.PushIpcInterface<' + manager + '>(ctx, system)' in client
+    assert 'ReplyRegisteredManager<' + manager + '>(ctx, "' + service + '")' in client
+assert 'auto manager = system.ServiceManager().GetService<T>(service);' in client
+assert 'rb.PushIpcInterface<T>(ctx, manager)' in client
+assert 'rb.Push(ResultNotFound);' in client
+assert 'std::make_shared<IAudioOutManager>' not in client
+assert 'std::make_shared<IAudioRendererManager>' not in client
 assert 'auto stub fallback' not in client.lower()
 streamplay = (audio_root.parent / 'nx2_streamplay.h').read_text()
 assert audio.count('RegisterNamedService("stpl:u"') == 1
@@ -201,12 +207,12 @@ assert 'python3 -B tools/ns2/check_native_streamplay_guest_hid_host.py' in (
 
 # Shared NS2 GPU-access SVC 0x80 is restricted to an actual NS2
 # ExeFS process and the 12 GiB profile; no blanket success of unknown calls.
-gpu_svc = (ROOT / 'vendor/encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp').read_text()
+gpu_svc = (ROOT / 'vendor/encore-active/eden/src/core/hle/kernel/svc.cpp').read_text()
 assert 'Eden::NS2::SvcTrace::IsActive(process.GetProcessId())' in gpu_svc
 assert 'Settings::MemoryLayout::Memory_12Gb' in gpu_svc
 assert 'process.GetPageTable().Contains(address, size)' in gpu_svc
 assert 'process.GetPageTable().SetMemoryAttribute(' in gpu_svc
 assert 'GpuAccessible = (1 << 5)' in (
-    ROOT / 'vendor/encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc_types.h').read_text()
+    ROOT / 'vendor/encore-active/eden/src/core/hle/kernel/svc_types.h').read_text()
 assert 'else if (process.Is64Bit())' in gpu_svc
 print("ENCORE_NS2_SHARED_EXEFS_SHIPPING_OWNER_PASS release=one ns1_nso_preserved=1 ns2_am_320=1 nvdrv_caps=1 kernel_heap=1 prekernel_layout=1 audio_u=1 streamplay=1")

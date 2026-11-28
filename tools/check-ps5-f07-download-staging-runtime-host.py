@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-src=(root/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+src=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp").read_text()
 gen=(root/"tools/prepare-vulkan-port.py").read_text()
 start=src.index("StagingBufferRef TextureCacheRuntime::DownloadStagingBuffer(size_t size, bool deferred) {")
 end=src.index("\n\nvoid TextureCacheRuntime::FreeDeferredStagingBuffer(",start)

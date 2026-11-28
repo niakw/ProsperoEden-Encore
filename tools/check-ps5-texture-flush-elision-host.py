@@ -6,12 +6,12 @@ import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
 def read(p): return (root/p).read_text()
-raster=read("vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp")
-bridge=read("vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp")
+raster=read("vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp")
+bridge=read("vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp")
 pinned=read("vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp")
 oracle=read("tools/prepare-vulkan-port.py")
 workflow=read(".github/workflows/encore-core-preflight.yml")
-cache=read("vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h")
+cache=read("vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h")
 start="void RasterizerVulkan::FlushRegion(DAddr addr, u64 size, VideoCommon::CacheType which) {"
 end="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea("
 def extract(s):

@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-P=ROOT/"vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp"
+P=ROOT/"vendor/encore-active/eden/src/core/hle/service/am/service/graphics_supervisor.cpp"
 source=P.read_text()
 start="bool IGraphicsSupervisor::WriteVideoSurface("
 end="\n// 901 and 1001 are the SDK's video codec/server-context admission calls."

@@ -15,25 +15,11 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=7fc673495b2ee18d5216023280057a42aa78d46c
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
-          test "$selected" = "$expected"
-          test "$checked" = "$expected"
-          test "$(git -C vendor hash-object encore-active/eden-core/src/core/file_sys/vfs/vfs_real.cpp)" = 097335e42a0f569a51f58417f0cfd6239f474136
-          test "$(git -C vendor hash-object encore-active/eden-threading/src/core/hle/kernel/k_server_session.cpp)" = 5bd8cd81c2bf8d32f0d65406881b8286a06ca771
-          test "$(git -C vendor hash-object encore-active/eden-threading/native-hle-overrides.cmake)" = 0ed9f8520019c07874c157c97ded3864c07a8a32
-          test "$(git -C vendor hash-object encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h)" = c7cb95ecaf388b925fc29582499bbd4b54a77f75
-          test "$(git -C vendor hash-object tests/ns1_r23_18_tir_host.py)" = 753df3ca146cba983057801df36dcf9db0b5fc6b
-          test "$(git -C vendor hash-object tests/fc27_deferred_page_protection_host.py)" = ae967badcfef7e098ac2620b789a1138fad79058
-          test "$(git -C vendor hash-object encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h)" = 86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86
-          test "$(git -C vendor hash-object encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp)" = 09ae2494b2b6f620a25ab549c06c69045a9fb73d
-          test "$(git -C vendor hash-object tests/ns2_recent_svc_fault_trace_host.py)" = 79d8d7294e37e141d6c669d9b55fa5a02d94287e
-          test "$(git -C vendor hash-object encore-active/eden-core/src/core/file_sys/romfs_factory.cpp)" = 4775cf98c3bfbc587402928bad424dcb471047a0
-          test "$(git -C vendor hash-object tests/ns2_romfs_program_index_fallback_host.py)" = abac08b40623febec02c58d2703b4ec3676b88f0
-          test "$(git -C vendor hash-object encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp)" = dd30183f72a9a9dfc2a17700db263f85e4d77596
+          test "$selected" = "$checked"
+          python3 -B tools/check-active-cmake-source-boundary.py
           python3 -B vendor/tests/ns2_romfs_program_index_fallback_host.py
-          test "$(git -C vendor hash-object encore-active/eden-vulkan/vulkan_rasterizer.cpp)" = 01c6880e5a8836da45601b0a3cb7c0fd6c46cf35
           python3 -B vendor/tests/native_msaa_attribute_handle_rebind_host.py
           python3 -B vendor/tests/r457_native_emit_invalid_warning_host.py
           python3 -B vendor/tests/p0_guest_fault_context_source.py
@@ -45,7 +31,7 @@ jobs:
           python3 -B vendor/tests/fc27_maxwell_prmt_operand_forms_source.py
           python3 -B vendor/tests/fc27_cpu_write_download_race_host.py
           python3 -B vendor/tests/fc27_gpu_page_sibling_preservation_host.py
-          test ! -e vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h
+          test ! -e vendor/encore-active/eden/src/core/deferred_cached_updates.h
           python3 -B vendor/tests/fc27_deferred_page_protection_host.py
           python3 -B vendor/tests/ns2_dynamic_texture_found_bit_limit_host.py
           python3 -B vendor/tests/ns2_duskbloods_tld4_imad_host.py

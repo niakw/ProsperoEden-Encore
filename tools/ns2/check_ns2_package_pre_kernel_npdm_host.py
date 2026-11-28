@@ -8,7 +8,7 @@ from pathlib import Path
 import os, shutil, subprocess, tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-source=(ROOT/"vendor/encore-active/ns2-runtime/process/core/core.cpp").read_text()
+source=(ROOT/"vendor/encore-active/eden/src/core/core.cpp").read_text()
 begin="[[nodiscard]] bool IsSwitch2LaunchProgram("
 end="\n} // namespace"
 assert source.count(begin)==1

@@ -28,9 +28,9 @@ for token in (
 ):
     assert token in cmake, ("CMake native owner selector", token)
 
-prefix = "encore-active/ns2-runtime/hle/core/hle/service/"
+prefix = "encore-active/eden/src/core/hle/service/"
 owners = {
-    "am": ("encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp", 1, 74),
+    "am": ("encore-active/eden/src/core/hle/service/am/service/application_functions.cpp", 1, 74),
     "hid": (prefix+"hid/hid_server.cpp", 1, 235),
     "nifm": (prefix+"nifm/nifm.cpp", 5, 86),
     "acc": (prefix+"acc/acc.cpp", 24, 487),
@@ -41,7 +41,7 @@ owners = {
     "lm": (prefix+"lm/lm.cpp", 3, 10),
     "audio_device": (prefix+"audio/audio_device.cpp", 1, 22),
     "audio_renderer": (prefix+"audio/audio_renderer_manager.cpp", 1, 5),
-    "fsp": ("encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp", 1, 128),
+    "fsp": ("encore-active/eden/src/core/hle/service/filesystem/fsp/fsp_srv.cpp", 1, 128),
 }
 files = {}
 summary = {}
@@ -71,7 +71,7 @@ fsp_data = (V / owners["fsp"][0]).read_bytes()
 fsp_blob = hashlib.sha1(b"blob " + str(len(fsp_data)).encode() + b"\0" + fsp_data).hexdigest()
 assert fsp_blob == "58303a0bd66387244c44968a0878e2f7c821bc9f", (
     "Pinned Eglantine FSP source changed", fsp_blob)
-w = (V / "encore-active/eden-core/src/core/hle/service/am/window_system.cpp").read_text()
+w = (V / "encore-active/eden/src/core/hle/service/am/window_system.cpp").read_text()
 h = (V / "sources/eden/src/core/hle/service/am/window_system.h").read_text()
 desktop = (V / "sources/eden/src/core/hle/service/am/window_system.cpp").read_text()
 assert "if (m_applets.empty() && !m_exit_sent)" in w
@@ -80,8 +80,8 @@ assert "bool m_exit_sent{};" in h
 assert "if (m_applets.empty())" in desktop
 assert "m_exit_sent" not in desktop
 assert "z_index = this->IsOverlayOpenLocked(*applet) ? Overlay : Background;" in w
-npdm = (V / "encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp").read_text()
-kp = (V / "encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp").read_text()
+npdm = (V / "encore-active/eden/src/core/file_sys/program_metadata.cpp").read_text()
+kp = (V / "encore-active/eden/src/core/hle/kernel/k_process.cpp").read_text()
 assert "Eden::NS2::FindAcidBody(" in npdm
 assert "uses_extended_acid = false;" in npdm and "is_switch2 = false;" in npdm
 assert "if (metadata.IsSwitch2())" in kp

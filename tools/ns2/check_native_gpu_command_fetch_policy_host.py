@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT/'vendor/encore-active/eden-core/src/video_core'
+OWNER=ROOT/'vendor/encore-active/eden/src/video_core'
 CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
 # Native SafeRead belongs to PS5 process/channel authentication, not a
 # separately selectable research build profile. NS1 retains its historical

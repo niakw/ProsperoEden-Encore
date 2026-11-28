@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-path=root/"vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp"
+path=root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp"
 src=path.read_text()
 sig="bool GraphicsPipeline::ConfigureImpl(bool is_indexed)"
 assert src.count(sig)==1
@@ -80,7 +80,7 @@ int main() {
 }
 '''
 # F07 P0.3: native selected stage host buffer gate is replayed verbatim.
-header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+header=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
 assert "std::array<bool, NUM_STAGES> stage_has_host_buffer_bindings{};" in header
 assert "stage_has_host_buffer_bindings[stage] = info->constant_buffer_mask != 0 ||" in constructor
 for kind in ("storage_buffers_descriptors", "texture_buffer_descriptors",

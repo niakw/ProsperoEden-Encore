@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-source=(ROOT/"vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp").read_text()
+source=(ROOT/"vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp").read_text()
 a="Result IGpuWorker::BackGpuOnlyRegion("
 b="bool IGpuWorker::RetireGpuOnlyRegion("
 assert source.count(a)==source.count(b)==1

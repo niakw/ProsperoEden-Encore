@@ -87,7 +87,7 @@ with tempfile.TemporaryDirectory(prefix="encore-native-range-") as temp:
     subprocess.run(["cmake", "-P", str(cmake_script)], check=True, timeout=20)
     original_source = pinned.read_text()
     derived_source = derived_path.read_text()
-    maintained = (root/"vendor/encore-active/eden-core/src/core/memory_native_standard.cpp").read_text()
+    maintained = (root/"vendor/encore-active/eden/src/core/memory_native_standard.cpp").read_text()
     assert real_method(maintained) == real_method(derived_source)
     assert derived_source.count("std::numeric_limits<u64>::max() - GetInteger(base)") == 1
     assert original_source.count("std::numeric_limits<u64>::max() - GetInteger(base)") == 0

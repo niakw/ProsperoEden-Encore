@@ -7,7 +7,7 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 pinned=(root/"vendor/sources/eden/src/shader_recompiler/frontend/maxwell/translate/impl/load_store_local_shared.cpp").read_text()
-active=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/load_store_local_shared.cpp").read_text()
+active=(root/"vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/load_store_local_shared.cpp").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
 ci=(root/".github/workflows/encore-core-preflight.yml").read_text()
 marker="IR::U32 LoadLocal(TranslatorVisitor& v,"

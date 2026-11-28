@@ -13,7 +13,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
-native = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+native = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 upstream = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_update_descriptor.cpp").read_text()
 assert "if (used + reserve >= frame_payload_size)" in upstream
 assert "required_entries > 0 ? required_entries : DEFAULT_REQUIRED_ENTRIES" in upstream
@@ -24,7 +24,7 @@ assert generator.count(signature) == 1
 start = generator.index(signature)
 end = generator.index("\n    }\n#endif", start) + len("\n    }")
 helper = generator[start:end]
-header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_update_descriptor.h").read_text()
+header = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_update_descriptor.h").read_text()
 assert helper in header, "Native maintained header has a stale exact helper"
 initial_signature = ("    template <typename WaitWorker>\n"
                      "    [[nodiscard]] bool PreflightGuestDraw(")
@@ -323,7 +323,7 @@ with tempfile.TemporaryDirectory(prefix="encore-exact-preflight-") as d:
 # F07 V03: compile the EXACT shipping Allocate fallback body, not a
 # handwritten restatement. PreflightFrameReuse may not have been called:
 # a completed frame tick must not trigger scheduler.Wait under cache locks.
-ring = (root / "vendor/encore-active/eden-vulkan/vk_descriptor_buffer_cost.cpp").read_text()
+ring = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_descriptor_buffer_cost.cpp").read_text()
 gen = (root / "tools/prepare-vulkan-port.py").read_text()
 ring_at = ring.index("DescriptorBufferRing::Allocation DescriptorBufferRing::Allocate(")
 fallback_at = ring.index("    if (frame_reused) {", ring_at)

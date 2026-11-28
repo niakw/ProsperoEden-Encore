@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-ACT=(ROOT/"vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.cpp").read_text()
+ACT=(ROOT/"vendor/encore-active/eden/src/core/hle/kernel/k_thread.cpp").read_text()
 PIN=(ROOT/"vendor/sources/eden/src/core/hle/kernel/k_thread.cpp").read_text()
 FLOW=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 FAST=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()

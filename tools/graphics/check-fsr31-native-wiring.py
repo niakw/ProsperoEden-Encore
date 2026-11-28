@@ -14,14 +14,14 @@ p=argparse.ArgumentParser()
 p.add_argument("--vendor-root",type=Path,default=root/"vendor")
 args=p.parse_args()
 vendor=args.vendor_root
-sdk=vendor/"encore-active/amd-fsr31"
-backend=vendor/"encore-active/eden-vulkan"
+sdk=vendor/"encore-active/eden/externals/amd-fsr31"
+backend=vendor/"encore-active/eden/src/video_core/renderer_vulkan"
 cmake=(root/"headless/vulkan.cmake").read_text()
 generator=(root/"tools/graphics/build-fsr31-amd-shaders.py").read_text()
 upscaler=(backend/"fsr31_temporal_upscaler.cpp").read_text()
 bridge=(backend/"fsr31_native_bridge.cpp").read_text()
 pool=(backend/"fsr31_descriptor_pool.cpp").read_text()
-pool_h=(backend/"include/video_core/renderer_vulkan/vk_descriptor_pool.h").read_text()
+pool_h=(backend/"vk_descriptor_pool.h").read_text()
 contract=(root/"extras/graphics/fsr31_temporal_contract.h").read_text()
 assert "c6efa6bf7f2027b3ec94f28578bb5965eabb9e55" in (sdk/"README.md").read_text()
 assert "Permission is hereby granted" in (sdk/"LICENSE.txt").read_text()
@@ -43,7 +43,7 @@ assert "in.device_to_view_depth" in upscaler
 assert "in.tan_half_fov" in upscaler
 assert "CAMERA_NEAR" not in upscaler
 assert "CAMERA_FOV" not in upscaler
-assert "Temporal::FrameContinuity" in (backend/"include/video_core/renderer_vulkan/fsr31_native_bridge.h").read_text()
+assert "Temporal::FrameContinuity" in (backend/"fsr31_native_bridge.h").read_text()
 assert "continuity.Observe(frame.metadata)" in bridge
 assert "Fsr31Budget::Evaluate" in bridge
 assert "GetDeviceLocalMemory" in bridge

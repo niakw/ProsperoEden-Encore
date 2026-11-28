@@ -12,14 +12,14 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-source=(ROOT/"vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp").read_text()
+source=(ROOT/"vendor/encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp").read_text()
 begin="Result IGpuSession::HandleSyncRequest("
 end="static Result Translate("
 assert source.count(begin)==source.count(end)==1
 owner=begin+source.split(begin,1)[1].split(end,1)[0]
 # The selected GSV and acquired worker must accept NS2 SDK TIPC-0 before any
 # GPU VA/GPFIFO work. Unknown opcodes still fail closed in the tested owner.
-worker_source=(ROOT/"vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp").read_text()
+worker_source=(ROOT/"vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp").read_text()
 for body,klass in ((source,"IGpuSession"),(worker_source,"IGpuWorker")):
     assert f'{{0, &{klass}::Handshake, "Handshake"}}' in body
     signature=f"void {klass}::Handshake(HLERequestContext& ctx) {{"

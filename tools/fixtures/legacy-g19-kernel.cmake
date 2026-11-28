@@ -156,7 +156,7 @@ if(EDEN_DEV_PROFILE)
     # Select the complete Encore-maintained diagnostic variant of KProcess.
     # The normal profile continues to compile the untouched pinned source.
     set(EDEN_MAINTAINED_DEV_PROCESS
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/kernel/k_process.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/kernel/k_process.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_DEV_PROCESS}")
         message(FATAL_ERROR "Missing maintained KProcess shutdown diagnostic source")
     endif()
@@ -174,7 +174,7 @@ string(REPLACE "    manager->LoopProcess();" "    if (server_manager) manager->R
 # normal/DEV selection. Kernel shutdown calls RequestStop on both variants.
 set(server_header "core/hle/service/server_manager.h")
 set(EDEN_MAINTAINED_SERVER_ROOT
-    "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service")
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service")
 if(EDEN_DEV_PROFILE)
     set(EDEN_MAINTAINED_SERVER_HEADER "${EDEN_MAINTAINED_SERVER_ROOT}/server_manager_dev.h")
     set(EDEN_MAINTAINED_SERVER_SOURCE "${EDEN_MAINTAINED_SERVER_ROOT}/server_manager_dev.cpp")

@@ -6,7 +6,10 @@
 #include <string>
 #include <vector>
 namespace Settings {
-inline struct {
+// Named external-linkage type: the inline variable must denote ONE settings
+// object across the harness and the separately compiled native loader TU.
+struct HostValues {
     std::map<std::uint64_t, std::vector<std::string>> disabled_addons;
-} values;
+};
+inline HostValues values;
 }

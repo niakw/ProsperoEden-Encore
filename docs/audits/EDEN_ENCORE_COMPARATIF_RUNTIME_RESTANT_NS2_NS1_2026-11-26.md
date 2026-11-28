@@ -637,30 +637,25 @@ Eglantine :
 - `Eglantine/src/core/hle/service/audio/audio.cpp` — `b4c6b69c11bb5c48f4bd64c12d1e6243317525e4`;
 - `nx2_audio_user_client.h` — **même blob que Lichii `cde05e...`**.
 
-## 8.2 `aud:u` : table de commandes
+## 8.2 `aud:u` : commandes désormais implémentées sur le propriétaire actif
 
-| Commande | Encore | Lichii/Eglantine |
-|---:|---|---|
-| 0 | **absente** | `GetAudioInManager` |
-| 1 | `GetAudioOutManager` | `GetAudioOutManager` |
-| 2 | `GetAudioRendererManager` | `GetAudioRendererManager` |
+🟢 **26/11/2026 — contrôle source exact** du vendor `0506a211d82c880a49053c2ecb1b3129523dcbb0` (header `encore-active/ns2-runtime/audio/core/hle/service/audio/nx2_audio_user_client.h`, blob `c1609a9c9c28bafdcbbd647ea964c3da2e9a28ee`), moteur `1a743355a025938def223e5f669d493192698fdb` qui épingle ce vendor ; comparaison Lichii `src/core/hle/service/audio/nx2_audio_user_client.h` (blob `cde05e5576315b87d06ade179bce3f56dcb3825d`). **Cette pastille valide le contrat C++ contrôlé, pas la CI, pas le build PS5 et pas le gameplay.**
 
-**DIVERGENCE DE COUVERTURE CONFIRMÉE : cmd 0.**
+| Cmd | Encore avant correctif | Encore actif | Lichii/Eglantine |
+|---:|---|---|---|
+| 0 | absent | `GetAudioInManager` → `audin:u` enregistré | `GetAudioInManager` |
+| 1 | manager privé `IAudioOutManager` | instance `audout:u` enregistrée | instance partagée `audout:u` |
+| 2 | manager privé `IAudioRendererManager` | instance `audren:u` enregistrée | instance partagée `audren:u` |
 
-## 8.3 Managers privés vs managers enregistrés
+**La divergence de couverture de la commande 0 est corrigée côté source.** Le test hôte `tools/ns2/check_native_audio_virtual_device_host.py` exécute la classe extraite et compare l'identité des trois managers renvoyés, le second appel `aud:u 1` et le cas service absent. Son résultat CI doit être vérifié séparément.
 
-Lichii/Eglantine résolvent les managers `audin:u`, `audout:u`, `audren:u` déjà enregistrés dans le ServiceManager et renvoient ces objets partagés.
+## 8.3 Durée de vie audio : correction C++ publiée, qualification console ouverte
 
-Leur code documente la raison : un second manager AudioOut peut posséder un autre `AudioCore::AudioOut::Manager`, alors que le callback de libération de buffers n'est pas prévu pour plusieurs propriétaires concurrents ; une session ouverte sur le mauvais manager peut donc ne plus recevoir les libérations attendues.
+Lichii/Eglantine réutilisent les managers déjà enregistrés : créer un autre `AudioCore::AudioOut::Manager` peut capter ou perdre le callback de libération des buffers, puis immobiliser le thread audio avec des buffers non recyclés.
 
-Encore, dans le header actif, crée de nouvelles interfaces `IAudioOutManager` / `IAudioRendererManager` avec `system` au lieu de rechercher systématiquement les instances déjà enregistrées.
+Encore appelait auparavant `rb.PushIpcInterface<IAudioOutManager>(ctx, system)` et construisait une nouvelle instance. Le vendor `0506a211` invoque désormais `system.ServiceManager().GetService<T>(service)`, puis `rb.PushIpcInterface<T>(ctx, manager)`. Si le service enregistré manque, il renvoie `ResultNotFound`, **sans inventer de propriétaire concurrent ni de succès**. Le TU final PS5 conserve `headless/r23_audren_debug_ps5.cpp` et inclut ce header partagé.
 
-**DIVERGENCE DE DURÉE DE VIE CONFIRMÉE — candidat P0 conditionnel.**
-
-Il faut la traiter si les logs montrent :
-- `aud:u` cmd 0 → Encore ne couvre pas le contrat ;
-- cmd 1/2 puis queue de buffers qui ne se libère plus ;
-- thread audio devenu le dernier progrès avant le freeze.
+**Statut : correctif runtime intégré sur `main`, effet PS5 non testé.** La cause des freezes de MKW, Pokopia, DK, des autres titres NS2 et des saccades FC27 n'est pas établie par cette correction audio. Aucune mesure de performance ou première frame nouvelle.
 
 ## 8.4 Sysmix / services
 
@@ -1077,3 +1072,31 @@ Sources propriétaires croisées : [Khronos Vulkan — Profiling](https://docs.v
 **Échantillon de titres NS2 nxnative parcouru :** Donkey Kong Bananza, Fast Fusion, Fire Emblem Fortune's Weave, Hyrule Warriors: Age of Imprisonment, Kirby Air Riders, Mario Kart World, Mario Tennis Fever, Welcome Tour, Nintendo Switch Sports Resort, Orbitals, Pokémon Pokopia, PRAGMATA, Splatoon Raiders, Star Fox, Wonder NS2 Edition, Zelda Ocarina of Time NS2, Xenoblade Chronicles 2 et X NS2, Yoshi and the Mysterious Book. Le gameplay Mac annoncé dépend de la version, du matériel et du profil de chaque jeu ; aucune ligne ne signifie « support PS5 acquis ».
 
 **Couple épinglé lors du contrôle VI2 107/301/354 :** moteur `cd7ec379`, vendor `5bb102629fa51c9198208e6139e27d57b05cb900`, `encore-overrides` inchangé. **Pas de build natif, pas de test console, pas de merge.** MKW `2114-0010`, premier `GPFIFO` et première frame invitée, autres démarrages NS2 et FC27 restent ouverts. Aucune jauge de complétude n'est assimilable à une qualification console.
+
+
+---
+
+## Contrôle pré-console du 27/11/2026 — couple FC27/NS2 candidat
+
+🟢 **2026-11-27 — contrôle source/contrat, pas validation console.** Couple contrôlé avant cette mise à jour documentaire : moteur `016841d49fa6da400fe1db0600c3820dadb5e2c4`, vendor/gitlink `57be62ed6bcc872a850676f92f55de92ace7a290`, `encore-overrides` `cfb46f7307e3d1f1c4daa70acaf540cfed78082a`. Le vendor final est un successeur de `806252e96253489c18d11551bf2dcfd668502719` (dernier test PS5 du 26/11) avec **26 commits** et conserve les propriétaires NS2 déjà sélectionnés ; les deux derniers changements runtime sont `60ff8dcaac` (fast-guards BufferCache) et `57be62ed6b` (UsageTracker idempotent entre resets).
+
+**NS2 — couverture post-test contrôlée :** MKW conserve les correctifs VI2/GSV (image groups consécutifs, producer/layer transactionnel, disponibilité/rebind, format FP16/count, capacités 107/301/354 et allocation 229) ; Pokopia conserve le retirement strict des sémaphores/timestamps, le désappairage `SET_OBJECT(0)`, et le chemin GPFIFO déjà qualifié ; DK/Z-A conservent NRR v1/NRO, correctif JIT prelude, ownership StreamPlay/audio et le teardown GPU annulable. Le blocage de fermeture observé sur Pokopia a été localisé dans `gpu_core->NotifyShutdown()` / `gpu_thread.Stop()`; le runtime actuel annule les waits de fence pendant shutdown et découple le callback inter-list de la durée de vie du `DmaPusher` (`80468e0d` puis `8d3eaa48`). **Aucune de ces lignes ne prouve une première frame PS5.**
+
+**FC27 — cause mesurée et correctifs actuels :** la capture `heap(20261126-163140).log` montre 121 fenêtres ; les 24 fenêtres <25 FPS ont environ **836 ms/5 s** d'attente BufferCache contre **104 ms/5 s** pour les 80 fenêtres >=29,8 FPS, avec corrélation FPS ↔ attente BufferCache d'environ **-0,807**. TextureCache est marginal sur cette mesure. Le vendor `60ff8dcaac` évite les mises à jour/bindings de stages vides ou inchangés sous la section critique ; `57be62ed6b` évite de retraverser les mêmes pages UsageTracker avant Reset tout en réarmant le cache après Reset. Pas de write-behind, pas de faux fence, pas de modification de contenu buffer/texture.
+
+**Inconnues qui exigent la prochaine console :** premier GPFIFO et première frame réels par titre NS2 ; résultat précis des commandes GSV/VI2 si MKW bloque encore ; producteur d'un éventuel `pending_native_acquire` Pokopia ; boot réel DK/Z-A ; pour FC27 p50/p95/p99, pauses >100 ms, HUD/textures, latence pause, cadence et crash de fermeture dans la même scène/cache. Les divergences D-03/D-04/D-07 restent conditionnelles à une signature de log absente ; D-02 reste volontairement strict. **Compatibilité exhaustive NS2 non revendiquée.**
+
+**Réconciliation de la matrice D :** D-05/D-06 (`aud:u`) et D-09 (`SET_OBJECT class 0`) sont désormais traités dans le runtime sélectionné ; D-08 a reçu le lot BufferCache ciblé ci-dessus. D-01 reste une différence d'architecture Ampere, D-02 un choix de synchronisation sûr, D-03/D-04/D-07 restent à ouvrir uniquement si une trace réelle les désigne. Aucun nouveau patch n'est justifié par le comparatif seul avant la prochaine campagne PS5.
+
+
+---
+
+## Contrôle post-console du 27/11/2026 — réconciliation R-02 / VI2 sans exception de titre
+
+🟢 **2026-11-27 — contrat source contrôlé.** La règle de ce document « compatibilité NS2 sans exception de titre » est désormais appliquée au chemin `PresentClientBuffer` du vendor `9d8b9c280a9907a9881abcc974a1fde248d73fec`. L'ancien branchement spécifique Donkey Kong Bananza a été retiré. La synchronisation décide entre fence courante et fence précédente à partir de l'état du producteur : progression du syncpoint, canaux natifs suspendus derrière une acquire et capacité du CPU invité à publier la release attendue.
+
+Ce comportement est la traduction directe de **R-02** : identifier le producteur d'une attente de sémaphore au lieu de la neutraliser. Le registre natif suit les releases GPU et leur époque ; `DmaPusher` distingue une acquire résolue par producteur GPU d'une dépendance CPU/indéterminée ; `Scheduler::HasCpuBlockedNativeChannels()` expose seulement les canaux effectivement parqués. Il n'existe pas de sélection par `ProgramId` dans cette politique. Les gardes source `de047ccb` / `42a10d25` empêchent le retour d'une exception Bananza/Ocarina dans ce chemin.
+
+🟢 **2026-11-27 — séparation testée / non testée contrôlée.** La campagne console de référence utilisait moteur `e9a910cc2eb527859905484dfdcb1dfd87daa5b9` + vendor `57be62ed6bcc872a850676f92f55de92ace7a290`. Elle ne contient donc ni la généralisation de Present, ni `334915ab` (GSV mode 0), ni la série de handoff premier SVC, ni le correctif NUP `c42ef6a`. Le résultat Bananza figé, le `PC=0x4` MKW et les chargements infinis ne peuvent pas être utilisés pour invalider ou valider ces successors.
+
+**Statut :** source/contrat et QA hôte contrôlés ; build PS5 et console du nouveau couple non validés au moment de cette note. Aucun titre n'est déclaré jouable sur cette base documentaire.

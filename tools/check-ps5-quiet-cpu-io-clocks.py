@@ -8,7 +8,7 @@ root = Path(__file__).resolve().parents[1]
 cmake = (root / "headless/CMakeLists.txt").read_text()
 # Production selects the quiet maintained TU; DEV diagnostics remain
 # independently audited source variants and are not selectable build modes.
-core_dir = root / "vendor/encore-active/eden-core/src/core/hle/kernel"
+core_dir = root / "vendor/encore-active/eden/src/core/hle/kernel"
 dev_source = (core_dir / "physical_core_dev.cpp").read_text()
 standard_source = (core_dir / "physical_core_standard.cpp").read_text()
 idle_start = dev_source.index("void PhysicalCore::Idle() {")
@@ -34,7 +34,7 @@ assert "__atomic_load_n(&m_is_interrupted, __ATOMIC_RELAXED)" in idle
 
 # Buffer dequeue diagnostics also live in a tracked DEV-only source now.
 dequeue = (Path(__file__).resolve().parents[1] /
-           "vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
+           "vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_PROFILE_DEQUEUE}")' in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/buffer_queue_producer.cpp"' not in cmake
 assert "const auto dequeue_start = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) ? ::Eden::Performance::NowNs() : 0;" in dequeue
@@ -44,7 +44,7 @@ assert dequeue.index("Status status = WaitForFreeSlotThenRelock(async") < dequeu
 
 # Host-syncpoint event-wait callback is now maintained C++ (DEV only).
 nvctrl = (Path(__file__).resolve().parents[1] /
-          "vendor/encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvhost_ctrl.cpp").read_text()
+          "vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvhost_ctrl.cpp").read_text()
 assert 'EDEN_MAINTAINED_PROFILE_NVCTRL' not in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/nvhost_ctrl.cpp"' not in cmake
 assert "const auto wait_start = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) ? ::Eden::Performance::NowNs() : 0;" in nvctrl
@@ -55,8 +55,8 @@ assert nvctrl.index("RegisterHostAction(fence_id") < nvctrl.index("if (wait_star
 
 # IPC and service request clocks are now in maintained DEV-only C++.
 root = Path(__file__).resolve().parents[1]
-ipc = (root / "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_ipc.cpp").read_text()
-service = (root / "vendor/encore-active/eden-core/src/core/hle/service/service.cpp").read_text()
+ipc = (root / "vendor/encore-active/eden/src/core/hle/kernel/svc/svc_ipc.cpp").read_text()
+service = (root / "vendor/encore-active/eden/src/core/hle/service/service.cpp").read_text()
 assert 'EDEN_MAINTAINED_PROFILE_SVC_IPC' not in cmake
 assert 'EDEN_MAINTAINED_PROFILE_HLE_SERVICE' not in cmake
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")' in cmake
@@ -105,7 +105,7 @@ assert '"GetAutoUpload"' not in service.split('if (service_name == "eupld:c")', 
 assert service.index("IsSafeOptionalNoOp") < service.index("SaveUnimplementedFunctionReport")
 # The diagnostic filesystem units are now maintained C++ sources,
 # no longer strings embedded in headless/CMakeLists.txt.
-maintained = Path(__file__).resolve().parents[1] / "vendor/encore-active/eden-core/src/core/hle/service/filesystem/fsp"
+maintained = Path(__file__).resolve().parents[1] / "vendor/encore-active/eden/src/core/hle/service/filesystem/fsp"
 fs_file = (maintained / "fs_i_file.cpp").read_text()
 fs_storage = (maintained / "fs_i_storage.cpp").read_text()
 assert 'EDEN_MAINTAINED_PROFILE_FS_FILE' not in cmake

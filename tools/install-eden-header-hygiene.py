@@ -16,7 +16,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 PIN = "5f142c7926d0c7fcbbd0ce30794d72f638a43b2a"
 ORIGINAL = ROOT / "vendor/sources/eden/src"
-ACTIVE = ROOT / "vendor/encore-active/eden-header-hygiene/include"
+ACTIVE = ROOT / "vendor/encore-active/eden/src"
 FIXES = {
     "common/page_table.h": (
         ("static constexpr u64 SIGN_BIT = 45 + 12; // 44 bits of data + page offset",

@@ -12,7 +12,7 @@ import tempfile
 
 root=Path(__file__).resolve().parents[3]
 pinned=(root/"vendor/sources/eden/src/core/hle/kernel/svc/svc_ipc.cpp").read_text()
-owner=root/"vendor/encore-active/eden-core/src/core/hle/kernel/svc"
+owner=root/"vendor/encore-active/eden/src/core/hle/kernel/svc"
 normal=(owner/"svc_ipc_standard.cpp").read_text()
 dev=(owner/"svc_ipc.cpp").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()

@@ -17,9 +17,9 @@ from concurrent.futures import ThreadPoolExecutor
 ROOT=Path(__file__).resolve().parents[2]
 SCRIPT=ROOT/'headless/ns2_cpu6_source_bridge.cmake'
 BASE=ROOT/'vendor/sources/eden/src'
-CPU6=ROOT/'vendor/encore-active/ns2-runtime/cpu6'
-G11=ROOT/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_normal.cpp'
-G11_A32=ROOT/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11/arm_dynarmic_32_native_normal.cpp'
+CPU6=ROOT/'vendor/encore-active/eden/src/core'
+G11=ROOT/'vendor/encore-active/eden/src/core/arm/dynarmic/g11/arm_dynarmic_64_native_normal.cpp'
+G11_A32=ROOT/'vendor/encore-active/eden/src/core/arm/dynarmic/g11/arm_dynarmic_32_native_normal.cpp'
 CMAKE=(ROOT/'headless/CMakeLists.txt').read_text()
 FILES=('hle/kernel/global_scheduler_context.cpp',
        'arm/dynarmic/arm_dynarmic_32.cpp',
@@ -34,9 +34,9 @@ assert 'list(FIND eden_cpu6_core_sources "${eden_cpu6_selected_source}" eden_cpu
 assert 'CPU6 must retain selected N76/G11 JIT source' in research
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in research
 assert 'EDEN_NS2_CPU6_EXPERIMENTAL' not in CMAKE
-assert 'NUM_CPU_CORES = 6' in (CPU6/'core/hardware_properties.h').read_text()
-assert 'NUM_LEGACY_CPU_CORES = 4' in (CPU6/'core/hardware_properties.h').read_text()
-assert 'MAX_NUM_CPU_CORES = 6' in (CPU6/'dynarmic/interface/exclusive_monitor.h').read_text()
+assert 'NUM_CPU_CORES = 6' in (CPU6/'hardware_properties.h').read_text()
+assert 'NUM_LEGACY_CPU_CORES = 4' in (CPU6/'hardware_properties.h').read_text()
+assert 'MAX_NUM_CPU_CORES = 6' in (ROOT/'vendor/encore-active/eden/src/dynarmic/interface/exclusive_monitor.h').read_text()
 
 
 def generate(src:Path,out:Path,jit:Path=G11)->subprocess.CompletedProcess[str]:
@@ -64,12 +64,12 @@ def main()->None:
         stdlib=['-target','arm64-apple-macos15','-nostdinc++',
                 '-isystem',str(sdk26/'usr/include/c++/v1')]
     deps=ROOT/'vendor/sources/eden-cpm'
-    includes=[ROOT/'headless',CPU6,ROOT/'vendor/encore-active/ns2-runtime/kernel_wait64',
-              ROOT/'vendor/encore-active/ns2-runtime/gpu_access_svc',
+    includes=[ROOT/'headless',CPU6,ROOT/'vendor/encore-active/eden/src',
+              ROOT/'vendor/encore-active/eden/src',
               BASE,BASE/'dynarmic/src',ROOT/'vendor/sources/fmt/include',
-              ROOT/'vendor/encore-active/eden-core/overrides',
-              ROOT/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11',
-              ROOT/'vendor/encore-active/eden-core/include',
+              ROOT/'vendor/encore-active/eden/src',
+              ROOT/'vendor/encore-active/eden/src/core/arm/dynarmic/g11',
+              ROOT/'vendor/encore-active/eden/include',
               deps/'xbyak/v7.40.1',
               *sorted((deps/'boost/boost-1.90.0/libs').glob('*/include'))]
     includes=['-I'+str(p) for p in includes if p.is_dir()]
@@ -125,7 +125,7 @@ def main()->None:
             assert original.count(old)==1,('pinned owner drift',name)
             expected=original.replace(old,replacement)
             actual=(out/'core'/name).read_text()
-            maintained=(ROOT/'vendor/encore-active/ns2-runtime/cpu6/maintained/core'/name).read_text()
+            maintained=(ROOT/'vendor/encore-active/eden/src/core'/name).read_text()
             assert actual==expected==maintained,('static CPU6 owner parity',name)
             # Mutation control: a wrong pinned upstream byte must never pass
             # the exact maintained-owner parity gate.

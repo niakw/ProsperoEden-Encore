@@ -13,9 +13,9 @@ fragments = sorted(p.name for p in headless.glob("*.inc") if p.is_file())
 assert fragments == ["gpu_native_probe.inc", "gpu_probe.inc"], (
     "Unexpected unclassified headless fragment", fragments)
 old = headless/"dev_render_passes.inc"
-maintained = ROOT/"vendor/encore-active/eden-core/src/video_core/renderer_opengl/dev_render_passes.inc"
-dev_rasterizer = ROOT/"vendor/encore-active/eden-core/src/video_core/renderer_opengl/gl_rasterizer_dev.cpp"
-normal_rasterizer = ROOT/"vendor/encore-active/eden-core/src/video_core/renderer_opengl/gl_rasterizer.cpp"
+maintained = ROOT/"vendor/encore-active/eden/src/video_core/renderer_opengl/dev_render_passes.inc"
+dev_rasterizer = ROOT/"vendor/encore-active/eden/src/video_core/renderer_opengl/gl_rasterizer_dev.cpp"
+normal_rasterizer = ROOT/"vendor/encore-active/eden/src/video_core/renderer_opengl/gl_rasterizer.cpp"
 assert not old.exists(), "DEV diagnostic fragment must have exactly one Encore owner"
 assert maintained.is_file()
 assert "static void CaptureDevelopmentPass()" in maintained.read_text()
@@ -49,8 +49,8 @@ assert found == [str(dev_rasterizer.relative_to(ROOT))], (
     "OpenGL DEV fragment must have one direct maintained rasterizer owner", found)
 assert not (headless/"macro_recovery.cmake").exists()
 assert not (headless/"slot_vector_recovery.cmake").exists()
-assert (ROOT/"vendor/encore-active/eden-core/src/video_core/macro.cpp").is_file()
-assert (ROOT/"vendor/encore-active/eden-core/overrides/slot-vector/common/slot_vector.h").is_file()
+assert (ROOT/"vendor/encore-active/eden/src/video_core/macro.cpp").is_file()
+assert (ROOT/"vendor/encore-active/eden/src/common/slot_vector.h").is_file()
 print(f"ENCORE_HEADLESS_FRAGMENT_OWNERSHIP_PASS fragments=2 "
       f"consumed_probe_fragments=2 maintained_dev_gl=1 "
       f"retired_X01_X02=2 scanned_inputs={scanned}")

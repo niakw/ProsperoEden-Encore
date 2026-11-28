@@ -131,6 +131,7 @@ public:
     void SyncOperation(std::function<void()>&& func) override;
     void SignalSyncPoint(u32 value) override;
     bool SignalNativeSyncPoint(u32 value) override;
+    bool SignalNativeFence(std::function<void()>&& func) override;
     void SignalReference() override;
     void ReleaseFences(bool force = true) override;
     void FlushAndInvalidateRegion(

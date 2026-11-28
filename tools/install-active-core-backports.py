@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Install maintained CPU I-cache and SM host service-wait sources unconditionally.
+"""Install maintained CPU I-cache and host service-wait sources unconditionally.
 
 Production copies complete checked-in sources from vendor/encore-active.
 The two historical patches are replayed only into a temporary comparison
-tree to prove byte-for-byte parity. AUDCTL is owned by eden-backports and
-must not be overwritten by this legacy active-core installer. Any difference fails closed.
+tree to prove byte-for-byte parity. Any difference fails closed.
 The quarantined dummy-thread workaround remains excluded (unsafe wait queue).
 """
 from __future__ import annotations
@@ -18,7 +17,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 ORIGINAL = ROOT / "vendor/sources/eden"
-ACTIVE = ROOT / "vendor/encore-active/eden-core"
+ACTIVE = ROOT / "vendor/encore-active/eden"
 PATCHES = (
     ROOT / "headless/backports/eden-dynarmic-icache-coherence.patch",
     ROOT / "headless/backports/eden-sm-host-wait.patch",
@@ -44,8 +43,8 @@ def affected() -> list[str]:
                 if not rel.startswith("src/") or ".." in Path(rel).parts:
                     raise RuntimeError(f"Invalid target in {patch}: {rel}")
                 names.add(rel)
-    if len(names) != 3:
-        raise RuntimeError(f"Expected exactly three core patch sources: {sorted(names)}")
+    if len(names) != 5:
+        raise RuntimeError(f"Expected exactly five core patch sources: {sorted(names)}")
     return sorted(names)
 
 
@@ -82,10 +81,21 @@ def derive() -> dict[str, tuple[bytes, bytes]]:
 # CI 41258590941 identified one previous local A64 overlay in the disposable
 # owned source cache. Recover only that exact SHA-256, never arbitrary bytes.
 KNOWN_STALE_A64_SHA256 = "08ae577aa069b589faaa8cc6659baa66c80661d78abc15381907d63b343c17b0"
+A32_OWNER = "src/core/arm/dynarmic/arm_dynarmic_32.cpp"
 A64_OWNER = "src/core/arm/dynarmic/arm_dynarmic_64.cpp"
+# Canonical CPU6/JIT successors merged on 2026-11-27. These are complete
+# reviewed Git blobs, not loose marker allowlists. The historical I-cache
+# patch remains replayed independently by derive().
+A32_ICACHE_PREDECESSOR_GIT_BLOB = "8e3a224f19ecf1723c1036241787cb76761b117b"
+A32_CPU6_GIT_BLOB = "16d5c80ad9dfcdaad32ceb4b4925af80a76c6b29"
+A64_CPU6_GIT_BLOB = "90ef34cf1ce04ea2a199622beb4ac0a8c89cb128"
 SM_SOURCE_OWNER = "src/core/hle/service/sm/sm.cpp"
-SM_SHIPPING_SOURCE = ROOT / "vendor/encore-active/eden-backports" / SM_SOURCE_OWNER
+SM_MAINTAINED_SOURCE = ACTIVE / SM_SOURCE_OWNER
+# c75c5437 is the exact canonical predecessor with HOS23 session capacity
+# but before the shutdown/wait owner was restored. 7dcef506 is the current
+# maintained successor selected by CMake.
 SM_SHIPPING_GIT_BLOB = "c75c5437dfae5176d25a9994ff8aa7164d8b6713"
+SM_HOS23_GIT_BLOB = "7dcef506262120194a8c62caff7dcf289156fc03"
 SM_SHUTDOWN_PREVIOUS_GIT_BLOB = "494ee50d2880a491b07c2b981193df1a686c696a"
 SM_FACTORY_RETIREMENT_GIT_BLOB = "34c7c85f1476a3ba819ad20b8a4f8150cca86e16"
 SM_SHUTDOWN_GIT_BLOB = "2ef914e3f1b24442e1fa0130d5f8175111e7d316"
@@ -128,10 +138,23 @@ def preserve_known_owned_cache_source(destination: Path, target: Path, digest: s
 
 
 def normalize_sm_factory_retirement(data: bytes) -> bytes:
-    """Replay the exact NVDRV-last successor (6d9fc808) for provenance only."""
-    if git_blob_sha1(data) == SM_FACTORY_RETIREMENT_GIT_BLOB:
+    """Replay the exact HOS23 + NVDRV-last successors for provenance only."""
+    current_blob = git_blob_sha1(data)
+    if current_blob == SM_HOS23_GIT_BLOB:
+        # 7fda6333 is a one-line successor: keep the 64-session runtime owner,
+        # but reverse it only on this audit copy before replaying the older
+        # shutdown receipt.
+        current = b': ServiceFramework{system_, "sm:", 64}\n'
+        previous = b': ServiceFramework{system_, "sm:", 4}\n'
+        if data.count(current) != 1:
+            raise RuntimeError("SM HOS23 session-capacity successor shape drift")
+        data = data.replace(current, previous, 1)
+        if git_blob_sha1(data) != SM_SHUTDOWN_GIT_BLOB:
+            raise RuntimeError("SM HOS23 successor modified unrelated shutdown source")
+        current_blob = SM_SHUTDOWN_GIT_BLOB
+    if current_blob == SM_FACTORY_RETIREMENT_GIT_BLOB:
         return data
-    if git_blob_sha1(data) != SM_SHUTDOWN_GIT_BLOB:
+    if current_blob != SM_SHUTDOWN_GIT_BLOB:
         raise RuntimeError("Shutdown SM owner drift")
     header = b"#include <array>\n"
     successor = "void ServiceManager::ReleaseRegisteredHandlersForShutdown() {\n    // Closing/waking host service waiters and joining their work happens first.\n    // Keep SM itself and its kernel-owned ports alive until process shutdown,\n    // but retire factories (NVDRV included) while KProcess/Host1x still exist.\n    decltype(registered_services) retired;\n    {\n        std::unique_lock l{lock};\n        if (!closing || service_waiters != 0) {\n            LOG_ERROR(Service_SM, \"Refusing to retire service handlers before SM close\");\n            return;\n        }\n        retired.swap(registered_services);\n    }\n    // GPU supervisor / worker factories may hold an AS shared_ptr after its\n    // originating NVDRV FD closes. nvhost_as_gpu references Module::Container\n    // and NvMap: destroying NVDRV first leaves those references dangling, and\n    // later AS retirement tries to lock an already-destroyed mutex. Retire all\n    // other service factories before the three NVDRV aliases. Service loops\n    // are already joined and the kernel/Host1x remain alive. Moving the\n    // std::function owners costs no allocations and keeps this out of SM's lock.\n    std::array<SessionRequestHandlerFactory, 3> nvdrv_keepers{};\n    for (auto& [name, factory] : retired) {\n        if (name == \"nvdrv\") {\n            nvdrv_keepers[0] = std::move(factory);\n        } else if (name == \"nvdrv:a\") {\n            nvdrv_keepers[1] = std::move(factory);\n        } else if (name == \"nvdrv:s\") {\n            nvdrv_keepers[2] = std::move(factory);\n        }\n    }\n    retired.clear();\n    // Only now may NVDRV's module close its NvMap/Container and their mutexes.\n    for (auto& factory : nvdrv_keepers) {\n        factory = {};\n    }\n}\n\n"
@@ -149,16 +172,14 @@ def normalize_sm_factory_retirement(data: bytes) -> bytes:
 def stage_selected_sm_source(destination: Path, *, check: bool) -> bool:
     """Keep the shutdown-aware SM header and implementation under one owner."""
     target = destination / SM_SOURCE_OWNER
-    maintained = ACTIVE / SM_SOURCE_OWNER
-    predecessor = SM_SHIPPING_SOURCE
+    maintained = SM_MAINTAINED_SOURCE
     if not target.is_file() or target.is_symlink():
         raise RuntimeError("Missing staged SM source")
-    if not maintained.is_file() or not predecessor.is_file():
+    if not maintained.is_file():
         raise RuntimeError("Missing reviewed SM source owner")
     maintained_bytes = maintained.read_bytes()
-    predecessor_bytes = predecessor.read_bytes()
-    if git_blob_sha1(predecessor_bytes) != SM_SHIPPING_GIT_BLOB:
-        raise RuntimeError("Shipping SM predecessor drift")
+    if git_blob_sha1(maintained_bytes) != SM_HOS23_GIT_BLOB:
+        raise RuntimeError("Maintained SM HOS23/shutdown owner drift")
     historical = normalize_sm_factory_retirement(maintained_bytes)
     # The current SM factory-retirement owner is an exact successor of the
     # reviewed close/wait implementation. Seal its unchanged predecessor too.
@@ -176,13 +197,14 @@ def stage_selected_sm_source(destination: Path, *, check: bool) -> bool:
     if check:
         raise RuntimeError(
             f"Active SM source check found predecessor: current={git_blob_sha1(current)} "
-            f"active={SM_SHUTDOWN_GIT_BLOB}"
+            f"active={SM_HOS23_GIT_BLOB}"
         )
-    if current != predecessor_bytes and git_blob_sha1(current) not in (
-            SM_SHUTDOWN_PREVIOUS_GIT_BLOB, SM_FACTORY_RETIREMENT_GIT_BLOB):
+    if git_blob_sha1(current) not in (
+            SM_SHIPPING_GIT_BLOB, SM_SHUTDOWN_PREVIOUS_GIT_BLOB,
+            SM_FACTORY_RETIREMENT_GIT_BLOB, SM_SHUTDOWN_GIT_BLOB):
         raise RuntimeError(
             f"Refusing unknown staged SM source: current={git_blob_sha1(current)} "
-            f"shipping={SM_SHIPPING_GIT_BLOB}"
+            f"active={SM_HOS23_GIT_BLOB}"
         )
     with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as handle:
         tmp = Path(handle.name)
@@ -237,17 +259,50 @@ def stage_source(destination: Path, expected: dict[str, tuple[bytes, bytes]], *,
                     shutdown = shutdown.replace(added, replacement, 1)
                 if shutdown != new:
                     raise RuntimeError("SM shutdown successor modified unrelated host-wait source")
-            elif relative == "src/core/arm/dynarmic/arm_dynarmic_64.cpp":
-                # N76 is a guarded, exact additive extension of the canonical
-                # A64 JIT source; reject all other source drift.
-                header = "#ifdef EDEN_NS2_GUEST_COUNTER\n#include \"encore/guest_counter_policy.h\"\n#endif\n".encode()
-                guest_counter = "#ifdef EDEN_NS2_GUEST_COUNTER\n    // Set before JIT is instantiated; never hardcode a game-specific name.\n    config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());\n#else\n    config.cntfrq_el0 = Hardware::CNTFREQ;\n#endif".encode()
-                original_counter = b"    config.cntfrq_el0 = Hardware::CNTFREQ;"
-                if (maintained_bytes.count(header) != 1 or
-                        maintained_bytes.count(guest_counter) != 1 or
-                        maintained_bytes.replace(header, b"").replace(
-                            guest_counter, original_counter) != new):
-                    raise RuntimeError("N76 modified unrelated native A64 source")
+            elif relative == A32_OWNER:
+                # The canonical A32 owner is the reviewed I-cache source plus
+                # the CPU6/JIT successor merged by vendor commit 277b1f25.
+                # Seal both complete epochs so native preparation cannot
+                # silently accept an unrelated A32 edit.
+                if git_blob_sha1(new) != A32_ICACHE_PREDECESSOR_GIT_BLOB:
+                    raise RuntimeError("A32 I-cache predecessor drift")
+                if git_blob_sha1(maintained_bytes) != A32_CPU6_GIT_BLOB:
+                    raise RuntimeError("A32 CPU6/JIT successor drift")
+                for marker in (
+                    b"Core::Hardware::NUM_LEGACY_CPU_CORES",
+                    b"std::countl_zero(Common::PageTable::ATTRIBUTE_MASK)",
+                    b"::Eden::JitMemory::A32CacheBytes(",
+                    b"::Eden::JitStartup::ConstructWithCapacityFallback(",
+                ):
+                    if maintained_bytes.count(marker) != 1:
+                        raise RuntimeError("A32 CPU6/JIT successor shape drift")
+            elif relative == A64_OWNER:
+                current_blob = git_blob_sha1(maintained_bytes)
+                if current_blob == A64_CPU6_GIT_BLOB:
+                    # Complete reviewed CPU6/JIT successor merged by vendor
+                    # commit 5ddc3c41. Exact blob identity is the admission
+                    # authority; markers document the contracts it carries.
+                    for marker in (
+                        b"Core::Hardware::NUM_LEGACY_CPU_CORES",
+                        b"std::countl_zero(Common::PageTable::ATTRIBUTE_MASK)",
+                        b"::Eden::JitMemory::A64CacheBytes(",
+                        b"::Eden::JitStartup::ConstructWithCapacityFallback(",
+                        b"Eden::GuestCounter::Rate()",
+                    ):
+                        if maintained_bytes.count(marker) != 1:
+                            raise RuntimeError("A64 CPU6/JIT successor shape drift")
+                else:
+                    # N76 is a guarded, exact additive extension of the
+                    # historical canonical A64 JIT source; keep accepting that
+                    # immediately preceding reviewed epoch as well.
+                    header = "#ifdef EDEN_NS2_GUEST_COUNTER\n#include \"encore/guest_counter_policy.h\"\n#endif\n".encode()
+                    guest_counter = "#ifdef EDEN_NS2_GUEST_COUNTER\n    // Set before JIT is instantiated; never hardcode a game-specific name.\n    config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());\n#else\n    config.cntfrq_el0 = Hardware::CNTFREQ;\n#endif".encode()
+                    original_counter = b"    config.cntfrq_el0 = Hardware::CNTFREQ;"
+                    if (maintained_bytes.count(header) != 1 or
+                            maintained_bytes.count(guest_counter) != 1 or
+                            maintained_bytes.replace(header, b"").replace(
+                                guest_counter, original_counter) != new):
+                        raise RuntimeError("N76 modified unrelated native A64 source")
             else:
                 raise RuntimeError(f"Unreviewed active-core patch drift: {relative}")
         current = target.read_bytes()
@@ -426,7 +481,7 @@ def main() -> None:
                 target.write_bytes(old)
             sm_target = destination / SM_SOURCE_OWNER
             sm_target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(SM_SHIPPING_SOURCE, sm_target)
+            shutil.copyfile(SM_MAINTAINED_SOURCE, sm_target)
             stage_source(destination, expected, check=False)
             stage_source(destination, expected, check=True)
             stage_source(destination, expected, check=False)

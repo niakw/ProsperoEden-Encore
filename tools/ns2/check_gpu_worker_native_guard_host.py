@@ -10,7 +10,7 @@ import re
 
 root = Path(__file__).resolve().parents[2]
 cmake = (root / "headless/CMakeLists.txt").read_text(encoding="utf-8")
-source = (root / "vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp").read_text(encoding="utf-8")
+source = (root / "vendor/encore-active/eden/src/core/hle/service/am/service/gpu_worker.cpp").read_text(encoding="utf-8")
 
 begin = cmake.index('set(EDEN_NS2_GPU_SESSION_ROOT ')
 end = cmake.index('\nendif()', begin)

@@ -11,7 +11,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 pinned = (root / "vendor/sources/eden/src/video_core/texture_cache/texture_cache_base.h").read_text()
-active = (root / "vendor/encore-active/eden-backports/src/video_core/texture_cache/texture_cache_base.h").read_text()
+active = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache_base.h").read_text()
 patch = root / "headless/backports/eden-ps5-texture-page-range-guards.patch"
 shipping = (root / "tools/apply-eden-backports.sh").read_text()
 assert 'apply_one "$root/headless/backports/eden-ps5-texture-page-range-guards.patch"' in shipping

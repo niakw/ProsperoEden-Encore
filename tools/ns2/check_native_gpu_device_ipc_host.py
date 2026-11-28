@@ -12,7 +12,7 @@ import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
 vendor=ROOT/"vendor"
-owner=(vendor/"encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp").read_text()
+owner=(vendor/"encore-active/eden/src/core/hle/service/am/service/gpu_session.cpp").read_text()
 def extract(begin,end):
     assert owner.count(begin)==owner.count(end)==1,(begin,end)
     return begin+owner.split(begin,1)[1].split(end,1)[0]
@@ -130,7 +130,7 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-devices-") as d:
             exe=Path(d)/(Path(cc).name+opt)
             cmd=[cc,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                  "-fsanitize=undefined","-fno-sanitize-recover=all",
-                 "-I"+str(vendor/"encore-active/ns2-runtime/hle"),
+                 "-I"+str(vendor/"encore-active/eden/src"),
                  str(src),"-o",str(exe)]
             built=subprocess.run(cmd,capture_output=True,text=True,timeout=60,env=os.environ.copy())
             assert built.returncode==0,built.stderr[-6000:]

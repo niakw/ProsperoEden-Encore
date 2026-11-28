@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-source = (root / "vendor/encore-active/eden-vulkan/vulkan_present_layer.cpp").read_text()
+source = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_layer.cpp").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 function = source.index("void Layer::UpdateRawImage(")
 start = "    const std::span<u8> mapped_span = buffer.Mapped();\n\n#ifndef PS5_NATIVE\n    const u64 image_offset = GetRawImageOffset(framebuffer, image_index);"

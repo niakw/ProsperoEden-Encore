@@ -3,7 +3,7 @@
 from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 pinned = (root / "vendor/sources/eden/src/video_core/renderer_opengl/gl_rasterizer.cpp").read_text()
-maintained = root / "vendor/encore-active/eden-core/src/video_core/renderer_opengl"
+maintained = root / "vendor/encore-active/eden/src/video_core/renderer_opengl"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 old_tail = "        }\n    });\n}\n\nvoid RasterizerOpenGL::DrawIndirect()"
 new_tail = "        }\n        static unsigned traced_draws{};\n        if (traced_draws < 3) {\n            ++traced_draws;\n            LOG_INFO(Render_OpenGL, \"EDEN_GUEST_GL_DRAW count={} error={}\", traced_draws, glGetError());\n        }\n    });\n}\n\nvoid RasterizerOpenGL::DrawIndirect()"

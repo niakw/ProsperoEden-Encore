@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
-src=(root/"vendor/encore-active/eden-core/src/common/logging.cpp").read_text()
+src=(root/"vendor/encore-active/eden/src/common/logging.cpp").read_text()
 routine=src.split("void FmtLogMessageImpl(",1)[1]
 guard=routine.split("#ifdef __OPENORBIS__",1)[1].split("#endif",1)[0]
 assert "color_console_backend.enabled.load(std::memory_order_relaxed)" in guard

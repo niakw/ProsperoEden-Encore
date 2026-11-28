@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-path = ROOT/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h"
+path = ROOT/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h"
 src = path.read_text()
 cmake = (ROOT/"headless/vulkan.cmake").read_text()
 fast = (ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
@@ -25,7 +25,7 @@ start = "template <class P>\nvoid TextureCache<P>::RefreshContents("
 end = "\ntemplate <class P>\nImageViewId TextureCache<P>::CreateImageView("
 assert src.count(start) == src.count(end) == 1
 method = src[src.index(start):src.index(end,src.index(start))]
-selected = (ROOT/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+selected = (ROOT/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 upload_start = "void TextureCache<P>::UploadImageContents("
 upload_end = "\ntemplate <class P>"
 def extract_upload(body):

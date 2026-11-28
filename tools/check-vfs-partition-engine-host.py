@@ -12,7 +12,7 @@ paths = ["file_sys/vfs/vfs.cpp","file_sys/vfs/vfs_vector.cpp","file_sys/partitio
          "file_sys/fssystem/fssystem_nca_file_system_driver.cpp","file_sys/romfs.cpp"]
 for name in paths:
     assert '"' + name + '"' in segment
-    assert (ROOT/"vendor/encore-active/eden-core/src/core"/name).is_file()
+    assert (ROOT/"vendor/encore-active/eden/src/core"/name).is_file()
 ncz = source.split("# NSZ/XCZ:",1)[1].split("# Extracted AOC:",1)[0]
 assert '"file_sys/card_image.cpp"' in ncz
 # Evaluate the actual CMake selection loop with the original source list.
@@ -27,7 +27,7 @@ foreach(relative IN ITEMS '''+' '.join(paths)+''')
     if(relative IN_LIST core_sources)
        message(FATAL_ERROR "Original VFS owner retained")
     endif()
-    if(NOT "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/${relative}" IN_LIST core_sources)
+    if(NOT "${PORT_ROOT}/vendor/encore-active/eden/src/core/${relative}" IN_LIST core_sources)
        message(FATAL_ERROR "Maintained owner missing")
     endif()
 endforeach()

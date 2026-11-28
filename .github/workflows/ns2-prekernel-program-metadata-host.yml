@@ -29,12 +29,12 @@ jobs:
             -fsanitize=address,undefined -fno-sanitize-recover=all \
             -ffunction-sections -fdata-sections -Wl,--gc-sections \
             -Ibuild-ns2-prekernel/fmt/include \
-            -Ivendor/encore-active/ns2-helpers/include \
-            -Ivendor/encore-active/ns2-runtime/metadata \
+            -Ivendor/encore-active/eden/src \
+            -Ivendor/encore-active/eden/src \
             -Ivendor/sources/eden/src/dynarmic/src \
             -Ivendor/sources/eden/src \
             tools/ns2/test_program_metadata.cpp \
-            vendor/encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp \
+            vendor/encore-active/eden/src/core/file_sys/program_metadata.cpp \
             -o build-ns2-prekernel/npdm-real-test
           ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 \
             build-ns2-prekernel/npdm-real-test

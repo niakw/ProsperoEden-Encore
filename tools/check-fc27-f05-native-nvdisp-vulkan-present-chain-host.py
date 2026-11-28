@@ -27,9 +27,9 @@ cmd="python3 -B tools/check-fc27-f05-native-nvdisp-vulkan-present-chain-host.py"
 assert cmd in fast and cmd in pre
 NV=(ROOT/"vendor/sources/eden/src/core/hle/service/nvdrv/devices/nvdisp_disp0.cpp").read_text()
 GPU=(ROOT/"vendor/sources/eden/src/video_core/gpu.cpp").read_text()
-SYNC=(ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp").read_text()
-RENDER=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_renderer.cpp").read_text()
-PRESENT=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_present_manager.cpp").read_text()
+SYNC=(ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
+RENDER=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_renderer.cpp").read_text()
+PRESENT=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_manager.cpp").read_text()
 cmake=(ROOT/"headless/vulkan.cmake").read_text()
 assert "vulkan_present_manager.cpp" in cmake and "vulkan_renderer.cpp" in cmake
 assert "renderer->Composite(composite_layers);" in GPU
@@ -210,7 +210,7 @@ consumer_methods="\n\n".join(native(consumer_source,signature) for signature in 
     "Status BufferQueueConsumer::AcquireBuffer(",
     "Status BufferQueueConsumer::ReleaseBuffer(",
 ))
-producer_source=(ROOT/"vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
+producer_source=(ROOT/"vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
 queued=producer_source[producer_source.index("Status BufferQueueProducer::QueueBuffer("):
                        producer_source.index("\nvoid BufferQueueProducer::CancelBuffer(")]
 producer_publish=queued[queued.index("        ++core->frame_counter;"):
@@ -472,8 +472,8 @@ kt=kt[0]
 kr=ROOT/"vendor/sources/eden/src/core/hle/kernel"
 s=(kr/"k_synchronization_object.cpp").read_text()
 q=(kr/"k_thread_queue.cpp").read_text()
-t=(ROOT/"vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.cpp").read_text()
-c=(ROOT/"vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp").read_text()
+t=(ROOT/"vendor/encore-active/eden/src/core/hle/kernel/k_thread.cpp").read_text()
+c=(ROOT/"vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp").read_text()
 re=(kr/"k_readable_event.cpp").read_text()
 ev=(kr/"k_event.cpp").read_text()
 ws="class ThreadQueueImplForKSynchronizationObjectWait final : public KThreadQueueWithoutEndWait {"

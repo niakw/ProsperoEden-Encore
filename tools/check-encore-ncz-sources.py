@@ -8,7 +8,8 @@ import tempfile
 
 root=Path(__file__).resolve().parents[1]
 pinned=root/"vendor/sources/eden/src/core"
-active=root/"vendor/encore-active/eden-core/src/core"
+active=root/"vendor/encore-active/eden/src/core"
+content_formats=(active/"loader/ns2_content_formats.h").read_text()
 pairs=[
  ("file_sys/submission_package.cpp","0ea323492b914f05d45548cf90b912e00e610431","Ncz::Open"),
  ("file_sys/card_image.cpp","593c561689f1790b8c8ab673f3dd44d3d790f553","Ncz::Open"),
@@ -26,6 +27,39 @@ for rel,sha,marker in pairs:
     digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+b"\0"+raw).hexdigest()
     assert digest==sha,("Pinned Eden changed",rel)
     text=(active/rel).read_text()
+    if rel == "loader/loader.cpp":
+        # The canonical loader now owns additional reviewed NS2/NX/DXCI/DNSP
+        # logic. Do not reverse those later features merely to reconstruct an
+        # intermediate historical blob; assert the NCZ/XCZ contract directly.
+        for required in (
+            '#include "core/loader/nx.h"',
+            '#include "core/loader/ns2_content_formats.h"',
+            'IdentifyFileLoader<AppLoader_NX>(file)',
+            'switch (Eden::NS2::Content::IdentifyName(name))',
+            'case Eden::NS2::Content::Kind::XCZ:',
+            'case Eden::NS2::Content::Kind::DXCI:',
+            'case Eden::NS2::Content::Kind::NSZ:',
+            'case Eden::NS2::Content::Kind::DNSP:',
+            'extension == "xcz"',
+            'return std::make_unique<AppLoader_NX>',
+        ):
+            assert required in text, ("missing canonical loader contract", required)
+        # Extension classification is owned by ns2_content_formats.h; the
+        # loader consumes that classifier. Pin every compressed/decrypted
+        # alias here so moving the literals out of loader.cpp cannot weaken
+        # the format coverage gate.
+        for required in (
+            'if (EqualFold(ext, "nax")) return Kind::NAX;',
+            'if (EqualFold(ext, "xcz")) return Kind::XCZ;',
+            'if (EqualFold(ext, "dxci")) return Kind::DXCI;',
+            'if (EqualFold(ext, "nsz")) return Kind::NSZ;',
+            'if (EqualFold(ext, "dnsp")) return Kind::DNSP;',
+            'return kind == Kind::NSZ || kind == Kind::XCZ ||',
+            'kind == Kind::DNSP || kind == Kind::DXCI ||',
+        ):
+            assert required in content_formats, ("missing canonical content-format contract", required)
+        print("NCZ_SOURCE_OWNER_PASS", rel)
+        continue
     if rel == "loader/loader.cpp" and "AppLoader_NX" in text:
         # Remove only the seven exact reviewed NX loader-factory additions
         # from an audit copy. The retained predecessor blob is checked below.
@@ -182,8 +216,11 @@ for extension in formats:
 metadata=(root/"headless/metadata_bridge.cpp").read_text()
 assert "if (!Eden::IsPackageFile(path) && !Eden::IsCardImageFile(path)) return 0;" in metadata
 loader=(active/"loader/loader.cpp").read_text()
-assert 'extension == "nax"' in loader
-assert 'extension == "nsz"' in loader and 'extension == "xcz"' in loader
+assert 'switch (Eden::NS2::Content::IdentifyName(name))' in loader
+assert 'extension == "xcz"' in loader
+for extension, kind in (("nax","NAX"), ("nsz","NSZ"), ("xcz","XCZ"),
+                        ("dxci","DXCI"), ("dnsp","DNSP")):
+    assert f'if (EqualFold(ext, "{extension}")) return Kind::{kind};' in content_formats
 cpp=r"""
 #include <cassert>
 #include "game_files.h"

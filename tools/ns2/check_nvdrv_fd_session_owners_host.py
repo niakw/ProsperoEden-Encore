@@ -11,7 +11,7 @@ root = Path(__file__).resolve().parents[2]
 vendor_root = root / 'vendor'
 if not (vendor_root / 'encore-active').exists():
     vendor_root = root.parent / 'vendor'  # isolated sparse host checkout
-vendor = vendor_root / 'encore-active/eden-core/src/core/hle/service/nvdrv'
+vendor = vendor_root / 'encore-active/eden/src/core/hle/service/nvdrv'
 container = (vendor / 'core/container.cpp').read_text()
 core_nvmap = (vendor / 'core/nvmap.cpp').read_text()
 interface = (vendor / 'devices/nvmap.cpp').read_text()

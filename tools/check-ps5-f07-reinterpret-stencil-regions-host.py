@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-owner = (ROOT / "vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+owner = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp").read_text()
 begin = "void TextureCacheRuntime::ReinterpretImage(Image& dst, Image& src,"
 end = "\nvoid TextureCacheRuntime::BlitImage("
 assert owner.count(begin) == owner.count(end) == 1

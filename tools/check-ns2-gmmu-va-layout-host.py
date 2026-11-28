@@ -8,7 +8,7 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
-AS = ROOT / "vendor/encore-active/ns2-runtime/nvdrv_as"
+AS = ROOT / "vendor/encore-active/eden/src"
 OWNER = AS / "core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp"
 HELPER = AS / "core/hle/service/nvdrv/devices/native_gpu_va_layout.h"
 TEST = ROOT / "tools/ns2/test_native_gpu_va_layout.cpp"

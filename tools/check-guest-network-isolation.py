@@ -23,7 +23,7 @@ assert "eden-ps5-guest-domain-filter.patch" in apply
 # The shipped guest resolver is a complete maintained source; the old
 # substring-domain blocker must not survive there. CMake merely selects it.
 cmake = (root / "headless/CMakeLists.txt").read_text()
-dns = (root / "vendor/encore-active/eden-core/src/core/hle/service/sockets/sfdnsres.cpp").read_text()
+dns = (root / "vendor/encore-active/eden/src/core/hle/service/sockets/sfdnsres.cpp").read_text()
 assert 'set(EDEN_MAINTAINED_GUEST_DNS' in cmake
 assert 'list(REMOVE_ITEM core_sources hle/service/sockets/sfdnsres.cpp)' in cmake
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_GUEST_DNS}")' in cmake

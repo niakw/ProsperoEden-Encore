@@ -61,8 +61,8 @@ OWNERS = [
       "inline bool NeverHeld("
     ],
     "consumers": [
-      "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h",
-      "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp"
+      "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h",
+      "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp"
     ]
   },
   {
@@ -84,7 +84,7 @@ OWNERS = [
       "std::size_t Record("
     ],
     "consumers": [
-      "vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp"
+      "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_pipeline_cache_cost.cpp"
     ]
   },
   {
@@ -137,17 +137,6 @@ OWNERS = [
     ]
   },
   {
-    "id": "U77",
-    "header": "vulkan_gc_budget.h",
-    "symbols": [
-      "constexpr std::uint64_t AfterProjectedEviction(",
-      "constexpr std::uint64_t OldestEvictionTick("
-    ],
-    "consumers": [
-      "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h"
-    ]
-  },
-  {
     "id": "U78",
     "header": "vulkan_pool_capacity.h",
     "symbols": [
@@ -155,12 +144,12 @@ OWNERS = [
       "std::uint64_t Observe("
     ],
     "consumers": [
-      "vendor/encore-active/eden-vulkan/vulkan_device.cpp"
+      "vendor/encore-active/eden/src/video_core/vulkan_common/vulkan_device.cpp"
     ]
   }
 ]
 
-assert len(OWNERS) == 13
+assert len(OWNERS) == 12
 assert len({row["id"] for row in OWNERS}) == len(OWNERS)
 for owner in OWNERS:
     body = (ROOT / "headless" / owner["header"]).read_text(encoding="utf-8")
@@ -171,6 +160,15 @@ for owner in OWNERS:
     for path in owner["consumers"]:
         consumer = (ROOT / path).read_text(encoding="utf-8")
         assert expected in consumer, (owner["id"], "direct include missing", path)
+# U77 is parked after TextureCache GC stopped consuming projected-eviction
+# helpers directly. Keep the helper auditable without forcing a dead include.
+gc_budget = (ROOT / "headless/vulkan_gc_budget.h").read_text()
+assert "constexpr std::uint64_t AfterProjectedEviction(" in gc_budget
+assert "constexpr std::uint64_t OldestEvictionTick(" in gc_budget
+assert '#include "vulkan_gc_budget.h"' not in (
+    ROOT / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h"
+).read_text()
+
 # U79 is a PARKED source-contract owner, not an active native caller.
 topology = (ROOT / "headless/ps5_amd_topology_evidence.h").read_text()
 assert "struct AmdCpuEvidence" in topology

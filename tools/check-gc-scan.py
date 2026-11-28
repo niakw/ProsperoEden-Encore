@@ -1,43 +1,54 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""R439 source contract and behavioral model; no PS5 required."""
+"""Selected native texture-GC scan contract; source + behavioral model only."""
 from pathlib import Path
+
 root = Path(__file__).resolve().parents[1]
-port = (root / "tools/prepare-vulkan-port.py").read_text()
-perf = (root / "headless/performance.h").read_text()
-main = (root / "headless/main.cpp").read_text()
-active = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+active = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 start = active.index("void TextureCache<P>::RunGarbageCollector() {")
 end = active.index("\ntemplate <class P>", start)
 gc = active[start:end]
-assert "gc_count_visits{false}" in perf
-assert 'entry == "gc_scan=upstream"' in main
-assert "gc_count_visits.store(false" in main
-for item in ("size_t num_scanned = 0", "max_scanned = 8192",
-             "num_iterations == 0 || num_scanned >= max_scanned",
-             "++total_scanned;", "++skipped;", "++evicted;",
-             "num_scanned = 0; // independent scan allowance for the aggressive pass",
-             "EDEN_VULKAN_GC_SCAN"):
-    assert item in gc, item
-assert gc.count("gc_count_visits.load(std::memory_order_relaxed)") == 3
-assert "Pinned GC scan anchor changed" in port and "gc_ending" in port
-def model(items, budget=10, limit=8192, old=False):
-    visits = evictions = 0
-    for eligible in items:
-        if budget == 0 or visits == limit:
+
+for marker in (
+    "constexpr size_t gc_scan_limit = 8192;",
+    "constexpr size_t gc_batch_count = 40;",
+    "constexpr size_t gc_batch_bytes = 32_MiB;",
+    "const auto PrefetchGc = [&] {",
+    "size_t remaining = num_iterations;",
+    "size_t scanned = 0;",
+    "if (remaining == 0 || scanned >= gc_scan_limit ||",
+    "++scanned;",
+    "--remaining;",
+    "|| gc_scanned >= gc_scan_limit",
+    "++gc_scanned;",
+    "--num_iterations;",
+    "gc_scanned = 0;",
+    "PrefetchGc();",
+):
+    assert marker in gc, marker
+
+prefetch = gc[gc.index("const auto PrefetchGc"):gc.index("const auto UseGcPrefetch")]
+assert prefetch.index("++scanned;") < prefetch.index("ImageFlagBits::IsDecoding")
+assert prefetch.index("ImageFlagBits::IsDecoding") < prefetch.index("--remaining;")
+cleanup = gc[gc.index("const auto Cleanup"):gc.index("const auto CollectEligible")]
+assert cleanup.index("++gc_scanned;") < cleanup.index("ImageFlagBits::IsDecoding")
+assert cleanup.index("ImageFlagBits::IsDecoding") < cleanup.rindex("--num_iterations;")
+collect = gc[gc.index("const auto CollectEligible"):gc.index("Configure(false);")]
+assert collect.index("gc_scanned = 0;") < collect.index("PrefetchGc();")
+assert collect.index("PrefetchGc();") < collect.index("lru_cache.ForEachItemBelow")
+
+def model(statuses, budget=10, cap=8192):
+    scanned = attempts = 0
+    for protected in statuses:
+        if attempts == budget or scanned >= cap:
             break
-        visits += 1
-        if old:
-            budget -= 1
-        if not eligible:
+        scanned += 1
+        if protected:
             continue
-        if not old:
-            budget -= 1
-        evictions += 1
-    return visits, evictions
-items = [False] * 200 + [True] * 15
-assert model(items) == (210, 10)
-assert model(items, old=True) == (10, 0)
-assert model([False] * 10000) == (8192, 0)
-assert model([True] * 100) == (10, 10)
-print("R439 GC scan contract PASS")
+        attempts += 1
+    return scanned, attempts
+
+assert model([True] * 200 + [False] * 15) == (210, 10)
+assert model([True] * 10000) == (8192, 0)
+assert model([False] * 100) == (10, 10)
+print("SELECTED_GC_SCAN_CONTRACT_PASS scan_limit=8192 eviction_budget_independent=1")

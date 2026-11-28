@@ -18,7 +18,7 @@ import sys
 import tempfile
 
 root = pathlib.Path(__file__).resolve().parents[1]
-heap = (root / 'vendor/encore-active/eden-build/tooling/native/app_heap_arenas.c').read_text()
+heap = (root / 'vendor/encore-active/eden/tooling/native/app_heap_arenas.c').read_text()
 assert not (root / 'headless/heap_arenas.inc').exists()
 assert not (root / 'headless/heap_guard.h').exists()
 for required in (

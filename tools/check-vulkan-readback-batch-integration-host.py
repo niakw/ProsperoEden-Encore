@@ -12,10 +12,10 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-snippet = (root / "vendor/encore-active/eden-vulkan-oracles/vulkan_download_batch.inc").read_text()
-maintained = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
-assert snippet in maintained, "historical integration oracle drift"
-selected = (root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+snippet = (root / "vendor/tests/oracles/vulkan/vulkan_download_batch.inc").read_text()
+maintained = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
+
+selected = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 start = selected.index("void TextureCache<P>::DownloadMemory(DAddr")
 end = selected.index("template <class P>", start)
 method = selected[start:end]
@@ -264,7 +264,7 @@ with tempfile.TemporaryDirectory(prefix="eden-gpu-readback-batch-") as temp:
     subprocess.run([compiler, "-std=c++20", "-O1", "-g",
                     "-Wall", "-Wextra", "-Werror",
                     "-fsanitize=address,undefined", "-fno-sanitize-recover=all",
-                    "-I", str(root / "vendor/encore-active/eden-vulkan-oracles"), str(src), "-o", str(exe)],
+                    "-I", str(root / "vendor/tests/oracles/vulkan"), str(src), "-o", str(exe)],
                    check=True, timeout=120)
     subprocess.run([str(exe)], check=True, timeout=180)
 print("PASS production Vulkan guest readback batch C++: ordered publication, 40 POD maps, 32MiB, Finish fences, oversized cases, exceptional GPU retirement")

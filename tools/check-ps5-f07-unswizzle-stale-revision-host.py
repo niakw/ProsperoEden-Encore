@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-active = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+active = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 pinned = (root / "vendor/sources/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 method_start = "void TextureCache<P>::TickAsyncUnswizzle() {"

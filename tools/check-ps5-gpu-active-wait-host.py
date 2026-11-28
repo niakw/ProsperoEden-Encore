@@ -23,7 +23,7 @@ assert "active->store(0, std::memory_order_release);" in impl
 assert "if (!totals) return;" in impl
 assert "std::memory_order_acquire" in impl
 assert "while (" not in impl and "std::printf(" not in impl
-gpu_root = root / "vendor/encore-active/eden-core/src/video_core"
+gpu_root = root / "vendor/encore-active/eden/src/video_core"
 dma_normal = (gpu_root / "dma_pusher.cpp").read_text()
 dma_dev = (gpu_root / "dma_pusher_dev.cpp").read_text()
 puller_normal = (gpu_root / "engines/puller.cpp").read_text()

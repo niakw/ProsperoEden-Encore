@@ -17,7 +17,7 @@ from test_dlss_nr_min_vendor_source_guard import Drift, compact, git, method, or
 
 OWNERS = {
     "fsr": "sources/eden/src/video_core/renderer_vulkan/present/fsr.cpp",
-    "neural_present": "encore-active/eden-vulkan/nr_rdna2_nohistory_present.cpp",
+    "neural_present": "encore-active/eden/src/video_core/renderer_vulkan/nr_rdna2_nohistory_present.cpp",
 }
 
 def check(presenter: str, owners: dict[str, str]) -> None:

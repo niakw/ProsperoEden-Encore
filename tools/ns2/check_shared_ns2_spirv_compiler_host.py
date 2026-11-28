@@ -31,10 +31,10 @@ assert 'backend/spirv/emit_spirv_image.cpp' in section
 assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")' in section
 assert 'set_property(TARGET shader_recompiler PROPERTY SOURCES' in section
 # NS1 SampleMask must survive selecting the shared native SPIR-V owners.
-ns2_context=(ROOT/'vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp').read_text()
-ns2_get=(ROOT/'vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp').read_text()
-ns1_context=(ROOT/'vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp').read_text()
-ns1_get=(ROOT/'vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp').read_text()
+ns2_context=(ROOT/'vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp').read_text()
+ns2_get=(ROOT/'vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp').read_text()
+ns1_context=(ROOT/'vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp').read_text()
+ns1_get=(ROOT/'vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp').read_text()
 sample_input='''    if (info.uses_sample_mask) {
         input_sample_mask = DefineInput(*this, TypeArray(U32[1], Const(1U)), false,
                                        spv::BuiltIn::SampleMask);
@@ -62,7 +62,7 @@ assert real.returncode==0 and 'UNIFIED_NATIVE_GPU_SOURCE_GRAPH_PASS' in real.std
 print('P0_2_UNIFIED_SPIRV_CMAKE_GRAPH_PASS ps5_npdm_owners=1 maxwell=preserved',flush=True)
 
 pinned=(ROOT/"vendor/sources/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
-native=(ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
+native=(ROOT/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
 marker="        std::array<Id, Info::MAX_INDIRECT_CBUFS> buf_labels;"
 start=pinned.index(marker)
 end=pinned.index("        return func;",start)+len("        return func;")
@@ -76,7 +76,7 @@ assert copy==reference, "Maxwell indirect CBUF emitter drifted from pinned sourc
 assert "OpSwitch(selector, invalid_label," in area[stop:]
 assert "const Id valid_offset{OpULessThan(" in area[stop:]
 assert "inline thread_local bool native_spirv_cbuf_bounds_active = false" in (
-    ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_indirect_cbuf.h"
+    ROOT/"vendor/encore-active/eden/src/shader_recompiler/frontend/ampere/native_indirect_cbuf.h"
 ).read_text()
 print("P0_2_NS1_PINNED_CBUF_PARITY_PASS sparse_maxwell=unchanged native_scope=thread_local",flush=True)
 
@@ -84,7 +84,7 @@ print("P0_2_NS1_PINNED_CBUF_PARITY_PASS sparse_maxwell=unchanged native_scope=th
 # emitter's F16[2] memory operand is not a valid OpLoad/OpAtomicCompareExchange
 # from an actual U32 SSBO pointer. Native CAS must load/compare/store U32,
 # and only bitcast the 32-bit word for the paired-half arithmetic operation.
-cas_owner=(ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
+cas_owner=(ROOT/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
 for name in ("f16x2_add_cas", "f16x2_min_cas", "f16x2_max_cas"):
     start=cas_owner.index(name+" = CasLoop(*this,")
     end=cas_owner.index(";",start)
@@ -152,7 +152,7 @@ for owner in ("DefineTextureBuffers", "DefineImageBuffers", "DefineImages"):
     assert "DescType(*this," in body, owner
 assert "Array of texture buffers" not in cas_owner
 pinned_image=(ROOT/"vendor/sources/eden/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp").read_text()
-image_owner=(ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp").read_text()
+image_owner=(ROOT/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp").read_text()
 assert "const Id ptr{ctx.OpAccessChain(ctx.image_buffer_type, def.id, idx)};" in pinned_image
 assert "ctx.TypePointer(spv::StorageClass::UniformConstant, ctx.image_buffer_type)" in image_owner
 assert "ctx.OpAccessChain(element_ptr_type, def.id, idx)" in image_owner
@@ -162,8 +162,8 @@ print("P2_2C_REAL_SPIRV_TEXEL_DESCRIPTOR_ARRAY_SOURCE_PASS scalar=unchanged poin
 # P2.4: non-generic tessellation patch levels are real shared SPIR-V
 # variables with distinct Input (TES) and Output (TCS) storage. Generic
 # patches retain the existing index and 4-component layout unchanged.
-stage_header=(ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h").read_text()
-patch_emitter=(ROOT/"vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp").read_text()
+stage_header=(ROOT/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.h").read_text()
+patch_emitter=(ROOT/"vendor/encore-active/eden/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp").read_text()
 assert "Id input_tess_level_outer{};" in stage_header
 assert "Id input_tess_level_inner{};" in stage_header
 assert "input_tess_level_outer = DefineInput(" in cas_owner
@@ -228,12 +228,12 @@ sources=(
     "shader_recompiler/frontend/ampere/renderer_spirv_bridge.cpp",
     "video_core/ns2_shader_spirv_compile.cpp",
 )
-native_root=ROOT/"vendor/encore-active/ns2-runtime/ampere"
+native_root=ROOT/"vendor/encore-active/eden/src"
 includes=[
     native_root,
-    ROOT/"vendor/encore-active/ns2-runtime/gpu_dispatch",
-    ROOT/"vendor/encore-active/ns2-runtime/hle",
-    ROOT/"vendor/encore-active/eden-shader/src",
+    ROOT/"vendor/encore-active/eden/src",
+    ROOT/"vendor/encore-active/eden/src",
+    ROOT/"vendor/encore-active/eden/src",
     ROOT/"vendor/sources/eden/src",
     ROOT/"vendor/sources/eden/src/dynarmic/src",
     cpm/"fmt/12.1.0/include",

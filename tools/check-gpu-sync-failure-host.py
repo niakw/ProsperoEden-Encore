@@ -13,11 +13,11 @@ root = Path(__file__).resolve().parents[1]
 pinned = (root / "vendor/sources/eden/src/video_core/gpu.cpp").read_text()
 cmake = (root / "headless/CMakeLists.txt").read_text()
 legacy = (root / "tools/fixtures/legacy-g21-gpu.cmake").read_text()
-maintained_gpu = (root / "vendor/encore-active/eden-core/src/video_core/gpu_gl_native.cpp").read_text()
+maintained_gpu = (root / "vendor/encore-active/eden/src/video_core/gpu_gl_native.cpp").read_text()
 assert 'list(APPEND video_sources "${EDEN_MAINTAINED_G21_GPU}")' in cmake
 assert 'gpu_sync_wait_original' not in cmake
 header = (root / "headless/gpu_failure.h").read_text()
-native_method = (root / "vendor/encore-active/eden-core/gpu-injections/gpu_sync_failure_wait.inc").read_text()
+native_method = (root / "vendor/encore-active/eden/src/video_core/gpu_sync_failure_wait.inc").read_text()
 original = """    void WaitForSyncOperation(const u64 fence) {
         std::unique_lock lck{sync_request_mutex};
         sync_request_cv.wait(lck, [this, fence] { return sync_requests_stopped || CurrentSyncRequestFence() >= fence; });
@@ -27,7 +27,7 @@ stopped_pinned = pinned.replace(
     "return sync_requests_stopped || CurrentSyncRequestFence() >= fence;"
 )
 assert stopped_pinned.count(original) == 1
-assert 'file(READ "${PORT_ROOT}/vendor/encore-active/eden-core/gpu-injections/gpu_sync_failure_wait.inc" gpu_sync_wait_replacement)' in legacy
+assert 'file(READ "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/gpu_sync_failure_wait.inc" gpu_sync_wait_replacement)' in legacy
 assert 'string(FIND "${gpu_source}" "${gpu_sync_wait_original}" gpu_sync_wait_position)' in legacy
 assert native_method.strip() in maintained_gpu
 assert "std::rethrow_exception(failure);" in native_method

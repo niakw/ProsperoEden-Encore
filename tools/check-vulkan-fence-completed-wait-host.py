@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-ACTIVE = (ROOT / "vendor/encore-active/eden-vulkan/vk_fence_manager_cost.cpp").read_text()
+ACTIVE = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_fence_manager_cost.cpp").read_text()
 PINNED = (ROOT / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_fence_manager.cpp").read_text()
 GENERATOR = (ROOT / "tools/prepare-vulkan-port.py").read_text()
 FAST = (ROOT / ".github/workflows/encore-core-fast-gate.yml").read_text()

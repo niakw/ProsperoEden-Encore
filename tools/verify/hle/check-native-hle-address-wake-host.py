@@ -13,13 +13,13 @@ import tempfile
 
 root = Path(__file__).resolve().parents[3]
 pinned = (root/"vendor/sources/eden/src/core/hle/kernel/k_address_arbiter.cpp").read_text()
-active = (root/"vendor/encore-active/eden-threading/src/core/hle/kernel/k_address_arbiter.cpp").read_text()
-thread = (root/"vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.cpp").read_text()
+active = (root/"vendor/encore-active/eden/src/core/hle/kernel/k_address_arbiter.cpp").read_text()
+thread = (root/"vendor/encore-active/eden/src/core/hle/kernel/k_thread.cpp").read_text()
 queue = (root/"vendor/sources/eden/src/core/hle/kernel/k_thread_queue.cpp").read_text()
 cmake = (root/"headless/CMakeLists.txt").read_text()
 workflow = (root/".github/workflows/encore-core-preflight.yml").read_text()
 assert "python3 -B tools/verify/hle/check-native-hle-address-wake-host.py" in workflow
-module = (root/"vendor/encore-active/eden-threading/native-hle-overrides.cmake").read_text()
+module = (root/"vendor/encore-active/eden/native-hle-overrides.cmake").read_text()
 assert "native-hle-overrides.cmake" in cmake
 assert "k_address_arbiter.cpp" in module and "k_thread.cpp" in module
 compiler = shutil.which("g++") or shutil.which("clang++")

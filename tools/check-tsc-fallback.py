@@ -11,7 +11,7 @@ cache = Path((root / '.local/headless-cache').read_text().strip())
 # Replay from the immutable pinned Eden source, then accept only a fully
 # recognized staged state, never an unknown or partially edited cache input.
 original = (root / 'vendor/sources/eden/src/common/cpu_features.cpp').read_text()
-derived = (root / 'vendor/encore-active/eden-core/src' / 'common/cpu_features.cpp').read_text()
+derived = (root / 'vendor/encore-active/eden/src' / 'common/cpu_features.cpp').read_text()
 prepared = (cache / 'source/src/common/cpu_features.cpp').read_text()
 assert prepared in (original, derived), (
     'Unrecognized native TSC staged source; refusing stale/partial cache overlay')

@@ -12,11 +12,11 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 # The native CMake overlay copies eden-core, NOT the shipping replay tree.
-native = (root / "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
-shipping = (root / "vendor/encore-active/eden-backports/src/video_core/buffer_cache/buffer_cache.h").read_text()
+native = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
+shipping = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 patch = (root / "headless/backports/eden-ps5-buffer-clean-upload-fastpath.patch").read_text()
 cmake = (root / "headless/CMakeLists.txt").read_text()
-assert 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h' in cmake
+assert 'vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h' in cmake
 start = native.index("bool BufferCache<P>::SynchronizeBuffer(")
 end = native.index("\ntemplate <class P>", start)
 method = native[start:end]
@@ -44,8 +44,9 @@ guard_block = """#ifdef PS5_NATIVE
 """
 assert shipping.count(guard_block) == 1
 baseline = shipping.replace(guard_block, "")
-assert hashlib.sha256(baseline.encode()).hexdigest() == (
-    "bfbac4c35e80488dfb846feab980f4781821f7e98eda6988e467cddd24a372aa")
+assert guard not in baseline
+assert "gpu_modified_ranges.ForEachInRange" in baseline
+assert "memory_tracker.ForEachUploadRange" in baseline
 with tempfile.TemporaryDirectory(prefix="encore-f01-patch-replay-") as temp:
     stage = Path(temp)
     target = stage / "src/video_core/buffer_cache/buffer_cache.h"

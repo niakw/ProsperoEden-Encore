@@ -12,8 +12,8 @@ import shutil, subprocess, tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
 PIN=(ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
-ACT=(ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp").read_text()
-HDR=(ROOT/"vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h").read_text()
+ACT=(ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
+HDR=(ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.h").read_text()
 CM=(ROOT/"headless/CMakeLists.txt").read_text()
 FAST=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 FULL=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
@@ -30,7 +30,7 @@ assert "std::list<RegisteredAction>::iterator" not in HDR
 # video_core (maintained .cpp) and core (NS2 graphics supervisor).
 for token in (
     'set(EDEN_MAINTAINED_HOST1X_HEADER',
-    'vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h',
+    'vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.h',
     'configure_file("${EDEN_MAINTAINED_HOST1X_HEADER}"',
     'target_include_directories(video_core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}")',
     'target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}")',
@@ -50,8 +50,8 @@ for token in (
 # conflicting old header. The reviewed include root MUST win; a reversed
 # include order is the deliberate negative control.
 vendor_root=ROOT/"vendor"
-host1x_source=vendor_root/"encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"
-host1x_header=vendor_root/"encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h"
+host1x_source=vendor_root/"encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp"
+host1x_header=vendor_root/"encore-active/eden/src/video_core/host1x/syncpoint_manager.h"
 compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler
 with tempfile.TemporaryDirectory(prefix="encore-host1x-native-abi-") as d:

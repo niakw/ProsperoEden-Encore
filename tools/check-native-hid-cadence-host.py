@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import tempfile
 root = Path(__file__).resolve().parents[1]
-src = (root / "vendor/encore-active/eden-core/src/hid_core/resource_manager.cpp").read_text()
+src = (root / "vendor/encore-active/eden/src/hid_core/resource_manager.cpp").read_text()
 original = (root / "vendor/sources/eden/src/hid_core/resource_manager.cpp").read_text()
 definition = "constexpr auto npad_update_ns = std::chrono::nanoseconds{4 * 1000 * 1000};"
 assert src.count(definition) == 1

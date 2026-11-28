@@ -10,13 +10,13 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-main = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-bridge = (root / "vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp").read_text()
+main = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
+bridge = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp").read_text()
 pinned = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp").read_text()
 oracle = (root / "tools/prepare-vulkan-port.py").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
-texture = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
-buffer = (root / "vendor/encore-active/eden-backports/src/video_core/buffer_cache/buffer_cache.h").read_text()
+texture = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
+buffer = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 anchor = "void RasterizerVulkan::AccelerateInlineToMemory("
 last = "\nstd::optional<FramebufferTextureInfo> RasterizerVulkan::AccelerateDisplay("
 def extract(text: str) -> str:

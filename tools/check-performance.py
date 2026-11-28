@@ -44,7 +44,7 @@ for name in ('a32_interface.cpp', 'a64_interface.cpp', 'block_of_code.cpp'):
 cmake = (root / 'headless/CMakeLists.txt').read_text()
 assert 'list(APPEND core_sources "${EDEN_G11_SOURCE}")' in cmake
 assert 'write_derived("${derived}"' not in cmake
-jit_root = root/'vendor/encore-active/eden-core/src/core/arm/dynarmic/g11'
+jit_root = root/'vendor/encore-active/eden/src/core/arm/dynarmic/g11'
 for bits in (32, 64):
     for platform in ('host','native'):
         for profile in ('normal','dev'):
@@ -84,7 +84,7 @@ for bits in (32, 64):
                 assert 'if (!CheckMemoryAccess(vaddr' not in wrapper
 
 jit = (generated / 'a64_interface.cpp').read_text()
-interface_root = root / 'vendor/encore-active/eden-core/src/dynarmic/backend/x64'
+interface_root = root / 'vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64'
 selected = 'a64_interface_standard.cpp'
 assert jit == (interface_root / selected).read_text(), 'configured A64 owner differs'
 # Complete units now contain guarded batch/DEV code even when disabled.
@@ -124,7 +124,7 @@ cmake = (root / 'headless/CMakeLists.txt').read_text()
 assert 'Timer read_timer' not in cmake
 assert 'Timer compile_timer' not in cmake
 assert 'protection_timer' not in cmake
-shared_root = root / 'vendor/encore-active/eden-core/dynarmic/shared-jit'
+shared_root = root / 'vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64'
 shared_jit = (shared_root / 'jit_group_support.inc').read_text()
 assert 'bool eden_jit_shared = false;' in shared_jit
 assert 'option(EDEN_SHARED_JIT' not in cmake
@@ -138,7 +138,7 @@ assert 'std::this_thread::yield()' not in jit_impl
 assert 'sleep_for(std::chrono::microseconds(50))' in jit_group
 assert 'sleep_for(std::chrono::microseconds(50))' in jit_impl
 assert 'EDEN_JIT_CLEAR_BEGIN' in jit_impl and 'EDEN_JIT_CLEAR_END' in jit_impl
-monitor_lock = (root / 'vendor/encore-active/eden-core/src/dynarmic/common/spin_lock_x64.cpp').read_text()
+monitor_lock = (root / 'vendor/encore-active/eden/src/dynarmic/common/spin_lock_x64.cpp').read_text()
 assert 'sceKernelUsleep(50);' in monitor_lock
 main = (root / 'headless/main.cpp').read_text()
 assert 'Performance::Reset()' not in main

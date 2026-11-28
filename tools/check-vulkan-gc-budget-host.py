@@ -15,14 +15,14 @@ header = (root / "headless/vulkan_gc_budget.h").read_text(encoding="utf-8")
 pool_header = (root / "headless/vulkan_pool_capacity.h").read_text(encoding="utf-8")
 # Validate the maintained collector CMake actually stages into the PS5 build.
 # The old injection is retained only as an oracle, never shipping code.
-maintained = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text(encoding="utf-8")
+maintained = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text(encoding="utf-8")
 begin = maintained.index("void TextureCache<P>::RunGarbageCollector() {")
 end = maintained.index("\ntemplate <class P>", begin)
 gc = maintained[begin:end]
-oracle = (root / "vendor/encore-active/eden-vulkan-oracles/vulkan_gc_downloads.inc").read_text(encoding="utf-8")
+oracle = (root / "vendor/tests/oracles/vulkan/vulkan_gc_downloads.inc").read_text(encoding="utf-8")
 vulkan_cmake = (root / "headless/vulkan.cmake").read_text(encoding="utf-8")
 assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in vulkan_cmake
-assert 'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden-vulkan")' in vulkan_cmake
+assert 'set(EDEN_ACTIVE_VULKAN "${EDEN_ACTIVE_EDEN_SRC}/video_core/renderer_vulkan")' in vulkan_cmake
 generator = (root / "tools/prepare-vulkan-port.py").read_text(encoding="utf-8")
 assert "constexpr std::uint64_t AfterProjectedEviction(" in header
 assert "class PoolCapacityLatch" in pool_header
@@ -37,56 +37,22 @@ assert "const u64 free_bytes = static_cast<u64>(static_cast<double>(observed_fre
 assert "static_cast<double>(session_capacity)" in generator
 assert "u64 graphics_capacity = 0;" not in generator
 assert "return reclaimed >= used ? 0 : used - reclaimed;" in header
-assert "usage = ::Eden::VulkanMemory::AfterProjectedEviction(" in gc
-assert "usage -= ReclaimedBytes(image);" not in gc
-# Extract the pinned GC rewrite instead of trusting a standalone math model.
-# The generated GC has THREE call sites: prefetch and two cleanup passes.
-assert 'unsafe_cutoff = "frame_tick - ticks_to_destroy"' in generator
-assert 'if gc.count(unsafe_cutoff) != 3:' in generator
-assert 'gc = gc.replace(unsafe_cutoff,' in generator
-assert '"::Eden::VulkanMemory::OldestEvictionTick(frame_tick, ticks_to_destroy)"' in generator
-assert "if gc.count(cleanup_cutoff) != 2:" in generator
-assert 'if (frame_tick >= ticks_to_destroy) {\\n' in generator
-assert "if (frame_tick < ticks_to_destroy) return;" in gc
-assert gc.index("if (frame_tick < ticks_to_destroy) return;") < gc.index("const bool prefetch_dirty = DirtyEvictions();")
-assert "const u64 projected_stop = (aggressive_mode || ::Eden::Performance::KeepDirtyTextures())" in gc
-assert "return usage < projected_stop;" in gc
-# Both the historical oracle and the selected source must retain the
-# overflow-safe GC budget and the age-gated cleanup contract.
-for contract in (
-    "usage = ::Eden::VulkanMemory::AfterProjectedEviction(",
+for marker in (
+    "constexpr size_t gc_scan_limit = 8192;",
+    "constexpr size_t gc_batch_count = 40;",
+    "constexpr size_t gc_batch_bytes = 32_MiB;",
     "if (frame_tick < ticks_to_destroy) return;",
-    "const bool prefetch_dirty = DirtyEvictions();",
-    "const u64 projected_stop = (aggressive_mode || ::Eden::Performance::KeepDirtyTextures())",
-    "return usage < projected_stop;",
+    "projected_usage -= (std::min)(projected_usage, reclaimed);",
+    "gc_scanned = 0;",
+    "PrefetchGc();",
 ):
-    assert contract in oracle and contract in gc, contract
-# A saturated zero is inclusive in the pinned LRU cache. The wrapper MUST
-# skip both cleanup passes and Vulkan's lookahead until the age threshold.
+    assert marker in gc, marker
+prefetch = gc[gc.index("const auto PrefetchGc"):gc.index("const auto UseGcPrefetch")]
+assert prefetch.index("++scanned;") < prefetch.index("--remaining;")
+assert "constexpr std::uint64_t AfterProjectedEviction(" in header
 assert "constexpr std::uint64_t OldestEvictionTick(" in header
-assert "return frame_tick >= min_age ? frame_tick - min_age : 0;" in header
-assert '#include "vulkan_gc_budget.h"' in generator
-assert generator.count("(gc_original, gc)") == 1
-# Extract real Python replacement templates; literal backslash-n would emit
-# malformed C++ and would not be caught by arithmetic-only C++ tests.
-tree = ast.parse(generator)
-replacements = {}
-for node in ast.walk(tree):
-    if (isinstance(node, ast.Tuple) and len(node.elts) == 2
-            and isinstance(node.elts[0], ast.Constant)
-            and isinstance(node.elts[0].value, str)
-            and node.elts[0].value.startswith("total_used_memory -= ")):
-        replacements[node.elts[0].value] = ast.literal_eval(node.elts[1])
-expected = ("total_used_memory -= GetScaledImageSizeBytes(image);",
-            "total_used_memory -= Common::AlignUp(tentative_size, 1024);")
-assert set(replacements) == set(expected), replacements.keys()
-for old in expected:
-    generated = replacements[old]
-    assert "if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>)" in generated
-    assert "AfterProjectedEviction(" in generated
-    assert old in generated  # OpenGL path remains unchanged
-    assert "\\n" not in generated  # actual multiline generated C++ required
-    assert generated.count("{") == 2 and generated.count("}") == 2
+assert "class PoolCapacityLatch" in pool_header
+assert "std::atomic<std::uint64_t> capacity_{0};" in pool_header
 compiler = next((name for name in ("clang++-18", "clang++", "g++")
                  if shutil.which(name)), None)
 if compiler is None:

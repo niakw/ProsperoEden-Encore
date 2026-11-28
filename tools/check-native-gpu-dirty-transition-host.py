@@ -13,7 +13,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 pinned = (root / "vendor/sources/eden/src/core/gpu_dirty_memory_manager.h").read_text()
-maintained = (root / "vendor/encore-active/eden-core/overrides/core/gpu_dirty_memory_manager.h").read_text()
+maintained = (root / "vendor/encore-active/eden/src/core/gpu_dirty_memory_manager.h").read_text()
 cmake = (root / "headless/CMakeLists.txt").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 
@@ -210,7 +210,7 @@ page_anchor = "    constexpr static size_t page_bits = DEVICE_PAGEBITS - 1;\n"
 assert expected.count(page_anchor) == 1
 expected = expected.replace(page_anchor, for_each_run + page_anchor, 1)
 actual_blob = subprocess.check_output(
-    ["git", "hash-object", str(root / "vendor/encore-active/eden-core/overrides/core/gpu_dirty_memory_manager.h")],
+    ["git", "hash-object", str(root / "vendor/encore-active/eden/src/core/gpu_dirty_memory_manager.h")],
     text=True).strip()
 assert actual_blob == "7769e314fbefeb8393e6d11b115c88bc0a8a0e58"
 assert maintained == expected

@@ -16,7 +16,7 @@ cmake = (root / "headless/CMakeLists.txt").read_text()
 assert '"${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher.cpp"' in cmake
 assert '"${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher_dev.cpp"' not in cmake
 assert '"${EDEN_MAINTAINED_GPU_DMA}"' in cmake
-owner = vendor / "encore-active/eden-core/src/video_core"
+owner = vendor / "encore-active/eden/src/video_core"
 for file in ("dma_pusher.cpp", "dma_pusher_dev.cpp"):
     source = (owner / file).read_text()
     step = source.split("bool DmaPusher::Step() {", 1)[1].split(
@@ -25,9 +25,13 @@ for file in ("dma_pusher.cpp", "dma_pusher_dev.cpp"):
     assert "CommandList& command_list = dma_pushbuffer.front();" in step
     assert "ProcessCommands(command_list.prefetch_command_list);" in step
     assert "command_list.command_lists[dma_pushbuffer_subindex]" in step
-    # Eglantine's submission-time user-GPU-word cache is NOT in this
-    # maintained owner; do not port its snapshot-selection patch blindly.
-    assert "submitted_words" not in step and "submitted_offsets" not in step
+    # The canonical owner now carries the reviewed bounded submit-time snapshot
+    # for CPU-authored words. GPU-dirty/unknown dependency provenance invalidates
+    # it and the coherent SafeRead path remains authoritative.
+    assert "submitted_words" in step and "submitted_offsets" in step
+    assert "snapshot_epoch" in step and "use_snapshot" in step
+    assert "memory_manager.IsMemoryDirty(" in step
+    assert "native_snapshot_resume_safe" in step
     assert "GpuGuestMemory<Tegra::CommandHeader," in step
     assert "GuestMemoryFlags::SafeRead" in step
     assert "GuestMemoryFlags::UnsafeRead" in step
@@ -47,7 +51,7 @@ for file in ("dma_pusher.cpp", "dma_pusher_dev.cpp"):
         "GpuGuestMemory<Tegra::CommandHeader,"
     ) < step.index("ProcessCommands(headers);")
 nvdrv = (vendor / (
-    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/"
+    "encore-active/eden/src/core/hle/service/nvdrv/"
     "devices/nvhost_gpu.cpp"
 )).read_text()
 # The two ioctl owners now allocate only after validating entry counts and
@@ -112,13 +116,13 @@ read = memory.split("void MemoryManager::ReadBlockImpl(", 1)[1].split(
 assert read.count("rasterizer->FlushRegion(dev_addr_base, copy_amount, which);") == 2
 assert "memory.ReadBlockUnsafe(dev_addr_base, dest_buffer, copy_amount);" in read
 assert "std::memset(dest_buffer, 0, size);" in read
-for rasterizer in ("eden-vulkan/vulkan_rasterizer.cpp",
-                   "eden-core/guest-bridge/vulkan_rasterizer.cpp"):
-    source = (vendor / "encore-active" / rasterizer).read_text()
-    flush = source.split("void RasterizerVulkan::FlushRegion(", 1)[1].split(
-        "bool RasterizerVulkan::MustFlushRegion(", 1)[0]
-    assert "texture_cache.DownloadMemory(addr, size);" in flush
-    assert "buffer_cache.DownloadMemory(addr, size);" in flush
+source = (
+    vendor / "encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp"
+).read_text()
+flush = source.split("void RasterizerVulkan::FlushRegion(", 1)[1].split(
+    "bool RasterizerVulkan::MustFlushRegion(", 1)[0]
+assert "texture_cache.DownloadMemory(addr, size);" in flush
+assert "buffer_cache.DownloadMemory(addr, size);" in flush
 buffer_cache = (owner / "buffer_cache/buffer_cache.h").read_text()
 download = buffer_cache.split("void BufferCache<P>::DownloadBufferMemory(Buffer& buffer, DAddr", 1)[1].split(
     "void BufferCache<P>::DeleteBuffer(", 1)[0]
@@ -133,13 +137,13 @@ elif cache_blob in {
     "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
     "505ee80a37d5991b7925019282e71926c1648e02",
     "c6bab56cbd4e58458d010e423d74df9f933a8f8d",  # vendor #189: reviewed pinned RangeSet native ABI adaptation
-    "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b", "6aa9754506ee82b4d25a4e36d4f3be646a62456b", "7f07e392ea0cc828d862da29d32ada1ebc3966aa", "4ce33d21debc33c9625129cbd545bf9b1c084272", "fce19742529b21bca0f92f3f67c4e420dcd493c7", "24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86", "4577de4f63bc0393a1e14e89534d6f8aedf50d67",  # NS1 FC27: page-wide ownership sampled before CPU write; GPU siblings retained; all-channel binding scrub
+    "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b", "6aa9754506ee82b4d25a4e36d4f3be646a62456b", "7f07e392ea0cc828d862da29d32ada1ebc3966aa", "4ce33d21debc33c9625129cbd545bf9b1c084272", "fce19742529b21bca0f92f3f67c4e420dcd493c7", "24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86", "4577de4f63bc0393a1e14e89534d6f8aedf50d67", "30e7c389851a5a0f2b6369c35a313f93a0fc6826", "30e7c389851a5a0f2b6369c35a313f93a0fc6826",  # NS1 FC27: page-wide ownership sampled before CPU write; GPU siblings retained; all-channel binding scrub
 }:
     write_marker = "WriteDownloadedMemory(cpu_written, copy_device_addr, copy_mapped_memory, copy.size);"
     assert "void BufferCache<P>::WriteDownloadedMemory" in buffer_cache
     assert "device_memory.WriteBlockUnsafe(start, data + (start - device_addr), end - start);" in buffer_cache
     if cache_blob in {"09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
-                       "505ee80a37d5991b7925019282e71926c1648e02", "c6bab56cbd4e58458d010e423d74df9f933a8f8d", "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b", "6aa9754506ee82b4d25a4e36d4f3be646a62456b", "7f07e392ea0cc828d862da29d32ada1ebc3966aa", "4ce33d21debc33c9625129cbd545bf9b1c084272", "fce19742529b21bca0f92f3f67c4e420dcd493c7", "24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86", "4577de4f63bc0393a1e14e89534d6f8aedf50d67"}:
+                       "505ee80a37d5991b7925019282e71926c1648e02", "c6bab56cbd4e58458d010e423d74df9f933a8f8d", "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b", "6aa9754506ee82b4d25a4e36d4f3be646a62456b", "7f07e392ea0cc828d862da29d32ada1ebc3966aa", "4ce33d21debc33c9625129cbd545bf9b1c084272", "fce19742529b21bca0f92f3f67c4e420dcd493c7", "24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86", "4577de4f63bc0393a1e14e89534d6f8aedf50d67", "30e7c389851a5a0f2b6369c35a313f93a0fc6826"}:
         assert "Upstream Lichii/Eglantine b13c4c1" in buffer_cache
         assert "keep_page_gpu_data" in buffer_cache
     if cache_blob == "505ee80a37d5991b7925019282e71926c1648e02":
@@ -163,7 +167,7 @@ elif cache_blob in {
         assert "gpu_modified_ranges.ForEachInRange(addr, size," in region
 else:
     raise AssertionError(("Unreviewed live-fetch BufferCache owner", cache_blob))
-if cache_blob in {"24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86", "4577de4f63bc0393a1e14e89534d6f8aedf50d67"}:
+if cache_blob in {"24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86", "4577de4f63bc0393a1e14e89534d6f8aedf50d67", "30e7c389851a5a0f2b6369c35a313f93a0fc6826"}:
     # Vendor 637edccb batches asynchronous fence downloads only. The live
     # GPFIFO SafeRead path still uses synchronous copy / Finish / publication.
     assert "std::array<BufferCopy, 8> copies{};" in buffer_cache
@@ -171,7 +175,7 @@ if cache_blob in {"24323ea00c4088d45d5357a6df5382a7447669ab", "0ecca19b38d4d40ce
     assert "std::span<const BufferCopy>{copies.data(), count}, false" in buffer_cache
     assert "std::array<BufferCopy, 8>" not in download
 assert download.index("runtime.CopyBuffer(") < download.index("runtime.Finish();") < download.index(write_marker)
-runtime = (vendor / "encore-active/eden-vulkan/vk_buffer_cache_cost.cpp").read_text()
+runtime = (vendor / "encore-active/eden/src/video_core/renderer_vulkan/vk_buffer_cache_cost.cpp").read_text()
 assert "void BufferCacheRuntime::Finish() {" in runtime
 assert "scheduler.Finish();" in runtime.split("void BufferCacheRuntime::Finish() {", 1)[1].split("}", 1)[0]
 assert (root / "tools/ns2/test_native_gpu_command_saferead.cpp").is_file()
@@ -186,7 +190,7 @@ if cache_blob in {"0ecca19b38d4d40ce03e4f9392c5b6ef042e1e86", "4577de4f63bc0393a
     assert "DownloadBufferMemory(buffer, start, end - start);" in readback
     assert "DownloadBufferMemory(buffer, device_addr, size);" not in readback
 
-if cache_blob == "4577de4f63bc0393a1e14e89534d6f8aedf50d67":
+if cache_blob in {"4577de4f63bc0393a1e14e89534d6f8aedf50d67", "30e7c389851a5a0f2b6369c35a313f93a0fc6826"}:
     gc = buffer_cache.split("void BufferCache<P>::RunGarbageCollector()",1)[1].split("\n}",1)[0]
     assert "constexpr u64 staging_budget = 16ULL * 1024 * 1024;" in gc
     assert gc.index("runtime.Finish();") < gc.index("WriteDownloadedMemory(cpu_written") < gc.index("memory_tracker.ForEachDownloadRangeAndClear(")

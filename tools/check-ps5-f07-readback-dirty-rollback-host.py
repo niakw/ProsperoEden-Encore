@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-path=root/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h"
+path=root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h"
 source=path.read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()
 fast=(root/".github/workflows/encore-core-fast-gate.yml").read_text()
@@ -30,8 +30,8 @@ assert native.index("images.push_back(image_id)") < native.index("image.flags &=
 assert method.index(guard) < method.index(collection)
 # The prior oracle remains embedded byte-for-byte; batching and Finish order
 # are untouched by the guarded early flag management.
-oracle=(root/"vendor/encore-active/eden-vulkan-oracles/vulkan_download_batch.inc").read_text()
-assert oracle in (root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+oracle=(root/"vendor/tests/oracles/vulkan/vulkan_download_batch.inc").read_text()
+assert oracle in (root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 assert "DownloadStagingBuffer(bytes, true)" in method
 assert "std::uncaught_exceptions() > uncaught_before_readback && !pending.empty()" in method
 assert "runtime.Finish();" in method and "release_batch();" in method

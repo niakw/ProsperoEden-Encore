@@ -44,7 +44,7 @@ assert "return present_failure || present_queue.empty(); });" not in generator
 # Prove the installed, maintained native presenter carries these same
 # waiter and ownership boundaries. The former `... not in generator or True`
 # assertion was tautological, allowing a broken native source to pass.
-native = (root / "vendor/encore-active/eden-vulkan/vulkan_present_manager.cpp").read_text()
+native = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_manager.cpp").read_text()
 def section(start: str, end: str) -> str:
     assert native.count(start) == 1, start
     return native.split(start, 1)[1].split(end, 1)[0]

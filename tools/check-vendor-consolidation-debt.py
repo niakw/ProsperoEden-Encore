@@ -25,11 +25,10 @@ for dep in deps:
 for extra in ("eden-cpm", "boilerplate-setup-0"):
     assert extra in root_names, extra
 fork_names = {entry.name for entry in active.iterdir() if entry.is_dir()}
-for name in ("eden-backports", "eden-build", "eden-core", "eden-gpu",
-             "eden-surface-lifecycle", "eden-vulkan", "ps5-mesa"):
+for name in ("eden", "ps5-mesa"):
     assert name in fork_names, f"missing active patched tree: {name}"
 assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in vulkan
-assert (active/"eden-build/src/CMakeLists.txt").is_file(), "missing maintained native CMake"
+assert (active/"eden/src/CMakeLists.txt").is_file(), "missing maintained native CMake"
 assert 'execute_process(COMMAND python3 "${PORT_ROOT}/tools/prepare-vulkan-port.py"' not in vulkan
 # Migration budget: historical ceilings (77/87/225) no longer protect a
 # consolidated source tree. Match the remaining reviewed CMake generation
@@ -69,7 +68,7 @@ for bits in (32,64):
     for platform in ("host","native"):
         for profile in ("normal","dev"):
             name = f"arm_dynarmic_{bits}_{platform}_{profile}.cpp"
-            assert (active/"eden-core/src/core/arm/dynarmic/g11"/name).is_file(), name
+            assert (active/"eden/src/core/arm/dynarmic/g11"/name).is_file(), name
 assert 'write_derived("${derived}"' in (
     root/"tools/fixtures/legacy-g11-jit.cmake").read_text()
 # G19: direct ownership from a single full Encore kernel translation unit.
@@ -78,7 +77,7 @@ assert 'file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/kernel/kernel.cpp" kernel_
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_KERNEL_SOURCE}")' in c
 assert 'list(FIND core_sources hle/kernel/kernel.cpp eden_g19_pinned_owner)' in c
 for name in ("kernel_standard.cpp", "kernel_dev.cpp"):
-    assert (active/"eden-core/src/core/hle/kernel"/name).is_file(), name
+    assert (active/"eden/src/core/hle/kernel"/name).is_file(), name
 assert 'write_derived("${PORT_BUILD_DIR}/kernel.cpp"' in (
     root/"tools/fixtures/legacy-g19-kernel.cmake").read_text()
 # G21 no longer injects source-level GPU sync code from CMake.
@@ -91,12 +90,12 @@ assert 'write_derived("${PORT_BUILD_DIR}/gpu.cpp"' not in c
 assert 'list(APPEND video_sources "${EDEN_MAINTAINED_G21_GPU}")' in c
 for name in ("gpu_gl_host.cpp", "gpu_gl_host_dev.cpp", "gpu_gl_native.cpp",
              "gpu_gl_native_dev.cpp", "gpu_vulkan.cpp"):
-    assert (active/"eden-core/src/video_core"/name).is_file(), name
+    assert (active/"eden/src/video_core"/name).is_file(), name
 
 # G13/X05 native guard ownership is now in the two complete maintained
 # sources. Keep each contract in both, not in CMake string-rewrite fragments.
 native_units = [
-    (active/"eden-core/src/core"/name).read_text()
+    (active/"eden/src/core"/name).read_text()
     for name in ("memory_native_standard.cpp", "memory_native_a32.cpp")
 ]
 for unit in native_units:
@@ -110,9 +109,9 @@ assert not (root / "headless/native_gpu_granular_bounds.cmake").exists()
 assert "Pinned GPU read callback lifetime changed" not in c
 for name in ("gpu_gl_host.cpp", "gpu_gl_host_dev.cpp",
              "gpu_gl_native.cpp", "gpu_gl_native_dev.cpp"):
-    unit = (active/"eden-core/src/video_core"/name).read_text()
+    unit = (active/"eden/src/video_core"/name).read_text()
     assert unit.count('RequestSyncOperation([this, raster_area]() {') == 1
-vulkan_gpu = (active/"eden-core/src/video_core/gpu_vulkan.cpp").read_text()
+vulkan_gpu = (active/"eden/src/video_core/gpu_vulkan.cpp").read_text()
 # The queued GPU callback owns its flush range by value. A reference capture
 # can outlive OnCPURead's stack frame while the GPU worker drains later.
 assert 'RequestSyncOperation([this, raster_area]() {' in vulkan_gpu
@@ -155,7 +154,7 @@ for name, limit in baseline.items():
 # include path); prevent silent semantic drift while removing string rewrites.
 fs_rel = "core/hle/service/filesystem/fsp/fs_i_file.cpp"
 fs_pinned = (sources / "eden/src" / fs_rel).read_text()
-fs_maintained = (active / "eden-core/src" / fs_rel).read_text()
+fs_maintained = (active / "eden/src" / fs_rel).read_text()
 fs_old = """    R_RETURN(
         backend->Read(reinterpret_cast<size_t*>(out_size.Get()), offset, out_buffer.data(), size));"""
 fs_new = """    const auto fs_start = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) ? ::Eden::Performance::NowNs() : 0;
@@ -181,11 +180,11 @@ assert 'write_derived("${PORT_BUILD_DIR}/gpu_thread.cpp"' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/include/common/bounded_threadsafe_queue.h"' not in c
 # The stop-aware producer's single implementation is the selected GPU source,
 # not a fresh CMake string rewrite or a historical injection fragment.
-producer_header = (active / "eden-gpu/include/common/bounded_threadsafe_queue.h").read_text()
+producer_header = (active / "eden/src/common/bounded_threadsafe_queue.h").read_text()
 assert producer_header.count("bool EmplaceWaitWithStopToken(") == 1
 assert "producer.cv.wait(lock, stop_token" in producer_header
-for variant in ("gpu_thread_dev.cpp", "gpu_thread_quiet.cpp"):
-    gpu_worker = (active / "eden-gpu" / variant).read_text()
+for variant in ("gpu_thread_dev.cpp", "gpu_thread.cpp"):
+    gpu_worker = (active / "eden/src/video_core" / variant).read_text()
     assert "state.queue.EmplaceWaitWithStopToken(stop_source.get_token()," in gpu_worker
 assert 'configure_file("${EDEN_ACTIVE_GPU}/include/common/bounded_threadsafe_queue.h"' in c
 assert 'string(REPLACE "${gpu_block_wait_original}" "${gpu_block_wait_checked}"' not in c
@@ -196,7 +195,7 @@ assert "fs_file_source" not in c
 
 storage_rel = "core/hle/service/filesystem/fsp/fs_i_storage.cpp"
 storage_pinned = (sources / "eden/src" / storage_rel).read_text()
-storage_maintained = (active / "eden-core/src" / storage_rel).read_text()
+storage_maintained = (active / "eden/src" / storage_rel).read_text()
 storage_old = "    backend->Read(out_bytes.data(), length, offset);"
 storage_new = """    const auto fs_start = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) ? ::Eden::Performance::NowNs() : 0;
     const auto fs_read = backend->Read(out_bytes.data(), length, offset);
@@ -235,14 +234,14 @@ assert 'EDEN_MAINTAINED_PROFILE_FS_STORAGE' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/fs_i_storage.cpp"' not in c
 assert "fs_storage_source" not in c
 assert counts["write_derived("] <= 63, counts
-print("VENDOR_MAINTAINED_FS_ISTORAGE_PARITY_PASS: read, short read, quiet policy, operate-range")
+print("VENDOR_MAINTAINED_FS_ISTORAGE_PARITY_PASS: read, short read, pacing, OperateRange invalidate/query")
 
 
 # FS open diagnostics used to be a CMake loop patching three calls.
 # Compare maintained C++ with that exact previous generated content.
 fs_system_rel = "core/hle/service/filesystem/fsp/fs_i_filesystem.cpp"
 fs_system_pinned = (sources / "eden/src" / fs_system_rel).read_text()
-fs_system_maintained = (active / "eden-core/src" / fs_system_rel).read_text()
+fs_system_maintained = (active / "eden/src" / fs_system_rel).read_text()
 fs_system_expected = '#include "performance.h"\n' + fs_system_pinned
 fs_system_calls = (
     ("file", """backend->OpenFile(&vfs_file, FileSys::Path(path->str),
@@ -272,7 +271,7 @@ print("VENDOR_MAINTAINED_FS_IFILESYSTEM_PARITY_PASS: three opens, quiet guard, D
 # Native host-syncpoint callback diagnostic: exact old-generated TU parity.
 nvctrl_rel = "core/hle/service/nvdrv/devices/nvhost_ctrl.cpp"
 nvctrl_pinned = (sources / "eden/src" / nvctrl_rel).read_text()
-nvctrl_maintained = (active / "eden-core/src" / nvctrl_rel).read_text()
+nvctrl_maintained = (active / "eden/src" / nvctrl_rel).read_text()
 nvctrl_old = """    event.wait_handle =
         host1x_syncpoint_manager.RegisterHostAction(fence_id, target_value, [this, slot]() {
             auto& event_ = events[slot];"""
@@ -349,7 +348,7 @@ assert "ctrl_source" not in c and "ctrl_old" not in c
 # now a real maintained source, identical apart from the necessary include.
 dequeue_rel = "core/hle/service/nvnflinger/buffer_queue_producer.cpp"
 dequeue_pinned = (sources / "eden/src" / dequeue_rel).read_text()
-dequeue_maintained = (active / "eden-core/src" / dequeue_rel).read_text()
+dequeue_maintained = (active / "eden/src" / dequeue_rel).read_text()
 dequeue_old = "        Status status = WaitForFreeSlotThenRelock(async, &found, &return_flags, lock);"
 dequeue_new = """#ifdef EDEN_NVNF_DEQUEUE_PROFILE
         const auto dequeue_start = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) ? ::Eden::Performance::NowNs() : 0;
@@ -622,7 +621,7 @@ assert "producer_source" not in c and "producer_old" not in c
 # F05: pinned-to-maintained consumer delta for abandonment wake.
 consumer_rel = "core/hle/service/nvnflinger/buffer_queue_consumer.cpp"
 consumer_pinned = (sources / "eden/src" / consumer_rel).read_text()
-consumer_active = (active / "eden-core/src" / consumer_rel).read_text()
+consumer_active = (active / "eden/src" / consumer_rel).read_text()
 consumer_start = "Status BufferQueueConsumer::Disconnect() {"
 consumer_end = "\nStatus BufferQueueConsumer::GetReleasedBuffers("
 assert consumer_pinned.count(consumer_start) == 1 and consumer_pinned.count(consumer_end) == 1
@@ -771,7 +770,7 @@ print("VENDOR_MAINTAINED_FS_IFILE_PARITY_PASS: pinned native DEV source, no CMak
 # wrappers, even though we intentionally make no new runtime behavior changes.
 hle_rel = "core/hle/service/service.cpp"
 hle_pinned = (sources / "eden/src" / hle_rel).read_text()
-hle_maintained = (active / "eden-core/src" / hle_rel).read_text()
+hle_maintained = (active / "eden/src" / hle_rel).read_text()
 hle_expected = '#include "performance.h"\n#include "core/arm/debug.h"\n' + hle_pinned
 hle_calls = ("        InvokeRequest(ctx);", "            InvokeRequestTipc(ctx);")
 hle_metric = """            if (profile_hle)
@@ -924,7 +923,7 @@ print("ENCORE_R23_HLE_DISPATCH_ISOLATION_PASS", "legacy_600us_sleep=0", "profile
 # blocking call; the exact historical body is maintained, not regenerated.
 ipc_rel = "core/hle/kernel/svc/svc_ipc.cpp"
 ipc_pinned = (sources / "eden/src" / ipc_rel).read_text()
-ipc_maintained = (active / "eden-core/src" / ipc_rel).read_text()
+ipc_maintained = (active / "eden/src" / ipc_rel).read_text()
 ipc_old = "    R_RETURN(session->SendSyncRequest(kernel, message, buffer_size));"
 ipc_new = """    const bool ipc_profile = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed);
     const auto ipc_start = ipc_profile ? ::Eden::Performance::NowNs() : 0;
@@ -959,7 +958,7 @@ ipc_expected = ('#include "performance.h"\n' +
                 ipc_pinned.replace(ipc_old, ipc_new).replace(ipc_timeout_old, ipc_timeout_fixed).replace(ipc_index_old, ipc_index_fixed))
 assert ipc_maintained == ipc_expected, (
     "Maintained DEV IPC source diverges from pinned + profiler + deadline and slot guards")
-ipc_standard = (active / "eden-core/src/core/hle/kernel/svc/svc_ipc_standard.cpp").read_text()
+ipc_standard = (active / "eden/src/core/hle/kernel/svc/svc_ipc_standard.cpp").read_text()
 # Final IPC source adds one fail-closed check *only* for impossible success
 # indices; DEV remains the pinned profile with its instrumented timestamps.
 ipc_success_old = """            if (R_SUCCEEDED(result)) {
@@ -1044,7 +1043,7 @@ print("VENDOR_MAINTAINED_HLE_IPC_PARITY_PASS: both dispatches, caller traces, gu
 # with the former absolute include replaced by the tracked include directory.
 thread_rel = "common/thread.cpp"
 thread_original = (sources / "eden/src" / thread_rel).read_text()
-thread_maintained = (active / "eden-core/src" / thread_rel).read_text()
+thread_maintained = (active / "eden/src" / thread_rel).read_text()
 thread_old = "void SetCurrentThreadName(const char* name) {"
 thread_new = thread_old + "\n    ::Eden::Performance::RegisterWorker(name);"
 assert thread_original.count(thread_old) == 1
@@ -1055,7 +1054,7 @@ assert 'write_derived("${PORT_BUILD_DIR}/thread.cpp"' not in c
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/common/thread.cpp" thread_source)' not in c
 fs_native_rel = "common/fs/fs.cpp"
 fs_native_original = (sources / "eden/src" / fs_native_rel).read_text()
-fs_native_maintained = (active / "eden-core/src" / fs_native_rel).read_text()
+fs_native_maintained = (active / "eden/src" / fs_native_rel).read_text()
 fs_native_old = "fs::directory_iterator(path, ec)"
 assert fs_native_original.count(fs_native_old) == 2
 fs_native_expected = '#include "native_directory.h"\n' + fs_native_original.replace(
@@ -1083,7 +1082,7 @@ print("VENDOR_MAINTAINED_COMMON_RUNTIME_PARITY_PASS: thread name, two iterators,
 # leaf-specific block without changing the existing host frequency heuristic.
 cpu_rel = "common/cpu_features.cpp"
 cpu_pinned = (sources / "eden/src" / cpu_rel).read_text()
-cpu_active = (active / "eden-core/src" / cpu_rel).read_text()
+cpu_active = (active / "eden/src" / cpu_rel).read_text()
 cpu_fallback = """        } else {
             caps.tsc_frequency = X64::EstimateRDTSCFrequency();
         }"""
@@ -1149,7 +1148,7 @@ assert 'file(READ "${PROJECT_SOURCE_DIR}/src/common/cpu_features.cpp" features_s
 # EDEN_PORT_DIR private include root used by the previous generated file.
 paths_rel = "common/fs/path_util.cpp"
 paths_pinned = (sources / "eden/src" / paths_rel).read_text()
-paths_active = (active / "eden-core/src" / paths_rel).read_text()
+paths_active = (active / "eden/src" / paths_rel).read_text()
 paths_old = "#else\n        eden_path = GetCurrentDir() / PORTABLE_DIR;"
 paths_new = """#elif defined(PS5_NATIVE)
         eden_path = Eden::UserDir();
@@ -1178,7 +1177,7 @@ print("VENDOR_MAINTAINED_NATIVE_TSC_PATH_PARITY_PASS: CPUID fallback, native roo
 # substitutions used to be emitted as a generated CMake translation unit.
 interfaces_rel = "core/internal_network/network_interface.cpp"
 interfaces_pinned = (sources / "eden/src" / interfaces_rel).read_text()
-interfaces_active = (active / "eden-core/src" / interfaces_rel).read_text()
+interfaces_active = (active / "eden/src" / interfaces_rel).read_text()
 interface_replacements = (
     ("defined(__linux__) || defined(__ANDROID__)",
      "defined(__linux__) || defined(__ANDROID__) || defined(__FreeBSD__)"),
@@ -1205,7 +1204,7 @@ print("VENDOR_MAINTAINED_NATIVE_NET_INTERFACES_PARITY_PASS: getifaddrs branch, n
 # Firmware system root: preserved transformation and selected native C++.
 native_fs_rel = "core/hle/service/filesystem/filesystem.cpp"
 native_fs_pinned = (sources / "eden/src" / native_fs_rel).read_text()
-native_fs_active = (active / "eden-core/src" / native_fs_rel).read_text()
+native_fs_active = (active / "eden/src" / native_fs_rel).read_text()
 native_fs_old = "nand_directory, std::move(load_directory), std::move(dump_directory));"
 native_fs_new = ('nand_directory, std::move(load_directory), std::move(dump_directory), '
                  'vfs.OpenDirectory(Eden::AssetsPath("firmware"), FileSys::OpenMode::Read));')
@@ -1256,7 +1255,7 @@ assert native_fs_historical == (
     + native_fs_pinned.replace(native_fs_old, native_fs_new)
 ), "Native R23 FS source not reversible to firmware-root baseline"
 print("ENCORE_R23_FS_TEMP_SAVE_ISOLATION_PASS", "application_owner=1", "H01_rollback=1")
-h01_fs_header = (active / "eden-core/overrides/h01-filesystem/core/hle/service/filesystem/filesystem.h").read_text()
+h01_fs_header = (active / "eden/src/core/hle/service/filesystem/filesystem.h").read_text()
 assert "void UnregisterProcessIfPresent(ProcessId process_id);" in h01_fs_header
 assert c.count('list(REMOVE_ITEM core_sources hle/service/filesystem/filesystem.cpp)') == 1
 assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_NATIVE_FILESYSTEM}")') == 1
@@ -1270,7 +1269,7 @@ print("VENDOR_MAINTAINED_NATIVE_FILESYSTEM_PARITY_PASS: firmware and selection")
 # substitutions targeted TWO directory/file contexts and TWO assignments.
 romfs_rel = "core/file_sys/fsmitm_romfsbuild.cpp"
 romfs_pinned = (sources / "eden/src" / romfs_rel).read_text()
-romfs_active = (active / "eden-core/src" / romfs_rel).read_text()
+romfs_active = (active / "eden/src" / romfs_rel).read_text()
 romfs_rewrites = (
     ("    std::shared_ptr<RomFSBuildDirectoryContext> parent;",
      "    RomFSBuildDirectoryContext* parent = nullptr;"),
@@ -1316,13 +1315,13 @@ print("VENDOR_MAINTAINED_ROMFS_BUILDER_PARITY_PASS: two non-owning links, two as
 # firmware root, plus the lookup-only mod directory behavior, match the
 # former configure-time substitutions byte-for-byte.
 bis_header_pinned = (sources / "eden/src/core/file_sys/bis_factory.h").read_text()
-bis_header_maintained = (active / "eden-core/include/core/file_sys/bis_factory.h").read_text()
+bis_header_maintained = (active / "eden/include/core/file_sys/bis_factory.h").read_text()
 bis_header_old = "VirtualDir dump_root);"
 bis_header_new = "VirtualDir dump_root, VirtualDir firmware_root = {});"
 assert bis_header_pinned.count(bis_header_old) == 1
 assert bis_header_maintained == bis_header_pinned.replace(bis_header_old,bis_header_new)
 bis_cpp_pinned = (sources / "eden/src/core/file_sys/bis_factory.cpp").read_text()
-bis_cpp_maintained = (active / "eden-core/src/core/file_sys/bis_factory.cpp").read_text()
+bis_cpp_maintained = (active / "eden/src/core/file_sys/bis_factory.cpp").read_text()
 bis_rewrites = (
     ("VirtualDir dump_root_)", "VirtualDir dump_root_, VirtualDir firmware_root)"),
     ('GetOrCreateDirectoryRelative(nand_root, "/system/Contents/registered")',
@@ -1353,7 +1352,7 @@ print("VENDOR_MAINTAINED_BIS_PAIR_PARITY_PASS: API, firmware root, mods and nati
 # Renderer factory parity: Vulkan keeps the untouched source while the
 # OpenGL-only native profile selects the tracked two-removal variant.
 pinned_factory = (sources / "eden/src/video_core/video_core.cpp").read_text()
-maintained_gl_factory = (active / "eden-core/src/video_core/video_core_opengl.cpp").read_text()
+maintained_gl_factory = (active / "eden/src/video_core/video_core_opengl.cpp").read_text()
 gl_removals = (
     '#include "video_core/renderer_vulkan/renderer_vulkan.h"',
     '    case Settings::RendererBackend::Vulkan:\n'
@@ -1398,8 +1397,8 @@ old_qry = "const bool slice_counter = WaitPending() && stream.IsEnabled();"
 new_qry = "const bool slice_counter = false; // PS5: do not split cached query reads."
 assert pinned_gl_buffer.count(old_buf) == 1
 assert pinned_gl_query.count(old_qry) == 1
-assert (active/"eden-core/src"/native_gl_buffer).read_text() == pinned_gl_buffer.replace(old_buf,new_buf)
-assert (active/"eden-core/src"/native_gl_query).read_text() == pinned_gl_query.replace(old_qry,new_qry)
+assert (active/"eden/src"/native_gl_buffer).read_text() == pinned_gl_buffer.replace(old_buf,new_buf)
+assert (active/"eden/src"/native_gl_query).read_text() == pinned_gl_query.replace(old_qry,new_qry)
 assert c.count('list(APPEND video_sources "${EDEN_MAINTAINED_GL_BUFFER_CACHE}")') == 1
 assert c.count('list(APPEND video_sources "${EDEN_MAINTAINED_GL_QUERY_CACHE}")') == 1
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_GL_BUFFER_CACHE}")' in c
@@ -1429,7 +1428,7 @@ gl_anchor = "dst_origin.y, dst_origin.z, region.width, region.height, region.dep
 gl_trace = "        static unsigned copy_errors = 0;\n        const GLenum copy_error = copy_errors < 8 ? glGetError() : GL_NO_ERROR;\n        if (copy_error && copy_errors++ < 8) {\n            GLint sw = 0, dw = 0;\n            glGetTextureLevelParameteriv(src_name, src_origin.level, GL_TEXTURE_WIDTH, &sw);\n            glGetTextureLevelParameteriv(dst_name, dst_origin.level, GL_TEXTURE_WIDTH, &dw);\n            std::printf(\"EDEN_DEV_COPY error=%x src=%u target=%x level=%d x=%d width=%d dst=%u target=%x level=%d x=%d width=%d extent=%dx%dx%d\\n\", copy_error, src_name, src_target, src_origin.level, src_origin.x, sw, dst_name, dst_target, dst_origin.level, dst_origin.x, dw, region.width, region.height, region.depth);\n        }"
 assert gl_src.count(gl_anchor) == 1, "Pinned development GL copy site drift"
 gl_old_generated = "#include <cstdio>\n" + gl_src.replace(gl_anchor, gl_anchor + "\n" + gl_trace)
-assert (active / "eden-core/src/video_core/renderer_opengl/gl_texture_cache.cpp").read_text() == gl_old_generated
+assert (active / "eden/src/video_core/renderer_opengl/gl_texture_cache.cpp").read_text() == gl_old_generated
 assert c.count('list(APPEND video_sources "${EDEN_MAINTAINED_DEV_GL_TEXTURE}")') == 0
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_DEV_GL_TEXTURE}")' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/gl_texture_cache.cpp"' not in c
@@ -1439,8 +1438,8 @@ print("MAINTAINED_GL_TEXTURE_DEV_PARITY_PASS: bounded copy instrumentation")
 
 # A32 fastmem must derive from the *installed shipping backport*, not from
 # the original pinned Eden file that is overwritten before CMake configure.
-shipping_memory = (active / "eden-backports/src/core/memory.cpp").read_text()
-a32_memory = (active / "eden-core/src/core/memory.cpp").read_text()
+shipping_memory = (active / "eden/src/core/memory.cpp").read_text()
+a32_memory = (active / "eden/src/core/memory.cpp").read_text()
 old_fastmem_guard = "        if (process.IsApplication() && Settings::IsFastmemEnabled()) {"
 new_fastmem_guard = "        if (process.IsApplication() && !process.Is64Bit() && Settings::IsFastmemEnabled()) {"
 assert shipping_memory.count(old_fastmem_guard) == 1, "shipping memory ABI/input changed"
@@ -1452,7 +1451,7 @@ assert 'if(EDEN_A32_FASTMEM)' in c
 for label in ("a32","standard"):
     chosen = 'memory_native_'+label+'.cpp'
     assert 'set(EDEN_NATIVE_GUEST_SOURCE "${EDEN_NATIVE_MEMORY_ROOT}/'+chosen+'")' in c
-    unit = (active/"eden-core/src/core"/chosen).read_text()
+    unit = (active/"eden/src/core"/chosen).read_text()
     assert unit.count("ShouldLogUnmappedAccess()") == 11
     assert "std::numeric_limits<u64>::max() - GetInteger(base)" in unit
 assert 'file(READ "${eden_cpu_memory_tu}" eden_cpu_memory)' not in c
@@ -1528,7 +1527,7 @@ nvdrv_expected = nvdrv_expected.replace(original_get, guarded_get)
 # for native child handles. The historical source receipt predates this
 # shipping owner. Reverse exactly the reviewed addition on an audit copy,
 # never strip arbitrary changes or modify the production C++ source.
-nvdrv_maintained = (active / "eden-core/src" / nvdrv_rel).read_text()
+nvdrv_maintained = (active / "eden/src" / nvdrv_rel).read_text()
 _nvdrv_bytes = nvdrv_maintained.encode("utf-8")
 _nvdrv_blob = hashlib.sha1(
     b"blob " + str(len(_nvdrv_bytes)).encode() + b"\0" + _nvdrv_bytes
@@ -1597,7 +1596,7 @@ assert rumble_generated.count(legacy_button_entry) == 1
 assert rumble_generated.count(legacy_reconnect) == 1
 rumble_r23 = rumble_generated.replace(legacy_button_entry, revised_button_entry, 1)
 rumble_r23 = rumble_r23.replace(legacy_reconnect, revised_reconnect, 1)
-rumble_maintained = (active / "eden-core/src/hid_core/frontend/emulated_controller.cpp").read_text()
+rumble_maintained = (active / "eden/src/hid_core/frontend/emulated_controller.cpp").read_text()
 import hashlib
 def r23_blob_sha(text):
     raw = text.encode("utf-8")
@@ -1616,7 +1615,7 @@ print("MAINTAINED_RUMBLE_UNIT_PARITY_PASS selection=hid_core")
 # Exact old-source parity for NPad: this must reproduce the former build
 # generator applied to the immutable shipping-backport snapshot, not an
 # independently rewritten input implementation.
-npad_shipping = (active / "eden-backports/src/hid_core/resources/npad/npad.cpp").read_text()
+npad_shipping = (active / "eden/src/hid_core/resources/npad/npad.cpp").read_text()
 npad_old_pair = "        auto& controller = controller_data[aruid_index][controller_idx];\n        const auto is_connected = controller.device->IsConnected();"
 npad_new_pair = "        auto& controller = controller_data[aruid_index][controller_idx];\n        if (controller.device == nullptr) {\n            continue;  // ProsperoEden: this applet resource is not activated yet\n        }\n        const auto is_connected = controller.device->IsConnected();"
 npad_old_entry = "void NPad::ControllerUpdate(Kernel::KernelCore& kernel, Core::HID::ControllerTriggerType type, std::size_t controller_idx) {\n"
@@ -1644,7 +1643,7 @@ assert npad_expected.count(npad_r23_constructor) == 1
 assert npad_expected.count(npad_r23_prior_hold) == 1
 npad_r23 = npad_expected.replace(npad_r23_constructor, npad_r23_initialized, 1)
 npad_r23 = npad_r23.replace(npad_r23_prior_hold, npad_r23_checked_hold, 1)
-npad_maintained = (active / "eden-core/src/hid_core/resources/npad/npad.cpp").read_text()
+npad_maintained = (active / "eden/src/hid_core/resources/npad/npad.cpp").read_text()
 assert r23_blob_sha(npad_maintained) == "001df5c99e36d176f6db72d0c7c542737e897dc9"
 npad_release_diag = npad_maintained
 release_includes = "#include <atomic>\\n#include <chrono>\\n#include <cstdio>\\n".replace("\\n", "\n")
@@ -1691,7 +1690,7 @@ print("MAINTAINED_NPAD_SOURCE_PARITY_PASS guards=2 selection=hid_core")
 
 # Dev NPad is not another instrumented CMake-generated translation unit.
 # It is the guarded normal source with one scoped Fullkey event witness.
-npad_dev = (active / "eden-core/src/hid_core/resources/npad/npad_pause_diag.cpp").read_text()
+npad_dev = (active / "eden/src/hid_core/resources/npad/npad_pause_diag.cpp").read_text()
 npad_prefix = "#include <atomic>\\n#include <cstdio>\\n".replace("\\n", "\n")
 assert npad_dev.startswith(npad_prefix)
 npad_dev_body = npad_dev[len(npad_prefix):]
@@ -1732,7 +1731,7 @@ for pos, (old, new) in enumerate(pm_pairs):
 # R23 #113 parent-program sharing adds 20 reviewed source-delta regions
 # on top of the previous four-modification PatchManager generator.
 # Reverse exactly to the frozen baseline before checking old parity.
-pm_current = (active / "eden-core/src/core/file_sys/patch_manager.cpp").read_text()
+pm_current = (active / "eden/src/core/file_sys/patch_manager.cpp").read_text()
 pm_receipt = json.loads(
     (root / "tools/fixtures/r23-parent-patch-manager-reverse.json").read_text())
 assert pm_receipt["schema_version"] == 1 and len(pm_receipt["hunks"]) == 20
@@ -1763,7 +1762,7 @@ slot_old = "[[nodiscard]] SlotId insert(Args&&... args) noexcept {\n        cons
 slot_new = "[[nodiscard]] SlotId insert(Args&&... args) {\n        const u32 index = FreeValueIndex();\n        try {\n            new (&values[index].object) T(std::forward<Args>(args)...);\n        } catch (...) {\n            free_list.push_back(index); // Restores the popped slot without allocating.\n            throw;\n        }"
 assert slot_base.count(slot_old) == 1, "Pinned SlotVector constructor changed"
 slot_expected = slot_base.replace(slot_old, slot_new)
-slot_maintained = active / "eden-core/overrides/slot-vector/common/slot_vector.h"
+slot_maintained = active / "eden/src/common/slot_vector.h"
 assert slot_maintained.read_text() == slot_expected, "Maintained SlotVector does not match former CMake"
 assert 'target_include_directories(common BEFORE PUBLIC "${EDEN_MAINTAINED_SLOT_VECTOR_ROOT}")' in c
 assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_MAINTAINED_SLOT_VECTOR_ROOT}")' in c
@@ -1778,7 +1777,7 @@ macro_derived = "#include <exception>\n" + macro_original
 for idx, (before, after) in enumerate(macro_replacements):
     assert macro_derived.count(before) == 1, ("MacroJIT pinned hunk drift", idx)
     macro_derived = macro_derived.replace(before, after)
-assert (active / "eden-core/src/video_core/macro.cpp").read_text() == macro_derived
+assert (active / "eden/src/video_core/macro.cpp").read_text() == macro_derived
 assert 'list(APPEND video_sources "${EDEN_MAINTAINED_MACRO}")' in c
 assert 'macro_recovery.cmake' not in c
 print("MAINTAINED_MACRO_RECOVERY_PARITY_PASS anchors=5")
@@ -1890,12 +1889,12 @@ shared_jit_blobs = {
 }
 assert all(re.fullmatch(r"[0-9a-f]{40}", sha) for sha in shared_jit_blobs.values()), "Malformed canonical JIT Git object ID"
 for filename, original_blob in shared_jit_blobs.items():
-    source = active / "eden-core/dynarmic/shared-jit" / filename
+    source = active / "eden/src/dynarmic/src/dynarmic/backend/x64" / filename
     assert source.is_file() and not (root / "headless/dynarmic" / filename).exists(), (
         "duplicate shared JIT fragment or missing canonical owner", filename)
     check_canonical_git_object(source, original_blob, "JIT")
 shared_jit_selector = (root / "headless/dynarmic/shared-jit.cmake").read_text()
-assert 'set(EDEN_SHARED_JIT_DIR "${PORT_ROOT}/vendor/encore-active/eden-core/dynarmic/shared-jit")' in shared_jit_selector
+assert 'set(EDEN_SHARED_JIT_DIR "${PORT_ROOT}/vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64")' in shared_jit_selector
 assert ('configure_file("${EDEN_SHARED_JIT_DIR}/jit_group.h"\n'
         '        "${PORT_BUILD_DIR}/include/dynarmic/backend/x64/jit_group.h" COPYONLY)') in shared_jit_selector
 assert 'file(READ "${EDEN_SHARED_JIT_DIR}/jit_group.h" eden_group_header)' not in shared_jit_selector
@@ -1906,7 +1905,7 @@ jit_state_anchor = "    std::array<u64, RSB_SIZE> rsb_codeptrs;\n"
 jit_state_added = "\n    // ProsperoEden: what generated code reads instead of embedding it, so that any core can run\n    // code another core compiled (jit_group.h): this core's callbacks and JIT object, TPIDR\n    // registers, exclusive monitor slots, configuration and fast dispatch table.\n    void* eden_callbacks = nullptr;\n    void* eden_jit = nullptr;\n    u64* eden_tpidr_el0 = nullptr;\n    const u64* eden_tpidrro_el0 = nullptr;\n    void* eden_exclusive_address = nullptr;\n    void* eden_exclusive_value = nullptr;\n    const void* eden_conf = nullptr;\n    void* eden_fast_dispatch = nullptr;\n"
 assert jit_state_pinned.count(jit_state_anchor) == 1, "Pinned A64JitState layout drift"
 jit_state_expected = jit_state_pinned.replace(jit_state_anchor, jit_state_anchor + jit_state_added)
-assert (active / "eden-core/dynarmic/shared-jit/a64_jitstate.h").read_text() == jit_state_expected, (
+assert (active / "eden/src/dynarmic/src/dynarmic/backend/x64/a64_jitstate.h").read_text() == jit_state_expected, (
     "Maintained A64JitState differs from historical M01 generation")
 assert ('configure_file("${EDEN_SHARED_JIT_DIR}/a64_jitstate.h"\n'
         '        "${PORT_BUILD_DIR}/include/${eden_jitstate_relative}" COPYONLY)') in shared_jit_selector
@@ -1916,7 +1915,7 @@ print("ENCORE_SHARED_JIT_STATE_PARITY_PASS M01 exact historical layout, direct m
 # M03 exact parity: the canonical callback translation unit reproduces
 # the previous generated includes, args registry and two call substitutions.
 callback_original = (sources / "eden/src/dynarmic/src/dynarmic/backend/x64/callback.cpp").read_text()
-callback_args = (active / "eden-core/dynarmic/shared-jit/jit_state_args.inc").read_text()
+callback_args = (active / "eden/src/dynarmic/src/dynarmic/backend/x64/jit_state_args.inc").read_text()
 callback_changes = (
     ("namespace Dynarmic::Backend::X64 {\n",
      "namespace Dynarmic::Backend::X64 {\n" + callback_args),
@@ -1930,7 +1929,7 @@ for before, after in callback_changes:
     assert callback_expected.count(before) == 1, ("Pinned shared-JIT callback anchor drift", before)
     callback_expected = callback_expected.replace(before, after)
 callback_expected = "#include <array>\n#include <atomic>\n#include <cstdlib>\n#include <optional>\n" + callback_expected
-assert (active / "eden-core/dynarmic/shared-jit/callback.cpp").read_text() == callback_expected, (
+assert (active / "eden/src/dynarmic/src/dynarmic/backend/x64/callback.cpp").read_text() == callback_expected, (
     "Maintained shared-JIT callback differs from M03 output")
 assert ('configure_file("${EDEN_SHARED_JIT_DIR}/callback.cpp"\n'
         '        "${PORT_BUILD_DIR}/callback.cpp" COPYONLY)') in shared_jit_selector
@@ -1948,7 +1947,7 @@ scalar_canonical_blobs = {
     "scalar-memory-write.inc": "3d86e3e8ca2294a4dfe244063950db583dc22af9",
 }
 for filename, expected in scalar_canonical_blobs.items():
-    source = active / "eden-core/dynarmic/scalar" / filename
+    source = active / "eden/src/dynarmic/src/dynarmic/backend/x64" / filename
     assert source.is_file() and not (root / "headless" / filename).exists(), (
         "scalar injection has duplicate or missing authority", filename)
     check_canonical_git_object(source, expected, "scalar")
@@ -1956,20 +1955,20 @@ scalar_module = (root / "headless/scalar-memory.cmake").read_text()
 assert 'file(READ "${EDEN_SCALAR_INPUT_DIR}/scalar-memory-${lower}.inc" scalar_access)' not in scalar_module
 assert "set(memory_source" not in scalar_module
 for variant in ("standard", "checked"):
-    compiled = (active / f"eden-core/src/dynarmic/backend/x64/emit_x64_memory_{variant}.cpp.inc").read_text()
+    compiled = (active / f"eden/src/dynarmic/src/dynarmic/backend/x64/emit_x64_memory_{variant}.cpp.inc").read_text()
     for direction in ("read", "write"):
-        oracle = (active / f"eden-core/dynarmic/scalar/scalar-memory-{direction}.inc").read_text()
+        oracle = (active / f"eden/src/dynarmic/src/dynarmic/backend/x64/scalar-memory-{direction}.inc").read_text()
         assert oracle in compiled, ("lost scalar fallback", variant, direction)
 assert not (root / "headless/checked-fastmem.cmake").exists()
 assert 'write_derived("' not in scalar_module
 assert 'list(APPEND jit_sources "${EDEN_MAINTAINED_SCALAR_BACKEND}/emit_x64_${unit}.cpp")' in scalar_module
 for unit in ("vector", "data_processing"):
-    assert (active / f"eden-core/src/dynarmic/backend/x64/emit_x64_{unit}.cpp").is_file()
+    assert (active / f"eden/src/dynarmic/src/dynarmic/backend/x64/emit_x64_{unit}.cpp").is_file()
 assert (root / "tools/check-maintained-scalar-emitters.py").is_file()
 # Both Fermi2D variants are full tracked sources; native CMake selects,
 # and the ordinary mode remains OFF for unqualified layered copies.
 for fermi_variant in ("fermi_2d_observed.cpp", "fermi_2d_experimental.cpp"):
-    assert (active / "eden-core/src/video_core/engines" / fermi_variant).is_file()
+    assert (active / "eden/src/video_core/engines" / fermi_variant).is_file()
 fermi_selector = (root / "headless/gpu_native_observability.cmake").read_text()
 assert 'EDEN_UNQUALIFIED_FERMI2D_COPY' not in fermi_selector
 assert 'fermi_2d_experimental.cpp' not in fermi_selector
@@ -1979,13 +1978,13 @@ assert (root / "tools/check-maintained-fermi2d-variants.py").is_file()
 print("VENDOR_MAINTAINED_FERMI2D_VARIANTS_OWNER_PASS")
 
 # Maxwell PRMT translations now live in the complete tracked shader unit.
-assert (active / "eden-core/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp").is_file()
+assert (active / "eden/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp").is_file()
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in (root / "headless/gpu_native_observability.cmake").read_text()
 assert (root / "tools/check-maintained-maxwell-prmt.py").is_file()
 print("VENDOR_MAINTAINED_PRMT_OWNER_PASS")
 
 # OpenGL rasterizer diagnostics now compile from one selected full source.
-gl_rasterizer_dir = active / "eden-core/src/video_core/renderer_opengl"
+gl_rasterizer_dir = active / "eden/src/video_core/renderer_opengl"
 assert (gl_rasterizer_dir / "gl_rasterizer.cpp").is_file()
 assert (gl_rasterizer_dir / "gl_rasterizer_dev.cpp").is_file()
 assert 'list(APPEND video_sources "${EDEN_MAINTAINED_GL_RASTERIZER}")' in c
@@ -1995,13 +1994,13 @@ print("VENDOR_MAINTAINED_GL_RASTERIZER_OWNER_PASS")
 
 # Native GPU software blitter has a tracked complete source based on the
 # shipping backport; the former three edits are tested outside CMake.
-assert (active / "eden-core/src/video_core/engines/sw_blitter/blitter.cpp").is_file()
+assert (active / "eden/src/video_core/engines/sw_blitter/blitter.cpp").is_file()
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in (root / "headless/gpu_native_observability.cmake").read_text()
 assert (root / "tools/check-maintained-sw-blitter.py").is_file()
 print("VENDOR_MAINTAINED_SW_BLITTER_OWNER_PASS")
 
 # KProcess finalization timing is selected from a complete DEV-only TU.
-assert (active / "eden-core/src/core/hle/kernel/k_process.cpp").is_file()
+assert (active / "eden/src/core/hle/kernel/k_process.cpp").is_file()
 assert 'list(APPEND process_core_sources "${EDEN_MAINTAINED_DEV_PROCESS}")' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/k_process.cpp"' not in c
 assert (root / "tools/check-maintained-kprocess-dev.py").is_file()
@@ -2009,34 +2008,34 @@ print("VENDOR_MAINTAINED_KPROCESS_DEV_OWNER_PASS")
 
 # Xbyak writable alias uses a complete tagged header. Only the separate
 # code_source transformation remains indirect, explicitly inventoried.
-assert (active / "eden-build/third_party/xbyak/xbyak.h").is_file()
+assert (active / "eden-cpm/xbyak/v7.40.1/xbyak/xbyak.h").is_file()
 assert 'configure_file("${EDEN_MAINTAINED_XBYAK_HEADER}"' in (root / "headless/jit-alias.cmake").read_text()
 assert (root / "tools/check-maintained-xbyak-alias.py").is_file()
 print("VENDOR_MAINTAINED_XBYAK_OWNER_PASS")
 
 # Dynarmic block-range pair is maintained and the old headless source pair
 # is retired. The build selects the complete units directly.
-assert (active / "eden-core/src/dynarmic/backend/block_range_information.cpp").is_file()
-assert (active / "eden-core/src/dynarmic/backend/block_range_information.h").is_file()
+assert (active / "eden/src/dynarmic/backend/block_range_information.cpp").is_file()
+assert (active / "eden/src/dynarmic/backend/block_range_information.h").is_file()
 assert 'target_sources(dynarmic PRIVATE\n    "${EDEN_MAINTAINED_BLOCK_RANGE_DIR}/block_range_information.cpp")' in c
 assert (root / "tools/check-maintained-block-range.py").is_file()
 print("VENDOR_MAINTAINED_BLOCK_RANGE_OWNER_PASS")
 
 # Native JIT constant pool has a complete tracked source and explicit selector.
-assert (active / "eden-core/src/dynarmic/backend/x64/constant_pool.cpp").is_file()
+assert (active / "eden/src/dynarmic/backend/x64/constant_pool.cpp").is_file()
 assert 'target_sources(dynarmic PRIVATE "${EDEN_MAINTAINED_CONSTANT_POOL}")' in (root / "headless/jit-alias.cmake").read_text()
 assert (root / "tools/check-maintained-constant-pool.py").is_file()
 print("VENDOR_MAINTAINED_CONSTANT_POOL_OWNER_PASS")
 
 # RegAlloc now has complete tracked sources and one explicit selector.
-regalloc_dir = active / "eden-core/src/dynarmic/backend/x64"
+regalloc_dir = active / "eden/src/dynarmic/backend/x64"
 assert (regalloc_dir / "reg_alloc.h").is_file() and (regalloc_dir / "reg_alloc.cpp").is_file()
 assert "write_derived(" not in (root / "headless/dynarmic/reg_alloc.cmake").read_text()
 assert (root / "tools/check-maintained-reg-alloc.py").is_file()
 print("VENDOR_MAINTAINED_REGALLOC_OWNER_PASS")
 
 # Sparse memory table is maintained as a full header; replay lives in a standalone host oracle.
-assert (active / "eden-core/src/common/sparse_large_vector.h").is_file()
+assert (active / "eden/src/common/sparse_large_vector.h").is_file()
 assert 'configure_file("${EDEN_MAINTAINED_SPARSE_VECTOR}"' in c
 assert 'write_derived("${PORT_BUILD_DIR}/sparse/common/sparse_large_vector.h"' not in c
 assert (root / "tools/check-maintained-sparse-vector.py").is_file()
@@ -2054,7 +2053,7 @@ new_w = ("    if (bitsize == 32 || bitsize == 64) {\n"
          "        ir.SetQ(vec, ir.ZeroExtendToQuad(value));\n"
          "    }")
 assert base_impl.count(old_r) == base_impl.count(old_w) == 1
-assert (active / "eden-core/src/dynarmic/frontend/A64/translate/impl/impl.cpp").read_text() == base_impl.replace(old_r, new_r).replace(old_w, new_w)
+assert (active / "eden/src/dynarmic/frontend/A64/translate/impl/impl.cpp").read_text() == base_impl.replace(old_r, new_r).replace(old_w, new_w)
 base_trans = (scalar_root / "frontend/A64/translate/a64_translate.cpp").read_text()
 old_inc = '"dynarmic/frontend/A64/translate/impl/impl.cpp"'
 assert base_trans.count(old_inc) == 1
@@ -2072,13 +2071,13 @@ native_a64_includes = (
 assert base_trans.count(native_a64_anchor) == 1
 native_a64_expected = base_trans.replace(old_inc, '"impl/impl.cpp"').replace(
     native_a64_anchor, native_a64_includes + native_a64_anchor, 1)
-assert (active / "eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp").read_text() == native_a64_expected, (
+assert (active / "eden/src/dynarmic/frontend/A64/translate/a64_translate.cpp").read_text() == native_a64_expected, (
     "Maintained A64 translator deviates from exact reviewed native ARMv8.1-v8.5 includes")
 print("VENDOR_MAINTAINED_A64_V81_V85_TRANSLATOR_PARITY_PASS includes=3 guard=1")
 base_opt = (scalar_root / "ir/opt_passes.cpp").read_text()
 opt_anchor = "        case Op::LeastSignificantWord:\n            FoldLeastSignificantWord(inst);\n            break;"
 assert base_opt.count(opt_anchor) == 1
-fold_oracle = (active / "eden-core/dynarmic/scalar/scalar-fold.inc").read_text()
+fold_oracle = (active / "eden/src/dynarmic/src/dynarmic/backend/x64/scalar-fold.inc").read_text()
 scalar_expected = base_opt.replace(opt_anchor, opt_anchor + "\n" + fold_oracle)
 scalar_r23_previous = "    if (conf.HasOptimization(OptimizationFlag::GetSetElimination)) {"
 scalar_r23_checked = (
@@ -2087,7 +2086,7 @@ scalar_r23_checked = (
 assert scalar_expected.count(scalar_r23_previous) == 1
 scalar_r23_source = scalar_expected.replace(
     scalar_r23_previous, scalar_r23_checked, 1)
-scalar_maintained = (active / "eden-core/src/dynarmic/ir/opt_passes.cpp").read_text()
+scalar_maintained = (active / "eden/src/dynarmic/ir/opt_passes.cpp").read_text()
 assert r23_blob_sha(scalar_maintained) == "3e423f113f6c6236e4e12028450b85c941a03606"
 assert scalar_maintained == scalar_r23_source, (
     "R23 Dynarmic memory-access halt guard changed beyond reviewed single predicate")
@@ -2116,7 +2115,7 @@ for filename, expected_git_blob in vulkan_oracle_sources.items():
     assert oracle.is_file() and not (root / "headless" / filename).exists()
     check_canonical_git_object(oracle, expected_git_blob, "Vulkan oracle")
     assert filename not in vulkan, ("test fixture is still a native CMake input", filename)
-assert (active / "eden-vulkan/vulkan_renderer.cpp").is_file()
+assert (active / "eden/src/video_core/renderer_vulkan/vulkan_renderer.cpp").is_file()
 print("ENCORE_VULKAN_ORACLE_SCOPE_PASS", len(vulkan_oracle_sources))
 
 
@@ -2134,7 +2133,7 @@ gpu_hunks = [
 for index, (before, after, expected_count) in enumerate(gpu_hunks):
     assert gpu_expected.count(before) == expected_count, ("GPU pinned anchor drift", index)
     gpu_expected = gpu_expected.replace(before, after)
-gpu_maintained = active / "eden-core/src/video_core/memory_manager.cpp"
+gpu_maintained = active / "eden/src/video_core/memory_manager.cpp"
 assert gpu_maintained.is_file()
 gpu_actual = gpu_maintained.read_text()
 if gpu_actual != gpu_expected:
@@ -2176,7 +2175,7 @@ if gpu_actual != gpu_expected:
         assert owner_sha == "836c0653652957a996db89ba7a7d5c48db1350a8", (
             "P1.2 physical remap diff exceeds reviewed small/big PTE changes")
         assert (root / "tools/ns2/check_native_gpu_pte_remap_host.py").is_file()
-        assert (active / "eden-core/src/video_core/native_gpu_page_remap.h").is_file()
+        assert (active / "eden/src/video_core/native_gpu_page_remap.h").is_file()
     n51_sha = "c7923dbbef27a9088dbfcb33c162e3c7069679c1"
     p12_sha = "7dba34b3e300515cd5b0a8579fe893072cb70b24"
     # Complete P1.2 successor reviewed against the historical generated TU:
@@ -2268,7 +2267,7 @@ network_expected = network_expected.replace(old_write, network_interrupt)
 network_expected = network_expected.replace(old_read,
     "ssize_t ret = recv(interrupt_pipe_fd[0], &value, sizeof(value), MSG_DONTWAIT);")
 network_expected = "#include <cstdio>\\n#include <stdexcept>\\n".replace("\\n", "\n") + network_expected
-assert (active / "eden-core/src/core/internal_network/network.cpp").read_text() == network_expected
+assert (active / "eden/src/core/internal_network/network.cpp").read_text() == network_expected
 assert 'list(APPEND core_sources "${EDEN_NATIVE_NETWORK_SOURCE}")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/network.cpp"' not in c
 print("MAINTAINED_NETWORK_SOURCE_PARITY_PASS transformations=5")
@@ -2278,7 +2277,7 @@ gpu_injection_blobs = {
     "gpu_sync_failure_wait.inc": "8840ab6d3e440321191765a823496e7f68d7feb3",
 }
 for filename, expected_blob in gpu_injection_blobs.items():
-    input_source = active / "eden-core/gpu-injections" / filename
+    input_source = active / "eden/src/video_core" / filename
     assert input_source.is_file() and not (root / "headless" / filename).exists()
     check_canonical_git_object(input_source, expected_blob, "GPU injection")
     # G21 no longer injects this historic method from active CMake.
@@ -2290,16 +2289,16 @@ for filename, expected_blob in gpu_injection_blobs.items():
     historic_wait = input_source.read_text().strip()
     for gpu_name in ("gpu_gl_host.cpp", "gpu_gl_host_dev.cpp",
                      "gpu_gl_native.cpp", "gpu_gl_native_dev.cpp"):
-        unit = (active/"eden-core/src/video_core"/gpu_name).read_text()
+        unit = (active/"eden/src/video_core"/gpu_name).read_text()
         assert historic_wait in unit, ("G21 wait drift", gpu_name)
 # The old queue injection was redundant and has been removed outright:
-# the same stop-aware method has a single shipping owner in eden-gpu.
-assert not (active / "eden-core/gpu-injections/gpu_queue_stop_wait.inc").exists()
+# the same stop-aware method has a single shipping owner in canonical eden.
+assert not (active / "eden/src/video_core/gpu_queue_stop_wait.inc").exists()
 assert 'gpu_queue_stop_wait.inc' not in c
-queue_header = (active / "eden-gpu/include/common/bounded_threadsafe_queue.h").read_text()
+queue_header = (active / "eden/src/common/bounded_threadsafe_queue.h").read_text()
 assert queue_header.count("bool EmplaceWaitWithStopToken(") == 1
-for variant in ("gpu_thread_dev.cpp", "gpu_thread_quiet.cpp"):
-    worker = (active / "eden-gpu" / variant).read_text()
+for variant in ("gpu_thread_dev.cpp", "gpu_thread.cpp"):
+    worker = (active / "eden/src/video_core" / variant).read_text()
     assert "state.queue.EmplaceWaitWithStopToken(stop_source.get_token()," in worker
 assert 'configure_file("${EDEN_ACTIVE_GPU}/include/common/bounded_threadsafe_queue.h"' in c
 print("ENCORE_GPU_INJECTIONS_CANONICAL_PASS", len(gpu_injection_blobs))
@@ -2312,7 +2311,7 @@ for old, new in vi_pairs:
     assert vi_pinned.count(old)==1, ("pinned VI source drift", old[:65])
     vi_pinned=vi_pinned.replace(old,new)
 vi_expected="#include \"display_refresh.h\"\n#include \"performance.h\"\n#include <thread>\n"+vi_pinned
-assert (active/"eden-core/src/core/hle/service/vi/conductor.cpp").read_text()==vi_expected, "VI source parity mismatch"
+assert (active/"eden/src/core/hle/service/vi/conductor.cpp").read_text()==vi_expected, "VI source parity mismatch"
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_VI_CONDUCTOR}")' in c
 assert 'target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/vi_conductor.cpp"' not in c
@@ -2322,7 +2321,7 @@ print("ENCORE_VI_CONDUCTOR_PARITY_PASS",len(vi_pairs))
 # Earlier pinned spin-lock generator is retired. The owned translation unit
 # is a byte-exact copy of its old emitted C++ at migration; this Git blob
 # locks the accepted source, while the prefix remains from pinned Dynarmic.
-spin_source = active / "eden-core/src/dynarmic/common/spin_lock_x64.cpp"
+spin_source = active / "eden/src/dynarmic/common/spin_lock_x64.cpp"
 check_canonical_git_object(spin_source, "20568a7d13151800c0b436b3864876f469bd0214", "native spin lock")
 # Warning-only change after original migration: the upstream prefix is still
 # verified byte-exact below; the current native owner consumes the retained
@@ -2343,7 +2342,7 @@ print("ENCORE_NATIVE_SPIN_LOCK_SOURCE_PASS")
 # Historical CMake IPS/patch-text fixes (eight eden_patch substitutions plus
 # the function-body splice) now have one canonical C++ owner. This SHA is
 # the exact Git blob calculated from the old generator on the pinned source.
-ips_layer = active / "eden-core/src/core/file_sys/ips_layer.cpp"
+ips_layer = active / "eden/src/core/file_sys/ips_layer.cpp"
 check_canonical_git_object(ips_layer, "f6687abf25ef2874c06c2523c530b5ba197e6d45", "IPS")
 assert 'set(EDEN_MAINTAINED_IPS_LAYER' in c
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")' in c
@@ -2356,7 +2355,7 @@ print("MAINTAINED_IPS_LAYER_SOURCE_PASS pinned_generator_blob=f6687abf")
 # R428 per-layer ASTC scratch is now a canonical, selected C++ source. Its
 # Git blob was derived by applying the single historical CMake raw-string
 # replacement against the pinned Eden texture utility.
-astc_maintained = active / "eden-core/src/video_core/texture_cache/util.cpp"
+astc_maintained = active / "eden/src/video_core/texture_cache/util.cpp"
 # Preserve the complete R428 source except named 3D-layout/policy changes.
 import hashlib
 astc_previous = astc_maintained.read_text()
@@ -2455,7 +2454,7 @@ host_stop_old = "    ~ThreadManager();"
 host_stop_new = "    ~ThreadManager();\\n    void Stop() { thread.request_stop(); if (thread.joinable()) thread.join(); }".replace("\\n", "\n")
 assert host_original.count(host_queue_old) == host_original.count(host_stop_old) == 1
 host_expected = host_original.replace(host_queue_old, host_queue_new).replace(host_stop_old, host_stop_new)
-host_canonical = active / "eden-core/host-gpu/include/video_core/gpu_thread.h"
+host_canonical = active / "eden/src/video_core/gpu_thread.h"
 assert host_canonical.read_text() == host_expected, "Host GPU header parity drift"
 assert 'configure_file("${EDEN_MAINTAINED_HOST_GPU_HEADER}"' in c
 assert 'write_derived("${PORT_BUILD_DIR}/include/video_core/gpu_thread.h"' not in c
@@ -2473,8 +2472,8 @@ shader_prefix = "#include <cstdio>\n#include <new>\n#include <stdexcept>\n#inclu
 shader_expected = (shader_prefix + shader_pinned[:shader_begin] +
                    '#include "shader_cache_reader.inc"\n\n' +
                    shader_pinned[shader_end:])
-shader_maintained = active / "eden-core/src/video_core/shader_environment.cpp"
-reader_maintained = active / "eden-core/src/video_core/shader_cache_reader.inc"
+shader_maintained = active / "eden/src/video_core/shader_environment.cpp"
+reader_maintained = active / "eden/src/video_core/shader_cache_reader.inc"
 # P2.4 NVN mesh-stage admission is additive to the shipping shader cache
 # owner. Reverse only the three exact authenticated-graphics additions and
 # still require byte-for-byte parity with the generated historical source.
@@ -2642,7 +2641,7 @@ print("ENCORE_SHADER_CACHE_SOURCE_PARITY_PASS", "source and reader canonical")
 # The selected BSD source equals all five previous CMake instrumentation
 # replacements on top of the immutable shipping backport, modulo the
 # equivalent quoted header resolved through core's headless include path.
-bsd_shipping = (active / "eden-backports/src/core/hle/service/sockets/bsd.cpp").read_text()
+bsd_shipping = (active / "eden/src/core/hle/service/sockets/bsd.cpp").read_text()
 bsd_expected = '#include "network_audit.h"\n' + bsd_shipping
 bsd_replacements = [["    const Errno result = Translate(file_descriptors[fd]->socket->Connect(Translate(addr_in)));","    const Errno result = Translate(file_descriptors[fd]->socket->Connect(Translate(addr_in)));\n    if ((result == Errno::SUCCESS || result == Errno::ISCONN) && eden_network_audit_active()) {\n        const auto peer = Translate(addr_in);\n        const std::string host = Network::IPv4AddressToString(peer.ip) + \":\" + std::to_string(peer.portno);\n        eden_network_audit_event(\"guest\", \"connect\", host.c_str(), 0, 0);\n    }"],["    return Translate(file_descriptors[fd]->socket->Send(message, flags));","    const auto send_result = Translate(file_descriptors[fd]->socket->Send(message, flags));\n    if (send_result.first > 0 && eden_network_audit_active()) {\n        const std::string descriptor = \"fd:\" + std::to_string(fd);\n        eden_network_audit_event(\"guest\", \"tx\", descriptor.c_str(), send_result.first, 0);\n    }\n    return send_result;"],["    return Translate(file_descriptors[fd]->socket->SendTo(flags, message, p_addr_in));","    const auto sent = Translate(file_descriptors[fd]->socket->SendTo(flags, message, p_addr_in));\n    if (sent.first > 0 && eden_network_audit_active()) {\n        const std::string target = p_addr_in ? Network::IPv4AddressToString(p_addr_in->ip) + \":\" + std::to_string(p_addr_in->portno) : \"fd:\" + std::to_string(fd);\n        eden_network_audit_event(\"guest\", \"tx\", target.c_str(), sent.first, 0);\n    }\n    return sent;"],["    const auto [ret, bsd_errno] = Translate(descriptor.socket->Recv(flags, message));","    const auto [ret, bsd_errno] = Translate(descriptor.socket->Recv(flags, message));\n    if (ret > 0 && eden_network_audit_active()) {\n        const std::string descriptor = \"fd:\" + std::to_string(fd);\n        eden_network_audit_event(\"guest\", \"rx\", descriptor.c_str(), ret, 0);\n    }"],["    const auto [ret, bsd_errno] = Translate(descriptor.socket->RecvFrom(flags, message, p_addr_in));","    const auto [ret, bsd_errno] = Translate(descriptor.socket->RecvFrom(flags, message, p_addr_in));\n    if (ret > 0 && eden_network_audit_active()) {\n        const std::string target = p_addr_in ? Network::IPv4AddressToString(p_addr_in->ip) + \":\" + std::to_string(p_addr_in->portno) : \"fd:\" + std::to_string(fd);\n        eden_network_audit_event(\"guest\", \"rx\", target.c_str(), ret, 0);\n    }"]]
 for i, (needle, replacement) in enumerate(bsd_replacements):
@@ -2652,7 +2651,7 @@ for i, (needle, replacement) in enumerate(bsd_replacements):
 # changing real socket connect/send/receive paths. Seal the complete revised
 # owner to its reviewed Git blob, while preserving the original five-rewrite
 # audit as an independently computed predecessor checksum.
-bsd_shipping_owner = (active / "eden-core/src/core/hle/service/sockets/bsd.cpp").read_text()
+bsd_shipping_owner = (active / "eden/src/core/hle/service/sockets/bsd.cpp").read_text()
 bsd_shipping_bytes = bsd_shipping_owner.encode("utf-8")
 bsd_shipping_sha = hashlib.sha1(
     b"blob " + str(len(bsd_shipping_bytes)).encode() + b"\0" + bsd_shipping_bytes
@@ -2680,25 +2679,19 @@ assert 'target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")' in c
 print("MAINTAINED_GUEST_BSD_PARITY_PASS rewrites=5 shipping_backport=preserved")
 
 
-# Former CMake guest DNS substitutions are now a host-only equality oracle.
-dns_base = (active / "eden-backports/src/core/hle/service/sockets/sfdnsres.cpp").read_text()
-dns_first = dns_base.find("static const constexpr std::array blockedDomains = {")
-dns_last = dns_base.find("static NetDbError GetAddrInfoErrorToNetDbError")
-assert dns_first >= 0 and dns_last > dns_first
-dns_expected = dns_base[:dns_first] + dns_base[dns_last:]
-dns_pairs = [["    // Prevent resolution of Nintendo servers\n    if (IsBlockedHost(host)) {\n        LOG_WARNING(Network, \"Resolution of hostname {} requested, returning EAI_AGAIN\", host);\n        return {0, GetAddrInfoError::AGAIN};\n    }\n\n","",2],["    if (eden_network_host_blocked(host.c_str())) return {0, GetAddrInfoError::NODATA};","    const bool encore_denied = eden_network_host_blocked(host.c_str()) != 0;\n    eden_network_audit_event(\"guest\", encore_denied ? \"dns-denied\" : \"dns-allowed\", host.c_str(), 0, encore_denied ? 1 : 0);\n    if (encore_denied) return {0, GetAddrInfoError::NODATA};",2],["    auto res_v = Network::GetAddressInfo(host, /*service*/ std::nullopt);","    auto res_v = Network::GetAddressInfo(host, /*service*/ std::nullopt);\n    if (eden_network_audit_active()) {\n        const bool found = std::get_if<std::vector<Network::AddrInfo>>(&res_v) != nullptr;\n        eden_network_audit_event(\"guest\", found ? \"dns-resolved\" : \"dns-error\", host.c_str(), 0, found ? 0 : 1);\n    }",1],["    auto res_v = Network::GetAddressInfo(host, service);","    auto res_v = Network::GetAddressInfo(host, service);\n    if (eden_network_audit_active()) {\n        const bool found = std::get_if<std::vector<Network::AddrInfo>>(&res_v) != nullptr;\n        eden_network_audit_event(\"guest\", found ? \"dns-resolved\" : \"dns-error\", host.c_str(), 0, found ? 0 : 1);\n    }",1]]
-for i, (old, new, occurrences) in enumerate(dns_pairs):
-    assert dns_expected.count(old) == occurrences, ("shipping guest DNS drift", i)
-    dns_expected = dns_expected.replace(old, new)
-assert "IsBlockedHost" not in dns_expected
-dns_expected = '#include "network_audit.h"\n' + dns_expected
-assert (active / "eden-core/src/core/hle/service/sockets/sfdnsres.cpp").read_text() == dns_expected
+# Guest DNS is a complete maintained source selected directly from the
+# canonical Eden owner. Domain policy data lives in the engine-owned packaged
+# network-hosts.txt and is evaluated through the shared matcher.
+dns_selected = (active / "eden/src/core/hle/service/sockets/sfdnsres.cpp").read_text()
+assert "static const constexpr std::array blockedDomains" not in dns_selected
+assert "IsBlockedHost(" not in dns_selected
+assert dns_selected.count("eden_network_host_blocked(host.c_str())") == 2
+assert '#include "network_domain_rules.h"' in dns_selected
+assert '#include "network_audit.h"' in dns_selected
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_GUEST_DNS}")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/audited_guest_dns.cpp"' not in c
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/sockets/sfdnsres.cpp" audited_dns)' not in c
-assert 'target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")' in c
-print("MAINTAINED_GUEST_DNS_SOURCE_PARITY_PASS old_rewrites=5 denied_policy=retained")
-
+print("MAINTAINED_GUEST_DNS_SOURCE_PARITY_PASS shared_policy=1 static_blocker=0")
 
 # Exact parity of the four former CMake C++ span-constructor fixes.
 # Production only copies the complete versioned nvdrv header.
@@ -2708,7 +2701,7 @@ ioctl_expected = ioctl_pinned
 for before, after in ioctl_pairs:
     assert ioctl_expected.count(before) == 1, ("ioctl header baseline drift", before)
     ioctl_expected = ioctl_expected.replace(before, after)
-ioctl_active = active / "eden-core/src/core/hle/service/nvdrv/devices/ioctl_serialization.h"
+ioctl_active = active / "eden/src/core/hle/service/nvdrv/devices/ioctl_serialization.h"
 ioctl_active_bytes = ioctl_active.read_bytes()
 ioctl_active_text = ioctl_active_bytes.decode()
 # Preserve all four historical span-conversion semantics, then seal the
@@ -2759,7 +2752,7 @@ for relative in (
 staging = (root / "tools/prepare-build.sh").read_text()
 assert 'python3 -B tools/install-active-core-backports.py "$eden"' in staging
 active_core_installer = (root / "tools/install-active-core-backports.py").read_text()
-assert 'ACTIVE = ROOT / "vendor/encore-active/eden-core"' in active_core_installer
+assert 'ACTIVE = ROOT / "vendor/encore-active/eden"' in active_core_installer
 assert "shutil.copyfile(maintained, tmp)" in active_core_installer
 assert "maintained_bytes != new:" in active_core_installer
 assert "maintained_bytes.replace(header, b\"\").replace(" in active_core_installer
@@ -2794,7 +2787,7 @@ maxwell_old_end = "    }\n    }\n}\n\nvoid Maxwell3D::ProcessCounterReset() {"
 maxwell_new_end = "    }\n    }\n    ::Eden::Performance::CountCondition(\n        regs.render_enable_override == Regs::RenderEnable::Override::AlwaysRender ? 1u :\n        regs.render_enable_override == Regs::RenderEnable::Override::NeverRender ? 2u :\n        3u + static_cast<unsigned>(regs.render_enable.mode) * 2u + (execute_on ? 1u : 0u));\n}\n\nvoid Maxwell3D::ProcessCounterReset() {"
 assert maxwell_pinned.count(maxwell_old_accel) == maxwell_pinned.count(maxwell_old_end) == 1
 maxwell_expected = '#include "performance.h"\n' + maxwell_pinned.replace(maxwell_old_accel, maxwell_new_accel).replace(maxwell_old_end, maxwell_new_end)
-maxwell_selected = (active / "eden-core/src/video_core/engines/maxwell_3d.cpp").read_text()
+maxwell_selected = (active / "eden/src/video_core/engines/maxwell_3d.cpp").read_text()
 cbbind_guard = """    // Lichii e6e03043 / current Eglantine: CB_BIND encodes a 5-bit slot,
     // while Maxwell3D keeps only 18 constant-buffer entries per stage.
     // Reject guest slots 18..31 before indexing the fixed-size state array.
@@ -2807,7 +2800,7 @@ if maxwell_selected != maxwell_expected:
     # its one guard in-memory before comparing the immutable generated owner.
     assert maxwell_selected.count(cbbind_guard) == 1
     assert subprocess.check_output(
-        ["git", "hash-object", str(active / "eden-core/src/video_core/engines/maxwell_3d.cpp")],
+        ["git", "hash-object", str(active / "eden/src/video_core/engines/maxwell_3d.cpp")],
         text=True).strip() == "fe7c4fa421ccabf9fff4b1bc277fb8ab5fe46677"
     maxwell_selected = maxwell_selected.replace(cbbind_guard, "", 1)
 assert maxwell_selected == maxwell_expected
@@ -2820,14 +2813,14 @@ radv_crt_original = (sources / "boilerplate/tooling/native/app_crt.cpp").read_te
 radv_old = 'extern "C" void _init()\n{'
 radv_new = 'extern "C" void ps5_fp_ieee();\nextern "C" void _init()\n{\n    ps5_fp_ieee();'
 assert radv_crt_original.count(radv_old) == 1
-assert (active / "eden-build/tooling/native/app_crt_radv.cpp").read_text() == radv_crt_original.replace(radv_old, radv_new)
+assert (active / "eden/tooling/native/app_crt_radv.cpp").read_text() == radv_crt_original.replace(radv_old, radv_new)
 assert 'set(eden_app_crt "${EDEN_MAINTAINED_RADV_CRT}")' in c
 assert 'write_derived("${eden_app_crt}"' not in c
 print("VENDOR_MAINTAINED_RADV_CRT_PARITY_PASS: pinned startup and native-only variant")
 
 # R437: the native BufferCache is a tracked header, never reassembled by CMake.
-r437_rel = "eden-core/src/video_core/buffer_cache/buffer_cache.h"
-r437_back = (active / "eden-backports/src/video_core/buffer_cache/buffer_cache.h").read_text()
+r437_rel = "eden/src/video_core/buffer_cache/buffer_cache.h"
+r437_back = (active / "eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 r437_before = ("    const auto size = buffer.SizeBytes();\n    if (insert) {\n"
                 "        total_used_memory += Common::AlignUp(size, 1024);")
 r437_after = ("    const auto size = buffer.SizeBytes();\n    if (insert) {\n"
@@ -3090,7 +3083,7 @@ legacy_calls = re.findall(
     legacy_replay_source, re.M)
 active_core_installer = (root / "tools/install-active-core-backports.py").read_text()
 patch_names = {p.name for p in (root / "headless/backports").glob("*.patch")}
-assert len(legacy_calls) == len(set(legacy_calls)) == 51
+assert len(legacy_calls) == len(set(legacy_calls)) == 53
 active_core_patches = sorted(patch_names.difference(legacy_calls))
 assert active_core_patches == [
     "eden-dynarmic-icache-coherence.patch",
@@ -3102,12 +3095,12 @@ assert "if len(names) != 5:" in active_core_installer
 assert "git apply --check" not in legacy_replay_source or "git apply" in legacy_replay_source
 assert 'git apply "$patch"' in legacy_replay_source
 assert "EDEN_EXPERIMENTAL_DUMMY_THREAD_WAITS:-OFF" in legacy_replay_source
-assert len(patch_names) == len(registered_patches) == 53
+assert len(patch_names) == len(registered_patches) == 55
 assert registered_patches == legacy_calls + active_core_patches
 assert set(registered_patches) == patch_names
-print("VENDOR_SOURCE_PATCH_REPLAY_INVENTORY_PASS: 51 replay calls, 2 active-core patches, 53 files")
+print("VENDOR_SOURCE_PATCH_REPLAY_INVENTORY_PASS: 53 replay calls, 2 active-core patches, 55 files")
 
-# Independent source-target audit: 53 registered patches may touch more
+# Independent source-target audit: 55 registered patches may touch more
 # physical translation units than the high-priority function graph names.
 # This reports EXACT path gaps; it does not assert all unlisted functions
 # have never been checked, nor that the pinned file is selected at runtime.
@@ -3127,21 +3120,20 @@ for patch_name in sorted(patch_names):
 all_patch_targets = set().union(*patch_target_map.values())
 def has_exact_audit_path(relative):
     return any(prefix + relative in audit_paths for prefix in (
-        "vendor/sources/eden/", "vendor/encore-active/eden-core/",
-        "vendor/encore-active/eden-backports/",
-        "vendor/encore-active/eden-vulkan/", "vendor/encore-active/eden-gpu/",
-        "vendor/encore-active/eden-threading/",
-        "vendor/encore-active/eden-sync/",
-        "vendor/encore-active/eden-shader/",
+        "vendor/sources/eden/",
+        "vendor/encore-active/eden/",
+        "vendor/encore-active/eden/",
+        "vendor/encore-active/eden/",
+        "vendor/encore-active/eden/src/video_core/renderer_vulkan/",
     ))
-shipping_manifest = json.loads((active / "eden-backports/manifest.json").read_text())
+shipping_manifest = json.loads((active / "eden/backports/manifest.json").read_text())
 shipping_build_recipes = {"src/common/CMakeLists.txt", "src/core/CMakeLists.txt"}
 assert shipping_build_recipes <= set(shipping_manifest["entries"])
 unmatched_patch_targets = sorted(path for path in all_patch_targets
                                  if path not in shipping_build_recipes
                                  and not has_exact_audit_path(path))
 assert not unmatched_patch_targets, ("unowned source patch targets", unmatched_patch_targets)
-assert len(patch_target_map) == 53
+assert len(patch_target_map) == 55
 print("VENDOR_PATCH_TARGET_FOOTPRINT_PASS "
       f"patches={len(patch_target_map)} "
       f"touched_paths={len(all_patch_targets)} "

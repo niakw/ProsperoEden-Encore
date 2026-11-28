@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-WRAPPER = ROOT / "vendor/encore-active/eden-vulkan/include/video_core/vulkan_common/vulkan_wrapper.h"
+WRAPPER = ROOT / "vendor/encore-active/eden/src/video_core/vulkan_common/vulkan_wrapper.h"
 source = WRAPPER.read_text(encoding="utf-8")
 start_mark = "    VkResult BindSparse(Span<VkBindSparseInfo> bind_infos,"
 end_mark = "    VkResult Present(const VkPresentInfoKHR& present_info)"

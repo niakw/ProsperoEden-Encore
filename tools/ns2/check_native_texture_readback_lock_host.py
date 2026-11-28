@@ -14,8 +14,8 @@ import tempfile
 root=Path(__file__).resolve().parents[2]
 variant='deferred' if '--deferred' in sys.argv[1:] else 'vulkan'
 assert len(sys.argv)==1 or sys.argv[1:]==['--deferred']
-owner=('vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp'
-       if variant=='deferred' else 'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp')
+owner=('vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_rasterizer_deferred.cpp'
+       if variant=='deferred' else 'vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp')
 source=(root/owner).read_text()
 assert source.count('NativeTextureReadLockScope native_texture_read_scope{this};')==2
 assert 'VideoCommon::ReadNs2GpuShader(' in source

@@ -63,7 +63,7 @@ with tempfile.TemporaryDirectory(prefix="ns2-svc-loading-snapshot-") as tmp:
                 compiler, "-std=c++20", "-Wall", "-Wextra", "-Werror", "-DPS5_NATIVE=1",
                 opt, "-fsanitize=undefined", "-fno-sanitize-recover=all",
                 "-I",str(root / "headless"),
-                "-I",str(root / "vendor/encore-active/ns2-helpers/include"),
+                "-I",str(root / "vendor/encore-active/eden/src"),
                 str(source), "-o",str(binary)
             ], check=True,timeout=45)
             subprocess.run([str(binary)],check=True,timeout=10)

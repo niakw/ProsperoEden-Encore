@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """Source + C++20 host witness for NS2-only GPU access SVC 0x80 admission."""
 from pathlib import Path
+import hashlib
 import shutil
 import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
 vendor = root / "vendor/encore-active"
-base = vendor / "ns2-runtime/gpu_access_svc"
+base = vendor / "eden/src"
 src = (base / "core/hle/kernel/svc.cpp").read_text()
 helper = (base / "core/hle/kernel/ns2_gpu_memory_attribute.h").read_text()
-pid = (vendor / "ns2-helpers/include/core/loader/ns2_svc_trace.h").read_text()
+pid = (vendor / "eden/src/core/loader/ns2_svc_trace.h").read_text()
 recipe = (root / "headless/CMakeLists.txt").read_text()
 assert recipe.count("set(EDEN_SHARED_NS2_GPU_ACCESS_SVC ON)") == 1
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in recipe
@@ -27,33 +28,36 @@ assert 'static_cast<KMemoryAttribute>(attribute)' in src
 svc_enum = (base / "core/hle/kernel/svc_types.h").read_text()
 block_enum = (base / "core/hle/kernel/k_memory_block.h").read_text()
 assert 'GpuAccessible = (1 << 5)' in svc_enum
-# Prevent the NS2 public header from hiding maintained Eden backport enums.
-# svc_info.cpp in the PS5 native build uses these values (the upstream base
-# header lacks them). Only the GPU 0x20 bit may differ from the selected
-# baseline header.
-installed_svc = (vendor / "eden-backports/src/core/hle/kernel/svc_types.h").read_text()
+
+def git_blob(text: str) -> str:
+    raw = text.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+
+# The old NS2 overlay and the maintained Eden header were consolidated into
+# one canonical encore-active owner. Validate the exact reviewed successor
+# and reconstruct its exact predecessor instead of comparing that file to
+# itself plus the same additions.
+assert git_blob(svc_enum) == "093441f9da4f3232ea884f1241417ef2dcc93a5f"
+gpu_attribute = '    GpuAccessible = (1 << 5), // NS2 SVC 0x80; preserve maintained NS1 source ABI\n'
+wait64 = '    WaitIfEqual64 = 3, // 8-byte aligned compare, no truncated upper word\n'
+assert svc_enum.count(gpu_attribute) == 1
+assert svc_enum.count(wait64) == 1
+svc_predecessor = svc_enum.replace(gpu_attribute, "", 1).replace(wait64, "", 1)
+assert git_blob(svc_predecessor) == "cc37a063101f85b8cdd0eb2c1bea97df32ab9969"
 # Six-core Switch 2 processes may query thread ticks on physical cores 4/5.
 # Preserve the legacy four-core range for non-extended processes.
-info_source = (vendor / "eden-backports/src/core/hle/kernel/svc/svc_info.cpp").read_text()
-cpu6_header = (vendor / "ns2-runtime/cpu6/core/hardware_properties.h").read_text()
+info_source = (vendor / "eden/src/core/hle/kernel/svc/svc_info.cpp").read_text()
+cpu6_header = (vendor / "eden/src/core/hardware_properties.h").read_text()
 assert "constexpr u32 NUM_CPU_CORES = 6;" in cpu6_header
 assert "GetPhysicalCoreMask();" in info_source
 assert "const u64 num_cpus = (physical_core_mask & (u64{3} << 4)) != 0" in info_source
 assert "? Core::Hardware::NUM_CPU_CORES : 4;" in info_source
-baseline_attribute = '    PermissionLocked = (1 << 4),'
-assert installed_svc.count(baseline_attribute) == 1
-expected_svc = installed_svc.replace(
-    baseline_attribute,
-    baseline_attribute + '\n'
-    + '    GpuAccessible = (1 << 5), // NS2 SVC 0x80; preserve maintained NS1 source ABI')
-expected_svc = expected_svc.replace(
-    '    WaitIfEqual = 2,',
-    '    WaitIfEqual = 2,\n    WaitIfEqual64 = 3, // 8-byte aligned compare, no truncated upper word')
-assert svc_enum == expected_svc
+assert '    PermissionLocked = (1 << 4),' in svc_enum
+assert '    WaitIfEqual = 2,' in svc_enum
 assert 'Unknown37 = 37' in svc_enum and 'Unknown38 = 38' in svc_enum
 # Native 4K worker research must run against the SAME persisted SVC 0x80
 # attribute. Never silently pin non-GPU guest pages or use trace-only SVC.
-worker = (vendor / "ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp").read_text()
+worker = (vendor / "eden/src/core/hle/service/am/service/gpu_worker.cpp").read_text()
 assert 'True(info.m_attribute & Kernel::KMemoryAttribute::GpuAccessible)' in worker
 assert 'LockForMapDeviceAddressSpace(' in worker
 # Source selected through the shared native owner, never an optional
@@ -93,7 +97,7 @@ assert 'inline void DumpRecent(' in pid
 assert 'entry.sequence.store(seq, std::memory_order_release);' in pid
 assert 'inline void ResetForTitle() noexcept' in pid
 assert 'active_pid.store(0, std::memory_order_release)' in pid
-core = (vendor / "ns2-runtime/process/core/core.cpp").read_text()
+core = (vendor / "eden/src/core/core.cpp").read_text()
 load = core.split('SystemResultStatus Load(System& system', 1)[1].split('InitializeKernel(system);', 1)[0]
 assert 'Eden::NS2::SvcTrace::ResetForTitle();' in load
 assert core.count('Eden::NS2::SvcTrace::ResetForTitle();') == 2
@@ -148,7 +152,7 @@ with tempfile.TemporaryDirectory(prefix="encore-ns2-gpu-access-") as d:
     (p / "test.cpp").write_text(fixture)
     exe = p / "test"
     subprocess.run([compiler, "-std=c++20", "-Wall", "-Wextra", "-Werror",
-                    "-I", str(base), "-I", str(vendor / "ns2-helpers/include"),
+                    "-I", str(base), "-I", str(vendor / "eden/src"),
                     str(p / "test.cpp"), "-o", str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
 # Engine controls must exercise the exact *pinned* vendor witness. This is

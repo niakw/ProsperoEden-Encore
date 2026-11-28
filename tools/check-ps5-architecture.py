@@ -29,9 +29,9 @@ def main() -> None:
     perf = read("headless/performance.cpp")
     perf_h = read("headless/performance.h")
     cmake = read("headless/CMakeLists.txt")
-    native_boc = read("vendor/encore-active/eden-core/src/dynarmic/backend/x64/block_of_code_native.cpp")
-    a64_unit = read("vendor/encore-active/eden-core/src/dynarmic/backend/x64/a64_interface_standard.cpp")
-    a32_native = read("vendor/encore-active/eden-core/src/dynarmic/backend/x64/a32_interface_native.cpp")
+    native_boc = read("vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/block_of_code_native.cpp")
+    a64_unit = read("vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface_standard.cpp")
+    a32_native = read("vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a32_interface_native.cpp")
     worker_script = read("tools/prepare-vulkan-port.py")
     jit_policy = read("headless/jit_memory_policy.h")
     native_alloc = read("headless/jit-allocator.h")
@@ -208,7 +208,7 @@ def main() -> None:
     for bits in (32, 64):
         for profile in ("normal", "dev"):
             unit = read(
-                f"vendor/encore-active/eden-core/src/core/arm/dynarmic/g11/"
+                f"vendor/encore-active/eden/src/core/arm/dynarmic/g11/"
                 f"arm_dynarmic_{bits}_native_{profile}.cpp")
             budget = f"A{bits}CacheBytes(m_core_index"
             require(budget in unit,

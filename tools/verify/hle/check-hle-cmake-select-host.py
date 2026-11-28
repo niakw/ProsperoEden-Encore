@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[3]
-module = root / "vendor/encore-active/eden-threading/native-hle-overrides.cmake"
+module = root / "vendor/encore-active/eden/native-hle-overrides.cmake"
 assert module.is_file()
 cmake = shutil.which("cmake")
 assert cmake, "CMake must be installed on the host CI runner"
@@ -36,11 +36,11 @@ set(PORT_BUILD_DIR "${CMAKE_BINARY_DIR}/headless")
 add_library(core STATIC
 @PINNED@
 )
-include("${PORT_ROOT}/vendor/encore-active/eden-threading/native-hle-overrides.cmake")
+include("${PORT_ROOT}/vendor/encore-active/eden/native-hle-overrides.cmake")
 get_target_property(selected core SOURCES)
 # A native-only NVDRV pool replaces the pinned owner when PS5_NATIVE is ON.
 set(sync_pinned "hle/service/nvdrv/core/syncpoint_manager.cpp")
-set(sync_native "${PORT_ROOT}/vendor/encore-active/eden-sync/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp")
+set(sync_native "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp")
 list(FIND selected "${sync_pinned}" sync_pinned_pos)
 list(FIND selected "${sync_native}" sync_native_pos)
 if(PS5_NATIVE)
@@ -78,7 +78,7 @@ foreach(file IN ITEMS k_thread.cpp k_server_session.cpp k_scheduler.cpp k_condit
         set(native_file ${PS5_NATIVE})
     endif()
     list(FIND selected "${rel}" pinned_pos)
-    list(FIND selected "${PORT_ROOT}/vendor/encore-active/eden-threading/src/${relative}" active_pos)
+    list(FIND selected "${PORT_ROOT}/vendor/encore-active/eden/src/${relative}" active_pos)
     if(native_file)
         if(NOT pinned_pos EQUAL -1 OR active_pos EQUAL -1)
             message(FATAL_ERROR "Native source wrong: ${file} pinned=${pinned_pos} active=${active_pos}")
@@ -94,7 +94,7 @@ endforeach()
 # its syncpoint manager, before checking the selected maintained override.
 list(FIND selected "hle/service/nvdrv/core/syncpoint_manager.cpp" pinned_syncpoint_pos)
 list(FIND selected
-    "${PORT_ROOT}/vendor/encore-active/eden-sync/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp"
+    "${PORT_ROOT}/vendor/encore-active/eden/src/core/hle/service/nvdrv/core/syncpoint_manager.cpp"
     active_syncpoint_pos)
 if(PS5_NATIVE)
     if(NOT pinned_syncpoint_pos EQUAL -1 OR active_syncpoint_pos EQUAL -1)
@@ -109,7 +109,7 @@ endif()
 get_target_property(include_dirs core INCLUDE_DIRECTORIES)
 if(PS5_NATIVE)
     list(FIND include_dirs
-       "${PORT_ROOT}/vendor/encore-active/eden-sync/src" sync_pos)
+       "${PORT_ROOT}/vendor/encore-active/eden/src" sync_pos)
     if(sync_pos EQUAL -1)
         message(FATAL_ERROR "Native synchronization header root missing")
     endif()
@@ -138,7 +138,7 @@ with tempfile.TemporaryDirectory(prefix="encore-hle-cmake-") as td:
             assert "ENCORE_HLE_CMAKE_SELECTION_PASS" in check.stdout, check.stdout
             for helper in ("slab_helpers.h", "k_worker_task_manager.h"):
                 generated = out / "headless/include/core/hle/kernel" / helper
-                source = root / "vendor/encore-active/eden-threading/src/core/hle/kernel" / helper
+                source = root / "vendor/encore-active/eden/src/core/hle/kernel" / helper
                 assert generated.is_file(), ("missing copied helper", native, blocking, helper)
                 assert generated.read_bytes() == source.read_bytes(), (
                     "staged helper differs from maintained source", helper)

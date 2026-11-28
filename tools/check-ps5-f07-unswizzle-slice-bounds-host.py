@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-src = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+src = (root / "vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 start = "#ifdef PS5_NATIVE\n        // Widen BEFORE multiplying:"
 end = "        task.last_submitted_offset = 0;"
@@ -176,7 +176,7 @@ print("F07_UNSWIZZLE_SLICE_BOUNDS_PASS zero=2 truncated=1 overflow=1"
 # F07 P0.4: a missing image-format-list extension must not disable the
 # unrelated native BCn-3D storage-buffer compute pass. Extract the exact
 # constructor branch, not a hand-authored approximation.
-runtime_src = (root / "vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+runtime_src = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp").read_text()
 constructor = runtime_src[runtime_src.index("TextureCacheRuntime::TextureCacheRuntime("):
                           runtime_src.index("void TextureCacheRuntime::Finish()")]
 fallback_start = constructor.index("    if (!device.IsKhrImageFormatListSupported()) {")

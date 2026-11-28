@@ -111,8 +111,6 @@ TESTS = {
     "vulkan_generator_fork": "tools/check-vendored-vulkan-fork.py",
     "final_engine_owners": "tools/ci/check-final-engine-owner-contracts.py",
     "deferred_dma_parity": "tools/check-deferred-native-bridge-contract.py",
-    "audit_verification_matrix": "tools/check-eden-audit-verification-matrix.py",
-    "vendor_source_parity": "tools/check-vendor-consolidation-debt.py",
     "native_package_contract": "tools/check-ps5-all-on-contract.py",
     "physical_core_atomic": "tools/check-native-physical-core-atomic-host.py",
     "vulkan_deferred_copy": "tools/check-vulkan-deferred-copy-ownership-host.py",
@@ -133,14 +131,13 @@ TESTS = {
     "native_renderer_selector": "tools/check-ns2-renderer-selector-host.py",
     "native_astc_cache_parity": "tools/ns2/check_egl_astc_texture_cache.py",
     "native_texture_format": "tools/ns2/check_native_texture_format_mapping.py",
-    "active_sources": "tools/check-active-source-inventory.py",
-    "f07_review": "tools/check-eden-optimization-coverage.py",
+    "active_vendor_contract": "tools/check-active-cmake-source-boundary.py",
     "repo_hygiene": "tools/ci/check-repo-hygiene.py",
     "p1_p2_finite_exit_audit": "tools/ns2/check_p1_p2_exit_gate.py",
     "python_syntax": "tools/check-python-source-syntax.py",
 }
 SMOKE = ("source_owner", "release_profile", "shared_ampere",
-         "vulkan_generator_fork", "repo_hygiene", "active_sources", "python_syntax")
+         "vulkan_generator_fork", "repo_hygiene", "active_vendor_contract", "python_syntax")
 
 def git(*args: str, cwd: Path = ROOT) -> str:
     proc = subprocess.run(["git", *args], cwd=cwd, text=True,

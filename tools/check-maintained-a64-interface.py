@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-owner = root / "vendor/encore-active/eden-core/src/dynarmic/backend/x64"
+owner = root / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64"
 standard = (owner / "a64_interface_standard.cpp").read_text()
 shared = (owner / "a64_interface_shared.cpp").read_text()
 cmake = (root / "headless/CMakeLists.txt").read_text()
@@ -47,8 +47,8 @@ assert "if (eden_native_detailed_logging && eden_native_detailed_logging() && ++
 # Shared mode used to replace Jit::Impl entirely after the standard edits.
 # Verify the maintained variant preserves the original exact support+Impl.
 pinned = (root / "vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface.cpp").read_text()
-support = (root / "vendor/encore-active/eden-core/dynarmic/shared-jit/jit_group_support.inc").read_text()
-impl = (root / "vendor/encore-active/eden-core/dynarmic/shared-jit/jit_impl.inc").read_text()
+support = (root / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/jit_group_support.inc").read_text()
+impl = (root / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/jit_impl.inc").read_text()
 start = pinned.index("struct Jit::Impl final {")
 end = pinned.index("Jit::Jit(UserConfig conf)", start)
 assert shared.endswith(pinned[:start] + support + "\n" + impl + "\n" + pinned[end:])

@@ -5,8 +5,8 @@ import hashlib
 from ps5_kprocess_postload_receipt import normalize_process_receipt
 
 ROOT=Path(__file__).resolve().parents[2]
-SRC=ROOT/"vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp"
-TRACE=ROOT/"vendor/encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h"
+SRC=ROOT/"vendor/encore-active/eden/src/core/hle/service/os/process.cpp"
+TRACE=ROOT/"vendor/encore-active/eden/src/core/loader/ns2_svc_trace.h"
 CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
 
 def blob(txt):

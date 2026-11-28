@@ -55,7 +55,7 @@ start = host.index('cpp = r"""') + len('cpp = r"""')
 end = host.index('""".replace("STOP_CODE", inc)', start)
 cpp = host[start:end]
 assert cpp.count("int main() {") == 1
-queue_header = (root / "vendor/encore-active/eden-gpu/include/common/bounded_threadsafe_queue.h").read_text()
+queue_header = (root / "vendor/encore-active/eden/src/common/bounded_threadsafe_queue.h").read_text()
 method_start = "    template <typename... Args>\n    bool EmplaceWaitWithStopToken("
 method_end = "\n\n    bool TryPop("
 assert queue_header.count(method_start) == 1

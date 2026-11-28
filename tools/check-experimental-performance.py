@@ -14,7 +14,7 @@ read = lambda name: (root / name).read_text()
 header = read("headless/jit_memory_policy.h")
 main = read("headless/main.cpp")
 cmake = read("headless/CMakeLists.txt")
-native_boc = read("vendor/encore-active/eden-core/src/dynarmic/backend/x64/block_of_code_native.cpp")
+native_boc = read("vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/block_of_code_native.cpp")
 cpu = read("headless/performance.cpp")
 graphics = read("headless/graphics.cpp")
 graphics_h = read("headless/graphics.h")
@@ -103,7 +103,7 @@ assert 'list(APPEND core_sources "${EDEN_G11_SOURCE}")' in cmake
 assert 'write_derived("${derived}"' not in cmake
 assert 'string(PREPEND wrapper "#include' not in cmake
 for bits in (32,64):
-    root_src = "vendor/encore-active/eden-core/src/core/arm/dynarmic/g11/"
+    root_src = "vendor/encore-active/eden/src/core/arm/dynarmic/g11/"
     native = read(root_src+f"arm_dynarmic_{bits}_native_normal.cpp")
     native_dev = read(root_src+f"arm_dynarmic_{bits}_native_dev.cpp")
     host_src = read(root_src+f"arm_dynarmic_{bits}_host_normal.cpp")

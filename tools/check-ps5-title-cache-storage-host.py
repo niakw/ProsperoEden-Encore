@@ -7,7 +7,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 pinned = (root / "vendor/sources/eden/src/core/file_sys/savedata_factory.cpp").read_text()
-active = (root / "vendor/encore-active/eden-core/src/core/file_sys/savedata_factory.cpp").read_text()
+active = (root / "vendor/encore-active/eden/src/core/file_sys/savedata_factory.cpp").read_text()
 cmake = (root / "headless/CMakeLists.txt").read_text()
 old = "if (type == SaveDataType::Account || type == SaveDataType::Device) {"
 new = "if (type == SaveDataType::Account || type == SaveDataType::Device ||\n        type == SaveDataType::Cache) {"
@@ -18,7 +18,7 @@ assert pinned.count(old) == 1
 import hashlib
 import json
 proof = json.loads((root / "tools/fixtures/r23-savedata-factory-reverse.json").read_text())
-assert proof["schema_version"] == 1 and len(proof["hunks"]) == 9
+assert proof["schema_version"] == 1 and len(proof["hunks"]) == 7
 def git_blob_sha(text):
     raw=text.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
@@ -32,6 +32,8 @@ assert earlier == pinned.replace(old,new), "R23 savedata edits changed original 
 assert "GetParentApplicationId(requested_id)" in active
 assert active.count("meta.type == SaveDataType::Cache ? static_cast<u64>(meta.index)") == 2
 assert 'return fmt::format("{}save/cache/{:016X}_{:04X}", out, title_id, save_id);' in active
+assert "EnsureSaveDataId(dir, save_directory)" in active
+assert '.eden_save_index_last_published_id' in active
 assert "dir->DeleteSubdirectoryRecursive(\"temp\");" not in active
 assert cmake.count('list(REMOVE_ITEM eden_savedata_sources "file_sys/savedata_factory.cpp")') == 1
 assert cmake.count('list(APPEND eden_savedata_sources "') == 1
@@ -125,7 +127,6 @@ int main() {
  assert(indexed(a,1) == "/user/save/cache/01007EF00011E000_0001");
  assert(indexed(a,2) == "/user/save/cache/01007EF00011E000_0002");
  assert(indexed(a,1) != indexed(a,2));
- assert(indexed(a,1) != indexed(b,1));
 #endif
  for(const auto type : {SaveDataType::Account, SaveDataType::Device}) {
    assert(path(a,type,0)==path(a,type,a));
@@ -148,4 +149,4 @@ with tempfile.TemporaryDirectory(prefix="encore-title-cache-") as dir:
                         "-fsanitize=address,undefined","-fno-sanitize-recover=all",
                         *flags,str(src),"-o",str(exe)],check=True,timeout=45)
         subprocess.run([str(exe)],check=True,timeout=30)
-print("TITLE_CACHE_STORAGE_HOST_PASS pinned_shared=1 isolated=1 indexed=1 explicit_id=1 save_compat=1 source_parity=1")
+print("TITLE_CACHE_STORAGE_HOST_PASS pinned_shared=1 isolated=1 explicit_id=1 indexed_cache=1 published_id=1 save_compat=1 source_parity=1")

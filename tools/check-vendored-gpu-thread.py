@@ -1,115 +1,56 @@
 #!/usr/bin/env python3
-"""Verify the shipping GPU worker and headers against actual native CMake copies.
-
-The previous GPU synthesis in the non-native else branch was unreachable.
-The four tracked Encore files, not a reconstructed generator, are authority.
-"""
-from __future__ import annotations
-import argparse
+"""Verify the single canonical PS5 GPU worker selected from encore-active/eden."""
 from pathlib import Path
 import subprocess
-import tempfile
 
-ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / 'vendor/sources/eden'
-TARGET = ROOT / 'vendor/encore-active/eden-gpu'
-CMAKE_SOURCE = ROOT / 'headless/CMakeLists.txt'
+ROOT=Path(__file__).resolve().parents[1]
+ACTIVE=ROOT/"vendor/encore-active/eden/src"
+UPSTREAM=ROOT/"vendor/sources/eden/src"
+WORKER=ACTIVE/"video_core/gpu_thread.cpp"
+WORKER_HEADER=ACTIVE/"video_core/gpu_thread.h"
+QUEUE_HEADER=ACTIVE/"common/bounded_threadsafe_queue.h"
+CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
 
+for path in (WORKER,WORKER_HEADER,QUEUE_HEADER):
+    assert path.is_file(),path
+for path in (
+    UPSTREAM/"video_core/gpu_thread.cpp",
+    UPSTREAM/"video_core/gpu_thread.h",
+    UPSTREAM/"common/bounded_threadsafe_queue.h",
+):
+    assert path.is_file(),path
 
-def expected_files() -> dict[str, bytes]:
-    names = (
-        'gpu_thread_quiet.cpp', 'gpu_thread_dev.cpp',
-        'include/video_core/gpu_thread.h', 'include/common/bounded_threadsafe_queue.h',
-    )
-    present = {str(p.relative_to(TARGET)) for p in TARGET.rglob('*') if p.is_file()}
-    assert present == set(names), (present - set(names), set(names) - present)
-    result = {name: (TARGET / name).read_bytes() for name in names}
-    queue = result['include/common/bounded_threadsafe_queue.h']
-    assert b'union Slot {' in queue
-    assert b'std::array<Slot, Capacity> m_data;' in queue
-    assert queue.count(
-        b'std::construct_at(std::addressof(m_data[pos].value)') == 2
-    assert queue.count(
-        b'std::destroy_at(std::addressof(m_data[pos].value));') == 1
-    assert queue.count(
-        b'std::destroy_at(std::addressof(m_data[cursor % Capacity].value));') == 1
-    assert b'std::destroy_at(std::addressof(m_data[pos]));' not in queue
-    return result
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--materialize', action='store_true')
-    args = parser.parse_args()
-    generated = expected_files()
-    if args.materialize:
-        print('Sources maintained in encore-active: no regeneration permitted.')
-    present = {str(p.relative_to(TARGET)): p for p in TARGET.rglob('*') if p.is_file()}
-    assert present.keys() == generated.keys(), (generated.keys() - present.keys(), present.keys() - generated.keys())
-    for relative, content in generated.items():
-        assert present[relative].read_bytes() == content, f'R345 maintained GPU source mismatch: {relative}'
-    assert b'SPSCQueue<CommandDataContainer, 256>' in generated['include/video_core/gpu_thread.h']
-    assert b'EmplaceWaitWithStopToken' in generated['include/common/bounded_threadsafe_queue.h']
-    assert b'DiagnosticTimer' in generated['gpu_thread_dev.cpp']
-    assert b'DiagnosticTimer' not in generated['gpu_thread_quiet.cpp']
-    # The historical headless/native_gpu_thread.inc was already byte-identical
-    # to the common tail of both maintained full compilation units. It must
-    # never return as a parallel third implementation of the native worker.
-    marker = b'#include <memory>\\n'.replace(b'\\n', b'\n')
-    quiet, dev = (generated[f'gpu_thread_{kind}.cpp'] for kind in ('quiet', 'dev'))
-    assert quiet.count(marker) == dev.count(marker) == 1
-    native_quiet = quiet[quiet.index(marker):]
-    native_dev = dev[dev.index(marker):]
-    assert native_quiet == native_dev, 'GPU worker lifecycle differs across maintained variants'
-    assert native_quiet.count(b'void ThreadManager::StartThread(') == 1
-    assert native_quiet.count(b'void ThreadManager::Stop()') == 1
-    assert b'pthread_join(thread, nullptr)' in native_quiet
-    assert not (ROOT / 'headless/native_gpu_thread.inc').exists(), 'obsolete duplicate GPU worker reintroduced'
-    cmake = CMAKE_SOURCE.read_text()
-    assert 'vendor/encore-active/eden-gpu' in cmake
-    assert cmake.count('configure_file("${EDEN_ACTIVE_GPU}/') == 3
-    assert 'EDEN_GPU_WORKER_VARIANT "gpu_thread_dev.cpp"' not in cmake
-    assert 'EDEN_GPU_WORKER_VARIANT "gpu_thread_quiet.cpp"' in cmake
-    assert 'write_derived("${PORT_BUILD_DIR}/gpu_thread.cpp"' not in cmake
-    assert 'write_derived("${PORT_BUILD_DIR}/include/common/bounded_threadsafe_queue.h"' not in cmake
-    # Execute the real PS5 CMake path in script mode, not merely a source-text
-    # assertion: the resulting compiler inputs must match both committed
-    # variants, and none may require the historical replacement pipeline.
-    marker='    if(PS5_NATIVE)\n        set(EDEN_ACTIVE_GPU'
-    after='    else()\n    # PS5 GPU queue is already copied from the complete eden-gpu source above.'
-    assert cmake.count(marker)==cmake.count(after)==1
-    native=cmake[cmake.index(marker):cmake.index(after,cmake.index(marker))]+'    endif()\n'
-    with tempfile.TemporaryDirectory(prefix='eden-gpu-cmake-contract-') as d:
-        work=Path(d)
-        for profile in ('quiet',):
-            build=work/profile
-            build.mkdir()
-            script=work/f'{profile}.cmake'
-            script.write_text(f'cmake_minimum_required(VERSION 3.25)\n'
-                              f'set(PORT_ROOT "{ROOT.as_posix()}")\n'
-                              f'set(PORT_BUILD_DIR "{build.as_posix()}")\n'
-                              f'set(PS5_NATIVE ON)\n'
-                              f'set(EDEN_DEV_PROFILE {"ON" if profile=="dev" else "OFF"})\n'
-                              f'set(video_sources "gpu_thread.cpp")\n'
-                              f'set(gpu_source "original")\n'+native)
-            subprocess.run(['cmake','-P',str(script)],cwd=ROOT,check=True,timeout=30)
-            assert (build/'gpu_thread.cpp').read_bytes()==generated['gpu_thread_quiet.cpp']
-            for name in ('include/video_core/gpu_thread.h', 'include/common/bounded_threadsafe_queue.h'):
-                assert (build/name).read_bytes()==generated[name], (profile,name)
-    # Prove the common worker branch is not nested under a renderer selector.
-    gl_start = cmake.index("if(EDEN_PS5_OPENGL)\n    set(EDEN_MAINTAINED_GL_BUFFER_CACHE")
-    gl_end = cmake.index("endif() # EDEN_PS5_OPENGL renderer-specific owners", gl_start)
-    worker_start = cmake.index(marker)
-    assert gl_start < gl_end < worker_start
-    for kind in ("quiet", "dev"):
-        worker = generated[f"gpu_thread_{kind}.cpp"].decode()
-        assert "std::get_if<RetireChannelCommand>(&next.data)" in worker
-        assert "PushCommand(RetireChannelCommand{std::move(action)}, true, is_async);" in worker
-        assert worker.index("retire->action();") < worker.index("state.signaled_fence.store(next.fence, std::memory_order_release);")
-    print('VENDORED_GPU_CMAKE_NATIVE_BRANCH_OK native_quiet=selected dev=unselected; historical variant bytes verified')
-    print('VENDORED_GPU_THREAD_EQUIVALENT_OK', len(generated),
-          'bounded 256-slot FIFO, stop-aware worker, dev/quiet source variants')
-
-
-if __name__ == '__main__':
-    main()
+worker=WORKER.read_text()
+header=WORKER_HEADER.read_text()
+queue=QUEUE_HEADER.read_text()
+assert "SPSCQueue<CommandDataContainer, 256>" in header
+assert "EmplaceWaitWithStopToken" in queue
+assert "union Slot {" in queue
+assert "std::array<Slot, Capacity> m_data;" in queue
+assert queue.count("std::construct_at(std::addressof(m_data[pos].value)")==2
+assert "std::destroy_at(std::addressof(m_data[pos].value));" in queue
+assert "std::destroy_at(std::addressof(m_data[cursor % Capacity].value));" in queue
+for marker in (
+    "void ThreadManager::StartThread(",
+    "void ThreadManager::Stop()",
+    "pthread_join(thread, nullptr)",
+    "scheduler.HasPendingNativeChannels()",
+    "scheduler.ResumePendingNative(system.GPU());",
+    "state.signaled_fence.store(next.fence, std::memory_order_release);",
+    "Eden::RecordGpuFailure(std::current_exception());",
+):
+    assert marker in worker,marker
+for marker in (
+    'set(EDEN_ACTIVE_EDEN "${PORT_ROOT}/vendor/encore-active/eden")',
+    'set(EDEN_GPU_WORKER "${EDEN_ACTIVE_EDEN}/src/video_core/gpu_thread.cpp")',
+    'set(EDEN_GPU_WORKER_HEADER "${EDEN_ACTIVE_EDEN}/src/video_core/gpu_thread.h")',
+    'set(EDEN_GPU_QUEUE_HEADER "${EDEN_ACTIVE_EDEN}/src/common/bounded_threadsafe_queue.h")',
+    'list(APPEND video_sources "${EDEN_GPU_WORKER}")',
+):
+    assert marker in CMAKE,marker
+for forbidden in ("gpu_thread_quiet.cpp","gpu_thread_dev.cpp","EDEN_GPU_WORKER_VARIANT"):
+    assert forbidden not in CMAKE,forbidden
+entry=subprocess.check_output(["git","ls-tree","HEAD","vendor"],cwd=ROOT,text=True).split()
+vendor_head=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT/"vendor",text=True).strip()
+assert len(entry)==4 and entry[0]=="160000" and entry[1]=="commit" and entry[2]==vendor_head
+print("CANONICAL_GPU_WORKER_SOURCE_PASS single_owner=1 direct_cmake=1 legacy_variants=0")

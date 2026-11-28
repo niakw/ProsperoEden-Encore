@@ -25,7 +25,7 @@ assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' 
 assert 'write_derived(' not in cmake and 'string(REPLACE' not in cmake
 # PRMT is now compiled from a full maintained shader unit, while Fermi
 # below still carries one isolated CMake generator.
-prmt = (ROOT / "vendor/encore-active/eden-core/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp").read_text()
+prmt = (ROOT / "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp").read_text()
 pinned_prmt = (ROOT / "vendor/sources/eden/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp").read_text()
 def extract_method(text: str, sig: str) -> str:
     match = re.search(r"^void TranslatorVisitor::" + sig + r"\([^\n]*\) \{\n.*?^\}\n", text, re.S | re.M)
@@ -109,7 +109,7 @@ assert "ThrowNotImplemented(Opcode::PRET);" not in prmt
 assert "ThrowNotImplemented(Opcode::JCAL);" in prmt
 
 pinned_control=(ROOT / "vendor/sources/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
-native_control=(ROOT / "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
+native_control=(ROOT / "vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
 for control in (pinned_control,native_control):
     assert "if (pred == Predicate{false}) {\n        return false;\n    }" in control
     assert "case Opcode::BRA:\n    case Opcode::JMP:\n    case Opcode::RET:" in control
@@ -140,7 +140,7 @@ assert "ThrowNotImplemented" not in pret_new
 assert "ThrowNotImplemented(Opcode::JCAL);" in prmt
 prmt_reference = prmt
 fermi_pinned = (ROOT / "vendor/sources/eden/src/video_core/engines/fermi_2d.cpp").read_text()
-fermi_default = (ROOT / "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp").read_text()
+fermi_default = (ROOT / "vendor/encore-active/eden/src/video_core/engines/fermi_2d_observed.cpp").read_text()
 
 # GPU-31: preserve exact shipping/retired Fermi provenance. Only the
 # reviewed nonzero pitch-layer guards and the software-copy tail are
@@ -230,7 +230,7 @@ z = fermi_default.index(origin_end, a)
 p = fermi_pinned.index(origin_start)
 q = fermi_pinned.index(origin_end, p)
 fermi_default = fermi_default[:a] + fermi_pinned[p:q] + fermi_default[z:]
-fermi_experimental = (ROOT / "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_experimental.cpp").read_text()
+fermi_experimental = (ROOT / "vendor/encore-active/eden/src/video_core/engines/fermi_2d_experimental.cpp").read_text()
 # The shipping variant adds an audited CodeQL #55 security-only
 # replacement of the pitch-alignment address block. Reverse that one
 # replacement before comparing to the immutable pinned baseline.
@@ -486,7 +486,7 @@ assert "regs.src.depth = 1;" not in fermi_copy_new
 assert "regs.dst.depth = 1;" not in fermi_copy_new
 # The widened software blitter is a tracked source built from the shipping
 # backport, not a CMake-generated translation unit.
-blitter = (ROOT / "vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
+blitter = (ROOT / "vendor/encore-active/eden/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
 for token in (
     "src.depth, config.src_x0", "dst.depth, config.dst_x0",
     # The selected Fermi2D blitter now admits the entire GOB extent in u64,
@@ -521,7 +521,7 @@ assert "write_derived(" not in cmake
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in cmake
-shared_atomic=(ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp").read_text()
+shared_atomic=(ROOT/"vendor/encore-active/eden/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp").read_text()
 assert "void TranslatorVisitor::ATOMS_cas(u64 insn)" in shared_atomic
 assert "SharedAtomicCompareExchange" in shared_atomic
 assert "BitField<28, 2, AtomsCasBcRz> bc_rz;" in shared_atomic

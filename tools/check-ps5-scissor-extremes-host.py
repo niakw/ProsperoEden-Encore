@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-ACTIVE = ROOT / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp"
+ACTIVE = ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp"
 PINNED = ROOT / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp"
 
 

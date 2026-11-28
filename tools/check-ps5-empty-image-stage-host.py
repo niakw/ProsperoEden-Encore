@@ -5,8 +5,8 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-src=(root/"vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
-hdr=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+src=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+hdr=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
 constructor=src[src.index("        stage_infos[stage] = *info;"):src.index("        enabled_uniform_buffer_masks[stage]",src.index("        stage_infos[stage] = *info;"))]
 b=src.index("    const auto prepare_stage{[&](size_t stage) LAMBDA_FORCEINLINE {")
 e=src.index("    }};",b)+len("    }};")
@@ -169,7 +169,7 @@ with tempfile.TemporaryDirectory(prefix="encore-empty-graphics-stage-") as tmp:
 # deletion/retry latch on *every* call, including an empty graphics pass.
 # Compute preserves this contract already. Use the exact selected graphics
 # call block and compile zero/populated/zero transitions at O0 and O2.
-texture_header=(root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+texture_header=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 fill_start=texture_header.index("void TextureCache<P>::FillImageViews(")
 fill_end=texture_header.index("void TextureCache<P>::CheckFeedbackLoop(",fill_start)
 fill_source=texture_header[fill_start:fill_end]
@@ -183,7 +183,9 @@ image_call=draw_source[image_start:image_end]
 assert image_call.count("texture_cache.FillImageViews(")==1
 assert "if (!views.empty())" not in image_call
 assert "CachePhase::TextureFillImageViews" in image_call
-assert "FillImageViews resets the image-deletion/retry latch" in (root/"tools/check-vendored-vulkan-fork.py").read_text()
+# The selected GraphicsPipeline block and canonical TextureCache method above
+# are the semantic authority. Do not couple this runtime witness to prose in
+# another source-selection gate.
 empty_views_cpp=r"""
 #include <cassert>
 #include <span>

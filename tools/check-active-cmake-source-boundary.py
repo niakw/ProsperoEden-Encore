@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Audit the active CMake module boundary; prohibit C++ source fabrication.
+"""Audit the single vendor source-of-truth contract used by main.
 
-Pinned upstream vendor/sources CMake and historical tools/fixtures are not
-build-time Encore mutation owners. Resource generation G23 is explicitly
-allowed in the root; staging maintained full sources is permitted.
+Unmodified upstream inputs stay under vendor/sources. Every maintained Encore
+override lives under vendor/encore-active and CMake selects those tracked bytes
+directly; build-time C++ fabrication/patching is forbidden. The vendor checkout
+must match the engine gitlink, with no historical revision allowlist.
 """
 from pathlib import Path
 import re
@@ -11,7 +12,43 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
+VENDOR = ROOT / "vendor"
+ACTIVE = VENDOR / "encore-active"
+SOURCES = VENDOR / "sources"
+
+gitlink = subprocess.check_output(
+    ["git", "ls-tree", "HEAD", "vendor"], cwd=ROOT, text=True
+).split()
+assert len(gitlink) == 4 and gitlink[0] == "160000" and gitlink[1] == "commit"
+vendor_head = subprocess.check_output(
+    ["git", "rev-parse", "HEAD"], cwd=VENDOR, text=True
+).strip()
+assert vendor_head == gitlink[2], ("vendor checkout differs from engine gitlink", vendor_head, gitlink[2])
+assert ACTIVE.is_dir() and SOURCES.is_dir()
+assert not subprocess.check_output(
+    ["git", "status", "--porcelain", "--untracked-files=no"], cwd=VENDOR, text=True
+).strip(), "tracked vendor source is dirty"
+
+# One layout contract, no per-revision SHA catalogue. sources/ is the frozen
+# dependency mirror; encore-active/ is the only maintained override tree.
+subprocess.check_call(["python3", "-B", "tools/check-source-tree-layout.py"], cwd=VENDOR)
+# The vendor's source-layout checker is the single owner of README/layout
+# wording. Do not duplicate prose markers here: this engine gate only verifies
+# that the selected build graph obeys that canonical contract.
+# Functional roots that duplicated the Eden dependency are retired. A future
+# override must use encore-active/eden/<same upstream-relative path>, not
+# recreate a second family tree.
+retired_eden_roots = (
+    "eden-gpu", "eden-sync", "eden-threading", "eden-shader", "eden-core",
+    "ns2-astc", "eden-build", "eden-backports", "eden-vulkan", "ns2-runtime",
+    "amd-fsr31",
+)
+retired_eden_subroots = ("srcpere", "src_wait64", "src_as", "src_gpu", "src_structure")
+for legacy in retired_eden_roots:
+    assert not (ACTIVE / legacy).exists(), ("retired Encore root reintroduced", legacy)
+
 root_cmake = (ROOT/"headless/CMakeLists.txt").read_text(encoding="utf-8")
+assert "vendor/encore-active" in root_cmake
 # P5: CMake defers only target wiring, never creating a subdirectory.
 # The actual project(yuzu) hook registers the immutable source before DEFER.
 native_inject = (ROOT/"headless/inject.cmake").read_text(encoding="utf-8")
@@ -50,6 +87,118 @@ module_paths = {
     *(ROOT/"vendor/encore-active").rglob("CMakeLists.txt"),
 }
 module_paths.discard(ROOT/"headless/CMakeLists.txt")
+
+for path in [ROOT/"headless/CMakeLists.txt", *sorted(module_paths)]:
+    source = path.read_text(encoding="utf-8")
+    for legacy in retired_eden_roots:
+        forbidden = f"vendor/encore-active/{legacy}"
+        assert forbidden not in source, (
+            "active CMake references retired Encore root",
+            str(path.relative_to(ROOT)), forbidden)
+
+# Active host gates and workflows are source consumers too. Historical fixtures
+# are deliberately excluded; executable checks must follow the same canonical
+# owner paths as the build graph so a directory migration cannot produce CI-only
+# FileNotFoundError failures.
+consumer_paths = {
+    *(ROOT/"tools").rglob("*.py"),
+    *(ROOT/"tools").rglob("*.sh"),
+    *(ROOT/".github/workflows").glob("*.yml"),
+    *(ROOT/".github/workflows").glob("*.yaml"),
+}
+# These two frozen F07 ledgers intentionally preserve historical vendor paths
+# and SHA-specific receipts. They are not invoked by the current build/preflight
+# graph; current source ownership is enforced by this gate and focused host
+# checks. Do not recreate retired vendor roots to satisfy old receipts.
+historical_receipt_scripts = {
+    ROOT/"tools/check-active-source-inventory.py",
+    ROOT/"tools/check-eden-optimization-coverage.py",
+    ROOT/"tools/check-vendor-consolidation-debt.py",
+}
+consumer_paths = {
+    path for path in consumer_paths
+    if "fixtures" not in path.relative_to(ROOT).parts
+    and path != Path(__file__).resolve()
+    and path not in historical_receipt_scripts
+}
+
+# Follow structured source contracts loaded by active tools/workflows. This
+# catches stale owner paths hidden one level behind a JSON registry instead of
+# waiting for the downstream checker to fail. Dated F07 ledgers remain explicit
+# historical receipts and are not current source-selection contracts.
+historical_structured_receipts = {
+    ROOT/"docs/EDEN_OPTIMIZATION_COVERAGE_2026-10-20.json",
+    ROOT/"docs/EDEN_POST_F07_CHANGED_SOURCE_REGISTER_2026-11-08.json",
+}
+structured_contract_ref = re.compile(r"docs/[A-Za-z0-9_.\\/-]+[.]json")
+referenced_structured_contracts = set()
+for path in sorted(consumer_paths):
+    source = path.read_text(encoding="utf-8")
+    for relative in structured_contract_ref.findall(source):
+        candidate = ROOT / relative
+        if candidate.is_file() and candidate not in historical_structured_receipts:
+            referenced_structured_contracts.add(candidate)
+consumer_paths |= referenced_structured_contracts
+
+legacy_consumer_refs = []
+
+def is_negative_path_witness(line: str) -> bool:
+    stripped = line.strip()
+    return (
+        " not in " in line
+        or stripped.startswith("assert not ")
+        or "forbidden" in stripped
+        or "retired" in stripped and "assert" in stripped
+    )
+
+for path in sorted(consumer_paths):
+    source = path.read_text(encoding="utf-8")
+    lines = source.splitlines()
+    for legacy in retired_eden_roots:
+        for forbidden in (
+            f"vendor/encore-active/{legacy}",
+            f"encore-active/{legacy}",
+        ):
+            if forbidden in source:
+                legacy_consumer_refs.append(
+                    (str(path.relative_to(ROOT)), forbidden)
+                )
+        for line_no, line in enumerate(lines, 1):
+            if is_negative_path_witness(line):
+                continue
+            for forbidden in (f'"{legacy}/', f"'{legacy}/"):
+                if forbidden in line:
+                    legacy_consumer_refs.append(
+                        (f"{path.relative_to(ROOT)}:{line_no}", forbidden)
+                    )
+    for legacy in retired_eden_subroots:
+        for forbidden in (
+            f"vendor/encore-active/eden/{legacy}",
+            f"encore-active/eden/{legacy}",
+        ):
+            if forbidden in source:
+                legacy_consumer_refs.append(
+                    (str(path.relative_to(ROOT)), forbidden)
+                )
+        for line_no, line in enumerate(lines, 1):
+            if is_negative_path_witness(line):
+                continue
+            for forbidden in (f'"{legacy}/', f"'{legacy}/"):
+                if forbidden in line:
+                    legacy_consumer_refs.append(
+                        (f"{path.relative_to(ROOT)}:{line_no}", forbidden)
+                    )
+    for forbidden in (
+        "encore-active/eden/src/dynarmic/backend/",
+        "encore-active/eden/src/dynarmic/frontend/",
+    ):
+        if forbidden in source:
+            legacy_consumer_refs.append(
+                (str(path.relative_to(ROOT)), forbidden)
+            )
+assert not legacy_consumer_refs, (
+    "active consumer references retired/malformed Encore owner path",
+    legacy_consumer_refs)
 
 # All original upstream source CMake files live under vendor/sources/:
 # they are not maintained Encore CMake mutation owners. Every active
@@ -127,7 +276,7 @@ for path, code in (("native build", native_build),
 assert 'shutil.copyfile(maintained, tmp)' in (
     ROOT/"tools/install-active-core-backports.py").read_text()
 # SVC cache coherency is a real core TU replacement, not a no-op IPC stub.
-svc_cache = ROOT / "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_cache.cpp"
+svc_cache = ROOT / "vendor/encore-active/eden/src/core/hle/kernel/svc/svc_cache.cpp"
 assert svc_cache.is_file()
 svc_code = svc_cache.read_text(encoding="utf-8")
 assert 'list(FIND core_sources "hle/kernel/svc/svc_cache.cpp" eden_ns1_svc_cache_index)' in root_cmake
@@ -203,4 +352,6 @@ print("ENCORE_NS1_CAS_SOURCE_SELECTION_PASS native=1 maintained=1 unique=1 profi
 
 print(f"ENCORE_ACTIVE_CMAKE_SOURCE_BOUNDARY_PASS modules={checked} "
       f"pinned_upstream_modules={excluded_upstream_modules} "
+      f"structured_contracts={len(referenced_structured_contracts)} "
+      "vendor_gitlink_match=1 active_source_of_truth=1 "
       "cpp_generators=0 resource_generators=1 nup_source_pair_split=1")

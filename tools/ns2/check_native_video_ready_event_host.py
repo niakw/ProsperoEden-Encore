@@ -9,7 +9,7 @@ import tempfile
 root=Path(__file__).resolve().parents[2]
 vroot=root/'vendor'
 if not (vroot/'encore-active').exists():vroot=root.parent/'vendor'
-base=vroot/'encore-active/ns2-runtime/video_decoder/core/hle/service/am/service'
+base=vroot/'encore-active/eden/src/core/hle/service/am/service'
 header=(base/'native_video_ready_state.h').read_text()
 owner=(base/'graphics_video_decoder_session.cpp').read_text()
 recipe=(root/'headless/CMakeLists.txt').read_text()
@@ -87,7 +87,7 @@ with tempfile.TemporaryDirectory(prefix='eden-video-ready-state-') as tmp:
             exe=Path(tmp)/(Path(compiler).name+opt)
             args=[compiler,'-std=c++20',opt,'-Wall','-Wextra','-Werror',
                   '-fsanitize=undefined','-fno-sanitize-recover=all',
-                  '-pthread','-I',str(vroot/'encore-active/ns2-runtime/video_decoder'),
+                  '-pthread','-I',str(vroot/'encore-active/eden/src'),
                   str(cpp),'-o',str(exe)]
             built=subprocess.run(args,env=env,text=True,capture_output=True,timeout=90)
             assert built.returncode==0,(args,built.stderr[-2800:])

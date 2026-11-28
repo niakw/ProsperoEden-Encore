@@ -5,7 +5,7 @@ string(REPLACE "    // Destruction of thread must be done before all (non trivia
 string(REPLACE "    u64 pending_composite_fence{};" "    u64 pending_composite_fence{};\n    VideoCommon::GPUThread::ThreadManager gpu_thread;" gpu_source "${gpu_source}")
 if(EDEN_PS5_OPENGL)
     set(EDEN_MAINTAINED_GL_BUFFER_CACHE
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/renderer_opengl/gl_buffer_cache.cpp")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_opengl/gl_buffer_cache.cpp")
     if(NOT EXISTS "${EDEN_MAINTAINED_GL_BUFFER_CACHE}")
         message(FATAL_ERROR "Missing maintained OpenGL buffer cache source")
     endif()
@@ -15,7 +15,7 @@ if(EDEN_PS5_OPENGL)
         # PS5 permits reading an ended query while another query is active.
         # Retain the upstream NVIDIA workaround on all other builds.
         set(EDEN_MAINTAINED_GL_QUERY_CACHE
-            "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/renderer_opengl/gl_query_cache.cpp")
+            "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_opengl/gl_query_cache.cpp")
         if(NOT EXISTS "${EDEN_MAINTAINED_GL_QUERY_CACHE}")
             message(FATAL_ERROR "Missing maintained native OpenGL query cache")
         endif()
@@ -27,7 +27,7 @@ if(EDEN_PS5_OPENGL)
         # The development-only OpenGL copy diagnostics are a tracked C++
         # source, byte-for-byte equivalent to the old CMake substitution.
         set(EDEN_MAINTAINED_DEV_GL_TEXTURE
-            "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/renderer_opengl/gl_texture_cache.cpp")
+            "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_opengl/gl_texture_cache.cpp")
         if(NOT EXISTS "${EDEN_MAINTAINED_DEV_GL_TEXTURE}")
             message(FATAL_ERROR "Missing maintained development GL texture cache")
         endif()
@@ -37,7 +37,7 @@ if(EDEN_PS5_OPENGL)
     endif()
     # Each profile selects one full translation unit; never splice C++ in CMake.
     set(EDEN_MAINTAINED_GL_RASTERIZER_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/renderer_opengl")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/renderer_opengl")
     set(EDEN_MAINTAINED_GL_RASTERIZER
         "${EDEN_MAINTAINED_GL_RASTERIZER_ROOT}/gl_rasterizer.cpp")
     if(EDEN_DEV_PROFILE)
@@ -55,7 +55,7 @@ if(EDEN_PS5_OPENGL)
     if(PS5_NATIVE)
         # Native MacroJIT exception recovery is selected from Encore, not generated.
         set(EDEN_MAINTAINED_MACRO
-            "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/macro.cpp")
+            "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/macro.cpp")
         if(NOT EXISTS "${EDEN_MAINTAINED_MACRO}")
             message(FATAL_ERROR "Missing maintained native macro unit")
         endif()
@@ -85,7 +85,7 @@ if(EDEN_PS5_OPENGL)
     # PS5 GPU queue is already copied from the complete eden-gpu source above.
     # Host-specific GPU header is a tracked source, not generated C++.
     set(EDEN_MAINTAINED_HOST_GPU_HEADER
-        "${PORT_ROOT}/vendor/encore-active/eden-core/host-gpu/include/video_core/gpu_thread.h")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/gpu_thread.h")
     if(NOT EXISTS "${EDEN_MAINTAINED_HOST_GPU_HEADER}")
         message(FATAL_ERROR "Missing maintained host GPU header")
     endif()
@@ -108,7 +108,7 @@ if(EDEN_PS5_OPENGL)
     # G20: select maintained normal/DEV guest GPU command processor units.
     # The DMA input already contains the shipping #4473/#4477 backport.
     set(EDEN_MAINTAINED_GUEST_GPU_ROOT
-        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core")
+        "${PORT_ROOT}/vendor/encore-active/eden/src/video_core")
     if(EDEN_DEV_PROFILE)
         set(EDEN_MAINTAINED_GPU_DMA "${EDEN_MAINTAINED_GUEST_GPU_ROOT}/dma_pusher_dev.cpp")
         set(EDEN_MAINTAINED_GPU_PULLER "${EDEN_MAINTAINED_GUEST_GPU_ROOT}/engines/puller_dev.cpp")
@@ -155,8 +155,8 @@ if(EDEN_PS5_OPENGL)
     if(gpu_sync_wait_position LESS 0)
         message(FATAL_ERROR "Pinned native GPU synchronization wait changed")
     endif()
-    file(READ "${PORT_ROOT}/vendor/encore-active/eden-core/gpu-injections/gpu_sync_failure_wait.inc" gpu_sync_wait_replacement)
-        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PORT_ROOT}/vendor/encore-active/eden-core/gpu-injections/gpu_sync_failure_wait.inc")
+    file(READ "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/gpu_sync_failure_wait.inc" gpu_sync_wait_replacement)
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PORT_ROOT}/vendor/encore-active/eden/src/video_core/gpu_sync_failure_wait.inc")
     string(REPLACE "${gpu_sync_wait_original}" "${gpu_sync_wait_replacement}"
         gpu_source "${gpu_source}")
     string(PREPEND gpu_source "#include \"${EDEN_PORT_DIR}/gpu_failure.h\"\n")

@@ -19,7 +19,7 @@ with tempfile.TemporaryDirectory(prefix="eden-native-recipe-") as scratch:
     original={}
     for relative,from_bytes,to_bytes in specs:
         source=root/"vendor/sources/eden"/relative
-        active=root/"vendor/encore-active/eden-build"/relative
+        active=root/"vendor/encore-active/eden"/relative
         old=source.read_bytes()
         assert old.count(from_bytes)==1
         expected=old.replace(from_bytes,to_bytes)

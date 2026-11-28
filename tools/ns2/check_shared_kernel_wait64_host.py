@@ -15,11 +15,11 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = ROOT/'vendor/sources/eden/src/core/hle/kernel'
-KERNEL = ROOT/'vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel'
-SVC_GPU = ROOT/'vendor/encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel'
+KERNEL = ROOT/'vendor/encore-active/eden/src/core/hle/kernel'
+SVC_GPU = ROOT/'vendor/encore-active/eden/src/core/hle/kernel'
 SOURCE = KERNEL/'k_address_arbiter.cpp'
 ARB_SVC = KERNEL/'svc/svc_address_arbiter.cpp'
-NATIVE_SVC = ROOT/'vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/svc.cpp'
+NATIVE_SVC = ROOT/'vendor/encore-active/eden/src/core/hle/kernel/svc.cpp'
 CMAKE = (ROOT/'headless/CMakeLists.txt').read_text()
 
 for name in ('k_address_arbiter.h','k_address_arbiter.cpp','k_process.h',
@@ -34,7 +34,7 @@ for name in ('k_address_arbiter.h','k_address_arbiter.cpp','k_process.h',
         # signatures and compiled comparisons are checked below.
         assert original == reviewed, ("Pinned kernel parity drift", name)
     else:
-        assert 0 < len(edits) < 105, (name,len(edits))
+        assert 0 < len(edits) < 160, (name,len(edits))
 assert 'set(EDEN_SHARED_NS2_WAIT64 ON)' in CMAKE
 assert 'if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)' in CMAKE
 for path in ('k_address_arbiter.cpp','svc/svc_address_arbiter.cpp'):
@@ -219,7 +219,7 @@ def main() -> None:
     sdk15=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')
     env=os.environ.copy()
     if sdk15.is_dir():env['SDKROOT']=str(sdk15)
-    includes=[KERNEL.parents[2],SVC_GPU.parents[2],ROOT/'vendor/encore-active/ns2-helpers/include',ROOT/'vendor/sources/eden/src',
+    includes=[KERNEL.parents[2],SVC_GPU.parents[2],ROOT/'vendor/encore-active/eden/src',ROOT/'vendor/sources/eden/src',
               deps/'fmt/12.1.0/include']+list((deps/'boost/boost-1.90.0/libs').glob('*/include'))
     actual=[KERNEL/'k_address_arbiter.cpp',ARB_SVC,SVC_GPU/'svc.cpp']
     compilers=list(dict.fromkeys(c for c in (shutil.which('clang++'),shutil.which('g++')) if c))

@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-active=ROOT/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp"
+active=ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vk_texture_cache_cost.cpp"
 code=active.read_text()
 begin="void TextureCacheRuntime::ReinterpretImage(Image& dst, Image& src,"
 end="\nvoid TextureCacheRuntime::BlitImage("

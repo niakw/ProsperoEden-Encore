@@ -13,13 +13,14 @@ import tempfile
 
 root=Path(__file__).resolve().parents[3]
 pinned=(root/"vendor/sources/eden/src/core/hle/kernel/k_synchronization_object.h").read_text()
-native=(root/"vendor/encore-active/eden-sync/src/core/hle/kernel/k_synchronization_object.h").read_text()
+native=(root/"vendor/encore-active/eden/src/core/hle/kernel/k_synchronization_object.h").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
 workflow=(root/".github/workflows/encore-core-preflight.yml").read_text()
 assert "python3 -B tools/verify/hle/check-native-hle-sync-unlink-host.py" in workflow
-module = (root/"vendor/encore-active/eden-threading/native-hle-overrides.cmake").read_text()
+module = (root/"vendor/encore-active/eden/native-hle-overrides.cmake").read_text()
 assert "native-hle-overrides.cmake" in cmake
-assert "eden-sync/src" in module and "k_synchronization_object.h" in module
+assert 'set(_encore_sync_root "${CMAKE_CURRENT_LIST_DIR}/src")' in module
+assert "k_synchronization_object.h" in module
 
 old="""        ThreadListNode* prev_ptr =
             reinterpret_cast<ThreadListNode*>(std::addressof(m_thread_list_head));

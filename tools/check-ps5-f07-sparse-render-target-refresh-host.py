@@ -12,8 +12,8 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-native=(root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
-backports=(root/"vendor/encore-active/eden-backports/src/video_core/texture_cache/texture_cache.h").read_text()
+native=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
+pinned=(root/"vendor/sources/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()
 fast=(root/".github/workflows/encore-core-fast-gate.yml").read_text()
 pre=(root/".github/workflows/encore-core-preflight.yml").read_text()
@@ -27,9 +27,9 @@ def clean(source):
     assert source.count(start)==source.count(end)==1
     section=source[source.index(start):source.index(end,source.index(start))]
     return section[section.index("    if (!flags[Dirty::RenderTargets]) {"):]
-original=clean(backports)
+original=clean(pinned)
 shadow=clean(native)
-selected=(root/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+selected=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 updated=clean(selected)
 assert updated == shadow, "selected native sparse render-target owner drift"
 assert "#include <bit>" in selected

@@ -14,7 +14,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 OWNER = Path(os.environ.get(
     "EDEN_GPU_DIRTY_HEADER_SOURCE",
-    str(ROOT / "vendor/encore-active/eden-core/overrides/core/gpu_dirty_memory_manager.h")))
+    str(ROOT / "vendor/encore-active/eden/src/core/gpu_dirty_memory_manager.h")))
 body = OWNER.read_text()
 assert body.count("std::mutex gather_guard;") == 1
 assert body.count("std::scoped_lock gather_lock(gather_guard);") == 2

@@ -126,6 +126,38 @@ public:
         SignalFence(std::move(func));
     }
 
+    // Native C7xx semaphore completion must be published behind a real GPU
+    // fence. Keep the shutdown overlay's exception-safe queue publication so
+    // a failed QueueFence cannot leave a partially visible guest completion.
+    void SignalNativeFence(std::function<void()>&& complete) {
+        if constexpr (!can_async_check) {
+            TryReleasePendingFences<false>();
+        }
+        CommitAsyncFlushes();
+        TFence new_fence = CreateFence(false);
+        std::unique_lock queue_lock{guard, std::defer_lock};
+        if constexpr (can_async_check) queue_lock.lock();
+        try {
+            uncommitted_operations.emplace_back(std::move(complete));
+            pending_operations.emplace_back(std::move(uncommitted_operations));
+            // InnerFence::Queue records the scheduler tick and flushes it.
+            QueueFence(new_fence);
+            fences.push(std::move(new_fence));
+        } catch (...) {
+            ::Eden::RecordGpuFailure(std::current_exception());
+            if constexpr (can_async_check) {
+                queue_lock.unlock();
+                cv.notify_all();
+            }
+            throw;
+        }
+        if constexpr (can_async_check) {
+            queue_lock.unlock();
+            cv.notify_all();
+        }
+        rasterizer.InvalidateGPUCache();
+    }
+
     // Native Ampere completion must retire behind a real GPU fence, even
     // when Maxwell's configured policy permits an immediate/stubbed fence.
     // Preserve the shutdown overlay's failure-aware queue publication.

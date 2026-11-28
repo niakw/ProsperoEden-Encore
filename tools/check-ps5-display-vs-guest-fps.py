@@ -14,12 +14,12 @@ import json
 import statistics
 
 root=Path(__file__).resolve().parents[1]
-renderer=(root/"vendor/encore-active/eden-vulkan/vulkan_renderer.cpp").read_text()
-manager=(root/"vendor/encore-active/eden-vulkan/vulkan_present_manager.cpp").read_text()
+renderer=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_renderer.cpp").read_text()
+manager=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_manager.cpp").read_text()
 graphics=(root/"headless/graphics.cpp").read_text()
 native_main=(root/"headless/main.cpp").read_text()
 settings=(root/"vendor/sources/eden/src/common/settings.h").read_text()
-swapchain=(root/"vendor/encore-active/eden-vulkan/vulkan_swapchain.cpp").read_text()
+swapchain=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_swapchain.cpp").read_text()
 composer=(root/"vendor/sources/eden/src/core/hle/service/nvnflinger/hardware_composer.cpp").read_text()
 data=json.loads((root/"tools/fixtures/native-load-20261013.json").read_text())
 rows=[dict(zip(data["window_fields"],values)) for values in data["windows"]]

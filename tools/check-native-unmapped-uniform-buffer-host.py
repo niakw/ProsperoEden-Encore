@@ -6,8 +6,8 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-active=(root/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
-backport=(root/"vendor/encore-active/eden-backports/src/video_core/buffer_cache/buffer_cache.h").read_text()
+active=(root/"vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
+backport=(root/"vendor/sources/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 start="template <class P>\nvoid BufferCache<P>::BindGraphicsUniformBuffer("
 end="template <class P>\nvoid BufferCache<P>::UpdateGraphicsBuffers("
 def source_method(text):

@@ -5,11 +5,30 @@ on:
   push:
     branches: [main]
     paths:
+      # The host job compiles against the pinned vendor VFS/API. A gitlink
+      # change can therefore invalidate the ABI even when the NUP sources
+      # themselves are byte-identical.
+      - vendor
       - headless/nup_v1_vfs.cpp
+      - headless/nup_v1_native_vfs.cpp
+      - headless/nup_v1_native_vfs.h
+      - headless/nup_v1_native_content.cpp
+      - headless/nup_v1_native_content.h
+      - headless/nup_v1_native_loader.cpp
+      - headless/nup_v1_native_loader.h
+      - headless/nup_v1_loader_route.cpp
+      - headless/nup_v1_runtime.cmake
+      - headless/nup_v1_aoc_service.cpp
       - tools/check-nup-v1-host.py
       - tools/check-nup-v1-vfs-host.py
+      - tools/check-nup-v1-native-host.py
+      - tools/nup-v1-native-host.cpp
+      - tools/nup-native-host-stub/**
+      - tools/nup-v1-content-fixture.py
       - tools/check-nup-v1-native-abi.py
-      - headless/nup_v1_aoc_service.cpp
+      - tools/check-nup-v1-real-romfs-host.py
+      - tools/check-nup-v1-runtime-cmake.py
+      - tools/check-nup-v1-game-discovery.py
       - tools/check-nup-v1-service-parity-host.py
       - tools/check-nup-metadata-bounds-source.py
       - .github/workflows/nup-v1-host.yml

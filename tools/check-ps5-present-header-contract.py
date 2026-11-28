@@ -8,9 +8,9 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 native_header = (root / "headless/vk_present_manager_r08.h").read_text()
-owner_header = (root / "vendor/encore-active/eden-vulkan/include/"
+owner_header = (root / "vendor/encore-active/eden/src/"
                 "video_core/renderer_vulkan/vk_present_manager.h").read_text()
-owner_cpp = (root / "vendor/encore-active/eden-vulkan/"
+owner_cpp = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/"
              "vulkan_present_manager.cpp").read_text()
 
 # Only compare the shared worker state; Encore legitimately extends the

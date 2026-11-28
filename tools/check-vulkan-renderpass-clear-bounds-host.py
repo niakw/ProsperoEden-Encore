@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-source = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp").read_text()
+source = (ROOT / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_scheduler.cpp").read_text()
 workflow = (ROOT / ".github/workflows/encore-core-preflight.yml").read_text()
 start = "        std::array<VkClearValue, 9> values{};"
 end = "        record_pass(values, bounded_clear_value_count);"

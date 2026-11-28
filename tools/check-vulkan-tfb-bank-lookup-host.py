@@ -9,7 +9,7 @@ import tempfile
 from ns2.native_vulkan_occlusion_review import strip_reviewed_close
 
 ROOT=Path(__file__).resolve().parents[1]
-active=ROOT/'vendor/encore-active/eden-vulkan'
+active=ROOT/'vendor/encore-active/eden/src/video_core/renderer_vulkan'
 tree=ast.parse((ROOT/'tools/prepare-vulkan-port.py').read_text())
 edits=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign)
            and any(isinstance(t,ast.Name) and t.id=='tfb_sync_edits' for t in n.targets))

@@ -9,7 +9,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 header = (root / "headless/performance.h").read_text()
 report = (root / "headless/performance.cpp").read_text()
-presenter = (root / "vendor/encore-active/eden-vulkan/vulkan_present_manager.cpp").read_text()
+presenter = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_present_manager.cpp").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 
 for field in ("gpu_present_wait", "gpu_present_free_wait", "gpu_present_fence_wait"):

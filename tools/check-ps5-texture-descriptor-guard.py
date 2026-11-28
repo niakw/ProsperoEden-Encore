@@ -35,7 +35,7 @@ with tempfile.TemporaryDirectory(prefix="eden-r312-TIC-") as d:
     fn = data[begin:end]
     # The active CMake-selected overlay must preserve the historical PS5
     # descriptor guard, not silently revert to upstream's permissive logic.
-    active = (root / "vendor/encore-active/eden-core/src/video_core/texture_cache/util.cpp").read_text()
+    active = (root / "vendor/encore-active/eden/src/video_core/texture_cache/util.cpp").read_text()
     active_begin = active.index("bool IsValidEntry(")
     active_end = active.index("\nboost::container::small_vector<BufferImageCopy", active_begin)
     active_fn = active[active_begin:active_end]

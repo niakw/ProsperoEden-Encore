@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-engines = root / "vendor/encore-active/eden-core/src/video_core/engines"
+engines = root / "vendor/encore-active/eden/src/video_core/engines"
 pinned = (root / "vendor/sources/eden/src/video_core/engines/fermi_2d.cpp").read_text()
 old = "auto address = src.Address() + config.src_x0 * bytes_per_pixel;"
 assert pinned.count(old) == 1
@@ -263,7 +263,7 @@ volume_fallback=fermi_volume_source[fallback_start:fallback_end]
 assert "if (src.depth != 1 || regs.dst.depth != 1)" in volume_fallback
 assert volume_fallback.index("src.depth != 1") < volume_fallback.index("sw_blitter->Blit")
 
-texture_volume=(root/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+texture_volume=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 assert texture_volume.count("const auto copy_ns1_volume_slice = [&]() -> bool {") == 1
 ns1_start=texture_volume.index("const auto copy_ns1_volume_slice = [&]() -> bool {")
 ns1_end=texture_volume.index("\n        };",ns1_start)+11

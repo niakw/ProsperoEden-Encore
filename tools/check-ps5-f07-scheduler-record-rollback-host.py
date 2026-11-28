@@ -8,7 +8,7 @@ import tempfile
 root=Path(__file__).resolve().parents[1]
 header=(root/"headless/vk_scheduler_ps5.h").read_text()
 implementation=(root/"headless/vulkan_scheduler_ps5.cpp").read_text()
-rasterizer=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+rasterizer=(root/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 buffer_runtime=(root/"headless/vk_buffer_cache_shutdown_ps5.cpp").read_text()
 cmake=(root/"headless/vulkan.cmake").read_text()
 generator=(root/"tools/prepare-vulkan-port.py").read_text()

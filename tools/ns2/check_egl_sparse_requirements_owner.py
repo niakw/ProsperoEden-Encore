@@ -3,7 +3,7 @@
 from pathlib import Path
 import subprocess,sys,tempfile
 ROOT=Path(__file__).resolve().parents[2]
-SRC=ROOT/'vendor/encore-active/eden-vulkan'
+SRC=ROOT/'vendor/encore-active/eden/src/video_core/renderer_vulkan'
 HEADER=SRC/'include/video_core/vulkan_common/vulkan_wrapper.h'
 CPP=SRC/'vulkan_wrapper.cpp'
 with tempfile.TemporaryDirectory(prefix='n65-vendor-req-') as td:

@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-A64=(ROOT/"vendor/encore-active/eden-core/src/dynarmic/backend/x64/a64_interface_standard.cpp").read_text()
+A64=(ROOT/"vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64/a64_interface_standard.cpp").read_text()
 PERF=(ROOT/"headless/performance.cpp").read_text()
 PERFH=(ROOT/"headless/performance.h").read_text()
 MAIN=(ROOT/"headless/main.cpp").read_text()

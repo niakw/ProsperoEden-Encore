@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[2]
-vendor = root / "vendor/encore-active/ns2-runtime/nvdrv_as"
+vendor = root / "vendor/encore-active/eden/src"
 header = vendor / "core/hle/service/nvdrv/devices/native_gpu_allocation_range.h"
 source = (vendor / "core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp").read_text()
 assert header.is_file()

@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-source=(root/"vendor/encore-active/eden-threading/src/core/hle/kernel/k_slab_heap.h").read_text()
+source=(root/"vendor/encore-active/eden/src/core/hle/kernel/k_slab_heap.h").read_text()
 assert "Node* ret = m_head.load(std::memory_order_relaxed);" in source
 assert "m_head.store(ret->next, std::memory_order_relaxed);" in source
 assert "node->next = m_head.load(std::memory_order_relaxed);" in source
@@ -84,7 +84,7 @@ with tempfile.TemporaryDirectory(prefix="eden-kernel-slab-") as temp:
  exe=d/"test"
  subprocess.run([compiler,"-std=c++20","-O1","-g","-pthread","-Wall","-Wextra",
   "-Werror","-fsanitize=address,undefined","-fno-sanitize-recover=all",
-  "-I",str(d),"-I",str(root/"vendor/encore-active/eden-threading/src"),
+  "-I",str(d),"-I",str(root/"vendor/encore-active/eden/src"),
   str(d/"fixture.cpp"),"-o",str(exe)],check=True,timeout=90)
  subprocess.run([str(exe)],check=True,timeout=90)
 print("KERNEL_SLAB_MUTEX_HOST_PASS relaxed_atomic_under_mutex=1 parallel_owners=1 exhaustion=1 sanitizers=1")

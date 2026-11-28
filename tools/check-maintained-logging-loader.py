@@ -5,7 +5,7 @@ import hashlib
 
 root = Path(__file__).resolve().parents[1]
 base = root / "vendor/sources/eden/src"
-active = root / "vendor/encore-active/eden-core/src"
+active = root / "vendor/encore-active/eden/src"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 
 loader = (base / "core/loader/deconstructed_rom_directory.cpp").read_text()
@@ -20,14 +20,15 @@ loader_path = active / "core/loader/deconstructed_rom_directory.cpp"
 loader_data = loader_path.read_bytes()
 loader_text = loader_data.decode("utf-8")
 assert loader_text.count(new) == 1 and old not in loader_text
-assert loader_text.count("FileSys::CreateRomFS(std::move(extracted_romfs), nullptr)") == 1
-assert loader_text.count("FileSys::LayeredVfsDirectory::MakeLayeredDirectory(") >= 2
-assert "UpdateCandidate" in loader_text and "candidate.depth >= 5" in loader_text
+assert loader_text.count("FileSys::CreateRomFS(own_romfs, nullptr)") == 1
+assert loader_text.count("FileSys::CreateRomFS(std::move(layered), nullptr)") == 1
+assert loader_text.count("FileSys::LayeredVfsDirectory::MakeLayeredDirectory(") == 1
+assert "struct Candidate" in loader_text and "candidate.depth >= 5" in loader_text
 assert "cursor == game_root" in loader_text
 loader_git_blob = hashlib.sha1(
     b"blob " + str(len(loader_data)).encode() + b"\0" + loader_data
 ).hexdigest()
-assert loader_git_blob == "6b2f529fb09083fab4abd47b2605d16f42d93300", (
+assert loader_git_blob == "bb99dccad28234f246395d4d010211a41d928763", (
     "maintained loader changed: repeat owner review", loader_git_blob
 )
 

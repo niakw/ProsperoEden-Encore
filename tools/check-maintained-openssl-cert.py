@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-maintained = root / "vendor/encore-active/eden-build/openssl/cert.h"
+maintained = root / "vendor/encore-active/eden/openssl/cert.h"
 original = root / "vendor/sources/eden/.patch/openssl/0001-add-bundled-cert.patch"
 script = root / "tools/materialize-openssl-cert.py"
 build = (root / "tools/build-headless-native.sh").read_text()

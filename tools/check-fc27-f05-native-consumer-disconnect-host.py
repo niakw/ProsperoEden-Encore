@@ -5,8 +5,8 @@ from pathlib import Path
 import shutil, subprocess, tempfile
 root=Path(__file__).resolve().parents[1]
 old=(root/"vendor/sources/eden/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp").read_text()
-new=(root/"vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp").read_text()
-producer=(root/"vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
+new=(root/"vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_consumer.cpp").read_text()
+producer=(root/"vendor/encore-active/eden/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
 assert 'list(APPEND core_sources "\x24{EDEN_MAINTAINED_NVNF_CONSUMER}")' in cmake
 assert 'list(REMOVE_ITEM core_sources "hle/service/nvnflinger/buffer_queue_consumer.cpp")' in cmake

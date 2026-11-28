@@ -28,7 +28,7 @@ def normalized(root: Path, name: str) -> str:
     }
     expected_sha, edits = recipes[name]
     assert len(edits) == (4 if name == "vk_buffer_cache_cost.cpp" else 5)
-    owner = root / "vendor/encore-active/eden-vulkan" / name
+    owner = root / "vendor/encore-active/eden/src/video_core/renderer_vulkan" / name
     sha = subprocess.check_output(
         ["git", "hash-object", str(owner)], text=True).strip()
     content = owner.read_text()

@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 ROOT=Path(__file__).resolve().parents[1]
-vendor=ROOT/"vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp"
+vendor=ROOT/"vendor/encore-active/eden/src/core/file_sys/romfs_factory.cpp"
 engine=ROOT/"headless/nup_v1_romfs_factory.cpp"
 runtime=ROOT/"headless/nup_v1_runtime.cmake"
 assert vendor.is_file() and engine.is_file() and runtime.is_file()

@@ -33,8 +33,8 @@ method = method_start + upstream.split(method_start, 1)[1].split(method_end, 1)[
 assert method.count(old) == 1
 assert 'memory_native_standard.cpp' in cmake and 'memory_native_a32.cpp' in cmake
 assert 'write_derived("${eden_native_memory_tu}"' not in cmake
-normal_memory=(root/"vendor/encore-active/eden-core/src/core/memory_native_standard.cpp").read_text()
-a32_memory=(root/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp").read_text()
+normal_memory=(root/"vendor/encore-active/eden/src/core/memory_native_standard.cpp").read_text()
+a32_memory=(root/"vendor/encore-active/eden/src/core/memory_native_a32.cpp").read_text()
 for source in (normal_memory, a32_memory):
     assert source.count(native) == 1
     assert old not in source

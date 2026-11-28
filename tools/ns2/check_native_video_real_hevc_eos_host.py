@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT/"vendor/encore-active/ns2-runtime/video_decoder/video_core/host1x/nx2_video_decoder.cpp"
+OWNER=ROOT/"vendor/encore-active/eden/src/video_core/host1x/nx2_video_decoder.cpp"
 source=OWNER.read_text()
 def extract(start, stop):
     assert source.count(start)==source.count(stop)==1,(start,stop)
@@ -174,7 +174,7 @@ with tempfile.TemporaryDirectory(prefix="eden-h05-native-hevc-") as temp:
             cmd=[cc,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                  "-Wno-unused-variable","-Wno-unused-function",
                  "-fsanitize=undefined","-fno-sanitize-recover=all",
-                 "-I"+str(ROOT/"vendor/encore-active/ns2-runtime/video_decoder"),
+                 "-I"+str(ROOT/"vendor/encore-active/eden/src"),
                  "-I"+str(ROOT/"vendor/sources/eden/src"),
                  str(file),"-o",str(exe),"-lavcodec","-lavutil","-lswscale"]
             built=subprocess.run(cmd,capture_output=True,text=True,timeout=70,env=os.environ.copy())

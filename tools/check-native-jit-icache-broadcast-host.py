@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-A64=(ROOT/"vendor/encore-active/eden-core/src/core/arm/dynarmic/arm_dynarmic_64.cpp").read_text()
+A64=(ROOT/"vendor/encore-active/eden/src/core/arm/dynarmic/arm_dynarmic_64.cpp").read_text()
 DEBUG=(ROOT/"vendor/sources/eden/src/core/arm/debug.cpp").read_text()
 PATCH=(ROOT/"headless/backports/eden-dynarmic-icache-coherence.patch").read_text()
 FLOW=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()

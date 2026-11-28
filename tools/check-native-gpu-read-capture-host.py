@@ -27,10 +27,10 @@ assert 'list(APPEND video_sources "${EDEN_MAINTAINED_G21_GPU}")' in cmake
 assert 'gpu_read_capture_original' not in cmake
 for filename in ("gpu_gl_host.cpp", "gpu_gl_host_dev.cpp",
                  "gpu_gl_native.cpp", "gpu_gl_native_dev.cpp"):
-    maintained = (root/"vendor/encore-active/eden-core/src/video_core"/filename).read_text()
+    maintained = (root/"vendor/encore-active/eden/src/video_core"/filename).read_text()
     assert maintained.count(fixed) == 1, filename
     assert old not in maintained, filename
-vulkan = (root/"vendor/encore-active/eden-core/src/video_core/gpu_vulkan.cpp").read_text()
+vulkan = (root/"vendor/encore-active/eden/src/video_core/gpu_vulkan.cpp").read_text()
 assert vulkan.count(fixed) == 1 and old not in vulkan
 assert 'set(EDEN_MAINTAINED_G21_GPU "${EDEN_G21_GPU_ROOT}/gpu_vulkan.cpp")' in cmake
 vulkan_body = start + vulkan.split(start, 1)[1].split(end, 1)[0]

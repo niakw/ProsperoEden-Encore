@@ -3,8 +3,8 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 patch = (root / 'headless/backports/eden-sm-host-wait.patch').read_text()
-audio = (root / 'vendor/encore-active/eden-backports/src/core/hle/service/audio/audio_controller.cpp').read_text()
-audio_h = (root / 'vendor/encore-active/eden-backports/src/core/hle/service/audio/audio_controller.h').read_text()
+audio = (root / 'vendor/encore-active/eden/src/core/hle/service/audio/audio_controller.cpp').read_text()
+audio_h = (root / 'vendor/encore-active/eden/src/core/hle/service/audio/audio_controller.h').read_text()
 
 for needle in (
     'Kernel::GetCurrentThread(kernel).IsDummyThread()',

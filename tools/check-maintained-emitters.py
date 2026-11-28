@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-owned = root / "vendor/encore-active/eden-core/src/dynarmic/backend/x64"
+owned = root / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64"
 upstream = root / "vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64"
 read = lambda base, name: (base / name).read_text()
 cm = read(root / "headless", "CMakeLists.txt")
@@ -104,7 +104,7 @@ assert pub_proto in shared_h and proto not in shared_h
 assert "JitGroup* eden_group = nullptr;" in shared_h
 assert "eden_pending_sites" in shared_h
 assert shared.count(publish_sig) == 1 and publish_end in shared
-shared_root = root / "vendor/encore-active/eden-core/dynarmic/shared-jit"
+shared_root = root / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64"
 assert read(shared_root, "jit_push_rsb.inc") in shared
 assert read(shared_root, "jit_links.inc") in shared
 assert "macro(eden_shared_jit_emitter_header)" not in macros

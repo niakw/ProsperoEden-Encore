@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-OWNER=ROOT/'vendor/encore-active/eden-core/src/video_core'
+OWNER=ROOT/'vendor/encore-active/eden/src/video_core'
 start='        const bool explicit_sync = command_list.command_lists[dma_pushbuffer_subindex].sync;'
 stop='\n#endif'
 policies=[]

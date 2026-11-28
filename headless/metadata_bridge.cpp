@@ -6,7 +6,7 @@
 #endif
 #include "extracted_npdm_identity.h"
 #include "firmware_zip_import.h"
-#include "../vendor/encore-active/eden-core/src/core/file_sys/extracted_aoc_paths.h"
+#include "../vendor/encore-active/eden/src/core/file_sys/extracted_aoc_paths.h"
 #include "assets_dir.h"
 #include "diagnostics.h"
 #include "glyph_version.h"

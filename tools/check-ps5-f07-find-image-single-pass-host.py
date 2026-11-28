@@ -3,7 +3,7 @@
 from pathlib import Path
 import shutil,subprocess,tempfile
 root=Path(__file__).resolve().parents[1]
-native=(root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+native=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 gen=(root/"tools/prepare-vulkan-port.py").read_text()
 fast=(root/".github/workflows/encore-core-fast-gate.yml").read_text()
 pre=(root/".github/workflows/encore-core-preflight.yml").read_text()
@@ -12,7 +12,7 @@ assert "python3 -B tools/check-ps5-f07-find-image-single-pass-host.py" in fast a
 start="ImageId TextureCache<P>::FindImage(const ImageInfo& info, GPUVAddr gpu_addr,"
 a=native.index(start)
 shadow_body=native[a:native.index("\ntemplate <class P>",a)]
-selected=(root/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+selected=(root/"vendor/encore-active/eden/src/video_core/texture_cache/texture_cache.h").read_text()
 a=selected.index(start)
 body=selected[a:selected.index("\ntemplate <class P>",a)]
 assert body == shadow_body, "selected native FindImage diverged from reviewed single-pass owner"

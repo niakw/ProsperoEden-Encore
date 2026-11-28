@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-src = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+src = (root / "vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_rasterizer.cpp").read_text()
 def take(begin, end):
     return src[src.index(begin):src.index(end, src.index(begin))]
 inv = take("void RasterizerVulkan::InvalidateRegion(", "void RasterizerVulkan::InnerInvalidation(")
@@ -19,7 +19,7 @@ assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in 
 assert '"${PORT_BUILD_DIR}/vulkan_rasterizer.cpp"' in cmake
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 assert "future buffer" in generator or "their first upload is unaffected" in generator
-buffer_owner = (root / "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
+buffer_owner = (root / "vendor/encore-active/eden/src/video_core/buffer_cache/buffer_cache.h").read_text()
 reg = buffer_owner[buffer_owner.index("void BufferCache<P>::ChangeRegister("):]
 assert reg.index("::Eden::BufferPages::Mark(buffer.CpuAddr(), size);") < reg.index("page_table[page] = buffer_id;")
 word_owner = (root / "vendor/sources/eden/src/video_core/buffer_cache/word_manager.h").read_text()

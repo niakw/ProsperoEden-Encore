@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
-active = root / "vendor/encore-active/eden-core/src/dynarmic/backend/x64"
+active = root / "vendor/encore-active/eden/src/dynarmic/src/dynarmic/backend/x64"
 cmake = (root / "headless/CMakeLists.txt").read_text()
 alias = (root / "headless/jit-alias.cmake").read_text()
 assert not (root / "headless/jit-permissions.inc").exists()

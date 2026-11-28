@@ -86,17 +86,14 @@ crash_header = read("headless/crash_report.h")
 crash_source = read("headless/crash_report.cpp")
 failure_header = read("headless/gpu_failure.h")
 gpu_worker_generator = read("headless/CMakeLists.txt")
-# The production GPU worker is no longer constructed inside CMake:
-# the shipping quiet source alone is selected by CMake and compiled from Encore.
-# The DEV variant below is retained only as a historical breadcrumb parity oracle.
+# One canonical GPU worker is selected directly from encore-active/eden.
 gpu_worker_sources = {
-    profile: read(f"vendor/encore-active/eden-gpu/gpu_thread_{profile}.cpp")
-    for profile in ("dev", "quiet")
+    "canonical": read("vendor/encore-active/eden/src/video_core/gpu_thread.cpp")
 }
-assert 'set(EDEN_GPU_WORKER_VARIANT "gpu_thread_dev.cpp")' not in gpu_worker_generator
-assert 'set(EDEN_GPU_WORKER_VARIANT "gpu_thread_quiet.cpp")' in gpu_worker_generator
-assert 'configure_file("${EDEN_ACTIVE_GPU}/${EDEN_GPU_WORKER_VARIANT}"' in gpu_worker_generator
-assert 'list(APPEND video_sources "${PORT_BUILD_DIR}/gpu_thread.cpp")' in gpu_worker_generator
+assert 'set(EDEN_GPU_WORKER "${EDEN_ACTIVE_EDEN}/src/video_core/gpu_thread.cpp")' in gpu_worker_generator
+assert 'list(APPEND video_sources "${EDEN_GPU_WORKER}")' in gpu_worker_generator
+assert 'gpu_thread_dev.cpp' not in gpu_worker_generator
+assert 'gpu_thread_quiet.cpp' not in gpu_worker_generator
 watchdog = read("headless/stall_watchdog.h")
 assert 'inline std::atomic<std::uint64_t> gpu_completed_commands{0};' in crash_header
 assert 'inline std::atomic<unsigned> gpu_stall_suspicions{0};' in crash_header
@@ -126,12 +123,12 @@ assert 'set(EDEN_NATIVE_GUEST_SOURCE "${EDEN_NATIVE_MEMORY_ROOT}/memory_native_s
 assert 'set(EDEN_NATIVE_GUEST_SOURCE "${EDEN_NATIVE_MEMORY_ROOT}/memory_native_a32.cpp")' in gpu_worker_generator
 assert 'list(APPEND core_sources "${EDEN_NATIVE_GUEST_SOURCE}")' in gpu_worker_generator
 for variant in ("memory_native_standard.cpp", "memory_native_a32.cpp"):
-    native_memory = read(f"vendor/encore-active/eden-core/src/core/{variant}")
+    native_memory = read(f"vendor/encore-active/eden/src/core/{variant}")
     assert native_memory.count("::Eden::Performance::ShouldLogUnmappedAccess()") == 11, variant
     assert native_memory.count('LOG_ERROR(HW_Memory, "Unmapped ') == 11, variant
     assert '#include "performance.h"' in native_memory, variant
-for variant in ("memory_ps5_standard.cpp", "memory_ps5_a32.cpp"):
-    deferred_memory = read(f"vendor/encore-active/eden-core/guest-bridge/{variant}")
+for variant in ("memory_native_standard_deferred.cpp", "memory_native_a32_deferred.cpp"):
+    deferred_memory = read(f"vendor/encore-active/eden/src/core/{variant}")
     assert deferred_memory.count("::Eden::Performance::ShouldLogUnmappedAccess()") == 11, variant
     assert deferred_memory.count('LOG_ERROR(HW_Memory, "Unmapped ') == 11, variant
 print("ENCORE_NATIVE_MEMORY_CRASH_ONLY_LOG_SOURCE_PASS profiles=4 throttled_sites=11")

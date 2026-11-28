@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-NATIVE=ROOT/"vendor/encore-active/ns2-runtime/gpu_dispatch"
+NATIVE=ROOT/"vendor/encore-active/eden/src"
 source=(NATIVE/"video_core/engines/puller.cpp").read_text()
 start="struct CoherentNativeSemaphoreValue {"
 stop="void Puller::ProcessSemaphoreAcquire("

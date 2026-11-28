@@ -51,7 +51,7 @@ def main():
     parser.add_argument("--vendor",type=Path,required=True)
     parser.add_argument("--header",type=Path)
     args=parser.parse_args()
-    shader=args.vendor/"encore-active/eden-vulkan/r09_rdna2_nr/repack_tokens_rdna2.comp"
+    shader=args.vendor/"encore-active/eden/src/video_core/renderer_vulkan/r09_rdna2_nr/repack_tokens_rdna2.comp"
     validate(shader,args.header)
 
 if __name__=="__main__":

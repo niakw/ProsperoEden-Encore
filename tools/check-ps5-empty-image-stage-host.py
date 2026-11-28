@@ -183,7 +183,9 @@ image_call=draw_source[image_start:image_end]
 assert image_call.count("texture_cache.FillImageViews(")==1
 assert "if (!views.empty())" not in image_call
 assert "CachePhase::TextureFillImageViews" in image_call
-assert "FillImageViews resets the image-deletion/retry latch" in (root/"tools/check-vendored-vulkan-fork.py").read_text()
+# The selected GraphicsPipeline block and canonical TextureCache method above
+# are the semantic authority. Do not couple this runtime witness to prose in
+# another source-selection gate.
 empty_views_cpp=r"""
 #include <cassert>
 #include <span>

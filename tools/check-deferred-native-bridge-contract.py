@@ -524,7 +524,7 @@ if m07_source_blob(original_m07) == "6f3378f1bb611c74ecfe1f5cd37283137462012a":
     predecessor_page_untrack = rasterizer_text[
         rasterizer_text.index("bool RasterizerVulkan::OnCPUWrite("):
         rasterizer_text.index("\nvoid RasterizerVulkan::OnCacheInvalidations(")
-    ]
+    ] + "\n"
     gpu_thread_include = '#include "video_core/gpu_thread.h"\n'
     assert original_m07.count(current_page_untrack) == 1
     assert original_m07.count(gpu_thread_include) == 1

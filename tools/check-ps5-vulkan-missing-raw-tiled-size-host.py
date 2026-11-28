@@ -34,7 +34,7 @@ cpp=r"""
 using u8=std::uint8_t;
 using u32=std::uint32_t;
 using u64=std::uint64_t;
-struct Framebuffer { u32 stride{4},width{4},height{4}; };
+struct Framebuffer { u32 stride{4},width{4},height{4}; bool native_tiling{}; };
 namespace Tegra::Texture {
 inline unsigned tiled_size_calls{};
 inline unsigned unswizzles{};
@@ -42,7 +42,8 @@ u64 CalculateSize(bool, u32,u32,u32,u32,u32,u32) {
     ++tiled_size_calls;return 64;
 }
 void UnswizzleTexture(std::span<u8> dst,std::span<const u8> src,
-                      u32,u32,u32,u32,u32,u32) {
+                      u32,u32,u32,u32,u32,u32,u32,bool native_tiling) {
+    assert(!native_tiling);
     ++unswizzles;
     assert(dst.size()==src.size());
     std::copy(src.begin(),src.end(),dst.begin());

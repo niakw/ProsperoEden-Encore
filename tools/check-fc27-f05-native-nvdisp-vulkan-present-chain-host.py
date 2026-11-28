@@ -25,7 +25,7 @@ fast=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 pre=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 cmd="python3 -B tools/check-fc27-f05-native-nvdisp-vulkan-present-chain-host.py"
 assert cmd in fast and cmd in pre
-NV=(ROOT/"vendor/sources/eden/src/core/hle/service/nvdrv/devices/nvdisp_disp0.cpp").read_text()
+NV=(ROOT/"vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvdisp_disp0.cpp").read_text()
 GPU=(ROOT/"vendor/sources/eden/src/video_core/gpu.cpp").read_text()
 SYNC=(ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
 RENDER=(ROOT/"vendor/encore-active/eden/src/video_core/renderer_vulkan/vulkan_renderer.cpp").read_text()

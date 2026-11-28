@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-NV = (ROOT/"vendor/sources/eden/src/core/hle/service/nvdrv/devices/nvdisp_disp0.cpp").read_text()
+NV = (ROOT/"vendor/encore-active/eden/src/core/hle/service/nvdrv/devices/nvdisp_disp0.cpp").read_text()
 GPU = (ROOT/"vendor/sources/eden/src/video_core/gpu.cpp").read_text()
 SYNC = (ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
 SYNC_HDR = (ROOT/"vendor/encore-active/eden/src/video_core/host1x/syncpoint_manager.h").read_text()
@@ -96,6 +96,7 @@ struct FramebufferConfig {
     int offset{},width{},height{},stride{},pixel_format{};
     int transform_flags{},crop_rect{};
     BlendMode blending{};
+    bool native_tiling{};
     int layer_stack_mask{};
 };
 namespace Host1x {
@@ -160,7 +161,10 @@ struct Renderer {
     std::vector<std::vector<u64>> deliveries;
     void Composite(std::span<const FramebufferConfig> layers) {
         std::vector<u64> ids;
-        for (const auto& layer:layers) ids.push_back(layer.address);
+        for (const auto& layer:layers) {
+            assert(layer.native_tiling);
+            ids.push_back(layer.address);
+        }
         deliveries.push_back(std::move(ids));
     }
 };
@@ -256,14 +260,34 @@ struct HwcLayer {
     Fence acquire_fence{};
 };
 }
+namespace Kernel { class KProcess {}; }
+namespace Service::Nvidia::NvCore {
+struct SessionId { std::size_t id{}; };
+struct Session { Kernel::KProcess* process{}; };
+struct Container {
+    Kernel::KProcess process;
+    Session session{&process};
+    Session* GetSession(SessionId id){return id.id==1?&session:nullptr;}
+};
+}
 namespace Service::Nvidia::Devices {
+class NativeGpuProcessRegistry {
+public:
+    static NativeGpuProcessRegistry& Instance(){static NativeGpuProcessRegistry r;return r;}
+    bool Contains(const Kernel::KProcess* process) const {return process!=nullptr;}
+};
 Tegra::BlendMode ConvertBlending(int){return Tegra::BlendMode::Opaque;}
 struct NvMap {
+    struct Handle { NvCore::SessionId session_id{1}; };
+    std::shared_ptr<Handle> GetHandle(int id){
+        return id>=0?std::make_shared<Handle>():std::shared_ptr<Handle>{};
+    }
     u64 GetHandleAddress(int id){return 0x100000ULL+static_cast<u64>(id);}
 };
 class nvdisp_disp0 {
 public:
     Core::System& system;
+    NvCore::Container container;
     NvMap nvmap;
     explicit nvdisp_disp0(Core::System& s):system(s){}
     void Composite(std::span<const Service::Nvnflinger::HwcLayer>);

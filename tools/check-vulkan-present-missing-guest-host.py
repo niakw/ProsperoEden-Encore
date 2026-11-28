@@ -24,7 +24,7 @@ cpp=r"""
 #include <span>
 #include <vector>
 using u8=std::uint8_t;using u32=std::uint32_t;using u64=std::uint64_t;
-struct Framebuffer{u32 width=2,height=2,stride=2;};
+struct Framebuffer{u32 width=2,height=2,stride=2;bool native_tiling{};};
 struct Buffer{unsigned flushes=0;void Flush(){++flushes;}};
 static unsigned unswizzles=0, tiled_calculations=0;
 namespace Tegra::Texture{
@@ -32,8 +32,9 @@ u64 CalculateSize(bool,u32 bpp,u32 stride,u32 height,u32,u32,u32){
     ++tiled_calculations;
     return static_cast<u64>(bpp)*stride*height;
 }
-void UnswizzleTexture(std::span<u8> dst,std::span<const u8> src,u32,u32,u32,u32,u32,u32){
-    ++unswizzles;assert(src.size()>=dst.size());
+void UnswizzleTexture(std::span<u8> dst,std::span<const u8> src,
+                      u32,u32,u32,u32,u32,u32,u32,bool native_tiling){
+    ++unswizzles;assert(!native_tiling);assert(src.size()>=dst.size());
     std::copy_n(src.begin(),dst.size(),dst.begin());
 }
 }

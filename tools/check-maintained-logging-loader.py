@@ -33,7 +33,16 @@ assert loader_git_blob == "bb99dccad28234f246395d4d010211a41d928763", (
 )
 
 logging = (base / "common/logging.cpp").read_text()
-maintained_logging = (active / "common/logging.cpp").read_text()
+maintained_logging_path = active / "common/logging.cpp"
+maintained_logging_data = maintained_logging_path.read_bytes()
+maintained_logging = maintained_logging_data.decode("utf-8")
+maintained_logging_git_blob = hashlib.sha1(
+    b"blob " + str(len(maintained_logging_data)).encode() + b"\0" + maintained_logging_data
+).hexdigest()
+assert maintained_logging_git_blob == "0a3a70c8f44fbfef2b126e35aedfd307b78ba67a", (
+    "maintained PS5 logging owner changed: repeat owner review",
+    maintained_logging_git_blob,
+)
 
 # The frozen vendor source remains the unmodified Eden baseline.
 old_flush = """            if (write_limit_exceeded)
@@ -44,9 +53,9 @@ assert "eden_native_detailed_logging" not in logging
 assert "void RotatePs5() noexcept" not in logging
 
 # The canonical owner keeps the later host flush-throttling optimization.
+for needle in ("#include <atomic>", "#include <chrono>"):
+    assert maintained_logging.count(needle) >= 1, needle
 for needle in (
-    "#include <atomic>",
-    "#include <chrono>",
     "flush_now - error_flushed_ms.load(std::memory_order_relaxed) >= 100",
     "error_flushed_ms.store(flush_now, std::memory_order_relaxed);",
     'std::atomic<long long> error_flushed_ms{-1000};',

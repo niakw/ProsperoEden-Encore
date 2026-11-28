@@ -967,9 +967,74 @@ SYNC_HDR=V/"encore-active/eden/src/video_core/host1x/syncpoint_manager.h"
 CTRL_CPP=V/"encore-active/eden/src/video_core/host1x/control.cpp"
 CTRL_HDR=V/"encore-active/eden/src/video_core/host1x/control.h"
 sync_blob=blob(SYNC_CPP)
-assert sync_blob in {"eb5e2ea63652f020b6e14497080ba3339a9c983c", "59ac07af5eab89e78b7089d1db58918f2506aafe", "abe89b570a18508123a5c14c49cf5a43935f620c"}
+assert sync_blob in {"eb5e2ea63652f020b6e14497080ba3339a9c983c", "59ac07af5eab89e78b7089d1db58918f2506aafe", "abe89b570a18508123a5c14c49cf5a43935f620c", "91b6600f302c7a1326c45ac151b60b19ca41c2c7"}
 SYNC_SOURCE=SYNC_CPP.read_text()
 sync_receipt_source=SYNC_SOURCE
+if sync_blob=="91b6600f302c7a1326c45ac151b60b19ca41c2c7":
+    wrapping_added="""SyncpointManager::ActionHandle SyncpointManager::RegisterWrappingGuestAction(
+    u32 id, u32 target, std::function<void()>&& action) {
+    if (id >= NUM_MAX_SYNCPOINTS) return {};
+    {
+        std::scoped_lock lk(guard);
+        const u32 current = syncpoints_guest[id].load(std::memory_order_relaxed);
+        if (!IsWrappingGuestActionReady(current, target)) {
+            do { ++last_action_id; } while (last_action_id == 0);
+            return wrapping_guest_actions[id]
+                .emplace_back(target, last_action_id, std::move(action))->id;
+        }
+    }
+    action();
+    return {};
+}
+
+void SyncpointManager::DeregisterWrappingGuestAction(
+    u32 id, const ActionHandle& handle) {
+    if (id < NUM_MAX_SYNCPOINTS)
+        DeregisterAction(wrapping_guest_actions[id], handle);
+}
+
+"""
+    assert sync_receipt_source.count(wrapping_added)==1
+    sync_receipt_source=sync_receipt_source.replace(wrapping_added,"",1)
+    newer="""    Increment(syncpoints_guest[id], wait_guest_cv, guest_action_storage[id],
+              std::nullopt, &wrapping_guest_actions[id]);"""
+    older="""    Increment(syncpoints_guest[id], wait_guest_cv, guest_action_storage[id]);"""
+    assert sync_receipt_source.count(newer)==1
+    sync_receipt_source=sync_receipt_source.replace(newer,older,1)
+    newer_sig="""void SyncpointManager::Increment(std::atomic<u32>& syncpoint, std::condition_variable& wait_cv,
+                                 std::list<RegisteredAction>& action_storage,
+                                 std::optional<u32> mirrored_id,
+                                 std::list<RegisteredAction>* wrapping_storage) {"""
+    older_sig="""void SyncpointManager::Increment(std::atomic<u32>& syncpoint, std::condition_variable& wait_cv,
+                                 std::list<RegisteredAction>& action_storage,
+                                 std::optional<u32> mirrored_id) {"""
+    assert sync_receipt_source.count(newer_sig)==1
+    sync_receipt_source=sync_receipt_source.replace(newer_sig,older_sig,1)
+    newer_due="""    if (end == action_storage.begin() &&
+        (!wrapping_storage || wrapping_storage->empty()) &&
+        (!mirrored_id || native_guest_actions[*mirrored_id].empty())) return;
+
+    DueActions due;
+    due.pending.splice(due.pending.end(), action_storage, action_storage.begin(), end);
+    if (wrapping_storage) {
+        for (auto it = wrapping_storage->begin(); it != wrapping_storage->end();) {
+            auto candidate = it++;
+            if (IsWrappingGuestActionReady(new_value, candidate->expected_value))
+                due.pending.splice(due.pending.end(), *wrapping_storage, candidate);
+        }
+    }
+    if (mirrored_id) {"""
+    older_due="""    if (end == action_storage.begin() &&
+        (!mirrored_id || native_guest_actions[*mirrored_id].empty())) return;
+
+    DueActions due;
+    due.pending.splice(due.pending.end(), action_storage, action_storage.begin(), end);
+    if (mirrored_id) {"""
+    assert sync_receipt_source.count(newer_due)==1
+    sync_receipt_source=sync_receipt_source.replace(newer_due,older_due,1)
+    raw=sync_receipt_source.encode()
+    assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()=="abe89b570a18508123a5c14c49cf5a43935f620c"
+    sync_blob="abe89b570a18508123a5c14c49cf5a43935f620c"
 if sync_blob=="abe89b570a18508123a5c14c49cf5a43935f620c":
     # Reverse the strict host-completion delta on the audit copy only.
     # The stop-aware wait below is still extracted from the current owner.
